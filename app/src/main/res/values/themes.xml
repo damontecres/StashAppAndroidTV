@@ -1,0 +1,4 @@
+<resources>
+
+    <style name="Theme.StashAppAndroidTV" parent="@style/Theme.Leanback" />
+</resources>
