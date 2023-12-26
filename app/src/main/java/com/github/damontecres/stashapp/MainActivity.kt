@@ -1,12 +1,16 @@
 package com.github.damontecres.stashapp
 
+import android.content.Context
 import android.os.Bundle
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.fragment.app.FragmentActivity
+import java.util.prefs.Preferences
 
 /**
  * Loads [MainFragment].
  */
-class MainActivity : FragmentActivity() {
+class MainActivity() : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

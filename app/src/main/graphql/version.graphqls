@@ -1,0 +1,12 @@
+type Version {
+  version: String
+  hash: String!
+  build_time: String!
+}
+
+type LatestVersion {
+  version: String!
+  shorthash: String!
+  release_date: String!
+  url: String!
+}

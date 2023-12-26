@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-parcelize")
+    id("com.apollographql.apollo3") version "3.8.2"
 }
 
 android {
@@ -31,9 +33,24 @@ android {
     }
 }
 
+apollo {
+    service("app") {
+        packageName.set("com.github.damontecres.stashapp.api")
+    }
+}
+
 dependencies {
 
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.leanback:leanback:1.0.0")
     implementation("com.github.bumptech.glide:glide:4.11.0")
+
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore-core:1.0.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.9")
+
+
+    implementation("com.apollographql.apollo3:apollo-runtime:3.8.2")
 }

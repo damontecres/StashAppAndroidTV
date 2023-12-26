@@ -1,20 +1,23 @@
 package com.github.damontecres.stashapp
 
 import android.graphics.drawable.Drawable
-import androidx.leanback.widget.ImageCardView
-import androidx.leanback.widget.Presenter
-import androidx.core.content.ContextCompat
 import android.util.Log
 import android.view.ViewGroup
-
+import androidx.core.content.ContextCompat
+import androidx.leanback.widget.ImageCardView
+import androidx.leanback.widget.Presenter
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.model.GlideUrl
+import com.bumptech.glide.load.model.LazyHeaders
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import kotlin.properties.Delegates
+
 
 /**
  * A CardPresenter is used to generate Views and bind Objects to them on demand.
  * It contains an ImageCardView.
  */
-class CardPresenter : Presenter() {
+class PerformerPresenter : Presenter() {
     private var mDefaultCardImage: Drawable? = null
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
     private var sDefaultBackgroundColor: Int by Delegates.notNull()
@@ -40,16 +43,22 @@ class CardPresenter : Presenter() {
     }
 
     override fun onBindViewHolder(viewHolder: Presenter.ViewHolder, item: Any) {
-        val movie = item as Movie
+        val performer = item as PerformerData
         val cardView = viewHolder.view as ImageCardView
 
         Log.d(TAG, "onBindViewHolder")
-        if (movie.cardImageUrl != null) {
-            cardView.titleText = movie.title
-            cardView.contentText = movie.studio
+        if (performer.image_path != null) {
+            cardView.titleText = performer.name
+//            cardView.contentText = movie.studio
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
+            val url = GlideUrl(
+                performer.image_path,
+                LazyHeaders.Builder()
+                    .addHeader(StashCredentials.STASH_API_HEADER, StashCredentials.STASH_API_KEY)
+                    .build()
+            )
             Glide.with(viewHolder.view.context)
-                    .load(movie.cardImageUrl)
+                    .load(url)
                     .centerCrop()
                     .error(mDefaultCardImage)
                     .into(cardView.mainImageView)
@@ -75,7 +84,7 @@ class CardPresenter : Presenter() {
     companion object {
         private val TAG = "CardPresenter"
 
-        private val CARD_WIDTH = 313
-        private val CARD_HEIGHT = 176
+        private val CARD_HEIGHT = 313
+        private val CARD_WIDTH = 176
     }
 }

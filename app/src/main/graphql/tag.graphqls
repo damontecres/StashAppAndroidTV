@@ -1,0 +1,62 @@
+type Tag {
+  id: ID!
+  name: String!
+  description: String
+  aliases: [String!]!
+  ignore_auto_tag: Boolean!
+  created_at: Time!
+  updated_at: Time!
+
+  image_path: String # Resolver
+  scene_count(depth: Int): Int! # Resolver
+  scene_marker_count(depth: Int): Int! # Resolver
+  image_count(depth: Int): Int! # Resolver
+  gallery_count(depth: Int): Int! # Resolver
+  performer_count(depth: Int): Int! # Resolver
+  parents: [Tag!]!
+  children: [Tag!]!
+
+  parent_count: Int! # Resolver
+  child_count: Int! # Resolver
+}
+
+input TagCreateInput {
+  name: String!
+  description: String
+  aliases: [String!]
+  ignore_auto_tag: Boolean
+
+  "This should be a URL or a base64 encoded data URL"
+  image: String
+
+  parent_ids: [ID!]
+  child_ids: [ID!]
+}
+
+input TagUpdateInput {
+  id: ID!
+  name: String
+  description: String
+  aliases: [String!]
+  ignore_auto_tag: Boolean
+
+  "This should be a URL or a base64 encoded data URL"
+  image: String
+
+  parent_ids: [ID!]
+  child_ids: [ID!]
+}
+
+input TagDestroyInput {
+  id: ID!
+}
+
+type FindTagsResultType {
+  count: Int!
+  tags: [Tag!]!
+}
+
+input TagsMergeInput {
+  source: [ID!]!
+  destination: ID!
+}

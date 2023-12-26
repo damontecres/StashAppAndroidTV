@@ -28,10 +28,13 @@ import android.util.Log
 import android.widget.Toast
 
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.model.GlideUrl
+import com.bumptech.glide.load.model.LazyHeaders
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-
-import java.util.Collections
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
 
 /**
  * A wrapper fragment for leanback details screens.
@@ -39,7 +42,7 @@ import java.util.Collections
  */
 class VideoDetailsFragment : DetailsSupportFragment() {
 
-    private var mSelectedMovie: Movie? = null
+    private var mSelectedMovie: Scene? = null
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
     private lateinit var mPresenterSelector: ClassPresenterSelector
@@ -51,7 +54,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
 
-        mSelectedMovie = activity!!.intent.getSerializableExtra(DetailsActivity.MOVIE) as Movie
+//        mSelectedMovie = activity!!.intent.getSerializableExtra(DetailsActivity.MOVIE) as Scene
+        mSelectedMovie = activity!!.intent.getParcelableExtra(DetailsActivity.MOVIE)
         if (mSelectedMovie != null) {
             mPresenterSelector = ClassPresenterSelector()
             mAdapter = ArrayObjectAdapter(mPresenterSelector)
@@ -67,13 +71,19 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private fun initializeBackground(movie: Movie?) {
+    private fun initializeBackground(movie: Scene?) {
         mDetailsBackground.enableParallax()
+        val url = GlideUrl(
+            movie?.screenshotUrl,
+            LazyHeaders.Builder()
+                .addHeader(StashCredentials.STASH_API_HEADER, StashCredentials.STASH_API_KEY)
+                .build()
+        )
         Glide.with(activity!!)
                 .asBitmap()
                 .centerCrop()
                 .error(R.drawable.default_background)
-                .load(movie?.backgroundImageUrl)
+                .load(url)
                 .into<SimpleTarget<Bitmap>>(object : SimpleTarget<Bitmap>() {
                     override fun onResourceReady(bitmap: Bitmap,
                                                  transition: Transition<in Bitmap>?) {
@@ -89,8 +99,14 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         row.imageDrawable = ContextCompat.getDrawable(activity!!, R.drawable.default_background)
         val width = convertDpToPixel(activity!!, DETAIL_THUMB_WIDTH)
         val height = convertDpToPixel(activity!!, DETAIL_THUMB_HEIGHT)
+        val url = GlideUrl(
+            mSelectedMovie?.screenshotUrl,
+            LazyHeaders.Builder()
+                .addHeader(StashCredentials.STASH_API_HEADER, StashCredentials.STASH_API_KEY)
+                .build()
+        )
         Glide.with(activity!!)
-                .load(mSelectedMovie?.cardImageUrl)
+                .load(url)
                 .centerCrop()
                 .error(R.drawable.default_background)
                 .into<SimpleTarget<Drawable>>(object : SimpleTarget<Drawable>(width, height) {
@@ -106,19 +122,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         actionAdapter.add(
                 Action(
-                        ACTION_WATCH_TRAILER,
-                        resources.getString(R.string.watch_trailer_1),
-                        resources.getString(R.string.watch_trailer_2)))
-        actionAdapter.add(
-                Action(
-                        ACTION_RENT,
-                        resources.getString(R.string.rent_1),
-                        resources.getString(R.string.rent_2)))
-        actionAdapter.add(
-                Action(
-                        ACTION_BUY,
-                        resources.getString(R.string.buy_1),
-                        resources.getString(R.string.buy_2)))
+                        ACTION_PLAY_SCENE,
+                        resources.getString(R.string.play_scene)))
         row.actionsAdapter = actionAdapter
 
         mAdapter.add(row)
@@ -138,7 +143,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         detailsPresenter.isParticipatingEntranceTransition = true
 
         detailsPresenter.onActionClickedListener = OnActionClickedListener { action ->
-            if (action.id == ACTION_WATCH_TRAILER) {
+            if (action.id == ACTION_PLAY_SCENE && mSelectedMovie!=null) {
                 val intent = Intent(activity!!, PlaybackActivity::class.java)
                 intent.putExtra(DetailsActivity.MOVIE, mSelectedMovie)
                 startActivity(intent)
@@ -151,13 +156,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private fun setupRelatedMovieListRow() {
         val subcategories = arrayOf(getString(R.string.related_movies))
-        val list = MovieList.list
-
-        Collections.shuffle(list)
-        val listRowAdapter = ArrayObjectAdapter(CardPresenter())
-        for (j in 0 until NUM_COLS) {
-            listRowAdapter.add(list[j % 5])
-        }
+        val listRowAdapter = ArrayObjectAdapter(ScenePresenter())
+        // TODO related scenes
 
         val header = HeaderItem(0, subcategories[0])
         mAdapter.add(ListRow(header, listRowAdapter))
@@ -175,10 +175,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 item: Any?,
                 rowViewHolder: RowPresenter.ViewHolder,
                 row: Row) {
-            if (item is Movie) {
+            if (item is SlimSceneData) {
                 Log.d(TAG, "Item: " + item.toString())
                 val intent = Intent(activity!!, DetailsActivity::class.java)
-                intent.putExtra(resources.getString(R.string.movie), mSelectedMovie)
+                intent.putExtra(resources.getString(R.string.movie), sceneFromSlimSceneData(item))
 
                 val bundle =
                         ActivityOptionsCompat.makeSceneTransitionAnimation(
@@ -194,7 +194,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     companion object {
         private val TAG = "VideoDetailsFragment"
 
-        private val ACTION_WATCH_TRAILER = 1L
+        private val ACTION_PLAY_SCENE = 1L
         private val ACTION_RENT = 2L
         private val ACTION_BUY = 3L
 

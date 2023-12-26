@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import java.util.Collections
 import java.util.Timer
 import java.util.TimerTask
 
@@ -30,16 +29,33 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
+import com.apollographql.apollo3.ApolloClient
+import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo3.api.http.HttpRequest
+import com.apollographql.apollo3.api.http.HttpResponse
+import com.apollographql.apollo3.network.http.HttpInterceptor
+import com.apollographql.apollo3.network.http.HttpInterceptorChain
 
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
+import com.github.damontecres.stashapp.api.FindPerformersQuery
+import com.github.damontecres.stashapp.api.FindScenesQuery
+import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
+import kotlinx.coroutines.launch
 
 /**
  * Loads a grid of cards with movies to browse.
  */
 class MainFragment : BrowseSupportFragment() {
 
+    private lateinit var performerAdapter: ArrayObjectAdapter
+    private lateinit var sceneAdapter: ArrayObjectAdapter
     private val mHandler = Handler(Looper.myLooper()!!)
     private lateinit var mBackgroundManager: BackgroundManager
     private var mDefaultBackground: Drawable? = null
@@ -55,9 +71,57 @@ class MainFragment : BrowseSupportFragment() {
 
         setupUIElements()
 
-        loadRows()
-
         setupEventListeners()
+
+        this.sceneAdapter = ArrayObjectAdapter(ScenePresenter())
+        this.performerAdapter = ArrayObjectAdapter(PerformerPresenter())
+
+        val header = HeaderItem(0, "RECENTLY RELEASED SCENES")
+        val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
+        rowsAdapter.add(ListRow(header, sceneAdapter))
+        rowsAdapter.add(ListRow(HeaderItem(1, "RECENTLY ADDED PERFORMERS"), performerAdapter))
+        adapter = rowsAdapter
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val apolloClient = ApolloClient.Builder()
+                .serverUrl(StashCredentials.STASH_API_URL)
+                .addHttpInterceptor(AuthorizationInterceptor(StashCredentials.STASH_API_KEY))
+                .build()
+            val results = apolloClient.query(FindScenesQuery(
+                filter = Optional.present(FindFilterType(
+                    sort=Optional.present("date"),
+                    direction=Optional.present(SortDirectionEnum.DESC),
+                    per_page=Optional.present(25))))).execute()
+
+            Toast.makeText(this@MainFragment.context, "FindScenes completed", Toast.LENGTH_LONG).show()
+
+            val scenes = results.data?.findScenes?.scenes?.map {
+                it.slimSceneData
+            }
+            sceneAdapter.addAll(0, scenes)
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val apolloClient = ApolloClient.Builder()
+                .serverUrl(StashCredentials.STASH_API_URL)
+                .addHttpInterceptor(AuthorizationInterceptor(StashCredentials.STASH_API_KEY))
+                .build()
+            val results = apolloClient.query(
+                FindPerformersQuery(
+                filter = Optional.present(FindFilterType(
+                    sort=Optional.present("created_at"),
+                    direction=Optional.present(SortDirectionEnum.DESC),
+                    per_page=Optional.present(25))))
+            ).execute()
+
+            Toast.makeText(this@MainFragment.context, "FindPerformers completed", Toast.LENGTH_LONG).show()
+
+            val performers = results.data?.findPerformers?.performers?.map {
+                it.performerData
+            }
+            performerAdapter.addAll(0, performers)
+        }
+
     }
 
     override fun onDestroy() {
@@ -87,40 +151,10 @@ class MainFragment : BrowseSupportFragment() {
         searchAffordanceColor = ContextCompat.getColor(activity!!, R.color.search_opaque)
     }
 
-    private fun loadRows() {
-        val list = MovieList.list
-
-        val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-        val cardPresenter = CardPresenter()
-
-        for (i in 0 until NUM_ROWS) {
-            if (i != 0) {
-                Collections.shuffle(list)
-            }
-            val listRowAdapter = ArrayObjectAdapter(cardPresenter)
-            for (j in 0 until NUM_COLS) {
-                listRowAdapter.add(list[j % 5])
-            }
-            val header = HeaderItem(i.toLong(), MovieList.MOVIE_CATEGORY[i])
-            rowsAdapter.add(ListRow(header, listRowAdapter))
-        }
-
-        val gridHeader = HeaderItem(NUM_ROWS.toLong(), "PREFERENCES")
-
-        val mGridPresenter = GridItemPresenter()
-        val gridRowAdapter = ArrayObjectAdapter(mGridPresenter)
-        gridRowAdapter.add(resources.getString(R.string.grid_view))
-        gridRowAdapter.add(getString(R.string.error_fragment))
-        gridRowAdapter.add(resources.getString(R.string.personal_settings))
-        rowsAdapter.add(ListRow(gridHeader, gridRowAdapter))
-
-        adapter = rowsAdapter
-    }
-
     private fun setupEventListeners() {
         setOnSearchClickedListener {
             Toast.makeText(activity!!, "Implement your own in-app search", Toast.LENGTH_LONG)
-                    .show()
+                .show()
         }
 
         onItemViewClickedListener = ItemViewClickedListener()
@@ -129,22 +163,27 @@ class MainFragment : BrowseSupportFragment() {
 
     private inner class ItemViewClickedListener : OnItemViewClickedListener {
         override fun onItemClicked(
-                itemViewHolder: Presenter.ViewHolder,
-                item: Any,
-                rowViewHolder: RowPresenter.ViewHolder,
-                row: Row) {
+            itemViewHolder: Presenter.ViewHolder,
+            item: Any,
+            rowViewHolder: RowPresenter.ViewHolder,
+            row: Row
+        ) {
 
-            if (item is Movie) {
+            if (item is SlimSceneData) {
                 Log.d(TAG, "Item: " + item.toString())
                 val intent = Intent(activity!!, DetailsActivity::class.java)
-                intent.putExtra(DetailsActivity.MOVIE, item)
+                intent.putExtra(DetailsActivity.MOVIE, sceneFromSlimSceneData(item))
 
                 val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                        activity!!,
-                        (itemViewHolder.view as ImageCardView).mainImageView,
-                        DetailsActivity.SHARED_ELEMENT_NAME)
-                        .toBundle()
+                    activity!!,
+                    (itemViewHolder.view as ImageCardView).mainImageView,
+                    DetailsActivity.SHARED_ELEMENT_NAME
+                )
+                    .toBundle()
                 startActivity(intent, bundle)
+            } else if(item is PerformerData) {
+                // TODO
+                Toast.makeText(activity!!, "Performer selected: ${item.name}", Toast.LENGTH_LONG).show()
             } else if (item is String) {
                 if (item.contains(getString(R.string.error_fragment))) {
                     val intent = Intent(activity!!, BrowseErrorActivity::class.java)
@@ -157,12 +196,15 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private inner class ItemViewSelectedListener : OnItemViewSelectedListener {
-        override fun onItemSelected(itemViewHolder: Presenter.ViewHolder?, item: Any?,
-                                    rowViewHolder: RowPresenter.ViewHolder, row: Row) {
-            if (item is Movie) {
-                mBackgroundUri = item.backgroundImageUrl
-                startBackgroundTimer()
-            }
+        override fun onItemSelected(
+            itemViewHolder: Presenter.ViewHolder?, item: Any?,
+            rowViewHolder: RowPresenter.ViewHolder, row: Row
+        ) {
+            // TODO background
+//            if (item is SlimSceneData) {
+//                mBackgroundUri = item.backgroundImageUrl
+//                startBackgroundTimer()
+//            }
         }
     }
 
@@ -170,16 +212,18 @@ class MainFragment : BrowseSupportFragment() {
         val width = mMetrics.widthPixels
         val height = mMetrics.heightPixels
         Glide.with(activity!!)
-                .load(uri)
-                .centerCrop()
-                .error(mDefaultBackground)
-                .into<SimpleTarget<Drawable>>(
-                        object : SimpleTarget<Drawable>(width, height) {
-                            override fun onResourceReady(drawable: Drawable,
-                                                         transition: Transition<in Drawable>?) {
-                                mBackgroundManager.drawable = drawable
-                            }
-                        })
+            .load(uri)
+            .centerCrop()
+            .error(mDefaultBackground)
+            .into<SimpleTarget<Drawable>>(
+                object : SimpleTarget<Drawable>(width, height) {
+                    override fun onResourceReady(
+                        drawable: Drawable,
+                        transition: Transition<in Drawable>?
+                    ) {
+                        mBackgroundManager.drawable = drawable
+                    }
+                })
         mBackgroundTimer?.cancel()
     }
 
@@ -223,5 +267,18 @@ class MainFragment : BrowseSupportFragment() {
         private val GRID_ITEM_HEIGHT = 200
         private val NUM_ROWS = 6
         private val NUM_COLS = 15
+    }
+
+    class AuthorizationInterceptor(val apiKey: String) : HttpInterceptor {
+        override suspend fun intercept(
+            request: HttpRequest,
+            chain: HttpInterceptorChain
+        ): HttpResponse {
+            return chain.proceed(request.newBuilder().addHeader(StashCredentials.STASH_API_HEADER, apiKey).build())
+        }
+    }
+
+    private fun loadData() {
+
     }
 }

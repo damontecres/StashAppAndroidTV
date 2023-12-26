@@ -1,0 +1,127 @@
+type Fingerprint {
+  type: String!
+  value: String!
+}
+
+type Folder {
+  id: ID!
+  path: String!
+
+  parent_folder_id: ID
+  zip_file_id: ID
+
+  mod_time: Time!
+
+  created_at: Time!
+  updated_at: Time!
+}
+
+interface BaseFile {
+  id: ID!
+  path: String!
+  basename: String!
+
+  parent_folder_id: ID!
+  zip_file_id: ID
+
+  mod_time: Time!
+  size: Int64!
+
+  fingerprint(type: String!): String
+  fingerprints: [Fingerprint!]!
+
+  created_at: Time!
+  updated_at: Time!
+}
+
+type VideoFile implements BaseFile {
+  id: ID!
+  path: String!
+  basename: String!
+
+  parent_folder_id: ID!
+  zip_file_id: ID
+
+  mod_time: Time!
+  size: Int64!
+
+  fingerprint(type: String!): String
+  fingerprints: [Fingerprint!]!
+
+  format: String!
+  width: Int!
+  height: Int!
+  duration: Float!
+  video_codec: String!
+  audio_codec: String!
+  frame_rate: Float!
+  bit_rate: Int!
+
+  created_at: Time!
+  updated_at: Time!
+}
+
+type ImageFile implements BaseFile {
+  id: ID!
+  path: String!
+  basename: String!
+
+  parent_folder_id: ID!
+  zip_file_id: ID
+
+  mod_time: Time!
+  size: Int64!
+
+  fingerprint(type: String!): String
+  fingerprints: [Fingerprint!]!
+
+  width: Int!
+  height: Int!
+
+  created_at: Time!
+  updated_at: Time!
+}
+
+union VisualFile = VideoFile | ImageFile
+
+type GalleryFile implements BaseFile {
+  id: ID!
+  path: String!
+  basename: String!
+
+  parent_folder_id: ID!
+  zip_file_id: ID
+
+  mod_time: Time!
+  size: Int64!
+
+  fingerprint(type: String!): String
+  fingerprints: [Fingerprint!]!
+
+  created_at: Time!
+  updated_at: Time!
+}
+
+input MoveFilesInput {
+  ids: [ID!]!
+  "valid for single or multiple file ids"
+  destination_folder: String
+
+  "valid for single or multiple file ids"
+  destination_folder_id: ID
+
+  "valid only for single file id. If empty, existing basename is used"
+  destination_basename: String
+}
+
+input SetFingerprintsInput {
+  type: String!
+  "an null value will remove the fingerprint"
+  value: String
+}
+
+input FileSetFingerprintsInput {
+  id: ID!
+  "only supplied fingerprint types will be modified"
+  fingerprints: [SetFingerprintsInput!]!
+}

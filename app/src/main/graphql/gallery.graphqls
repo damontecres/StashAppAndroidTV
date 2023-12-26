@@ -1,0 +1,110 @@
+"Gallery type"
+type Gallery {
+  id: ID!
+  title: String
+  code: String
+  url: String @deprecated(reason: "Use urls")
+  urls: [String!]!
+  date: String
+  details: String
+  photographer: String
+  # rating expressed as 1-100
+  rating100: Int
+  organized: Boolean!
+  created_at: Time!
+  updated_at: Time!
+
+  files: [GalleryFile!]!
+  folder: Folder
+
+  chapters: [GalleryChapter!]!
+  scenes: [Scene!]!
+  studio: Studio
+  image_count: Int!
+  tags: [Tag!]!
+  performers: [Performer!]!
+
+  cover: Image
+}
+
+input GalleryCreateInput {
+  title: String!
+  code: String
+  url: String @deprecated(reason: "Use urls")
+  urls: [String!]
+  date: String
+  details: String
+  photographer: String
+  # rating expressed as 1-100
+  rating100: Int
+  organized: Boolean
+  scene_ids: [ID!]
+  studio_id: ID
+  tag_ids: [ID!]
+  performer_ids: [ID!]
+}
+
+input GalleryUpdateInput {
+  clientMutationId: String
+  id: ID!
+  title: String
+  code: String
+  url: String @deprecated(reason: "Use urls")
+  urls: [String!]
+  date: String
+  details: String
+  photographer: String
+  # rating expressed as 1-100
+  rating100: Int
+  organized: Boolean
+  scene_ids: [ID!]
+  studio_id: ID
+  tag_ids: [ID!]
+  performer_ids: [ID!]
+
+  primary_file_id: ID
+}
+
+input BulkGalleryUpdateInput {
+  clientMutationId: String
+  ids: [ID!]
+  code: String
+  url: String @deprecated(reason: "Use urls")
+  urls: BulkUpdateStrings
+  date: String
+  details: String
+  photographer: String
+  # rating expressed as 1-100
+  rating100: Int
+  organized: Boolean
+  scene_ids: BulkUpdateIds
+  studio_id: ID
+  tag_ids: BulkUpdateIds
+  performer_ids: BulkUpdateIds
+}
+
+input GalleryDestroyInput {
+  ids: [ID!]!
+  """
+  If true, then the zip file will be deleted if the gallery is zip-file-based.
+  If gallery is folder-based, then any files not associated with other
+  galleries will be deleted, along with the folder, if it is not empty.
+  """
+  delete_file: Boolean
+  delete_generated: Boolean
+}
+
+type FindGalleriesResultType {
+  count: Int!
+  galleries: [Gallery!]!
+}
+
+input GalleryAddInput {
+  gallery_id: ID!
+  image_ids: [ID!]!
+}
+
+input GalleryRemoveInput {
+  gallery_id: ID!
+  image_ids: [ID!]!
+}

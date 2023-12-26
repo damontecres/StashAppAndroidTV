@@ -1,0 +1,75 @@
+type Movie {
+  id: ID!
+  name: String!
+  aliases: String
+  "Duration in seconds"
+  duration: Int
+  date: String
+  # rating expressed as 1-100
+  rating100: Int
+  studio: Studio
+  director: String
+  synopsis: String
+  url: String
+  created_at: Time!
+  updated_at: Time!
+
+  front_image_path: String # Resolver
+  back_image_path: String # Resolver
+  scene_count: Int! # Resolver
+  scenes: [Scene!]!
+}
+
+input MovieCreateInput {
+  name: String!
+  aliases: String
+  "Duration in seconds"
+  duration: Int
+  date: String
+  # rating expressed as 1-100
+  rating100: Int
+  studio_id: ID
+  director: String
+  synopsis: String
+  url: String
+  "This should be a URL or a base64 encoded data URL"
+  front_image: String
+  "This should be a URL or a base64 encoded data URL"
+  back_image: String
+}
+
+input MovieUpdateInput {
+  id: ID!
+  name: String
+  aliases: String
+  duration: Int
+  date: String
+  # rating expressed as 1-100
+  rating100: Int
+  studio_id: ID
+  director: String
+  synopsis: String
+  url: String
+  "This should be a URL or a base64 encoded data URL"
+  front_image: String
+  "This should be a URL or a base64 encoded data URL"
+  back_image: String
+}
+
+input BulkMovieUpdateInput {
+  clientMutationId: String
+  ids: [ID!]
+  # rating expressed as 1-100
+  rating100: Int
+  studio_id: ID
+  director: String
+}
+
+input MovieDestroyInput {
+  id: ID!
+}
+
+type FindMoviesResultType {
+  count: Int!
+  movies: [Movie!]!
+}

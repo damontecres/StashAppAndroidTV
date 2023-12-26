@@ -1,0 +1,173 @@
+enum GenderEnum {
+  MALE
+  FEMALE
+  TRANSGENDER_MALE
+  TRANSGENDER_FEMALE
+  INTERSEX
+  NON_BINARY
+}
+
+enum CircumisedEnum {
+  CUT
+  UNCUT
+}
+
+type Performer {
+  id: ID!
+  name: String!
+  disambiguation: String
+  url: String
+  gender: GenderEnum
+  twitter: String
+  instagram: String
+  birthdate: String
+  ethnicity: String
+  country: String
+  eye_color: String
+  height_cm: Int
+  measurements: String
+  fake_tits: String
+  penis_length: Float
+  circumcised: CircumisedEnum
+  career_length: String
+  tattoos: String
+  piercings: String
+  alias_list: [String!]!
+  favorite: Boolean!
+  tags: [Tag!]!
+  ignore_auto_tag: Boolean!
+
+  image_path: String # Resolver
+  scene_count: Int! # Resolver
+  image_count: Int! # Resolver
+  gallery_count: Int! # Resolver
+  movie_count: Int! # Resolver
+  performer_count: Int! # Resolver
+  o_counter: Int # Resolver
+  scenes: [Scene!]!
+  stash_ids: [StashID!]!
+  # rating expressed as 1-100
+  rating100: Int
+  details: String
+  death_date: String
+  hair_color: String
+  weight: Int
+  created_at: Time!
+  updated_at: Time!
+  movies: [Movie!]!
+}
+
+input PerformerCreateInput {
+  name: String!
+  disambiguation: String
+  url: String
+  gender: GenderEnum
+  birthdate: String
+  ethnicity: String
+  country: String
+  eye_color: String
+  height_cm: Int
+  measurements: String
+  fake_tits: String
+  penis_length: Float
+  circumcised: CircumisedEnum
+  career_length: String
+  tattoos: String
+  piercings: String
+  alias_list: [String!]
+  twitter: String
+  instagram: String
+  favorite: Boolean
+  tag_ids: [ID!]
+  "This should be a URL or a base64 encoded data URL"
+  image: String
+  stash_ids: [StashIDInput!]
+  # rating expressed as 1-100
+  rating100: Int
+  details: String
+  death_date: String
+  hair_color: String
+  weight: Int
+  ignore_auto_tag: Boolean
+}
+
+input PerformerUpdateInput {
+  id: ID!
+  name: String
+  disambiguation: String
+  url: String
+  gender: GenderEnum
+  birthdate: String
+  ethnicity: String
+  country: String
+  eye_color: String
+  height_cm: Int
+  measurements: String
+  fake_tits: String
+  penis_length: Float
+  circumcised: CircumisedEnum
+  career_length: String
+  tattoos: String
+  piercings: String
+  alias_list: [String!]
+  twitter: String
+  instagram: String
+  favorite: Boolean
+  tag_ids: [ID!]
+  "This should be a URL or a base64 encoded data URL"
+  image: String
+  stash_ids: [StashIDInput!]
+  # rating expressed as 1-100
+  rating100: Int
+  details: String
+  death_date: String
+  hair_color: String
+  weight: Int
+  ignore_auto_tag: Boolean
+}
+
+input BulkUpdateStrings {
+  values: [String!]
+  mode: BulkUpdateIdMode!
+}
+
+input BulkPerformerUpdateInput {
+  clientMutationId: String
+  ids: [ID!]
+  disambiguation: String
+  url: String
+  gender: GenderEnum
+  birthdate: String
+  ethnicity: String
+  country: String
+  eye_color: String
+  height_cm: Int
+  measurements: String
+  fake_tits: String
+  penis_length: Float
+  circumcised: CircumisedEnum
+  career_length: String
+  tattoos: String
+  piercings: String
+  alias_list: BulkUpdateStrings
+  twitter: String
+  instagram: String
+  favorite: Boolean
+  tag_ids: BulkUpdateIds
+  # rating expressed as 1-100
+  rating100: Int
+  details: String
+  death_date: String
+  hair_color: String
+  weight: Int
+  ignore_auto_tag: Boolean
+}
+
+input PerformerDestroyInput {
+  id: ID!
+}
+
+type FindPerformersResultType {
+  count: Int!
+  performers: [Performer!]!
+}
