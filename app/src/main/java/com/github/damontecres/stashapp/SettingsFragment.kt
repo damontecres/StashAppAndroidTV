@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.api.type.SystemStatus
 
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
+
     override fun onPreferenceStartInitialScreen() {
         startPreferenceFragment(PreferencesFragment())
     }
@@ -58,18 +59,20 @@ class PreferencesFragment: LeanbackPreferenceFragmentCompat() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         findPreference<EditTextPreference>("stashUrl")?.setOnPreferenceChangeListener { pref, newValue ->
-//            val url = newValue.toString()
-//            val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext()).getString("stashApiKey", "")
-//            val apolloClient = ApolloClient.Builder()
-//                .serverUrl(url)
-//                .addHttpInterceptor(MainFragment.AuthorizationInterceptor(apiKey!!))
-//                .build()
-//
-//            apolloClient.query(SystemStatusQuery()).execute()
             true
         }
     }
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey)
+        val apiKayPref = getPreferenceManager().findPreference<EditTextPreference>("stashApiKey")
+        apiKayPref?.summaryProvider= object:Preference.SummaryProvider<EditTextPreference> {
+            override fun provideSummary(preference: EditTextPreference): CharSequence? {
+                return if(preference.text.isNullOrBlank()){
+                    "No API key configured"
+                }else{
+                    "API Key is configured"
+                }
+            }
+        }
     }
 }

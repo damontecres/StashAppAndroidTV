@@ -89,22 +89,29 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     override fun onStart() {
         super.onStart()
-        viewLifecycleOwner.lifecycleScope.launch {
-            val apolloClient = createApolloClient(requireContext())
-            if (apolloClient != null && mSelectedMovie != null) {
-                val results = apolloClient.query(
-                    FindScenesQuery(scene_ids = Optional.present(listOf(mSelectedMovie!!.id.toInt())))
-                ).execute()
+        if(performersAdapter.size()==0) {
+            // TODO: this is not efficient, but it does prevent duplicates during navigation
+            viewLifecycleOwner.lifecycleScope.launch {
+                val apolloClient = createApolloClient(requireContext())
+                if (apolloClient != null && mSelectedMovie != null) {
+                    val results = apolloClient.query(
+                        FindScenesQuery(scene_ids = Optional.present(listOf(mSelectedMovie!!.id.toInt())))
+                    ).execute()
 
-                val performerIds = results.data?.findScenes?.scenes?.map {
-                    it.slimSceneData.performers.map { it.id.toInt() }
-                }?.flatten()
-                val performers = apolloClient.query(FindPerformersQuery(performer_ids=Optional.present(performerIds))).execute()
-                val perfs = performers.data?.findPerformers?.performers?.map {
-                    it.performerData
-                }
-                if(perfs!=null) {
-                    performersAdapter.addAll(0, perfs)
+                    val performerIds = results.data?.findScenes?.scenes?.map {
+                        it.slimSceneData.performers.map { it.id.toInt() }
+                    }?.flatten()
+                    val performers = apolloClient.query(
+                        FindPerformersQuery(
+                            performer_ids = Optional.present(performerIds)
+                        )
+                    ).execute()
+                    val perfs = performers.data?.findPerformers?.performers?.map {
+                        it.performerData
+                    }
+                    if (perfs != null) {
+                        performersAdapter.addAll(0, perfs)
+                    }
                 }
             }
         }
