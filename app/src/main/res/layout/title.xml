@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <androidx.leanback.widget.SearchOrbView
+        android:id="@+id/search_orb"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+
+    />
+    <TextView
+        android:id="@+id/title_text"
+        android:layout_gravity="end"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stash"
+        />
+    <ImageButton
+        android:id="@+id/settings_button"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@android:drawable/ic_menu_preferences"
+        android:contentDescription="Preferences" />
+
+</LinearLayout>

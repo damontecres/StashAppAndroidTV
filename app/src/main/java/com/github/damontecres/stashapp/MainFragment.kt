@@ -30,10 +30,12 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.http.HttpRequest
 import com.apollographql.apollo3.api.http.HttpResponse
+import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.network.http.HttpInterceptor
 import com.apollographql.apollo3.network.http.HttpInterceptorChain
 
@@ -42,10 +44,12 @@ import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
+import com.github.damontecres.stashapp.api.SystemStatusQuery
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.api.type.SystemStatusEnum
 import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
 import kotlinx.coroutines.launch
 
@@ -63,6 +67,12 @@ class MainFragment : BrowseSupportFragment() {
     private var mBackgroundTimer: Timer? = null
     private var mBackgroundUri: String? = null
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        headersState = HEADERS_DISABLED
+    }
+
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         Log.i(TAG, "onCreate")
         super.onActivityCreated(savedInstanceState)
@@ -73,6 +83,11 @@ class MainFragment : BrowseSupportFragment() {
 
         setupEventListeners()
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+
         this.sceneAdapter = ArrayObjectAdapter(ScenePresenter())
         this.performerAdapter = ArrayObjectAdapter(PerformerPresenter())
 
@@ -82,44 +97,70 @@ class MainFragment : BrowseSupportFragment() {
         rowsAdapter.add(ListRow(HeaderItem(1, "RECENTLY ADDED PERFORMERS"), performerAdapter))
         adapter = rowsAdapter
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            val apolloClient = ApolloClient.Builder()
-                .serverUrl(StashCredentials.STASH_API_URL)
-                .addHttpInterceptor(AuthorizationInterceptor(StashCredentials.STASH_API_KEY))
-                .build()
-            val results = apolloClient.query(FindScenesQuery(
-                filter = Optional.present(FindFilterType(
-                    sort=Optional.present("date"),
-                    direction=Optional.present(SortDirectionEnum.DESC),
-                    per_page=Optional.present(25))))).execute()
+        var stashUrl = PreferenceManager.getDefaultSharedPreferences(requireContext()).getString("stashUrl", "")
+        val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext()).getString("stashApiKey", "")
 
-            Toast.makeText(this@MainFragment.context, "FindScenes completed", Toast.LENGTH_LONG).show()
-
-            val scenes = results.data?.findScenes?.scenes?.map {
-                it.slimSceneData
+        if(stashUrl!!.isNotBlank()) {
+            if(!stashUrl.endsWith("/graphql")){
+                stashUrl+="/graphql"
             }
-            sceneAdapter.addAll(0, scenes)
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
             val apolloClient = ApolloClient.Builder()
-                .serverUrl(StashCredentials.STASH_API_URL)
-                .addHttpInterceptor(AuthorizationInterceptor(StashCredentials.STASH_API_KEY))
+                .serverUrl(stashUrl)
+                .addHttpInterceptor(AuthorizationInterceptor(apiKey))
                 .build()
-            val results = apolloClient.query(
-                FindPerformersQuery(
-                filter = Optional.present(FindFilterType(
-                    sort=Optional.present("created_at"),
-                    direction=Optional.present(SortDirectionEnum.DESC),
-                    per_page=Optional.present(25))))
-            ).execute()
 
-            Toast.makeText(this@MainFragment.context, "FindPerformers completed", Toast.LENGTH_LONG).show()
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    apolloClient.query(SystemStatusQuery()).execute()
 
-            val performers = results.data?.findPerformers?.performers?.map {
-                it.performerData
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        val results = apolloClient.query(
+                            FindScenesQuery(
+                                filter = Optional.present(
+                                    FindFilterType(
+                                        sort = Optional.present("date"),
+                                        direction = Optional.present(SortDirectionEnum.DESC),
+                                        per_page = Optional.present(25)
+                                    )
+                                )
+                            )
+                        ).execute()
+
+//                    Toast.makeText(this@MainFragment.context, "FindScenes completed", Toast.LENGTH_LONG).show()
+
+                        val scenes = results.data?.findScenes?.scenes?.map {
+                            it.slimSceneData
+                        }
+                        sceneAdapter.addAll(0, scenes)
+                    }
+
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        val results = apolloClient.query(
+                            FindPerformersQuery(
+                                filter = Optional.present(
+                                    FindFilterType(
+                                        sort = Optional.present("created_at"),
+                                        direction = Optional.present(SortDirectionEnum.DESC),
+                                        per_page = Optional.present(25)
+                                    )
+                                )
+                            )
+                        ).execute()
+
+//                    Toast.makeText(this@MainFragment.context, "FindPerformers completed", Toast.LENGTH_LONG).show()
+
+                        val performers = results.data?.findPerformers?.performers?.map {
+                            it.performerData
+                        }
+                        performerAdapter.addAll(0, performers)
+                    }
+
+                } catch (exception: ApolloException) {
+                    Toast.makeText(context, exception.toString(), Toast.LENGTH_LONG).show()
+                }
             }
-            performerAdapter.addAll(0, performers)
+        } else {
+            Toast.makeText(context, "Stash URL not set!", Toast.LENGTH_LONG).show()
         }
 
     }
@@ -142,7 +183,6 @@ class MainFragment : BrowseSupportFragment() {
     private fun setupUIElements() {
         title = getString(R.string.browse_title)
         // over title
-        headersState = BrowseSupportFragment.HEADERS_ENABLED
         isHeadersTransitionOnBackEnabled = true
 
         // set fastLane (or headers) background color
@@ -269,12 +309,17 @@ class MainFragment : BrowseSupportFragment() {
         private val NUM_COLS = 15
     }
 
-    class AuthorizationInterceptor(val apiKey: String) : HttpInterceptor {
+    class AuthorizationInterceptor(val apiKey: String?) : HttpInterceptor {
         override suspend fun intercept(
             request: HttpRequest,
             chain: HttpInterceptorChain
         ): HttpResponse {
-            return chain.proceed(request.newBuilder().addHeader(StashCredentials.STASH_API_HEADER, apiKey).build())
+            return if(apiKey.isNullOrBlank()){
+                chain.proceed(request)
+            }else{
+                chain.proceed(request.newBuilder().addHeader(Constants.STASH_API_HEADER, apiKey).build())
+            }
+
         }
     }
 

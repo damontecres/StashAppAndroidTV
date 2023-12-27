@@ -1,4 +1,7 @@
 <resources>
 
-    <style name="Theme.StashAppAndroidTV" parent="@style/Theme.Leanback" />
+    <style name="Theme.StashAppAndroidTV" parent="@style/Theme.Leanback">
+        <item name="browseTitleViewLayout">@layout/main_title_view</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Leanback</item>
+    </style>
 </resources>

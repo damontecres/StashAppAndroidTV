@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
+import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
@@ -19,12 +20,13 @@ import kotlin.properties.Delegates
  * It contains an ImageCardView.
  */
 class ScenePresenter : Presenter() {
+    private var vParent: ViewGroup by Delegates.notNull()
     private var mDefaultCardImage: Drawable? = null
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
     private var sDefaultBackgroundColor: Int by Delegates.notNull()
 
     override fun onCreateViewHolder(parent: ViewGroup): Presenter.ViewHolder {
-        Log.d(TAG, "onCreateViewHolder")
+        vParent=parent
 
         sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
         sSelectedBackgroundColor = ContextCompat.getColor(parent.context, R.color.selected_background)
@@ -47,17 +49,12 @@ class ScenePresenter : Presenter() {
         val scene = sceneFromSlimSceneData(item as SlimSceneData)
         val cardView = viewHolder.view as ImageCardView
 
-        Log.d(TAG, "onBindViewHolder")
-        if (scene.screenshotUrl != null) {
+        if (!scene.screenshotUrl.isNullOrBlank()) {
             cardView.titleText = scene.title
             cardView.contentText = scene.details
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val url = GlideUrl(
-                scene.screenshotUrl,
-                LazyHeaders.Builder()
-                    .addHeader(StashCredentials.STASH_API_HEADER, StashCredentials.STASH_API_KEY)
-                    .build()
-            )
+            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context).getString("stashApiKey", "")
+            val url = createGlideUrl(scene.screenshotUrl!!, apiKey)
             Glide.with(viewHolder.view.context)
                     .load(url)
                     .centerCrop()

@@ -26,6 +26,7 @@ import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
 import android.util.Log
 import android.widget.Toast
+import androidx.preference.PreferenceManager
 
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.model.GlideUrl
@@ -73,24 +74,29 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private fun initializeBackground(movie: Scene?) {
         mDetailsBackground.enableParallax()
-        val url = GlideUrl(
-            movie?.screenshotUrl,
-            LazyHeaders.Builder()
-                .addHeader(StashCredentials.STASH_API_HEADER, StashCredentials.STASH_API_KEY)
-                .build()
-        )
-        Glide.with(activity!!)
+
+        val screenshotUrl = movie?.screenshotUrl
+
+        if(!screenshotUrl.isNullOrBlank()) {
+            val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getString("stashApiKey", "")
+            val url = createGlideUrl(screenshotUrl, apiKey)
+
+            Glide.with(requireActivity())
                 .asBitmap()
                 .centerCrop()
                 .error(R.drawable.default_background)
                 .load(url)
                 .into<SimpleTarget<Bitmap>>(object : SimpleTarget<Bitmap>() {
-                    override fun onResourceReady(bitmap: Bitmap,
-                                                 transition: Transition<in Bitmap>?) {
+                    override fun onResourceReady(
+                        bitmap: Bitmap,
+                        transition: Transition<in Bitmap>?
+                    ) {
                         mDetailsBackground.coverBitmap = bitmap
                         mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
                     }
                 })
+        }
     }
 
     private fun setupDetailsOverviewRow() {
@@ -99,24 +105,27 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         row.imageDrawable = ContextCompat.getDrawable(activity!!, R.drawable.default_background)
         val width = convertDpToPixel(activity!!, DETAIL_THUMB_WIDTH)
         val height = convertDpToPixel(activity!!, DETAIL_THUMB_HEIGHT)
-        val url = GlideUrl(
-            mSelectedMovie?.screenshotUrl,
-            LazyHeaders.Builder()
-                .addHeader(StashCredentials.STASH_API_HEADER, StashCredentials.STASH_API_KEY)
-                .build()
-        )
-        Glide.with(activity!!)
+
+        val screenshotUrl = mSelectedMovie?.screenshotUrl
+        if(!screenshotUrl.isNullOrBlank()) {
+            val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getString("stashApiKey", "")
+            val url = createGlideUrl(screenshotUrl, apiKey)
+            Glide.with(activity!!)
                 .load(url)
                 .centerCrop()
                 .error(R.drawable.default_background)
                 .into<SimpleTarget<Drawable>>(object : SimpleTarget<Drawable>(width, height) {
-                    override fun onResourceReady(drawable: Drawable,
-                                                 transition: Transition<in Drawable>?) {
+                    override fun onResourceReady(
+                        drawable: Drawable,
+                        transition: Transition<in Drawable>?
+                    ) {
                         Log.d(TAG, "details overview card image url ready: " + drawable)
                         row.imageDrawable = drawable
                         mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
                     }
                 })
+        }
 
         val actionAdapter = ArrayObjectAdapter()
 
