@@ -43,6 +43,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.data.performerFromPerformerData
 import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
 import kotlinx.coroutines.launch
 
@@ -117,7 +118,9 @@ class MainFragment : BrowseSupportFragment() {
                             val scenes = results.data?.findScenes?.scenes?.map {
                                 it.slimSceneData
                             }
-                            sceneAdapter.addAll(0, scenes)
+                            if (scenes != null) {
+                                sceneAdapter.addAll(0, scenes)
+                            }
                         }
 
                         viewLifecycleOwner.lifecycleScope.launch {
@@ -138,7 +141,9 @@ class MainFragment : BrowseSupportFragment() {
                             val performers = results.data?.findPerformers?.performers?.map {
                                 it.performerData
                             }
-                            performerAdapter.addAll(0, performers)
+                            if (performers != null) {
+                                performerAdapter.addAll(0, performers)
+                            }
                         }
 
                     } catch (exception: ApolloException) {
@@ -183,42 +188,8 @@ class MainFragment : BrowseSupportFragment() {
                 .show()
         }
 
-        onItemViewClickedListener = ItemViewClickedListener()
+        onItemViewClickedListener = StashItemViewClickListener(requireActivity())
         onItemViewSelectedListener = ItemViewSelectedListener()
-    }
-
-    private inner class ItemViewClickedListener : OnItemViewClickedListener {
-        override fun onItemClicked(
-            itemViewHolder: Presenter.ViewHolder,
-            item: Any,
-            rowViewHolder: RowPresenter.ViewHolder,
-            row: Row
-        ) {
-
-            if (item is SlimSceneData) {
-                Log.d(TAG, "Item: " + item.toString())
-                val intent = Intent(activity!!, DetailsActivity::class.java)
-                intent.putExtra(DetailsActivity.MOVIE, sceneFromSlimSceneData(item))
-
-                val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                    activity!!,
-                    (itemViewHolder.view as ImageCardView).mainImageView,
-                    DetailsActivity.SHARED_ELEMENT_NAME
-                )
-                    .toBundle()
-                startActivity(intent, bundle)
-            } else if(item is PerformerData) {
-                // TODO
-                Toast.makeText(activity!!, "Performer selected: ${item.name}", Toast.LENGTH_LONG).show()
-            } else if (item is String) {
-                if (item.contains(getString(R.string.error_fragment))) {
-                    val intent = Intent(activity!!, BrowseErrorActivity::class.java)
-                    startActivity(intent)
-                } else {
-                    Toast.makeText(activity!!, item, Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
     }
 
     private inner class ItemViewSelectedListener : OnItemViewSelectedListener {

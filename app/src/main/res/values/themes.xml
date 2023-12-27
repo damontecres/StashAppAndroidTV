@@ -4,6 +4,7 @@
         <item name="browseTitleViewLayout">@layout/main_title_view</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Leanback</item>
     </style>
+
     <style name="NoTitleTheme" parent="@style/Theme.Leanback">
         <item name="browseRowsMarginTop">5dp</item>
     </style>

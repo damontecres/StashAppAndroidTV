@@ -42,10 +42,10 @@ class ScenePresenter : Presenter() {
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true
         updateCardBackgroundColor(cardView, false)
-        return Presenter.ViewHolder(cardView)
+        return ViewHolder(cardView)
     }
 
-    override fun onBindViewHolder(viewHolder: Presenter.ViewHolder, item: Any) {
+    override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
         val scene = sceneFromSlimSceneData(item as SlimSceneData)
         val cardView = viewHolder.view as ImageCardView
 
@@ -59,7 +59,7 @@ class ScenePresenter : Presenter() {
                     .load(url)
                     .centerCrop()
                     .error(mDefaultCardImage)
-                    .into(cardView.mainImageView)
+                    .into(cardView.mainImageView!!)
         }
     }
 

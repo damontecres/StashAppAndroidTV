@@ -41,8 +41,12 @@
         <activity
             android:name=".BrowseErrorActivity"
             android:exported="false" />
-        <activity android:name=".SettingsActivity"
+        <activity
+            android:name=".SettingsActivity"
             android:exported="false" />
+        <activity android:name=".PerformerActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme"/>
     </application>
 
 </manifest>

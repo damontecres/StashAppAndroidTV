@@ -77,10 +77,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             setupRelatedMovieListRow()
             adapter = mAdapter
             initializeBackground(mSelectedMovie)
-            onItemViewClickedListener = ItemViewClickedListener()
-
-
-
+            onItemViewClickedListener = StashItemViewClickListener(requireActivity())
         } else {
             val intent = Intent(activity!!, MainActivity::class.java)
             startActivity(intent)
@@ -146,7 +143,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private fun setupDetailsOverviewRow() {
         Log.d(TAG, "doInBackground: " + mSelectedMovie?.toString())
-        val row = DetailsOverviewRow(mSelectedMovie)
+        val row = DetailsOverviewRow(mSelectedMovie!!)
         row.imageDrawable = ContextCompat.getDrawable(activity!!, R.drawable.default_background)
         val width = convertDpToPixel(activity!!, DETAIL_THUMB_WIDTH)
         val height = convertDpToPixel(activity!!, DETAIL_THUMB_HEIGHT)
@@ -221,28 +218,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private fun convertDpToPixel(context: Context, dp: Int): Int {
         val density = context.applicationContext.resources.displayMetrics.density
         return Math.round(dp.toFloat() * density)
-    }
-
-    private inner class ItemViewClickedListener : OnItemViewClickedListener {
-        override fun onItemClicked(
-                itemViewHolder: Presenter.ViewHolder?,
-                item: Any?,
-                rowViewHolder: RowPresenter.ViewHolder,
-                row: Row) {
-            if (item is SlimSceneData) {
-                Log.d(TAG, "Item: " + item.toString())
-                val intent = Intent(activity!!, DetailsActivity::class.java)
-                intent.putExtra(resources.getString(R.string.movie), sceneFromSlimSceneData(item))
-
-                val bundle =
-                        ActivityOptionsCompat.makeSceneTransitionAnimation(
-                                activity!!,
-                                (itemViewHolder?.view as ImageCardView).mainImageView,
-                                DetailsActivity.SHARED_ELEMENT_NAME)
-                                .toBundle()
-                startActivity(intent, bundle)
-            }
-        }
     }
 
     companion object {
