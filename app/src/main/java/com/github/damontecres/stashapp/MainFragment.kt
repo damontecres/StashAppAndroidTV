@@ -51,8 +51,8 @@ import kotlinx.coroutines.launch
  */
 class MainFragment : BrowseSupportFragment() {
 
-    private lateinit var performerAdapter: ArrayObjectAdapter
-    private lateinit var sceneAdapter: ArrayObjectAdapter
+    private var performerAdapter: ArrayObjectAdapter =ArrayObjectAdapter(PerformerPresenter())
+    private var sceneAdapter: ArrayObjectAdapter= ArrayObjectAdapter(ScenePresenter())
     private val mHandler = Handler(Looper.myLooper()!!)
     private lateinit var mBackgroundManager: BackgroundManager
     private var mDefaultBackground: Drawable? = null
@@ -76,78 +76,79 @@ class MainFragment : BrowseSupportFragment() {
 
         setupEventListeners()
 
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        this.sceneAdapter = ArrayObjectAdapter(ScenePresenter())
-        this.performerAdapter = ArrayObjectAdapter(PerformerPresenter())
-
         val header = HeaderItem(0, "RECENTLY RELEASED SCENES")
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
         rowsAdapter.add(ListRow(header, sceneAdapter))
         rowsAdapter.add(ListRow(HeaderItem(1, "RECENTLY ADDED PERFORMERS"), performerAdapter))
         adapter = rowsAdapter
 
+    }
 
-        val apolloClient = createApolloClient(requireContext())
+    override fun onResume() {
+        super.onResume()
 
-        if(apolloClient!=null) {
-            viewLifecycleOwner.lifecycleScope.launch {
-                try {
-                    apolloClient.query(SystemStatusQuery()).execute()
+        // Only query if there are no scenes
+        if(sceneAdapter.size()==0) {
+            val apolloClient = createApolloClient(requireContext())
+            if (apolloClient != null) {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    try {
+                        apolloClient.query(SystemStatusQuery()).execute()
 
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        val results = apolloClient.query(
-                            FindScenesQuery(
-                                filter = Optional.present(
-                                    FindFilterType(
-                                        sort = Optional.present("date"),
-                                        direction = Optional.present(SortDirectionEnum.DESC),
-                                        per_page = Optional.present(25)
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            val results = apolloClient.query(
+                                FindScenesQuery(
+                                    filter = Optional.present(
+                                        FindFilterType(
+                                            sort = Optional.present("date"),
+                                            direction = Optional.present(SortDirectionEnum.DESC),
+                                            per_page = Optional.present(25)
+                                        )
                                     )
                                 )
-                            )
-                        ).execute()
+                            ).execute()
 
-//                    Toast.makeText(this@MainFragment.context, "FindScenes completed", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                this@MainFragment.context,
+                                "FindScenes completed",
+                                Toast.LENGTH_SHORT
+                            ).show()
 
-                        val scenes = results.data?.findScenes?.scenes?.map {
-                            it.slimSceneData
+                            val scenes = results.data?.findScenes?.scenes?.map {
+                                it.slimSceneData
+                            }
+                            sceneAdapter.addAll(0, scenes)
                         }
-                        sceneAdapter.addAll(0, scenes)
-                    }
 
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        val results = apolloClient.query(
-                            FindPerformersQuery(
-                                filter = Optional.present(
-                                    FindFilterType(
-                                        sort = Optional.present("created_at"),
-                                        direction = Optional.present(SortDirectionEnum.DESC),
-                                        per_page = Optional.present(25)
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            val results = apolloClient.query(
+                                FindPerformersQuery(
+                                    filter = Optional.present(
+                                        FindFilterType(
+                                            sort = Optional.present("created_at"),
+                                            direction = Optional.present(SortDirectionEnum.DESC),
+                                            per_page = Optional.present(25)
+                                        )
                                     )
                                 )
-                            )
-                        ).execute()
+                            ).execute()
 
 //                    Toast.makeText(this@MainFragment.context, "FindPerformers completed", Toast.LENGTH_LONG).show()
 
-                        val performers = results.data?.findPerformers?.performers?.map {
-                            it.performerData
+                            val performers = results.data?.findPerformers?.performers?.map {
+                                it.performerData
+                            }
+                            performerAdapter.addAll(0, performers)
                         }
-                        performerAdapter.addAll(0, performers)
+
+                    } catch (exception: ApolloException) {
+                        Toast.makeText(context, exception.toString(), Toast.LENGTH_LONG).show()
                     }
-
-                } catch (exception: ApolloException) {
-                    Toast.makeText(context, exception.toString(), Toast.LENGTH_LONG).show()
                 }
+            } else {
+                Toast.makeText(context, "Stash URL not set!", Toast.LENGTH_LONG).show()
             }
-        } else {
-            Toast.makeText(context, "Stash URL not set!", Toast.LENGTH_LONG).show()
         }
-
     }
 
     override fun onDestroy() {
