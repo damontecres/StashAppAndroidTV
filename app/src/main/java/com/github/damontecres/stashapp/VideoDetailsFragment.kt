@@ -25,17 +25,27 @@ import androidx.leanback.widget.RowPresenter
 import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.ContextCompat
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import com.apollographql.apollo3.api.Optional
 
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
+import com.github.damontecres.stashapp.api.FindPerformersQuery
+import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
+import kotlinx.coroutines.launch
 
 /**
  * A wrapper fragment for leanback details screens.
@@ -44,6 +54,8 @@ import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
 class VideoDetailsFragment : DetailsSupportFragment() {
 
     private var mSelectedMovie: Scene? = null
+
+    private var performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
     private lateinit var mPresenterSelector: ClassPresenterSelector
@@ -66,9 +78,35 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             adapter = mAdapter
             initializeBackground(mSelectedMovie)
             onItemViewClickedListener = ItemViewClickedListener()
+
+
+
         } else {
             val intent = Intent(activity!!, MainActivity::class.java)
             startActivity(intent)
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        viewLifecycleOwner.lifecycleScope.launch {
+            val apolloClient = createApolloClient(requireContext())
+            if (apolloClient != null && mSelectedMovie != null) {
+                val results = apolloClient.query(
+                    FindScenesQuery(scene_ids = Optional.present(listOf(mSelectedMovie!!.id.toInt())))
+                ).execute()
+
+                val performerIds = results.data?.findScenes?.scenes?.map {
+                    it.slimSceneData.performers.map { it.id.toInt() }
+                }?.flatten()
+                val performers = apolloClient.query(FindPerformersQuery(performer_ids=Optional.present(performerIds))).execute()
+                val perfs = performers.data?.findPerformers?.performers?.map {
+                    it.performerData
+                }
+                if(perfs!=null) {
+                    performersAdapter.addAll(0, perfs)
+                }
+            }
         }
     }
 
@@ -168,8 +206,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val listRowAdapter = ArrayObjectAdapter(ScenePresenter())
         // TODO related scenes
 
-        val header = HeaderItem(0, subcategories[0])
-        mAdapter.add(ListRow(header, listRowAdapter))
+        mAdapter.add(ListRow(HeaderItem(0, "Performers"), performersAdapter))
+        mAdapter.add(ListRow(HeaderItem(1, subcategories[0]), listRowAdapter))
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 

@@ -30,14 +30,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.api.http.HttpRequest
-import com.apollographql.apollo3.api.http.HttpResponse
 import com.apollographql.apollo3.exception.ApolloException
-import com.apollographql.apollo3.network.http.HttpInterceptor
-import com.apollographql.apollo3.network.http.HttpInterceptorChain
 
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
@@ -49,7 +43,6 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
-import com.github.damontecres.stashapp.api.type.SystemStatusEnum
 import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
 import kotlinx.coroutines.launch
 
@@ -97,18 +90,10 @@ class MainFragment : BrowseSupportFragment() {
         rowsAdapter.add(ListRow(HeaderItem(1, "RECENTLY ADDED PERFORMERS"), performerAdapter))
         adapter = rowsAdapter
 
-        var stashUrl = PreferenceManager.getDefaultSharedPreferences(requireContext()).getString("stashUrl", "")
-        val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext()).getString("stashApiKey", "")
 
-        if(stashUrl!!.isNotBlank()) {
-            if(!stashUrl.endsWith("/graphql")){
-                stashUrl+="/graphql"
-            }
-            val apolloClient = ApolloClient.Builder()
-                .serverUrl(stashUrl)
-                .addHttpInterceptor(AuthorizationInterceptor(apiKey))
-                .build()
+        val apolloClient = createApolloClient(requireContext())
 
+        if(apolloClient!=null) {
             viewLifecycleOwner.lifecycleScope.launch {
                 try {
                     apolloClient.query(SystemStatusQuery()).execute()
@@ -307,20 +292,6 @@ class MainFragment : BrowseSupportFragment() {
         private val GRID_ITEM_HEIGHT = 200
         private val NUM_ROWS = 6
         private val NUM_COLS = 15
-    }
-
-    class AuthorizationInterceptor(val apiKey: String?) : HttpInterceptor {
-        override suspend fun intercept(
-            request: HttpRequest,
-            chain: HttpInterceptorChain
-        ): HttpResponse {
-            return if(apiKey.isNullOrBlank()){
-                chain.proceed(request)
-            }else{
-                chain.proceed(request.newBuilder().addHeader(Constants.STASH_API_HEADER, apiKey).build())
-            }
-
-        }
     }
 
     private fun loadData() {
