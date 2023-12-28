@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.presenters
 
 import android.graphics.drawable.Drawable
 import android.util.Log
@@ -9,11 +9,9 @@ import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.model.GlideUrl
-import com.bumptech.glide.load.model.LazyHeaders
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
-import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
+import com.github.damontecres.stashapp.createGlideUrl
 import kotlin.properties.Delegates
 
 class StudioPresenter : Presenter() {
@@ -26,7 +24,9 @@ class StudioPresenter : Presenter() {
         vParent=parent
 
         sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
-        sSelectedBackgroundColor = ContextCompat.getColor(parent.context, R.color.selected_background)
+        sSelectedBackgroundColor = ContextCompat.getColor(parent.context,
+            R.color.selected_background
+        )
         mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.movie)
 
         val cardView = object : ImageCardView(parent.context) {

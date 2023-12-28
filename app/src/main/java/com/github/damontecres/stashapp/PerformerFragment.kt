@@ -2,30 +2,19 @@ package com.github.damontecres.stashapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.GridLayout
-import android.widget.GridView
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.leanback.widget.ArrayObjectAdapter
-import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowView
-import androidx.leanback.widget.VerticalGridView
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.api.FindPerformersQuery
-import com.github.damontecres.stashapp.api.FindScenesQuery
-import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.MultiCriterionInput
-import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.Performer
+import com.github.damontecres.stashapp.presenters.ScenePresenter
 import kotlinx.coroutines.launch
 
 class PerformerFragment : Fragment(R.layout.performer_view) {

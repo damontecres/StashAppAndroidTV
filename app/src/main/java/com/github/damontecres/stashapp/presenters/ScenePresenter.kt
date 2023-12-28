@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.presenters
 
 import android.graphics.drawable.Drawable
 import android.util.Log
@@ -8,10 +8,9 @@ import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.model.GlideUrl
-import com.bumptech.glide.load.model.LazyHeaders
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
+import com.github.damontecres.stashapp.createGlideUrl
 import kotlin.properties.Delegates
 
 
@@ -19,7 +18,7 @@ import kotlin.properties.Delegates
  * A CardPresenter is used to generate Views and bind Objects to them on demand.
  * It contains an ImageCardView.
  */
-class TagPresenter : Presenter() {
+class ScenePresenter : Presenter() {
     private var vParent: ViewGroup by Delegates.notNull()
     private var mDefaultCardImage: Drawable? = null
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
@@ -29,7 +28,9 @@ class TagPresenter : Presenter() {
         vParent=parent
 
         sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
-        sSelectedBackgroundColor = ContextCompat.getColor(parent.context, R.color.selected_background)
+        sSelectedBackgroundColor = ContextCompat.getColor(parent.context,
+            R.color.selected_background
+        )
         mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.movie)
 
         val cardView = object : ImageCardView(parent.context) {
@@ -46,14 +47,24 @@ class TagPresenter : Presenter() {
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
-        val tag = item as SlimSceneData.Tag
+//        val scene = sceneFromSlimSceneData(item as SlimSceneData)
+        val scene = item as SlimSceneData
         val cardView = viewHolder.view as ImageCardView
+        Log.d(TAG, "onBindViewHolder: ${scene.title}")
 
-        cardView.titleText = tag.name
-        cardView.contentText=null
-        cardView.setMainImageDimensions(CARD_WIDTH,CARD_HEIGHT)
+        cardView.titleText = scene.title
+        cardView.contentText = """${scene.date} (${scene.performers.size}P, ${scene.tags.size}T)"""
 
-        // TODO: fetch image
+        if (!scene.paths.screenshot.isNullOrBlank()) {
+            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
+            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context).getString("stashApiKey", "")
+            val url = createGlideUrl(scene.paths.screenshot, apiKey)
+            Glide.with(viewHolder.view.context)
+                    .load(url)
+                    .centerCrop()
+                    .error(mDefaultCardImage)
+                    .into(cardView.mainImageView!!)
+        }
     }
 
     override fun onUnbindViewHolder(viewHolder: Presenter.ViewHolder) {
@@ -75,7 +86,7 @@ class TagPresenter : Presenter() {
     companion object {
         private val TAG = "CardPresenter"
 
-        private val CARD_WIDTH = 313
-        private val CARD_HEIGHT = 176
+        private val CARD_WIDTH = 351
+        private val CARD_HEIGHT = 198
     }
 }

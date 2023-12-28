@@ -1,13 +1,9 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
-import android.view.View
 import androidx.fragment.app.FragmentActivity
-import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
-import androidx.leanback.widget.VerticalGridPresenter
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+import com.github.damontecres.stashapp.presenters.ScenePresenter
 
 
 class TagActivity : FragmentActivity() {

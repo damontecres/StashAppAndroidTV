@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.presenters
 
 import android.graphics.drawable.Drawable
 import android.util.Log
@@ -8,11 +8,10 @@ import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.model.GlideUrl
-import com.bumptech.glide.load.model.LazyHeaders
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.createGlideUrl
 import kotlin.properties.Delegates
-
 
 /**
  * A CardPresenter is used to generate Views and bind Objects to them on demand.
@@ -24,11 +23,12 @@ class PerformerPresenter : Presenter() {
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
     private var sDefaultBackgroundColor: Int by Delegates.notNull()
 
-    override fun onCreateViewHolder(parent: ViewGroup): Presenter.ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         Log.d(TAG, "onCreateViewHolder")
         vParent=parent
         sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
-        sSelectedBackgroundColor = ContextCompat.getColor(parent.context, R.color.selected_background)
+        sSelectedBackgroundColor =
+            ContextCompat.getColor(parent.context, R.color.selected_background)
         mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.movie)
 
         val cardView = object : ImageCardView(parent.context) {
@@ -41,7 +41,7 @@ class PerformerPresenter : Presenter() {
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true
         updateCardBackgroundColor(cardView, false)
-        return Presenter.ViewHolder(cardView)
+        return ViewHolder(cardView)
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
@@ -53,7 +53,8 @@ class PerformerPresenter : Presenter() {
             cardView.titleText = performer.name
 //            cardView.contentText = movie.studio
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context).getString("stashApiKey", "")
+            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context)
+                .getString("stashApiKey", "")
             val url = createGlideUrl(performer.image_path, apiKey)
             Glide.with(viewHolder.view.context)
                     .load(url)
@@ -63,7 +64,7 @@ class PerformerPresenter : Presenter() {
         }
     }
 
-    override fun onUnbindViewHolder(viewHolder: Presenter.ViewHolder) {
+    override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         Log.d(TAG, "onUnbindViewHolder")
         val cardView = viewHolder.view as ImageCardView
         // Remove references to images so that the garbage collector can free up memory

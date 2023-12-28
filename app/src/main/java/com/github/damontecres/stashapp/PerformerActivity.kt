@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -11,7 +10,7 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.Performer
-import kotlinx.coroutines.launch
+import com.github.damontecres.stashapp.presenters.ScenePresenter
 
 class PerformerActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,7 +19,7 @@ class PerformerActivity : FragmentActivity() {
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                 .replace(R.id.performer_fragment, PerformerFragment())
-                .replace(R.id.performer_list_fragment, StashGridFragment(ScenePresenter()){fragment, adapter ->
+                .replace(R.id.performer_list_fragment, StashGridFragment(ScenePresenter()){ fragment, adapter ->
                     val apolloClient = createApolloClient(fragment.requireContext())
                     val performer = fragment.requireActivity().intent.getParcelableExtra<Performer>("performer")
                     if (apolloClient != null && performer!=null) {
