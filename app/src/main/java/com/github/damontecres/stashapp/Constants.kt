@@ -93,3 +93,16 @@ suspend fun fetchScenesByTag(context: Context, tagId:Int): List<SlimSceneData>{
     }
     return listOf()
 }
+
+suspend fun fetchScenesByStudio(context: Context, studioId:Int):List<SlimSceneData>{
+    val apolloClient = createApolloClient(context)
+    if (apolloClient != null) {
+        val results = apolloClient.query(
+            FindScenesQuery(scene_filter = Optional.present(SceneFilterType(studios=Optional.present(
+                HierarchicalMultiCriterionInput(value= Optional.present(listOf(studioId.toString())), modifier = CriterionModifier.INCLUDES_ALL)
+            ))))
+        ).execute()
+        return results.data?.findScenes?.scenes?.map { it.slimSceneData }.orEmpty()
+    }
+    return listOf()
+}

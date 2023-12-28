@@ -48,8 +48,9 @@
             android:exported="false"
             android:theme="@style/NoTitleTheme"/>
         <activity android:name=".TagActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme"/>
+            android:exported="false"/>
+        <activity android:name=".StudioActivity"
+            android:exported="false"/>
     </application>
 
 </manifest>
