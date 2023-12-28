@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp
 import android.graphics.drawable.Drawable
 import android.util.Log
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
@@ -11,15 +12,11 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
 import kotlin.properties.Delegates
 
-
-/**
- * A CardPresenter is used to generate Views and bind Objects to them on demand.
- * It contains an ImageCardView.
- */
-class ScenePresenter : Presenter() {
+class StudioPresenter : Presenter() {
     private var vParent: ViewGroup by Delegates.notNull()
     private var mDefaultCardImage: Drawable? = null
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
@@ -47,20 +44,27 @@ class ScenePresenter : Presenter() {
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
 //        val scene = sceneFromSlimSceneData(item as SlimSceneData)
-        val scene = item as SlimSceneData
+        val studio = item as StudioData
         val cardView = viewHolder.view as ImageCardView
-        Log.d(TAG, "onBindViewHolder: ${scene.title}")
 
-        cardView.titleText = scene.title
-        cardView.contentText = """${scene.date} (${scene.performers.size}P, ${scene.tags.size}T)"""
+        cardView.titleText = studio.name
+        var contentText=ArrayList<String>()
+        if(studio.scene_count>0){
+            contentText+="${studio.scene_count}S"
+        }
+        if(studio.performer_count>0){
+            contentText+="${studio.performer_count}P"
+        }
+        cardView.contentText = contentText.joinToString(" ")
 
-        if (!scene.paths.screenshot.isNullOrBlank()) {
+        if (!studio.image_path.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
+            cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER)
             val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context).getString("stashApiKey", "")
-            val url = createGlideUrl(scene.paths.screenshot, apiKey)
+            val url = createGlideUrl(studio.image_path, apiKey)
             Glide.with(viewHolder.view.context)
                     .load(url)
-                    .centerCrop()
+                    .fitCenter()
                     .error(mDefaultCardImage)
                     .into(cardView.mainImageView!!)
         }

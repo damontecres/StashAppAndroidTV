@@ -38,6 +38,7 @@ import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
+import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.SystemStatusQuery
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -46,6 +47,7 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.performerFromPerformerData
 import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
 import kotlinx.coroutines.launch
+import okhttp3.internal.http2.Header
 
 /**
  * Loads a grid of cards with movies to browse.
@@ -53,6 +55,7 @@ import kotlinx.coroutines.launch
 class MainFragment : BrowseSupportFragment() {
 
     private var performerAdapter: ArrayObjectAdapter =ArrayObjectAdapter(PerformerPresenter())
+    private var studioAdapter: ArrayObjectAdapter= ArrayObjectAdapter(StudioPresenter())
     private var sceneAdapter: ArrayObjectAdapter= ArrayObjectAdapter(ScenePresenter())
     private val mHandler = Handler(Looper.myLooper()!!)
     private lateinit var mBackgroundManager: BackgroundManager
@@ -77,10 +80,10 @@ class MainFragment : BrowseSupportFragment() {
 
         setupEventListeners()
 
-        val header = HeaderItem(0, "RECENTLY RELEASED SCENES")
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-        rowsAdapter.add(ListRow(header, sceneAdapter))
-        rowsAdapter.add(ListRow(HeaderItem(1, "RECENTLY ADDED PERFORMERS"), performerAdapter))
+        rowsAdapter.add(ListRow(HeaderItem("RECENTLY RELEASED SCENES"), sceneAdapter))
+        rowsAdapter.add(ListRow(HeaderItem("RECENTLY ADDED STUDIOS"), studioAdapter))
+        rowsAdapter.add(ListRow(HeaderItem("RECENTLY ADDED PERFORMERS"), performerAdapter))
         adapter = rowsAdapter
 
     }
@@ -108,13 +111,6 @@ class MainFragment : BrowseSupportFragment() {
                                     )
                                 )
                             ).execute()
-
-                            Toast.makeText(
-                                this@MainFragment.context,
-                                "FindScenes completed",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
                             val scenes = results.data?.findScenes?.scenes?.map {
                                 it.slimSceneData
                             }
@@ -135,14 +131,31 @@ class MainFragment : BrowseSupportFragment() {
                                     )
                                 )
                             ).execute()
-
-//                    Toast.makeText(this@MainFragment.context, "FindPerformers completed", Toast.LENGTH_LONG).show()
-
                             val performers = results.data?.findPerformers?.performers?.map {
                                 it.performerData
                             }
                             if (performers != null) {
                                 performerAdapter.addAll(0, performers)
+                            }
+                        }
+
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            val results = apolloClient.query(
+                                FindStudiosQuery(
+                                    filter = Optional.present(
+                                        FindFilterType(
+                                            sort = Optional.present("created_at"),
+                                            direction = Optional.present(SortDirectionEnum.DESC),
+                                            per_page = Optional.present(25)
+                                        )
+                                    )
+                                )
+                            ).execute()
+                            val studios = results.data?.findStudios?.studios?.map {
+                                it.studioData
+                            }
+                            if (studios != null) {
+                                studioAdapter.addAll(0, studios)
                             }
                         }
 
