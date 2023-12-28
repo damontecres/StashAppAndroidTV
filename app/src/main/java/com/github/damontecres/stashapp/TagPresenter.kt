@@ -19,7 +19,7 @@ import kotlin.properties.Delegates
  * A CardPresenter is used to generate Views and bind Objects to them on demand.
  * It contains an ImageCardView.
  */
-class ScenePresenter : Presenter() {
+class TagPresenter : Presenter() {
     private var vParent: ViewGroup by Delegates.notNull()
     private var mDefaultCardImage: Drawable? = null
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
@@ -46,24 +46,14 @@ class ScenePresenter : Presenter() {
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
-//        val scene = sceneFromSlimSceneData(item as SlimSceneData)
-        val scene = item as SlimSceneData
+        val tag = item as SlimSceneData.Tag
         val cardView = viewHolder.view as ImageCardView
-        Log.d(TAG, "onBindViewHolder: ${scene.title}")
 
-        cardView.titleText = scene.title
-        cardView.contentText = """${scene.date} (${scene.performers.size}P, ${scene.tags.size}T)"""
+        cardView.titleText = tag.name
+        cardView.contentText=null
+        cardView.setMainImageDimensions(CARD_WIDTH,CARD_HEIGHT)
 
-        if (!scene.paths.screenshot.isNullOrBlank()) {
-            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context).getString("stashApiKey", "")
-            val url = createGlideUrl(scene.paths.screenshot, apiKey)
-            Glide.with(viewHolder.view.context)
-                    .load(url)
-                    .centerCrop()
-                    .error(mDefaultCardImage)
-                    .into(cardView.mainImageView!!)
-        }
+        // TODO: fetch image
     }
 
     override fun onUnbindViewHolder(viewHolder: Presenter.ViewHolder) {

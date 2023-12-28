@@ -47,6 +47,9 @@
         <activity android:name=".PerformerActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme"/>
+        <activity android:name=".TagActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme"/>
     </application>
 
 </manifest>

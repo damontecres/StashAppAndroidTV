@@ -36,16 +36,6 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
     private lateinit var mPerformerScenes: ListRowView
     private var gridAdapter: ArrayObjectAdapter = ArrayObjectAdapter(ScenePresenter())
 
-//    override fun onCreateView(
-//        inflater: LayoutInflater,
-//        container: ViewGroup?,
-//        savedInstanceState: Bundle?
-//    ): View? {
-//        val root= inflater.inflate(R.layout.performer_view, container)
-//
-//        return root
-//    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 

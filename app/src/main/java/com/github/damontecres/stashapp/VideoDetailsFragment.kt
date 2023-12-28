@@ -56,6 +56,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private var mSelectedMovie: Scene? = null
 
     private var performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
+    private var tagsAdapter: ArrayObjectAdapter = ArrayObjectAdapter(TagPresenter())
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
     private lateinit var mPresenterSelector: ClassPresenterSelector
@@ -91,23 +92,26 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             viewLifecycleOwner.lifecycleScope.launch {
                 val apolloClient = createApolloClient(requireContext())
                 if (apolloClient != null && mSelectedMovie != null) {
-                    val results = apolloClient.query(
-                        FindScenesQuery(scene_ids = Optional.present(listOf(mSelectedMovie!!.id.toInt())))
-                    ).execute()
+                    val scene = fetchSceneById(requireContext(), mSelectedMovie!!.id.toInt())
+                    if(scene!=null) {
+                        if (scene.tags.isNotEmpty()) {
+                            tagsAdapter.addAll(0, scene.tags)
+                        }
 
-                    val performerIds = results.data?.findScenes?.scenes?.map {
-                        it.slimSceneData.performers.map { it.id.toInt() }
-                    }?.flatten()
-                    val performers = apolloClient.query(
-                        FindPerformersQuery(
-                            performer_ids = Optional.present(performerIds)
-                        )
-                    ).execute()
-                    val perfs = performers.data?.findPerformers?.performers?.map {
-                        it.performerData
-                    }
-                    if (perfs != null) {
-                        performersAdapter.addAll(0, perfs)
+                        val performerIds = scene?.performers?.map {
+                            it.id.toInt()
+                        }
+                        val performers = apolloClient.query(
+                            FindPerformersQuery(
+                                performer_ids = Optional.present(performerIds)
+                            )
+                        ).execute()
+                        val perfs = performers.data?.findPerformers?.performers?.map {
+                            it.performerData
+                        }
+                        if (perfs != null) {
+                            performersAdapter.addAll(0, perfs)
+                        }
                     }
                 }
             }
@@ -206,12 +210,9 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupRelatedMovieListRow() {
-        val subcategories = arrayOf(getString(R.string.related_movies))
-        val listRowAdapter = ArrayObjectAdapter(ScenePresenter())
         // TODO related scenes
-
         mAdapter.add(ListRow(HeaderItem(0, "Performers"), performersAdapter))
-        mAdapter.add(ListRow(HeaderItem(1, subcategories[0]), listRowAdapter))
+        mAdapter.add(ListRow(HeaderItem(1,"Tags"), tagsAdapter))
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 

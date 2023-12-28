@@ -22,8 +22,8 @@ class StashItemViewClickListener(private val activity: Activity): OnItemViewClic
     override fun onItemClicked(
         itemViewHolder: Presenter.ViewHolder,
         item: Any,
-        rowViewHolder: RowPresenter.ViewHolder,
-        row: Row
+        rowViewHolder: RowPresenter.ViewHolder?,
+        row: Row?
     ) {
 
         if (item is SlimSceneData) {
@@ -46,6 +46,16 @@ class StashItemViewClickListener(private val activity: Activity): OnItemViewClic
                 DetailsActivity.SHARED_ELEMENT_NAME
             )
                 .toBundle()
+            activity.startActivity(intent, bundle)
+        }else if(item is SlimSceneData.Tag){
+            val intent = Intent(activity, TagActivity::class.java)
+            intent.putExtra("tagId", item.id.toInt())
+            intent.putExtra("tagName", item.name)
+            val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
+                activity,
+                (itemViewHolder.view as ImageCardView).mainImageView,
+                DetailsActivity.SHARED_ELEMENT_NAME
+            ).toBundle()
             activity.startActivity(intent, bundle)
         } else if (item is String) {
             if (item.contains(activity.getString(R.string.error_fragment))) {
