@@ -92,15 +92,7 @@ class MainFragment : BrowseSupportFragment() {
                     null
                 }
             }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            if (testStashConnection(requireContext(), true)) {
-                addRowsIfNeeded()
-            }
-        }
         adapter = rowsAdapter
-
-        fetchData()
     }
 
     override fun onResume() {
