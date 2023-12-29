@@ -3,6 +3,7 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="80dp">
+
     <ImageView
         android:id="@+id/icon"
         android:layout_width="80dp"
@@ -10,11 +11,20 @@
         android:src="@mipmap/stash_logo"
         android:contentDescription="icon"
         android:layout_alignParentStart="true" />
+
     <androidx.leanback.widget.SearchOrbView
         android:id="@+id/search_orb"
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_toEndOf="@id/icon" />
+
+    <Button
+        android:id="@+id/scenes_button"
+        android:text="Scenes"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_toEndOf="@+id/search_orb" />
+
     <ImageButton
         android:id="@+id/settings_button"
         android:layout_width="80dp"
@@ -22,5 +32,5 @@
         android:layout_gravity="end"
         android:contentDescription="Preferences"
         android:src="@drawable/vector_settings"
-        android:layout_alignParentEnd="true"/>
+        android:layout_alignParentEnd="true" />
 </RelativeLayout>

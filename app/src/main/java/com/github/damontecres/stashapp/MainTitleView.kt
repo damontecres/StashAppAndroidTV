@@ -6,6 +6,7 @@ import android.content.Intent
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RelativeLayout
 import android.widget.TextView
@@ -36,6 +37,10 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
             }
 
         })
+        root.findViewById<Button>(R.id.scenes_button).setOnClickListener {
+            val intent = Intent(context, SceneActivity::class.java)
+            startActivity(context, intent, null)
+        }
     }
 
     override fun getTitleViewAdapter(): TitleViewAdapter {

@@ -47,13 +47,13 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.leanback:leanback:1.1.0-rc02")
     implementation("androidx.leanback:leanback-preference:1.1.0-rc01")
+    implementation("androidx.leanback:leanback-paging:1.1.0-alpha11")
     implementation("com.github.bumptech.glide:glide:4.11.0")
 
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
-
 
     implementation("com.apollographql.apollo3:apollo-runtime:3.8.2")
     implementation("androidx.preference:preference-ktx:1.2.1")

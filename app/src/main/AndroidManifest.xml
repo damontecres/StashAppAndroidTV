@@ -11,7 +11,8 @@
     <uses-feature
         android:name="android.software.leanback"
         android:required="true" />
-    <uses-feature android:name="android.hardware.microphone"
+    <uses-feature
+        android:name="android.hardware.microphone"
         android:required="false" />
 
     <application
@@ -47,16 +48,24 @@
         <activity
             android:name=".SettingsActivity"
             android:exported="false" />
-        <activity android:name=".PerformerActivity"
+        <activity
+            android:name=".PerformerActivity"
             android:exported="false"
-            android:theme="@style/NoTitleTheme"/>
-        <activity android:name=".TagActivity"
-            android:exported="false"/>
-        <activity android:name=".StudioActivity"
-            android:exported="false"/>
-        <activity android:name=".SearchActivity"
+            android:theme="@style/NoTitleTheme" />
+        <activity
+            android:name=".TagActivity"
+            android:exported="false" />
+        <activity
+            android:name=".StudioActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SearchActivity"
             android:exported="false"
-            android:theme="@style/NoTitleTheme"/>
+            android:theme="@style/NoTitleTheme" />
+        <activity
+            android:name=".SceneActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>
