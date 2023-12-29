@@ -3,18 +3,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-    
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="600dp"
         android:layout_weight="1">
+
         <ImageView
             android:id="@+id/performer_image"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:contentDescription="Performer Image"
-            />
+            android:contentDescription="Performer Image" />
+
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -22,30 +23,32 @@
             android:orientation="vertical"
 
             >
+
             <TextView
                 android:id="@+id/performer_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="50sp"
-                />
+                android:textSize="50sp" />
+
             <TextView
                 android:id="@+id/performer_disambiguation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="30sp"
-                />
+                android:textSize="30sp" />
 
         </LinearLayout>
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:layout_marginTop="10dp">
+
         <FrameLayout
             android:id="@+id/performer_list_fragment"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            />
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
 </LinearLayout>

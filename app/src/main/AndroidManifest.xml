@@ -51,7 +51,7 @@
         <activity
             android:name=".PerformerActivity"
             android:exported="false"
-            android:theme="@style/NoTitleTheme" />
+            android:theme="@style/NoTitleTheme" /> <!-- Would be good to remove NoTitleTheme -->
         <activity
             android:name=".TagActivity"
             android:exported="false" />
