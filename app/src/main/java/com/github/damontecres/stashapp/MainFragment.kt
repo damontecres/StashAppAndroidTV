@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -27,6 +28,7 @@ import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.bumptech.glide.Glide
@@ -91,8 +93,6 @@ class MainFragment : BrowseSupportFragment() {
                 }
             }
 
-
-
         viewLifecycleOwner.lifecycleScope.launch {
             if (testStashConnection(requireContext(), true)) {
                 addRowsIfNeeded()
@@ -100,79 +100,23 @@ class MainFragment : BrowseSupportFragment() {
         }
         adapter = rowsAdapter
 
+        fetchData()
     }
 
     override fun onResume() {
         super.onResume()
 
-        clearData()
-
         viewLifecycleOwner.lifecycleScope.launch {
             if (testStashConnection(requireContext(), false)) {
-                addRowsIfNeeded()
-                val apolloClient = createApolloClient(requireContext())
-
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindScenesQuery(
-                            filter = Optional.present(
-                                FindFilterType(
-                                    sort = Optional.present("date"),
-                                    direction = Optional.present(SortDirectionEnum.DESC),
-                                    per_page = Optional.present(25)
-                                )
-                            )
-                        )
-                    ).execute()
-                    val scenes = results.data?.findScenes?.scenes?.map {
-                        it.slimSceneData
-                    }
-                    if (scenes != null) {
-                        sceneAdapter.addAll(0, scenes)
-                    }
-                }
-
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindPerformersQuery(
-                            filter = Optional.present(
-                                FindFilterType(
-                                    sort = Optional.present("created_at"),
-                                    direction = Optional.present(SortDirectionEnum.DESC),
-                                    per_page = Optional.present(25)
-                                )
-                            )
-                        )
-                    ).execute()
-                    val performers = results.data?.findPerformers?.performers?.map {
-                        it.performerData
-                    }
-                    if (performers != null) {
-                        performerAdapter.addAll(0, performers)
-                    }
-                }
-
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindStudiosQuery(
-                            filter = Optional.present(
-                                FindFilterType(
-                                    sort = Optional.present("created_at"),
-                                    direction = Optional.present(SortDirectionEnum.DESC),
-                                    per_page = Optional.present(25)
-                                )
-                            )
-                        )
-                    ).execute()
-                    val studios = results.data?.findStudios?.studios?.map {
-                        it.studioData
-                    }
-                    if (studios != null) {
-                        studioAdapter.addAll(0, studios)
-                    }
+                if (rowsAdapter.size() == 0) {
+                    addRowsIfNeeded()
+                    fetchData()
                 }
             } else {
+                clearData()
                 rowsAdapter.clear()
+                Toast.makeText(requireContext(), "Connection to Stash failed.", Toast.LENGTH_LONG)
+                    .show()
             }
         }
     }
@@ -290,6 +234,78 @@ class MainFragment : BrowseSupportFragment() {
         sceneAdapter.clear()
         studioAdapter.clear()
         performerAdapter.clear()
+    }
+
+    private fun fetchData() {
+        clearData()
+        viewLifecycleOwner.lifecycleScope.launch {
+            if (testStashConnection(requireContext(), false)) {
+                addRowsIfNeeded()
+                val apolloClient = createApolloClient(requireContext())
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val results = apolloClient!!.query(
+                        FindScenesQuery(
+                            filter = Optional.present(
+                                FindFilterType(
+                                    sort = Optional.present("date"),
+                                    direction = Optional.present(SortDirectionEnum.DESC),
+                                    per_page = Optional.present(25)
+                                )
+                            )
+                        )
+                    ).execute()
+                    val scenes = results.data?.findScenes?.scenes?.map {
+                        it.slimSceneData
+                    }
+                    if (scenes != null) {
+                        sceneAdapter.addAll(0, scenes)
+                    }
+                }
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val results = apolloClient!!.query(
+                        FindPerformersQuery(
+                            filter = Optional.present(
+                                FindFilterType(
+                                    sort = Optional.present("created_at"),
+                                    direction = Optional.present(SortDirectionEnum.DESC),
+                                    per_page = Optional.present(25)
+                                )
+                            )
+                        )
+                    ).execute()
+                    val performers = results.data?.findPerformers?.performers?.map {
+                        it.performerData
+                    }
+                    if (performers != null) {
+                        performerAdapter.addAll(0, performers)
+                    }
+                }
+
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val results = apolloClient!!.query(
+                        FindStudiosQuery(
+                            filter = Optional.present(
+                                FindFilterType(
+                                    sort = Optional.present("created_at"),
+                                    direction = Optional.present(SortDirectionEnum.DESC),
+                                    per_page = Optional.present(25)
+                                )
+                            )
+                        )
+                    ).execute()
+                    val studios = results.data?.findStudios?.studios?.map {
+                        it.studioData
+                    }
+                    if (studios != null) {
+                        studioAdapter.addAll(0, studios)
+                    }
+                }
+            } else {
+                rowsAdapter.clear()
+            }
+        }
     }
 
     companion object {
