@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.FragmentActivity
@@ -12,10 +13,12 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
+import androidx.recyclerview.widget.DiffUtil
+import com.apollographql.apollo3.api.Fragment
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.presenters.SceneComparator
-import com.github.damontecres.stashapp.presenters.ScenePagingSource
 import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.presenters.StashPagingSource
+import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -35,7 +38,7 @@ class SceneActivity : FragmentActivity() {
 
 class SceneFragment : VerticalGridSupportFragment() {
 
-    private val mAdapter = PagingDataAdapter(ScenePresenter(), SceneComparator)
+    private val mAdapter = PagingDataAdapter(ScenePresenter(), sceneComparator)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,7 +63,12 @@ class SceneFragment : VerticalGridSupportFragment() {
         val flow = Pager(
             PagingConfig(pageSize = pageSize, prefetchDistance = pageSize * 2)
         ) {
-            ScenePagingSource(requireContext(), pageSize)
+            StashPagingSource(
+                requireContext(),
+                pageSize,
+                "date",
+                dataSupplier = SceneDataSupplier()
+            )
         }.flow
             .cachedIn(viewLifecycleOwner.lifecycleScope)
 

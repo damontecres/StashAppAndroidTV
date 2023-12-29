@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import androidx.preference.PreferenceManager
+import androidx.recyclerview.widget.DiffUtil
 import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -32,7 +33,8 @@ class ScenePresenter : Presenter() {
             parent.context,
             R.color.selected_background
         )
-        mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
+        mDefaultCardImage =
+            ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
 
         val cardView = object : ImageCardView(parent.context) {
             override fun setSelected(selected: Boolean) {
