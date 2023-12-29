@@ -71,6 +71,9 @@
         <activity
             android:name=".StudioListActivity"
             android:exported="false" />
+        <activity
+            android:name=".TagListActivity"
+            android:exported="false" />
 
     </application>
 

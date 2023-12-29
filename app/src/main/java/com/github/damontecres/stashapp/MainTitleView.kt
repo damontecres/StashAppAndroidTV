@@ -48,6 +48,10 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
             val intent = Intent(context, StudioListActivity::class.java)
             startActivity(context, intent, null)
         }
+        root.findViewById<Button>(R.id.tags_button).setOnClickListener {
+            val intent = Intent(context, TagListActivity::class.java)
+            startActivity(context, intent, null)
+        }
     }
 
     override fun getTitleViewAdapter(): TitleViewAdapter {

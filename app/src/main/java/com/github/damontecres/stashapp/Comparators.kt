@@ -4,6 +4,7 @@ import androidx.recyclerview.widget.DiffUtil
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.data.Tag
 
 object sceneComparator : DiffUtil.ItemCallback<SlimSceneData>() {
     override fun areItemsTheSame(oldItem: SlimSceneData, newItem: SlimSceneData): Boolean {
@@ -31,6 +32,16 @@ object studioComparator : DiffUtil.ItemCallback<StudioData>() {
     }
 
     override fun areContentsTheSame(oldItem: StudioData, newItem: StudioData): Boolean {
+        return oldItem == newItem
+    }
+}
+
+object tagComparator : DiffUtil.ItemCallback<Tag>() {
+    override fun areItemsTheSame(oldItem: Tag, newItem: Tag): Boolean {
+        return oldItem.id == newItem.id
+    }
+
+    override fun areContentsTheSame(oldItem: Tag, newItem: Tag): Boolean {
         return oldItem == newItem
     }
 }

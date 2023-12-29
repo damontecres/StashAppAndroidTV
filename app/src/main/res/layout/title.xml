@@ -39,6 +39,13 @@
         android:layout_height="80dp"
         android:layout_toEndOf="@+id/performers_button" />
 
+    <Button
+        android:id="@+id/tags_button"
+        android:text="Tags"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_toEndOf="@+id/studios_button" />
+
     <ImageButton
         android:id="@+id/settings_button"
         android:layout_width="80dp"

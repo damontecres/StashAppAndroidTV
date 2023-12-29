@@ -29,7 +29,8 @@ class TagPresenter : Presenter() {
             parent.context,
             R.color.selected_background
         )
-        mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
+        mDefaultCardImage =
+            ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
 
         val cardView = object : ImageCardView(parent.context) {
             override fun setSelected(selected: Boolean) {
@@ -50,7 +51,7 @@ class TagPresenter : Presenter() {
 
         cardView.titleText = tag.name
         // TODO: content text
-        cardView.contentText = null
+        cardView.contentText = "${tag.sceneCount} scenes"
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 
         // TODO: fetch image
