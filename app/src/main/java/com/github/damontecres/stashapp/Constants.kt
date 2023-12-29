@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceManager
@@ -73,12 +74,16 @@ class AuthorizationInterceptor(val apiKey: String?) : HttpInterceptor {
  */
 fun createApolloClient(stashUrl: String?, apiKey: String?): ApolloClient? {
     return if (stashUrl!!.isNotBlank()) {
-        var url = Uri.parse(stashUrl.trim())
-        val scheme = if (url.scheme.isNullOrBlank()) "http" else url.scheme
+        var cleanedStashUrl = stashUrl.trim()
+        if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
+            // Assume http
+            cleanedStashUrl = "http://$cleanedStashUrl"
+        }
+        var url = Uri.parse(cleanedStashUrl)
         url = url.buildUpon()
-            .scheme(scheme) // Set the scheme if the user only entered a domain or IP
             .path("/graphql") // Ensure the URL is the graphql endpoint
             .build()
+        Log.d("Constants", "StashUrl: $stashUrl => $url")
         ApolloClient.Builder()
             .serverUrl(url.toString())
             .addHttpInterceptor(AuthorizationInterceptor(apiKey))

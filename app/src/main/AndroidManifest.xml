@@ -20,7 +20,8 @@
         android:icon="@mipmap/stash_logo"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.StashAppAndroidTV">
+        android:theme="@style/Theme.StashAppAndroidTV"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:banner="@mipmap/stash_logo"
