@@ -14,6 +14,11 @@
             app:title="@string/pref_stash_api_key"
             app:useSimpleSummaryProvider="false" />
 
+        <Preference
+            app:key="testStashServer"
+            app:title="Test Connection"
+            app:summary="Test connecting to Stash using the above settings"/>
+
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Search">

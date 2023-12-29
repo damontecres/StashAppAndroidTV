@@ -1,0 +1,8 @@
+query ServerInfo {
+  version {
+    version
+  }
+  stats {
+    scene_count
+  }
+}

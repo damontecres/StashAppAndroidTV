@@ -1,14 +1,20 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
 import androidx.leanback.preference.LeanbackSettingsFragmentCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceDialogFragmentCompat
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceScreen
+import com.apollographql.apollo3.exception.ApolloException
+import com.apollographql.apollo3.exception.ApolloHttpException
+import com.github.damontecres.stashapp.api.ServerInfoQuery
+import kotlinx.coroutines.launch
 
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
@@ -51,17 +57,21 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 }
 
 class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        findPreference<EditTextPreference>("stashUrl")?.setOnPreferenceChangeListener { pref, newValue ->
-            true
-        }
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey)
-        val apiKayPref = getPreferenceManager().findPreference<EditTextPreference>("stashApiKey")
+
+        findPreference<Preference>("testStashServer")?.setOnPreferenceClickListener {
+            viewLifecycleOwner.lifecycleScope.launch {
+                testStashConnection(requireContext(), true)
+            }
+            true
+        }
+
+        val apiKayPref = findPreference<EditTextPreference>("stashApiKey")
         apiKayPref?.summaryProvider = object : Preference.SummaryProvider<EditTextPreference> {
             override fun provideSummary(preference: EditTextPreference): CharSequence? {
                 return if (preference.text.isNullOrBlank()) {
@@ -71,5 +81,6 @@ class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
                 }
             }
         }
+
     }
 }
