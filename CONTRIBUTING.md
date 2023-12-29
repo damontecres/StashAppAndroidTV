@@ -15,3 +15,11 @@ Please make sure that you've considered the following before you submit your Pul
 You acknowledge that, if applicable, submitting and subsequent acceptance of any pull request you, the code contributor of the pull request, agree and acknowledge that the code will be licensed under [AGPL](LICENSE).
 
 **In case you are unable to follow any of the above, please include an explanation in your pull request**
+
+## Tips
+
+### Submodule
+
+Certain assets are provided by thehttps://github.com/stashapp/stash repo which is included as a submodule. Make sure to run `git submodule update --init --recursive --remote` after cloning this repo to get the latest version of the submodule.
+
+If you get compile errors such as `java.nio.file.NoSuchFileException: .../StashAppAndroidTV/app/src/main/res/mipmap-anydpi/stash_logo.png`, you need to update the submodule (or the paths in `stashapp/stash` has changed!).
