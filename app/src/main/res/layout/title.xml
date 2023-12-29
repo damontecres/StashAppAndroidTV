@@ -1,27 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-
+    android:layout_height="80dp">
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="80dp"
+        android:layout_height="match_parent"
+        android:src="@mipmap/stash_logo"
+        android:contentDescription="icon"
+        android:layout_alignParentStart="true" />
     <androidx.leanback.widget.SearchOrbView
         android:id="@+id/search_orb"
         android:layout_width="80dp"
         android:layout_height="80dp"
-
-    />
-    <TextView
-        android:id="@+id/title_text"
-        android:layout_gravity="end"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Stash"
-        />
+        android:layout_toEndOf="@id/icon" />
     <ImageButton
         android:id="@+id/settings_button"
         android:layout_width="80dp"
         android:layout_height="80dp"
+        android:layout_gravity="end"
+        android:contentDescription="Preferences"
         android:src="@android:drawable/ic_menu_preferences"
-        android:contentDescription="Preferences" />
-
-</LinearLayout>
+        android:layout_alignParentEnd="true" />
+</RelativeLayout>

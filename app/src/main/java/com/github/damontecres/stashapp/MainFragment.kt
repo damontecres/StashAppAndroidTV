@@ -9,6 +9,7 @@ import android.os.Looper
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
@@ -16,6 +17,8 @@ import androidx.core.content.ContextCompat
 import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
+import androidx.leanback.widget.BrowseFrameLayout
+import androidx.leanback.widget.BrowseFrameLayout.OnFocusSearchListener
 import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
@@ -41,6 +44,7 @@ import com.github.damontecres.stashapp.presenters.StudioPresenter
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
+
 
 /**
  * Loads a grid of cards with movies to browse.
@@ -72,6 +76,19 @@ class MainFragment : BrowseSupportFragment() {
         setupUIElements()
 
         setupEventListeners()
+
+        // Override the focus search so that pressing up from the rows will move to search first
+        val browseFrameLayout =
+            requireView().findViewById<BrowseFrameLayout>(androidx.leanback.R.id.browse_frame)
+        val originalOnFocusSearchListener = browseFrameLayout.onFocusSearchListener
+        browseFrameLayout.onFocusSearchListener =
+            OnFocusSearchListener { focused: View?, direction: Int ->
+                if (direction == View.FOCUS_UP) {
+                    requireActivity().findViewById<View>(androidx.leanback.R.id.search_orb)
+                } else {
+                    null
+                }
+            }
 
         val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
         rowsAdapter.add(ListRow(HeaderItem("RECENTLY RELEASED SCENES"), sceneAdapter))

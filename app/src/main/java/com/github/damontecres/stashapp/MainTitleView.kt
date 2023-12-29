@@ -18,7 +18,6 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
 
     private var mPreferencesView: ImageButton
     private lateinit var mSearchOrbView: SearchOrbView
-    private lateinit var mTitleView: TextView
 
     val mTitleViewAdapter = object : TitleViewAdapter() {
         override fun getSearchAffordanceView(): View {
@@ -28,7 +27,6 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
         val root = LayoutInflater.from(context).inflate(R.layout.title, this)
-        mTitleView = root.findViewById<TextView>(R.id.title_text) as TextView
         mSearchOrbView = root.findViewById<SearchOrbView>(R.id.search_orb)
         mPreferencesView = root.findViewById<ImageButton>(R.id.settings_button)
         mPreferencesView.setOnClickListener(object : View.OnClickListener {
