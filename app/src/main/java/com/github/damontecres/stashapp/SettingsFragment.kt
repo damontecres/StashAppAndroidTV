@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -64,12 +65,22 @@ class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey)
 
-        findPreference<Preference>("testStashServer")?.setOnPreferenceClickListener {
-            viewLifecycleOwner.lifecycleScope.launch {
-                testStashConnection(requireContext(), true)
-            }
-            true
+        val pkgInfo =
+            requireActivity().packageManager.getPackageInfo(requireContext().packageName, 0)
+        findPreference<Preference>("versionName")?.summary = pkgInfo.versionName
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            findPreference<Preference>("versionCode")?.summary = pkgInfo.longVersionCode.toString()
+        } else {
+            findPreference<Preference>("versionCode")?.summary = pkgInfo.versionCode.toString()
         }
+
+        findPreference<Preference>("testStashServer")
+            ?.setOnPreferenceClickListener {
+                viewLifecycleOwner.lifecycleScope.launch {
+                    testStashConnection(requireContext(), true)
+                }
+                true
+            }
 
         val apiKayPref = findPreference<EditTextPreference>("stashApiKey")
         apiKayPref?.summaryProvider = object : Preference.SummaryProvider<EditTextPreference> {

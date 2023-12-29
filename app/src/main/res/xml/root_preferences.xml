@@ -75,4 +75,15 @@
             />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="About">
+        <Preference
+            app:key="versionName"
+            app:title="Version"
+            app:summary=""/>
+        <Preference
+            app:key="versionCode"
+            app:title="Version Code"
+            app:summary=""/>
+    </PreferenceCategory>
+
 </PreferenceScreen>
