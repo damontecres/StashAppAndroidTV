@@ -1,14 +1,18 @@
 package com.github.damontecres.stashapp
 
 import android.content.Intent
-import java.util.Timer
-import java.util.TimerTask
-
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.DisplayMetrics
+import android.util.Log
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -19,17 +23,9 @@ import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
-import androidx.core.content.ContextCompat
-import android.util.DisplayMetrics
-import android.util.Log
-import android.view.Gravity
-import android.view.ViewGroup
-import android.widget.TextView
-import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
-
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
@@ -43,15 +39,17 @@ import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import kotlinx.coroutines.launch
+import java.util.Timer
+import java.util.TimerTask
 
 /**
  * Loads a grid of cards with movies to browse.
  */
 class MainFragment : BrowseSupportFragment() {
 
-    private var performerAdapter: ArrayObjectAdapter =ArrayObjectAdapter(PerformerPresenter())
-    private var studioAdapter: ArrayObjectAdapter= ArrayObjectAdapter(StudioPresenter())
-    private var sceneAdapter: ArrayObjectAdapter= ArrayObjectAdapter(ScenePresenter())
+    private var performerAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
+    private var studioAdapter: ArrayObjectAdapter = ArrayObjectAdapter(StudioPresenter())
+    private var sceneAdapter: ArrayObjectAdapter = ArrayObjectAdapter(ScenePresenter())
     private val mHandler = Handler(Looper.myLooper()!!)
     private lateinit var mBackgroundManager: BackgroundManager
     private var mDefaultBackground: Drawable? = null
@@ -87,7 +85,7 @@ class MainFragment : BrowseSupportFragment() {
         super.onResume()
 
         // Only query if there are no scenes
-        if(sceneAdapter.size()==0) {
+        if (sceneAdapter.size() == 0) {
             val apolloClient = createApolloClient(requireContext())
             if (apolloClient != null) {
                 viewLifecycleOwner.lifecycleScope.launch {

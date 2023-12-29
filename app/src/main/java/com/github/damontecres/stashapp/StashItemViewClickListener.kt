@@ -19,7 +19,7 @@ import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
 /**
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc
  */
-class StashItemViewClickListener(private val activity: Activity): OnItemViewClickedListener {
+class StashItemViewClickListener(private val activity: Activity) : OnItemViewClickedListener {
 
     override fun onItemClicked(
         itemViewHolder: Presenter.ViewHolder,
@@ -39,7 +39,7 @@ class StashItemViewClickListener(private val activity: Activity): OnItemViewClic
             )
                 .toBundle()
             activity.startActivity(intent, bundle)
-        } else if(item is PerformerData) {
+        } else if (item is PerformerData) {
             val intent = Intent(activity, PerformerActivity::class.java)
             intent.putExtra("performer", performerFromPerformerData(item))
             val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
@@ -49,7 +49,7 @@ class StashItemViewClickListener(private val activity: Activity): OnItemViewClic
             )
                 .toBundle()
             activity.startActivity(intent, bundle)
-        }else if(item is Tag) {
+        } else if (item is Tag) {
             val intent = Intent(activity, TagActivity::class.java)
             intent.putExtra("tag", item)
             val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
@@ -58,7 +58,7 @@ class StashItemViewClickListener(private val activity: Activity): OnItemViewClic
                 DetailsActivity.SHARED_ELEMENT_NAME
             ).toBundle()
             activity.startActivity(intent, bundle)
-        } else if(item is StudioData){
+        } else if (item is StudioData) {
             val intent = Intent(activity, StudioActivity::class.java)
             intent.putExtra("studioId", item.id.toInt())
             intent.putExtra("studioName", item.name)

@@ -7,7 +7,6 @@ import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.Tag
 import kotlin.properties.Delegates
 
@@ -23,10 +22,11 @@ class TagPresenter : Presenter() {
     private var sDefaultBackgroundColor: Int by Delegates.notNull()
 
     override fun onCreateViewHolder(parent: ViewGroup): Presenter.ViewHolder {
-        vParent=parent
+        vParent = parent
 
         sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
-        sSelectedBackgroundColor = ContextCompat.getColor(parent.context,
+        sSelectedBackgroundColor = ContextCompat.getColor(
+            parent.context,
             R.color.selected_background
         )
         mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.movie)
@@ -50,7 +50,7 @@ class TagPresenter : Presenter() {
 
         cardView.titleText = tag.name
         // TODO: content text
-        cardView.contentText=null
+        cardView.contentText = null
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 
         // TODO: fetch image

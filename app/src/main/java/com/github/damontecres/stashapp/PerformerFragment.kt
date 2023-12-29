@@ -29,11 +29,11 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         super.onViewCreated(view, savedInstanceState)
 
         mPerformerImage = view.findViewById(R.id.performer_image)
-        mPerformerName=view.findViewById(R.id.performer_name)
-        mPerformerDisambiguation=view.findViewById(R.id.performer_disambiguation)
+        mPerformerName = view.findViewById(R.id.performer_name)
+        mPerformerDisambiguation = view.findViewById(R.id.performer_disambiguation)
 
         val performer = requireActivity().intent.getParcelableExtra<Performer>("performer")
-        if(performer!=null) {
+        if (performer != null) {
             mPerformerName.text = performer.name
             mPerformerDisambiguation.text = performer.disambiguation
 
@@ -49,11 +49,11 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                             )
                         )
                     ).execute().data?.findPerformers?.performers;
-                    if(performers!=null && !performers.isEmpty()){
+                    if (performers != null && !performers.isEmpty()) {
                         val performer = performers.first().performerData
                         val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
                             .getString("stashApiKey", "")
-                        if(performer.image_path!=null) {
+                        if (performer.image_path != null) {
                             val url = createGlideUrl(performer.image_path, apiKey)
                             Glide.with(activity!!)
                                 .load(url)

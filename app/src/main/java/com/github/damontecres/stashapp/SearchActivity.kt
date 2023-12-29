@@ -2,10 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
-import androidx.leanback.app.SearchSupportFragment
-import androidx.leanback.widget.ArrayObjectAdapter
-import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StudioPresenter
 
 
 class SearchActivity : FragmentActivity() {

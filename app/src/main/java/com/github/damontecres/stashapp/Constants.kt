@@ -13,18 +13,17 @@ import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 
-object Constants{
-    const val STASH_API_HEADER="ApiKey"
+object Constants {
+    const val STASH_API_HEADER = "ApiKey"
 }
 
-fun createGlideUrl(url:String, apiKey: String?): GlideUrl{
-    return if(apiKey.isNullOrBlank()){
+fun createGlideUrl(url: String, apiKey: String?): GlideUrl {
+    return if (apiKey.isNullOrBlank()) {
         GlideUrl(url)
-    }else {
+    } else {
         GlideUrl(
             url,
             LazyHeaders.Builder()
@@ -39,20 +38,22 @@ class AuthorizationInterceptor(val apiKey: String?) : HttpInterceptor {
         request: HttpRequest,
         chain: HttpInterceptorChain
     ): HttpResponse {
-        return if(apiKey.isNullOrBlank()){
+        return if (apiKey.isNullOrBlank()) {
             chain.proceed(request)
-        }else{
-            chain.proceed(request.newBuilder().addHeader(Constants.STASH_API_HEADER, apiKey.trim()).build())
+        } else {
+            chain.proceed(
+                request.newBuilder().addHeader(Constants.STASH_API_HEADER, apiKey.trim()).build()
+            )
         }
 
     }
 }
 
-fun createApolloClient(context: Context): ApolloClient?{
+fun createApolloClient(context: Context): ApolloClient? {
     var stashUrl = PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
     val apiKey = PreferenceManager.getDefaultSharedPreferences(context).getString("stashApiKey", "")
 
-    return if(stashUrl!!.isNotBlank()) {
+    return if (stashUrl!!.isNotBlank()) {
         if (!stashUrl.endsWith("/graphql")) {
             stashUrl += "/graphql"
         }
@@ -60,12 +61,12 @@ fun createApolloClient(context: Context): ApolloClient?{
             .serverUrl(stashUrl)
             .addHttpInterceptor(AuthorizationInterceptor(apiKey))
             .build()
-    }else{
+    } else {
         null
     }
 }
 
-suspend fun fetchScenesById(context: Context, sceneIds:List<Int>): List<SlimSceneData>{
+suspend fun fetchScenesById(context: Context, sceneIds: List<Int>): List<SlimSceneData> {
     val apolloClient = createApolloClient(context)
     if (apolloClient != null) {
         val results = apolloClient.query(
@@ -76,31 +77,49 @@ suspend fun fetchScenesById(context: Context, sceneIds:List<Int>): List<SlimScen
     return listOf()
 }
 
-suspend fun fetchSceneById(context: Context, sceneId:Int): SlimSceneData?{
+suspend fun fetchSceneById(context: Context, sceneId: Int): SlimSceneData? {
     val results = fetchScenesById(context, listOf(sceneId))
     return results.getOrNull(0)
 }
 
-suspend fun fetchScenesByTag(context: Context, tagId:Int): List<SlimSceneData>{
+suspend fun fetchScenesByTag(context: Context, tagId: Int): List<SlimSceneData> {
     val apolloClient = createApolloClient(context)
     if (apolloClient != null) {
         val results = apolloClient.query(
-            FindScenesQuery(scene_filter = Optional.present(SceneFilterType(tags= Optional.present(
-                HierarchicalMultiCriterionInput(value= Optional.present(listOf(tagId.toString())), modifier = CriterionModifier.INCLUDES_ALL)
-            ))))
+            FindScenesQuery(
+                scene_filter = Optional.present(
+                    SceneFilterType(
+                        tags = Optional.present(
+                            HierarchicalMultiCriterionInput(
+                                value = Optional.present(listOf(tagId.toString())),
+                                modifier = CriterionModifier.INCLUDES_ALL
+                            )
+                        )
+                    )
+                )
+            )
         ).execute()
         return results.data?.findScenes?.scenes?.map { it.slimSceneData }.orEmpty()
     }
     return listOf()
 }
 
-suspend fun fetchScenesByStudio(context: Context, studioId:Int):List<SlimSceneData>{
+suspend fun fetchScenesByStudio(context: Context, studioId: Int): List<SlimSceneData> {
     val apolloClient = createApolloClient(context)
     if (apolloClient != null) {
         val results = apolloClient.query(
-            FindScenesQuery(scene_filter = Optional.present(SceneFilterType(studios=Optional.present(
-                HierarchicalMultiCriterionInput(value= Optional.present(listOf(studioId.toString())), modifier = CriterionModifier.INCLUDES_ALL)
-            ))))
+            FindScenesQuery(
+                scene_filter = Optional.present(
+                    SceneFilterType(
+                        studios = Optional.present(
+                            HierarchicalMultiCriterionInput(
+                                value = Optional.present(listOf(studioId.toString())),
+                                modifier = CriterionModifier.INCLUDES_ALL
+                            )
+                        )
+                    )
+                )
+            )
         ).execute()
         return results.data?.findScenes?.scenes?.map { it.slimSceneData }.orEmpty()
     }

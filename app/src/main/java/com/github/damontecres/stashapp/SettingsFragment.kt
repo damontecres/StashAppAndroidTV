@@ -8,11 +8,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceDialogFragmentCompat
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
-import com.apollographql.apollo3.ApolloClient
-import com.github.damontecres.stashapp.api.SystemStatusQuery
-import com.github.damontecres.stashapp.api.type.SystemStatus
 
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
@@ -54,7 +50,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
     }
 }
 
-class PreferencesFragment: LeanbackPreferenceFragmentCompat() {
+class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,14 +58,15 @@ class PreferencesFragment: LeanbackPreferenceFragmentCompat() {
             true
         }
     }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey)
         val apiKayPref = getPreferenceManager().findPreference<EditTextPreference>("stashApiKey")
-        apiKayPref?.summaryProvider= object:Preference.SummaryProvider<EditTextPreference> {
+        apiKayPref?.summaryProvider = object : Preference.SummaryProvider<EditTextPreference> {
             override fun provideSummary(preference: EditTextPreference): CharSequence? {
-                return if(preference.text.isNullOrBlank()){
+                return if (preference.text.isNullOrBlank()) {
                     "No API key configured"
-                }else{
+                } else {
                     "API Key is configured"
                 }
             }

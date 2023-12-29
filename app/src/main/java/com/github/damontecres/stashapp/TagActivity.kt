@@ -13,14 +13,16 @@ class TagActivity : FragmentActivity() {
         setContentView(R.layout.activity_tag)
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                .replace(R.id.tag_fragment, StashGridFragment(ScenePresenter()) { fragment: StashGridFragment, adapter: ArrayObjectAdapter ->
-                    val tag =fragment.requireActivity().intent.getParcelableExtra<Tag>("tag")
-                    if(tag!=null) {
-                        fragment.title = tag.name
-                        val scenes = fetchScenesByTag(fragment.requireContext(), tag.id)
-                        adapter.addAll(0, scenes)
-                    }
-                }).commitNow()
+                .replace(
+                    R.id.tag_fragment,
+                    StashGridFragment(ScenePresenter()) { fragment: StashGridFragment, adapter: ArrayObjectAdapter ->
+                        val tag = fragment.requireActivity().intent.getParcelableExtra<Tag>("tag")
+                        if (tag != null) {
+                            fragment.title = tag.name
+                            val scenes = fetchScenesByTag(fragment.requireContext(), tag.id)
+                            adapter.addAll(0, scenes)
+                        }
+                    }).commitNow()
         }
     }
 }

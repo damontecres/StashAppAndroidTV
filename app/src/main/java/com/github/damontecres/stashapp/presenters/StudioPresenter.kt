@@ -21,10 +21,11 @@ class StudioPresenter : Presenter() {
     private var sDefaultBackgroundColor: Int by Delegates.notNull()
 
     override fun onCreateViewHolder(parent: ViewGroup): Presenter.ViewHolder {
-        vParent=parent
+        vParent = parent
 
         sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
-        sSelectedBackgroundColor = ContextCompat.getColor(parent.context,
+        sSelectedBackgroundColor = ContextCompat.getColor(
+            parent.context,
             R.color.selected_background
         )
         mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.movie)
@@ -48,25 +49,26 @@ class StudioPresenter : Presenter() {
         val cardView = viewHolder.view as ImageCardView
 
         cardView.titleText = studio.name
-        var contentText=ArrayList<String>()
-        if(studio.scene_count>0){
-            contentText+="${studio.scene_count}S"
+        var contentText = ArrayList<String>()
+        if (studio.scene_count > 0) {
+            contentText += "${studio.scene_count}S"
         }
-        if(studio.performer_count>0){
-            contentText+="${studio.performer_count}P"
+        if (studio.performer_count > 0) {
+            contentText += "${studio.performer_count}P"
         }
         cardView.contentText = contentText.joinToString(" ")
 
         if (!studio.image_path.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER)
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context).getString("stashApiKey", "")
+            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context)
+                .getString("stashApiKey", "")
             val url = createGlideUrl(studio.image_path, apiKey)
             Glide.with(viewHolder.view.context)
-                    .load(url)
-                    .fitCenter()
-                    .error(mDefaultCardImage)
-                    .into(cardView.mainImageView!!)
+                .load(url)
+                .fitCenter()
+                .error(mDefaultCardImage)
+                .into(cardView.mainImageView!!)
         }
     }
 

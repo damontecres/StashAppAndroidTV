@@ -25,7 +25,7 @@ class PerformerPresenter : Presenter() {
 
     override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         Log.d(TAG, "onCreateViewHolder")
-        vParent=parent
+        vParent = parent
         sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
         sSelectedBackgroundColor =
             ContextCompat.getColor(parent.context, R.color.selected_background)
@@ -51,17 +51,17 @@ class PerformerPresenter : Presenter() {
         Log.d(TAG, "onBindViewHolder")
         if (performer.image_path != null) {
             cardView.titleText = performer.name
-            cardView.contentText=performer.disambiguation
+            cardView.contentText = performer.disambiguation
 //            cardView.contentText = movie.studio
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context)
                 .getString("stashApiKey", "")
             val url = createGlideUrl(performer.image_path, apiKey)
             Glide.with(viewHolder.view.context)
-                    .load(url)
-                    .centerCrop()
-                    .error(mDefaultCardImage)
-                    .into(cardView.mainImageView!!)
+                .load(url)
+                .centerCrop()
+                .error(mDefaultCardImage)
+                .into(cardView.mainImageView!!)
         }
     }
 

@@ -25,10 +25,11 @@ class ScenePresenter : Presenter() {
     private var sDefaultBackgroundColor: Int by Delegates.notNull()
 
     override fun onCreateViewHolder(parent: ViewGroup): Presenter.ViewHolder {
-        vParent=parent
+        vParent = parent
 
         sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
-        sSelectedBackgroundColor = ContextCompat.getColor(parent.context,
+        sSelectedBackgroundColor = ContextCompat.getColor(
+            parent.context,
             R.color.selected_background
         )
         mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.movie)
@@ -57,13 +58,14 @@ class ScenePresenter : Presenter() {
 
         if (!scene.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context).getString("stashApiKey", "")
+            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context)
+                .getString("stashApiKey", "")
             val url = createGlideUrl(scene.paths.screenshot, apiKey)
             Glide.with(viewHolder.view.context)
-                    .load(url)
-                    .centerCrop()
-                    .error(mDefaultCardImage)
-                    .into(cardView.mainImageView!!)
+                .load(url)
+                .centerCrop()
+                .error(mDefaultCardImage)
+                .into(cardView.mainImageView!!)
         }
     }
 

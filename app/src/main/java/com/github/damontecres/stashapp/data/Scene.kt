@@ -5,7 +5,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class Scene (
+data class Scene(
     var id: Long,
     var title: String?,
     var details: String?,
@@ -15,9 +15,10 @@ data class Scene (
     var studioName: String?,
 ) : Parcelable
 
-fun sceneFromSlimSceneData(data: SlimSceneData): Scene{
-    return Scene(id=data.id.toLong(), title=data.title, details=data.details,
-        streamUrl=data.paths.stream, screenshotUrl = data.paths.screenshot,
+fun sceneFromSlimSceneData(data: SlimSceneData): Scene {
+    return Scene(
+        id = data.id.toLong(), title = data.title, details = data.details,
+        streamUrl = data.paths.stream, screenshotUrl = data.paths.screenshot,
         studioId = data.studio?.id, studioName = data.studio?.name
     )
 }

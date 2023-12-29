@@ -3,8 +3,11 @@ package com.github.damontecres.stashapp
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.os.Bundle
 import android.graphics.drawable.Drawable
+import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
 import androidx.leanback.widget.Action
@@ -17,13 +20,9 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
-import androidx.core.content.ContextCompat
-import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
-
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
@@ -74,13 +73,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     override fun onStart() {
         super.onStart()
-        if(performersAdapter.size()==0) {
+        if (performersAdapter.size() == 0) {
             // TODO: this is not efficient, but it does prevent duplicates during navigation
             viewLifecycleOwner.lifecycleScope.launch {
                 val apolloClient = createApolloClient(requireContext())
                 if (apolloClient != null && mSelectedMovie != null) {
                     val scene = fetchSceneById(requireContext(), mSelectedMovie!!.id.toInt())
-                    if(scene!=null) {
+                    if (scene != null) {
                         if (scene.tags.isNotEmpty()) {
                             tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
                         }
@@ -110,7 +109,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         val screenshotUrl = movie?.screenshotUrl
 
-        if(!screenshotUrl.isNullOrBlank()) {
+        if (!screenshotUrl.isNullOrBlank()) {
             val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getString("stashApiKey", "")
             val url = createGlideUrl(screenshotUrl, apiKey)
@@ -140,7 +139,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val height = convertDpToPixel(activity!!, DETAIL_THUMB_HEIGHT)
 
         val screenshotUrl = mSelectedMovie?.screenshotUrl
-        if(!screenshotUrl.isNullOrBlank()) {
+        if (!screenshotUrl.isNullOrBlank()) {
             val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getString("stashApiKey", "")
             val url = createGlideUrl(screenshotUrl, apiKey)
@@ -163,9 +162,11 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val actionAdapter = ArrayObjectAdapter()
 
         actionAdapter.add(
-                Action(
-                        ACTION_PLAY_SCENE,
-                        resources.getString(R.string.play_scene)))
+            Action(
+                ACTION_PLAY_SCENE,
+                resources.getString(R.string.play_scene)
+            )
+        )
         row.actionsAdapter = actionAdapter
 
         mAdapter.add(row)
@@ -175,17 +176,18 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         // Set detail background.
         val detailsPresenter = FullWidthDetailsOverviewRowPresenter(DetailsDescriptionPresenter())
         detailsPresenter.backgroundColor =
-                ContextCompat.getColor(activity!!, R.color.selected_background)
+            ContextCompat.getColor(activity!!, R.color.selected_background)
 
         // Hook up transition element.
         val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
         sharedElementHelper.setSharedElementEnterTransition(
-                activity, DetailsActivity.SHARED_ELEMENT_NAME)
+            activity, DetailsActivity.SHARED_ELEMENT_NAME
+        )
         detailsPresenter.setListener(sharedElementHelper)
         detailsPresenter.isParticipatingEntranceTransition = true
 
         detailsPresenter.onActionClickedListener = OnActionClickedListener { action ->
-            if (action.id == ACTION_PLAY_SCENE && mSelectedMovie!=null) {
+            if (action.id == ACTION_PLAY_SCENE && mSelectedMovie != null) {
                 val intent = Intent(activity!!, PlaybackActivity::class.java)
                 intent.putExtra(DetailsActivity.MOVIE, mSelectedMovie)
                 startActivity(intent)
@@ -199,7 +201,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private fun setupRelatedMovieListRow() {
         // TODO related scenes
         mAdapter.add(ListRow(HeaderItem(0, "Performers"), performersAdapter))
-        mAdapter.add(ListRow(HeaderItem(1,"Tags"), tagsAdapter))
+        mAdapter.add(ListRow(HeaderItem(1, "Tags"), tagsAdapter))
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 

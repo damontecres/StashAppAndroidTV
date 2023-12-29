@@ -8,13 +8,12 @@ import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class StashGridFragment(
     presenter: Presenter,
-    private val corountine: (suspend (fragment: StashGridFragment, adapter: ArrayObjectAdapter)->Unit)?
-):VerticalGridSupportFragment() {
+    private val corountine: (suspend (fragment: StashGridFragment, adapter: ArrayObjectAdapter) -> Unit)?
+) : VerticalGridSupportFragment() {
 
     val mAdapter = ArrayObjectAdapter(presenter)
 
@@ -22,10 +21,12 @@ class StashGridFragment(
         super.onCreate(savedInstanceState)
 
         val gridPresenter = VerticalGridPresenter()
-        gridPresenter.numberOfColumns = PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt("numberOfColumns", 5)
+        gridPresenter.numberOfColumns =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("numberOfColumns", 5)
         setGridPresenter(gridPresenter)
 
-        adapter=mAdapter
+        adapter = mAdapter
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -33,7 +34,7 @@ class StashGridFragment(
 
         onItemViewClickedListener = StashItemViewClickListener(requireActivity())
 
-        viewLifecycleOwner.lifecycleScope.launch{
+        viewLifecycleOwner.lifecycleScope.launch {
             corountine?.invoke(this@StashGridFragment, mAdapter)
         }
     }

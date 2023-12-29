@@ -13,10 +13,10 @@ data class Performer(
     var gender: GenderEnum?,
 ) : Parcelable
 
-fun performerFromPerformerData(p: PerformerData): Performer{
+fun performerFromPerformerData(p: PerformerData): Performer {
     return Performer(
-        id=p.id.toLong(),
-        name=p.name,
+        id = p.id.toLong(),
+        name = p.name,
         disambiguation = p.disambiguation,
         gender = p.gender
     )

@@ -1,8 +1,6 @@
 package com.github.damontecres.stashapp
 
-import android.content.Context
 import android.os.Bundle
-import android.os.Handler
 import android.text.TextUtils
 import androidx.leanback.app.SearchSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -17,10 +15,7 @@ import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
-import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
-import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
-import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.fromFindTag
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
@@ -30,7 +25,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class StashSearchFragment: SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
+class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
 
     private val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
@@ -59,7 +54,8 @@ class StashSearchFragment: SearchSupportFragment(), SearchSupportFragment.Search
     override fun onQueryTextChange(newQuery: String): Boolean {
         taskJob?.cancel()
         taskJob = viewLifecycleOwner.lifecycleScope.launch {
-            val searchDelay = PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt("searchDelay", 500)
+            val searchDelay = PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("searchDelay", 500)
             delay(searchDelay.toLong())
             search(newQuery)
         }
@@ -74,7 +70,7 @@ class StashSearchFragment: SearchSupportFragment(), SearchSupportFragment.Search
         return true
     }
 
-    private suspend fun search(query: String){
+    private suspend fun search(query: String) {
         sceneAdapter.clear()
         studioAdapter.clear()
         performerAdapter.clear()

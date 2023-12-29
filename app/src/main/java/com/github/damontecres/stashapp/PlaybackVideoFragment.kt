@@ -1,9 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.content.Context
-import android.media.MediaMetadataRetriever
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
@@ -32,8 +30,10 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         val scene = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE) as Scene?
 
         val glueHost = VideoSupportFragmentGlueHost(this@PlaybackVideoFragment)
-        var skipForward = PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt("skip_forward_time", 30)
-        var skipBack = PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt("skip_back_time", 10)
+        var skipForward = PreferenceManager.getDefaultSharedPreferences(requireContext())
+            .getInt("skip_forward_time", 30)
+        var skipBack = PreferenceManager.getDefaultSharedPreferences(requireContext())
+            .getInt("skip_back_time", 10)
 
         val playerAdapter = BasicMediaPlayerAdapter(requireActivity(), skipForward, skipBack)
 
@@ -52,13 +52,16 @@ class PlaybackVideoFragment : VideoSupportFragment() {
     }
 
 
-
-    class BasicMediaPlayerAdapter(context: Context, private var skipForward: Int, private var skipBack: Int) :
+    class BasicMediaPlayerAdapter(
+        context: Context,
+        private var skipForward: Int,
+        private var skipBack: Int
+    ) :
         MediaPlayerAdapter(context) {
 
-        override fun fastForward() = seekTo(currentPosition + skipForward*1000)
+        override fun fastForward() = seekTo(currentPosition + skipForward * 1000)
 
-        override fun rewind() = seekTo(currentPosition - skipBack*1000)
+        override fun rewind() = seekTo(currentPosition - skipBack * 1000)
 
         override fun getSupportedActions(): Long {
             return (ACTION_REWIND xor
@@ -107,11 +110,13 @@ class PlaybackVideoFragment : VideoSupportFragment() {
                         onActionClicked(forwardAction)
                         true
                     }
+
                     KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_MEDIA_REWIND,
                     KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD, KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
                         onActionClicked(rewindAction)
                         true
                     }
+
                     else -> super.onKey(v, keyCode, event)
                 }
             }
