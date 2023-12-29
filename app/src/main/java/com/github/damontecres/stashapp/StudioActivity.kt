@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -17,6 +18,8 @@ class StudioActivity : FragmentActivity() {
         setContentView(R.layout.activity_tag)
         if (savedInstanceState == null) {
             val studioId = this.intent.getIntExtra("studioId", -1)
+            val studioName = this.intent.getStringExtra("studioName")
+            findViewById<TextView>(R.id.tag_title).text = "${studioName}"
             getSupportFragmentManager().beginTransaction()
                 .replace(
                     R.id.tag_fragment,

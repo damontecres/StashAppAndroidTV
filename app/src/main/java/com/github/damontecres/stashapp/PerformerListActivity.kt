@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.FindScenesQuery
@@ -21,6 +22,8 @@ class PerformerListActivity : FragmentActivity() {
         setContentView(R.layout.activity_tag)
         if (savedInstanceState == null) {
             val performer = this.intent.getParcelableExtra<Performer>("performer")
+            findViewById<TextView>(R.id.tag_title).text =
+                "${performer?.name}" + if (performer?.disambiguation != null) "(${performer.disambiguation})" else ""
             getSupportFragmentManager().beginTransaction()
                 .replace(
                     R.id.tag_fragment,

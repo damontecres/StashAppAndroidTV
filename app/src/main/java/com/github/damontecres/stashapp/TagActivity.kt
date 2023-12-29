@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.widget.ArrayObjectAdapter
 import com.apollographql.apollo3.api.Optional
@@ -19,6 +20,7 @@ class TagActivity : FragmentActivity() {
         setContentView(R.layout.activity_tag)
         if (savedInstanceState == null) {
             val tag = this.intent.getParcelableExtra<Tag>("tag")
+            findViewById<TextView>(R.id.tag_title).text = "${tag?.name}"
             getSupportFragmentManager().beginTransaction()
                 .replace(
                     R.id.tag_fragment,
