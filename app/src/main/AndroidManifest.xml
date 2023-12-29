@@ -65,6 +65,9 @@
         <activity
             android:name=".SceneListActivity"
             android:exported="false" />
+        <activity
+            android:name=".PerformerListActivity"
+            android:exported="false" />
 
     </application>
 

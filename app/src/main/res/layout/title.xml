@@ -25,6 +25,13 @@
         android:layout_height="80dp"
         android:layout_toEndOf="@+id/search_orb" />
 
+    <Button
+        android:id="@+id/performers_button"
+        android:text="Performers"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_toEndOf="@+id/scenes_button" />
+
     <ImageButton
         android:id="@+id/settings_button"
         android:layout_width="80dp"

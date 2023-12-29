@@ -9,7 +9,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RelativeLayout
-import android.widget.TextView
 import androidx.core.content.ContextCompat.startActivity
 import androidx.leanback.widget.SearchOrbView
 import androidx.leanback.widget.TitleViewAdapter
@@ -38,7 +37,11 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
 
         })
         root.findViewById<Button>(R.id.scenes_button).setOnClickListener {
-            val intent = Intent(context, SceneActivity::class.java)
+            val intent = Intent(context, SceneListActivity::class.java)
+            startActivity(context, intent, null)
+        }
+        root.findViewById<Button>(R.id.performers_button).setOnClickListener {
+            val intent = Intent(context, PerformerListActivity::class.java)
             startActivity(context, intent, null)
         }
     }
