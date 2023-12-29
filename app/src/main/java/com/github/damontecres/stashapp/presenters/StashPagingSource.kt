@@ -13,19 +13,39 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.createApolloClient
 import com.github.damontecres.stashapp.data.CountAndList
 
+/**
+ * A PagingSource for Stash
+ *
+ * @property context
+ * @property pageSize how many items per page
+ * @property dataSupplier how to query and parse data
+ */
 class StashPagingSource<T : Query.Data, D : Any>(
     private val context: Context,
     private val pageSize: Int,
-    private val sortKey: String?,
     private val dataSupplier: DataSupplier<T, D>
 ) :
     PagingSource<Int, D>() {
 
     interface DataSupplier<T : Query.Data, D : Any> {
-        fun createQuery(filter: FindFilterType): Query<T>
+        /**
+         * Create query with the given filter
+         *
+         * @param filter the filter to use
+         */
+        fun createQuery(filter: FindFilterType?): Query<T>
 
+        /**
+         * Parse the data returned from the query created by [createQuery]
+         *
+         * @param data the Query's data object
+         * @return The list of data along with the total count
+         */
         fun parseQuery(data: T?): CountAndList<D>
 
+        /**
+         * How should the data be sorted by default
+         */
         fun getSortKey(): String?
     }
 
@@ -36,7 +56,7 @@ class StashPagingSource<T : Query.Data, D : Any>(
                 FindFilterType(
                     per_page = Optional.present(pageSize),
                     page = Optional.present(page),
-                    sort = Optional.present(sortKey),
+                    sort = Optional.presentIfNotNull(dataSupplier.getSortKey()),
                     direction = Optional.present(SortDirectionEnum.DESC)
                 )
             )
@@ -56,11 +76,12 @@ class StashPagingSource<T : Query.Data, D : Any>(
             if (results.count < 0) {
                 return LoadResult.Error(RuntimeException("Invalid count"))
             }
+            // If the total fetched results is less than the total number of items, then there is a next page
             val nextPageNum = if (pageSize * pageNum < results.count) pageNum + 1 else null
 
             return LoadResult.Page(
                 data = results.list,
-                prevKey = if (pageNum > 1) pageNum - 1 else null,
+                prevKey = if (pageNum > 1) pageNum - 1 else null, // Only a previous page if current page is 2+
                 nextKey = nextPageNum
             )
         } catch (e: ApolloException) {

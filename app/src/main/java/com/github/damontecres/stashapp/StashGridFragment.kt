@@ -57,7 +57,6 @@ class StashGridFragment<T : Query.Data, D : Any>(
             StashPagingSource(
                 requireContext(),
                 pageSize,
-                dataSupplier.getSortKey(),
                 dataSupplier = dataSupplier
             )
         }.flow

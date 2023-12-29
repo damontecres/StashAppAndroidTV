@@ -22,11 +22,20 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 
 object Constants {
+    /**
+     * The name of the header for authenticating to Stash
+     */
     const val STASH_API_HEADER = "ApiKey"
+    const val PREF_KEY_STASH_URL = "stashUrl"
+    const val PREF_KEY_STASH_API_KEY = "stashApi"
 }
 
+/**
+ * Create a [GlideUrl], adding the API key to the headers if needed
+ */
 fun createGlideUrl(url: String, apiKey: String?): GlideUrl {
     return if (apiKey.isNullOrBlank()) {
         GlideUrl(url)
@@ -40,6 +49,9 @@ fun createGlideUrl(url: String, apiKey: String?): GlideUrl {
     }
 }
 
+/**
+ * Add API key to headers for Apollo GraphQL requests
+ */
 class AuthorizationInterceptor(val apiKey: String?) : HttpInterceptor {
     override suspend fun intercept(
         request: HttpRequest,
@@ -56,13 +68,16 @@ class AuthorizationInterceptor(val apiKey: String?) : HttpInterceptor {
     }
 }
 
+/**
+ * Create a client for accessing Stash's GraphQL API
+ */
 fun createApolloClient(stashUrl: String?, apiKey: String?): ApolloClient? {
     return if (stashUrl!!.isNotBlank()) {
         var url = Uri.parse(stashUrl.trim())
         val scheme = if (url.scheme.isNullOrBlank()) "http" else url.scheme
         url = url.buildUpon()
-            .scheme(scheme)
-            .path("/graphql")
+            .scheme(scheme) // Set the scheme if the user only entered a domain or IP
+            .path("/graphql") // Ensure the URL is the graphql endpoint
             .build()
         ApolloClient.Builder()
             .serverUrl(url.toString())
@@ -73,8 +88,11 @@ fun createApolloClient(stashUrl: String?, apiKey: String?): ApolloClient? {
     }
 }
 
+/**
+ * Create a client for accessing Stash's GraphQL API using the default shared preferences for the URL & API key
+ */
 fun createApolloClient(context: Context): ApolloClient? {
-    var stashUrl = PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
+    val stashUrl = PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
     val apiKey = PreferenceManager.getDefaultSharedPreferences(context).getString("stashApiKey", "")
     return createApolloClient(stashUrl, apiKey)
 }
@@ -90,6 +108,12 @@ suspend fun getStashServerInfo(
     }
 }
 
+/**
+ * Test whether the app can connect to Stash
+ *
+ * @param context the context to pull preferences from
+ * @param showToast whether a Toast message should be displayed with error/success information
+ */
 suspend fun testStashConnection(context: Context, showToast: Boolean): Boolean {
     val client = createApolloClient(context)
     if (client == null) {
@@ -149,6 +173,9 @@ suspend fun testStashConnection(context: Context, showToast: Boolean): Boolean {
     return false
 }
 
+/**
+ * Get Scene data for a list of scene IDs
+ */
 suspend fun fetchScenesById(context: Context, sceneIds: List<Int>): List<SlimSceneData> {
     val apolloClient = createApolloClient(context)
     if (apolloClient != null) {
@@ -160,6 +187,9 @@ suspend fun fetchScenesById(context: Context, sceneIds: List<Int>): List<SlimSce
     return listOf()
 }
 
+/**
+ * Get a Scene by ID
+ */
 suspend fun fetchSceneById(context: Context, sceneId: Int): SlimSceneData? {
     val results = fetchScenesById(context, listOf(sceneId))
     return results.getOrNull(0)
