@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <uses-feature
         android:name="android.hardware.touchscreen"
@@ -10,6 +11,8 @@
     <uses-feature
         android:name="android.software.leanback"
         android:required="true" />
+    <uses-feature android:name="android.hardware.microphone"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
