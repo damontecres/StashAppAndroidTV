@@ -10,7 +10,7 @@ plugins {
 fun getAppVersion(): String {
     val stdout = ByteArrayOutputStream()
     exec {
-        commandLine = listOf("git", "describe", "--tags")
+        commandLine = listOf("git", "describe", "--tags", "--long")
         standardOutput = stdout
     }
     return stdout.toString().trim().removePrefix("v")
@@ -26,7 +26,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = getAppVersion()
-
     }
 
     buildTypes {
@@ -36,6 +35,18 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+        }
+
+        applicationVariants.all {
+            val variant = this
+            variant.outputs
+                .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
+                .forEach { output ->
+                    val outputFileName =
+                        "StashAppAndroidTV-${variant.baseName}-${variant.versionName}-${variant.versionCode}.apk"
+                    output.outputFileName = outputFileName
+                }
         }
     }
     compileOptions {
