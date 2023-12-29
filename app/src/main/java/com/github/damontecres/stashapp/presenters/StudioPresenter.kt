@@ -28,7 +28,7 @@ class StudioPresenter : Presenter() {
             parent.context,
             R.color.selected_background
         )
-        mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.movie)
+        mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
 
         val cardView = object : ImageCardView(parent.context) {
             override fun setSelected(selected: Boolean) {
