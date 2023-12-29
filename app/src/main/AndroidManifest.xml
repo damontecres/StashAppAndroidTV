@@ -13,17 +13,17 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/stash_logo"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.StashAppAndroidTV">
         <activity
             android:name=".MainActivity"
-            android:banner="@drawable/app_icon_your_company"
+            android:banner="@mipmap/stash_logo"
             android:exported="true"
-            android:icon="@drawable/app_icon_your_company"
+            android:icon="@mipmap/stash_logo"
             android:label="@string/app_name"
-            android:logo="@drawable/app_icon_your_company"
+            android:logo="@mipmap/stash_logo"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

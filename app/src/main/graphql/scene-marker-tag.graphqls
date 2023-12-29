@@ -1,4 +1,0 @@
-type SceneMarkerTag {
-  tag: Tag!
-  scene_markers: [SceneMarker!]!
-}
