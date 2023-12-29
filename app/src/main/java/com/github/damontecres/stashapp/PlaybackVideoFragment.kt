@@ -96,20 +96,26 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 
         override fun onKey(v: View?, keyCode: Int, event: KeyEvent): Boolean {
             // TODO: left/right pauses
+            // TODO: if visible, fast forward button doesn't work
             if (host.isControlsOverlayVisible || event.repeatCount > 0) {
                 return super.onKey(v, keyCode, event)
             }
-            return when (keyCode) {
-                KeyEvent.KEYCODE_DPAD_RIGHT -> if (event.action != KeyEvent.ACTION_DOWN) false else {
-                    onActionClicked(forwardAction)
-                    true
+            if (event.action != KeyEvent.ACTION_DOWN) {
+                return when (keyCode) {
+                    KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+                    KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD, KeyEvent.KEYCODE_MEDIA_NEXT -> {
+                        onActionClicked(forwardAction)
+                        true
+                    }
+                    KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_MEDIA_REWIND,
+                    KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD, KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
+                        onActionClicked(rewindAction)
+                        true
+                    }
+                    else -> super.onKey(v, keyCode, event)
                 }
-                KeyEvent.KEYCODE_DPAD_LEFT -> if (event.action != KeyEvent.ACTION_DOWN) false else {
-                    onActionClicked(rewindAction)
-                    true
-                }
-                else -> super.onKey(v, keyCode, event)
             }
+            return false
         }
     }
 

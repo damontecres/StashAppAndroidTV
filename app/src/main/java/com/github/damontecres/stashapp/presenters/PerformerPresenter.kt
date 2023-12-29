@@ -51,6 +51,7 @@ class PerformerPresenter : Presenter() {
         Log.d(TAG, "onBindViewHolder")
         if (performer.image_path != null) {
             cardView.titleText = performer.name
+            cardView.contentText=performer.disambiguation
 //            cardView.contentText = movie.studio
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context)
