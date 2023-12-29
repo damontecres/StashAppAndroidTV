@@ -21,6 +21,6 @@
         android:layout_height="80dp"
         android:layout_gravity="end"
         android:contentDescription="Preferences"
-        android:src="@android:drawable/ic_menu_preferences"
-        android:layout_alignParentEnd="true" />
+        android:src="@drawable/vector_settings"
+        android:layout_alignParentEnd="true"/>
 </RelativeLayout>
