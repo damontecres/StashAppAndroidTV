@@ -1,8 +1,19 @@
+import java.io.ByteArrayOutputStream
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
     id("com.apollographql.apollo3") version "3.8.2"
+}
+
+fun getAppVersion(): String {
+    val stdout = ByteArrayOutputStream()
+    exec {
+        commandLine = listOf("git", "describe", "--tags")
+        standardOutput = stdout
+    }
+    return stdout.toString().trim().removePrefix("v")
 }
 
 android {
@@ -14,7 +25,7 @@ android {
         minSdk = 21
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = getAppVersion()
 
     }
 
