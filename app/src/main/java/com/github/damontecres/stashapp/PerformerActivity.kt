@@ -24,7 +24,7 @@ class PerformerActivity : FragmentActivity() {
                 .replace(
                     R.id.performer_list_fragment,
                     StashGridFragment(
-                        ScenePresenter(), sceneComparator, SceneDataSupplier(
+                        sceneComparator, SceneDataSupplier(
                             SceneFilterType(
                                 performers = Optional.present(
                                     MultiCriterionInput(

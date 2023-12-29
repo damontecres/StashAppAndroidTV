@@ -25,7 +25,7 @@ class PerformerListActivity : FragmentActivity() {
                 .replace(
                     R.id.tag_fragment,
                     StashGridFragment(
-                        PerformerPresenter(), performerComparator, PerformerDataSupplier()
+                        performerComparator, PerformerDataSupplier()
                     )
                 )
                 .commitNow()

@@ -21,16 +21,23 @@
     <Button
         android:id="@+id/scenes_button"
         android:text="Scenes"
-        android:layout_width="80dp"
+        android:layout_width="88dp"
         android:layout_height="80dp"
         android:layout_toEndOf="@+id/search_orb" />
 
     <Button
         android:id="@+id/performers_button"
         android:text="Performers"
-        android:layout_width="80dp"
+        android:layout_width="120dp"
         android:layout_height="80dp"
         android:layout_toEndOf="@+id/scenes_button" />
+
+    <Button
+        android:id="@+id/studios_button"
+        android:text="Studios"
+        android:layout_width="88dp"
+        android:layout_height="80dp"
+        android:layout_toEndOf="@+id/performers_button" />
 
     <ImageButton
         android:id="@+id/settings_button"

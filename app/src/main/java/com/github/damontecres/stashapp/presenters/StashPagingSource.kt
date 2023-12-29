@@ -44,22 +44,26 @@ class StashPagingSource<T : Query.Data, D : Any>(
         fun parseQuery(data: T?): CountAndList<D>
 
         /**
-         * How should the data be sorted by default
+         * Get the default filter
+         *
+         * By default, this sorts by name ascending
          */
-        fun getSortKey(): String?
+        fun getDefaultFilter(): FindFilterType {
+            return FindFilterType(
+                sort = Optional.present("name"),
+                direction = Optional.present(SortDirectionEnum.ASC)
+            )
+        }
     }
 
     private suspend fun fetchPage(page: Int): CountAndList<D> {
         val apolloClient = createApolloClient(context)
         if (apolloClient != null) {
-            val query = dataSupplier.createQuery(
-                FindFilterType(
-                    per_page = Optional.present(pageSize),
-                    page = Optional.present(page),
-                    sort = Optional.presentIfNotNull(dataSupplier.getSortKey()),
-                    direction = Optional.present(SortDirectionEnum.DESC)
-                )
+            val filter = dataSupplier.getDefaultFilter().copy(
+                per_page = Optional.present(pageSize),
+                page = Optional.present(page),
             )
+            val query = dataSupplier.createQuery(filter)
             val results = apolloClient.query(query).execute()
             return dataSupplier.parseQuery(results.data)
         }

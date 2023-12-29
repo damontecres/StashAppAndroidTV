@@ -68,6 +68,9 @@
         <activity
             android:name=".PerformerListActivity"
             android:exported="false" />
+        <activity
+            android:name=".StudioListActivity"
+            android:exported="false" />
 
     </application>
 

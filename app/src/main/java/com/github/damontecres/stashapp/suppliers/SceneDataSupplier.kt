@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.presenters.StashPagingSource
 
@@ -24,7 +25,10 @@ class SceneDataSupplier(private val sceneFilter: SceneFilterType? = null) :
         return CountAndList(count, scenes)
     }
 
-    override fun getSortKey(): String? {
-        return "date"
+    override fun getDefaultFilter(): FindFilterType {
+        return FindFilterType(
+            sort = Optional.present("date"),
+            direction = Optional.present(SortDirectionEnum.DESC)
+        )
     }
 }

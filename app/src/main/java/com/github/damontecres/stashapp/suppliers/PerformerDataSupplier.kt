@@ -22,10 +22,6 @@ class PerformerDataSupplier(private val performerFilter: PerformerFilterType?) :
         )
     }
 
-    override fun getSortKey(): String? {
-        return "created_at"
-    }
-
     override fun parseQuery(data: FindPerformersQuery.Data?): CountAndList<PerformerData> {
         val count = data?.findPerformers?.count ?: -1
         val performers = data?.findPerformers?.performers?.map {

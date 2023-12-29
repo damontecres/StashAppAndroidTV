@@ -2,11 +2,11 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
-import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
+import com.github.damontecres.stashapp.data.Performer
+import com.github.damontecres.stashapp.presenters.StudioPresenter
+import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
 
-
-class SceneListActivity : FragmentActivity() {
+class StudioListActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)
@@ -14,9 +14,12 @@ class SceneListActivity : FragmentActivity() {
             getSupportFragmentManager().beginTransaction()
                 .replace(
                     R.id.tag_fragment,
-                    StashGridFragment(sceneComparator, SceneDataSupplier())
+                    StashGridFragment(
+                        studioComparator, StudioDataSupplier()
+                    )
                 )
                 .commitNow()
         }
     }
 }
+

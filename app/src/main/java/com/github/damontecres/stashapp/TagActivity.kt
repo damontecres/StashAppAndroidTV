@@ -23,7 +23,7 @@ class TagActivity : FragmentActivity() {
                 .replace(
                     R.id.tag_fragment,
                     StashGridFragment(
-                        ScenePresenter(), sceneComparator, SceneDataSupplier(
+                        sceneComparator, SceneDataSupplier(
                             SceneFilterType(
                                 tags = Optional.present(
                                     HierarchicalMultiCriterionInput(
