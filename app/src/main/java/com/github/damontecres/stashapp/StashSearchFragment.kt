@@ -26,9 +26,13 @@ import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class StashSearchFragment: SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
+    private var taskJob: Job? = null
+
     private val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
 
     private val sceneAdapter = ArrayObjectAdapter(ScenePresenter())
@@ -53,22 +57,37 @@ class StashSearchFragment: SearchSupportFragment(), SearchSupportFragment.Search
     }
 
     override fun onQueryTextChange(newQuery: String): Boolean {
-        // TODO
+        taskJob?.cancel()
+        taskJob = viewLifecycleOwner.lifecycleScope.launch {
+            val searchDelay = PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt("searchDelay", 500)
+            delay(searchDelay.toLong())
+            search(newQuery)
+        }
         return true
     }
 
     override fun onQueryTextSubmit(query: String): Boolean {
+        taskJob?.cancel()
+        taskJob = viewLifecycleOwner.lifecycleScope.launch {
+            search(query)
+        }
+        return true
+    }
+
+    private suspend fun search(query: String){
         sceneAdapter.clear()
         studioAdapter.clear()
         performerAdapter.clear()
         tagAdapter.clear()
 
         if (!TextUtils.isEmpty(query)) {
-            val perPage = PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt("maxSearchResults", 25)
+            val perPage = PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("maxSearchResults", 25)
             val filter = Optional.present(
                 FindFilterType(
                     q = Optional.present(query), per_page = Optional.present(perPage)
-                ))
+                )
+            )
             val apolloClient = createApolloClient(requireContext())
             if (apolloClient != null) {
                 viewLifecycleOwner.lifecycleScope.launch {
@@ -79,15 +98,18 @@ class StashSearchFragment: SearchSupportFragment(), SearchSupportFragment.Search
 
                 }
                 viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient.query(FindStudiosQuery(filter = filter)).execute()
+                    val results =
+                        apolloClient.query(FindStudiosQuery(filter = filter)).execute()
                     val mapped =
                         results.data?.findStudios?.studios?.map { it.studioData }.orEmpty()
                     studioAdapter.addAll(0, mapped)
                 }
                 viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient.query(FindPerformersQuery(filter = filter)).execute()
+                    val results =
+                        apolloClient.query(FindPerformersQuery(filter = filter)).execute()
                     val mapped =
-                        results.data?.findPerformers?.performers?.map { it.performerData }.orEmpty()
+                        results.data?.findPerformers?.performers?.map { it.performerData }
+                            .orEmpty()
                     performerAdapter.addAll(0, mapped)
                 }
                 viewLifecycleOwner.lifecycleScope.launch {
@@ -98,10 +120,5 @@ class StashSearchFragment: SearchSupportFragment(), SearchSupportFragment.Search
                 }
             }
         }
-        return true
-    }
-
-    companion object {
-        private val SEARCH_DELAY_MS = 300L
     }
 }

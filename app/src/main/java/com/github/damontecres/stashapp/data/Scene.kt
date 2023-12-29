@@ -10,9 +10,14 @@ data class Scene (
     var title: String?,
     var details: String?,
     var streamUrl: String?,
-    var screenshotUrl: String?
+    var screenshotUrl: String?,
+    var studioId: String?,
+    var studioName: String?,
 ) : Parcelable
 
 fun sceneFromSlimSceneData(data: SlimSceneData): Scene{
-    return Scene(id= data.id.toLong(), title=data.title, details=data.details, streamUrl=data.paths.stream, screenshotUrl = data.paths.screenshot)
+    return Scene(id=data.id.toLong(), title=data.title, details=data.details,
+        streamUrl=data.paths.stream, screenshotUrl = data.paths.screenshot,
+        studioId = data.studio?.id, studioName = data.studio?.name
+    )
 }

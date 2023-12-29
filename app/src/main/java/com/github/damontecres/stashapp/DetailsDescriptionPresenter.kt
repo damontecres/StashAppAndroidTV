@@ -12,8 +12,8 @@ class DetailsDescriptionPresenter : AbstractDetailsDescriptionPresenter() {
         val scene = item as Scene
 
         viewHolder.title.text = scene.title
-        // TODO
-//        viewHolder.subtitle.text = scene.studio?.name
+        viewHolder.subtitle.text = scene.studioName
+        // TODO: override max lines in the body text somehow
         viewHolder.body.text = scene.details
     }
 }

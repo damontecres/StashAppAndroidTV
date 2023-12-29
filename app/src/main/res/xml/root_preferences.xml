@@ -16,7 +16,40 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/prefs_settings">
+    <PreferenceCategory app:title="Search">
+        <SeekBarPreference
+            app:key="maxSearchResults"
+            app:title="Maximum number of search results"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="true"
+            android:min="1"
+            android:max="100"
+            app:defaultValue="25"
+            />
+        <SeekBarPreference
+            app:key="searchDelay"
+            app:title="Wait for searching (ms)"
+            app:seekBarIncrement="50"
+            app:showSeekBarValue="true"
+            android:min="50"
+            android:max="2000"
+            app:defaultValue="500"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Interface">
+        <SeekBarPreference
+            app:key="numberOfColumns"
+            app:title="Number of Columns"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="true"
+            android:min="1"
+            android:max="12"
+            app:defaultValue="5"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Playback">
         <SeekBarPreference
             app:key="skip_forward_time"
             app:title="Skip forward (seconds)"
@@ -35,16 +68,6 @@
             android:max="300"
             app:defaultValue="10"
             />
-        <SeekBarPreference
-            app:key="numberOfColumns"
-            app:title="Number of Columns"
-            app:seekBarIncrement="1"
-            app:showSeekBarValue="true"
-            android:min="1"
-            android:max="12"
-            app:defaultValue="5"
-            />
-
     </PreferenceCategory>
 
 </PreferenceScreen>
