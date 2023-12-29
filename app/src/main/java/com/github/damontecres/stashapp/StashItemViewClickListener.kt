@@ -12,6 +12,7 @@ import androidx.leanback.widget.RowPresenter
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.data.performerFromPerformerData
 import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
 
@@ -48,10 +49,9 @@ class StashItemViewClickListener(private val activity: Activity): OnItemViewClic
             )
                 .toBundle()
             activity.startActivity(intent, bundle)
-        }else if(item is SlimSceneData.Tag) {
+        }else if(item is Tag) {
             val intent = Intent(activity, TagActivity::class.java)
-            intent.putExtra("tagId", item.id.toInt())
-            intent.putExtra("tagName", item.name)
+            intent.putExtra("tag", item)
             val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
                 activity,
                 (itemViewHolder.view as ImageCardView).mainImageView,

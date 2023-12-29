@@ -8,6 +8,7 @@ import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.data.Tag
 import kotlin.properties.Delegates
 
 
@@ -44,10 +45,11 @@ class TagPresenter : Presenter() {
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
-        val tag = item as SlimSceneData.Tag
+        val tag = item as Tag
         val cardView = viewHolder.view as ImageCardView
 
         cardView.titleText = tag.name
+        // TODO: content text
         cardView.contentText=null
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 

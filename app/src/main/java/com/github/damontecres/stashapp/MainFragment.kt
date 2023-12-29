@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.content.Intent
 import java.util.Timer
 import java.util.TimerTask
 
@@ -191,8 +192,9 @@ class MainFragment : BrowseSupportFragment() {
 
     private fun setupEventListeners() {
         setOnSearchClickedListener {
-            Toast.makeText(activity!!, "Implement your own in-app search", Toast.LENGTH_LONG)
-                .show()
+//            Toast.makeText(activity!!, "Implement your own in-app search", Toast.LENGTH_LONG)
+//                .show()
+            requireActivity().startActivity(Intent(requireContext(), SearchActivity::class.java))
         }
 
         onItemViewClickedListener = StashItemViewClickListener(requireActivity())

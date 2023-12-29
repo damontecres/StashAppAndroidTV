@@ -29,6 +29,7 @@ import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.data.fromSlimSceneDataTag
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import kotlinx.coroutines.launch
@@ -81,7 +82,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     val scene = fetchSceneById(requireContext(), mSelectedMovie!!.id.toInt())
                     if(scene!=null) {
                         if (scene.tags.isNotEmpty()) {
-                            tagsAdapter.addAll(0, scene.tags)
+                            tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
                         }
 
                         val performerIds = scene?.performers?.map {

@@ -51,6 +51,9 @@
             android:exported="false"/>
         <activity android:name=".StudioActivity"
             android:exported="false"/>
+        <activity android:name=".SearchActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme"/>
     </application>
 
 </manifest>

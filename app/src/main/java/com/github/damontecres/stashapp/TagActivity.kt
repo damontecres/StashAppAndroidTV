@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.widget.ArrayObjectAdapter
+import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 
 
@@ -13,11 +14,10 @@ class TagActivity : FragmentActivity() {
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                 .replace(R.id.tag_fragment, StashGridFragment(ScenePresenter()) { fragment: StashGridFragment, adapter: ArrayObjectAdapter ->
-                    val tagId = fragment.requireActivity().intent.getIntExtra("tagId", -1)
-                    val tagName = fragment.requireActivity().intent.getStringExtra("tagName")
-                    fragment.title=tagName
-                    if (tagId >= 0) {
-                        val scenes = fetchScenesByTag(fragment.requireContext(), tagId)
+                    val tag =fragment.requireActivity().intent.getParcelableExtra<Tag>("tag")
+                    if(tag!=null) {
+                        fragment.title = tag.name
+                        val scenes = fetchScenesByTag(fragment.requireContext(), tag.id)
                         adapter.addAll(0, scenes)
                     }
                 }).commitNow()
