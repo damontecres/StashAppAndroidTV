@@ -2,20 +2,34 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.view.View
+import androidx.leanback.R
 import androidx.leanback.app.VerticalGridSupportFragment
+import androidx.leanback.paging.PagingDataAdapter
 import androidx.leanback.widget.ArrayObjectAdapter
+import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
+import androidx.recyclerview.widget.DiffUtil
+import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.presenters.StashPagingSource
+import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class StashGridFragment(
+class StashGridFragment<T : Query.Data, D : Any>(
     presenter: Presenter,
-    private val corountine: (suspend (fragment: StashGridFragment, adapter: ArrayObjectAdapter) -> Unit)?
+    comparator: DiffUtil.ItemCallback<D>,
+    private val dataSupplier: StashPagingSource.DataSupplier<T, D>,
 ) : VerticalGridSupportFragment() {
 
-    val mAdapter = ArrayObjectAdapter(presenter)
+    private val mAdapter = PagingDataAdapter(presenter, comparator)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,9 +48,25 @@ class StashGridFragment(
 
         onItemViewClickedListener = StashItemViewClickListener(requireActivity())
 
+        val pageSize = PreferenceManager.getDefaultSharedPreferences(requireContext())
+            .getInt("maxSearchResults", 50)
+
+        val flow = Pager(
+            PagingConfig(pageSize = pageSize, prefetchDistance = pageSize * 2)
+        ) {
+            StashPagingSource(
+                requireContext(),
+                pageSize,
+                dataSupplier.getSortKey(),
+                dataSupplier = dataSupplier
+            )
+        }.flow
+            .cachedIn(viewLifecycleOwner.lifecycleScope)
+
         viewLifecycleOwner.lifecycleScope.launch {
-            corountine?.invoke(this@StashGridFragment, mAdapter)
+            flow.collectLatest {
+                mAdapter.submitData(it)
+            }
         }
     }
-
 }

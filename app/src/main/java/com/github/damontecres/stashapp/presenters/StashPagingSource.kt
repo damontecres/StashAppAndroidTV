@@ -25,6 +25,8 @@ class StashPagingSource<T : Query.Data, D : Any>(
         fun createQuery(filter: FindFilterType): Query<T>
 
         fun parseQuery(data: T?): CountAndList<D>
+
+        fun getSortKey(): String?
     }
 
     private suspend fun fetchPage(page: Int): CountAndList<D> {

@@ -30,52 +30,11 @@ class SceneActivity : FragmentActivity() {
         setContentView(R.layout.activity_tag)
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                .replace(R.id.tag_fragment, SceneFragment())
+                .replace(
+                    R.id.tag_fragment,
+                    StashGridFragment(ScenePresenter(), sceneComparator, SceneDataSupplier())
+                )
                 .commitNow()
-        }
-    }
-}
-
-class SceneFragment : VerticalGridSupportFragment() {
-
-    private val mAdapter = PagingDataAdapter(ScenePresenter(), sceneComparator)
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val gridPresenter = VerticalGridPresenter()
-        gridPresenter.numberOfColumns =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("numberOfColumns", 5)
-        setGridPresenter(gridPresenter)
-
-        adapter = mAdapter
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        onItemViewClickedListener = StashItemViewClickListener(requireActivity())
-
-        val pageSize = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            .getInt("maxSearchResults", 50)
-
-        val flow = Pager(
-            PagingConfig(pageSize = pageSize, prefetchDistance = pageSize * 2)
-        ) {
-            StashPagingSource(
-                requireContext(),
-                pageSize,
-                "date",
-                dataSupplier = SceneDataSupplier()
-            )
-        }.flow
-            .cachedIn(viewLifecycleOwner.lifecycleScope)
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            flow.collectLatest {
-                mAdapter.submitData(it)
-            }
         }
     }
 }
