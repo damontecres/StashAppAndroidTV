@@ -7,10 +7,10 @@ import androidx.fragment.app.FragmentActivity
 class SearchActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_tag)
+        setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                .replace(R.id.tag_fragment, StashSearchFragment()).commitNow()
+                .replace(R.id.main_browse_fragment, StashSearchFragment()).commitNow()
         }
     }
 }
