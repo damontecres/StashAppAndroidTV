@@ -62,7 +62,8 @@ class ScenePresenter : Presenter() {
         } else {
             cardView.titleText = scene.title
         }
-        cardView.contentText = """${scene.date} (${scene.performers.size}P, ${scene.tags.size}T)"""
+        cardView.contentText =
+            """${scene.date.orEmpty()} (${scene.performers.size}P, ${scene.tags.size}T)"""
 
         if (!scene.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
