@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.ApolloResponse
@@ -23,7 +22,6 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 
 object Constants {
     /**
@@ -150,6 +148,7 @@ suspend fun testStashConnection(context: Context, showToast: Boolean): Boolean {
                 return true
             }
         } catch (ex: ApolloHttpException) {
+            Log.e("Constants", "ApolloHttpException", ex)
             if (ex.statusCode == 401 || ex.statusCode == 403) {
                 if (showToast) {
                     Toast.makeText(
@@ -166,6 +165,7 @@ suspend fun testStashConnection(context: Context, showToast: Boolean): Boolean {
                 }
             }
         } catch (ex: ApolloException) {
+            Log.e("Constants", "ApolloException", ex)
             if (showToast) {
                 Toast.makeText(
                     context,

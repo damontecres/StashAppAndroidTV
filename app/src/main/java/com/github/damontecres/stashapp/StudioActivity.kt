@@ -6,9 +6,7 @@ import androidx.fragment.app.FragmentActivity
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
-import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 
 

@@ -2,12 +2,8 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.view.View
-import androidx.leanback.R
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.paging.PagingDataAdapter
-import androidx.leanback.widget.ArrayObjectAdapter
-import androidx.leanback.widget.BrowseFrameLayout
-import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
@@ -17,11 +13,8 @@ import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPagingSource
 import com.github.damontecres.stashapp.presenters.stashPresenterSelector
-import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 

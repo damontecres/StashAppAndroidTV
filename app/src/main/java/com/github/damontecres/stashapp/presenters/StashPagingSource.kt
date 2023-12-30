@@ -3,11 +3,9 @@ package com.github.damontecres.stashapp.presenters
 import android.content.Context
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.apollographql.apollo3.exception.ApolloException
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.createApolloClient

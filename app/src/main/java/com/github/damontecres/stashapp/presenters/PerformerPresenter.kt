@@ -29,7 +29,8 @@ class PerformerPresenter : Presenter() {
         sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
         sSelectedBackgroundColor =
             ContextCompat.getColor(parent.context, R.color.selected_background)
-        mDefaultCardImage = ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
+        mDefaultCardImage =
+            ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
 
         val cardView = object : ImageCardView(parent.context) {
             override fun setSelected(selected: Boolean) {
@@ -85,7 +86,7 @@ class PerformerPresenter : Presenter() {
         private val TAG = "CardPresenter"
 
         private val CARD_HEIGHT = 381
-        private val CARD_WIDTH = CARD_HEIGHT*2/3
+        private val CARD_WIDTH = CARD_HEIGHT * 2 / 3
 
     }
 }
