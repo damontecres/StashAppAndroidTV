@@ -11,6 +11,7 @@ import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.createGlideUrl
+import java.io.File
 import kotlin.properties.Delegates
 
 
@@ -53,8 +54,14 @@ class ScenePresenter : Presenter() {
         val scene = item as SlimSceneData
         val cardView = viewHolder.view as ImageCardView
         Log.d(TAG, "onBindViewHolder: ${scene.title}")
-
-        cardView.titleText = scene.title
+        if (scene.title.isNullOrBlank()) {
+            val path = scene.files.firstOrNull()?.videoFileData?.path
+            if (path != null) {
+                cardView.titleText = File(path).name
+            }
+        } else {
+            cardView.titleText = scene.title
+        }
         cardView.contentText = """${scene.date} (${scene.performers.size}P, ${scene.tags.size}T)"""
 
         if (!scene.paths.screenshot.isNullOrBlank()) {
