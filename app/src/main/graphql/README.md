@@ -4,4 +4,4 @@ This directory contains the GraphQL query files.
 
 ## Queries
 
-The query files (`*.graphql`) are modified from the queries in https://github.com/stashapp/stash/tree/develop/graphql.
+Some of the query files (`*.graphql`) are modified from the queries in https://github.com/stashapp/stash/tree/develop/graphql.

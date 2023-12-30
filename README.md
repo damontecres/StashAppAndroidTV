@@ -1,8 +1,14 @@
 # Stash App for Android TV
 
-A basic Android TV app for browsing and playing videos from a [Stash](https://github.com/stashapp/stash) server.
+This is a basic Android TV app for browsing and playing videos from a [Stash](https://github.com/stashapp/stash) server.
+
+Not all features of Stash are supported, but the basics for browsing, searching, and playing scenes should work.
+
+The app is not intended to perform administrative functions such as scanning, scraping, or editing details.
 
 ## Setup
+
+Make sure your Stash server is running and that you can access it over the network (not `localhost`).
 
 ### Installation
 
@@ -19,13 +25,15 @@ The app does not auto-update, so you will need to repeat this process for each n
 ### Configuration
 
 1. Open the app
-2. Go to Settings (the wrench or gear icon at the top)
-3. Enter the URL of your Stash server (e.g. `http://192.168.1.122:9999`)
-4. If you have enabled authentication on your Stash server, you need to enter the API Key
-
-    a. Use your phone to browse to your Stash server and copy the API Key from the "Settings" page
-
-    b. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) to paste the API Key into the app
+1. Open settings (the gear icon at the top-right)
+1. Enter the URL of your Stash server (e.g. `http://192.168.1.122:9999`)
+    - Don't use `localhost`; use the IP address or domain of your Stash server
+    - If you have enabled HTTPS on your Stash server, use `https://` instead of `http://`
+1. If you have enabled authentication on your Stash server, you need to enter the API Key
+    1. Use your phone to browse to your Stash server and copy the API Key from the Settings->Security page (e.g. http://localhost:9999/settings?tab=security)
+    1. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) to paste the API Key into the app
+    - Do not enter an API Key if authentication is not enabled on your Stash server!
+1. Select `Test Connection` to verify that the app can connect to your Stash server
 
 ## Contributions
 
