@@ -12,15 +12,17 @@ Make sure your Stash server is running and that you can access it over the netwo
 
 ### Installation
 
-1. Download the latest APK release from the [releases page](https://github.com/damontecres/StashAppAndroidTV/releases/latest)
 1. Enable side-loading "unknown" apps
     - https://androidtvnews.com/unknown-sources-chromecast-google-tv/
     - https://www.xda-developers.com/how-to-sideload-apps-android-tv/
     - https://developer.android.com/distribute/marketing-tools/alternative-distribution#unknown-sources
+    - https://www.aftvnews.com/how-to-enable-apps-from-unknown-sources-on-an-amazon-fire-tv-or-fire-tv-stick/
 1. Install the APK on your Android TV device with one of these options:
-    - Put the APK on an SD Card/USB stick/network share and use a file manager app from the Google Play Store / Amazon AppStore (e.g. `FX File Explorer`). Android's preinstalled file manager probably will not work!
-    - Use `Send files to TV` from the Google Play Store on your phone & TV
-    - (Expert) Use [ADB](https://developer.android.com/studio/command-line/adb) to install the APK from your computer ([guide](https://fossbytes.com/side-load-apps-android-tv/#h-how-to-sideload-apps-on-your-android-tv-using-adb))
+    - Download the latest APK release from the [releases page](https://github.com/damontecres/StashAppAndroidTV/releases/latest)
+        - Put the APK on an SD Card/USB stick/network share and use a file manager app from the Google Play Store / Amazon AppStore (e.g. `FX File Explorer`). Android's preinstalled file manager probably will not work!
+        - Use `Send files to TV` from the Google Play Store on your phone & TV
+        - (Expert) Use [ADB](https://developer.android.com/studio/command-line/adb) to install the APK from your computer ([guide](https://fossbytes.com/side-load-apps-android-tv/#h-how-to-sideload-apps-on-your-android-tv-using-adb))
+    - Install a browser program such as [Downloader](https://www.aftvnews.com/downloader/), use it to visit the [releases page](https://github.com/damontecres/StashAppAndroidTV/releases/latest), and select the APK to install.
 
 The app does not auto-update, so you will need to repeat this process for each new release.
 
