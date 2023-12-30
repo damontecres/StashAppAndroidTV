@@ -43,6 +43,11 @@ fragment SlimSceneData on Scene {
     caption
     __typename
   }
+  sceneStreams {
+    url
+    mime_type
+    label
+  }
   scene_markers {
     id
     title

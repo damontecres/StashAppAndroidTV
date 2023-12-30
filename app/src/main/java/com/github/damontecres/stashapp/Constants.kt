@@ -22,6 +22,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.data.Scene
 
 object Constants {
     /**
@@ -242,4 +243,21 @@ suspend fun fetchScenesByStudio(context: Context, studioId: Int): List<SlimScene
         return results.data?.findScenes?.scenes?.map { it.slimSceneData }.orEmpty()
     }
     return listOf()
+}
+
+fun selectStream(scene: Scene?): String? {
+    if (scene == null) {
+        return null
+    }
+    var stream = scene.streams["Direct stream"]
+    if (stream == null) {
+        stream = scene.streams["WEBM"]
+    }
+    if (stream == null) {
+        stream = scene.streams["MP4"]
+    }
+    if (stream == null) {
+        stream = scene.streamUrl
+    }
+    return stream
 }

@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import androidx.leanback.app.VideoSupportFragment
@@ -43,7 +44,10 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         mTransportControlGlue.subtitle = scene?.details
         mTransportControlGlue.playWhenPrepared()
 
-        playerAdapter.setDataSource(Uri.parse(scene?.streamUrl))
+        val streamUrl = selectStream(scene)
+        if (streamUrl != null) {
+            playerAdapter.setDataSource(Uri.parse(streamUrl))
+        }
     }
 
     override fun onPause() {
