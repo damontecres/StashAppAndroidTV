@@ -11,9 +11,7 @@ class PerformerListActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)
         if (savedInstanceState == null) {
-            val performer = this.intent.getParcelableExtra<Performer>("performer")
-            findViewById<TextView>(R.id.tag_title).text =
-                "${performer?.name}" + if (performer?.disambiguation != null) "(${performer.disambiguation})" else ""
+            findViewById<TextView>(R.id.tag_title).text = "Performers"
             getSupportFragmentManager().beginTransaction()
                 .replace(
                     R.id.tag_fragment,
