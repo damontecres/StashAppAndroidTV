@@ -63,7 +63,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
 
 //        mSelectedMovie = activity!!.intent.getSerializableExtra(DetailsActivity.MOVIE) as Scene
-        mSelectedMovie = activity!!.intent.getParcelableExtra(DetailsActivity.MOVIE)
+        mSelectedMovie = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE)
         if (mSelectedMovie != null) {
             mPresenterSelector = ClassPresenterSelector()
             mAdapter = ArrayObjectAdapter(mPresenterSelector)
@@ -74,7 +74,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             initializeBackground(mSelectedMovie)
             onItemViewClickedListener = StashItemViewClickListener(requireActivity())
         } else {
-            val intent = Intent(activity!!, MainActivity::class.java)
+            val intent = Intent(requireActivity(), MainActivity::class.java)
             startActivity(intent)
         }
 
@@ -158,16 +158,16 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private fun setupDetailsOverviewRow() {
         Log.d(TAG, "doInBackground: " + mSelectedMovie?.toString())
         val row = DetailsOverviewRow(mSelectedMovie!!)
-        row.imageDrawable = ContextCompat.getDrawable(activity!!, R.drawable.default_background)
-        val width = convertDpToPixel(activity!!, DETAIL_THUMB_WIDTH)
-        val height = convertDpToPixel(activity!!, DETAIL_THUMB_HEIGHT)
+        row.imageDrawable = ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
+        val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
+        val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
 
         val screenshotUrl = mSelectedMovie?.screenshotUrl
         if (!screenshotUrl.isNullOrBlank()) {
             val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getString("stashApiKey", "")
             val url = createGlideUrl(screenshotUrl, apiKey)
-            Glide.with(activity!!)
+            Glide.with(requireActivity())
                 .load(url)
                 .centerCrop()
                 .error(R.drawable.default_background)
@@ -198,7 +198,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         // Set detail background.
         val detailsPresenter = FullWidthDetailsOverviewRowPresenter(DetailsDescriptionPresenter())
         detailsPresenter.backgroundColor =
-            ContextCompat.getColor(activity!!, R.color.selected_background)
+            ContextCompat.getColor(requireActivity(), R.color.selected_background)
 
         // Hook up transition element.
         val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()

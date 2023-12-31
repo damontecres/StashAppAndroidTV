@@ -55,7 +55,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                             .getString("stashApiKey", "")
                         if (performer.image_path != null) {
                             val url = createGlideUrl(performer.image_path, apiKey)
-                            Glide.with(activity!!)
+                            Glide.with(requireActivity())
                                 .load(url)
                                 .centerCrop()
                                 .error(R.drawable.default_background)
@@ -66,7 +66,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                 }
             }
         } else {
-            val intent = Intent(activity!!, MainActivity::class.java)
+            val intent = Intent(requireActivity(), MainActivity::class.java)
             startActivity(intent)
         }
     }
