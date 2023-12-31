@@ -7,7 +7,6 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -35,7 +34,6 @@ import com.github.damontecres.stashapp.data.fromSlimSceneDataTag
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import kotlinx.coroutines.launch
-import java.lang.IllegalArgumentException
 
 /**
  * A wrapper fragment for leanback details screens.
@@ -85,7 +83,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     position = data!!.getLongExtra(POSITION_ARG, -1)
                     if (position > 0) {
                         // If some of the video played, reset the available actions
-                        // This only causes the focused action to be resume
+                        // This also causes the focused action to default to resume which is an added bonus
                         actionAdapter.clear()
                         actionAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
                         actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
@@ -158,7 +156,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private fun setupDetailsOverviewRow() {
         Log.d(TAG, "doInBackground: " + mSelectedMovie?.toString())
         val row = DetailsOverviewRow(mSelectedMovie!!)
-        row.imageDrawable = ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
+        row.imageDrawable =
+            ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
         val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
         val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
 
