@@ -1,5 +1,4 @@
-<PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory app:title="@string/pref_stash_server">
@@ -17,7 +16,7 @@
         <Preference
             app:key="testStashServer"
             app:title="Test Connection"
-            app:summary="Test connecting to Stash using the above settings"/>
+            app:summary="Test connecting to Stash using the above settings" />
 
     </PreferenceCategory>
 
@@ -29,8 +28,7 @@
             app:showSeekBarValue="true"
             android:min="1"
             android:max="100"
-            app:defaultValue="25"
-            />
+            app:defaultValue="25" />
         <SeekBarPreference
             app:key="searchDelay"
             app:title="Wait for searching (ms)"
@@ -38,11 +36,15 @@
             app:showSeekBarValue="true"
             android:min="50"
             android:max="2000"
-            app:defaultValue="500"
-            />
+            app:defaultValue="500" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Interface">
+        <EditTextPreference
+            app:key="pinCode"
+            app:title="Protect with PIN Code"
+            android:inputType="number" />
+
         <SeekBarPreference
             app:key="numberOfColumns"
             app:title="Number of Columns"
@@ -50,8 +52,7 @@
             app:showSeekBarValue="true"
             android:min="1"
             android:max="12"
-            app:defaultValue="5"
-            />
+            app:defaultValue="5" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">
@@ -62,8 +63,7 @@
             app:showSeekBarValue="true"
             android:min="5"
             android:max="300"
-            app:defaultValue="30"
-            />
+            app:defaultValue="30" />
         <SeekBarPreference
             app:key="skip_back_time"
             app:title="Skip back (seconds)"
@@ -71,19 +71,18 @@
             app:showSeekBarValue="true"
             android:min="5"
             android:max="300"
-            app:defaultValue="10"
-            />
+            app:defaultValue="10" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="About">
         <Preference
             app:key="versionName"
             app:title="Version"
-            app:summary=""/>
+            app:summary="" />
         <Preference
             app:key="versionCode"
             app:title="Version Code"
-            app:summary=""/>
+            app:summary="" />
     </PreferenceCategory>
 
 </PreferenceScreen>

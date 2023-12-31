@@ -89,5 +89,16 @@ class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
             }
         }
 
+        val pinCodePref = findPreference<EditTextPreference>("pinCode")
+        pinCodePref?.summaryProvider = object : Preference.SummaryProvider<EditTextPreference> {
+            override fun provideSummary(preference: EditTextPreference): CharSequence? {
+                return if (preference.text.isNullOrBlank()) {
+                    "No PIN is set"
+                } else {
+                    "PIN is set"
+                }
+            }
+        }
+
     }
 }
