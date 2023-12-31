@@ -11,6 +11,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Need the tags to build
+          submodules: true # Need the submodules to build
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
