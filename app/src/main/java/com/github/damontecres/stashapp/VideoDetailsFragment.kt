@@ -106,19 +106,21 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
                         }
 
-                        val performerIds = scene?.performers?.map {
+                        val performerIds = scene.performers.map {
                             it.id.toInt()
                         }
-                        val performers = apolloClient.query(
-                            FindPerformersQuery(
-                                performer_ids = Optional.present(performerIds)
-                            )
-                        ).execute()
-                        val perfs = performers.data?.findPerformers?.performers?.map {
-                            it.performerData
-                        }
-                        if (perfs != null) {
-                            performersAdapter.addAll(0, perfs)
+                        if (performerIds.isNotEmpty()) {
+                            val performers = apolloClient.query(
+                                FindPerformersQuery(
+                                    performer_ids = Optional.present(performerIds)
+                                )
+                            ).execute()
+                            val perfs = performers.data?.findPerformers?.performers?.map {
+                                it.performerData
+                            }
+                            if (perfs != null) {
+                                performersAdapter.addAll(0, perfs)
+                            }
                         }
                     }
                 }
