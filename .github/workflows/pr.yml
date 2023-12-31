@@ -19,6 +19,4 @@ jobs:
           java-version: '17'
           cache: 'gradle'
       - name: Build app
-        run: |
-          chmod +x ./gradlew
-          ./gradlew build
+        run: ./gradlew build
