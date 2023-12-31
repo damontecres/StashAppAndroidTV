@@ -1,0 +1,22 @@
+name: PR
+
+on:
+  pull_request:
+
+jobs:
+  build: # Just build the app
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need the tags to build
+          submodules: true # Need the submodules to build
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+          cache: 'gradle'
+      - name: Build app
+        run: ./gradlew build
