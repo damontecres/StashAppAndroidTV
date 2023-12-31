@@ -1,12 +1,14 @@
 package com.github.damontecres.stashapp
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
@@ -47,6 +49,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
     private lateinit var mPresenterSelector: ClassPresenterSelector
     private lateinit var mAdapter: ArrayObjectAdapter
+    private lateinit var resultLauncher: ActivityResultLauncher<Intent>
+
+    private val actionAdapter = ArrayObjectAdapter()
+    private var position = -1L // The position in the video
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate DetailsFragment")
@@ -69,6 +75,22 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             val intent = Intent(requireActivity(), MainActivity::class.java)
             startActivity(intent)
         }
+
+        resultLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val data: Intent? = result.data
+                    position = data!!.getLongExtra(POSITION_ARG, -1)
+                    if (position > 0) {
+                        // If some of the video played, reset the available actions
+                        // This also causes the focused action to default to resume which is an added bonus
+                        actionAdapter.clear()
+                        actionAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
+                        actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+                    }
+                }
+
+            }
     }
 
     override fun onStart() {
@@ -134,7 +156,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private fun setupDetailsOverviewRow() {
         Log.d(TAG, "doInBackground: " + mSelectedMovie?.toString())
         val row = DetailsOverviewRow(mSelectedMovie!!)
-        row.imageDrawable = ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
+        row.imageDrawable =
+            ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
         val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
         val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
 
@@ -158,8 +181,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     }
                 })
         }
-
-        val actionAdapter = ArrayObjectAdapter()
 
         actionAdapter.add(
             Action(
@@ -187,12 +208,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         detailsPresenter.isParticipatingEntranceTransition = true
 
         detailsPresenter.onActionClickedListener = OnActionClickedListener { action ->
-            if (action.id == ACTION_PLAY_SCENE && mSelectedMovie != null) {
-                val intent = Intent(requireActivity(), PlaybackActivity::class.java)
-                intent.putExtra(DetailsActivity.MOVIE, mSelectedMovie)
-                startActivity(intent)
-            } else {
-                Toast.makeText(requireActivity(), action.toString(), Toast.LENGTH_SHORT).show()
+            if (mSelectedMovie != null) {
+                if (action.id in longArrayOf(ACTION_PLAY_SCENE, ACTION_RESUME_SCENE)) {
+                    val intent = Intent(requireActivity(), PlaybackActivity::class.java)
+                    intent.putExtra(DetailsActivity.MOVIE, mSelectedMovie)
+                    if (action.id == ACTION_RESUME_SCENE) {
+                        intent.putExtra(POSITION_ARG, position)
+                    }
+                    resultLauncher.launch(intent)
+                } else {
+                    throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
+                }
             }
         }
         mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
@@ -214,12 +240,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private val TAG = "VideoDetailsFragment"
 
         private val ACTION_PLAY_SCENE = 1L
-        private val ACTION_RENT = 2L
-        private val ACTION_BUY = 3L
+        private val ACTION_RESUME_SCENE = 2L
 
         private val DETAIL_THUMB_WIDTH = 274
         private val DETAIL_THUMB_HEIGHT = 274
 
         private val NUM_COLS = 10
+
+        const val POSITION_ARG = "position"
     }
 }
