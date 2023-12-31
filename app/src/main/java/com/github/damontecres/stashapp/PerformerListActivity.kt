@@ -6,7 +6,7 @@ import androidx.fragment.app.FragmentActivity
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 
-class PerformerListActivity : FragmentActivity() {
+class PerformerListActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)

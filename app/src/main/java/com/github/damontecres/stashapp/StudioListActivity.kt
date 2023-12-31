@@ -5,7 +5,7 @@ import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
 import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
 
-class StudioListActivity : FragmentActivity() {
+class StudioListActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)
