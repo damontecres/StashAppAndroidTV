@@ -12,11 +12,14 @@ import androidx.leanback.media.MediaPlayerAdapter
 import androidx.leanback.media.PlaybackControlGlue.ACTION_FAST_FORWARD
 import androidx.leanback.media.PlaybackControlGlue.ACTION_PLAY_PAUSE
 import androidx.leanback.media.PlaybackControlGlue.ACTION_REWIND
+import androidx.leanback.media.PlaybackGlue
+import androidx.leanback.media.PlaybackGlue.PlayerCallback
 import androidx.leanback.media.PlaybackTransportControlGlue
 import androidx.leanback.widget.Action
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.PlaybackControlsRow
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.VideoDetailsFragment.Companion.POSITION_ARG
 import com.github.damontecres.stashapp.data.Scene
 
 
@@ -24,11 +27,17 @@ import com.github.damontecres.stashapp.data.Scene
 class PlaybackVideoFragment : VideoSupportFragment() {
 
     private lateinit var mTransportControlGlue: BasicTransportControlsGlue
+    private lateinit var playerAdapter: BasicMediaPlayerAdapter
+
+    val currentVideoPosition get() = playerAdapter.currentPosition
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val scene = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE) as Scene?
+        val position = requireActivity().intent.getLongExtra(POSITION_ARG, -1)
+        Log.d(TAG, "scene=${scene?.id}")
+        Log.d(TAG, "$POSITION_ARG=$position")
 
         val glueHost = VideoSupportFragmentGlueHost(this@PlaybackVideoFragment)
         var skipForward = PreferenceManager.getDefaultSharedPreferences(requireContext())
@@ -36,7 +45,7 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         var skipBack = PreferenceManager.getDefaultSharedPreferences(requireContext())
             .getInt("skip_back_time", 10)
 
-        val playerAdapter = BasicMediaPlayerAdapter(requireActivity(), skipForward, skipBack)
+        playerAdapter = BasicMediaPlayerAdapter(requireActivity(), skipForward, skipBack)
 
         mTransportControlGlue = BasicTransportControlsGlue(activity, playerAdapter)
         mTransportControlGlue.host = glueHost
@@ -47,6 +56,19 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         val streamUrl = selectStream(scene)
         if (streamUrl != null) {
             playerAdapter.setDataSource(Uri.parse(streamUrl))
+            if (position > 0) {
+                // If a position was provided, resume playback from there
+                mTransportControlGlue.addPlayerCallback(object : PlayerCallback() {
+                    override fun onPlayStateChanged(glue: PlaybackGlue) {
+                        if (glue.isPlaying) {
+                            // Remove the callback so it's only run once
+                            glue.removePlayerCallback(this)
+                            playerAdapter.seekTo(position)
+                        }
+                    }
+                })
+            }
+
         }
     }
 
@@ -54,7 +76,6 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         super.onPause()
         mTransportControlGlue.pause()
     }
-
 
     class BasicMediaPlayerAdapter(
         context: Context,
@@ -127,5 +148,10 @@ class PlaybackVideoFragment : VideoSupportFragment() {
             return false
         }
     }
+
+    companion object {
+        private const val TAG = "PlaybackVideoFragment"
+    }
+
 
 }
