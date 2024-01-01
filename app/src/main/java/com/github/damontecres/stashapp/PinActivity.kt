@@ -7,11 +7,13 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.core.widget.addTextChangedListener
 import androidx.core.widget.doAfterTextChanged
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.preference.PreferenceManager
+import kotlin.system.exitProcess
 
 class PinActivity : SecureFragmentActivity() {
 
@@ -22,6 +24,10 @@ class PinActivity : SecureFragmentActivity() {
             getSupportFragmentManager().beginTransaction()
                 .replace(R.id.main_browse_fragment, PinFragment())
                 .commitNow()
+        }
+        onBackPressedDispatcher.addCallback(this) {
+            // Finish this activity and everything above (typically another Activity if the the app was resumed)
+            finishAffinity()
         }
     }
 
