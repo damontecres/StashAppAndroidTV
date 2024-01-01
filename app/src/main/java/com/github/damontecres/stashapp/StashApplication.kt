@@ -4,16 +4,15 @@ import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.ProcessLifecycleOwner
 
 class StashApplication : Application() {
 
     private var wasEnterBackground = false
+    private var mainDestroyed = false
 
     override fun onCreate() {
         super.onCreate()
@@ -24,6 +23,9 @@ class StashApplication : Application() {
     private fun showPinActivity() {
         val intent = Intent(this, PinActivity::class.java)
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.putExtra("wasResumed", true)
+        intent.putExtra("mainDestroyed", mainDestroyed)
+        mainDestroyed = false
         startActivity(intent)
     }
 
@@ -51,11 +53,11 @@ class StashApplication : Application() {
         }
 
         override fun onActivityPaused(activity: Activity) {
-
+            Log.d(TAG, "onActivityPaused: $activity")
         }
 
         override fun onActivityStopped(activity: Activity) {
-
+            Log.d(TAG, "onActivityStopped: $activity")
         }
 
         override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
@@ -63,8 +65,15 @@ class StashApplication : Application() {
         }
 
         override fun onActivityDestroyed(activity: Activity) {
-
+            Log.d(TAG, "onActivityDestroyed: $activity")
+            if (activity is MainActivity) {
+                mainDestroyed = true
+            }
         }
 
+    }
+
+    companion object {
+        const val TAG = "StashApplication"
     }
 }
