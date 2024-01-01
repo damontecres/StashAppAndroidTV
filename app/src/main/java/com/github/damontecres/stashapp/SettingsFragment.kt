@@ -2,7 +2,13 @@ package com.github.damontecres.stashapp
 
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
 import androidx.fragment.app.Fragment
+import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
 import androidx.leanback.preference.LeanbackSettingsFragmentCompat
 import androidx.lifecycle.lifecycleScope
@@ -50,6 +56,20 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         fragment.setArguments(args)
         startPreferenceFragment(fragment)
         return true
+    }
+
+    override fun onPreferenceDisplayDialog(
+        caller: PreferenceFragmentCompat,
+        pref: Preference
+    ): Boolean {
+        if (pref.key == getString(R.string.pref_key_pin_code)) {
+            val f = NumberEditTextPreferencesDialog(pref.key);
+            f.setTargetFragment(caller, 0);
+            startPreferenceFragment(f);
+            return true;
+        } else {
+            return super.onPreferenceDisplayDialog(caller, pref);
+        }
     }
 }
 
@@ -100,5 +120,27 @@ class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
             }
         }
 
+    }
+}
+
+
+class NumberEditTextPreferencesDialog(key: String) :
+    LeanbackEditTextPreferenceDialogFragmentCompat() {
+
+    init {
+        val args = Bundle(1)
+        args.putString(ARG_KEY, key)
+        arguments = args
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val root = super.onCreateView(inflater, container, savedInstanceState)
+        val editTextView = root?.findViewById<EditText>(android.R.id.edit)
+        editTextView?.inputType = InputType.TYPE_CLASS_NUMBER
+        return root
     }
 }
