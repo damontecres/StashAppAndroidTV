@@ -43,31 +43,43 @@ class PinActivity : SecureFragmentActivity() {
 
             pinEditText = view.findViewById(R.id.pin_edit_text)
 
-            val mainDestroyed = requireActivity().intent.getBooleanExtra("mainDestroyed", false)
             val pinCode = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getString("pinCode", "")
+                .getString(getString(R.string.pref_key_pin_code), "")
 
             val submit = view.findViewById<Button>(R.id.pin_submit)
             submit.setOnClickListener {
                 val enteredPin = pinEditText.text.toString()
                 if (enteredPin == pinCode) {
-                    if (requireActivity().isTaskRoot || mainDestroyed) {
-                        // This is the task root when invoked from the start
-                        // mainDestroyed is true when the MainActivity was destroyed, but not the entire app
-                        startMainActivity()
-                    }
-                    requireActivity().finish()
+                    startMainActivity()
                 } else {
                     Toast.makeText(requireContext(), "Wrong PIN", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            val autoSubmitPin =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getBoolean(getString(R.string.pref_key_pin_code_auto), false)
+            if (autoSubmitPin) {
+                submit.visibility = View.INVISIBLE
+                pinEditText.doAfterTextChanged {
+                    val enteredPin = it.toString()
+                    if (enteredPin == pinCode) {
+                        startMainActivity()
+                    }
                 }
             }
         }
 
         private fun startMainActivity() {
-            val intent = Intent(requireContext(), MainActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
+            val mainDestroyed = requireActivity().intent.getBooleanExtra("mainDestroyed", false)
+            if (requireActivity().isTaskRoot || mainDestroyed) {
+                // This is the task root when invoked from the start
+                // mainDestroyed is true when the MainActivity was destroyed, but not the entire app
+                val intent = Intent(requireContext(), MainActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+            }
             requireActivity().finish()
         }
     }

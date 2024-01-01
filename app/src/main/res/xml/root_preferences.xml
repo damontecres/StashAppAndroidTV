@@ -41,9 +41,14 @@
 
     <PreferenceCategory app:title="Interface">
         <EditTextPreference
-            app:key="pinCode"
+            app:key="@string/pref_key_pin_code"
             app:title="Protect with PIN Code"
             android:inputType="number" />
+        <SwitchPreference
+            app:key="@string/pref_key_pin_code_auto"
+            app:title="Auto submit PIN"
+            app:summary="Submit PIN automatically when typed"
+            app:defaultValue="false" />
 
         <SeekBarPreference
             app:key="numberOfColumns"
