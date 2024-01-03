@@ -6,9 +6,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.ApolloResponse
-import com.apollographql.apollo3.api.CompiledType
-import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.http.HttpRequest
 import com.apollographql.apollo3.api.http.HttpResponse
 import com.apollographql.apollo3.exception.ApolloException
@@ -17,12 +14,7 @@ import com.apollographql.apollo3.network.http.HttpInterceptor
 import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
-import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.ServerInfoQuery
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
-import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.Scene
 
 object Constants {

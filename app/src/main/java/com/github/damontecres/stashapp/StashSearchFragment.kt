@@ -11,12 +11,7 @@ import androidx.leanback.widget.ObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
-import com.github.damontecres.stashapp.api.FindPerformersQuery
-import com.github.damontecres.stashapp.api.FindScenesQuery
-import com.github.damontecres.stashapp.api.FindStudiosQuery
-import com.github.damontecres.stashapp.api.FindTagsQuery
 import com.github.damontecres.stashapp.api.type.FindFilterType
-import com.github.damontecres.stashapp.data.fromFindTag
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter

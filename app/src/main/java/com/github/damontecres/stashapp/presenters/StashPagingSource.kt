@@ -5,11 +5,9 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
-import com.apollographql.apollo3.exception.ApolloException
 import com.github.damontecres.stashapp.QueryEngine
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
-import com.github.damontecres.stashapp.createApolloClient
 import com.github.damontecres.stashapp.data.CountAndList
 
 /**

@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
-import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 
 class PerformerListActivity : FragmentActivity() {

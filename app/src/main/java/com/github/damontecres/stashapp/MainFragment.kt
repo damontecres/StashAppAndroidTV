@@ -31,9 +31,6 @@ import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-import com.github.damontecres.stashapp.api.FindPerformersQuery
-import com.github.damontecres.stashapp.api.FindScenesQuery
-import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.presenters.PerformerPresenter

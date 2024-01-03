@@ -24,11 +24,9 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.fromSlimSceneDataTag
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
