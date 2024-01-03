@@ -37,32 +37,20 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
             mPerformerName.text = performer.name
             mPerformerDisambiguation.text = performer.disambiguation
 
-            val apolloClient = createApolloClient(requireContext())
-            if (apolloClient != null) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val performers = apolloClient.query(
-                        FindPerformersQuery(
-                            performer_ids = Optional.present(
-                                listOf(
-                                    performer.id.toInt()
-                                )
-                            )
-                        )
-                    ).execute().data?.findPerformers?.performers;
-                    if (performers != null && !performers.isEmpty()) {
-                        val performer = performers.first().performerData
-                        val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                            .getString("stashApiKey", "")
-                        if (performer.image_path != null) {
-                            val url = createGlideUrl(performer.image_path, apiKey)
-                            Glide.with(requireActivity())
-                                .load(url)
-                                .centerCrop()
-                                .error(R.drawable.default_background)
-                                .into(mPerformerImage)
-                        }
+            val queryEngine = QueryEngine(requireContext(), true)
+            viewLifecycleOwner.lifecycleScope.launch {
+                val performers =
+                    queryEngine.findPerformers(performerIds = listOf(performer.id.toInt()))
+                if (performers.isNotEmpty()) {
+                    val performerData = performers.first()
+                    if (performerData.image_path != null) {
+                        val url = createGlideUrl(performerData.image_path, requireContext())
+                        Glide.with(requireActivity())
+                            .load(url)
+                            .centerCrop()
+                            .error(R.drawable.default_background)
+                            .into(mPerformerImage)
                     }
-
                 }
             }
         } else {

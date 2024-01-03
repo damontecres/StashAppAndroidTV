@@ -96,33 +96,25 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     override fun onStart() {
         super.onStart()
         if (performersAdapter.size() == 0) {
+            val queryEngine = QueryEngine(requireContext(), true)
             // TODO: this is not efficient, but it does prevent duplicates during navigation
             viewLifecycleOwner.lifecycleScope.launch {
-                val apolloClient = createApolloClient(requireContext())
-                if (apolloClient != null && mSelectedMovie != null) {
-                    val scene = fetchSceneById(requireContext(), mSelectedMovie!!.id.toInt())
-                    if (scene != null) {
-                        if (scene.tags.isNotEmpty()) {
-                            tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
-                        }
-
-                        val performerIds = scene.performers.map {
-                            it.id.toInt()
-                        }
-                        if (performerIds.isNotEmpty()) {
-                            val performers = apolloClient.query(
-                                FindPerformersQuery(
-                                    performer_ids = Optional.present(performerIds)
-                                )
-                            ).execute()
-                            val perfs = performers.data?.findPerformers?.performers?.map {
-                                it.performerData
-                            }
-                            if (perfs != null) {
-                                performersAdapter.addAll(0, perfs)
-                            }
-                        }
+                if (mSelectedMovie != null) {
+                    val scene =
+                        queryEngine.findScenes(sceneIds = listOf(mSelectedMovie!!.id.toInt()))
+                            .first()
+                    if (scene.tags.isNotEmpty()) {
+                        tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
                     }
+
+                    val performerIds = scene.performers.map {
+                        it.id.toInt()
+                    }
+                    if (performerIds.isNotEmpty()) {
+                        val perfs = queryEngine.findPerformers(performerIds = performerIds)
+                        performersAdapter.addAll(0, perfs)
+                    }
+
                 }
             }
         }

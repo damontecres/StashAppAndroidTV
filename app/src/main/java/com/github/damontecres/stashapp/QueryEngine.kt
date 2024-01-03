@@ -7,12 +7,14 @@ import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.api.Operation
 import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo3.api.Query
 import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
+import com.github.damontecres.stashapp.api.FindTagsQuery
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
@@ -21,6 +23,9 @@ import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StudioFilterType
+import com.github.damontecres.stashapp.api.type.TagFilterType
+import com.github.damontecres.stashapp.data.Tag
+import com.github.damontecres.stashapp.data.fromFindTag
 
 class QueryEngine(private val context: Context, private val showToasts: Boolean = false) {
 
@@ -73,6 +78,10 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         }
     }
 
+    suspend fun <D : Query.Data> executeQuery(query: Query<D>): ApolloResponse<D> {
+        return executeQuery(client.query(query))
+    }
+
     suspend fun findScenes(
         findFilter: FindFilterType? = null,
         sceneFilter: SceneFilterType? = null,
@@ -116,7 +125,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     ): List<StudioData> {
         val query = client.query(
             FindStudiosQuery(
-                filter = Optional.present(findFilter),
+                filter = Optional.presentIfNotNull(findFilter),
                 studio_filter = Optional.presentIfNotNull(studioFilter),
             )
         )
@@ -126,6 +135,20 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         return studios.orEmpty()
     }
 
+    suspend fun findTags(
+        findFilter: FindFilterType? = null,
+        tagFilter: TagFilterType? = null
+    ): List<Tag> {
+        val query = client.query(
+            FindTagsQuery(
+                filter = Optional.presentIfNotNull(findFilter),
+                tag_filter = Optional.presentIfNotNull(tagFilter)
+            )
+        )
+        val tags =
+            executeQuery(query).data?.findTags?.tags?.map { fromFindTag(it) }
+        return tags.orEmpty()
+    }
 
     open class QueryException(msg: String? = null, cause: ApolloException? = null) :
         RuntimeException(msg, cause) {

@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.ApolloResponse
+import com.apollographql.apollo3.api.CompiledType
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.http.HttpRequest
 import com.apollographql.apollo3.api.http.HttpResponse
@@ -47,6 +48,15 @@ fun createGlideUrl(url: String, apiKey: String?): GlideUrl {
                 .build()
         )
     }
+}
+
+/**
+ * Create a [GlideUrl], adding the API key to the headers if needed
+ */
+fun createGlideUrl(url: String, context: Context): GlideUrl {
+    val apiKey = PreferenceManager.getDefaultSharedPreferences(context)
+        .getString("stashApiKey", "")
+    return createGlideUrl(url, apiKey)
 }
 
 /**
@@ -99,17 +109,6 @@ fun createApolloClient(context: Context): ApolloClient? {
     val stashUrl = PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
     val apiKey = PreferenceManager.getDefaultSharedPreferences(context).getString("stashApiKey", "")
     return createApolloClient(stashUrl, apiKey)
-}
-
-suspend fun getStashServerInfo(
-    stashUrl: String?,
-    apiKey: String?
-): ApolloResponse<ServerInfoQuery.Data>? {
-    try {
-        return createApolloClient(stashUrl, apiKey)?.query(ServerInfoQuery())?.execute()
-    } catch (exception: ApolloException) {
-        return null
-    }
 }
 
 /**
@@ -177,72 +176,6 @@ suspend fun testStashConnection(context: Context, showToast: Boolean): Boolean {
         }
     }
     return false
-}
-
-/**
- * Get Scene data for a list of scene IDs
- */
-suspend fun fetchScenesById(context: Context, sceneIds: List<Int>): List<SlimSceneData> {
-    val apolloClient = createApolloClient(context)
-    if (apolloClient != null) {
-        val results = apolloClient.query(
-            FindScenesQuery(scene_ids = Optional.present(sceneIds))
-        ).execute()
-        return results.data?.findScenes?.scenes?.map { it.slimSceneData }.orEmpty()
-    }
-    return listOf()
-}
-
-/**
- * Get a Scene by ID
- */
-suspend fun fetchSceneById(context: Context, sceneId: Int): SlimSceneData? {
-    val results = fetchScenesById(context, listOf(sceneId))
-    return results.getOrNull(0)
-}
-
-suspend fun fetchScenesByTag(context: Context, tagId: Int): List<SlimSceneData> {
-    val apolloClient = createApolloClient(context)
-    if (apolloClient != null) {
-        val results = apolloClient.query(
-            FindScenesQuery(
-                scene_filter = Optional.present(
-                    SceneFilterType(
-                        tags = Optional.present(
-                            HierarchicalMultiCriterionInput(
-                                value = Optional.present(listOf(tagId.toString())),
-                                modifier = CriterionModifier.INCLUDES_ALL
-                            )
-                        )
-                    )
-                )
-            )
-        ).execute()
-        return results.data?.findScenes?.scenes?.map { it.slimSceneData }.orEmpty()
-    }
-    return listOf()
-}
-
-suspend fun fetchScenesByStudio(context: Context, studioId: Int): List<SlimSceneData> {
-    val apolloClient = createApolloClient(context)
-    if (apolloClient != null) {
-        val results = apolloClient.query(
-            FindScenesQuery(
-                scene_filter = Optional.present(
-                    SceneFilterType(
-                        studios = Optional.present(
-                            HierarchicalMultiCriterionInput(
-                                value = Optional.present(listOf(studioId.toString())),
-                                modifier = CriterionModifier.INCLUDES_ALL
-                            )
-                        )
-                    )
-                )
-            )
-        ).execute()
-        return results.data?.findScenes?.scenes?.map { it.slimSceneData }.orEmpty()
-    }
-    return listOf()
 }
 
 fun selectStream(scene: Scene?): String? {

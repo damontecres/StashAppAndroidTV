@@ -230,7 +230,6 @@ class MainFragment : BrowseSupportFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             if (testStashConnection(requireContext(), false)) {
                 addRowsIfNeeded()
-                val apolloClient = createApolloClient(requireContext())
                 try {
                     val queryEngine = QueryEngine(requireContext(), showToasts = true)
 
