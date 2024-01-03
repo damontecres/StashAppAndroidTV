@@ -31,14 +31,12 @@ import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-import com.github.damontecres.stashapp.api.FindPerformersQuery
-import com.github.damontecres.stashapp.api.FindScenesQuery
-import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
@@ -119,7 +117,8 @@ class MainFragment : BrowseSupportFragment() {
 
         mBackgroundManager = BackgroundManager.getInstance(activity)
         mBackgroundManager.attach(requireActivity().window)
-        mDefaultBackground = ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
+        mDefaultBackground =
+            ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
         mMetrics = DisplayMetrics()
         requireActivity().windowManager.defaultDisplay.getMetrics(mMetrics)
     }
@@ -229,12 +228,12 @@ class MainFragment : BrowseSupportFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             if (testStashConnection(requireContext(), false)) {
                 addRowsIfNeeded()
-                val apolloClient = createApolloClient(requireContext())
+                try {
+                    val queryEngine = QueryEngine(requireContext(), showToasts = true)
 
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindScenesQuery(
-                            filter = Optional.present(
+                    viewLifecycleOwner.lifecycleScope.async {
+                        sceneAdapter.addAll(
+                            0, queryEngine.findScenes(
                                 FindFilterType(
                                     sort = Optional.present("date"),
                                     direction = Optional.present(SortDirectionEnum.DESC),
@@ -242,19 +241,11 @@ class MainFragment : BrowseSupportFragment() {
                                 )
                             )
                         )
-                    ).execute()
-                    val scenes = results.data?.findScenes?.scenes?.map {
-                        it.slimSceneData
                     }
-                    if (scenes != null) {
-                        sceneAdapter.addAll(0, scenes)
-                    }
-                }
 
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindPerformersQuery(
-                            filter = Optional.present(
+                    viewLifecycleOwner.lifecycleScope.async {
+                        performerAdapter.addAll(
+                            0, queryEngine.findPerformers(
                                 FindFilterType(
                                     sort = Optional.present("created_at"),
                                     direction = Optional.present(SortDirectionEnum.DESC),
@@ -262,19 +253,11 @@ class MainFragment : BrowseSupportFragment() {
                                 )
                             )
                         )
-                    ).execute()
-                    val performers = results.data?.findPerformers?.performers?.map {
-                        it.performerData
                     }
-                    if (performers != null) {
-                        performerAdapter.addAll(0, performers)
-                    }
-                }
 
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindStudiosQuery(
-                            filter = Optional.present(
+                    viewLifecycleOwner.lifecycleScope.async {
+                        studioAdapter.addAll(
+                            0, queryEngine.findStudios(
                                 FindFilterType(
                                     sort = Optional.present("created_at"),
                                     direction = Optional.present(SortDirectionEnum.DESC),
@@ -282,13 +265,13 @@ class MainFragment : BrowseSupportFragment() {
                                 )
                             )
                         )
-                    ).execute()
-                    val studios = results.data?.findStudios?.studios?.map {
-                        it.studioData
                     }
-                    if (studios != null) {
-                        studioAdapter.addAll(0, studios)
-                    }
+                } catch (ex: QueryEngine.StashNotConfiguredException) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Stash not configured. Please enter the URL in settings!",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             } else {
                 rowsAdapter.clear()
