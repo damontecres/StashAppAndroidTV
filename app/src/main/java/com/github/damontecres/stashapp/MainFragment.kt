@@ -119,7 +119,8 @@ class MainFragment : BrowseSupportFragment() {
 
         mBackgroundManager = BackgroundManager.getInstance(activity)
         mBackgroundManager.attach(requireActivity().window)
-        mDefaultBackground = ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
+        mDefaultBackground =
+            ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
         mMetrics = DisplayMetrics()
         requireActivity().windowManager.defaultDisplay.getMetrics(mMetrics)
     }
@@ -230,11 +231,12 @@ class MainFragment : BrowseSupportFragment() {
             if (testStashConnection(requireContext(), false)) {
                 addRowsIfNeeded()
                 val apolloClient = createApolloClient(requireContext())
+                try {
+                    val queryEngine = QueryEngine(requireContext(), showToasts = true)
 
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindScenesQuery(
-                            filter = Optional.present(
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        sceneAdapter.addAll(
+                            0, queryEngine.findScenes(
                                 FindFilterType(
                                     sort = Optional.present("date"),
                                     direction = Optional.present(SortDirectionEnum.DESC),
@@ -242,19 +244,11 @@ class MainFragment : BrowseSupportFragment() {
                                 )
                             )
                         )
-                    ).execute()
-                    val scenes = results.data?.findScenes?.scenes?.map {
-                        it.slimSceneData
                     }
-                    if (scenes != null) {
-                        sceneAdapter.addAll(0, scenes)
-                    }
-                }
 
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindPerformersQuery(
-                            filter = Optional.present(
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        performerAdapter.addAll(
+                            0, queryEngine.findPerformers(
                                 FindFilterType(
                                     sort = Optional.present("created_at"),
                                     direction = Optional.present(SortDirectionEnum.DESC),
@@ -262,19 +256,11 @@ class MainFragment : BrowseSupportFragment() {
                                 )
                             )
                         )
-                    ).execute()
-                    val performers = results.data?.findPerformers?.performers?.map {
-                        it.performerData
                     }
-                    if (performers != null) {
-                        performerAdapter.addAll(0, performers)
-                    }
-                }
 
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindStudiosQuery(
-                            filter = Optional.present(
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        studioAdapter.addAll(
+                            0, queryEngine.findStudios(
                                 FindFilterType(
                                     sort = Optional.present("created_at"),
                                     direction = Optional.present(SortDirectionEnum.DESC),
@@ -282,13 +268,13 @@ class MainFragment : BrowseSupportFragment() {
                                 )
                             )
                         )
-                    ).execute()
-                    val studios = results.data?.findStudios?.studios?.map {
-                        it.studioData
                     }
-                    if (studios != null) {
-                        studioAdapter.addAll(0, studios)
-                    }
+                } catch (ex: QueryEngine.StashNotConfiguredException) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Stash not configured. Please enter the URL in settings!",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             } else {
                 rowsAdapter.clear()
