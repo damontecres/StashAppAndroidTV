@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.ScenePresenter
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class PerformerFragment : Fragment(R.layout.performer_view) {
@@ -38,7 +39,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
             mPerformerDisambiguation.text = performer.disambiguation
 
             val queryEngine = QueryEngine(requireContext(), true)
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.async {
                 val performers =
                     queryEngine.findPerformers(performerIds = listOf(performer.id.toInt()))
                 if (performers.isNotEmpty()) {

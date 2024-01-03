@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
@@ -233,7 +234,7 @@ class MainFragment : BrowseSupportFragment() {
                 try {
                     val queryEngine = QueryEngine(requireContext(), showToasts = true)
 
-                    viewLifecycleOwner.lifecycleScope.launch {
+                    viewLifecycleOwner.lifecycleScope.async {
                         sceneAdapter.addAll(
                             0, queryEngine.findScenes(
                                 FindFilterType(
@@ -245,7 +246,7 @@ class MainFragment : BrowseSupportFragment() {
                         )
                     }
 
-                    viewLifecycleOwner.lifecycleScope.launch {
+                    viewLifecycleOwner.lifecycleScope.async {
                         performerAdapter.addAll(
                             0, queryEngine.findPerformers(
                                 FindFilterType(
@@ -257,7 +258,7 @@ class MainFragment : BrowseSupportFragment() {
                         )
                     }
 
-                    viewLifecycleOwner.lifecycleScope.launch {
+                    viewLifecycleOwner.lifecycleScope.async {
                         studioAdapter.addAll(
                             0, queryEngine.findStudios(
                                 FindFilterType(

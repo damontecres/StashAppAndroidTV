@@ -22,6 +22,7 @@ import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -84,16 +85,16 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                 per_page = Optional.present(perPage)
             )
             val queryEngine = QueryEngine(requireContext(), true)
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.async {
                 sceneAdapter.addAll(0, queryEngine.findScenes(filter))
             }
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.async {
                 studioAdapter.addAll(0, queryEngine.findStudios(filter))
             }
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.async {
                 performerAdapter.addAll(0, queryEngine.findPerformers(filter))
             }
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.async {
                 tagAdapter.addAll(0, queryEngine.findTags(filter))
             }
         }
