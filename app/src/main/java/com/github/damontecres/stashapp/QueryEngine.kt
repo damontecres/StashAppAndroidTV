@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import com.apollographql.apollo3.ApolloCall
 import com.apollographql.apollo3.ApolloClient
@@ -46,6 +47,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                         Toast.LENGTH_LONG
                     ).show()
                 }
+                Log.e(TAG, "Errors in $queryName:\n$errorMsgs")
                 throw QueryException("($queryName), ${response.errors!!.size} errors in graphql response")
             }
         } catch (ex: ApolloNetworkException) {
@@ -56,6 +58,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                     Toast.LENGTH_LONG
                 ).show()
             }
+            Log.e(TAG, "Network error in $queryName", ex)
             throw QueryException("Network error ($queryName)", ex)
         } catch (ex: ApolloHttpException) {
             if (showToasts) {
@@ -65,6 +68,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                     Toast.LENGTH_LONG
                 ).show()
             }
+            Log.e(TAG, "HTTP ${ex.statusCode} error in $queryName", ex)
             throw QueryException("HTTP ${ex.statusCode} ($queryName)", ex)
         } catch (ex: ApolloException) {
             if (showToasts) {
@@ -74,6 +78,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                     Toast.LENGTH_LONG
                 ).show()
             }
+            Log.e(TAG, "ApolloException in $queryName", ex)
             throw QueryException("Apollo exception ($queryName)", ex)
         }
     }
@@ -148,6 +153,10 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         val tags =
             executeQuery(query).data?.findTags?.tags?.map { fromFindTag(it) }
         return tags.orEmpty()
+    }
+
+    companion object {
+        const val TAG = "QueryEngine"
     }
 
     open class QueryException(msg: String? = null, cause: ApolloException? = null) :
