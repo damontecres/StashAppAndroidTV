@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
+import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.http.HttpRequest
 import com.apollographql.apollo3.api.http.HttpResponse
 import com.apollographql.apollo3.exception.ApolloException
@@ -14,7 +15,9 @@ import com.apollographql.apollo3.network.http.HttpInterceptor
 import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.Scene
 
 object Constants {
@@ -185,4 +188,18 @@ fun selectStream(scene: Scene?): String? {
         stream = scene.streamUrl
     }
     return stream
+}
+
+fun convertFilter(filter: FindSavedFilterQuery.Find_filter?): FindFilterType? {
+    return if (filter != null) {
+        FindFilterType(
+            q = Optional.presentIfNotNull(filter.q),
+            page = Optional.presentIfNotNull(filter.page),
+            per_page = Optional.presentIfNotNull(filter.per_page),
+            sort = Optional.presentIfNotNull(filter.sort),
+            direction = Optional.presentIfNotNull(filter.direction)
+        )
+    } else {
+        null
+    }
 }
