@@ -17,8 +17,8 @@ class TagDataSupplier(private val tagFilter: TagFilterType?) :
 
     override fun createQuery(filter: FindFilterType?): Query<FindTagsQuery.Data> {
         return FindTagsQuery(
-            filter = Optional.presentIfNotNull(filter),
-            tag_filter = Optional.presentIfNotNull(tagFilter)
+            filter = filter,
+            tag_filter = tagFilter
         )
     }
 

@@ -17,8 +17,9 @@ class PerformerDataSupplier(private val performerFilter: PerformerFilterType?) :
 
     override fun createQuery(filter: FindFilterType?): Query<FindPerformersQuery.Data> {
         return FindPerformersQuery(
-            filter = Optional.presentIfNotNull(filter),
-            performer_filter = Optional.presentIfNotNull(performerFilter)
+            filter = filter,
+            performer_filter = performerFilter,
+            performer_ids = null
         )
     }
 

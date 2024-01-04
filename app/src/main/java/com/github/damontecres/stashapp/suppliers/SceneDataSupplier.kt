@@ -14,8 +14,9 @@ class SceneDataSupplier(private val sceneFilter: SceneFilterType? = null) :
     StashPagingSource.DataSupplier<FindScenesQuery.Data, SlimSceneData> {
     override fun createQuery(filter: FindFilterType?): Query<FindScenesQuery.Data> {
         return FindScenesQuery(
-            filter = Optional.presentIfNotNull(filter),
-            scene_filter = Optional.presentIfNotNull(sceneFilter)
+            filter = filter,
+            scene_filter = sceneFilter,
+            scene_ids = null
         )
     }
 

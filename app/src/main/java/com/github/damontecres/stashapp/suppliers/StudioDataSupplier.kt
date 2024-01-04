@@ -16,8 +16,8 @@ class StudioDataSupplier(private val studioFilter: StudioFilterType?) :
 
     override fun createQuery(filter: FindFilterType?): Query<FindStudiosQuery.Data> {
         return FindStudiosQuery(
-            filter = Optional.presentIfNotNull(filter),
-            studio_filter = Optional.presentIfNotNull(studioFilter)
+            filter = filter,
+            studio_filter = studioFilter
         )
     }
 

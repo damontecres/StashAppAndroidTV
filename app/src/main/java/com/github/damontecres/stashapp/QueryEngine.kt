@@ -93,9 +93,9 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     ): List<SlimSceneData> {
         val query = client.query(
             FindScenesQuery(
-                filter = Optional.presentIfNotNull(findFilter),
-                scene_filter = Optional.presentIfNotNull(sceneFilter),
-                scene_ids = Optional.presentIfNotNull(sceneIds)
+                filter = findFilter,
+                scene_filter = sceneFilter,
+                scene_ids = sceneIds
             )
         )
         val scenes = executeQuery(query).data?.findScenes?.scenes?.map {
@@ -111,9 +111,9 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     ): List<PerformerData> {
         val query = client.query(
             FindPerformersQuery(
-                filter = Optional.presentIfNotNull(findFilter),
-                performer_filter = Optional.presentIfNotNull(performerFilter),
-                performer_ids = Optional.presentIfNotNull(performerIds)
+                filter = findFilter,
+                performer_filter = performerFilter,
+                performer_ids = performerIds
             )
         )
         val performers = executeQuery(query).data?.findPerformers?.performers?.map {
@@ -129,8 +129,8 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     ): List<StudioData> {
         val query = client.query(
             FindStudiosQuery(
-                filter = Optional.presentIfNotNull(findFilter),
-                studio_filter = Optional.presentIfNotNull(studioFilter),
+                filter = findFilter,
+                studio_filter = studioFilter,
             )
         )
         val studios = executeQuery(query).data?.findStudios?.studios?.map {
@@ -145,8 +145,8 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     ): List<Tag> {
         val query = client.query(
             FindTagsQuery(
-                filter = Optional.presentIfNotNull(findFilter),
-                tag_filter = Optional.presentIfNotNull(tagFilter)
+                filter = findFilter,
+                tag_filter = tagFilter
             )
         )
         val tags =
