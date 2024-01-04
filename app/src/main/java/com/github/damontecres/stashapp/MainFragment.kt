@@ -34,14 +34,9 @@ import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
-import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
-import com.github.damontecres.stashapp.presenters.PerformerPresenter
-import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.stashPresenterSelector
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask

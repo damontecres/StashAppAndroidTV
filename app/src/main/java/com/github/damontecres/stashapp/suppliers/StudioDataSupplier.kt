@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.suppliers
 
-import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.fragment.StudioData

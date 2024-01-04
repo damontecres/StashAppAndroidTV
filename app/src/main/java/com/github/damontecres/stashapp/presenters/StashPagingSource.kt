@@ -7,7 +7,6 @@ import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.QueryEngine
 import com.github.damontecres.stashapp.api.type.FindFilterType
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 
