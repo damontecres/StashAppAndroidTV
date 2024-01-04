@@ -7,7 +7,7 @@ import androidx.fragment.app.FragmentActivity
 
 
 /** Loads [PlaybackVideoFragment]. */
-class PlaybackActivity : FragmentActivity() {
+class PlaybackActivity : SecureFragmentActivity() {
 
     private val fragment: PlaybackVideoFragment = PlaybackVideoFragment()
 

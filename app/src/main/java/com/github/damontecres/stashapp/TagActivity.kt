@@ -11,7 +11,7 @@ import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 
 
-class TagActivity : FragmentActivity() {
+class TagActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)

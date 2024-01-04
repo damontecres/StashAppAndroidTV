@@ -6,7 +6,7 @@ import androidx.fragment.app.FragmentActivity
 /**
  * Details activity class that loads [VideoDetailsFragment] class.
  */
-class DetailsActivity : FragmentActivity() {
+class DetailsActivity : SecureFragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
