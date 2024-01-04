@@ -242,127 +242,9 @@ class MainFragment : BrowseSupportFragment() {
 
                                 val filterType = frontPageFilter["__typename"] as String
                                 if (filterType == "CustomFilter") {
-                                    val mode = FilterMode.valueOf(frontPageFilter["mode"] as String)
-                                    val direction = frontPageFilter["direction"] as String
-                                    val sortBy = frontPageFilter["sortBy"] as String
-                                    val filter = FindFilterType(
-                                        direction = Optional.present(
-                                            SortDirectionEnum.safeValueOf(
-                                                direction
-                                            )
-                                        ),
-                                        sort = Optional.present(sortBy),
-                                        per_page = Optional.present(25)
-                                    )
-
-                                    val msg = frontPageFilter["message"] as Map<String, *>
-                                    val objType =
-                                        (msg["values"] as Map<String, String>)["objects"] as String
-                                    val description = when (msg["id"] as String) {
-                                        "recently_added_objects" -> "Recently Added $objType"
-                                        "recently_released_objects" -> "Recently Released $objType"
-                                        else -> ""
-                                    }
-
-                                    when (mode) {
-                                        FilterMode.SCENES -> {
-                                            rowsAdapter.add(
-                                                ListRow(
-                                                    HeaderItem(description),
-                                                    adapter
-                                                )
-                                            )
-                                            adapter.addAll(0, queryEngine.findScenes(filter))
-                                        }
-
-                                        FilterMode.STUDIOS -> {
-                                            rowsAdapter.add(
-                                                ListRow(
-                                                    HeaderItem(description),
-                                                    adapter
-                                                )
-                                            )
-                                            adapter.addAll(0, queryEngine.findStudios(filter))
-                                        }
-
-                                        FilterMode.PERFORMERS -> {
-                                            rowsAdapter.add(
-                                                ListRow(
-                                                    HeaderItem(description),
-                                                    adapter
-                                                )
-                                            )
-                                            adapter.addAll(0, queryEngine.findPerformers(filter))
-                                        }
-
-                                        else -> {
-                                            Log.i(TAG, "Unsupported mode in frontpage: $mode")
-                                        }
-                                    }
+                                    addCustomFilterRow(frontPageFilter, adapter, queryEngine)
                                 } else if (filterType == "SavedFilter") {
-                                    val filterId = frontPageFilter["savedFilterId"]
-                                    val header = HeaderItem("")
-                                    val listRow = ListRow(header, adapter)
-                                    rowsAdapter.add(listRow)
-                                    viewLifecycleOwner.lifecycleScope.launch(exHandler) {
-                                        val result = queryEngine.getSavedFilter(filterId.toString())
-
-                                        val index = rowsAdapter.indexOf(listRow)
-                                        rowsAdapter.removeItems(index, 1)
-
-                                        if (result?.mode in supportedFilterModes) {
-                                            // TODO doing it this way will result it adding an unsupported row then removing it which looks weird, in practice though it happens pretty fast
-                                            rowsAdapter.add(
-                                                index,
-                                                ListRow(HeaderItem(result?.name ?: ""), adapter)
-                                            )
-
-                                            val filter = convertFilter(result?.find_filter)
-                                            val objectFilter =
-                                                result?.object_filter as Map<String, Map<String, *>>
-                                            // TODO convert object filters
-
-
-                                            when (result?.mode) {
-                                                FilterMode.SCENES -> {
-                                                    adapter.addAll(
-                                                        0,
-                                                        queryEngine.findScenes(filter)
-                                                    )
-                                                }
-
-                                                FilterMode.STUDIOS -> {
-                                                    adapter.addAll(
-                                                        0,
-                                                        queryEngine.findStudios(filter)
-                                                    )
-                                                }
-
-                                                FilterMode.PERFORMERS -> {
-                                                    val performerFilter =
-                                                        convertPerformerObjectFilter(objectFilter)
-                                                    adapter.addAll(
-                                                        0,
-                                                        queryEngine.findPerformers(
-                                                            filter,
-                                                            performerFilter
-                                                        )
-                                                    )
-                                                }
-
-                                                FilterMode.TAGS -> {
-                                                    adapter.addAll(0, queryEngine.findTags(filter))
-                                                }
-
-                                                else -> {
-                                                    Log.i(
-                                                        TAG,
-                                                        "Unsupported mode in frontpage: ${result?.mode}"
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
+                                    addSavedFilterRow(frontPageFilter, adapter, queryEngine)
                                 }
                             }
                         }
@@ -376,6 +258,155 @@ class MainFragment : BrowseSupportFragment() {
                 }
             } else {
                 rowsAdapter.clear()
+            }
+        }
+    }
+
+    private fun addCustomFilterRow(
+        frontPageFilter: Map<String, *>,
+        adapter: ArrayObjectAdapter,
+        queryEngine: QueryEngine
+    ) {
+        val exHandler = CoroutineExceptionHandler { _, ex ->
+            Log.e(TAG, "Exception in addCustomFilterRow", ex)
+        }
+        val msg = frontPageFilter["message"] as Map<String, *>
+        val objType =
+            (msg["values"] as Map<String, String>)["objects"] as String
+        val description = when (msg["id"] as String) {
+            "recently_added_objects" -> "Recently Added $objType"
+            "recently_released_objects" -> "Recently Released $objType"
+            else -> objType
+        }
+        val mode = FilterMode.valueOf(frontPageFilter["mode"] as String)
+        if (mode !in supportedFilterModes) {
+            return
+        }
+        rowsAdapter.add(
+            ListRow(
+                HeaderItem(description),
+                adapter
+            )
+        )
+        viewLifecycleOwner.lifecycleScope.launch(exHandler) {
+            val direction = frontPageFilter["direction"] as String
+            val sortBy = frontPageFilter["sortBy"] as String
+            val filter = FindFilterType(
+                direction = Optional.present(
+                    SortDirectionEnum.safeValueOf(
+                        direction
+                    )
+                ),
+                sort = Optional.present(sortBy),
+                per_page = Optional.present(25)
+            )
+
+
+
+            when (mode) {
+                FilterMode.SCENES -> {
+                    adapter.addAll(0, queryEngine.findScenes(filter))
+                }
+
+                FilterMode.STUDIOS -> {
+                    adapter.addAll(0, queryEngine.findStudios(filter))
+                }
+
+                FilterMode.PERFORMERS -> {
+                    adapter.addAll(0, queryEngine.findPerformers(filter))
+                }
+
+                else -> {
+                    Log.i(TAG, "Unsupported mode in frontpage: $mode")
+                }
+            }
+        }
+    }
+
+    private fun addSavedFilterRow(
+        frontPageFilter: Map<String, *>,
+        adapter: ArrayObjectAdapter,
+        queryEngine: QueryEngine
+    ) {
+        val exHandler = CoroutineExceptionHandler { _, ex ->
+            Log.e(TAG, "Exception in addSavedFilterRow", ex)
+            Toast.makeText(
+                requireContext(),
+                "Error fetching saved filter. This is probably a bug!",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+        val filterId = frontPageFilter["savedFilterId"]
+        val header = HeaderItem("")
+        val listRow = ListRow(header, adapter)
+        rowsAdapter.add(listRow)
+        viewLifecycleOwner.lifecycleScope.launch(exHandler) {
+            val result = queryEngine.getSavedFilter(filterId.toString())
+
+            val index = rowsAdapter.indexOf(listRow)
+            rowsAdapter.removeItems(index, 1)
+
+            if (result?.mode in supportedFilterModes) {
+                // TODO doing it this way will result it adding an unsupported row then removing it which looks weird, in practice though it happens pretty fast
+                rowsAdapter.add(
+                    index,
+                    ListRow(HeaderItem(result?.name ?: ""), adapter)
+                )
+
+                val filter = convertFilter(result?.find_filter)
+                val objectFilter =
+                    result?.object_filter as Map<String, Map<String, *>>?
+
+                when (result?.mode) {
+                    FilterMode.SCENES -> {
+                        val sceneFilter =
+                            convertSceneObjectFilter(objectFilter)
+                        adapter.addAll(
+                            0,
+                            queryEngine.findScenes(filter, sceneFilter)
+                        )
+                    }
+
+                    FilterMode.STUDIOS -> {
+                        val studioFilter =
+                            convertStudioObjectFilter(objectFilter)
+                        adapter.addAll(
+                            0,
+                            queryEngine.findStudios(
+                                filter,
+                                studioFilter
+                            )
+                        )
+                    }
+
+                    FilterMode.PERFORMERS -> {
+                        val performerFilter =
+                            convertPerformerObjectFilter(objectFilter)
+                        adapter.addAll(
+                            0,
+                            queryEngine.findPerformers(
+                                filter,
+                                performerFilter
+                            )
+                        )
+                    }
+
+                    FilterMode.TAGS -> {
+                        val tagFilter =
+                            convertTagObjectFilter(objectFilter)
+                        adapter.addAll(
+                            0,
+                            queryEngine.findTags(filter, tagFilter)
+                        )
+                    }
+
+                    else -> {
+                        Log.i(
+                            TAG,
+                            "Unsupported mode in frontpage: ${result?.mode}"
+                        )
+                    }
+                }
             }
         }
     }
