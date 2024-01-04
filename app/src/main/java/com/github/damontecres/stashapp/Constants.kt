@@ -206,4 +206,4 @@ fun convertFilter(filter: FindSavedFilterQuery.Find_filter?): FindFilterType? {
 }
 
 val supportedFilterModes =
-    setOf(FilterMode.SCENES, FilterMode.STUDIOS, FilterMode.STUDIOS, FilterMode.TAGS)
+    setOf(FilterMode.SCENES, FilterMode.STUDIOS, FilterMode.PERFORMERS, FilterMode.TAGS)

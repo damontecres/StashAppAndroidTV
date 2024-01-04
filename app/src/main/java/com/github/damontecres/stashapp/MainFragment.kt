@@ -302,46 +302,56 @@ class MainFragment : BrowseSupportFragment() {
                                     val filterId = frontPageFilter["savedFilterId"]
                                     val header = HeaderItem("")
                                     val listRow = ListRow(header, adapter)
-                                    rowsAdapter.add(listRow) // TODO check if supported
+                                    rowsAdapter.add(listRow)
                                     viewLifecycleOwner.lifecycleScope.launch(exHandler) {
                                         val result = queryEngine.getSavedFilter(filterId.toString())
 
                                         val index = rowsAdapter.indexOf(listRow)
                                         rowsAdapter.removeItems(index, 1)
-                                        rowsAdapter.add(
-                                            index,
-                                            ListRow(HeaderItem(result?.name ?: ""), adapter)
-                                        )
 
-                                        val filter = convertFilter(result?.find_filter)
-                                        val objectFilter = result?.object_filter
-                                        // TODO convert object filters
+                                        if (result?.mode in supportedFilterModes) {
+                                            // TODO doing it this way will result it adding an unsupported row then removing it which looks weird, in practice though it happens pretty fast
+                                            rowsAdapter.add(
+                                                index,
+                                                ListRow(HeaderItem(result?.name ?: ""), adapter)
+                                            )
 
-                                        when (result?.mode) {
-                                            FilterMode.SCENES -> {
-                                                adapter.addAll(0, queryEngine.findScenes(filter))
-                                            }
+                                            val filter = convertFilter(result?.find_filter)
+                                            val objectFilter = result?.object_filter
+                                            // TODO convert object filters
 
-                                            FilterMode.STUDIOS -> {
-                                                adapter.addAll(0, queryEngine.findStudios(filter))
-                                            }
+                                            when (result?.mode) {
+                                                FilterMode.SCENES -> {
+                                                    adapter.addAll(
+                                                        0,
+                                                        queryEngine.findScenes(filter)
+                                                    )
+                                                }
 
-                                            FilterMode.PERFORMERS -> {
-                                                adapter.addAll(
-                                                    0,
-                                                    queryEngine.findPerformers(filter)
-                                                )
-                                            }
+                                                FilterMode.STUDIOS -> {
+                                                    adapter.addAll(
+                                                        0,
+                                                        queryEngine.findStudios(filter)
+                                                    )
+                                                }
 
-                                            FilterMode.TAGS -> {
-                                                adapter.addAll(0, queryEngine.findTags(filter))
-                                            }
+                                                FilterMode.PERFORMERS -> {
+                                                    adapter.addAll(
+                                                        0,
+                                                        queryEngine.findPerformers(filter)
+                                                    )
+                                                }
 
-                                            else -> {
-                                                Log.i(
-                                                    TAG,
-                                                    "Unsupported mode in frontpage: ${result?.mode}"
-                                                )
+                                                FilterMode.TAGS -> {
+                                                    adapter.addAll(0, queryEngine.findTags(filter))
+                                                }
+
+                                                else -> {
+                                                    Log.i(
+                                                        TAG,
+                                                        "Unsupported mode in frontpage: ${result?.mode}"
+                                                    )
+                                                }
                                             }
                                         }
                                     }
