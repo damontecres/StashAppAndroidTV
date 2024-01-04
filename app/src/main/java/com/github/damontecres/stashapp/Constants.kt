@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 
 object Constants {
@@ -427,9 +428,9 @@ fun convertResolutionCriterionInput(it: Map<String, *>?): ResolutionCriterionInp
     }
 }
 
-fun convertPerformerObjectFilter(filter: Map<String, Map<String, *>>?): PerformerFilterType? {
-    // TODO AND, OR, & NOT
-    return if (filter != null) {
+fun convertPerformerObjectFilter(f: Any?): PerformerFilterType? {
+    return if (f != null) {
+        val filter = f as Map<String, Map<String, *>>
         PerformerFilterType(
             AND = Optional.presentIfNotNull(convertPerformerObjectFilter(filter?.get("AND") as Map<String, Map<String, *>>?)),
             OR = Optional.presentIfNotNull(convertPerformerObjectFilter(filter?.get("OR") as Map<String, Map<String, *>>?)),
@@ -479,8 +480,9 @@ fun convertPerformerObjectFilter(filter: Map<String, Map<String, *>>?): Performe
     }
 }
 
-fun convertSceneObjectFilter(filter: Map<String, Map<String, *>>?): SceneFilterType? {
-    return if (filter != null) {
+fun convertSceneObjectFilter(f: Any?): SceneFilterType? {
+    return if (f != null) {
+        val filter = f as Map<String, Map<String, *>>
         SceneFilterType(
             AND = Optional.presentIfNotNull(convertSceneObjectFilter(filter?.get("AND") as Map<String, Map<String, *>>?)),
             OR = Optional.presentIfNotNull(convertSceneObjectFilter(filter?.get("OR") as Map<String, Map<String, *>>?)),
@@ -552,8 +554,9 @@ fun convertSceneObjectFilter(filter: Map<String, Map<String, *>>?): SceneFilterT
 
 }
 
-fun convertStudioObjectFilter(filter: Map<String, Map<String, *>>?): StudioFilterType? {
-    return if (filter != null) {
+fun convertStudioObjectFilter(f: Any?): StudioFilterType? {
+    return if (f != null) {
+        val filter = f as Map<String, Map<String, *>>
         StudioFilterType(
             AND = Optional.presentIfNotNull(convertStudioObjectFilter(filter?.get("AND") as Map<String, Map<String, *>>?)),
             OR = Optional.presentIfNotNull(convertStudioObjectFilter(filter?.get("OR") as Map<String, Map<String, *>>?)),
@@ -578,8 +581,9 @@ fun convertStudioObjectFilter(filter: Map<String, Map<String, *>>?): StudioFilte
     }
 }
 
-fun convertTagObjectFilter(filter: Map<String, Map<String, *>>?): TagFilterType? {
-    return if (filter != null) {
+fun convertTagObjectFilter(f: Any?): TagFilterType? {
+    return if (f != null) {
+        val filter = f as Map<String, Map<String, *>>
         TagFilterType(
             AND = Optional.presentIfNotNull(convertTagObjectFilter(filter?.get("AND") as Map<String, Map<String, *>>?)),
             OR = Optional.presentIfNotNull(convertTagObjectFilter(filter?.get("OR") as Map<String, Map<String, *>>?)),

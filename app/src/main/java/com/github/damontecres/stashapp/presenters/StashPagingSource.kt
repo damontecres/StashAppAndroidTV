@@ -9,6 +9,7 @@ import com.github.damontecres.stashapp.QueryEngine
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.CountAndList
+import com.github.damontecres.stashapp.data.DataType
 
 /**
  * A PagingSource for Stash
@@ -28,6 +29,9 @@ class StashPagingSource<T : Query.Data, D : Any>(
     private val queryEngine = QueryEngine(context, showToasts)
 
     interface DataSupplier<T : Query.Data, D : Any> {
+
+        val dataType: DataType
+
         /**
          * Create query with the given filter
          *
@@ -48,12 +52,7 @@ class StashPagingSource<T : Query.Data, D : Any>(
          *
          * By default, this sorts by name ascending
          */
-        fun getDefaultFilter(): FindFilterType {
-            return FindFilterType(
-                sort = Optional.present("name"),
-                direction = Optional.present(SortDirectionEnum.ASC)
-            )
-        }
+        fun getDefaultFilter(): FindFilterType
     }
 
     private suspend fun fetchPage(page: Int): CountAndList<D> {

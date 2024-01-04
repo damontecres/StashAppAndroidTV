@@ -13,6 +13,8 @@ import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
+import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.presenters.StashPagingSource
 import com.github.damontecres.stashapp.presenters.stashPresenterSelector
 import kotlinx.coroutines.flow.collectLatest
@@ -63,8 +65,13 @@ class StashGridFragment<T : Query.Data, D : Any>(
             .cachedIn(viewLifecycleOwner.lifecycleScope)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            flow.collectLatest {
-                mAdapter.submitData(it)
+            val queryEngine = QueryEngine(requireContext(), true)
+            val query = FindDefaultFilterQuery(FilterMode.TAGS)
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                flow.collectLatest {
+                    mAdapter.submitData(it)
+                }
             }
         }
     }
