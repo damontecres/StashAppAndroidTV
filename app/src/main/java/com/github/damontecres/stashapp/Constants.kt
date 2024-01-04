@@ -17,6 +17,7 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -212,7 +213,7 @@ fun selectStream(scene: Scene?): String? {
     return stream
 }
 
-fun convertFilter(filter: FindSavedFilterQuery.Find_filter?): FindFilterType? {
+fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
     return if (filter != null) {
         FindFilterType(
             q = Optional.presentIfNotNull(filter.q),

@@ -17,6 +17,7 @@ import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.type.FindFilterType
@@ -154,9 +155,9 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         return tags.orEmpty()
     }
 
-    suspend fun getSavedFilter(filterId: String): FindSavedFilterQuery.FindSavedFilter? {
+    suspend fun getSavedFilter(filterId: String): SavedFilterData? {
         val query = FindSavedFilterQuery(filterId)
-        return executeQuery(query).data?.findSavedFilter
+        return executeQuery(query).data?.findSavedFilter?.savedFilterData
     }
 
     companion object {
