@@ -299,14 +299,20 @@ class MainFragment : BrowseSupportFragment() {
                                         }
                                     }
                                 } else if (filterType == "SavedFilter") {
-                                    val filterId = frontPageFilter["savedFilterId"] as String
-                                    rowsAdapter.add(
-                                        ListRow(
-                                            adapter
-                                        )
-                                    )
+                                    val filterId = frontPageFilter["savedFilterId"]
+                                    val header = HeaderItem("")
+                                    val listRow = ListRow(header, adapter)
+                                    rowsAdapter.add(listRow) // TODO check if supported
                                     viewLifecycleOwner.lifecycleScope.launch(exHandler) {
-                                        val result = queryEngine.getSavedFilter(filterId)
+                                        val result = queryEngine.getSavedFilter(filterId.toString())
+
+                                        val index = rowsAdapter.indexOf(listRow)
+                                        rowsAdapter.removeItems(index, 1)
+                                        rowsAdapter.add(
+                                            index,
+                                            ListRow(HeaderItem(result?.name ?: ""), adapter)
+                                        )
+
                                         val filter = convertFilter(result?.find_filter)
                                         val objectFilter = result?.object_filter
                                         // TODO convert object filters
@@ -325,6 +331,10 @@ class MainFragment : BrowseSupportFragment() {
                                                     0,
                                                     queryEngine.findPerformers(filter)
                                                 )
+                                            }
+
+                                            FilterMode.TAGS -> {
+                                                adapter.addAll(0, queryEngine.findTags(filter))
                                             }
 
                                             else -> {

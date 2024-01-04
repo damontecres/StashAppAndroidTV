@@ -17,6 +17,7 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.Scene
 
@@ -203,3 +204,6 @@ fun convertFilter(filter: FindSavedFilterQuery.Find_filter?): FindFilterType? {
         null
     }
 }
+
+val supportedFilterModes =
+    setOf(FilterMode.SCENES, FilterMode.STUDIOS, FilterMode.STUDIOS, FilterMode.TAGS)
