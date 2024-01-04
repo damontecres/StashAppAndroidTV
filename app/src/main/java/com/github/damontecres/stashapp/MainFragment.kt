@@ -34,6 +34,7 @@ import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
@@ -317,8 +318,10 @@ class MainFragment : BrowseSupportFragment() {
                                             )
 
                                             val filter = convertFilter(result?.find_filter)
-                                            val objectFilter = result?.object_filter
+                                            val objectFilter =
+                                                result?.object_filter as Map<String, Map<String, *>>
                                             // TODO convert object filters
+
 
                                             when (result?.mode) {
                                                 FilterMode.SCENES -> {
@@ -336,9 +339,14 @@ class MainFragment : BrowseSupportFragment() {
                                                 }
 
                                                 FilterMode.PERFORMERS -> {
+                                                    val performerFilter =
+                                                        convertPerformerObjectFilter(objectFilter)
                                                     adapter.addAll(
                                                         0,
-                                                        queryEngine.findPerformers(filter)
+                                                        queryEngine.findPerformers(
+                                                            filter,
+                                                            performerFilter
+                                                        )
                                                     )
                                                 }
 

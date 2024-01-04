@@ -17,8 +17,15 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
+import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.Scene
 
 object Constants {
@@ -207,3 +214,135 @@ fun convertFilter(filter: FindSavedFilterQuery.Find_filter?): FindFilterType? {
 
 val supportedFilterModes =
     setOf(FilterMode.SCENES, FilterMode.STUDIOS, FilterMode.PERFORMERS, FilterMode.TAGS)
+
+
+fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {
+    return if (it != null) {
+        val values = it["value"]!! as Map<String, Int?>
+        IntCriterionInput(
+            values["value"]!!,
+            Optional.presentIfNotNull(values["value2"]),
+            CriterionModifier.valueOf(it["modifier"]!! as String)
+        )
+    } else {
+        null
+    }
+}
+
+fun convertFloatCriterionInput(it: Map<String, *>?): FloatCriterionInput? {
+    return if (it != null) {
+        val values = it["value"]!! as Map<String, Double?>
+        FloatCriterionInput(
+            values["value"]!!,
+            Optional.presentIfNotNull(values["value2"]),
+            CriterionModifier.valueOf(it["modifier"]!! as String)
+        )
+    } else {
+        null
+    }
+}
+
+fun convertStringCriterionInput(it: Map<String, *>?): StringCriterionInput? {
+    return if (it != null) {
+        val values = it["value"]!! as Map<String, String?>
+        StringCriterionInput(
+            values["value"]!!,
+            CriterionModifier.valueOf(it["modifier"]!!.toString())
+        )
+    } else {
+        null
+    }
+}
+
+fun mapToIds(list: Any?): List<String>? {
+    return (list as List<*>?)?.map { (it as Map<String, String>)["id"].orEmpty() }?.toList()
+}
+
+fun convertHierarchicalMultiCriterionInput(it: Map<String, *>?): HierarchicalMultiCriterionInput? {
+    return if (it != null) {
+        val values = it["value"]!! as Map<String, *>
+        val items = mapToIds(values["items"])
+        val excludes = mapToIds(values["excludes"])
+        HierarchicalMultiCriterionInput(
+            Optional.presentIfNotNull(items),
+            CriterionModifier.valueOf(it["modifier"]!!.toString()),
+            Optional.presentIfNotNull(it["depth"] as Int?),
+            Optional.presentIfNotNull(excludes)
+        )
+    } else {
+        null
+    }
+}
+
+fun convertMultiCriterionInput(it: Map<String, *>?): MultiCriterionInput? {
+    return if (it != null) {
+        val values = it["value"]!! as Map<String, *>
+        val items = mapToIds(values["items"])
+        val excludes = mapToIds(values["excludes"])
+        MultiCriterionInput(
+            Optional.presentIfNotNull(items),
+            CriterionModifier.valueOf(it["modifier"]!!.toString()),
+            Optional.presentIfNotNull(excludes)
+        )
+    } else {
+        null
+    }
+}
+
+fun convertBoolean(it: Map<String, *>?): Boolean? {
+    return if (it != null) {
+        val value = (it["value"] as String?).toBoolean()
+        when (CriterionModifier.valueOf(it["modifier"] as String)) {
+            CriterionModifier.EQUALS -> value
+            CriterionModifier.NOT_EQUALS -> !value
+            else -> null
+        }
+    } else {
+        null
+    }
+}
+
+fun convertPerformerObjectFilter(filter: Map<String, Map<String, *>>?): PerformerFilterType? {
+    // TODO AND, OR, & NOT
+    return PerformerFilterType(
+        name = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("name"))),
+        disambiguation = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("disambiguation"))),
+        details = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("details"))),
+        filter_favorites = Optional.presentIfNotNull(convertBoolean(filter?.get("filter_favorites"))),
+        birth_year = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("birth_year"))),
+        age = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("age"))),
+        ethnicity = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("ethnicity"))),
+        country = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("country"))),
+        eye_color = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("eye_color"))),
+        height_cm = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("height_cm"))),
+        measurements = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("measurements"))),
+        fake_tits = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("fake_tits"))),
+        penis_length = Optional.presentIfNotNull(convertFloatCriterionInput(filter?.get("penis_length"))),
+//        circumcised = Optional.presentIfNotNull(convertCircumcisionCriterionInput(filter?.get("circumcised"))),
+        career_length = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("career_length"))),
+        tattoos = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("tattoos"))),
+        piercings = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("piercings"))),
+        aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("aliases"))),
+//        gender = Optional.presentIfNotNull(convertGenderCriterionInput(filter?.get("gender"))),
+        // is_missing = Optional.presentIfNotNull(convertString(filter?.get("is_missing"))),
+        tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter?.get("tags"))),
+        tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("tag_count"))),
+        scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("scene_count"))),
+        image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("image_count"))),
+        gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("gallery_count"))),
+        o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("o_counter"))),
+        //stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter?.get("stash_id_endpoint"))),
+        rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("rating100"))),
+        url = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("url"))),
+        hair_color = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("hair_color"))),
+        weight = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("weight"))),
+        death_year = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("death_year"))),
+        studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter?.get("studios"))),
+        performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter?.get("performers"))),
+        ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter?.get("ignore_auto_tag"))),
+//        birthdate = Optional.presentIfNotNull(convertDateCriterionInput(filter?.get("birthdate"))),
+//        death_date = Optional.presentIfNotNull(convertDateCriterionInput(filter?.get("death_date"))),
+//        created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("created_at"))),
+//        updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("updated_at")))
+    )
+}
