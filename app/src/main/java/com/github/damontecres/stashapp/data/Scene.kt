@@ -14,7 +14,8 @@ data class Scene(
     var screenshotUrl: String?,
     var studioId: String?,
     var studioName: String?,
-    var streams: Map<String, String>
+    var streams: Map<String, String>,
+    val duration: Double?
 ) : Parcelable
 
 fun sceneFromSlimSceneData(data: SlimSceneData): Scene {
@@ -32,9 +33,16 @@ fun sceneFromSlimSceneData(data: SlimSceneData): Scene {
     } else {
         data.title
     }
+    val duration = data.files.firstOrNull()?.videoFileData?.duration
     return Scene(
-        id = data.id.toLong(), title = title, details = data.details,
-        streamUrl = data.paths.stream, screenshotUrl = data.paths.screenshot,
-        studioId = data.studio?.id, studioName = data.studio?.name, streams
+        id = data.id.toLong(),
+        title = title,
+        details = data.details,
+        streamUrl = data.paths.stream,
+        screenshotUrl = data.paths.screenshot,
+        studioId = data.studio?.id,
+        studioName = data.studio?.name,
+        streams = streams,
+        duration = duration
     )
 }

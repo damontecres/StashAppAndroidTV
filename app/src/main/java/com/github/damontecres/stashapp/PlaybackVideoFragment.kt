@@ -45,7 +45,8 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         var skipBack = PreferenceManager.getDefaultSharedPreferences(requireContext())
             .getInt("skip_back_time", 10)
 
-        playerAdapter = BasicMediaPlayerAdapter(requireActivity(), skipForward, skipBack)
+        playerAdapter =
+            BasicMediaPlayerAdapter(requireActivity(), skipForward, skipBack, scene?.duration)
 
         mTransportControlGlue = BasicTransportControlsGlue(activity, playerAdapter)
         mTransportControlGlue.host = glueHost
@@ -80,13 +81,23 @@ class PlaybackVideoFragment : VideoSupportFragment() {
     class BasicMediaPlayerAdapter(
         context: Context,
         private var skipForward: Int,
-        private var skipBack: Int
+        private var skipBack: Int,
+        private val duration: Double?
     ) :
         MediaPlayerAdapter(context) {
 
         override fun fastForward() = seekTo(currentPosition + skipForward * 1000)
 
         override fun rewind() = seekTo(currentPosition - skipBack * 1000)
+
+        override fun getDuration(): Long {
+            val dur = super.getDuration()
+            return if (dur < 1) {
+                duration?.times(1000)?.toLong() ?: -1
+            } else {
+                dur
+            }
+        }
 
         override fun getSupportedActions(): Long {
             return (ACTION_REWIND xor
