@@ -97,7 +97,7 @@ class ScenePresenter : Presenter() {
     companion object {
         private val TAG = "CardPresenter"
 
-        private val CARD_WIDTH = 351
-        private val CARD_HEIGHT = 198
+        const val CARD_WIDTH = 351
+        const val CARD_HEIGHT = 198
     }
 }
