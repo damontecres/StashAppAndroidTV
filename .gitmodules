@@ -1,4 +1,4 @@
 [submodule "stash"]
 	path = stash-server
 	url = https://github.com/stashapp/stash.git
-	branch = develop
+	tag = v0.24.1
