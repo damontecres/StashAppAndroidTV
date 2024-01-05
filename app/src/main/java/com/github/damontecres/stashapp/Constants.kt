@@ -234,7 +234,7 @@ fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {
     return if (it != null) {
         val values = it["value"]!! as Map<String, Int?>
         IntCriterionInput(
-            values["value"] ?: -1,
+            values["value"] ?: 0,
             Optional.presentIfNotNull(values["value2"]),
             CriterionModifier.valueOf(it["modifier"]!! as String)
         )
@@ -247,7 +247,7 @@ fun convertFloatCriterionInput(it: Map<String, *>?): FloatCriterionInput? {
     return if (it != null) {
         val values = it["value"]!! as Map<String, Number?> // Might be an int or double
         FloatCriterionInput(
-            values["value"]?.toDouble() ?: -1.0,
+            values["value"]?.toDouble() ?: 0.0,
             Optional.presentIfNotNull(values["value2"]?.toDouble()),
             CriterionModifier.valueOf(it["modifier"]!! as String)
         )
