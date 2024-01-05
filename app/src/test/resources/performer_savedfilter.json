@@ -1,0 +1,252 @@
+{
+  "data": {
+    "findSavedFilter": {
+      "id": "8",
+      "mode": "PERFORMERS",
+      "name": "Test Filter",
+      "find_filter": {
+        "q": "",
+        "page": 1,
+        "per_page": 40,
+        "sort": "name",
+        "direction": "ASC",
+        "__typename": "SavedFindFilterType"
+      },
+      "object_filter": {
+        "age": {
+          "modifier": "EQUALS",
+          "value": {
+            "value": 25
+          }
+        },
+        "aliases": {
+          "modifier": "INCLUDES",
+          "value": "alias"
+        },
+        "birth_year": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": 1990
+          }
+        },
+        "birthdate": {
+          "modifier": "NOT_BETWEEN",
+          "value": {
+            "value": "1990-01-05",
+            "value2": "1990-01-01"
+          }
+        },
+        "career_length": {
+          "modifier": "NOT_EQUALS",
+          "value": "66"
+        },
+        "circumcised": {
+          "modifier": "INCLUDES",
+          "value": [
+            "Uncut"
+          ]
+        },
+        "country": {
+          "modifier": "EXCLUDES",
+          "value": "USA"
+        },
+        "created_at": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": "2023-12-31 00:00"
+          }
+        },
+        "death_date": {
+          "modifier": "IS_NULL",
+          "value": {
+            "value": ""
+          }
+        },
+        "death_year": {
+          "modifier": "NOT_NULL",
+          "value": {}
+        },
+        "details": {
+          "modifier": "INCLUDES",
+          "value": "words"
+        },
+        "disambiguation": {
+          "modifier": "NOT_MATCHES_REGEX",
+          "value": "regex"
+        },
+        "ethnicity": {
+          "modifier": "NOT_EQUALS",
+          "value": "eth"
+        },
+        "eye_color": {
+          "modifier": "INCLUDES",
+          "value": "blue"
+        },
+        "fake_tits": {
+          "modifier": "EQUALS",
+          "value": "yes"
+        },
+        "filter_favorites": {
+          "modifier": "EQUALS",
+          "value": "false"
+        },
+        "gallery_count": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": 4
+          }
+        },
+        "gender": {
+          "modifier": "EQUALS",
+          "value": "Female"
+        },
+        "hair_color": {
+          "modifier": "NOT_MATCHES_REGEX",
+          "value": "dddd"
+        },
+        "height_cm": {
+          "modifier": "LESS_THAN",
+          "value": {
+            "value": 200
+          }
+        },
+        "ignore_auto_tag": {
+          "modifier": "EQUALS",
+          "value": "true"
+        },
+        "image_count": {
+          "modifier": "NOT_EQUALS",
+          "value": {
+            "value": 1
+          }
+        },
+        "is_missing": {
+          "modifier": "EQUALS",
+          "value": "piercings"
+        },
+        "measurements": {
+          "modifier": "INCLUDES",
+          "value": "something"
+        },
+        "name": {
+          "modifier": "EXCLUDES",
+          "value": "name"
+        },
+        "o_counter": {
+          "modifier": "LESS_THAN",
+          "value": {
+            "value": 5
+          }
+        },
+        "penis_length": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": 11
+          }
+        },
+        "piercings": {
+          "modifier": "NOT_NULL",
+          "value": ""
+        },
+        "rating100": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": 20
+          }
+        },
+        "scene_count": {
+          "modifier": "LESS_THAN",
+          "value": {
+            "value": 55
+          }
+        },
+        "stash_id_endpoint": {
+          "modifier": "IS_NULL",
+          "value": {
+            "endpoint": "endpoint",
+            "stashID": ""
+          }
+        },
+        "studios": {
+          "modifier": "INCLUDES",
+          "value": {
+            "depth": 0,
+            "excluded": [
+              {
+                "id": "94",
+                "label": "Excluded Studio"
+              }
+            ],
+            "items": [
+              {
+                "id": "1",
+                "label": "Studio1"
+              },
+              {
+                "id": "2",
+                "label": "Studio2"
+              },
+              {
+                "id": "3",
+                "label": "Studio3"
+              }
+            ]
+          }
+        },
+        "tag_count": {
+          "modifier": "BETWEEN",
+          "value": {
+            "value": 7,
+            "value2": 10
+          }
+        },
+        "tags": {
+          "modifier": "INCLUDES_ALL",
+          "value": {
+            "depth": 1,
+            "excluded": [],
+            "items": [
+              {
+                "id": "1",
+                "label": "Tag1"
+              },
+              {
+                "id": "11",
+                "label": "Tag2"
+              },
+              {
+                "id": "33",
+                "label": "Tag3"
+              }
+            ]
+          }
+        },
+        "tattoos": {
+          "modifier": "IS_NULL",
+          "value": ""
+        },
+        "updated_at": {
+          "modifier": "LESS_THAN",
+          "value": {
+            "value": "2024-01-01 14:00"
+          }
+        },
+        "url": {
+          "modifier": "NOT_NULL",
+          "value": ""
+        },
+        "weight": {
+          "modifier": "LESS_THAN",
+          "value": {
+            "value": 196
+          }
+        }
+      },
+      "ui_options": {
+        "display_mode": 0,
+        "zoom_index": 1
+      },
+      "__typename": "SavedFilter"
+    }
+  }
+}

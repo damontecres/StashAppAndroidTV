@@ -1,0 +1,262 @@
+{
+  "data": {
+    "findSavedFilter": {
+      "id": "1",
+      "mode": "SCENES",
+      "name": "Test filter",
+      "find_filter": {
+        "q": "",
+        "page": 1,
+        "per_page": 40,
+        "sort": "created_at",
+        "direction": "DESC",
+        "__typename": "SavedFindFilterType"
+      },
+      "object_filter": {
+        "audio_codec": {
+          "modifier": "EQUALS",
+          "value": "aac"
+        },
+        "captions": {
+          "modifier": "EXCLUDES",
+          "value": "English"
+        },
+        "checksum": {
+          "modifier": "NOT_NULL",
+          "value": ""
+        },
+        "code": {
+          "modifier": "NOT_NULL",
+          "value": ""
+        },
+        "created_at": {
+          "modifier": "BETWEEN",
+          "value": {
+            "value": "2024-01-01 10:30",
+            "value2": "2024-01-05 11:00"
+          }
+        },
+        "date": {
+          "modifier": "LESS_THAN",
+          "value": {
+            "value": "2024-01-05"
+          }
+        },
+        "details": {
+          "modifier": "INCLUDES",
+          "value": "something"
+        },
+        "director": {
+          "modifier": "MATCHES_REGEX",
+          "value": "test(\\w+)"
+        },
+        "duplicated": {
+          "modifier": "EQUALS",
+          "value": "true"
+        },
+        "duration": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": 10
+          }
+        },
+        "file_count": {
+          "modifier": "NOT_BETWEEN",
+          "value": {
+            "value": 2,
+            "value2": 6
+          }
+        },
+        "framerate": {
+          "modifier": "NOT_EQUALS",
+          "value": {
+            "value": 24
+          }
+        },
+        "has_markers": {
+          "modifier": "EQUALS",
+          "value": "false"
+        },
+        "interactive": {
+          "modifier": "EQUALS",
+          "value": "true"
+        },
+        "interactive_speed": {
+          "modifier": "EQUALS",
+          "value": {
+            "value": 12
+          }
+        },
+        "is_missing": {
+          "modifier": "EQUALS",
+          "value": "movie"
+        },
+        "movies": {
+          "modifier": "NOT_NULL",
+          "value": []
+        },
+        "o_counter": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": 1
+          }
+        },
+        "organized": {
+          "modifier": "EQUALS",
+          "value": "false"
+        },
+        "oshash": {
+          "modifier": "NOT_MATCHES_REGEX",
+          "value": "\\s\\s\\d{1,2}"
+        },
+        "path": {
+          "modifier": "NOT_NULL",
+          "value": ""
+        },
+        "performer_age": {
+          "modifier": "LESS_THAN",
+          "value": {
+            "value": 35
+          }
+        },
+        "performer_count": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": 2
+          }
+        },
+        "performer_favorite": {
+          "modifier": "EQUALS",
+          "value": "true"
+        },
+        "performer_tags": {
+          "modifier": "INCLUDES_ALL",
+          "value": {
+            "depth": -1,
+            "excluded": [],
+            "items": [
+              {
+                "id": "8",
+                "label": "Anal"
+              }
+            ]
+          }
+        },
+        "performers": {
+          "modifier": "INCLUDES",
+          "value": {
+            "excluded": [],
+            "items": [
+              {
+                "id": "1131",
+                "label": "Aaron"
+              }
+            ]
+          }
+        },
+        "phash_distance": {
+          "modifier": "NOT_EQUALS",
+          "value": {
+            "distance": 0,
+            "value": "aaa"
+          }
+        },
+        "play_count": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": 1
+          }
+        },
+        "play_duration": {
+          "modifier": "LESS_THAN",
+          "value": {
+            "value": 5085
+          }
+        },
+        "rating100": {
+          "modifier": "EQUALS",
+          "value": {
+            "value": 80
+          }
+        },
+        "resolution": {
+          "modifier": "EQUALS",
+          "value": "1080p"
+        },
+        "resume_time": {
+          "modifier": "BETWEEN",
+          "value": {
+            "value": 4,
+            "value2": 9
+          }
+        },
+        "stash_id_endpoint": {
+          "modifier": "IS_NULL",
+          "value": {
+            "endpoint": "1234",
+            "stashID": ""
+          }
+        },
+        "studios": {
+          "modifier": "INCLUDES",
+          "value": {
+            "depth": 0,
+            "excluded": [],
+            "items": [
+              {
+                "id": "33",
+                "label": "Test Studio"
+              }
+            ]
+          }
+        },
+        "tag_count": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": 2
+          }
+        },
+        "tags": {
+          "modifier": "INCLUDES_ALL",
+          "value": {
+            "depth": 0,
+            "excluded": [],
+            "items": [
+              {
+                "id": "8",
+                "label": "AAA"
+              },
+              {
+                "id": "148",
+                "label": "BBB"
+              }
+            ]
+          }
+        },
+        "title": {
+          "modifier": "EXCLUDES",
+          "value": "whatever"
+        },
+        "updated_at": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": "2024-01-01 23:00"
+          }
+        },
+        "url": {
+          "modifier": "NOT_NULL",
+          "value": ""
+        },
+        "video_codec": {
+          "modifier": "INCLUDES",
+          "value": "264"
+        }
+      },
+      "ui_options": {
+        "display_mode": 0,
+        "zoom_index": 1
+      },
+      "__typename": "SavedFilter"
+    }
+  }
+}
