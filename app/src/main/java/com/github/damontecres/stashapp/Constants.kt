@@ -234,7 +234,7 @@ fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {
     return if (it != null) {
         val values = it["value"]!! as Map<String, Int?>
         IntCriterionInput(
-            values["value"]!!,
+            values["value"] ?: -1,
             Optional.presentIfNotNull(values["value2"]),
             CriterionModifier.valueOf(it["modifier"]!! as String)
         )
@@ -245,10 +245,10 @@ fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {
 
 fun convertFloatCriterionInput(it: Map<String, *>?): FloatCriterionInput? {
     return if (it != null) {
-        val values = it["value"]!! as Map<String, Double?>
+        val values = it["value"]!! as Map<String, Number?> // Might be an int or double
         FloatCriterionInput(
-            values["value"]!!,
-            Optional.presentIfNotNull(values["value2"]),
+            values["value"]?.toDouble() ?: -1.0,
+            Optional.presentIfNotNull(values["value2"]?.toDouble()),
             CriterionModifier.valueOf(it["modifier"]!! as String)
         )
     } else {
@@ -258,9 +258,8 @@ fun convertFloatCriterionInput(it: Map<String, *>?): FloatCriterionInput? {
 
 fun convertStringCriterionInput(it: Map<String, *>?): StringCriterionInput? {
     return if (it != null) {
-        val values = it["value"]!! as Map<String, String?>
         StringCriterionInput(
-            values["value"]!!,
+            it["value"]?.toString() ?: "",
             CriterionModifier.valueOf(it["modifier"]!!.toString())
         )
     } else {
@@ -276,7 +275,7 @@ fun convertHierarchicalMultiCriterionInput(it: Map<String, *>?): HierarchicalMul
     return if (it != null) {
         val values = it["value"]!! as Map<String, *>
         val items = mapToIds(values["items"])
-        val excludes = mapToIds(values["excludes"])
+        val excludes = mapToIds(values["excluded"])
         HierarchicalMultiCriterionInput(
             Optional.presentIfNotNull(items),
             CriterionModifier.valueOf(it["modifier"]!!.toString()),
@@ -290,9 +289,8 @@ fun convertHierarchicalMultiCriterionInput(it: Map<String, *>?): HierarchicalMul
 
 fun convertMultiCriterionInput(it: Map<String, *>?): MultiCriterionInput? {
     return if (it != null) {
-        val values = it["value"]!! as Map<String, *>
-        val items = mapToIds(values["items"])
-        val excludes = mapToIds(values["excludes"])
+        val items = mapToIds(it["items"])
+        val excludes = mapToIds(it["excluded"])
         MultiCriterionInput(
             Optional.presentIfNotNull(items),
             CriterionModifier.valueOf(it["modifier"]!!.toString()),
@@ -344,9 +342,9 @@ fun convertTimestampCriterionInput(it: Map<String, *>?): TimestampCriterionInput
 
 fun convertCircumcisionCriterionInput(it: Map<String, *>?): CircumcisionCriterionInput? {
     return if (it != null) {
-        val values = it["value"]!! as Map<String, List<String>?>
+        val valueList = (it["value"] as List<String>?)
         CircumcisionCriterionInput(
-            Optional.presentIfNotNull(values["value"]?.map { CircumisedEnum.valueOf(it) }
+            Optional.presentIfNotNull(valueList?.map { CircumisedEnum.valueOf(it.uppercase()) }
                 ?.toList()),
             CriterionModifier.valueOf(it["modifier"]!! as String)
         )
@@ -357,9 +355,9 @@ fun convertCircumcisionCriterionInput(it: Map<String, *>?): CircumcisionCriterio
 
 fun convertGenderCriterionInput(it: Map<String, *>?): GenderCriterionInput? {
     return if (it != null) {
-        val values = it["value"]!! as Map<String, String?>
+        val value = it["value"].toString().uppercase().replace(" ", "_")
         GenderCriterionInput(
-            Optional.presentIfNotNull(GenderEnum.valueOf(values["value"]!!)),
+            Optional.presentIfNotNull(GenderEnum.valueOf(value)),
             CriterionModifier.valueOf(it["modifier"]!! as String)
         )
     } else {
@@ -369,8 +367,7 @@ fun convertGenderCriterionInput(it: Map<String, *>?): GenderCriterionInput? {
 
 fun convertString(it: Map<String, *>?): String? {
     return if (it != null) {
-        val values = it["value"]!! as Map<String, String?>
-        return values["value"]
+        return it["value"]?.toString()
     } else {
         null
     }
@@ -404,21 +401,39 @@ fun convertPhashDistanceCriterionInput(it: Map<String, *>?): PhashDistanceCriter
 
 fun convertPHashDuplicationCriterionInput(it: Map<String, *>?): PHashDuplicationCriterionInput? {
     return if (it != null) {
-        val values = it["value"]!! as Map<String, *>
         PHashDuplicationCriterionInput(
-            Optional.presentIfNotNull(values["duplicated"].toString().toBoolean()),
-            Optional.presentIfNotNull(values["distance"].toString().toInt())
+            Optional.presentIfNotNull(it["duplicated"]?.toString()?.toBoolean()),
+            Optional.presentIfNotNull(it["distance"]?.toString()?.toInt())
         )
     } else {
         null
     }
 }
 
+fun convertToResolutionEnum(str: String): ResolutionEnum {
+    return when (str) {
+        "114p" -> ResolutionEnum.VERY_LOW
+        "240p" -> ResolutionEnum.LOW
+        "360p" -> ResolutionEnum.R360P
+        "480p" -> ResolutionEnum.STANDARD
+        "540p" -> ResolutionEnum.WEB_HD
+        "720p" -> ResolutionEnum.STANDARD_HD
+        "1080p" -> ResolutionEnum.FULL_HD
+        "1440p" -> ResolutionEnum.QUAD_HD
+        "4k" -> ResolutionEnum.FOUR_K
+        "5k" -> ResolutionEnum.FIVE_K
+        "6k" -> ResolutionEnum.SIX_K
+        "7k" -> ResolutionEnum.SEVEN_K
+        "8k" -> ResolutionEnum.EIGHT_K
+        "Huge" -> ResolutionEnum.HUGE
+        else -> ResolutionEnum.UNKNOWN__
+    }
+}
+
 fun convertResolutionCriterionInput(it: Map<String, *>?): ResolutionCriterionInput? {
     return if (it != null) {
-        val values = it["value"]!! as Map<String, String?>
         ResolutionCriterionInput(
-            ResolutionEnum.valueOf(values["value"]!!),
+            convertToResolutionEnum(it["value"].toString()),
             CriterionModifier.valueOf(it["modifier"]!! as String)
         )
     } else {
