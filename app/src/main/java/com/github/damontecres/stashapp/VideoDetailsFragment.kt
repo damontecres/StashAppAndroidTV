@@ -24,11 +24,9 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.fromSlimSceneDataTag
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
@@ -96,33 +94,25 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     override fun onStart() {
         super.onStart()
         if (performersAdapter.size() == 0) {
+            val queryEngine = QueryEngine(requireContext(), true)
             // TODO: this is not efficient, but it does prevent duplicates during navigation
             viewLifecycleOwner.lifecycleScope.launch {
-                val apolloClient = createApolloClient(requireContext())
-                if (apolloClient != null && mSelectedMovie != null) {
-                    val scene = fetchSceneById(requireContext(), mSelectedMovie!!.id.toInt())
-                    if (scene != null) {
-                        if (scene.tags.isNotEmpty()) {
-                            tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
-                        }
-
-                        val performerIds = scene.performers.map {
-                            it.id.toInt()
-                        }
-                        if (performerIds.isNotEmpty()) {
-                            val performers = apolloClient.query(
-                                FindPerformersQuery(
-                                    performer_ids = Optional.present(performerIds)
-                                )
-                            ).execute()
-                            val perfs = performers.data?.findPerformers?.performers?.map {
-                                it.performerData
-                            }
-                            if (perfs != null) {
-                                performersAdapter.addAll(0, perfs)
-                            }
-                        }
+                if (mSelectedMovie != null) {
+                    val scene =
+                        queryEngine.findScenes(sceneIds = listOf(mSelectedMovie!!.id.toInt()))
+                            .first()
+                    if (scene.tags.isNotEmpty()) {
+                        tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
                     }
+
+                    val performerIds = scene.performers.map {
+                        it.id.toInt()
+                    }
+                    if (performerIds.isNotEmpty()) {
+                        val perfs = queryEngine.findPerformers(performerIds = performerIds)
+                        performersAdapter.addAll(0, perfs)
+                    }
+
                 }
             }
         }

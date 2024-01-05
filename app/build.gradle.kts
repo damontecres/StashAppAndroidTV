@@ -72,6 +72,7 @@ apollo {
     service("app") {
         packageName.set("com.github.damontecres.stashapp.api")
         schemaFiles.setFrom(fileTree("../stash-server/graphql/schema/").filter { it.extension == "graphql" }.files.map { it.path })
+        generateOptionalOperationVariables.set(false)
     }
 }
 

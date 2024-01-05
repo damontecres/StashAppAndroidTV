@@ -5,11 +5,10 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
-import com.apollographql.apollo3.exception.ApolloException
+import com.github.damontecres.stashapp.QueryEngine
 import com.github.damontecres.stashapp.api.type.FindFilterType
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
-import com.github.damontecres.stashapp.createApolloClient
 import com.github.damontecres.stashapp.data.CountAndList
+import com.github.damontecres.stashapp.data.DataType
 
 /**
  * A PagingSource for Stash
@@ -21,11 +20,17 @@ import com.github.damontecres.stashapp.data.CountAndList
 class StashPagingSource<T : Query.Data, D : Any>(
     private val context: Context,
     private val pageSize: Int,
-    private val dataSupplier: DataSupplier<T, D>
+    private val dataSupplier: DataSupplier<T, D>,
+    showToasts: Boolean = false
 ) :
     PagingSource<Int, D>() {
 
+    private val queryEngine = QueryEngine(context, showToasts)
+
     interface DataSupplier<T : Query.Data, D : Any> {
+
+        val dataType: DataType
+
         /**
          * Create query with the given filter
          *
@@ -46,26 +51,18 @@ class StashPagingSource<T : Query.Data, D : Any>(
          *
          * By default, this sorts by name ascending
          */
-        fun getDefaultFilter(): FindFilterType {
-            return FindFilterType(
-                sort = Optional.present("name"),
-                direction = Optional.present(SortDirectionEnum.ASC)
-            )
-        }
+        fun getDefaultFilter(): FindFilterType
     }
 
     private suspend fun fetchPage(page: Int): CountAndList<D> {
-        val apolloClient = createApolloClient(context)
-        if (apolloClient != null) {
-            val filter = dataSupplier.getDefaultFilter().copy(
-                per_page = Optional.present(pageSize),
-                page = Optional.present(page),
-            )
-            val query = dataSupplier.createQuery(filter)
-            val results = apolloClient.query(query).execute()
-            return dataSupplier.parseQuery(results.data)
-        }
-        return CountAndList(-1, listOf())
+
+        val filter = dataSupplier.getDefaultFilter().copy(
+            per_page = Optional.present(pageSize),
+            page = Optional.present(page),
+        )
+        val query = dataSupplier.createQuery(filter)
+        val results = queryEngine.executeQuery(query)
+        return dataSupplier.parseQuery(results.data)
     }
 
     override suspend fun load(
@@ -86,7 +83,7 @@ class StashPagingSource<T : Query.Data, D : Any>(
                 prevKey = if (pageNum > 1) pageNum - 1 else null, // Only a previous page if current page is 2+
                 nextKey = nextPageNum
             )
-        } catch (e: ApolloException) {
+        } catch (e: QueryEngine.QueryException) {
             return LoadResult.Error(e)
         }
     }
