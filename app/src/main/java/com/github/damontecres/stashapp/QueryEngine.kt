@@ -6,16 +6,18 @@ import android.widget.Toast
 import com.apollographql.apollo3.ApolloCall
 import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.api.Operation
-import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
+import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.FindPerformersQuery
+import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.type.FindFilterType
@@ -23,6 +25,7 @@ import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.data.fromFindTag
 
@@ -92,9 +95,9 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     ): List<SlimSceneData> {
         val query = client.query(
             FindScenesQuery(
-                filter = Optional.presentIfNotNull(findFilter),
-                scene_filter = Optional.presentIfNotNull(sceneFilter),
-                scene_ids = Optional.presentIfNotNull(sceneIds)
+                filter = findFilter,
+                scene_filter = sceneFilter,
+                scene_ids = sceneIds
             )
         )
         val scenes = executeQuery(query).data?.findScenes?.scenes?.map {
@@ -110,9 +113,9 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     ): List<PerformerData> {
         val query = client.query(
             FindPerformersQuery(
-                filter = Optional.presentIfNotNull(findFilter),
-                performer_filter = Optional.presentIfNotNull(performerFilter),
-                performer_ids = Optional.presentIfNotNull(performerIds)
+                filter = findFilter,
+                performer_filter = performerFilter,
+                performer_ids = performerIds
             )
         )
         val performers = executeQuery(query).data?.findPerformers?.performers?.map {
@@ -128,8 +131,8 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     ): List<StudioData> {
         val query = client.query(
             FindStudiosQuery(
-                filter = Optional.presentIfNotNull(findFilter),
-                studio_filter = Optional.presentIfNotNull(studioFilter),
+                filter = findFilter,
+                studio_filter = studioFilter,
             )
         )
         val studios = executeQuery(query).data?.findStudios?.studios?.map {
@@ -144,13 +147,24 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     ): List<Tag> {
         val query = client.query(
             FindTagsQuery(
-                filter = Optional.presentIfNotNull(findFilter),
-                tag_filter = Optional.presentIfNotNull(tagFilter)
+                filter = findFilter,
+                tag_filter = tagFilter
             )
         )
         val tags =
             executeQuery(query).data?.findTags?.tags?.map { fromFindTag(it) }
         return tags.orEmpty()
+    }
+
+    suspend fun getSavedFilter(filterId: String): SavedFilterData? {
+        val query = FindSavedFilterQuery(filterId)
+        return executeQuery(query).data?.findSavedFilter?.savedFilterData
+    }
+
+    suspend fun getDefaultFilter(type: DataType): SavedFilterData? {
+        val query = FindDefaultFilterQuery(type.filterMode)
+        return executeQuery(query).data?.findDefaultFilter?.savedFilterData
+
     }
 
     companion object {
