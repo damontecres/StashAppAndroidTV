@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.paging.PagingDataAdapter
+import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
@@ -76,7 +77,8 @@ class StashGridFragment<T : Query.Data, D : Any>(
         }
     }
 
-    private class StashGridPresenter : VerticalGridPresenter() {
+    private class StashGridPresenter :
+        VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
 
         override fun initializeGridViewHolder(vh: ViewHolder?) {
             super.initializeGridViewHolder(vh)
