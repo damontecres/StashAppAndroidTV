@@ -117,12 +117,6 @@ class MainFragment : BrowseSupportFragment() {
     private fun prepareBackgroundManager() {
         mBackgroundManager = BackgroundManager.getInstance(activity)
         mBackgroundManager.attach(requireActivity().window)
-        mBackgroundManager.color =
-            ContextCompat.getColor(requireContext(), R.color.default_background)
-        mDefaultBackground =
-            ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
-        mMetrics = DisplayMetrics()
-        requireActivity().windowManager.defaultDisplay.getMetrics(mMetrics)
     }
 
     private fun setupUIElements() {
@@ -166,7 +160,7 @@ class MainFragment : BrowseSupportFragment() {
         Glide.with(requireActivity())
             .load(uri)
             .centerCrop()
-            .error(mDefaultBackground)
+            .error(R.drawable.baseline_camera_indoor_48)
             .into<SimpleTarget<Drawable>>(
                 object : SimpleTarget<Drawable>(width, height) {
                     override fun onResourceReady(
