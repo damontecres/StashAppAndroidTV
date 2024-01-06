@@ -36,7 +36,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val gridPresenter = VerticalGridPresenter()
+        val gridPresenter = StashGridPresenter()
         gridPresenter.numberOfColumns =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("numberOfColumns", 5)
@@ -73,6 +73,19 @@ class StashGridFragment<T : Query.Data, D : Any>(
                     mAdapter.submitData(it)
                 }
             }
+        }
+    }
+
+    private class StashGridPresenter : VerticalGridPresenter() {
+
+        override fun initializeGridViewHolder(vh: ViewHolder?) {
+            super.initializeGridViewHolder(vh)
+            val gridView = vh!!.gridView
+            val top = gridView.paddingTop
+            val bottom = gridView.paddingBottom
+            val right = 20
+            val left = 20
+            gridView.setPadding(left, top, right, bottom)
         }
     }
 }
