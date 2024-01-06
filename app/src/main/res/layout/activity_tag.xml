@@ -5,13 +5,26 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tag_title"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:textSize="60sp"
-        android:textAlignment="center"
-        android:text="override me" />
+        android:layout_height="60dp">
+
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="80dp"
+            android:layout_height="match_parent"
+            android:src="@mipmap/stash_logo"
+            android:contentDescription="icon"
+            android:layout_alignParentStart="true" />
+
+        <TextView
+            android:id="@+id/tag_title"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textSize="40sp"
+            android:textAlignment="center"
+            android:text="override me" />
+    </RelativeLayout>
 
     <FrameLayout
         android:id="@+id/tag_fragment"
