@@ -6,4 +6,5 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity"
     tools:deviceIds="tv"
-    tools:ignore="MergeRootFrame" />
+    tools:ignore="MergeRootFrame"
+    android:theme="@style/Widget.Theme.StashAppAndroidTV.MyView" />

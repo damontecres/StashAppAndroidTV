@@ -2,7 +2,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="80dp">
+    android:layout_height="60dp"
+    android:layout_margin="10dp">
 
     <ImageView
         android:id="@+id/icon"
@@ -16,35 +17,40 @@
         android:id="@+id/search_orb"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_toEndOf="@id/icon" />
+        android:layout_toEndOf="@id/icon"
+        style="@style/TitleBarButton" />
 
     <Button
         android:id="@+id/scenes_button"
         android:text="Scenes"
         android:layout_width="88dp"
         android:layout_height="80dp"
-        android:layout_toEndOf="@+id/search_orb" />
+        android:layout_toEndOf="@+id/search_orb"
+        style="@style/TitleBarButton" />
 
     <Button
         android:id="@+id/performers_button"
         android:text="Performers"
         android:layout_width="120dp"
         android:layout_height="80dp"
-        android:layout_toEndOf="@+id/scenes_button" />
+        android:layout_toEndOf="@+id/scenes_button"
+        style="@style/TitleBarButton" />
 
     <Button
         android:id="@+id/studios_button"
         android:text="Studios"
         android:layout_width="88dp"
         android:layout_height="80dp"
-        android:layout_toEndOf="@+id/performers_button" />
+        android:layout_toEndOf="@+id/performers_button"
+        style="@style/TitleBarButton" />
 
     <Button
         android:id="@+id/tags_button"
         android:text="Tags"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_toEndOf="@+id/studios_button" />
+        android:layout_toEndOf="@+id/studios_button"
+        style="@style/TitleBarButton" />
 
     <ImageButton
         android:id="@+id/settings_button"
@@ -53,5 +59,6 @@
         android:layout_gravity="end"
         android:contentDescription="Preferences"
         android:src="@drawable/vector_settings"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        style="@style/TitleBarButton" />
 </RelativeLayout>

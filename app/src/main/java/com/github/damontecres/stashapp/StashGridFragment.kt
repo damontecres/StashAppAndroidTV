@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.paging.PagingDataAdapter
+import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
@@ -36,7 +37,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val gridPresenter = VerticalGridPresenter()
+        val gridPresenter = StashGridPresenter()
         gridPresenter.numberOfColumns =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("numberOfColumns", 5)
@@ -73,6 +74,20 @@ class StashGridFragment<T : Query.Data, D : Any>(
                     mAdapter.submitData(it)
                 }
             }
+        }
+    }
+
+    private class StashGridPresenter :
+        VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
+
+        override fun initializeGridViewHolder(vh: ViewHolder?) {
+            super.initializeGridViewHolder(vh)
+            val gridView = vh!!.gridView
+            val top = gridView.paddingTop
+            val bottom = gridView.paddingBottom
+            val right = 20
+            val left = 20
+            gridView.setPadding(left, top, right, bottom)
         }
     }
 }
