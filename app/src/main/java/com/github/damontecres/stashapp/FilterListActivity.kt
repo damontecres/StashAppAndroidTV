@@ -57,30 +57,6 @@ class FilterListActivity : FragmentActivity() {
         }
     }
 
-    private fun <D> getDiffCallback(mode: FilterMode): DiffUtil.ItemCallback<out Any>? {
-        return when (mode) {
-            FilterMode.SCENES -> {
-                sceneComparator
-            }
-
-            FilterMode.STUDIOS -> {
-                studioComparator
-            }
-
-            FilterMode.PERFORMERS -> {
-                performerComparator
-            }
-
-            FilterMode.TAGS -> {
-                tagComparator
-            }
-
-            else -> {
-                null
-            }
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)
