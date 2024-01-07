@@ -12,6 +12,8 @@ import androidx.leanback.widget.RowPresenter
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.data.StashCustomFilter
+import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.data.performerFromPerformerData
 import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
@@ -68,6 +70,18 @@ class StashItemViewClickListener(private val activity: Activity) : OnItemViewCli
                 DetailsActivity.SHARED_ELEMENT_NAME
             ).toBundle()
             activity.startActivity(intent, bundle)
+        } else if (item is StashSavedFilter) {
+            val intent = Intent(activity, FilterListActivity::class.java)
+            intent.putExtra("savedFilterId", item.savedFilterId)
+            intent.putExtra("mode", item.mode.rawValue)
+            activity.startActivity(intent)
+        } else if (item is StashCustomFilter) {
+            val intent = Intent(activity, FilterListActivity::class.java)
+            intent.putExtra("direction", item.direction)
+            intent.putExtra("sortBy", item.sortBy)
+            intent.putExtra("mode", item.mode.rawValue)
+            intent.putExtra("description", item.description)
+            activity.startActivity(intent)
         } else if (item is String) {
             if (item.contains(activity.getString(R.string.error_fragment))) {
                 val intent = Intent(activity, BrowseErrorActivity::class.java)

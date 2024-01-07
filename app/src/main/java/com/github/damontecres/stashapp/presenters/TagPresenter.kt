@@ -27,7 +27,7 @@ class TagPresenter : StashPresenter() {
     companion object {
         private const val TAG = "TagPresenter"
 
-        private const val CARD_WIDTH = 250
-        private const val CARD_HEIGHT = 250
+        const val CARD_WIDTH = 250
+        const val CARD_HEIGHT = 250
     }
 }

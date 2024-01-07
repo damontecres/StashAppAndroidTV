@@ -39,8 +39,8 @@ class PerformerPresenter : StashPresenter() {
     companion object {
         private const val TAG = "CardPresenter"
 
-        private const val CARD_HEIGHT = 381
-        private const val CARD_WIDTH = CARD_HEIGHT * 2 / 3
+        const val CARD_HEIGHT = 381
+        const val CARD_WIDTH = CARD_HEIGHT * 2 / 3
 
     }
 }

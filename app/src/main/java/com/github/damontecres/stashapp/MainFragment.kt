@@ -35,6 +35,8 @@ import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.data.StashCustomFilter
+import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
@@ -297,8 +299,6 @@ class MainFragment : BrowseSupportFragment() {
                 per_page = Optional.present(25)
             )
 
-
-
             when (mode) {
                 FilterMode.SCENES -> {
                     adapter.addAll(0, queryEngine.findScenes(filter))
@@ -316,6 +316,7 @@ class MainFragment : BrowseSupportFragment() {
                     Log.i(TAG, "Unsupported mode in frontpage: $mode")
                 }
             }
+            adapter.add(StashCustomFilter(mode, direction, sortBy, description))
         }
     }
 
@@ -403,6 +404,7 @@ class MainFragment : BrowseSupportFragment() {
                         )
                     }
                 }
+                adapter.add(StashSavedFilter(filterId.toString(), result!!.mode))
             }
         }
     }

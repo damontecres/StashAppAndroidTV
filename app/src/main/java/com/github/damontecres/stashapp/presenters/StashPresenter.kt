@@ -1,21 +1,18 @@
 package com.github.damontecres.stashapp.presenters
 
 import android.graphics.drawable.Drawable
-import android.util.Log
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
-import androidx.preference.PreferenceManager
-import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
-import com.github.damontecres.stashapp.createGlideUrl
+import com.github.damontecres.stashapp.data.StashCustomFilter
+import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.data.Tag
-import java.io.File
 import kotlin.properties.Delegates
 
 
@@ -71,5 +68,7 @@ abstract class StashPresenter : Presenter() {
             .addClassPresenter(SlimSceneData::class.java, ScenePresenter())
             .addClassPresenter(StudioData::class.java, StudioPresenter())
             .addClassPresenter(Tag::class.java, TagPresenter())
+            .addClassPresenter(StashSavedFilter::class.java, StashFilterPresenter())
+            .addClassPresenter(StashCustomFilter::class.java, StashFilterPresenter())
     }
 }
