@@ -25,7 +25,7 @@ class MovieActivity : SecureFragmentActivity() {
                         SceneDataSupplier(
                             FindFilterType(
                                 sort = Optional.present("movie_scene_number"),
-                                direction = Optional.present(SortDirectionEnum.DESC),
+                                direction = Optional.present(SortDirectionEnum.ASC),
                             ),
                             SceneFilterType(
                                 movies =
