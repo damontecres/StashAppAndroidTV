@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.widget.TextView
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
@@ -15,7 +14,7 @@ import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
 import com.github.damontecres.stashapp.suppliers.TagDataSupplier
 import kotlinx.coroutines.launch
 
-class FilterListActivity : FragmentActivity() {
+class FilterListActivity : SecureFragmentActivity() {
     private fun getFragment(
         mode: FilterMode,
         findFilter: FindFilterType?,

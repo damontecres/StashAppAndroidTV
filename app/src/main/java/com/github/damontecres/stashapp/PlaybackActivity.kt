@@ -3,10 +3,9 @@ package com.github.damontecres.stashapp
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.FragmentActivity
 
 /** Loads [PlaybackVideoFragment]. */
-class PlaybackActivity : FragmentActivity() {
+class PlaybackActivity : SecureFragmentActivity() {
     private val fragment: PlaybackVideoFragment = PlaybackVideoFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {

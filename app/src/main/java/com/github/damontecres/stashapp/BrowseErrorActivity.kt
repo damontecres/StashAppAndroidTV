@@ -10,12 +10,11 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 
 /**
  * BrowseErrorActivity shows how to use ErrorFragment.
  */
-class BrowseErrorActivity : FragmentActivity() {
+class BrowseErrorActivity : SecureFragmentActivity() {
     private lateinit var mErrorFragment: ErrorFragment
     private lateinit var mSpinnerFragment: SpinnerFragment
 

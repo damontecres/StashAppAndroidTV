@@ -2,13 +2,12 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.widget.TextView
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.TagDataSupplier
 import kotlinx.coroutines.launch
 
-class TagListActivity : FragmentActivity() {
+class TagListActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)
