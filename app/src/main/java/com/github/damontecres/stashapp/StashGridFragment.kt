@@ -16,8 +16,8 @@ import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.type.FilterMode
+import com.github.damontecres.stashapp.presenters.StashPagingSource
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 

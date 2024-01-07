@@ -7,6 +7,7 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.presenters.StashPagingSource
 
 class SceneDataSupplier(
     private val findFilter: FindFilterType?,

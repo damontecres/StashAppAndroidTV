@@ -8,6 +8,7 @@ import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.data.fromFindTag
+import com.github.damontecres.stashapp.presenters.StashPagingSource
 
 class TagDataSupplier(
     private val findFilter: FindFilterType?,
