@@ -3,8 +3,10 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
-import com.github.damontecres.stashapp.data.Performer
+import androidx.lifecycle.lifecycleScope
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
+import kotlinx.coroutines.launch
 
 class PerformerListActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -12,14 +14,22 @@ class PerformerListActivity : SecureFragmentActivity() {
         setContentView(R.layout.activity_tag)
         if (savedInstanceState == null) {
             findViewById<TextView>(R.id.tag_title).text = "Performers"
-            getSupportFragmentManager().beginTransaction()
-                .replace(
-                    R.id.tag_fragment,
-                    StashGridFragment(
-                        performerComparator, PerformerDataSupplier()
+
+            val queryEngine = QueryEngine(this, true)
+            lifecycleScope.launch {
+                val filter = queryEngine.getDefaultFilter(DataType.PERFORMER)
+                getSupportFragmentManager().beginTransaction()
+                    .replace(
+                        R.id.tag_fragment,
+                        StashGridFragment(
+                            performerComparator, PerformerDataSupplier(
+                                convertFilter(filter?.find_filter),
+                                convertPerformerObjectFilter(filter?.object_filter)
+                            )
+                        )
                     )
-                )
-                .commitNow()
+                    .commitNow()
+            }
         }
     }
 }

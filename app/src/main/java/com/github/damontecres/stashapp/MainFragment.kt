@@ -31,14 +31,14 @@ import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-import com.github.damontecres.stashapp.api.FindPerformersQuery
-import com.github.damontecres.stashapp.api.FindScenesQuery
-import com.github.damontecres.stashapp.api.FindStudiosQuery
+import com.github.damontecres.stashapp.api.ConfigurationQuery
+import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
-import com.github.damontecres.stashapp.presenters.PerformerPresenter
-import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StudioPresenter
+import com.github.damontecres.stashapp.data.StashCustomFilter
+import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.presenters.StashPresenter
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
@@ -50,9 +50,11 @@ import java.util.TimerTask
 class MainFragment : BrowseSupportFragment() {
 
     private val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-    private var performerAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
-    private var studioAdapter: ArrayObjectAdapter = ArrayObjectAdapter(StudioPresenter())
-    private var sceneAdapter: ArrayObjectAdapter = ArrayObjectAdapter(ScenePresenter())
+    private val adapters = ArrayList<ArrayObjectAdapter>()
+
+    //    private var performerAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
+//    private var studioAdapter: ArrayObjectAdapter = ArrayObjectAdapter(StudioPresenter())
+//    private var sceneAdapter: ArrayObjectAdapter = ArrayObjectAdapter(ScenePresenter())
     private val mHandler = Handler(Looper.myLooper()!!)
     private lateinit var mBackgroundManager: BackgroundManager
     private var mDefaultBackground: Drawable? = null
@@ -97,7 +99,6 @@ class MainFragment : BrowseSupportFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             if (testStashConnection(requireContext(), false)) {
                 if (rowsAdapter.size() == 0) {
-                    addRowsIfNeeded()
                     fetchData()
                 }
             } else {
@@ -116,12 +117,8 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun prepareBackgroundManager() {
-
         mBackgroundManager = BackgroundManager.getInstance(activity)
         mBackgroundManager.attach(requireActivity().window)
-        mDefaultBackground = ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
-        mMetrics = DisplayMetrics()
-        requireActivity().windowManager.defaultDisplay.getMetrics(mMetrics)
     }
 
     private fun setupUIElements() {
@@ -165,7 +162,7 @@ class MainFragment : BrowseSupportFragment() {
         Glide.with(requireActivity())
             .load(uri)
             .centerCrop()
-            .error(mDefaultBackground)
+            .error(R.drawable.baseline_camera_indoor_48)
             .into<SimpleTarget<Drawable>>(
                 object : SimpleTarget<Drawable>(width, height) {
                     override fun onResourceReady(
@@ -210,88 +207,198 @@ class MainFragment : BrowseSupportFragment() {
         override fun onUnbindViewHolder(viewHolder: Presenter.ViewHolder) {}
     }
 
-    private fun addRowsIfNeeded() {
-        if (rowsAdapter.size() == 0) {
-            rowsAdapter.add(ListRow(HeaderItem("RECENTLY RELEASED SCENES"), sceneAdapter))
-            rowsAdapter.add(ListRow(HeaderItem("RECENTLY ADDED STUDIOS"), studioAdapter))
-            rowsAdapter.add(ListRow(HeaderItem("RECENTLY ADDED PERFORMERS"), performerAdapter))
-        }
-    }
-
     private fun clearData() {
-        sceneAdapter.clear()
-        studioAdapter.clear()
-        performerAdapter.clear()
+        adapters.forEach { it.clear() }
     }
 
     private fun fetchData() {
         clearData()
         viewLifecycleOwner.lifecycleScope.launch {
             if (testStashConnection(requireContext(), false)) {
-                addRowsIfNeeded()
-                val apolloClient = createApolloClient(requireContext())
+                try {
+                    val queryEngine = QueryEngine(requireContext(), showToasts = true)
 
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindScenesQuery(
-                            filter = Optional.present(
-                                FindFilterType(
-                                    sort = Optional.present("date"),
-                                    direction = Optional.present(SortDirectionEnum.DESC),
-                                    per_page = Optional.present(25)
-                                )
-                            )
-                        )
-                    ).execute()
-                    val scenes = results.data?.findScenes?.scenes?.map {
-                        it.slimSceneData
+                    val exHandler = CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception in coroutine", ex)
                     }
-                    if (scenes != null) {
-                        sceneAdapter.addAll(0, scenes)
-                    }
-                }
 
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindPerformersQuery(
-                            filter = Optional.present(
-                                FindFilterType(
-                                    sort = Optional.present("created_at"),
-                                    direction = Optional.present(SortDirectionEnum.DESC),
-                                    per_page = Optional.present(25)
-                                )
-                            )
-                        )
-                    ).execute()
-                    val performers = results.data?.findPerformers?.performers?.map {
-                        it.performerData
-                    }
-                    if (performers != null) {
-                        performerAdapter.addAll(0, performers)
-                    }
-                }
+                    viewLifecycleOwner.lifecycleScope.launch(exHandler) {
+                        val query = ConfigurationQuery()
+                        val ui = queryEngine.executeQuery(query).data?.configuration?.ui
+                        if (ui != null) {
+                            val frontPageContent =
+                                (ui as Map<String, *>)["frontPageContent"] as List<Map<String, *>>
+                            for (frontPageFilter: Map<String, *> in frontPageContent) {
+                                val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                                adapters.add(adapter)
 
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient!!.query(
-                        FindStudiosQuery(
-                            filter = Optional.present(
-                                FindFilterType(
-                                    sort = Optional.present("created_at"),
-                                    direction = Optional.present(SortDirectionEnum.DESC),
-                                    per_page = Optional.present(25)
-                                )
-                            )
-                        )
-                    ).execute()
-                    val studios = results.data?.findStudios?.studios?.map {
-                        it.studioData
+                                val filterType = frontPageFilter["__typename"] as String
+                                if (filterType == "CustomFilter") {
+                                    addCustomFilterRow(frontPageFilter, adapter, queryEngine)
+                                } else if (filterType == "SavedFilter") {
+                                    addSavedFilterRow(frontPageFilter, adapter, queryEngine)
+                                }
+                            }
+                        }
                     }
-                    if (studios != null) {
-                        studioAdapter.addAll(0, studios)
-                    }
+                } catch (ex: QueryEngine.StashNotConfiguredException) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Stash not configured. Please enter the URL in settings!",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             } else {
                 rowsAdapter.clear()
+            }
+        }
+    }
+
+    private fun addCustomFilterRow(
+        frontPageFilter: Map<String, *>,
+        adapter: ArrayObjectAdapter,
+        queryEngine: QueryEngine
+    ) {
+        val exHandler = CoroutineExceptionHandler { _, ex ->
+            Log.e(TAG, "Exception in addCustomFilterRow", ex)
+        }
+        val msg = frontPageFilter["message"] as Map<String, *>
+        val objType =
+            (msg["values"] as Map<String, String>)["objects"] as String
+        val description = when (msg["id"] as String) {
+            "recently_added_objects" -> "Recently Added $objType"
+            "recently_released_objects" -> "Recently Released $objType"
+            else -> objType
+        }
+        val mode = FilterMode.valueOf(frontPageFilter["mode"] as String)
+        if (mode !in supportedFilterModes) {
+            return
+        }
+        rowsAdapter.add(
+            ListRow(
+                HeaderItem(description),
+                adapter
+            )
+        )
+        viewLifecycleOwner.lifecycleScope.launch(exHandler) {
+            val direction = frontPageFilter["direction"] as String
+            val sortBy = frontPageFilter["sortBy"] as String
+            val filter = FindFilterType(
+                direction = Optional.present(
+                    SortDirectionEnum.safeValueOf(
+                        direction
+                    )
+                ),
+                sort = Optional.present(sortBy),
+                per_page = Optional.present(25)
+            )
+
+            when (mode) {
+                FilterMode.SCENES -> {
+                    adapter.addAll(0, queryEngine.findScenes(filter))
+                }
+
+                FilterMode.STUDIOS -> {
+                    adapter.addAll(0, queryEngine.findStudios(filter))
+                }
+
+                FilterMode.PERFORMERS -> {
+                    adapter.addAll(0, queryEngine.findPerformers(filter))
+                }
+
+                else -> {
+                    Log.i(TAG, "Unsupported mode in frontpage: $mode")
+                }
+            }
+            adapter.add(StashCustomFilter(mode, direction, sortBy, description))
+        }
+    }
+
+    private fun addSavedFilterRow(
+        frontPageFilter: Map<String, *>,
+        adapter: ArrayObjectAdapter,
+        queryEngine: QueryEngine
+    ) {
+        val exHandler = CoroutineExceptionHandler { _, ex ->
+            Log.e(TAG, "Exception in addSavedFilterRow", ex)
+            Toast.makeText(
+                requireContext(),
+                "Error fetching saved filter. This is probably a bug!",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+        val filterId = frontPageFilter["savedFilterId"]
+        val header = HeaderItem("")
+        val listRow = ListRow(header, adapter)
+        rowsAdapter.add(listRow)
+        viewLifecycleOwner.lifecycleScope.launch(exHandler) {
+            val result = queryEngine.getSavedFilter(filterId.toString())
+
+            val index = rowsAdapter.indexOf(listRow)
+            rowsAdapter.removeItems(index, 1)
+
+            if (result?.mode in supportedFilterModes) {
+                // TODO doing it this way will result it adding an unsupported row then removing it which looks weird, in practice though it happens pretty fast
+                rowsAdapter.add(
+                    index,
+                    ListRow(HeaderItem(result?.name ?: ""), adapter)
+                )
+
+                val filter = convertFilter(result?.find_filter)
+                val objectFilter =
+                    result?.object_filter as Map<String, Map<String, *>>?
+
+                when (result?.mode) {
+                    FilterMode.SCENES -> {
+                        val sceneFilter =
+                            convertSceneObjectFilter(objectFilter)
+                        adapter.addAll(
+                            0,
+                            queryEngine.findScenes(filter, sceneFilter)
+                        )
+                    }
+
+                    FilterMode.STUDIOS -> {
+                        val studioFilter =
+                            convertStudioObjectFilter(objectFilter)
+                        adapter.addAll(
+                            0,
+                            queryEngine.findStudios(
+                                filter,
+                                studioFilter
+                            )
+                        )
+                    }
+
+                    FilterMode.PERFORMERS -> {
+                        val performerFilter =
+                            convertPerformerObjectFilter(objectFilter)
+                        adapter.addAll(
+                            0,
+                            queryEngine.findPerformers(
+                                filter,
+                                performerFilter
+                            )
+                        )
+                    }
+
+                    FilterMode.TAGS -> {
+                        val tagFilter =
+                            convertTagObjectFilter(objectFilter)
+                        adapter.addAll(
+                            0,
+                            queryEngine.findTags(filter, tagFilter)
+                        )
+                    }
+
+                    else -> {
+                        Log.i(
+                            TAG,
+                            "Unsupported mode in frontpage: ${result?.mode}"
+                        )
+                    }
+                }
+                adapter.add(StashSavedFilter(filterId.toString(), result!!.mode))
             }
         }
     }

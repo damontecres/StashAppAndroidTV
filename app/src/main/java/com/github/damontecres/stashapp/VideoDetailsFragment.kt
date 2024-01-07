@@ -7,6 +7,9 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -24,14 +27,13 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.fromSlimSceneDataTag
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
+import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import kotlinx.coroutines.launch
 
@@ -93,39 +95,32 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             }
     }
 
-    override fun onStart() {
-        super.onStart()
-        if (performersAdapter.size() == 0) {
-            // TODO: this is not efficient, but it does prevent duplicates during navigation
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val queryEngine = QueryEngine(requireContext(), true)
+        if (mSelectedMovie != null) {
             viewLifecycleOwner.lifecycleScope.launch {
-                val apolloClient = createApolloClient(requireContext())
-                if (apolloClient != null && mSelectedMovie != null) {
-                    val scene = fetchSceneById(requireContext(), mSelectedMovie!!.id.toInt())
-                    if (scene != null) {
-                        if (scene.tags.isNotEmpty()) {
-                            tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
-                        }
-
-                        val performerIds = scene.performers.map {
-                            it.id.toInt()
-                        }
-                        if (performerIds.isNotEmpty()) {
-                            val performers = apolloClient.query(
-                                FindPerformersQuery(
-                                    performer_ids = Optional.present(performerIds)
-                                )
-                            ).execute()
-                            val perfs = performers.data?.findPerformers?.performers?.map {
-                                it.performerData
-                            }
-                            if (perfs != null) {
-                                performersAdapter.addAll(0, perfs)
-                            }
-                        }
-                    }
+                val scene =
+                    queryEngine.findScenes(sceneIds = listOf(mSelectedMovie!!.id.toInt()))
+                        .first()
+                if (scene.tags.isNotEmpty()) {
+                    tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
                 }
+
+                val performerIds = scene.performers.map {
+                    it.id.toInt()
+                }
+                if (performerIds.isNotEmpty()) {
+                    val perfs = queryEngine.findPerformers(performerIds = performerIds)
+                    performersAdapter.addAll(0, perfs)
+                }
+
             }
         }
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     private fun initializeBackground(movie: Scene?) {
@@ -169,16 +164,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 .getString("stashApiKey", "")
             val url = createGlideUrl(screenshotUrl, apiKey)
             Glide.with(requireActivity())
+                .asBitmap()
                 .load(url)
                 .centerCrop()
                 .error(R.drawable.default_background)
-                .into<SimpleTarget<Drawable>>(object : SimpleTarget<Drawable>(width, height) {
+                .into<SimpleTarget<Bitmap>>(object : SimpleTarget<Bitmap>(width, height) {
                     override fun onResourceReady(
-                        drawable: Drawable,
-                        transition: Transition<in Drawable>?
+                        drawable: Bitmap,
+                        transition: Transition<in Bitmap>?
                     ) {
                         Log.d(TAG, "details overview card image url ready: " + drawable)
-                        row.imageDrawable = drawable
+                        row.setImageBitmap(requireContext(), drawable)
                         mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
                     }
                 })
@@ -199,7 +195,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         // Set detail background.
         val detailsPresenter = FullWidthDetailsOverviewRowPresenter(DetailsDescriptionPresenter())
         detailsPresenter.backgroundColor =
-            ContextCompat.getColor(requireActivity(), R.color.selected_background)
+            ContextCompat.getColor(requireActivity(), R.color.default_card_background)
 
         // Hook up transition element.
         val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
@@ -244,8 +240,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private val ACTION_PLAY_SCENE = 1L
         private val ACTION_RESUME_SCENE = 2L
 
-        private val DETAIL_THUMB_WIDTH = 274
-        private val DETAIL_THUMB_HEIGHT = 274
+        private val DETAIL_THUMB_WIDTH = ScenePresenter.CARD_WIDTH
+        private val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
 
         private val NUM_COLS = 10
 

@@ -18,11 +18,11 @@ Make sure your Stash server is running and that you can access it over the netwo
     - https://developer.android.com/distribute/marketing-tools/alternative-distribution#unknown-sources
     - https://www.aftvnews.com/how-to-enable-apps-from-unknown-sources-on-an-amazon-fire-tv-or-fire-tv-stick/
 1. Install the APK on your Android TV device with one of these options:
-    - Download the latest APK release from the [releases page](https://github.com/damontecres/StashAppAndroidTV/releases/latest)
+    - Install a browser program such as [Downloader](https://www.aftvnews.com/downloader/), use it to get the latest apk with short code `745800` or URL: https://aftv.news/745800
+    - Download the latest APK release from the [releases page](https://github.com/damontecres/StashAppAndroidTV/releases/latest) or https://aftv.news/745800
         - Put the APK on an SD Card/USB stick/network share and use a file manager app from the Google Play Store / Amazon AppStore (e.g. `FX File Explorer`). Android's preinstalled file manager probably will not work!
         - Use `Send files to TV` from the Google Play Store on your phone & TV
         - (Expert) Use [ADB](https://developer.android.com/studio/command-line/adb) to install the APK from your computer ([guide](https://fossbytes.com/side-load-apps-android-tv/#h-how-to-sideload-apps-on-your-android-tv-using-adb))
-    - Install a browser program such as [Downloader](https://www.aftvnews.com/downloader/), use it to visit the [releases page](https://github.com/damontecres/StashAppAndroidTV/releases/latest), and select the APK to install.
 
 The app does not auto-update, so you will need to repeat this process for each new release.
 
@@ -34,7 +34,7 @@ The app does not auto-update, so you will need to repeat this process for each n
     - Don't use `localhost`; use the IP address or domain of your Stash server
     - If you have configured HTTPS, make sure to use `https://` instead of `http://`
 1. If you have enabled authentication on your Stash server, enter the API Key
-    1. Use your phone to browse to your Stash server and copy the API Key from the Settings->Security page (e.g. http://localhost:9999/settings?tab=security)
+    1. Use your phone to browse to your Stash server and copy the API Key from the Settings->Security page (e.g. http://192.168.1.122:9999/settings?tab=security)
     1. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) to paste the API Key into the TV app
     - Do not enter an API Key if authentication is not enabled on your Stash server!
 1. Select `Test Connection` to verify that the app can connect to your Stash server
