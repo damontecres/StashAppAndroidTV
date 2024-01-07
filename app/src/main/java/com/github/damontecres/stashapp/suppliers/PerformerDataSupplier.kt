@@ -11,17 +11,16 @@ import com.github.damontecres.stashapp.presenters.StashPagingSource
 
 class PerformerDataSupplier(
     private val findFilter: FindFilterType?,
-    private val performerFilter: PerformerFilterType?
+    private val performerFilter: PerformerFilterType?,
 ) :
     StashPagingSource.DataSupplier<FindPerformersQuery.Data, PerformerData> {
-
     override val dataType: DataType get() = DataType.PERFORMER
 
     override fun createQuery(filter: FindFilterType?): Query<FindPerformersQuery.Data> {
         return FindPerformersQuery(
             filter = filter,
             performer_filter = performerFilter,
-            performer_ids = null
+            performer_ids = null,
         )
     }
 
@@ -31,9 +30,10 @@ class PerformerDataSupplier(
 
     override fun parseQuery(data: FindPerformersQuery.Data?): CountAndList<PerformerData> {
         val count = data?.findPerformers?.count ?: -1
-        val performers = data?.findPerformers?.performers?.map {
-            it.performerData
-        }.orEmpty()
+        val performers =
+            data?.findPerformers?.performers?.map {
+                it.performerData
+            }.orEmpty()
         return CountAndList(count, performers)
     }
 }

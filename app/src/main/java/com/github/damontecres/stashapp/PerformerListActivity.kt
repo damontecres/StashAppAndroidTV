@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.widget.TextView
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
@@ -18,19 +17,19 @@ class PerformerListActivity : SecureFragmentActivity() {
             val queryEngine = QueryEngine(this, true)
             lifecycleScope.launch {
                 val filter = queryEngine.getDefaultFilter(DataType.PERFORMER)
-                getSupportFragmentManager().beginTransaction()
+                supportFragmentManager.beginTransaction()
                     .replace(
                         R.id.tag_fragment,
                         StashGridFragment(
-                            performerComparator, PerformerDataSupplier(
+                            PerformerComparator,
+                            PerformerDataSupplier(
                                 convertFilter(filter?.find_filter),
-                                convertPerformerObjectFilter(filter?.object_filter)
-                            )
-                        )
+                                convertPerformerObjectFilter(filter?.object_filter),
+                            ),
+                        ),
                     )
                     .commitNow()
             }
         }
     }
 }
-

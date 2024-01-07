@@ -12,16 +12,15 @@ import com.github.damontecres.stashapp.presenters.StashPagingSource
 
 class TagDataSupplier(
     private val findFilter: FindFilterType?,
-    private val tagFilter: TagFilterType?
+    private val tagFilter: TagFilterType?,
 ) :
     StashPagingSource.DataSupplier<FindTagsQuery.Data, Tag> {
-
     override val dataType: DataType get() = DataType.TAG
 
     override fun createQuery(filter: FindFilterType?): Query<FindTagsQuery.Data> {
         return FindTagsQuery(
             filter = filter,
-            tag_filter = tagFilter
+            tag_filter = tagFilter,
         )
     }
 
@@ -31,9 +30,10 @@ class TagDataSupplier(
 
     override fun parseQuery(data: FindTagsQuery.Data?): CountAndList<Tag> {
         val count = data?.findTags?.count ?: -1
-        val studios = data?.findTags?.tags?.map {
-            fromFindTag(it)
-        }.orEmpty()
+        val studios =
+            data?.findTags?.tags?.map {
+                fromFindTag(it)
+            }.orEmpty()
         return CountAndList(count, studios)
     }
 }

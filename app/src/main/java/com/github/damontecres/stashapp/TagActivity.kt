@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.widget.TextView
-import androidx.fragment.app.FragmentActivity
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
@@ -12,7 +11,6 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 
-
 class TagActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,25 +18,27 @@ class TagActivity : SecureFragmentActivity() {
         if (savedInstanceState == null) {
             val tag = this.intent.getParcelableExtra<Tag>("tag")
             findViewById<TextView>(R.id.tag_title).text = "${tag?.name}"
-            getSupportFragmentManager().beginTransaction()
+            supportFragmentManager.beginTransaction()
                 .replace(
                     R.id.tag_fragment,
                     StashGridFragment(
-                        sceneComparator, SceneDataSupplier(
+                        SceneComparator,
+                        SceneDataSupplier(
                             FindFilterType(
                                 sort = Optional.present("date"),
-                                direction = Optional.present(SortDirectionEnum.DESC)
+                                direction = Optional.present(SortDirectionEnum.DESC),
                             ),
                             SceneFilterType(
-                                tags = Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tag?.id.toString())),
-                                        modifier = CriterionModifier.INCLUDES_ALL
-                                    )
-                                )
-                            )
-                        )
-                    )
+                                tags =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(tag?.id.toString())),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                        ),
+                                    ),
+                            ),
+                        ),
+                    ),
                 ).commitNow()
         }
     }

@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -42,7 +41,6 @@ import kotlinx.coroutines.launch
  * It shows a detailed view of video and its metadata plus related videos.
  */
 class VideoDetailsFragment : DetailsSupportFragment() {
-
     private var mSelectedMovie: Scene? = null
 
     private var performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
@@ -91,14 +89,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
                     }
                 }
-
             }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View? {
         val queryEngine = QueryEngine(requireContext(), true)
         if (mSelectedMovie != null) {
@@ -110,14 +107,14 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
                 }
 
-                val performerIds = scene.performers.map {
-                    it.id.toInt()
-                }
+                val performerIds =
+                    scene.performers.map {
+                        it.id.toInt()
+                    }
                 if (performerIds.isNotEmpty()) {
                     val perfs = queryEngine.findPerformers(performerIds = performerIds)
                     performersAdapter.addAll(0, perfs)
                 }
-
             }
         }
         return super.onCreateView(inflater, container, savedInstanceState)
@@ -129,8 +126,9 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val screenshotUrl = movie?.screenshotUrl
 
         if (!screenshotUrl.isNullOrBlank()) {
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getString("stashApiKey", "")
+            val apiKey =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getString("stashApiKey", "")
             val url = createGlideUrl(screenshotUrl, apiKey)
 
             Glide.with(requireActivity())
@@ -138,15 +136,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 .centerCrop()
                 .error(R.drawable.default_background)
                 .load(url)
-                .into<SimpleTarget<Bitmap>>(object : SimpleTarget<Bitmap>() {
-                    override fun onResourceReady(
-                        bitmap: Bitmap,
-                        transition: Transition<in Bitmap>?
-                    ) {
-                        mDetailsBackground.coverBitmap = bitmap
-                        mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
-                    }
-                })
+                .into<SimpleTarget<Bitmap>>(
+                    object : SimpleTarget<Bitmap>() {
+                        override fun onResourceReady(
+                            bitmap: Bitmap,
+                            transition: Transition<in Bitmap>?,
+                        ) {
+                            mDetailsBackground.coverBitmap = bitmap
+                            mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
+                    },
+                )
         }
     }
 
@@ -160,31 +160,34 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         val screenshotUrl = mSelectedMovie?.screenshotUrl
         if (!screenshotUrl.isNullOrBlank()) {
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getString("stashApiKey", "")
+            val apiKey =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getString("stashApiKey", "")
             val url = createGlideUrl(screenshotUrl, apiKey)
             Glide.with(requireActivity())
                 .asBitmap()
                 .load(url)
                 .centerCrop()
                 .error(R.drawable.default_background)
-                .into<SimpleTarget<Bitmap>>(object : SimpleTarget<Bitmap>(width, height) {
-                    override fun onResourceReady(
-                        drawable: Bitmap,
-                        transition: Transition<in Bitmap>?
-                    ) {
-                        Log.d(TAG, "details overview card image url ready: " + drawable)
-                        row.setImageBitmap(requireContext(), drawable)
-                        mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
-                    }
-                })
+                .into<SimpleTarget<Bitmap>>(
+                    object : SimpleTarget<Bitmap>(width, height) {
+                        override fun onResourceReady(
+                            drawable: Bitmap,
+                            transition: Transition<in Bitmap>?,
+                        ) {
+                            Log.d(TAG, "details overview card image url ready: " + drawable)
+                            row.setImageBitmap(requireContext(), drawable)
+                            mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
+                    },
+                )
         }
 
         actionAdapter.add(
             Action(
                 ACTION_PLAY_SCENE,
-                resources.getString(R.string.play_scene)
-            )
+                resources.getString(R.string.play_scene),
+            ),
         )
         row.actionsAdapter = actionAdapter
 
@@ -200,25 +203,27 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         // Hook up transition element.
         val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
         sharedElementHelper.setSharedElementEnterTransition(
-            activity, DetailsActivity.SHARED_ELEMENT_NAME
+            activity,
+            DetailsActivity.SHARED_ELEMENT_NAME,
         )
         detailsPresenter.setListener(sharedElementHelper)
         detailsPresenter.isParticipatingEntranceTransition = true
 
-        detailsPresenter.onActionClickedListener = OnActionClickedListener { action ->
-            if (mSelectedMovie != null) {
-                if (action.id in longArrayOf(ACTION_PLAY_SCENE, ACTION_RESUME_SCENE)) {
-                    val intent = Intent(requireActivity(), PlaybackActivity::class.java)
-                    intent.putExtra(DetailsActivity.MOVIE, mSelectedMovie)
-                    if (action.id == ACTION_RESUME_SCENE) {
-                        intent.putExtra(POSITION_ARG, position)
+        detailsPresenter.onActionClickedListener =
+            OnActionClickedListener { action ->
+                if (mSelectedMovie != null) {
+                    if (action.id in longArrayOf(ACTION_PLAY_SCENE, ACTION_RESUME_SCENE)) {
+                        val intent = Intent(requireActivity(), PlaybackActivity::class.java)
+                        intent.putExtra(DetailsActivity.MOVIE, mSelectedMovie)
+                        if (action.id == ACTION_RESUME_SCENE) {
+                            intent.putExtra(POSITION_ARG, position)
+                        }
+                        resultLauncher.launch(intent)
+                    } else {
+                        throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
                     }
-                    resultLauncher.launch(intent)
-                } else {
-                    throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
                 }
             }
-        }
         mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
     }
 
@@ -229,7 +234,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 
-    private fun convertDpToPixel(context: Context, dp: Int): Int {
+    private fun convertDpToPixel(
+        context: Context,
+        dp: Int,
+    ): Int {
         val density = context.applicationContext.resources.displayMetrics.density
         return Math.round(dp.toFloat() * density)
     }

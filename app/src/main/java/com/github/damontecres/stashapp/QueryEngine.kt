@@ -30,7 +30,6 @@ import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.data.fromFindTag
 
 class QueryEngine(private val context: Context, private val showToasts: Boolean = false) {
-
     private val client = createApolloClient(context) ?: throw StashNotConfiguredException()
 
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> {
@@ -45,7 +44,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                     Toast.makeText(
                         context,
                         "${response.errors!!.size} errors in response ($queryName)\n$errorMsgs",
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
                 Log.e(TAG, "Errors in $queryName:\n$errorMsgs")
@@ -56,7 +55,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 Toast.makeText(
                     context,
                     "Network error ($queryName). Message: ${ex.message}, ${ex.cause?.message}",
-                    Toast.LENGTH_LONG
+                    Toast.LENGTH_LONG,
                 ).show()
             }
             Log.e(TAG, "Network error in $queryName", ex)
@@ -66,7 +65,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 Toast.makeText(
                     context,
                     "HTTP error ($queryName). Status=${ex.statusCode}, Msg=${ex.message}",
-                    Toast.LENGTH_LONG
+                    Toast.LENGTH_LONG,
                 ).show()
             }
             Log.e(TAG, "HTTP ${ex.statusCode} error in $queryName", ex)
@@ -76,7 +75,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 Toast.makeText(
                     context,
                     "Server query error ($queryName). Msg=${ex.message}, ${ex.cause?.message}",
-                    Toast.LENGTH_LONG
+                    Toast.LENGTH_LONG,
                 ).show()
             }
             Log.e(TAG, "ApolloException in $queryName", ex)
@@ -91,66 +90,73 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun findScenes(
         findFilter: FindFilterType? = null,
         sceneFilter: SceneFilterType? = null,
-        sceneIds: List<Int>? = null
+        sceneIds: List<Int>? = null,
     ): List<SlimSceneData> {
-        val query = client.query(
-            FindScenesQuery(
-                filter = findFilter,
-                scene_filter = sceneFilter,
-                scene_ids = sceneIds
+        val query =
+            client.query(
+                FindScenesQuery(
+                    filter = findFilter,
+                    scene_filter = sceneFilter,
+                    scene_ids = sceneIds,
+                ),
             )
-        )
-        val scenes = executeQuery(query).data?.findScenes?.scenes?.map {
-            it.slimSceneData
-        }
+        val scenes =
+            executeQuery(query).data?.findScenes?.scenes?.map {
+                it.slimSceneData
+            }
         return scenes.orEmpty()
     }
 
     suspend fun findPerformers(
         findFilter: FindFilterType? = null,
         performerFilter: PerformerFilterType? = null,
-        performerIds: List<Int>? = null
+        performerIds: List<Int>? = null,
     ): List<PerformerData> {
-        val query = client.query(
-            FindPerformersQuery(
-                filter = findFilter,
-                performer_filter = performerFilter,
-                performer_ids = performerIds
+        val query =
+            client.query(
+                FindPerformersQuery(
+                    filter = findFilter,
+                    performer_filter = performerFilter,
+                    performer_ids = performerIds,
+                ),
             )
-        )
-        val performers = executeQuery(query).data?.findPerformers?.performers?.map {
-            it.performerData
-        }
+        val performers =
+            executeQuery(query).data?.findPerformers?.performers?.map {
+                it.performerData
+            }
         return performers.orEmpty()
     }
 
     // TODO Add studioIds?
     suspend fun findStudios(
         findFilter: FindFilterType? = null,
-        studioFilter: StudioFilterType? = null
+        studioFilter: StudioFilterType? = null,
     ): List<StudioData> {
-        val query = client.query(
-            FindStudiosQuery(
-                filter = findFilter,
-                studio_filter = studioFilter,
+        val query =
+            client.query(
+                FindStudiosQuery(
+                    filter = findFilter,
+                    studio_filter = studioFilter,
+                ),
             )
-        )
-        val studios = executeQuery(query).data?.findStudios?.studios?.map {
-            it.studioData
-        }
+        val studios =
+            executeQuery(query).data?.findStudios?.studios?.map {
+                it.studioData
+            }
         return studios.orEmpty()
     }
 
     suspend fun findTags(
         findFilter: FindFilterType? = null,
-        tagFilter: TagFilterType? = null
+        tagFilter: TagFilterType? = null,
     ): List<Tag> {
-        val query = client.query(
-            FindTagsQuery(
-                filter = findFilter,
-                tag_filter = tagFilter
+        val query =
+            client.query(
+                FindTagsQuery(
+                    filter = findFilter,
+                    tag_filter = tagFilter,
+                ),
             )
-        )
         val tags =
             executeQuery(query).data?.findTags?.tags?.map { fromFindTag(it) }
         return tags.orEmpty()
@@ -164,7 +170,6 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun getDefaultFilter(type: DataType): SavedFilterData? {
         val query = FindDefaultFilterQuery(type.filterMode)
         return executeQuery(query).data?.findDefaultFilter?.savedFilterData
-
     }
 
     companion object {
@@ -172,9 +177,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     }
 
     open class QueryException(msg: String? = null, cause: ApolloException? = null) :
-        RuntimeException(msg, cause) {
-    }
+        RuntimeException(msg, cause)
 
-    class StashNotConfiguredException : QueryException() {
-    }
+    class StashNotConfiguredException : QueryException()
 }

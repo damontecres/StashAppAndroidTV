@@ -26,10 +26,9 @@ class StashGridFragment<T : Query.Data, D : Any>(
     comparator: DiffUtil.ItemCallback<D>,
     private val dataSupplier: StashPagingSource.DataSupplier<T, D>,
 ) : VerticalGridSupportFragment() {
-
     constructor(
         comparator: DiffUtil.ItemCallback<D>,
-        dataSupplier: StashPagingSource.DataSupplier<T, D>
+        dataSupplier: StashPagingSource.DataSupplier<T, D>,
     ) : this(StashPresenter.SELECTOR, comparator, dataSupplier)
 
     private val mAdapter = PagingDataAdapter(presenter, comparator)
@@ -46,24 +45,29 @@ class StashGridFragment<T : Query.Data, D : Any>(
         adapter = mAdapter
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         onItemViewClickedListener = StashItemViewClickListener(requireActivity())
 
-        val pageSize = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            .getInt("maxSearchResults", 50)
+        val pageSize =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("maxSearchResults", 50)
 
-        val flow = Pager(
-            PagingConfig(pageSize = pageSize, prefetchDistance = pageSize * 2)
-        ) {
-            StashPagingSource(
-                requireContext(),
-                pageSize,
-                dataSupplier = dataSupplier
-            )
-        }.flow
-            .cachedIn(viewLifecycleOwner.lifecycleScope)
+        val flow =
+            Pager(
+                PagingConfig(pageSize = pageSize, prefetchDistance = pageSize * 2),
+            ) {
+                StashPagingSource(
+                    requireContext(),
+                    pageSize,
+                    dataSupplier = dataSupplier,
+                )
+            }.flow
+                .cachedIn(viewLifecycleOwner.lifecycleScope)
 
         viewLifecycleOwner.lifecycleScope.launch {
             val queryEngine = QueryEngine(requireContext(), true)
@@ -79,7 +83,6 @@ class StashGridFragment<T : Query.Data, D : Any>(
 
     private class StashGridPresenter :
         VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
-
         override fun initializeGridViewHolder(vh: ViewHolder?) {
             super.initializeGridViewHolder(vh)
             val gridView = vh!!.gridView

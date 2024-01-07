@@ -15,14 +15,16 @@ import com.github.damontecres.stashapp.presenters.ScenePresenter
 import kotlinx.coroutines.async
 
 class PerformerFragment : Fragment(R.layout.performer_view) {
-
     private lateinit var mPerformerImage: ImageView
     private lateinit var mPerformerName: TextView
     private lateinit var mPerformerDisambiguation: TextView
     private lateinit var mPerformerScenes: ListRowView
     private var gridAdapter: ArrayObjectAdapter = ArrayObjectAdapter(ScenePresenter())
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         mPerformerImage = view.findViewById(R.id.performer_image)

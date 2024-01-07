@@ -11,7 +11,6 @@ import org.junit.Assert
 import org.junit.Test
 
 class ObjectFilterParsingTests {
-
     /**
      * Get the SavedFilterData from a json file resource
      */
@@ -33,27 +32,27 @@ class ObjectFilterParsingTests {
         Assert.assertEquals(FilterMode.SCENES, savedFilterData.mode)
         Assert.assertEquals(
             "33",
-            sceneFilter.studios.getOrThrow()!!.value.getOrThrow()!!.first()
+            sceneFilter.studios.getOrThrow()!!.value.getOrThrow()!!.first(),
         )
         Assert.assertEquals(
             listOf("8", "148"),
-            sceneFilter.tags.getOrThrow()!!.value.getOrThrow()!!
+            sceneFilter.tags.getOrThrow()!!.value.getOrThrow()!!,
         )
         Assert.assertEquals(
             1,
-            sceneFilter.play_count.getOrThrow()!!.value
+            sceneFilter.play_count.getOrThrow()!!.value,
         )
         Assert.assertEquals(
             4,
-            sceneFilter.resume_time.getOrThrow()!!.value
+            sceneFilter.resume_time.getOrThrow()!!.value,
         )
         Assert.assertEquals(
             9,
-            sceneFilter.resume_time.getOrThrow()!!.value2.getOrThrow()!!
+            sceneFilter.resume_time.getOrThrow()!!.value2.getOrThrow()!!,
         )
         Assert.assertEquals(
             "2024-01-01 23:00",
-            sceneFilter.updated_at.getOrThrow()!!.value
+            sceneFilter.updated_at.getOrThrow()!!.value,
         )
     }
 
@@ -69,7 +68,7 @@ class ObjectFilterParsingTests {
         Assert.assertEquals(1, performerFilter.studios.getOrThrow()!!.excludes.getOrThrow()!!.size)
         Assert.assertEquals(
             "94",
-            performerFilter.studios.getOrThrow()!!.excludes.getOrThrow()!!.first()
+            performerFilter.studios.getOrThrow()!!.excludes.getOrThrow()!!.first(),
         )
     }
 }

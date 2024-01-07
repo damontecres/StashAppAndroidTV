@@ -10,13 +10,11 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 
 /**
  * BrowseErrorActivity shows how to use ErrorFragment.
  */
 class BrowseErrorActivity : SecureFragmentActivity() {
-
     private lateinit var mErrorFragment: ErrorFragment
     private lateinit var mSpinnerFragment: SpinnerFragment
 
@@ -24,7 +22,7 @@ class BrowseErrorActivity : SecureFragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
+            supportFragmentManager.beginTransaction()
                 .replace(R.id.main_browse_fragment, MainFragment())
                 .commitNow()
         }
@@ -56,9 +54,10 @@ class BrowseErrorActivity : SecureFragmentActivity() {
 
     class SpinnerFragment : Fragment() {
         override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?,
-            savedInstanceState: Bundle?
-        ): View? {
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?,
+        ): View {
             val progressBar = ProgressBar(container?.context)
             if (container is FrameLayout) {
                 val layoutParams =

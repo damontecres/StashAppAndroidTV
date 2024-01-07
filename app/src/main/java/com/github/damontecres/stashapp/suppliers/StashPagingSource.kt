@@ -21,14 +21,12 @@ class StashPagingSource<T : Query.Data, D : Any>(
     private val context: Context,
     private val pageSize: Int,
     private val dataSupplier: DataSupplier<T, D>,
-    showToasts: Boolean = false
+    showToasts: Boolean = false,
 ) :
     PagingSource<Int, D>() {
-
     private val queryEngine = QueryEngine(context, showToasts)
 
     interface DataSupplier<T : Query.Data, D : Any> {
-
         val dataType: DataType
 
         /**
@@ -55,19 +53,17 @@ class StashPagingSource<T : Query.Data, D : Any>(
     }
 
     private suspend fun fetchPage(page: Int): CountAndList<D> {
-
-        val filter = dataSupplier.getDefaultFilter().copy(
-            per_page = Optional.present(pageSize),
-            page = Optional.present(page),
-        )
+        val filter =
+            dataSupplier.getDefaultFilter().copy(
+                per_page = Optional.present(pageSize),
+                page = Optional.present(page),
+            )
         val query = dataSupplier.createQuery(filter)
         val results = queryEngine.executeQuery(query)
         return dataSupplier.parseQuery(results.data)
     }
 
-    override suspend fun load(
-        params: LoadParams<Int>
-    ): LoadResult<Int, D> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, D> {
         try {
             // Start refresh at page 1 if undefined.
             val pageNum = (params.key ?: 1).toInt()
@@ -80,8 +76,9 @@ class StashPagingSource<T : Query.Data, D : Any>(
 
             return LoadResult.Page(
                 data = results.list,
-                prevKey = if (pageNum > 1) pageNum - 1 else null, // Only a previous page if current page is 2+
-                nextKey = nextPageNum
+                // Only a previous page if current page is 2+
+                prevKey = if (pageNum > 1) pageNum - 1 else null,
+                nextKey = nextPageNum,
             )
         } catch (e: QueryEngine.QueryException) {
             return LoadResult.Error(e)

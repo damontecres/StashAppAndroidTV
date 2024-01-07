@@ -1,15 +1,9 @@
 package com.github.damontecres.stashapp.presenters
 
-import android.graphics.drawable.Drawable
-import android.util.Log
-import android.view.ViewGroup
 import android.widget.ImageView
-import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
-import androidx.leanback.widget.Presenter
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.createGlideUrl
 import kotlin.properties.Delegates
@@ -18,7 +12,10 @@ class StudioPresenter : StashPresenter() {
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
     private var sDefaultBackgroundColor: Int by Delegates.notNull()
 
-    override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
+    override fun onBindViewHolder(
+        viewHolder: ViewHolder,
+        item: Any?,
+    ) {
         val studio = item as StudioData
         val cardView = viewHolder.view as ImageCardView
 
@@ -35,8 +32,9 @@ class StudioPresenter : StashPresenter() {
         if (!studio.image_path.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER)
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context)
-                .getString("stashApiKey", "")
+            val apiKey =
+                PreferenceManager.getDefaultSharedPreferences(vParent.context)
+                    .getString("stashApiKey", "")
             val url = createGlideUrl(studio.image_path, apiKey)
             Glide.with(viewHolder.view.context)
                 .load(url)

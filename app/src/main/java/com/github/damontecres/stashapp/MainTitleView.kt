@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-
 import android.content.Context
 import android.content.Intent
 import android.util.AttributeSet
@@ -15,52 +14,57 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.leanback.widget.SearchOrbView
 import androidx.leanback.widget.TitleViewAdapter
 
-
 class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
-
     private var mPreferencesView: ImageButton
     private lateinit var mSearchOrbView: SearchOrbView
 
-    val mTitleViewAdapter = object : TitleViewAdapter() {
-        override fun getSearchAffordanceView(): View {
-            return mSearchOrbView
+    val mTitleViewAdapter =
+        object : TitleViewAdapter() {
+            override fun getSearchAffordanceView(): View {
+                return mSearchOrbView
+            }
         }
-    }
 
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
         val root = LayoutInflater.from(context).inflate(R.layout.title, this)
         mSearchOrbView = root.findViewById<SearchOrbView>(R.id.search_orb)
         mPreferencesView = root.findViewById<ImageButton>(R.id.settings_button)
-        mPreferencesView.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(v: View?) {
-                val intent = Intent(context, SettingsActivity::class.java)
-                startActivity(context, intent, null)
-            }
-
-        })
-
-        val mFocusedZoom = context.resources.getFraction(
-            androidx.leanback.R.fraction.lb_search_orb_focused_zoom, 1, 1
-        )
-        val mScaleDurationMs = context.resources.getInteger(
-            androidx.leanback.R.integer.lb_search_orb_scale_duration_ms
+        mPreferencesView.setOnClickListener(
+            object : OnClickListener {
+                override fun onClick(v: View?) {
+                    val intent = Intent(context, SettingsActivity::class.java)
+                    startActivity(context, intent, null)
+                }
+            },
         )
 
-        val onFocusChangeListener = OnFocusChangeListener { v, hasFocus ->
-            val zoom = if (hasFocus) mFocusedZoom else 1f
-            v.animate().scaleX(zoom).scaleY(zoom).setDuration(mScaleDurationMs.toLong()).start()
+        val mFocusedZoom =
+            context.resources.getFraction(
+                androidx.leanback.R.fraction.lb_search_orb_focused_zoom,
+                1,
+                1,
+            )
+        val mScaleDurationMs =
+            context.resources.getInteger(
+                androidx.leanback.R.integer.lb_search_orb_scale_duration_ms,
+            )
 
-            if (hasFocus) {
-                v.setBackgroundColor(ContextCompat.getColor(context, R.color.selected_background))
-            } else {
-                v.setBackgroundColor(
-                    ContextCompat.getColor(
-                        context,
-                        R.color.default_card_background
+        val onFocusChangeListener =
+            OnFocusChangeListener { v, hasFocus ->
+                val zoom = if (hasFocus) mFocusedZoom else 1f
+                v.animate().scaleX(zoom).scaleY(zoom).setDuration(mScaleDurationMs.toLong()).start()
+
+                if (hasFocus) {
+                    v.setBackgroundColor(ContextCompat.getColor(context, R.color.selected_background))
+                } else {
+                    v.setBackgroundColor(
+                        ContextCompat.getColor(
+                            context,
+                            R.color.default_card_background,
+                        ),
                     )
-                )
+                }
             }
-        }
         mSearchOrbView.onFocusChangeListener = onFocusChangeListener
         mPreferencesView.onFocusChangeListener = onFocusChangeListener
 
@@ -96,6 +100,4 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
     override fun getTitleViewAdapter(): TitleViewAdapter {
         return mTitleViewAdapter
     }
-
-
 }

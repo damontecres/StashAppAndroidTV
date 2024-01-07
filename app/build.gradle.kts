@@ -7,7 +7,6 @@ plugins {
     id("com.apollographql.apollo3") version "3.8.2"
 }
 
-
 fun getVersionCode(): Int {
     val stdout = ByteArrayOutputStream()
     exec {
@@ -43,9 +42,8 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
-
         }
 
         applicationVariants.all {

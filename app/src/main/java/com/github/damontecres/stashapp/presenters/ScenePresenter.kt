@@ -17,10 +17,11 @@ import java.security.MessageDigest
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-
 class ScenePresenter : StashPresenter() {
-
-    override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
+    override fun onBindViewHolder(
+        viewHolder: ViewHolder,
+        item: Any?,
+    ) {
         val scene = item as SlimSceneData
         val cardView = viewHolder.view as ImageCardView
         if (scene.title.isNullOrBlank()) {
@@ -36,8 +37,9 @@ class ScenePresenter : StashPresenter() {
 
         if (!scene.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context)
-                .getString("stashApiKey", "")
+            val apiKey =
+                PreferenceManager.getDefaultSharedPreferences(vParent.context)
+                    .getString("stashApiKey", "")
             val url = createGlideUrl(scene.paths.screenshot, apiKey)
             Glide.with(viewHolder.view.context)
                 .load(url)
@@ -52,7 +54,6 @@ class ScenePresenter : StashPresenter() {
      */
     private class TextOverlay(val scene: SlimSceneData) :
         BitmapTransformation() {
-
         override fun updateDiskCacheKey(messageDigest: MessageDigest) {
             messageDigest.update(ID)
             messageDigest.update(scene.id.toByteArray())
@@ -62,7 +63,7 @@ class ScenePresenter : StashPresenter() {
             pool: BitmapPool,
             toTransform: Bitmap,
             outWidth: Int,
-            outHeight: Int
+            outHeight: Int,
         ): Bitmap {
             // TODO: just grabbing the first seems like not the best solution
             val result = Bitmap.createBitmap(outWidth, outHeight, toTransform.config)
@@ -86,7 +87,7 @@ class ScenePresenter : StashPresenter() {
                     duration,
                     outWidth.toFloat() - 5F,
                     outHeight - 5F,
-                    paint
+                    paint,
                 )
 
                 paint.isFakeBoldText = true
@@ -97,7 +98,7 @@ class ScenePresenter : StashPresenter() {
                     resolution,
                     5F,
                     outHeight - 5F,
-                    paint
+                    paint,
                 )
             }
             return result
@@ -107,7 +108,6 @@ class ScenePresenter : StashPresenter() {
             private val ID =
                 "com.github.damontecres.stashapp.presenters.ScenePresenter.TextOverlay".toByteArray()
         }
-
     }
 
     companion object {

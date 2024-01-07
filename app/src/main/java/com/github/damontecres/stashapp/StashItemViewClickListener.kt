@@ -22,53 +22,55 @@ import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc
  */
 class StashItemViewClickListener(private val activity: Activity) : OnItemViewClickedListener {
-
     override fun onItemClicked(
         itemViewHolder: Presenter.ViewHolder,
         item: Any,
         rowViewHolder: RowPresenter.ViewHolder?,
-        row: Row?
+        row: Row?,
     ) {
-
         if (item is SlimSceneData) {
             val intent = Intent(activity, DetailsActivity::class.java)
             intent.putExtra(DetailsActivity.MOVIE, sceneFromSlimSceneData(item))
 
-            val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                activity,
-                (itemViewHolder.view as ImageCardView).mainImageView,
-                DetailsActivity.SHARED_ELEMENT_NAME
-            )
-                .toBundle()
+            val bundle =
+                ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    activity,
+                    (itemViewHolder.view as ImageCardView).mainImageView,
+                    DetailsActivity.SHARED_ELEMENT_NAME,
+                )
+                    .toBundle()
             activity.startActivity(intent, bundle)
         } else if (item is PerformerData) {
             val intent = Intent(activity, PerformerActivity::class.java)
             intent.putExtra("performer", performerFromPerformerData(item))
-            val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                activity,
-                (itemViewHolder.view as ImageCardView).mainImageView,
-                DetailsActivity.SHARED_ELEMENT_NAME
-            )
-                .toBundle()
+            val bundle =
+                ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    activity,
+                    (itemViewHolder.view as ImageCardView).mainImageView,
+                    DetailsActivity.SHARED_ELEMENT_NAME,
+                )
+                    .toBundle()
             activity.startActivity(intent, bundle)
         } else if (item is Tag) {
             val intent = Intent(activity, TagActivity::class.java)
             intent.putExtra("tag", item)
-            val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                activity,
-                (itemViewHolder.view as ImageCardView).mainImageView,
-                DetailsActivity.SHARED_ELEMENT_NAME
-            ).toBundle()
+            val bundle =
+                ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    activity,
+                    (itemViewHolder.view as ImageCardView).mainImageView,
+                    DetailsActivity.SHARED_ELEMENT_NAME,
+                ).toBundle()
             activity.startActivity(intent, bundle)
         } else if (item is StudioData) {
             val intent = Intent(activity, StudioActivity::class.java)
             intent.putExtra("studioId", item.id.toInt())
             intent.putExtra("studioName", item.name)
-            val bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(
-                activity,
-                (itemViewHolder.view as ImageCardView).mainImageView,
-                DetailsActivity.SHARED_ELEMENT_NAME
-            ).toBundle()
+            val bundle =
+                ActivityOptionsCompat.makeSceneTransitionAnimation(
+                    activity,
+                    (itemViewHolder.view as ImageCardView).mainImageView,
+                    DetailsActivity.SHARED_ELEMENT_NAME,
+                ).toBundle()
             activity.startActivity(intent, bundle)
         } else if (item is StashSavedFilter) {
             val intent = Intent(activity, FilterListActivity::class.java)
