@@ -15,7 +15,7 @@ import androidx.fragment.app.FragmentActivity
 /**
  * BrowseErrorActivity shows how to use ErrorFragment.
  */
-class BrowseErrorActivity : FragmentActivity() {
+class BrowseErrorActivity : SecureFragmentActivity() {
 
     private lateinit var mErrorFragment: ErrorFragment
     private lateinit var mSpinnerFragment: SpinnerFragment

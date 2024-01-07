@@ -16,7 +16,7 @@ import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
 import com.github.damontecres.stashapp.suppliers.TagDataSupplier
 import kotlinx.coroutines.launch
 
-class FilterListActivity : FragmentActivity() {
+class FilterListActivity : SecureFragmentActivity() {
 
     private fun getFragment(
         mode: FilterMode,

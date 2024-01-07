@@ -11,7 +11,7 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 
-class PerformerActivity : FragmentActivity() {
+class PerformerActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_performer)

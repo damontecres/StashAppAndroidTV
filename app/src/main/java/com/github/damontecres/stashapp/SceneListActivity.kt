@@ -9,7 +9,7 @@ import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import kotlinx.coroutines.launch
 
 
-class SceneListActivity : FragmentActivity() {
+class SceneListActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)
