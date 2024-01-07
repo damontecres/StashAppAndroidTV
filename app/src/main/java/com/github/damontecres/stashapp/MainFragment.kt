@@ -35,7 +35,9 @@ import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
-import com.github.damontecres.stashapp.presenters.stashPresenterSelector
+import com.github.damontecres.stashapp.data.StashCustomFilter
+import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import java.util.Timer
@@ -115,9 +117,10 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun prepareBackgroundManager() {
-
         mBackgroundManager = BackgroundManager.getInstance(activity)
         mBackgroundManager.attach(requireActivity().window)
+        mBackgroundManager.color =
+            ContextCompat.getColor(requireContext(), R.color.default_background)
         mDefaultBackground =
             ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
         mMetrics = DisplayMetrics()
@@ -232,7 +235,7 @@ class MainFragment : BrowseSupportFragment() {
                             val frontPageContent =
                                 (ui as Map<String, *>)["frontPageContent"] as List<Map<String, *>>
                             for (frontPageFilter: Map<String, *> in frontPageContent) {
-                                val adapter = ArrayObjectAdapter(stashPresenterSelector)
+                                val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
                                 adapters.add(adapter)
 
                                 val filterType = frontPageFilter["__typename"] as String
@@ -296,8 +299,6 @@ class MainFragment : BrowseSupportFragment() {
                 per_page = Optional.present(25)
             )
 
-
-
             when (mode) {
                 FilterMode.SCENES -> {
                     adapter.addAll(0, queryEngine.findScenes(filter))
@@ -315,6 +316,7 @@ class MainFragment : BrowseSupportFragment() {
                     Log.i(TAG, "Unsupported mode in frontpage: $mode")
                 }
             }
+            adapter.add(StashCustomFilter(mode, direction, sortBy, description))
         }
     }
 
@@ -402,6 +404,7 @@ class MainFragment : BrowseSupportFragment() {
                         )
                     }
                 }
+                adapter.add(StashSavedFilter(filterId.toString(), result!!.mode))
             }
         }
     }

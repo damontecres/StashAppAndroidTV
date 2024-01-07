@@ -76,6 +76,9 @@
         <activity
             android:name=".TagListActivity"
             android:exported="false" />
+        <activity
+            android:name=".FilterListActivity"
+            android:exported="false" />
 
     </application>
 

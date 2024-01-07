@@ -16,7 +16,7 @@ import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.presenters.StashPagingSource
-import com.github.damontecres.stashapp.presenters.stashPresenterSelector
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -29,7 +29,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
     constructor(
         comparator: DiffUtil.ItemCallback<D>,
         dataSupplier: StashPagingSource.DataSupplier<T, D>
-    ) : this(stashPresenterSelector, comparator, dataSupplier)
+    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier)
 
     private val mAdapter = PagingDataAdapter(presenter, comparator)
 
