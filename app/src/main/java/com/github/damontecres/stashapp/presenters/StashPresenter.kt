@@ -15,31 +15,32 @@ import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.data.Tag
 import kotlin.properties.Delegates
 
-
 abstract class StashPresenter : Presenter() {
     protected var vParent: ViewGroup by Delegates.notNull()
     protected var mDefaultCardImage: Drawable? = null
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
     private var sDefaultBackgroundColor: Int by Delegates.notNull()
 
-    override fun onCreateViewHolder(parent: ViewGroup): Presenter.ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         vParent = parent
 
         sDefaultBackgroundColor =
             ContextCompat.getColor(parent.context, R.color.default_card_background)
-        sSelectedBackgroundColor = ContextCompat.getColor(
-            parent.context,
-            R.color.selected_background
-        )
+        sSelectedBackgroundColor =
+            ContextCompat.getColor(
+                parent.context,
+                R.color.selected_background,
+            )
         mDefaultCardImage =
             ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
 
-        val cardView = object : ImageCardView(parent.context) {
-            override fun setSelected(selected: Boolean) {
-                updateCardBackgroundColor(this, selected)
-                super.setSelected(selected)
+        val cardView =
+            object : ImageCardView(parent.context) {
+                override fun setSelected(selected: Boolean) {
+                    updateCardBackgroundColor(this, selected)
+                    super.setSelected(selected)
+                }
             }
-        }
 
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true
@@ -47,14 +48,17 @@ abstract class StashPresenter : Presenter() {
         return ViewHolder(cardView)
     }
 
-    override fun onUnbindViewHolder(viewHolder: Presenter.ViewHolder) {
+    override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         val cardView = viewHolder.view as ImageCardView
         // Remove references to images so that the garbage collector can free up memory
         cardView.badgeImage = null
         cardView.mainImage = null
     }
 
-    private fun updateCardBackgroundColor(view: ImageCardView, selected: Boolean) {
+    private fun updateCardBackgroundColor(
+        view: ImageCardView,
+        selected: Boolean,
+    ) {
         val color = if (selected) sSelectedBackgroundColor else sDefaultBackgroundColor
         // Both background colors should be set because the view"s background is temporarily visible
         // during animations.
@@ -63,12 +67,13 @@ abstract class StashPresenter : Presenter() {
     }
 
     companion object {
-        val SELECTOR: ClassPresenterSelector = ClassPresenterSelector()
-            .addClassPresenter(PerformerData::class.java, PerformerPresenter())
-            .addClassPresenter(SlimSceneData::class.java, ScenePresenter())
-            .addClassPresenter(StudioData::class.java, StudioPresenter())
-            .addClassPresenter(Tag::class.java, TagPresenter())
-            .addClassPresenter(StashSavedFilter::class.java, StashFilterPresenter())
-            .addClassPresenter(StashCustomFilter::class.java, StashFilterPresenter())
+        val SELECTOR: ClassPresenterSelector =
+            ClassPresenterSelector()
+                .addClassPresenter(PerformerData::class.java, PerformerPresenter())
+                .addClassPresenter(SlimSceneData::class.java, ScenePresenter())
+                .addClassPresenter(StudioData::class.java, StudioPresenter())
+                .addClassPresenter(Tag::class.java, TagPresenter())
+                .addClassPresenter(StashSavedFilter::class.java, StashFilterPresenter())
+                .addClassPresenter(StashCustomFilter::class.java, StashFilterPresenter())
     }
 }

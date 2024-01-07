@@ -5,10 +5,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 
-
 /** Loads [PlaybackVideoFragment]. */
 class PlaybackActivity : FragmentActivity() {
-
     private val fragment: PlaybackVideoFragment = PlaybackVideoFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {

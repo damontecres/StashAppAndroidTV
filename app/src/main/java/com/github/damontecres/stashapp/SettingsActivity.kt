@@ -3,13 +3,12 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 
-class SettingsActivity() : FragmentActivity() {
-
+class SettingsActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
+            supportFragmentManager.beginTransaction()
                 .replace(R.id.main_browse_fragment, SettingsFragment())
                 .commitNow()
         }

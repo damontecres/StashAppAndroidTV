@@ -31,7 +31,6 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
     private val performerAdapter = ArrayObjectAdapter(PerformerPresenter())
     private val tagAdapter = ArrayObjectAdapter(TagPresenter())
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setSearchResultProvider(this)
@@ -40,7 +39,6 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
         rowsAdapter.add(ListRow(HeaderItem("Studios"), studioAdapter))
         rowsAdapter.add(ListRow(HeaderItem("Performers"), performerAdapter))
         rowsAdapter.add(ListRow(HeaderItem("Tags"), tagAdapter))
-
     }
 
     override fun getResultsAdapter(): ObjectAdapter {
@@ -49,20 +47,23 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
 
     override fun onQueryTextChange(newQuery: String): Boolean {
         taskJob?.cancel()
-        taskJob = viewLifecycleOwner.lifecycleScope.launch {
-            val searchDelay = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("searchDelay", 500)
-            delay(searchDelay.toLong())
-            search(newQuery)
-        }
+        taskJob =
+            viewLifecycleOwner.lifecycleScope.launch {
+                val searchDelay =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        .getInt("searchDelay", 500)
+                delay(searchDelay.toLong())
+                search(newQuery)
+            }
         return true
     }
 
     override fun onQueryTextSubmit(query: String): Boolean {
         taskJob?.cancel()
-        taskJob = viewLifecycleOwner.lifecycleScope.launch {
-            search(query)
-        }
+        taskJob =
+            viewLifecycleOwner.lifecycleScope.launch {
+                search(query)
+            }
         return true
     }
 
@@ -73,12 +74,14 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
         tagAdapter.clear()
 
         if (!TextUtils.isEmpty(query)) {
-            val perPage = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("maxSearchResults", 25)
-            val filter = FindFilterType(
-                q = Optional.present(query),
-                per_page = Optional.present(perPage)
-            )
+            val perPage =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getInt("maxSearchResults", 25)
+            val filter =
+                FindFilterType(
+                    q = Optional.present(query),
+                    per_page = Optional.present(perPage),
+                )
             val queryEngine = QueryEngine(requireContext(), true)
             viewLifecycleOwner.lifecycleScope.async {
                 sceneAdapter.addAll(0, queryEngine.findScenes(filter))

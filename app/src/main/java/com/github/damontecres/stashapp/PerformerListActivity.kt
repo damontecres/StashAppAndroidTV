@@ -18,19 +18,19 @@ class PerformerListActivity : FragmentActivity() {
             val queryEngine = QueryEngine(this, true)
             lifecycleScope.launch {
                 val filter = queryEngine.getDefaultFilter(DataType.PERFORMER)
-                getSupportFragmentManager().beginTransaction()
+                supportFragmentManager.beginTransaction()
                     .replace(
                         R.id.tag_fragment,
                         StashGridFragment(
-                            performerComparator, PerformerDataSupplier(
+                            PerformerComparator,
+                            PerformerDataSupplier(
                                 convertFilter(filter?.find_filter),
-                                convertPerformerObjectFilter(filter?.object_filter)
-                            )
-                        )
+                                convertPerformerObjectFilter(filter?.object_filter),
+                            ),
+                        ),
                     )
                     .commitNow()
             }
         }
     }
 }
-

@@ -6,42 +6,66 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.Tag
 
-object sceneComparator : DiffUtil.ItemCallback<SlimSceneData>() {
-    override fun areItemsTheSame(oldItem: SlimSceneData, newItem: SlimSceneData): Boolean {
+object SceneComparator : DiffUtil.ItemCallback<SlimSceneData>() {
+    override fun areItemsTheSame(
+        oldItem: SlimSceneData,
+        newItem: SlimSceneData,
+    ): Boolean {
         return oldItem.id == newItem.id
     }
 
-    override fun areContentsTheSame(oldItem: SlimSceneData, newItem: SlimSceneData): Boolean {
+    override fun areContentsTheSame(
+        oldItem: SlimSceneData,
+        newItem: SlimSceneData,
+    ): Boolean {
         return oldItem == newItem
     }
 }
 
-object performerComparator : DiffUtil.ItemCallback<PerformerData>() {
-    override fun areItemsTheSame(oldItem: PerformerData, newItem: PerformerData): Boolean {
+object PerformerComparator : DiffUtil.ItemCallback<PerformerData>() {
+    override fun areItemsTheSame(
+        oldItem: PerformerData,
+        newItem: PerformerData,
+    ): Boolean {
         return oldItem.id == newItem.id
     }
 
-    override fun areContentsTheSame(oldItem: PerformerData, newItem: PerformerData): Boolean {
+    override fun areContentsTheSame(
+        oldItem: PerformerData,
+        newItem: PerformerData,
+    ): Boolean {
         return oldItem == newItem
     }
 }
 
-object studioComparator : DiffUtil.ItemCallback<StudioData>() {
-    override fun areItemsTheSame(oldItem: StudioData, newItem: StudioData): Boolean {
+object StudioComparator : DiffUtil.ItemCallback<StudioData>() {
+    override fun areItemsTheSame(
+        oldItem: StudioData,
+        newItem: StudioData,
+    ): Boolean {
         return oldItem.id == newItem.id
     }
 
-    override fun areContentsTheSame(oldItem: StudioData, newItem: StudioData): Boolean {
+    override fun areContentsTheSame(
+        oldItem: StudioData,
+        newItem: StudioData,
+    ): Boolean {
         return oldItem == newItem
     }
 }
 
-object tagComparator : DiffUtil.ItemCallback<Tag>() {
-    override fun areItemsTheSame(oldItem: Tag, newItem: Tag): Boolean {
+object TagComparator : DiffUtil.ItemCallback<Tag>() {
+    override fun areItemsTheSame(
+        oldItem: Tag,
+        newItem: Tag,
+    ): Boolean {
         return oldItem.id == newItem.id
     }
 
-    override fun areContentsTheSame(oldItem: Tag, newItem: Tag): Boolean {
+    override fun areContentsTheSame(
+        oldItem: Tag,
+        newItem: Tag,
+    ): Boolean {
         return oldItem == newItem
     }
 }

@@ -54,7 +54,10 @@ object Constants {
 /**
  * Create a [GlideUrl], adding the API key to the headers if needed
  */
-fun createGlideUrl(url: String, apiKey: String?): GlideUrl {
+fun createGlideUrl(
+    url: String,
+    apiKey: String?,
+): GlideUrl {
     return if (apiKey.isNullOrBlank()) {
         GlideUrl(url)
     } else {
@@ -62,7 +65,7 @@ fun createGlideUrl(url: String, apiKey: String?): GlideUrl {
             url,
             LazyHeaders.Builder()
                 .addHeader(Constants.STASH_API_HEADER, apiKey.trim())
-                .build()
+                .build(),
         )
     }
 }
@@ -70,9 +73,13 @@ fun createGlideUrl(url: String, apiKey: String?): GlideUrl {
 /**
  * Create a [GlideUrl], adding the API key to the headers if needed
  */
-fun createGlideUrl(url: String, context: Context): GlideUrl {
-    val apiKey = PreferenceManager.getDefaultSharedPreferences(context)
-        .getString("stashApiKey", "")
+fun createGlideUrl(
+    url: String,
+    context: Context,
+): GlideUrl {
+    val apiKey =
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .getString("stashApiKey", "")
     return createGlideUrl(url, apiKey)
 }
 
@@ -82,23 +89,25 @@ fun createGlideUrl(url: String, context: Context): GlideUrl {
 class AuthorizationInterceptor(val apiKey: String?) : HttpInterceptor {
     override suspend fun intercept(
         request: HttpRequest,
-        chain: HttpInterceptorChain
+        chain: HttpInterceptorChain,
     ): HttpResponse {
         return if (apiKey.isNullOrBlank()) {
             chain.proceed(request)
         } else {
             chain.proceed(
-                request.newBuilder().addHeader(Constants.STASH_API_HEADER, apiKey.trim()).build()
+                request.newBuilder().addHeader(Constants.STASH_API_HEADER, apiKey.trim()).build(),
             )
         }
-
     }
 }
 
 /**
  * Create a client for accessing Stash's GraphQL API
  */
-fun createApolloClient(stashUrl: String?, apiKey: String?): ApolloClient? {
+fun createApolloClient(
+    stashUrl: String?,
+    apiKey: String?,
+): ApolloClient? {
     return if (stashUrl!!.isNotBlank()) {
         var cleanedStashUrl = stashUrl.trim()
         if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
@@ -106,9 +115,10 @@ fun createApolloClient(stashUrl: String?, apiKey: String?): ApolloClient? {
             cleanedStashUrl = "http://$cleanedStashUrl"
         }
         var url = Uri.parse(cleanedStashUrl)
-        url = url.buildUpon()
-            .path("/graphql") // Ensure the URL is the graphql endpoint
-            .build()
+        url =
+            url.buildUpon()
+                .path("/graphql") // Ensure the URL is the graphql endpoint
+                .build()
         Log.d("Constants", "StashUrl: $stashUrl => $url")
         ApolloClient.Builder()
             .serverUrl(url.toString())
@@ -134,13 +144,17 @@ fun createApolloClient(context: Context): ApolloClient? {
  * @param context the context to pull preferences from
  * @param showToast whether a Toast message should be displayed with error/success information
  */
-suspend fun testStashConnection(context: Context, showToast: Boolean): Boolean {
+suspend fun testStashConnection(
+    context: Context,
+    showToast: Boolean,
+): Boolean {
     val client = createApolloClient(context)
     if (client == null) {
         if (showToast) {
             Toast.makeText(
-                context, "Stash server URL is not set.",
-                Toast.LENGTH_LONG
+                context,
+                "Stash server URL is not set.",
+                Toast.LENGTH_LONG,
             ).show()
         }
     } else {
@@ -149,8 +163,9 @@ suspend fun testStashConnection(context: Context, showToast: Boolean): Boolean {
             if (info.hasErrors()) {
                 if (showToast) {
                     Toast.makeText(
-                        context, "Failed to connect to Stash. Check URL or API Key.",
-                        Toast.LENGTH_LONG
+                        context,
+                        "Failed to connect to Stash. Check URL or API Key.",
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
             } else {
@@ -158,8 +173,9 @@ suspend fun testStashConnection(context: Context, showToast: Boolean): Boolean {
                     val version = info.data?.version?.version
                     val sceneCount = info.data?.stats?.scene_count
                     Toast.makeText(
-                        context, "Connected to Stash ($version) with $sceneCount scenes!",
-                        Toast.LENGTH_SHORT
+                        context,
+                        "Connected to Stash ($version) with $sceneCount scenes!",
+                        Toast.LENGTH_SHORT,
                     ).show()
                 }
                 return true
@@ -169,15 +185,17 @@ suspend fun testStashConnection(context: Context, showToast: Boolean): Boolean {
             if (ex.statusCode == 401 || ex.statusCode == 403) {
                 if (showToast) {
                     Toast.makeText(
-                        context, "Failed to connect to Stash. API Key was not valid.",
-                        Toast.LENGTH_LONG
+                        context,
+                        "Failed to connect to Stash. API Key was not valid.",
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
             } else {
                 if (showToast) {
                     Toast.makeText(
-                        context, "Failed to connect to Stash. Error was '${ex.message}'",
-                        Toast.LENGTH_LONG
+                        context,
+                        "Failed to connect to Stash. Error was '${ex.message}'",
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
             }
@@ -187,7 +205,7 @@ suspend fun testStashConnection(context: Context, showToast: Boolean): Boolean {
                 Toast.makeText(
                     context,
                     "Failed to connect to Stash. Error was '${ex.message}'",
-                    Toast.LENGTH_LONG
+                    Toast.LENGTH_LONG,
                 ).show()
             }
         }
@@ -219,7 +237,7 @@ fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
             page = Optional.presentIfNotNull(filter.page),
             per_page = Optional.presentIfNotNull(filter.per_page),
             sort = Optional.presentIfNotNull(filter.sort),
-            direction = Optional.presentIfNotNull(filter.direction)
+            direction = Optional.presentIfNotNull(filter.direction),
         )
     } else {
         null
@@ -229,14 +247,13 @@ fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
 val supportedFilterModes =
     setOf(FilterMode.SCENES, FilterMode.STUDIOS, FilterMode.PERFORMERS, FilterMode.TAGS)
 
-
 fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {
     return if (it != null) {
         val values = it["value"]!! as Map<String, Int?>
         IntCriterionInput(
             values["value"] ?: 0,
             Optional.presentIfNotNull(values["value2"]),
-            CriterionModifier.valueOf(it["modifier"]!! as String)
+            CriterionModifier.valueOf(it["modifier"]!! as String),
         )
     } else {
         null
@@ -249,7 +266,7 @@ fun convertFloatCriterionInput(it: Map<String, *>?): FloatCriterionInput? {
         FloatCriterionInput(
             values["value"]?.toDouble() ?: 0.0,
             Optional.presentIfNotNull(values["value2"]?.toDouble()),
-            CriterionModifier.valueOf(it["modifier"]!! as String)
+            CriterionModifier.valueOf(it["modifier"]!! as String),
         )
     } else {
         null
@@ -260,7 +277,7 @@ fun convertStringCriterionInput(it: Map<String, *>?): StringCriterionInput? {
     return if (it != null) {
         StringCriterionInput(
             it["value"]?.toString() ?: "",
-            CriterionModifier.valueOf(it["modifier"]!!.toString())
+            CriterionModifier.valueOf(it["modifier"]!!.toString()),
         )
     } else {
         null
@@ -280,7 +297,7 @@ fun convertHierarchicalMultiCriterionInput(it: Map<String, *>?): HierarchicalMul
             Optional.presentIfNotNull(items),
             CriterionModifier.valueOf(it["modifier"]!!.toString()),
             Optional.presentIfNotNull(it["depth"] as Int?),
-            Optional.presentIfNotNull(excludes)
+            Optional.presentIfNotNull(excludes),
         )
     } else {
         null
@@ -294,7 +311,7 @@ fun convertMultiCriterionInput(it: Map<String, *>?): MultiCriterionInput? {
         MultiCriterionInput(
             Optional.presentIfNotNull(items),
             CriterionModifier.valueOf(it["modifier"]!!.toString()),
-            Optional.presentIfNotNull(excludes)
+            Optional.presentIfNotNull(excludes),
         )
     } else {
         null
@@ -320,7 +337,7 @@ fun convertDateCriterionInput(it: Map<String, *>?): DateCriterionInput? {
         DateCriterionInput(
             values["value"]!!,
             Optional.presentIfNotNull(values["value2"]),
-            CriterionModifier.valueOf(it["modifier"]!! as String)
+            CriterionModifier.valueOf(it["modifier"]!! as String),
         )
     } else {
         null
@@ -333,7 +350,7 @@ fun convertTimestampCriterionInput(it: Map<String, *>?): TimestampCriterionInput
         TimestampCriterionInput(
             values["value"]!!,
             Optional.presentIfNotNull(values["value2"]),
-            CriterionModifier.valueOf(it["modifier"]!! as String)
+            CriterionModifier.valueOf(it["modifier"]!! as String),
         )
     } else {
         null
@@ -344,9 +361,11 @@ fun convertCircumcisionCriterionInput(it: Map<String, *>?): CircumcisionCriterio
     return if (it != null) {
         val valueList = (it["value"] as List<String>?)
         CircumcisionCriterionInput(
-            Optional.presentIfNotNull(valueList?.map { CircumisedEnum.valueOf(it.uppercase()) }
-                ?.toList()),
-            CriterionModifier.valueOf(it["modifier"]!! as String)
+            Optional.presentIfNotNull(
+                valueList?.map { CircumisedEnum.valueOf(it.uppercase()) }
+                    ?.toList(),
+            ),
+            CriterionModifier.valueOf(it["modifier"]!! as String),
         )
     } else {
         null
@@ -358,7 +377,7 @@ fun convertGenderCriterionInput(it: Map<String, *>?): GenderCriterionInput? {
         val value = it["value"].toString().uppercase().replace(" ", "_")
         GenderCriterionInput(
             Optional.presentIfNotNull(GenderEnum.valueOf(value)),
-            CriterionModifier.valueOf(it["modifier"]!! as String)
+            CriterionModifier.valueOf(it["modifier"]!! as String),
         )
     } else {
         null
@@ -379,7 +398,7 @@ fun convertStashIDCriterionInput(it: Map<String, *>?): StashIDCriterionInput? {
         StashIDCriterionInput(
             Optional.presentIfNotNull(values["endpoint"]),
             Optional.presentIfNotNull(values["stash_id"]),
-            CriterionModifier.valueOf(it["modifier"]!! as String)
+            CriterionModifier.valueOf(it["modifier"]!! as String),
         )
     } else {
         null
@@ -403,7 +422,7 @@ fun convertPHashDuplicationCriterionInput(it: Map<String, *>?): PHashDuplication
     return if (it != null) {
         PHashDuplicationCriterionInput(
             Optional.presentIfNotNull(it["duplicated"]?.toString()?.toBoolean()),
-            Optional.presentIfNotNull(it["distance"]?.toString()?.toInt())
+            Optional.presentIfNotNull(it["distance"]?.toString()?.toInt()),
         )
     } else {
         null
@@ -434,7 +453,7 @@ fun convertResolutionCriterionInput(it: Map<String, *>?): ResolutionCriterionInp
     return if (it != null) {
         ResolutionCriterionInput(
             convertToResolutionEnum(it["value"].toString()),
-            CriterionModifier.valueOf(it["modifier"]!! as String)
+            CriterionModifier.valueOf(it["modifier"]!! as String),
         )
     } else {
         null
@@ -445,48 +464,48 @@ fun convertPerformerObjectFilter(f: Any?): PerformerFilterType? {
     return if (f != null) {
         val filter = f as Map<String, Map<String, *>>
         PerformerFilterType(
-            AND = Optional.presentIfNotNull(convertPerformerObjectFilter(filter?.get("AND") as Map<String, Map<String, *>>?)),
-            OR = Optional.presentIfNotNull(convertPerformerObjectFilter(filter?.get("OR") as Map<String, Map<String, *>>?)),
-            NOT = Optional.presentIfNotNull(convertPerformerObjectFilter(filter?.get("NOT") as Map<String, Map<String, *>>?)),
-            name = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("name"))),
-            disambiguation = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("disambiguation"))),
-            details = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("details"))),
-            filter_favorites = Optional.presentIfNotNull(convertBoolean(filter?.get("filter_favorites"))),
-            birth_year = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("birth_year"))),
-            age = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("age"))),
-            ethnicity = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("ethnicity"))),
-            country = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("country"))),
-            eye_color = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("eye_color"))),
-            height_cm = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("height_cm"))),
-            measurements = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("measurements"))),
-            fake_tits = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("fake_tits"))),
-            penis_length = Optional.presentIfNotNull(convertFloatCriterionInput(filter?.get("penis_length"))),
-            circumcised = Optional.presentIfNotNull(convertCircumcisionCriterionInput(filter?.get("circumcised"))),
-            career_length = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("career_length"))),
-            tattoos = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("tattoos"))),
-            piercings = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("piercings"))),
-            aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("aliases"))),
-            gender = Optional.presentIfNotNull(convertGenderCriterionInput(filter?.get("gender"))),
-            is_missing = Optional.presentIfNotNull(convertString(filter?.get("is_missing"))),
-            tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter?.get("tags"))),
-            tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("tag_count"))),
-            scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("scene_count"))),
-            image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("image_count"))),
-            gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("gallery_count"))),
-            o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("o_counter"))),
-            stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter?.get("stash_id_endpoint"))),
-            rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("rating100"))),
-            url = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("url"))),
-            hair_color = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("hair_color"))),
-            weight = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("weight"))),
-            death_year = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("death_year"))),
-            studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter?.get("studios"))),
-            performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter?.get("performers"))),
-            ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter?.get("ignore_auto_tag"))),
-            birthdate = Optional.presentIfNotNull(convertDateCriterionInput(filter?.get("birthdate"))),
-            death_date = Optional.presentIfNotNull(convertDateCriterionInput(filter?.get("death_date"))),
-            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("created_at"))),
-            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("updated_at")))
+            AND = Optional.presentIfNotNull(convertPerformerObjectFilter(filter.get("AND") as Map<String, Map<String, *>>?)),
+            OR = Optional.presentIfNotNull(convertPerformerObjectFilter(filter.get("OR") as Map<String, Map<String, *>>?)),
+            NOT = Optional.presentIfNotNull(convertPerformerObjectFilter(filter.get("NOT") as Map<String, Map<String, *>>?)),
+            name = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("name"))),
+            disambiguation = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("disambiguation"))),
+            details = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("details"))),
+            filter_favorites = Optional.presentIfNotNull(convertBoolean(filter.get("filter_favorites"))),
+            birth_year = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("birth_year"))),
+            age = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("age"))),
+            ethnicity = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("ethnicity"))),
+            country = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("country"))),
+            eye_color = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("eye_color"))),
+            height_cm = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("height_cm"))),
+            measurements = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("measurements"))),
+            fake_tits = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("fake_tits"))),
+            penis_length = Optional.presentIfNotNull(convertFloatCriterionInput(filter.get("penis_length"))),
+            circumcised = Optional.presentIfNotNull(convertCircumcisionCriterionInput(filter.get("circumcised"))),
+            career_length = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("career_length"))),
+            tattoos = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("tattoos"))),
+            piercings = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("piercings"))),
+            aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("aliases"))),
+            gender = Optional.presentIfNotNull(convertGenderCriterionInput(filter.get("gender"))),
+            is_missing = Optional.presentIfNotNull(convertString(filter.get("is_missing"))),
+            tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter.get("tags"))),
+            tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("tag_count"))),
+            scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("scene_count"))),
+            image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("image_count"))),
+            gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("gallery_count"))),
+            o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("o_counter"))),
+            stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter.get("stash_id_endpoint"))),
+            rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("rating100"))),
+            url = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("url"))),
+            hair_color = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("hair_color"))),
+            weight = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("weight"))),
+            death_year = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("death_year"))),
+            studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter.get("studios"))),
+            performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter.get("performers"))),
+            ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter.get("ignore_auto_tag"))),
+            birthdate = Optional.presentIfNotNull(convertDateCriterionInput(filter.get("birthdate"))),
+            death_date = Optional.presentIfNotNull(convertDateCriterionInput(filter.get("death_date"))),
+            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter.get("created_at"))),
+            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter.get("updated_at"))),
         )
     } else {
         null
@@ -497,97 +516,99 @@ fun convertSceneObjectFilter(f: Any?): SceneFilterType? {
     return if (f != null) {
         val filter = f as Map<String, Map<String, *>>
         SceneFilterType(
-            AND = Optional.presentIfNotNull(convertSceneObjectFilter(filter?.get("AND") as Map<String, Map<String, *>>?)),
-            OR = Optional.presentIfNotNull(convertSceneObjectFilter(filter?.get("OR") as Map<String, Map<String, *>>?)),
-            NOT = Optional.presentIfNotNull(convertSceneObjectFilter(filter?.get("NOT") as Map<String, Map<String, *>>?)),
-            id = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("id"))),
-            title = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("title"))),
-            code = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("code"))),
-            details = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("details"))),
-            director = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("director"))),
-            oshash = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("oshash"))),
-            checksum = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("checksum"))),
-            phash = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("phash"))),
-            phash_distance = Optional.presentIfNotNull(
-                convertPhashDistanceCriterionInput(
-                    filter?.get(
-                        "phash_distance"
-                    )
-                )
-            ),
-            path = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("path"))),
-            file_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("file_count"))),
-            rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("rating100"))),
-            organized = Optional.presentIfNotNull(convertBoolean(filter?.get("organized"))),
-            o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("o_counter"))),
-            duplicated = Optional.presentIfNotNull(
-                convertPHashDuplicationCriterionInput(
-                    filter?.get(
-                        "duplicated"
-                    )
-                )
-            ),
-            resolution = Optional.presentIfNotNull(convertResolutionCriterionInput(filter?.get("resolution"))),
-            framerate = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("framerate"))),
-            video_codec = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("video_codec"))),
-            audio_codec = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("audio_codec"))),
-            duration = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("duration"))),
-            has_markers = Optional.presentIfNotNull(convertString(filter?.get("has_markers"))),
-            is_missing = Optional.presentIfNotNull(convertString(filter?.get("is_missing"))),
-            studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter?.get("studios"))),
-            movies = Optional.presentIfNotNull(convertMultiCriterionInput(filter?.get("movies"))),
-            tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter?.get("tags"))),
-            tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("tag_count"))),
-            performer_tags = Optional.presentIfNotNull(
-                convertHierarchicalMultiCriterionInput(
-                    filter?.get(
-                        "performer_tags"
-                    )
-                )
-            ),
-            performer_favorite = Optional.presentIfNotNull(convertBoolean(filter?.get("performer_favorite"))),
-            performer_age = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("performer_age"))),
-            performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter?.get("performers"))),
-            performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("performer_count"))),
-            stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter?.get("stash_id_endpoint"))),
-            url = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("url"))),
-            interactive = Optional.presentIfNotNull(convertBoolean(filter?.get("interactive"))),
-            interactive_speed = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("interactive_speed"))),
-            captions = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("captions"))),
-            resume_time = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("resume_time"))),
-            play_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("play_count"))),
-            play_duration = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("play_duration"))),
-            date = Optional.presentIfNotNull(convertDateCriterionInput(filter?.get("date"))),
-            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("created_at"))),
-            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("updated_at"))),
+            AND = Optional.presentIfNotNull(convertSceneObjectFilter(filter.get("AND") as Map<String, Map<String, *>>?)),
+            OR = Optional.presentIfNotNull(convertSceneObjectFilter(filter.get("OR") as Map<String, Map<String, *>>?)),
+            NOT = Optional.presentIfNotNull(convertSceneObjectFilter(filter.get("NOT") as Map<String, Map<String, *>>?)),
+            id = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("id"))),
+            title = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("title"))),
+            code = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("code"))),
+            details = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("details"))),
+            director = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("director"))),
+            oshash = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("oshash"))),
+            checksum = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("checksum"))),
+            phash = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("phash"))),
+            phash_distance =
+                Optional.presentIfNotNull(
+                    convertPhashDistanceCriterionInput(
+                        filter.get(
+                            "phash_distance",
+                        ),
+                    ),
+                ),
+            path = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("path"))),
+            file_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("file_count"))),
+            rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("rating100"))),
+            organized = Optional.presentIfNotNull(convertBoolean(filter.get("organized"))),
+            o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("o_counter"))),
+            duplicated =
+                Optional.presentIfNotNull(
+                    convertPHashDuplicationCriterionInput(
+                        filter.get(
+                            "duplicated",
+                        ),
+                    ),
+                ),
+            resolution = Optional.presentIfNotNull(convertResolutionCriterionInput(filter.get("resolution"))),
+            framerate = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("framerate"))),
+            video_codec = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("video_codec"))),
+            audio_codec = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("audio_codec"))),
+            duration = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("duration"))),
+            has_markers = Optional.presentIfNotNull(convertString(filter.get("has_markers"))),
+            is_missing = Optional.presentIfNotNull(convertString(filter.get("is_missing"))),
+            studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter.get("studios"))),
+            movies = Optional.presentIfNotNull(convertMultiCriterionInput(filter.get("movies"))),
+            tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter.get("tags"))),
+            tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("tag_count"))),
+            performer_tags =
+                Optional.presentIfNotNull(
+                    convertHierarchicalMultiCriterionInput(
+                        filter.get(
+                            "performer_tags",
+                        ),
+                    ),
+                ),
+            performer_favorite = Optional.presentIfNotNull(convertBoolean(filter.get("performer_favorite"))),
+            performer_age = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("performer_age"))),
+            performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter.get("performers"))),
+            performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("performer_count"))),
+            stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter.get("stash_id_endpoint"))),
+            url = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("url"))),
+            interactive = Optional.presentIfNotNull(convertBoolean(filter.get("interactive"))),
+            interactive_speed = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("interactive_speed"))),
+            captions = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("captions"))),
+            resume_time = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("resume_time"))),
+            play_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("play_count"))),
+            play_duration = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("play_duration"))),
+            date = Optional.presentIfNotNull(convertDateCriterionInput(filter.get("date"))),
+            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter.get("created_at"))),
+            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter.get("updated_at"))),
         )
     } else {
         null
     }
-
 }
 
 fun convertStudioObjectFilter(f: Any?): StudioFilterType? {
     return if (f != null) {
         val filter = f as Map<String, Map<String, *>>
         StudioFilterType(
-            AND = Optional.presentIfNotNull(convertStudioObjectFilter(filter?.get("AND") as Map<String, Map<String, *>>?)),
-            OR = Optional.presentIfNotNull(convertStudioObjectFilter(filter?.get("OR") as Map<String, Map<String, *>>?)),
-            NOT = Optional.presentIfNotNull(convertStudioObjectFilter(filter?.get("NOT") as Map<String, Map<String, *>>?)),
-            name = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("name"))),
-            details = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("details"))),
-            parents = Optional.presentIfNotNull(convertMultiCriterionInput(filter?.get("parents"))),
-            stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter?.get("stash_id_endpoint"))),
-            is_missing = Optional.presentIfNotNull(convertString(filter?.get("is_missing"))),
-            rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("rating100"))),
-            scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("scene_count"))),
-            image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("image_count"))),
-            gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("gallery_count"))),
-            url = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("url"))),
-            aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("aliases"))),
-            ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter?.get("ignore_auto_tag"))),
-            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("created_at"))),
-            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("updated_at"))),
+            AND = Optional.presentIfNotNull(convertStudioObjectFilter(filter.get("AND") as Map<String, Map<String, *>>?)),
+            OR = Optional.presentIfNotNull(convertStudioObjectFilter(filter.get("OR") as Map<String, Map<String, *>>?)),
+            NOT = Optional.presentIfNotNull(convertStudioObjectFilter(filter.get("NOT") as Map<String, Map<String, *>>?)),
+            name = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("name"))),
+            details = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("details"))),
+            parents = Optional.presentIfNotNull(convertMultiCriterionInput(filter.get("parents"))),
+            stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter.get("stash_id_endpoint"))),
+            is_missing = Optional.presentIfNotNull(convertString(filter.get("is_missing"))),
+            rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("rating100"))),
+            scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("scene_count"))),
+            image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("image_count"))),
+            gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("gallery_count"))),
+            url = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("url"))),
+            aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("aliases"))),
+            ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter.get("ignore_auto_tag"))),
+            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter.get("created_at"))),
+            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter.get("updated_at"))),
         )
     } else {
         null
@@ -598,31 +619,32 @@ fun convertTagObjectFilter(f: Any?): TagFilterType? {
     return if (f != null) {
         val filter = f as Map<String, Map<String, *>>
         TagFilterType(
-            AND = Optional.presentIfNotNull(convertTagObjectFilter(filter?.get("AND") as Map<String, Map<String, *>>?)),
-            OR = Optional.presentIfNotNull(convertTagObjectFilter(filter?.get("OR") as Map<String, Map<String, *>>?)),
-            NOT = Optional.presentIfNotNull(convertTagObjectFilter(filter?.get("NOT") as Map<String, Map<String, *>>?)),
-            name = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("name"))),
-            aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("aliases"))),
-            description = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("description"))),
-            is_missing = Optional.presentIfNotNull(convertString(filter?.get("is_missing"))),
-            scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("scene_count"))),
-            image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("image_count"))),
-            gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("gallery_count"))),
-            performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("performer_count"))),
-            marker_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("marker_count"))),
-            parents = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter?.get("parents"))),
-            children = Optional.presentIfNotNull(
-                convertHierarchicalMultiCriterionInput(
-                    filter?.get(
-                        "children"
-                    )
-                )
-            ),
-            parent_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("parent_count"))),
-            child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("child_count"))),
-            ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter?.get("ignore_auto_tag"))),
-            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("created_at"))),
-            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("updated_at"))),
+            AND = Optional.presentIfNotNull(convertTagObjectFilter(filter.get("AND") as Map<String, Map<String, *>>?)),
+            OR = Optional.presentIfNotNull(convertTagObjectFilter(filter.get("OR") as Map<String, Map<String, *>>?)),
+            NOT = Optional.presentIfNotNull(convertTagObjectFilter(filter.get("NOT") as Map<String, Map<String, *>>?)),
+            name = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("name"))),
+            aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("aliases"))),
+            description = Optional.presentIfNotNull(convertStringCriterionInput(filter.get("description"))),
+            is_missing = Optional.presentIfNotNull(convertString(filter.get("is_missing"))),
+            scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("scene_count"))),
+            image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("image_count"))),
+            gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("gallery_count"))),
+            performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("performer_count"))),
+            marker_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("marker_count"))),
+            parents = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter.get("parents"))),
+            children =
+                Optional.presentIfNotNull(
+                    convertHierarchicalMultiCriterionInput(
+                        filter.get(
+                            "children",
+                        ),
+                    ),
+                ),
+            parent_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("parent_count"))),
+            child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter.get("child_count"))),
+            ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter.get("ignore_auto_tag"))),
+            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter.get("created_at"))),
+            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter.get("updated_at"))),
         )
     } else {
         null

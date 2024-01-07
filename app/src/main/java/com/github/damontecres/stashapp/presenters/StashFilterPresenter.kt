@@ -7,50 +7,58 @@ import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 
 class StashFilterPresenter : StashPresenter() {
-    override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
+    override fun onBindViewHolder(
+        viewHolder: ViewHolder,
+        item: Any?,
+    ) {
         val cardView = viewHolder.view as ImageCardView
         cardView.titleText = "View All"
 
-        val mode: FilterMode = when (item) {
-            is StashSavedFilter -> {
-                item.mode
-            }
+        val mode: FilterMode =
+            when (item) {
+                is StashSavedFilter -> {
+                    item.mode
+                }
 
-            is StashCustomFilter -> {
-                item.mode
-            }
+                is StashCustomFilter -> {
+                    item.mode
+                }
 
-            else -> {
-                throw RuntimeException("Unsupported item $item")
+                else -> {
+                    throw RuntimeException("Unsupported item $item")
+                }
             }
-        }
 
         when (mode) {
-            FilterMode.SCENES -> cardView.setMainImageDimensions(
-                ScenePresenter.CARD_WIDTH,
-                ScenePresenter.CARD_HEIGHT
-            )
+            FilterMode.SCENES ->
+                cardView.setMainImageDimensions(
+                    ScenePresenter.CARD_WIDTH,
+                    ScenePresenter.CARD_HEIGHT,
+                )
 
-            FilterMode.STUDIOS -> cardView.setMainImageDimensions(
-                StudioPresenter.CARD_WIDTH,
-                StudioPresenter.CARD_HEIGHT
-            )
+            FilterMode.STUDIOS ->
+                cardView.setMainImageDimensions(
+                    StudioPresenter.CARD_WIDTH,
+                    StudioPresenter.CARD_HEIGHT,
+                )
 
-            FilterMode.PERFORMERS -> cardView.setMainImageDimensions(
-                PerformerPresenter.CARD_WIDTH,
-                PerformerPresenter.CARD_HEIGHT
-            )
+            FilterMode.PERFORMERS ->
+                cardView.setMainImageDimensions(
+                    PerformerPresenter.CARD_WIDTH,
+                    PerformerPresenter.CARD_HEIGHT,
+                )
 
-            FilterMode.TAGS -> cardView.setMainImageDimensions(
-                TagPresenter.CARD_WIDTH,
-                TagPresenter.CARD_HEIGHT
-            )
+            FilterMode.TAGS ->
+                cardView.setMainImageDimensions(
+                    TagPresenter.CARD_WIDTH,
+                    TagPresenter.CARD_HEIGHT,
+                )
 
             else -> {}
         }
 
         cardView.mainImageView.setImageDrawable(
-            viewHolder.view.context.getDrawable(R.drawable.baseline_camera_indoor_48)
+            viewHolder.view.context.getDrawable(R.drawable.baseline_camera_indoor_48),
         )
     }
 }

@@ -17,20 +17,19 @@ class TagListActivity : FragmentActivity() {
             val queryEngine = QueryEngine(this, true)
             lifecycleScope.launch {
                 val filter = queryEngine.getDefaultFilter(DataType.TAG)
-                getSupportFragmentManager().beginTransaction()
+                supportFragmentManager.beginTransaction()
                     .replace(
                         R.id.tag_fragment,
                         StashGridFragment(
-                            tagComparator,
+                            TagComparator,
                             TagDataSupplier(
                                 convertFilter(filter?.find_filter),
-                                convertTagObjectFilter(filter?.object_filter)
-                            )
-                        )
+                                convertTagObjectFilter(filter?.object_filter),
+                            ),
+                        ),
                     )
                     .commitNow()
             }
         }
     }
 }
-

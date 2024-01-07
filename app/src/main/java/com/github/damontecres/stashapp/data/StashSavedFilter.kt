@@ -7,5 +7,5 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class StashSavedFilter(
     val savedFilterId: String,
-    val mode: FilterMode
+    val mode: FilterMode,
 ) : Parcelable

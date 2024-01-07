@@ -18,19 +18,19 @@ class StudioListActivity : FragmentActivity() {
             lifecycleScope.launch {
                 val filter = queryEngine.getDefaultFilter(DataType.STUDIO)
 
-                getSupportFragmentManager().beginTransaction()
+                supportFragmentManager.beginTransaction()
                     .replace(
                         R.id.tag_fragment,
                         StashGridFragment(
-                            studioComparator, StudioDataSupplier(
+                            StudioComparator,
+                            StudioDataSupplier(
                                 convertFilter(filter?.find_filter),
-                                convertStudioObjectFilter(filter?.object_filter)
-                            )
-                        )
+                                convertStudioObjectFilter(filter?.object_filter),
+                            ),
+                        ),
                     )
                     .commitNow()
             }
         }
     }
 }
-

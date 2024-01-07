@@ -11,7 +11,7 @@ data class Tag(
     var name: String,
     var sceneCount: Int?,
     var performerCount: Int?,
-    var imagePath: String?
+    var imagePath: String?,
 ) : Parcelable
 
 fun fromSlimSceneDataTag(sceneTag: SlimSceneData.Tag): Tag {
@@ -20,7 +20,7 @@ fun fromSlimSceneDataTag(sceneTag: SlimSceneData.Tag): Tag {
         sceneTag.name,
         sceneTag.scene_count,
         sceneTag.performer_count,
-        sceneTag.image_path
+        sceneTag.image_path,
     )
 }
 
@@ -30,6 +30,6 @@ fun fromFindTag(findTag: FindTagsQuery.Tag): Tag {
         findTag.name,
         findTag.scene_count,
         findTag.performer_count,
-        findTag.image_path
+        findTag.image_path,
     )
 }

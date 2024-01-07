@@ -11,7 +11,6 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 
-
 class StudioActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,28 +18,29 @@ class StudioActivity : FragmentActivity() {
         if (savedInstanceState == null) {
             val studioId = this.intent.getIntExtra("studioId", -1)
             val studioName = this.intent.getStringExtra("studioName")
-            findViewById<TextView>(R.id.tag_title).text = "${studioName}"
-            getSupportFragmentManager().beginTransaction()
+            findViewById<TextView>(R.id.tag_title).text = "$studioName"
+            supportFragmentManager.beginTransaction()
                 .replace(
                     R.id.tag_fragment,
                     StashGridFragment(
-                        sceneComparator, SceneDataSupplier(
+                        SceneComparator,
+                        SceneDataSupplier(
                             FindFilterType(
                                 sort = Optional.present("date"),
-                                direction = Optional.present(SortDirectionEnum.DESC)
+                                direction = Optional.present(SortDirectionEnum.DESC),
                             ),
                             SceneFilterType(
-                                studios = Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(studioId.toString())),
-                                        modifier = CriterionModifier.INCLUDES_ALL
-                                    )
-                                )
-                            )
-                        )
-                    )
+                                studios =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(studioId.toString())),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                        ),
+                                    ),
+                            ),
+                        ),
+                    ),
                 ).commitNow()
         }
     }
 }
-

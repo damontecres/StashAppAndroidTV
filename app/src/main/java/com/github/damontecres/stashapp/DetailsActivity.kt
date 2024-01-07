@@ -7,7 +7,6 @@ import androidx.fragment.app.FragmentActivity
  * Details activity class that loads [VideoDetailsFragment] class.
  */
 class DetailsActivity : FragmentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_details)

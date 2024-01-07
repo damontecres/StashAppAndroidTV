@@ -43,12 +43,10 @@ import kotlinx.coroutines.launch
 import java.util.Timer
 import java.util.TimerTask
 
-
 /**
  * Loads a grid of cards with movies to browse.
  */
 class MainFragment : BrowseSupportFragment() {
-
     private val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()
 
@@ -145,8 +143,10 @@ class MainFragment : BrowseSupportFragment() {
 
     private inner class ItemViewSelectedListener : OnItemViewSelectedListener {
         override fun onItemSelected(
-            itemViewHolder: Presenter.ViewHolder?, item: Any?,
-            rowViewHolder: RowPresenter.ViewHolder, row: Row
+            itemViewHolder: Presenter.ViewHolder?,
+            item: Any?,
+            rowViewHolder: RowPresenter.ViewHolder,
+            row: Row,
         ) {
             // TODO background
 //            if (item is SlimSceneData) {
@@ -167,11 +167,12 @@ class MainFragment : BrowseSupportFragment() {
                 object : SimpleTarget<Drawable>(width, height) {
                     override fun onResourceReady(
                         drawable: Drawable,
-                        transition: Transition<in Drawable>?
+                        transition: Transition<in Drawable>?,
                     ) {
                         mBackgroundManager.drawable = drawable
                     }
-                })
+                },
+            )
         mBackgroundTimer?.cancel()
     }
 
@@ -182,14 +183,13 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private inner class UpdateBackgroundTask : TimerTask() {
-
         override fun run() {
             mHandler.post { updateBackground(mBackgroundUri) }
         }
     }
 
     private inner class GridItemPresenter : Presenter() {
-        override fun onCreateViewHolder(parent: ViewGroup): Presenter.ViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
             val view = TextView(parent.context)
             view.layoutParams = ViewGroup.LayoutParams(GRID_ITEM_WIDTH, GRID_ITEM_HEIGHT)
             view.isFocusable = true
@@ -197,14 +197,17 @@ class MainFragment : BrowseSupportFragment() {
             view.setBackgroundColor(ContextCompat.getColor(activity!!, R.color.default_background))
             view.setTextColor(Color.WHITE)
             view.gravity = Gravity.CENTER
-            return Presenter.ViewHolder(view)
+            return ViewHolder(view)
         }
 
-        override fun onBindViewHolder(viewHolder: Presenter.ViewHolder, item: Any) {
+        override fun onBindViewHolder(
+            viewHolder: ViewHolder,
+            item: Any,
+        ) {
             (viewHolder.view as TextView).text = item as String
         }
 
-        override fun onUnbindViewHolder(viewHolder: Presenter.ViewHolder) {}
+        override fun onUnbindViewHolder(viewHolder: ViewHolder) {}
     }
 
     private fun clearData() {
@@ -218,9 +221,10 @@ class MainFragment : BrowseSupportFragment() {
                 try {
                     val queryEngine = QueryEngine(requireContext(), showToasts = true)
 
-                    val exHandler = CoroutineExceptionHandler { _, ex ->
-                        Log.e(TAG, "Exception in coroutine", ex)
-                    }
+                    val exHandler =
+                        CoroutineExceptionHandler { _, ex ->
+                            Log.e(TAG, "Exception in coroutine", ex)
+                        }
 
                     viewLifecycleOwner.lifecycleScope.launch(exHandler) {
                         val query = ConfigurationQuery()
@@ -245,7 +249,7 @@ class MainFragment : BrowseSupportFragment() {
                     Toast.makeText(
                         requireContext(),
                         "Stash not configured. Please enter the URL in settings!",
-                        Toast.LENGTH_LONG
+                        Toast.LENGTH_LONG,
                     ).show()
                 }
             } else {
@@ -257,19 +261,21 @@ class MainFragment : BrowseSupportFragment() {
     private fun addCustomFilterRow(
         frontPageFilter: Map<String, *>,
         adapter: ArrayObjectAdapter,
-        queryEngine: QueryEngine
+        queryEngine: QueryEngine,
     ) {
-        val exHandler = CoroutineExceptionHandler { _, ex ->
-            Log.e(TAG, "Exception in addCustomFilterRow", ex)
-        }
+        val exHandler =
+            CoroutineExceptionHandler { _, ex ->
+                Log.e(TAG, "Exception in addCustomFilterRow", ex)
+            }
         val msg = frontPageFilter["message"] as Map<String, *>
         val objType =
             (msg["values"] as Map<String, String>)["objects"] as String
-        val description = when (msg["id"] as String) {
-            "recently_added_objects" -> "Recently Added $objType"
-            "recently_released_objects" -> "Recently Released $objType"
-            else -> objType
-        }
+        val description =
+            when (msg["id"] as String) {
+                "recently_added_objects" -> "Recently Added $objType"
+                "recently_released_objects" -> "Recently Released $objType"
+                else -> objType
+            }
         val mode = FilterMode.valueOf(frontPageFilter["mode"] as String)
         if (mode !in supportedFilterModes) {
             return
@@ -277,21 +283,23 @@ class MainFragment : BrowseSupportFragment() {
         rowsAdapter.add(
             ListRow(
                 HeaderItem(description),
-                adapter
-            )
+                adapter,
+            ),
         )
         viewLifecycleOwner.lifecycleScope.launch(exHandler) {
             val direction = frontPageFilter["direction"] as String
             val sortBy = frontPageFilter["sortBy"] as String
-            val filter = FindFilterType(
-                direction = Optional.present(
-                    SortDirectionEnum.safeValueOf(
-                        direction
-                    )
-                ),
-                sort = Optional.present(sortBy),
-                per_page = Optional.present(25)
-            )
+            val filter =
+                FindFilterType(
+                    direction =
+                        Optional.present(
+                            SortDirectionEnum.safeValueOf(
+                                direction,
+                            ),
+                        ),
+                    sort = Optional.present(sortBy),
+                    per_page = Optional.present(25),
+                )
 
             when (mode) {
                 FilterMode.SCENES -> {
@@ -317,16 +325,17 @@ class MainFragment : BrowseSupportFragment() {
     private fun addSavedFilterRow(
         frontPageFilter: Map<String, *>,
         adapter: ArrayObjectAdapter,
-        queryEngine: QueryEngine
+        queryEngine: QueryEngine,
     ) {
-        val exHandler = CoroutineExceptionHandler { _, ex ->
-            Log.e(TAG, "Exception in addSavedFilterRow", ex)
-            Toast.makeText(
-                requireContext(),
-                "Error fetching saved filter. This is probably a bug!",
-                Toast.LENGTH_LONG
-            ).show()
-        }
+        val exHandler =
+            CoroutineExceptionHandler { _, ex ->
+                Log.e(TAG, "Exception in addSavedFilterRow", ex)
+                Toast.makeText(
+                    requireContext(),
+                    "Error fetching saved filter. This is probably a bug!",
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
         val filterId = frontPageFilter["savedFilterId"]
         val header = HeaderItem("")
         val listRow = ListRow(header, adapter)
@@ -341,7 +350,7 @@ class MainFragment : BrowseSupportFragment() {
                 // TODO doing it this way will result it adding an unsupported row then removing it which looks weird, in practice though it happens pretty fast
                 rowsAdapter.add(
                     index,
-                    ListRow(HeaderItem(result?.name ?: ""), adapter)
+                    ListRow(HeaderItem(result?.name ?: ""), adapter),
                 )
 
                 val filter = convertFilter(result?.find_filter)
@@ -354,7 +363,7 @@ class MainFragment : BrowseSupportFragment() {
                             convertSceneObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
-                            queryEngine.findScenes(filter, sceneFilter)
+                            queryEngine.findScenes(filter, sceneFilter),
                         )
                     }
 
@@ -365,8 +374,8 @@ class MainFragment : BrowseSupportFragment() {
                             0,
                             queryEngine.findStudios(
                                 filter,
-                                studioFilter
-                            )
+                                studioFilter,
+                            ),
                         )
                     }
 
@@ -377,8 +386,8 @@ class MainFragment : BrowseSupportFragment() {
                             0,
                             queryEngine.findPerformers(
                                 filter,
-                                performerFilter
-                            )
+                                performerFilter,
+                            ),
                         )
                     }
 
@@ -387,14 +396,14 @@ class MainFragment : BrowseSupportFragment() {
                             convertTagObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
-                            queryEngine.findTags(filter, tagFilter)
+                            queryEngine.findTags(filter, tagFilter),
                         )
                     }
 
                     else -> {
                         Log.i(
                             TAG,
-                            "Unsupported mode in frontpage: ${result?.mode}"
+                            "Unsupported mode in frontpage: ${result?.mode}",
                         )
                     }
                 }
@@ -414,6 +423,5 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun loadData() {
-
     }
 }

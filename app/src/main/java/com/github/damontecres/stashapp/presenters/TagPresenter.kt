@@ -1,18 +1,13 @@
 package com.github.damontecres.stashapp.presenters
 
-import android.graphics.drawable.Drawable
-import android.util.Log
-import android.view.ViewGroup
-import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
-import androidx.leanback.widget.Presenter
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.Tag
-import kotlin.properties.Delegates
-
 
 class TagPresenter : StashPresenter() {
-    override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
+    override fun onBindViewHolder(
+        viewHolder: ViewHolder,
+        item: Any?,
+    ) {
         val tag = item as Tag
         val cardView = viewHolder.view as ImageCardView
 
