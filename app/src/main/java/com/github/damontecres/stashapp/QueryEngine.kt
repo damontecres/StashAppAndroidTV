@@ -11,16 +11,19 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
+import com.github.damontecres.stashapp.api.FindMoviesQuery
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
+import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
@@ -159,6 +162,21 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
             )
         val tags =
             executeQuery(query).data?.findTags?.tags?.map { fromFindTag(it) }
+        return tags.orEmpty()
+    }
+
+    suspend fun findMovies(
+        findFilter: FindFilterType? = null,
+        movieFilter: MovieFilterType? = null,
+    ): List<MovieData> {
+        val query =
+            client.query(
+                FindMoviesQuery(
+                    filter = findFilter,
+                    movie_filter = movieFilter,
+                ),
+            )
+        val tags = executeQuery(query).data?.findMovies?.movies?.map { it.movieData }
         return tags.orEmpty()
     }
 

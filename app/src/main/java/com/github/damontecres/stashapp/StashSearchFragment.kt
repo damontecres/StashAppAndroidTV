@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
@@ -30,6 +31,7 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
     private val studioAdapter = ArrayObjectAdapter(StudioPresenter())
     private val performerAdapter = ArrayObjectAdapter(PerformerPresenter())
     private val tagAdapter = ArrayObjectAdapter(TagPresenter())
+    private val movieAdapter = ArrayObjectAdapter(MoviePresenter())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +41,7 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
         rowsAdapter.add(ListRow(HeaderItem("Studios"), studioAdapter))
         rowsAdapter.add(ListRow(HeaderItem("Performers"), performerAdapter))
         rowsAdapter.add(ListRow(HeaderItem("Tags"), tagAdapter))
+        rowsAdapter.add(ListRow(HeaderItem("Movies"), movieAdapter))
     }
 
     override fun getResultsAdapter(): ObjectAdapter {
@@ -72,6 +75,7 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
         studioAdapter.clear()
         performerAdapter.clear()
         tagAdapter.clear()
+        movieAdapter.clear()
 
         if (!TextUtils.isEmpty(query)) {
             val perPage =
@@ -94,6 +98,9 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
             }
             viewLifecycleOwner.lifecycleScope.async {
                 tagAdapter.addAll(0, queryEngine.findTags(filter))
+            }
+            viewLifecycleOwner.lifecycleScope.async {
+                movieAdapter.addAll(0, queryEngine.findMovies(filter))
             }
         }
     }

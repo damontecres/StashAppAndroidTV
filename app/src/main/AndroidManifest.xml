@@ -86,6 +86,14 @@
             android:name=".FilterListActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
+        <activity
+            android:name=".MovieActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
+        <activity
+            android:name=".MovieListActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
 
     </application>
 

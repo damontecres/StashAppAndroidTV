@@ -1,0 +1,21 @@
+query FindMovies($filter: FindFilterType, $movie_filter: MovieFilterType){
+  findMovies(filter: $filter, movie_filter: $movie_filter){
+    count
+    movies{
+      ...MovieData
+    }
+  }
+}
+
+fragment MovieData on Movie {
+  id
+  name
+  aliases
+  studio {
+    id
+    name
+  }
+  scene_count
+  front_image_path
+  back_image_path
+}
