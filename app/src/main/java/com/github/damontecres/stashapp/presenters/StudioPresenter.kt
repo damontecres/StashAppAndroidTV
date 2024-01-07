@@ -49,7 +49,7 @@ class StudioPresenter : StashPresenter() {
     companion object {
         private const val TAG = "StudioPresenter"
 
-        private const val CARD_WIDTH = 351
-        private const val CARD_HEIGHT = 198
+        const val CARD_WIDTH = 351
+        const val CARD_HEIGHT = 198
     }
 }
