@@ -21,13 +21,13 @@ import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
-import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
@@ -40,6 +40,7 @@ import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 
 object Constants {
@@ -244,8 +245,7 @@ fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
     }
 }
 
-val supportedFilterModes =
-    setOf(FilterMode.SCENES, FilterMode.STUDIOS, FilterMode.PERFORMERS, FilterMode.TAGS)
+val supportedFilterModes = DataType.entries.map { it.filterMode }.toSet()
 
 fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {
     return if (it != null) {
@@ -645,6 +645,28 @@ fun convertTagObjectFilter(f: Any?): TagFilterType? {
             ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter.get("ignore_auto_tag"))),
             created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter.get("created_at"))),
             updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter.get("updated_at"))),
+        )
+    } else {
+        null
+    }
+}
+
+fun convertMovieObjectFilter(f: Any?): MovieFilterType? {
+    return if (f != null) {
+        val filter = f as Map<String, Map<String, *>>
+        MovieFilterType(
+            name = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("name"))),
+            director = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("director"))),
+            synopsis = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("synopsis"))),
+            duration = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("duration"))),
+            rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("rating100"))),
+            studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter?.get("studios"))),
+            is_missing = Optional.presentIfNotNull(convertString(filter?.get("is_missing"))),
+            url = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("url"))),
+            performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter?.get("performers"))),
+            date = Optional.presentIfNotNull(convertDateCriterionInput(filter?.get("date"))),
+            created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("created_at"))),
+            updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("updated_at"))),
         )
     } else {
         null

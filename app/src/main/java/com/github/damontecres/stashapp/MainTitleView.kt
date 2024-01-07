@@ -55,7 +55,12 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
                 v.animate().scaleX(zoom).scaleY(zoom).setDuration(mScaleDurationMs.toLong()).start()
 
                 if (hasFocus) {
-                    v.setBackgroundColor(ContextCompat.getColor(context, R.color.selected_background))
+                    v.setBackgroundColor(
+                        ContextCompat.getColor(
+                            context,
+                            R.color.selected_background,
+                        ),
+                    )
                 } else {
                     v.setBackgroundColor(
                         ContextCompat.getColor(
@@ -95,6 +100,13 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
             startActivity(context, intent, null)
         }
         tagsButton.onFocusChangeListener = onFocusChangeListener
+
+        val moviesButton = root.findViewById<Button>(R.id.movies_button)
+        moviesButton.setOnClickListener {
+            val intent = Intent(context, MovieListActivity::class.java)
+            startActivity(context, intent, null)
+        }
+        moviesButton.onFocusChangeListener = onFocusChangeListener
     }
 
     override fun getTitleViewAdapter(): TitleViewAdapter {

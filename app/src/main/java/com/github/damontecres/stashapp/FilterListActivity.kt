@@ -8,6 +8,7 @@ import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
@@ -46,6 +47,11 @@ class FilterListActivity : SecureFragmentActivity() {
                 val tagFilter =
                     convertTagObjectFilter(objectFilter)
                 StashGridFragment(TagComparator, TagDataSupplier(findFilter, tagFilter))
+            }
+
+            FilterMode.MOVIES -> {
+                val movieFilter = convertMovieObjectFilter(objectFilter)
+                StashGridFragment(MovieComparator, MovieDataSupplier(findFilter, movieFilter))
             }
 
             else -> {

@@ -7,4 +7,5 @@ enum class DataType(val filterMode: FilterMode) {
     SCENE(FilterMode.SCENES),
     STUDIO(FilterMode.STUDIOS),
     TAG(FilterMode.TAGS),
+    MOVIE(FilterMode.MOVIES),
 }
