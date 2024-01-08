@@ -6,6 +6,7 @@ import android.widget.Toast
 import com.apollographql.apollo3.ApolloCall
 import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.api.Operation
+import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
@@ -31,6 +32,7 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.data.fromFindTag
+import kotlin.random.Random
 
 class QueryEngine(private val context: Context, private val showToasts: Boolean = false) {
     private val client = createApolloClient(context) ?: throw StashNotConfiguredException()
@@ -98,7 +100,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         val query =
             client.query(
                 FindScenesQuery(
-                    filter = findFilter,
+                    filter = updateFilter(findFilter),
                     scene_filter = sceneFilter,
                     scene_ids = sceneIds,
                 ),
@@ -118,7 +120,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         val query =
             client.query(
                 FindPerformersQuery(
-                    filter = findFilter,
+                    filter = updateFilter(findFilter),
                     performer_filter = performerFilter,
                     performer_ids = performerIds,
                 ),
@@ -138,7 +140,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         val query =
             client.query(
                 FindStudiosQuery(
-                    filter = findFilter,
+                    filter = updateFilter(findFilter),
                     studio_filter = studioFilter,
                 ),
             )
@@ -156,7 +158,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         val query =
             client.query(
                 FindTagsQuery(
-                    filter = findFilter,
+                    filter = updateFilter(findFilter),
                     tag_filter = tagFilter,
                 ),
             )
@@ -172,7 +174,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         val query =
             client.query(
                 FindMoviesQuery(
-                    filter = findFilter,
+                    filter = updateFilter(findFilter),
                     movie_filter = movieFilter,
                 ),
             )
@@ -188,6 +190,23 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun getDefaultFilter(type: DataType): SavedFilterData? {
         val query = FindDefaultFilterQuery(type.filterMode)
         return executeQuery(query).data?.findDefaultFilter?.savedFilterData
+    }
+
+    /**
+     * Updates a FindFilterType if needed
+     *
+     * Handles updating the random sort if requested
+     */
+    private fun updateFilter(filter: FindFilterType?): FindFilterType? {
+        return if (filter != null) {
+            if (filter.sort.getOrNull()?.startsWith("random_") == true) {
+                filter.copy(sort = Optional.present("random_" + Random.nextInt(1e8.toInt())))
+            } else {
+                filter
+            }
+        } else {
+            null
+        }
     }
 
     companion object {
