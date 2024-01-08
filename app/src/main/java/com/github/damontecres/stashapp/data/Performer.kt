@@ -18,6 +18,6 @@ fun performerFromPerformerData(p: PerformerData): Performer {
         id = p.id.toLong(),
         name = p.name,
         disambiguation = p.disambiguation,
-        gender = p.gender
+        gender = p.gender,
     )
 }

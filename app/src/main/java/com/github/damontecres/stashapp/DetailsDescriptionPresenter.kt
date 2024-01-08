@@ -4,10 +4,9 @@ import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
 import com.github.damontecres.stashapp.data.Scene
 
 class DetailsDescriptionPresenter : AbstractDetailsDescriptionPresenter() {
-
     override fun onBindDescription(
-        viewHolder: AbstractDetailsDescriptionPresenter.ViewHolder,
-        item: Any
+        viewHolder: ViewHolder,
+        item: Any,
     ) {
         val scene = item as Scene
 

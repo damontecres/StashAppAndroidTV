@@ -11,17 +11,14 @@ import androidx.leanback.widget.ObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
-import com.github.damontecres.stashapp.api.FindPerformersQuery
-import com.github.damontecres.stashapp.api.FindScenesQuery
-import com.github.damontecres.stashapp.api.FindStudiosQuery
-import com.github.damontecres.stashapp.api.FindTagsQuery
 import com.github.damontecres.stashapp.api.type.FindFilterType
-import com.github.damontecres.stashapp.data.fromFindTag
+import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -34,7 +31,7 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
     private val studioAdapter = ArrayObjectAdapter(StudioPresenter())
     private val performerAdapter = ArrayObjectAdapter(PerformerPresenter())
     private val tagAdapter = ArrayObjectAdapter(TagPresenter())
-
+    private val movieAdapter = ArrayObjectAdapter(MoviePresenter())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +41,7 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
         rowsAdapter.add(ListRow(HeaderItem("Studios"), studioAdapter))
         rowsAdapter.add(ListRow(HeaderItem("Performers"), performerAdapter))
         rowsAdapter.add(ListRow(HeaderItem("Tags"), tagAdapter))
-
+        rowsAdapter.add(ListRow(HeaderItem("Movies"), movieAdapter))
     }
 
     override fun getResultsAdapter(): ObjectAdapter {
@@ -53,20 +50,23 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
 
     override fun onQueryTextChange(newQuery: String): Boolean {
         taskJob?.cancel()
-        taskJob = viewLifecycleOwner.lifecycleScope.launch {
-            val searchDelay = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("searchDelay", 500)
-            delay(searchDelay.toLong())
-            search(newQuery)
-        }
+        taskJob =
+            viewLifecycleOwner.lifecycleScope.launch {
+                val searchDelay =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        .getInt("searchDelay", 500)
+                delay(searchDelay.toLong())
+                search(newQuery)
+            }
         return true
     }
 
     override fun onQueryTextSubmit(query: String): Boolean {
         taskJob?.cancel()
-        taskJob = viewLifecycleOwner.lifecycleScope.launch {
-            search(query)
-        }
+        taskJob =
+            viewLifecycleOwner.lifecycleScope.launch {
+                search(query)
+            }
         return true
     }
 
@@ -75,45 +75,32 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
         studioAdapter.clear()
         performerAdapter.clear()
         tagAdapter.clear()
+        movieAdapter.clear()
 
         if (!TextUtils.isEmpty(query)) {
-            val perPage = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("maxSearchResults", 25)
-            val filter = Optional.present(
+            val perPage =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getInt("maxSearchResults", 25)
+            val filter =
                 FindFilterType(
-                    q = Optional.present(query), per_page = Optional.present(perPage)
+                    q = Optional.present(query),
+                    per_page = Optional.present(perPage),
                 )
-            )
-            val apolloClient = createApolloClient(requireContext())
-            if (apolloClient != null) {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient.query(FindScenesQuery(filter = filter)).execute()
-                    val mapped =
-                        results.data?.findScenes?.scenes?.map { it.slimSceneData }.orEmpty()
-                    sceneAdapter.addAll(0, mapped)
-
-                }
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results =
-                        apolloClient.query(FindStudiosQuery(filter = filter)).execute()
-                    val mapped =
-                        results.data?.findStudios?.studios?.map { it.studioData }.orEmpty()
-                    studioAdapter.addAll(0, mapped)
-                }
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results =
-                        apolloClient.query(FindPerformersQuery(filter = filter)).execute()
-                    val mapped =
-                        results.data?.findPerformers?.performers?.map { it.performerData }
-                            .orEmpty()
-                    performerAdapter.addAll(0, mapped)
-                }
-                viewLifecycleOwner.lifecycleScope.launch {
-                    val results = apolloClient.query(FindTagsQuery(filter = filter)).execute()
-                    val mapped =
-                        results.data?.findTags?.tags?.map { fromFindTag(it) }.orEmpty()
-                    tagAdapter.addAll(0, mapped)
-                }
+            val queryEngine = QueryEngine(requireContext(), true)
+            viewLifecycleOwner.lifecycleScope.async {
+                sceneAdapter.addAll(0, queryEngine.findScenes(filter))
+            }
+            viewLifecycleOwner.lifecycleScope.async {
+                studioAdapter.addAll(0, queryEngine.findStudios(filter))
+            }
+            viewLifecycleOwner.lifecycleScope.async {
+                performerAdapter.addAll(0, queryEngine.findPerformers(filter))
+            }
+            viewLifecycleOwner.lifecycleScope.async {
+                tagAdapter.addAll(0, queryEngine.findTags(filter))
+            }
+            viewLifecycleOwner.lifecycleScope.async {
+                movieAdapter.addAll(0, queryEngine.findMovies(filter))
             }
         }
     }

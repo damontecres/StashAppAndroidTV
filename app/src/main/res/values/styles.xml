@@ -1,7 +1,11 @@
 <resources>
 
     <style name="Widget.Theme.StashAppAndroidTV.MyView" parent="">
-        <item name="android:background">@color/gray_400</item>
-        <item name="exampleColor">@color/light_blue_400</item>
+        <item name="android:background">@color/default_background</item>
+    </style>
+
+    <style name="TitleBarButton" parent="Widget.Theme.StashAppAndroidTV.MyView">
+        <item name="android:background">@color/default_card_background</item>
+        <item name="android:layout_margin">5dp</item>
     </style>
 </resources>

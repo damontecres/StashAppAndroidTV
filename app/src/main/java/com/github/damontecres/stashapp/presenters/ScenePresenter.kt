@@ -1,59 +1,29 @@
 package com.github.damontecres.stashapp.presenters
 
-import android.graphics.drawable.Drawable
-import android.util.Log
-import android.view.ViewGroup
-import androidx.core.content.ContextCompat
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import androidx.leanback.widget.ImageCardView
-import androidx.leanback.widget.Presenter
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
-import com.github.damontecres.stashapp.R
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
+import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.createGlideUrl
 import java.io.File
-import kotlin.properties.Delegates
+import java.security.MessageDigest
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
-
-/**
- * A CardPresenter is used to generate Views and bind Objects to them on demand.
- * It contains an ImageCardView.
- */
-class ScenePresenter : Presenter() {
-    private var vParent: ViewGroup by Delegates.notNull()
-    private var mDefaultCardImage: Drawable? = null
-    private var sSelectedBackgroundColor: Int by Delegates.notNull()
-    private var sDefaultBackgroundColor: Int by Delegates.notNull()
-
-    override fun onCreateViewHolder(parent: ViewGroup): Presenter.ViewHolder {
-        vParent = parent
-
-        sDefaultBackgroundColor = ContextCompat.getColor(parent.context, R.color.default_background)
-        sSelectedBackgroundColor = ContextCompat.getColor(
-            parent.context,
-            R.color.selected_background
-        )
-        mDefaultCardImage =
-            ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
-
-        val cardView = object : ImageCardView(parent.context) {
-            override fun setSelected(selected: Boolean) {
-                updateCardBackgroundColor(this, selected)
-                super.setSelected(selected)
-            }
-        }
-
-        cardView.isFocusable = true
-        cardView.isFocusableInTouchMode = true
-        updateCardBackgroundColor(cardView, false)
-        return ViewHolder(cardView)
-    }
-
-    override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
-//        val scene = sceneFromSlimSceneData(item as SlimSceneData)
+class ScenePresenter : StashPresenter() {
+    override fun onBindViewHolder(
+        viewHolder: ViewHolder,
+        item: Any?,
+    ) {
         val scene = item as SlimSceneData
         val cardView = viewHolder.view as ImageCardView
-        Log.d(TAG, "onBindViewHolder: ${scene.title}")
         if (scene.title.isNullOrBlank()) {
             val path = scene.files.firstOrNull()?.videoFileData?.path
             if (path != null) {
@@ -67,37 +37,83 @@ class ScenePresenter : Presenter() {
 
         if (!scene.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(vParent.context)
-                .getString("stashApiKey", "")
+            val apiKey =
+                PreferenceManager.getDefaultSharedPreferences(vParent.context)
+                    .getString("stashApiKey", "")
             val url = createGlideUrl(scene.paths.screenshot, apiKey)
             Glide.with(viewHolder.view.context)
                 .load(url)
-                .centerCrop()
+                .transform(CenterCrop(), TextOverlay(scene))
                 .error(mDefaultCardImage)
                 .into(cardView.mainImageView!!)
         }
     }
 
-    override fun onUnbindViewHolder(viewHolder: Presenter.ViewHolder) {
-        Log.d(TAG, "onUnbindViewHolder")
-        val cardView = viewHolder.view as ImageCardView
-        // Remove references to images so that the garbage collector can free up memory
-        cardView.badgeImage = null
-        cardView.mainImage = null
-    }
+    /**
+     * Adds some text on top of a scene's image
+     */
+    private class TextOverlay(val scene: SlimSceneData) :
+        BitmapTransformation() {
+        override fun updateDiskCacheKey(messageDigest: MessageDigest) {
+            messageDigest.update(ID)
+            messageDigest.update(scene.id.toByteArray())
+        }
 
-    private fun updateCardBackgroundColor(view: ImageCardView, selected: Boolean) {
-        val color = if (selected) sSelectedBackgroundColor else sDefaultBackgroundColor
-        // Both background colors should be set because the view"s background is temporarily visible
-        // during animations.
-        view.setBackgroundColor(color)
-        view.setInfoAreaBackgroundColor(color)
+        override fun transform(
+            pool: BitmapPool,
+            toTransform: Bitmap,
+            outWidth: Int,
+            outHeight: Int,
+        ): Bitmap {
+            // TODO: just grabbing the first seems like not the best solution
+            val result = Bitmap.createBitmap(outWidth, outHeight, toTransform.config)
+            val videoFile = scene.files.firstOrNull()?.videoFileData
+            if (videoFile != null) {
+                // TODO: change pixels to dp?
+                val canvas = Canvas(result)
+                canvas.drawBitmap(toTransform, 0.0F, 0.0F, null)
+                val paint = Paint()
+                paint.color = Color.WHITE
+                paint.textSize = CARD_HEIGHT / 10F
+                paint.isAntiAlias = true
+                paint.style = Paint.Style.FILL
+                paint.setShadowLayer(5F, 5F, 5F, Color.BLACK)
+
+                paint.textAlign = Paint.Align.RIGHT
+                val duration =
+                    videoFile.duration.times(100).toInt().div(100).toDuration(DurationUnit.SECONDS)
+                        .toString()
+                canvas.drawText(
+                    duration,
+                    outWidth.toFloat() - 5F,
+                    outHeight - 5F,
+                    paint,
+                )
+
+                paint.isFakeBoldText = true
+                paint.textAlign = Paint.Align.LEFT
+                // TODO: 2160P => 4k, etc
+                val resolution = "${videoFile.height}P"
+                canvas.drawText(
+                    resolution,
+                    5F,
+                    outHeight - 5F,
+                    paint,
+                )
+            }
+            return result
+        }
+
+        companion object {
+            private val ID =
+                "com.github.damontecres.stashapp.presenters.ScenePresenter.TextOverlay".toByteArray()
+        }
     }
 
     companion object {
-        private val TAG = "CardPresenter"
+        private val TAG = "ScenePresenter"
 
-        private val CARD_WIDTH = 351
-        private val CARD_HEIGHT = 198
+        const val CARD_WIDTH = 351
+        const val CARD_HEIGHT = 198
     }
 }

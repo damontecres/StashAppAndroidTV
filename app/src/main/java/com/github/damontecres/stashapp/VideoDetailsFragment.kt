@@ -4,9 +4,11 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -24,14 +26,13 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
-import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.fromSlimSceneDataTag
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
+import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import kotlinx.coroutines.launch
 
@@ -40,7 +41,6 @@ import kotlinx.coroutines.launch
  * It shows a detailed view of video and its metadata plus related videos.
  */
 class VideoDetailsFragment : DetailsSupportFragment() {
-
     private var mSelectedMovie: Scene? = null
 
     private var performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
@@ -89,43 +89,35 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
                     }
                 }
-
             }
     }
 
-    override fun onStart() {
-        super.onStart()
-        if (performersAdapter.size() == 0) {
-            // TODO: this is not efficient, but it does prevent duplicates during navigation
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View? {
+        val queryEngine = QueryEngine(requireContext(), true)
+        if (mSelectedMovie != null) {
             viewLifecycleOwner.lifecycleScope.launch {
-                val apolloClient = createApolloClient(requireContext())
-                if (apolloClient != null && mSelectedMovie != null) {
-                    val scene = fetchSceneById(requireContext(), mSelectedMovie!!.id.toInt())
-                    if (scene != null) {
-                        if (scene.tags.isNotEmpty()) {
-                            tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
-                        }
+                val scene =
+                    queryEngine.findScenes(sceneIds = listOf(mSelectedMovie!!.id.toInt()))
+                        .first()
+                if (scene.tags.isNotEmpty()) {
+                    tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
+                }
 
-                        val performerIds = scene.performers.map {
-                            it.id.toInt()
-                        }
-                        if (performerIds.isNotEmpty()) {
-                            val performers = apolloClient.query(
-                                FindPerformersQuery(
-                                    performer_ids = Optional.present(performerIds)
-                                )
-                            ).execute()
-                            val perfs = performers.data?.findPerformers?.performers?.map {
-                                it.performerData
-                            }
-                            if (perfs != null) {
-                                performersAdapter.addAll(0, perfs)
-                            }
-                        }
+                val performerIds =
+                    scene.performers.map {
+                        it.id.toInt()
                     }
+                if (performerIds.isNotEmpty()) {
+                    val perfs = queryEngine.findPerformers(performerIds = performerIds)
+                    performersAdapter.addAll(0, perfs)
                 }
             }
         }
+        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     private fun initializeBackground(movie: Scene?) {
@@ -134,8 +126,9 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val screenshotUrl = movie?.screenshotUrl
 
         if (!screenshotUrl.isNullOrBlank()) {
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getString("stashApiKey", "")
+            val apiKey =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getString("stashApiKey", "")
             val url = createGlideUrl(screenshotUrl, apiKey)
 
             Glide.with(requireActivity())
@@ -143,15 +136,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 .centerCrop()
                 .error(R.drawable.default_background)
                 .load(url)
-                .into<SimpleTarget<Bitmap>>(object : SimpleTarget<Bitmap>() {
-                    override fun onResourceReady(
-                        bitmap: Bitmap,
-                        transition: Transition<in Bitmap>?
-                    ) {
-                        mDetailsBackground.coverBitmap = bitmap
-                        mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
-                    }
-                })
+                .into<SimpleTarget<Bitmap>>(
+                    object : SimpleTarget<Bitmap>() {
+                        override fun onResourceReady(
+                            bitmap: Bitmap,
+                            transition: Transition<in Bitmap>?,
+                        ) {
+                            mDetailsBackground.coverBitmap = bitmap
+                            mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
+                    },
+                )
         }
     }
 
@@ -165,30 +160,34 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         val screenshotUrl = mSelectedMovie?.screenshotUrl
         if (!screenshotUrl.isNullOrBlank()) {
-            val apiKey = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getString("stashApiKey", "")
+            val apiKey =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getString("stashApiKey", "")
             val url = createGlideUrl(screenshotUrl, apiKey)
             Glide.with(requireActivity())
+                .asBitmap()
                 .load(url)
                 .centerCrop()
                 .error(R.drawable.default_background)
-                .into<SimpleTarget<Drawable>>(object : SimpleTarget<Drawable>(width, height) {
-                    override fun onResourceReady(
-                        drawable: Drawable,
-                        transition: Transition<in Drawable>?
-                    ) {
-                        Log.d(TAG, "details overview card image url ready: " + drawable)
-                        row.imageDrawable = drawable
-                        mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
-                    }
-                })
+                .into<SimpleTarget<Bitmap>>(
+                    object : SimpleTarget<Bitmap>(width, height) {
+                        override fun onResourceReady(
+                            drawable: Bitmap,
+                            transition: Transition<in Bitmap>?,
+                        ) {
+                            Log.d(TAG, "details overview card image url ready: " + drawable)
+                            row.setImageBitmap(requireContext(), drawable)
+                            mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
+                    },
+                )
         }
 
         actionAdapter.add(
             Action(
                 ACTION_PLAY_SCENE,
-                resources.getString(R.string.play_scene)
-            )
+                resources.getString(R.string.play_scene),
+            ),
         )
         row.actionsAdapter = actionAdapter
 
@@ -199,30 +198,32 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         // Set detail background.
         val detailsPresenter = FullWidthDetailsOverviewRowPresenter(DetailsDescriptionPresenter())
         detailsPresenter.backgroundColor =
-            ContextCompat.getColor(requireActivity(), R.color.selected_background)
+            ContextCompat.getColor(requireActivity(), R.color.default_card_background)
 
         // Hook up transition element.
         val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
         sharedElementHelper.setSharedElementEnterTransition(
-            activity, DetailsActivity.SHARED_ELEMENT_NAME
+            activity,
+            DetailsActivity.SHARED_ELEMENT_NAME,
         )
         detailsPresenter.setListener(sharedElementHelper)
         detailsPresenter.isParticipatingEntranceTransition = true
 
-        detailsPresenter.onActionClickedListener = OnActionClickedListener { action ->
-            if (mSelectedMovie != null) {
-                if (action.id in longArrayOf(ACTION_PLAY_SCENE, ACTION_RESUME_SCENE)) {
-                    val intent = Intent(requireActivity(), PlaybackActivity::class.java)
-                    intent.putExtra(DetailsActivity.MOVIE, mSelectedMovie)
-                    if (action.id == ACTION_RESUME_SCENE) {
-                        intent.putExtra(POSITION_ARG, position)
+        detailsPresenter.onActionClickedListener =
+            OnActionClickedListener { action ->
+                if (mSelectedMovie != null) {
+                    if (action.id in longArrayOf(ACTION_PLAY_SCENE, ACTION_RESUME_SCENE)) {
+                        val intent = Intent(requireActivity(), PlaybackActivity::class.java)
+                        intent.putExtra(DetailsActivity.MOVIE, mSelectedMovie)
+                        if (action.id == ACTION_RESUME_SCENE) {
+                            intent.putExtra(POSITION_ARG, position)
+                        }
+                        resultLauncher.launch(intent)
+                    } else {
+                        throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
                     }
-                    resultLauncher.launch(intent)
-                } else {
-                    throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
                 }
             }
-        }
         mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
     }
 
@@ -233,7 +234,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 
-    private fun convertDpToPixel(context: Context, dp: Int): Int {
+    private fun convertDpToPixel(
+        context: Context,
+        dp: Int,
+    ): Int {
         val density = context.applicationContext.resources.displayMetrics.density
         return Math.round(dp.toFloat() * density)
     }
@@ -244,8 +248,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private val ACTION_PLAY_SCENE = 1L
         private val ACTION_RESUME_SCENE = 2L
 
-        private val DETAIL_THUMB_WIDTH = 274
-        private val DETAIL_THUMB_HEIGHT = 274
+        private val DETAIL_THUMB_WIDTH = ScenePresenter.CARD_WIDTH
+        private val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
 
         private val NUM_COLS = 10
 

@@ -7,7 +7,6 @@ plugins {
     id("com.apollographql.apollo3") version "3.8.2"
 }
 
-
 fun getVersionCode(): Int {
     val stdout = ByteArrayOutputStream()
     exec {
@@ -43,9 +42,8 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
-
         }
 
         applicationVariants.all {
@@ -72,6 +70,12 @@ apollo {
     service("app") {
         packageName.set("com.github.damontecres.stashapp.api")
         schemaFiles.setFrom(fileTree("../stash-server/graphql/schema/").filter { it.extension == "graphql" }.files.map { it.path })
+        generateOptionalOperationVariables.set(false)
+        outputDirConnection {
+            // Fixes where classes aren't detected in unit tests
+            // See: https://community.apollographql.com/t/android-warning-duplicate-content-roots-detected-after-just-adding-apollo3-kotlin-client/4529/6
+            connectToKotlinSourceSet("main")
+        }
     }
 }
 
@@ -89,4 +93,5 @@ dependencies {
 
     implementation("com.apollographql.apollo3:apollo-runtime:3.8.2")
     implementation("androidx.preference:preference-ktx:1.2.1")
+    testImplementation("junit:junit:4.13.2")
 }

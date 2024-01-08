@@ -13,25 +13,25 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceScreen
 import kotlinx.coroutines.launch
 
-
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
-
     override fun onPreferenceStartInitialScreen() {
         startPreferenceFragment(PreferencesFragment())
     }
 
     override fun onPreferenceStartFragment(
         caller: PreferenceFragmentCompat,
-        pref: Preference
+        pref: Preference,
     ): Boolean {
-        val args: Bundle = pref.getExtras()
-        val f: Fragment = childFragmentManager.fragmentFactory.instantiate(
-            requireActivity().classLoader, pref.getFragment()!!
-        )
-        f.setArguments(args)
+        val args: Bundle = pref.extras
+        val f: Fragment =
+            childFragmentManager.fragmentFactory.instantiate(
+                requireActivity().classLoader,
+                pref.fragment!!,
+            )
+        f.arguments = args
         f.setTargetFragment(caller, 0)
-        if (f is PreferenceFragmentCompat
-            || f is PreferenceDialogFragmentCompat
+        if (f is PreferenceFragmentCompat ||
+            f is PreferenceDialogFragmentCompat
         ) {
             startPreferenceFragment(f)
         } else {
@@ -42,23 +42,22 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
     override fun onPreferenceStartScreen(
         caller: PreferenceFragmentCompat,
-        pref: PreferenceScreen
+        pref: PreferenceScreen,
     ): Boolean {
         val fragment: Fragment = PreferencesFragment()
         val args = Bundle(1)
-        args.putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, pref.getKey())
-        fragment.setArguments(args)
+        args.putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, pref.key)
+        fragment.arguments = args
         startPreferenceFragment(fragment)
         return true
     }
 }
 
 class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+    override fun onCreatePreferences(
+        savedInstanceState: Bundle?,
+        rootKey: String?,
+    ) {
         setPreferencesFromResource(R.xml.root_preferences, rootKey)
 
         val pkgInfo =
@@ -79,15 +78,15 @@ class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
             }
 
         val apiKayPref = findPreference<EditTextPreference>("stashApiKey")
-        apiKayPref?.summaryProvider = object : Preference.SummaryProvider<EditTextPreference> {
-            override fun provideSummary(preference: EditTextPreference): CharSequence? {
-                return if (preference.text.isNullOrBlank()) {
-                    "No API key configured"
-                } else {
-                    "API Key is configured"
+        apiKayPref?.summaryProvider =
+            object : Preference.SummaryProvider<EditTextPreference> {
+                override fun provideSummary(preference: EditTextPreference): CharSequence {
+                    return if (preference.text.isNullOrBlank()) {
+                        "No API key configured"
+                    } else {
+                        "API Key is configured"
+                    }
                 }
             }
-        }
-
     }
 }

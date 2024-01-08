@@ -53,29 +53,47 @@
         <activity
             android:name=".PerformerActivity"
             android:exported="false"
-            android:theme="@style/NoTitleTheme" /> <!-- Would be good to remove NoTitleTheme -->
+            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".TagActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".StudioActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".SearchActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".SceneListActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".PerformerListActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".StudioListActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".TagListActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
+        <activity
+            android:name=".FilterListActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
+        <activity
+            android:name=".MovieActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
+        <activity
+            android:name=".MovieListActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
 
     </application>
 
