@@ -4,8 +4,10 @@ on:
   pull_request:
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
@@ -20,12 +22,6 @@ jobs:
           cache: 'gradle'
       - name: Build app
         run: ./gradlew assembleRelease
-  publish:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      contents: write
-    steps:
       - name: Sign APK
         uses: r0adkll/sign-android-release@v1
         id: sign_app
