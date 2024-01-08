@@ -220,10 +220,10 @@ fun selectStream(scene: Scene?): String? {
     }
     var stream = scene.streams["Direct stream"]
     if (stream == null) {
-        stream = scene.streams["WEBM"]
+        stream = scene.streams["DASH"]
     }
     if (stream == null) {
-        stream = scene.streams["MP4"]
+        stream = scene.streams["WEBM"]
     }
     if (stream == null) {
         stream = scene.streamUrl
