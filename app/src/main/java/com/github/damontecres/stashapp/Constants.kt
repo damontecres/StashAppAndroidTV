@@ -41,7 +41,6 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Scene
 
 object Constants {
     /**
@@ -212,23 +211,6 @@ suspend fun testStashConnection(
         }
     }
     return false
-}
-
-fun selectStream(scene: Scene?): String? {
-    if (scene == null) {
-        return null
-    }
-    var stream = scene.streams["Direct stream"]
-    if (stream == null) {
-        stream = scene.streams["DASH"]
-    }
-    if (stream == null) {
-        stream = scene.streams["WEBM"]
-    }
-    if (stream == null) {
-        stream = scene.streamUrl
-    }
-    return stream
 }
 
 fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
