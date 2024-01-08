@@ -1,0 +1,43 @@
+name: Create release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need the tags to build
+          submodules: true # Need the submodules to build
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+          cache: 'gradle'
+      - name: Build app
+        run: ./gradlew assembleRelease
+      - name: Sign APK
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+      - name: Copy signed APK to generic name
+        run: |
+          cp ${{ steps.sign_app.outputs.signedReleaseFile }} StashAppAndroidTV.apk
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "${{ steps.sign_app.outputs.signedReleaseFile }},StashAppAndroidTV.apk"
+          generateReleaseNotes: true
