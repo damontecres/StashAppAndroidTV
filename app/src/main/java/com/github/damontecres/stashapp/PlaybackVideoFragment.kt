@@ -54,14 +54,14 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         mTransportControlGlue.subtitle = scene?.details
         mTransportControlGlue.playWhenPrepared()
 
-        val streamChoice =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getString("stream_choice", "MP4")
-        val streamUrl =
-            scene?.streams?.getOrDefault(
-                "Direct stream",
-                scene.streams.getOrDefault(streamChoice, scene.streamUrl),
-            )
+        var streamUrl = scene?.streams?.get("Direct stream")
+        if (streamUrl == null) {
+            val streamChoice =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getString("stream_choice", "MP4")
+            streamUrl = scene?.streams?.get(streamChoice)
+        }
+
         if (streamUrl != null) {
             playerAdapter.setDataSource(Uri.parse(streamUrl))
             if (position > 0) {
