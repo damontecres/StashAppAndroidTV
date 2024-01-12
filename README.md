@@ -6,6 +6,9 @@ Not all features of Stash are supported, but the basics for browsing, searching,
 
 The app is not intended to perform administrative functions such as scanning, scraping, or editing details.
 
+### Dashboard
+![dashboard screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/24387c5a-4c57-4cdc-8cb7-be455fa3bfbd)
+
 ## Setup
 
 Make sure your Stash server is running and that you can access it over the network (not `localhost`).
@@ -46,3 +49,12 @@ Issues and pull requests are always welcome! UI/UX improvements are especially d
 Please check before submitting that your issue or pull request is not a duplicate.
 
 If you plan to submit a pull request, please read the [contributing guide](CONTRIBUTING.md) before submitting!
+
+## Additional screenshots
+
+### Default filtered scenes
+![scenes screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/227254ef-325d-4284-b778-983f86453a24)
+
+### Default filtered performers
+![performers screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/7dded398-e327-414e-a2a3-fa60c11c92f1)
+
