@@ -57,4 +57,3 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 
 ### Default filtered performers
 ![performers screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/7dded398-e327-414e-a2a3-fa60c11c92f1)
-
