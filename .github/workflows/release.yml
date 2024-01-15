@@ -16,6 +16,8 @@ jobs:
         with:
           fetch-depth: 0 # Need the tags to build
           submodules: true # Need the submodules to build
+      - name: Setup Python
+        uses: actions/setup-python@v5
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
