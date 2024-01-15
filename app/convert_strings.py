@@ -20,6 +20,7 @@ def parse_dict(d, keys=[]):
 def convert_file(source_file, dest_file):
     with open(source_file, "r") as f:
         data = json.load(f)
+    dest_file.parent.mkdir(parents=True, exist_ok=True)
     with open(dest_file, "w") as f:
         f.write("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
         f.write("<resources>\n")
@@ -32,3 +33,10 @@ main_file = source_dir / "en-GB.json"
 main_dest = Path(dest_prefix) / "stash_strings.xml"
 
 convert_file(main_file, main_dest)
+
+for file in source_dir.glob("*.json"):
+    if file.name.startswith("en-GB"):
+        continue
+    else:
+        lang = file.name.replace(".json", "").replace("-", "+").replace("_", "+")
+        convert_file(file, Path(dest_prefix+"-b+"+lang) / "stash_strings.xml")

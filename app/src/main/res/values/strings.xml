@@ -1,8 +1,7 @@
 <resources>
-    <string name="app_name">StashAppAndroidTV</string>
-    <string name="browse_title">Stash</string>
-    <string name="play_scene">Play</string>
-    <string name="pref_stash_server_header">Stash</string>
-    <string name="pref_stash_server_url">Stash URL</string>
-    <string name="pref_stash_api_key">API Key</string>
+    <string name="app_name" translatable="false">StashAppAndroidTV</string>
+    <string name="browse_title" translatable="false">Stash</string>
+    <string name="play_scene" translatable="false">Play</string>
+    <string name="pref_stash_server_header" translatable="false">Stash</string>
+    <string name="pref_stash_server_url" translatable="false">Stash URL</string>
 </resources>
