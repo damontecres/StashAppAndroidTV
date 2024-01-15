@@ -287,17 +287,23 @@ class MainFragment : BrowseSupportFragment() {
             ),
         )
         viewLifecycleOwner.lifecycleScope.launch(exHandler) {
-            val direction = frontPageFilter["direction"] as String
-            val sortBy = frontPageFilter["sortBy"] as String
+            val direction = frontPageFilter["direction"] as String?
+            val directionEnum =
+                if (direction != null) {
+                    val enum = SortDirectionEnum.safeValueOf(direction.uppercase())
+                    if (enum == SortDirectionEnum.UNKNOWN__) {
+                        SortDirectionEnum.ASC
+                    }
+                    enum
+                } else {
+                    SortDirectionEnum.ASC
+                }
+
+            val sortBy = frontPageFilter["sortBy"] as String?
             val filter =
                 FindFilterType(
-                    direction =
-                        Optional.present(
-                            SortDirectionEnum.safeValueOf(
-                                direction,
-                            ),
-                        ),
-                    sort = Optional.present(sortBy),
+                    direction = Optional.presentIfNotNull(directionEnum),
+                    sort = Optional.presentIfNotNull(sortBy),
                     per_page = Optional.present(25),
                 )
 
@@ -312,6 +318,10 @@ class MainFragment : BrowseSupportFragment() {
 
                 FilterMode.PERFORMERS -> {
                     adapter.addAll(0, queryEngine.findPerformers(filter))
+                }
+
+                FilterMode.MOVIES -> {
+                    adapter.addAll(0, queryEngine.findMovies(filter))
                 }
 
                 else -> {

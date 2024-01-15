@@ -54,6 +54,13 @@ class StashFilterPresenter : StashPresenter() {
                     TagPresenter.CARD_HEIGHT,
                 )
 
+            FilterMode.MOVIES -> {
+                cardView.setMainImageDimensions(
+                    MoviePresenter.CARD_WIDTH,
+                    MoviePresenter.CARD_HEIGHT,
+                )
+            }
+
             else -> {}
         }
 
