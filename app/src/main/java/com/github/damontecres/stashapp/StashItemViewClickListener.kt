@@ -2,7 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.app.Activity
 import android.content.Intent
-import android.widget.Toast
+import android.util.Log
 import androidx.core.app.ActivityOptionsCompat
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.OnItemViewClickedListener
@@ -90,13 +90,12 @@ class StashItemViewClickListener(private val activity: Activity) : OnItemViewCli
             intent.putExtra("mode", item.mode.rawValue)
             intent.putExtra("description", item.description)
             activity.startActivity(intent)
-        } else if (item is String) {
-            if (item.contains(activity.getString(R.string.error_fragment))) {
-                val intent = Intent(activity, BrowseErrorActivity::class.java)
-                activity.startActivity(intent)
-            } else {
-                Toast.makeText(activity, item, Toast.LENGTH_SHORT).show()
-            }
+        } else {
+            Log.e(TAG, "Unknown item type: $item")
         }
+    }
+
+    companion object {
+        private const val TAG = "StashItemViewClickListener"
     }
 }
