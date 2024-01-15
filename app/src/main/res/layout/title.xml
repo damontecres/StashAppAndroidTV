@@ -22,7 +22,7 @@
 
     <Button
         android:id="@+id/scenes_button"
-        android:text="Scenes"
+        android:text="@string/stashapp_scenes"
         android:layout_width="88dp"
         android:layout_height="80dp"
         android:layout_toEndOf="@+id/search_orb"
@@ -30,7 +30,7 @@
 
     <Button
         android:id="@+id/movies_button"
-        android:text="Movies"
+        android:text="@string/stashapp_movies"
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_toEndOf="@+id/scenes_button"
@@ -38,7 +38,7 @@
 
     <Button
         android:id="@+id/performers_button"
-        android:text="Performers"
+        android:text="@string/stashapp_performers"
         android:layout_width="120dp"
         android:layout_height="80dp"
         android:layout_toEndOf="@+id/movies_button"
@@ -46,7 +46,7 @@
 
     <Button
         android:id="@+id/studios_button"
-        android:text="Studios"
+        android:text="@string/stashapp_studios"
         android:layout_width="88dp"
         android:layout_height="80dp"
         android:layout_toEndOf="@+id/performers_button"
@@ -54,7 +54,7 @@
 
     <Button
         android:id="@+id/tags_button"
-        android:text="Tags"
+        android:text="@string/stashapp_tags"
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_toEndOf="@+id/studios_button"
@@ -65,7 +65,7 @@
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_gravity="end"
-        android:contentDescription="Preferences"
+        android:contentDescription="@string/stashapp_settings"
         android:src="@drawable/vector_settings"
         android:layout_alignParentEnd="true"
         style="@style/TitleBarButton" />

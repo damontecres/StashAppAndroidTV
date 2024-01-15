@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import java.io.ByteArrayOutputStream
 
 plugins {
@@ -78,6 +79,13 @@ apollo {
         }
     }
 }
+
+tasks.register("generateStrings", Exec::class.java) {
+    println("Generating android strings from server json")
+    commandLine("python", "convert_strings.py")
+}
+
+tasks.assemble.dependsOn("generateStrings")
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")

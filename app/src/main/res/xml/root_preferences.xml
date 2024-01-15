@@ -1,7 +1,7 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory app:title="@string/pref_stash_server">
+    <PreferenceCategory app:title="@string/pref_stash_server_header">
 
         <EditTextPreference
             app:key="stashUrl"
@@ -10,7 +10,7 @@
 
         <EditTextPreference
             app:key="stashApiKey"
-            app:title="@string/pref_stash_api_key"
+            app:title="@string/stashapp_config_general_auth_api_key"
             app:useSimpleSummaryProvider="false" />
 
         <Preference
