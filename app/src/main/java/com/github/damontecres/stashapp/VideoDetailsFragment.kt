@@ -72,6 +72,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             initializeBackground(mSelectedMovie)
             onItemViewClickedListener = StashItemViewClickListener(requireActivity())
         } else {
+            Log.w(TAG, "No movie found in intent")
             val intent = Intent(requireActivity(), MainActivity::class.java)
             startActivity(intent)
         }

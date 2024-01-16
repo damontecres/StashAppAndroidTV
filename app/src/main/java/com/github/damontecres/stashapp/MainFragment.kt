@@ -241,6 +241,8 @@ class MainFragment : BrowseSupportFragment() {
                                     addCustomFilterRow(frontPageFilter, adapter, queryEngine)
                                 } else if (filterType == "SavedFilter") {
                                     addSavedFilterRow(frontPageFilter, adapter, queryEngine)
+                                } else {
+                                    Log.w(TAG, "Unknown frontPageFilter typename: $filterType")
                                 }
                             }
                         }
@@ -271,10 +273,16 @@ class MainFragment : BrowseSupportFragment() {
         val objType =
             (msg["values"] as Map<String, String>)["objects"] as String
         val description =
-            when (msg["id"] as String) {
+            when (msg["id"].toString()) {
                 "recently_added_objects" -> "Recently Added $objType"
                 "recently_released_objects" -> "Recently Released $objType"
                 else -> objType
+            }
+        val sortBy =
+            (frontPageFilter["sortBy"] as String?) ?: when (msg["id"].toString()) {
+                "recently_added_objects" -> "created_at"
+                "recently_released_objects" -> "date"
+                else -> null
             }
         val mode = FilterMode.valueOf(frontPageFilter["mode"] as String)
         if (mode !in supportedFilterModes) {
@@ -292,14 +300,13 @@ class MainFragment : BrowseSupportFragment() {
                 if (direction != null) {
                     val enum = SortDirectionEnum.safeValueOf(direction.uppercase())
                     if (enum == SortDirectionEnum.UNKNOWN__) {
-                        SortDirectionEnum.ASC
+                        SortDirectionEnum.DESC
                     }
                     enum
                 } else {
-                    SortDirectionEnum.ASC
+                    SortDirectionEnum.DESC
                 }
 
-            val sortBy = frontPageFilter["sortBy"] as String?
             val filter =
                 FindFilterType(
                     direction = Optional.presentIfNotNull(directionEnum),
