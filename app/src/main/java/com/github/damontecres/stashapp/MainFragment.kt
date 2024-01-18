@@ -95,7 +95,7 @@ class MainFragment : BrowseSupportFragment() {
         super.onResume()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            if (testStashConnection(requireContext(), false)) {
+            if (testStashConnection(requireContext(), false) != null) {
                 if (rowsAdapter.size() == 0) {
                     fetchData()
                 }
@@ -216,8 +216,32 @@ class MainFragment : BrowseSupportFragment() {
 
     private fun fetchData() {
         clearData()
-        viewLifecycleOwner.lifecycleScope.launch {
-            if (testStashConnection(requireContext(), false)) {
+        viewLifecycleOwner.lifecycleScope.launch(
+            CoroutineExceptionHandler { _, ex ->
+                Log.e(TAG, "Exception in fetchData coroutine", ex)
+                Toast.makeText(
+                    requireContext(),
+                    "Error fetching data: ${ex.message}",
+                    Toast.LENGTH_LONG,
+                ).show()
+            },
+        ) {
+            val serverInfo = testStashConnection(requireContext(), false)
+            if (serverInfo?.version?.version == null) {
+                Log.w(TAG, "Version returned by server is null")
+                Toast.makeText(
+                    requireContext(),
+                    "Could not determine the server version. Things may not work!",
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+            if (serverInfo?.version?.version != null && !isStashVersionSupported(Version(serverInfo.version.version))) {
+                val msg =
+                    "Stash server version ${serverInfo.version.version} is not supported!"
+                Log.e(TAG, msg)
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
+                rowsAdapter.clear()
+            } else if (serverInfo != null) {
                 try {
                     val queryEngine = QueryEngine(requireContext(), showToasts = true)
 
