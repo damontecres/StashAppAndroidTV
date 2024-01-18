@@ -49,7 +49,7 @@ object Constants {
     const val STASH_API_HEADER = "ApiKey"
     const val PREF_KEY_STASH_URL = "stashUrl"
     const val PREF_KEY_STASH_API_KEY = "stashApi"
-
+    const val TAG = "Constants"
     val MINIMUM_STASH_VERSION = Version("0.23.0")
 }
 
@@ -140,7 +140,7 @@ fun createApolloClient(
     stashUrl: String?,
     apiKey: String?,
 ): ApolloClient? {
-    return if (stashUrl!!.isNotBlank()) {
+    return if (!stashUrl.isNullOrBlank()) {
         var cleanedStashUrl = stashUrl.trim()
         if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
             // Assume http
@@ -151,12 +151,16 @@ fun createApolloClient(
             url.buildUpon()
                 .path("/graphql") // Ensure the URL is the graphql endpoint
                 .build()
-        Log.d("Constants", "StashUrl: $stashUrl => $url")
+        Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
         ApolloClient.Builder()
             .serverUrl(url.toString())
             .addHttpInterceptor(AuthorizationInterceptor(apiKey))
             .build()
     } else {
+        Log.v(
+            Constants.TAG,
+            "Cannot create ApolloClient: stashUrl='$stashUrl', apiKey set: ${!apiKey.isNullOrBlank()}",
+        )
         null
     }
 }
@@ -200,6 +204,7 @@ suspend fun testStashConnection(
                         Toast.LENGTH_LONG,
                     ).show()
                 }
+                Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
             } else {
                 if (showToast) {
                     val version = info.data?.version?.version
@@ -213,7 +218,7 @@ suspend fun testStashConnection(
                 return info.data
             }
         } catch (ex: ApolloHttpException) {
-            Log.e("Constants", "ApolloHttpException", ex)
+            Log.e(Constants.TAG, "ApolloHttpException", ex)
             if (ex.statusCode == 401 || ex.statusCode == 403) {
                 if (showToast) {
                     Toast.makeText(
@@ -232,7 +237,7 @@ suspend fun testStashConnection(
                 }
             }
         } catch (ex: ApolloException) {
-            Log.e("Constants", "ApolloException", ex)
+            Log.e(Constants.TAG, "ApolloException", ex)
             if (showToast) {
                 Toast.makeText(
                     context,
