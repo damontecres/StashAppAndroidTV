@@ -252,8 +252,12 @@ class MainFragment : BrowseSupportFragment() {
 
                     viewLifecycleOwner.lifecycleScope.launch(exHandler) {
                         val query = ConfigurationQuery()
-                        val ui = queryEngine.executeQuery(query).data?.configuration?.ui
-                        if (ui != null) {
+                        val config = queryEngine.executeQuery(query).data?.configuration
+                        val serverPreferences = ServerPreferences(requireContext())
+                        serverPreferences.updatePreferences(config)
+
+                        if (config?.ui != null) {
+                            val ui = config.ui
                             val frontPageContent =
                                 (ui as Map<String, *>)["frontPageContent"] as List<Map<String, *>>
                             for (frontPageFilter: Map<String, *> in frontPageContent) {
@@ -303,15 +307,15 @@ class MainFragment : BrowseSupportFragment() {
                     "recently_released_objects" -> "Recently Released $objType"
                     else -> objType
                 }
+
             val sortBy =
-                (frontPageFilter["sortBy"] as String?)
-                    ?: // Some servers may return sortBy in lowercase
-                    (frontPageFilter["sortby"] as String?) ?: when (msg["id"].toString()) {
-                    // Just in case, fall back to a reasonable default
-                    "recently_added_objects" -> "created_at"
-                    "recently_released_objects" -> "date"
-                    else -> null
-                }
+                (frontPageFilter.getCaseInsensitive("sortBy") as String?)
+                    ?: when (msg["id"].toString()) {
+                        // Just in case, fall back to a reasonable default
+                        "recently_added_objects" -> "created_at"
+                        "recently_released_objects" -> "date"
+                        else -> null
+                    }
             val mode = FilterMode.safeValueOf(frontPageFilter["mode"] as String)
             if (mode !in supportedFilterModes) {
                 Log.w(TAG, "CustomFilter mode is $mode which is not supported yet")

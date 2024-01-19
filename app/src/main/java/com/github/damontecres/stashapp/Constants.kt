@@ -691,3 +691,13 @@ fun convertMovieObjectFilter(f: Any?): MovieFilterType? {
         null
     }
 }
+
+/**
+ * Gets the value for the key trying first the key as provided and next the key lower cased
+ */
+fun <V> Map<String, V>.getCaseInsensitive(k: String?): V? {
+    if (k == null) {
+        return null
+    }
+    return this[k] ?: this[k.lowercase()]
+}

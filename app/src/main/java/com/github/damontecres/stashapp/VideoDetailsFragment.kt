@@ -184,12 +184,20 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 )
         }
 
-        actionAdapter.add(
-            Action(
-                ACTION_PLAY_SCENE,
-                resources.getString(R.string.play_scene),
-            ),
-        )
+        val serverPreferences = ServerPreferences(requireContext())
+        if (serverPreferences.trackActivity && mSelectedMovie?.resumeTime != null && mSelectedMovie?.resumeTime!! > 0) {
+            position = (mSelectedMovie?.resumeTime!! * 1000).toLong()
+            actionAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
+            actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+        } else {
+            actionAdapter.add(
+                Action(
+                    ACTION_PLAY_SCENE,
+                    resources.getString(R.string.play_scene),
+                ),
+            )
+        }
+
         row.actionsAdapter = actionAdapter
 
         mAdapter.add(row)
