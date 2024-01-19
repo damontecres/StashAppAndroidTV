@@ -49,8 +49,38 @@ object Constants {
     const val STASH_API_HEADER = "ApiKey"
     const val PREF_KEY_STASH_URL = "stashUrl"
     const val PREF_KEY_STASH_API_KEY = "stashApi"
-
     const val TAG = "Constants"
+    val MINIMUM_STASH_VERSION = Version("0.23.0")
+}
+
+data class Version(val version: String) {
+    val major: Int
+    val minor: Int
+    val patch: Int
+
+    init {
+        val splits = version.removePrefix("v").split(".").map { it.toInt() }.toList()
+        major = splits[0]
+        minor = splits[1]
+        patch = splits[2]
+    }
+
+    fun isAtLeast(version: Version): Boolean {
+        return this.major > version.major || (
+            this.major == version.major &&
+                (
+                    this.minor > version.minor || this.minor == version.minor &&
+                        this.patch >= version.patch
+                )
+        )
+    }
+}
+
+fun isStashVersionSupported(version: Version?): Boolean {
+    if (version == null) {
+        return false
+    }
+    return version.isAtLeast(Constants.MINIMUM_STASH_VERSION)
 }
 
 /**
@@ -153,7 +183,7 @@ fun createApolloClient(context: Context): ApolloClient? {
 suspend fun testStashConnection(
     context: Context,
     showToast: Boolean,
-): Boolean {
+): ServerInfoQuery.Data? {
     val client = createApolloClient(context)
     if (client == null) {
         if (showToast) {
@@ -185,7 +215,7 @@ suspend fun testStashConnection(
                         Toast.LENGTH_SHORT,
                     ).show()
                 }
-                return true
+                return info.data
             }
         } catch (ex: ApolloHttpException) {
             Log.e(Constants.TAG, "ApolloHttpException", ex)
@@ -217,7 +247,7 @@ suspend fun testStashConnection(
             }
         }
     }
-    return false
+    return null
 }
 
 fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
