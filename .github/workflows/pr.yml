@@ -34,4 +34,4 @@ jobs:
           java-version: '17'
           cache: 'gradle'
       - name: Build app
-        run: ./gradlew build
+        run: ./gradlew clean build
