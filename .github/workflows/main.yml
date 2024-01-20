@@ -68,6 +68,7 @@ jobs:
           allowUpdates: true
           artifactErrorsFailBuild: true
           artifacts: "${{ steps.buildapp.outputs.apk }},${{ env.APK_SHORT_NAME }}"
+          draft: false
           generateReleaseNotes: false
           makeLatest: false
           name: "Develop build"
@@ -75,7 +76,6 @@ jobs:
           removeArtifacts: true
           replacesArtifacts: true
           tag: "${{ env.TAG_NAME }}"
-          updateOnlyUnreleased: true
 
           body: |
             This pre-release tracks the latest development debug build of StashAppAndroidTV from the `main` branch
