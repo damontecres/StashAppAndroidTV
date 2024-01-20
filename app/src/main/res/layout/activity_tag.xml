@@ -14,7 +14,7 @@
             android:layout_width="80dp"
             android:layout_height="match_parent"
             android:src="@mipmap/stash_logo"
-            android:contentDescription="icon"
+            android:contentDescription="@string/stashapp_image"
             android:layout_alignParentStart="true" />
 
         <TextView
@@ -23,7 +23,7 @@
             android:layout_height="match_parent"
             android:textSize="40sp"
             android:textAlignment="center"
-            android:text="override me" />
+            android:text="" />
     </RelativeLayout>
 
     <FrameLayout

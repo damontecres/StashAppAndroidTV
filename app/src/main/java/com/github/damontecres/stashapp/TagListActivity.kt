@@ -12,7 +12,7 @@ class TagListActivity : SecureFragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)
         if (savedInstanceState == null) {
-            findViewById<TextView>(R.id.tag_title).text = "Tags"
+            findViewById<TextView>(R.id.tag_title).text = getString(R.string.stashapp_tags)
             val queryEngine = QueryEngine(this, true)
             lifecycleScope.launch {
                 val filter = queryEngine.getDefaultFilter(DataType.TAG)

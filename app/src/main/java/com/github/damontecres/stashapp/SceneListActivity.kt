@@ -17,7 +17,7 @@ class SceneListActivity : SecureFragmentActivity() {
             val filter = queryEngine.getDefaultFilter(DataType.SCENE)
 
             if (savedInstanceState == null) {
-                findViewById<TextView>(R.id.tag_title).text = "Scenes"
+                findViewById<TextView>(R.id.tag_title).text = getString(R.string.stashapp_scenes)
                 supportFragmentManager.beginTransaction()
                     .replace(
                         R.id.tag_fragment,

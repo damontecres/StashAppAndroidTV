@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import java.io.ByteArrayOutputStream
 
 plugins {
@@ -64,6 +65,9 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    lint {
+        disable.add("MissingTranslation")
+    }
 }
 
 apollo {
@@ -78,6 +82,16 @@ apollo {
         }
     }
 }
+
+tasks.create("generateStrings", Exec::class.java) {
+    if (gradle.startParameter.logLevel == LogLevel.DEBUG || gradle.startParameter.logLevel == LogLevel.INFO) {
+        commandLine("python", "convert_strings.py", "--debug")
+    } else {
+        commandLine("python", "convert_strings.py")
+    }
+}
+
+tasks.preBuild.dependsOn("generateStrings")
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")

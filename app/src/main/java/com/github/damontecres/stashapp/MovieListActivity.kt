@@ -12,7 +12,7 @@ class MovieListActivity : SecureFragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)
         if (savedInstanceState == null) {
-            findViewById<TextView>(R.id.tag_title).text = "Movies"
+            findViewById<TextView>(R.id.tag_title).text = getString(R.string.stashapp_movies)
 
             val queryEngine = QueryEngine(this, true)
             lifecycleScope.launch {
