@@ -25,7 +25,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           try {
-              await github.git.deleteRef({
+              await github.rest.git.deleteRef({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: "tags/${{ env.TAG_NAME }}"
@@ -33,13 +33,14 @@ jobs:
           } catch (e) {
             console.log("The ${{ env.TAG_NAME }} tag doesn't exist yet: " + e)
           }
-          await github.git.createRef({
+          await github.rest.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
             ref: "refs/tags/${{ env.TAG_NAME }}",
             sha: context.sha
           })
   build:
+    needs: advance-tag
     runs-on: ubuntu-latest
     permissions:
       contents: write
