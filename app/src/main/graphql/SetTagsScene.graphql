@@ -1,0 +1,8 @@
+mutation SetSceneTags($input: SceneUpdateInput!) {
+  sceneUpdate(input: $input) {
+    id
+    tags {
+      ...TagData
+    }
+  }
+}

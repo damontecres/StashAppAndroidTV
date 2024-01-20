@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -24,17 +25,25 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
+import androidx.leanback.widget.OnItemViewClickedListener
+import androidx.leanback.widget.Presenter
+import androidx.leanback.widget.Row
+import androidx.leanback.widget.RowPresenter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
+import com.github.damontecres.stashapp.actions.AddTagAction
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.data.fromSlimSceneDataTag
+import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
 /**
@@ -46,6 +55,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private var performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
     private var tagsAdapter: ArrayObjectAdapter = ArrayObjectAdapter(TagPresenter())
+    private var actionsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
     private lateinit var mPresenterSelector: ClassPresenterSelector
@@ -59,6 +69,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
+        actionsAdapter.add(AddTagAction())
+
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
 
 //        mSelectedMovie = activity!!.intent.getSerializableExtra(DetailsActivity.MOVIE) as Scene
@@ -71,7 +83,19 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             setupRelatedMovieListRow()
             adapter = mAdapter
             initializeBackground(mSelectedMovie)
-            onItemViewClickedListener = StashItemViewClickListener(requireActivity())
+
+            val actionListener =
+                OnItemViewClickedListener { viewHolder: Presenter.ViewHolder, item: Any, rowViewHolder: RowPresenter.ViewHolder, row: Row ->
+                    if (item is AddTagAction) {
+                        val intent = Intent(requireActivity(), SearchForActivity::class.java)
+                        intent.putExtra("dataType", DataType.TAG.name)
+                        intent.putExtra(SearchForFragment.ID_KEY, ADD_TAG_SEARCH_ID)
+                        resultLauncher.launch(intent)
+                    }
+                }
+
+            onItemViewClickedListener =
+                StashItemViewClickListener(requireActivity(), actionListener)
         } else {
             Log.w(TAG, "No movie found in intent")
             val intent = Intent(requireActivity(), MainActivity::class.java)
@@ -82,21 +106,57 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
                     val data: Intent? = result.data
-                    position = data!!.getLongExtra(POSITION_ARG, -1)
-                    if (position > 10_000) {
-                        // If some of the video played, reset the available actions
-                        // This also causes the focused action to default to resume which is an added bonus
-                        actionAdapter.clear()
-                        actionAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
-                        actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
-
-                        val serverPreferences = ServerPreferences(requireContext())
-                        if (serverPreferences.trackActivity) {
-                            viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
-                                MutationEngine(requireContext(), false).saveSceneActivity(
+                    val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
+                    if (id == ADD_TAG_SEARCH_ID) {
+                        val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
+                        Log.d(TAG, "Adding tag $tagId to scene ${mSelectedMovie?.id}")
+                        viewLifecycleOwner.lifecycleScope.launch(
+                            CoroutineExceptionHandler { _, ex ->
+                                Log.e(TAG, "Exception setting tags", ex)
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to add tag: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            },
+                        ) {
+                            val tagIds =
+                                tagsAdapter.unmodifiableList<Tag>().map { it.id }.toMutableList()
+                            tagIds.add(tagId!!.toInt())
+                            val mutResult =
+                                MutationEngine(requireContext()).setTagsOnScene(
                                     mSelectedMovie!!.id,
-                                    position,
+                                    tagIds,
                                 )
+                            val newTags = mutResult?.tags?.map { Tag(it.tagData) }
+                            val newTagName =
+                                newTags?.first { it.id == tagId.toInt() }?.name
+                            tagsAdapter.clear()
+                            tagsAdapter.addAll(0, newTags)
+
+                            Toast.makeText(
+                                requireContext(),
+                                "Added tag '$newTagName' to scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    } else {
+                        position = data.getLongExtra(POSITION_ARG, -1)
+                        if (position > 10_000) {
+                            // If some of the video played, reset the available actions
+                            // This also causes the focused action to default to resume which is an added bonus
+                            actionAdapter.clear()
+                            actionAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
+                            actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+
+                            val serverPreferences = ServerPreferences(requireContext())
+                            if (serverPreferences.trackActivity) {
+                                viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
+                                    MutationEngine(requireContext(), false).saveSceneActivity(
+                                        mSelectedMovie!!.id,
+                                        position,
+                                    )
+                                }
                             }
                         }
                     }
@@ -116,7 +176,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     queryEngine.findScenes(sceneIds = listOf(mSelectedMovie!!.id.toInt()))
                         .first()
                 if (scene.tags.isNotEmpty()) {
-                    tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
+                    tagsAdapter.addAll(0, scene.tags.map { Tag(it.tagData) })
                 }
 
                 val performerIds =
@@ -163,7 +223,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupDetailsOverviewRow() {
-        Log.d(TAG, "doInBackground: " + mSelectedMovie?.toString())
         val row = DetailsOverviewRow(mSelectedMovie!!)
         row.imageDrawable =
             ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
@@ -251,6 +310,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         // TODO related scenes
         mAdapter.add(ListRow(HeaderItem(0, "Performers"), performersAdapter))
         mAdapter.add(ListRow(HeaderItem(1, "Tags"), tagsAdapter))
+        mAdapter.add(ListRow(HeaderItem(2, "Actions"), actionsAdapter))
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 
@@ -274,5 +334,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private val NUM_COLS = 10
 
         const val POSITION_ARG = "position"
+
+        const val ADD_TAG_SEARCH_ID = 1L
     }
 }
