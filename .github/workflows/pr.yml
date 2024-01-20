@@ -29,6 +29,8 @@ jobs:
           submodules: true # Need the submodules to build
       - name: Setup Python
         uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
