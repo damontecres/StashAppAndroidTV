@@ -76,6 +76,18 @@
             app:entryValues="@array/stream_options" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="@string/stashapp_config_tasks_job_queue">
+        <Preference
+            app:key="triggerScan"
+            app:title="Trigger Default Library Scan"
+            app:summary="@string/stashapp_config_tasks_scan_for_content_desc" />
+
+        <Preference
+            app:key="triggerGenerate"
+            app:title="Trigger Default Generate"
+            app:summary="@string/stashapp_config_tasks_generate_desc" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="About">
         <Preference
             app:key="versionName"
