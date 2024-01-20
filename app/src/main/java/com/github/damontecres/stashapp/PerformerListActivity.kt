@@ -12,7 +12,7 @@ class PerformerListActivity : SecureFragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)
         if (savedInstanceState == null) {
-            findViewById<TextView>(R.id.tag_title).text = "Performers"
+            findViewById<TextView>(R.id.tag_title).text = getString(R.string.stashapp_performers)
 
             val queryEngine = QueryEngine(this, true)
             lifecycleScope.launch {

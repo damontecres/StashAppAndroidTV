@@ -10,7 +10,7 @@
         android:layout_width="80dp"
         android:layout_height="match_parent"
         android:src="@mipmap/stash_logo"
-        android:contentDescription="icon"
+        android:contentDescription="@string/stashapp_image"
         android:layout_alignParentStart="true" />
 
     <androidx.leanback.widget.SearchOrbView
