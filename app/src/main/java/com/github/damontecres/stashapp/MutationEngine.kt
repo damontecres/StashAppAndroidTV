@@ -12,7 +12,7 @@ import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
-import com.github.damontecres.stashapp.api.SetSceneTagsMutation
+import com.github.damontecres.stashapp.api.SceneUpdateMutation
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
@@ -144,14 +144,31 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
     suspend fun setTagsOnScene(
         sceneId: Long,
         tagIds: List<Int>,
-    ): SetSceneTagsMutation.SceneUpdate? {
+    ): SceneUpdateMutation.SceneUpdate? {
         Log.v(TAG, "setTagsOnScene sceneId=$sceneId, tagIds=$tagIds")
         val mutation =
-            SetSceneTagsMutation(
+            SceneUpdateMutation(
                 input =
                     SceneUpdateInput(
                         id = sceneId.toString(),
                         tag_ids = Optional.present(tagIds.map { it.toString() }),
+                    ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.sceneUpdate
+    }
+
+    suspend fun setPerformersOnScene(
+        sceneId: Long,
+        performerIds: List<Int>,
+    ): SceneUpdateMutation.SceneUpdate? {
+        Log.v(TAG, "setTagsOnScene sceneId=$sceneId, performerIds=$performerIds")
+        val mutation =
+            SceneUpdateMutation(
+                input =
+                    SceneUpdateInput(
+                        id = sceneId.toString(),
+                        performer_ids = Optional.present(performerIds.map { it.toString() }),
                     ),
             )
         val result = executeMutation(mutation)

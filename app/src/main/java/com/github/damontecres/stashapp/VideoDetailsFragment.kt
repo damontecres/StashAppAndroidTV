@@ -33,6 +33,7 @@ import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.Tag
@@ -67,6 +68,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         super.onCreate(savedInstanceState)
 
         actionsAdapter.add(StashAction.ADD_TAG)
+        actionsAdapter.add(StashAction.ADD_PERFORMER)
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
 
@@ -83,12 +85,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
             val actionListener =
                 StashActionClickedListener { action: StashAction ->
-                    if (action == StashAction.ADD_TAG) {
-                        val intent = Intent(requireActivity(), SearchForActivity::class.java)
-                        intent.putExtra("dataType", DataType.TAG.name)
-                        intent.putExtra(SearchForFragment.ID_KEY, action.id)
-                        resultLauncher.launch(intent)
-                    }
+                    val intent = Intent(requireActivity(), SearchForActivity::class.java)
+                    val dataType =
+                        when (action) {
+                            StashAction.ADD_TAG -> DataType.TAG
+                            StashAction.ADD_PERFORMER -> DataType.PERFORMER
+                        }
+                    intent.putExtra("dataType", dataType.name)
+                    intent.putExtra(SearchForFragment.ID_KEY, action.id)
+                    resultLauncher.launch(intent)
                 }
 
             onItemViewClickedListener =
@@ -104,7 +109,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 if (result.resultCode == Activity.RESULT_OK) {
                     val data: Intent? = result.data
                     val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
-                    if (id == ADD_TAG_SEARCH_ID) {
+                    if (id == StashAction.ADD_TAG.id) {
                         val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
                         Log.d(TAG, "Adding tag $tagId to scene ${mSelectedMovie?.id}")
                         viewLifecycleOwner.lifecycleScope.launch(
@@ -134,6 +139,40 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             Toast.makeText(
                                 requireContext(),
                                 "Added tag '$newTagName' to scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    } else if (id == StashAction.ADD_PERFORMER.id) {
+                        val performerId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
+                        Log.d(TAG, "Adding performer $performerId to scene ${mSelectedMovie?.id}")
+                        viewLifecycleOwner.lifecycleScope.launch(
+                            CoroutineExceptionHandler { _, ex ->
+                                Log.e(TAG, "Exception setting performers", ex)
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to add performer: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            },
+                        ) {
+                            val performerIds =
+                                performersAdapter.unmodifiableList<PerformerData>().map { it.id }
+                                    .toMutableList()
+                            performerIds.add(performerId.toString())
+                            val mutResult =
+                                MutationEngine(requireContext()).setPerformersOnScene(
+                                    mSelectedMovie!!.id,
+                                    performerIds.map { it.toInt() },
+                                )
+                            val resultPerformers = mutResult?.performers?.map { it.performerData }
+                            val newPerformer =
+                                resultPerformers?.first { it.id == performerId }
+                            performersAdapter.clear()
+                            performersAdapter.addAll(0, resultPerformers)
+
+                            Toast.makeText(
+                                requireContext(),
+                                "Added performer '${newPerformer?.name}' to scene",
                                 Toast.LENGTH_SHORT,
                             ).show()
                         }
