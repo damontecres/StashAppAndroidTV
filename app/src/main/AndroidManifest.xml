@@ -45,9 +45,6 @@
             android:name=".PlaybackActivity"
             android:exported="false" />
         <activity
-            android:name=".BrowseErrorActivity"
-            android:exported="false" />
-        <activity
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity
