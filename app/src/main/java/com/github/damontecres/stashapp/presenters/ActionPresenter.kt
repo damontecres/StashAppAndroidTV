@@ -10,7 +10,7 @@ class ActionPresenter : StashPresenter() {
     ) {
         val action = item as StashAction
         val cardView = viewHolder.view as ImageCardView
-        cardView.titleText = action.name
+        cardView.titleText = action.actionName
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
     }
 

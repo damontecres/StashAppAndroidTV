@@ -25,17 +25,14 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
-import androidx.leanback.widget.OnItemViewClickedListener
-import androidx.leanback.widget.Presenter
-import androidx.leanback.widget.Row
-import androidx.leanback.widget.RowPresenter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
-import com.github.damontecres.stashapp.actions.AddTagAction
+import com.github.damontecres.stashapp.actions.StashAction
+import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.Tag
@@ -69,7 +66,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
-        actionsAdapter.add(AddTagAction())
+        actionsAdapter.add(StashAction.ADD_TAG)
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
 
@@ -85,11 +82,11 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             initializeBackground(mSelectedMovie)
 
             val actionListener =
-                OnItemViewClickedListener { viewHolder: Presenter.ViewHolder, item: Any, rowViewHolder: RowPresenter.ViewHolder, row: Row ->
-                    if (item is AddTagAction) {
+                StashActionClickedListener { action: StashAction ->
+                    if (action == StashAction.ADD_TAG) {
                         val intent = Intent(requireActivity(), SearchForActivity::class.java)
                         intent.putExtra("dataType", DataType.TAG.name)
-                        intent.putExtra(SearchForFragment.ID_KEY, ADD_TAG_SEARCH_ID)
+                        intent.putExtra(SearchForFragment.ID_KEY, action.id)
                         resultLauncher.launch(intent)
                     }
                 }
