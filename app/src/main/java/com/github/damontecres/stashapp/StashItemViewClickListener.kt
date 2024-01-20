@@ -10,6 +10,7 @@ import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
 import com.github.damontecres.stashapp.actions.StashAction
+import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -26,7 +27,7 @@ import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
  */
 class StashItemViewClickListener(
     private val activity: Activity,
-    private val actionListener: OnItemViewClickedListener? = null,
+    private val actionListener: StashActionClickedListener? = null,
 ) : OnItemViewClickedListener {
     override fun onItemClicked(
         itemViewHolder: Presenter.ViewHolder,
@@ -96,7 +97,7 @@ class StashItemViewClickListener(
             activity.startActivity(intent)
         } else if (item is StashAction) {
             if (actionListener != null) {
-                actionListener.onItemClicked(itemViewHolder, item, rowViewHolder, row)
+                actionListener.onClicked(item)
             } else {
                 throw RuntimeException("Action $item clicked, but no actionListener was provided!")
             }

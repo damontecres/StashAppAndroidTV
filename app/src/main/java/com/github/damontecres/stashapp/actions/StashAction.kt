@@ -1,9 +1,6 @@
 package com.github.damontecres.stashapp.actions
 
-import android.content.Context
-
-interface StashAction {
-    val name: String
-
-    fun execute(context: Context)
+enum class StashAction(val id: Long, val actionName: String) {
+    ADD_TAG(1L, "Add Tag"),
+    ADD_PERFORMER(2L, "Add Performer"),
 }

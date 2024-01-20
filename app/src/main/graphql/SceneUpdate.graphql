@@ -1,0 +1,11 @@
+mutation SceneUpdate($input: SceneUpdateInput!) {
+  sceneUpdate(input: $input) {
+    id
+    tags {
+      ...TagData
+    }
+    performers {
+      ...PerformerData
+    }
+  }
+}
