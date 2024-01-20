@@ -29,6 +29,12 @@ Make sure your Stash server is running and that you can access it over the netwo
 
 The app does not auto-update, so you will need to repeat this process for each new release.
 
+#### Develop build
+
+You can install the latest development debug build from the [develop pre-release](https://github.com/damontecres/StashAppAndroidTV/releases/tag/develop) using the same methods as above. The short code is `505547` or URL: https://aftv.news/505547
+
+This build has the latest features, but may be unstable or have bugs.
+
 ### Configuration
 
 1. Open the app
