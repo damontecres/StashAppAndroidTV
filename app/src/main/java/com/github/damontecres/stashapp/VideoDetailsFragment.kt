@@ -39,8 +39,6 @@ import com.github.damontecres.stashapp.actions.AddTagAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.Tag
-import com.github.damontecres.stashapp.data.fromSlimSceneDataTag
-import com.github.damontecres.stashapp.data.fromTagData
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -130,7 +128,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                                     mSelectedMovie!!.id,
                                     tagIds,
                                 )
-                            val newTags = mutResult?.tags?.map { fromTagData(it.tagData) }
+                            val newTags = mutResult?.tags?.map { Tag(it.tagData) }
                             val newTagName =
                                 newTags?.first { it.id == tagId.toInt() }?.name
                             tagsAdapter.clear()
@@ -178,7 +176,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     queryEngine.findScenes(sceneIds = listOf(mSelectedMovie!!.id.toInt()))
                         .first()
                 if (scene.tags.isNotEmpty()) {
-                    tagsAdapter.addAll(0, scene.tags.map { fromSlimSceneDataTag(it) })
+                    tagsAdapter.addAll(0, scene.tags.map { Tag(it.tagData) })
                 }
 
                 val performerIds =

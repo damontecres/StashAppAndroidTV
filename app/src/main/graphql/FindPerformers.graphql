@@ -44,7 +44,7 @@ fragment PerformerData on Performer {
   performer_count
   o_counter
   tags {
-    ...SlimTagData
+    ...TagData
     __typename
   }
   stash_ids {
@@ -57,15 +57,5 @@ fragment PerformerData on Performer {
   death_date
   hair_color
   weight
-  __typename
-}
-
-fragment SlimTagData on Tag {
-  id
-  name
-  aliases
-  image_path
-  parent_count
-  child_count
   __typename
 }

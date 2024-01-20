@@ -31,7 +31,6 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Tag
-import com.github.damontecres.stashapp.data.fromFindTag
 import kotlin.random.Random
 
 class QueryEngine(private val context: Context, private val showToasts: Boolean = false) {
@@ -165,7 +164,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 ),
             )
         val tags =
-            executeQuery(query).data?.findTags?.tags?.map { fromFindTag(it) }
+            executeQuery(query).data?.findTags?.tags?.map { Tag(it.tagData) }
         return tags.orEmpty()
     }
 
