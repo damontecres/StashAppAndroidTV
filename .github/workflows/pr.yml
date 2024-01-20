@@ -38,4 +38,6 @@ jobs:
           java-version: '17'
           cache: 'gradle'
       - name: Build app
-        run: ./gradlew clean build
+        run: |
+          python -c 'import sys; print(sys.version)'
+          ./gradlew clean build
