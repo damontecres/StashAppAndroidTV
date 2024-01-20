@@ -1,11 +1,7 @@
 query FindTags($filter: FindFilterType, $tag_filter: TagFilterType)  {
   findTags(filter: $filter, tag_filter: $tag_filter){
     tags {
-      id
-      name
-      scene_count
-      performer_count
-      image_path
+      ...TagData
       __typename
     }
     count

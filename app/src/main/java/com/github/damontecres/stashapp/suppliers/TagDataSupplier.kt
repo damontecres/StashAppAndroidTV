@@ -7,7 +7,6 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Tag
-import com.github.damontecres.stashapp.data.fromFindTag
 import com.github.damontecres.stashapp.presenters.StashPagingSource
 
 class TagDataSupplier(
@@ -32,7 +31,7 @@ class TagDataSupplier(
         val count = data?.findTags?.count ?: -1
         val studios =
             data?.findTags?.tags?.map {
-                fromFindTag(it)
+                Tag(it.tagData)
             }.orEmpty()
         return CountAndList(count, studios)
     }
