@@ -84,7 +84,11 @@ apollo {
 }
 
 tasks.create("generateStrings", Exec::class.java) {
-    commandLine("python", "convert_strings.py", "--debug")
+    if (gradle.startParameter.logLevel == LogLevel.DEBUG || gradle.startParameter.logLevel == LogLevel.INFO) {
+        commandLine("python", "convert_strings.py", "--debug")
+    } else {
+        commandLine("python", "convert_strings.py")
+    }
 }
 
 tasks.preBuild.dependsOn("generateStrings")
