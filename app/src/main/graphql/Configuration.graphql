@@ -1,5 +1,37 @@
 query Configuration {
   configuration {
+    defaults{
+      scan{
+        scanGenerateClipPreviews
+        scanGenerateCovers
+        scanGenerateImagePreviews
+        scanGeneratePhashes
+        scanGeneratePreviews
+        scanGenerateSprites
+        scanGenerateThumbnails
+      }
+      generate{
+        clipPreviews
+        covers
+        imagePreviews
+        interactiveHeatmapsSpeeds
+        markerImagePreviews
+        markers
+        markerScreenshots
+        phashes
+        previews
+        sprites
+        transcodes
+      }
+    }
     ui
   }
+}
+
+mutation MetadataScan($input: ScanMetadataInput!){
+  metadataScan(input: $input)
+}
+
+mutation MetadataGenerate($input: GenerateMetadataInput!){
+  metadataGenerate(input: $input)
 }
