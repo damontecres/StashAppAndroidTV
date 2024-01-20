@@ -3,7 +3,7 @@ name: Development build
 on:
   push:
     branches:
-      - fea/debug-builds
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
