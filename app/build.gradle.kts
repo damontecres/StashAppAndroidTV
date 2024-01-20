@@ -84,12 +84,10 @@ apollo {
 }
 
 tasks.create("generateStrings", Exec::class.java) {
-    println("Generating android strings from server json")
     commandLine("python", "convert_strings.py", "--debug")
-    println("DONE: Generating android strings from server json")
 }
 
-tasks.build.dependsOn("generateStrings")
+tasks.preBuild.dependsOn("generateStrings")
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
