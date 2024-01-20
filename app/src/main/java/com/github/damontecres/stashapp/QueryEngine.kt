@@ -184,6 +184,22 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         return tags.orEmpty()
     }
 
+    /**
+     * Search for a type of data with the given query. Users will need to cast the returned List.
+     */
+    suspend fun find(
+        type: DataType,
+        findFilter: FindFilterType,
+    ): List<*> {
+        return when (type) {
+            DataType.SCENE -> findScenes(findFilter)
+            DataType.PERFORMER -> findPerformers(findFilter)
+            DataType.TAG -> findTags(findFilter)
+            DataType.STUDIO -> findStudios(findFilter)
+            DataType.MOVIE -> findMovies(findFilter)
+        }
+    }
+
     suspend fun getSavedFilter(filterId: String): SavedFilterData? {
         val query = FindSavedFilterQuery(filterId)
         return executeQuery(query).data?.findSavedFilter?.savedFilterData
