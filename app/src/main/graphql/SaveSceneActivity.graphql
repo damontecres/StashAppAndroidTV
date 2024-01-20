@@ -1,0 +1,3 @@
+mutation SceneSaveActivity($scene_id: ID!, $resume_time: Float!){
+  sceneSaveActivity(id: $scene_id, resume_time: $resume_time)
+}

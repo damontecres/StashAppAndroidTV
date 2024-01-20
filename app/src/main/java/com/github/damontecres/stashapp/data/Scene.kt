@@ -16,6 +16,7 @@ data class Scene(
     var studioName: String?,
     var streams: Map<String, String>,
     val duration: Double?,
+    val resumeTime: Double?,
 ) : Parcelable
 
 fun sceneFromSlimSceneData(data: SlimSceneData): Scene {
@@ -46,5 +47,6 @@ fun sceneFromSlimSceneData(data: SlimSceneData): Scene {
         studioName = data.studio?.name,
         streams = streams,
         duration = duration,
+        resumeTime = data.resume_time,
     )
 }
