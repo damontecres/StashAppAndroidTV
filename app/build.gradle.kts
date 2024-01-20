@@ -82,7 +82,7 @@ apollo {
 
 tasks.register("generateStrings", Exec::class.java) {
     println("Generating android strings from server json")
-    commandLine("python", "convert_strings.py")
+    commandLine("python", "convert_strings.py", "--debug")
 }
 
 tasks.build.dependsOn("generateStrings")

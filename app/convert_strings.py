@@ -1,7 +1,9 @@
-import os
+import sys
 import json
 from pathlib import Path
 from xml.sax.saxutils import escape
+
+DEBUG = "--debug" in sys.argv
 
 source_dir = Path("../stash-server/ui/v2.5/src/locales")
 dest_prefix="src/main/res/values"
@@ -18,6 +20,8 @@ def parse_dict(d, keys=[]):
             yield keys + [key], value
 
 def convert_file(source_file, dest_file, allowed_keys):
+    if DEBUG:
+        print(f"Converting {source_file} to {dest_file}")
     collected_keys = []
     with open(source_file, "r") as f:
         data = json.load(f)
@@ -28,6 +32,8 @@ def convert_file(source_file, dest_file, allowed_keys):
         for key, value in parse_dict(data, ["stashapp"]):
             key = "_".join(key)
             if allowed_keys and key not in allowed_keys:
+                if DEBUG:
+                    print(f"Skipping {key} in {source_file}")
                 continue
             collected_keys.append(key)
             f.write(f"    <string name=\"{key}\" formatted=\"false\">{escape_value(value)}</string>\n")
@@ -38,6 +44,8 @@ main_file = source_dir / "en-GB.json"
 main_dest = Path(dest_prefix) / "stash_strings.xml"
 
 allowed_keys = convert_file(main_file, main_dest, set())
+if DEBUG:
+    print(f"Got {len(allowed_keys)} allowed keys")
 
 for file in source_dir.glob("*.json"):
     if file.name.startswith("en-GB"):
@@ -45,3 +53,7 @@ for file in source_dir.glob("*.json"):
     else:
         lang = file.name.replace(".json", "").replace("-", "+").replace("_", "+")
         convert_file(file, Path(dest_prefix+"-b+"+lang) / "stash_strings.xml", allowed_keys)
+
+if DEBUG:
+    print(main_dest.name)
+    print(main_dest.read_text())
