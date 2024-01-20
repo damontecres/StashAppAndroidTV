@@ -65,6 +65,9 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    lint {
+        disable.add("MissingTranslation")
+    }
 }
 
 apollo {
@@ -80,7 +83,7 @@ apollo {
     }
 }
 
-tasks.register("generateStrings", Exec::class.java) {
+tasks.create("generateStrings", Exec::class.java) {
     println("Generating android strings from server json")
     commandLine("python", "convert_strings.py", "--debug")
 }
