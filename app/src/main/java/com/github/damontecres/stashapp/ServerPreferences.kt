@@ -4,6 +4,11 @@ import android.content.Context
 import androidx.core.content.edit
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 
+/**
+ * Represents configuration that users have set server-side
+ *
+ * Configuration is loaded into a SharedPreferences and made available throughout the app
+ */
 class ServerPreferences(context: Context) {
     val preferences =
         context.getSharedPreferences(

@@ -10,6 +10,9 @@ import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 
+/**
+ * Class for sending graphql mutations
+ */
 class MutationEngine(private val context: Context, private val showToasts: Boolean = false) {
     private val client =
         createApolloClient(context) ?: throw QueryEngine.StashNotConfiguredException()
@@ -66,6 +69,12 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         }
     }
 
+    /**
+     * Saves the resume time for a given scene
+     *
+     * @param sceneId the scene ID
+     * @param position the video playback position in milliseconds
+     */
     suspend fun saveSceneActivity(
         sceneId: Long,
         position: Long,
@@ -79,7 +88,7 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
     }
 
     companion object {
-        const val TAG = "mutationEngine"
+        const val TAG = "MutationEngine"
     }
 
     open class MutationException(msg: String? = null, cause: ApolloException? = null) :
