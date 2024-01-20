@@ -45,11 +45,13 @@ class SearchForFragment(
     private val exceptionHandler =
         CoroutineExceptionHandler { _: CoroutineContext, ex: Throwable ->
             Log.e(TAG, "Exception in search", ex)
-            Toast.makeText(requireContext(), "Search failed: ${ex.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(requireContext(), "Search failed: ${ex.message}", Toast.LENGTH_LONG)
+                .show()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        title = getString(dataType.pluralStringId)
         setSearchResultProvider(this)
         setOnItemViewClickedListener {
                 itemViewHolder: Presenter.ViewHolder,
