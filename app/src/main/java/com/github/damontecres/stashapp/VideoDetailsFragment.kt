@@ -29,6 +29,7 @@ import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
+import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.fromSlimSceneDataTag
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
@@ -72,6 +73,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             initializeBackground(mSelectedMovie)
             onItemViewClickedListener = StashItemViewClickListener(requireActivity())
         } else {
+            Log.w(TAG, "No movie found in intent")
             val intent = Intent(requireActivity(), MainActivity::class.java)
             startActivity(intent)
         }
@@ -81,12 +83,22 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 if (result.resultCode == Activity.RESULT_OK) {
                     val data: Intent? = result.data
                     position = data!!.getLongExtra(POSITION_ARG, -1)
-                    if (position > 0) {
+                    if (position > 10_000) {
                         // If some of the video played, reset the available actions
                         // This also causes the focused action to default to resume which is an added bonus
                         actionAdapter.clear()
                         actionAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
                         actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+
+                        val serverPreferences = ServerPreferences(requireContext())
+                        if (serverPreferences.trackActivity) {
+                            viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
+                                MutationEngine(requireContext(), false).saveSceneActivity(
+                                    mSelectedMovie!!.id,
+                                    position,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -183,12 +195,20 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 )
         }
 
-        actionAdapter.add(
-            Action(
-                ACTION_PLAY_SCENE,
-                resources.getString(R.string.play_scene),
-            ),
-        )
+        val serverPreferences = ServerPreferences(requireContext())
+        if (serverPreferences.trackActivity && mSelectedMovie?.resumeTime != null && mSelectedMovie?.resumeTime!! > 0) {
+            position = (mSelectedMovie?.resumeTime!! * 1000).toLong()
+            actionAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
+            actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+        } else {
+            actionAdapter.add(
+                Action(
+                    ACTION_PLAY_SCENE,
+                    resources.getString(R.string.play_scene),
+                ),
+            )
+        }
+
         row.actionsAdapter = actionAdapter
 
         mAdapter.add(row)

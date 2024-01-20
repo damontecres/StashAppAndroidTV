@@ -49,6 +49,38 @@ object Constants {
     const val STASH_API_HEADER = "ApiKey"
     const val PREF_KEY_STASH_URL = "stashUrl"
     const val PREF_KEY_STASH_API_KEY = "stashApi"
+    const val TAG = "Constants"
+    val MINIMUM_STASH_VERSION = Version("0.23.0")
+}
+
+data class Version(val version: String) {
+    val major: Int
+    val minor: Int
+    val patch: Int
+
+    init {
+        val splits = version.removePrefix("v").split(".").map { it.toInt() }.toList()
+        major = splits[0]
+        minor = splits[1]
+        patch = splits[2]
+    }
+
+    fun isAtLeast(version: Version): Boolean {
+        return this.major > version.major || (
+            this.major == version.major &&
+                (
+                    this.minor > version.minor || this.minor == version.minor &&
+                        this.patch >= version.patch
+                )
+        )
+    }
+}
+
+fun isStashVersionSupported(version: Version?): Boolean {
+    if (version == null) {
+        return false
+    }
+    return version.isAtLeast(Constants.MINIMUM_STASH_VERSION)
 }
 
 /**
@@ -108,7 +140,7 @@ fun createApolloClient(
     stashUrl: String?,
     apiKey: String?,
 ): ApolloClient? {
-    return if (stashUrl!!.isNotBlank()) {
+    return if (!stashUrl.isNullOrBlank()) {
         var cleanedStashUrl = stashUrl.trim()
         if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
             // Assume http
@@ -119,12 +151,16 @@ fun createApolloClient(
             url.buildUpon()
                 .path("/graphql") // Ensure the URL is the graphql endpoint
                 .build()
-        Log.d("Constants", "StashUrl: $stashUrl => $url")
+        Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
         ApolloClient.Builder()
             .serverUrl(url.toString())
             .addHttpInterceptor(AuthorizationInterceptor(apiKey))
             .build()
     } else {
+        Log.v(
+            Constants.TAG,
+            "Cannot create ApolloClient: stashUrl='$stashUrl', apiKey set: ${!apiKey.isNullOrBlank()}",
+        )
         null
     }
 }
@@ -147,7 +183,7 @@ fun createApolloClient(context: Context): ApolloClient? {
 suspend fun testStashConnection(
     context: Context,
     showToast: Boolean,
-): Boolean {
+): ServerInfoQuery.Data? {
     val client = createApolloClient(context)
     if (client == null) {
         if (showToast) {
@@ -168,6 +204,7 @@ suspend fun testStashConnection(
                         Toast.LENGTH_LONG,
                     ).show()
                 }
+                Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
             } else {
                 if (showToast) {
                     val version = info.data?.version?.version
@@ -178,10 +215,10 @@ suspend fun testStashConnection(
                         Toast.LENGTH_SHORT,
                     ).show()
                 }
-                return true
+                return info.data
             }
         } catch (ex: ApolloHttpException) {
-            Log.e("Constants", "ApolloHttpException", ex)
+            Log.e(Constants.TAG, "ApolloHttpException", ex)
             if (ex.statusCode == 401 || ex.statusCode == 403) {
                 if (showToast) {
                     Toast.makeText(
@@ -200,7 +237,7 @@ suspend fun testStashConnection(
                 }
             }
         } catch (ex: ApolloException) {
-            Log.e("Constants", "ApolloException", ex)
+            Log.e(Constants.TAG, "ApolloException", ex)
             if (showToast) {
                 Toast.makeText(
                     context,
@@ -210,7 +247,7 @@ suspend fun testStashConnection(
             }
         }
     }
-    return false
+    return null
 }
 
 fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
@@ -653,4 +690,14 @@ fun convertMovieObjectFilter(f: Any?): MovieFilterType? {
     } else {
         null
     }
+}
+
+/**
+ * Gets the value for the key trying first the key as provided and next the key lower cased
+ */
+fun <V> Map<String, V>.getCaseInsensitive(k: String?): V? {
+    if (k == null) {
+        return null
+    }
+    return this[k] ?: this[k.lowercase()]
 }

@@ -39,9 +39,11 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
 
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> {
         val queryName = query.operation.name()
+        Log.d(TAG, "executeQuery $queryName: ${query.operation}")
         try {
             val response = query.execute()
             if (response.errors.isNullOrEmpty()) {
+                Log.d(TAG, "executeQuery $queryName successful")
                 return response
             } else {
                 val errorMsgs = response.errors!!.map { it.message }.joinToString("\n")
@@ -52,7 +54,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                         Toast.LENGTH_LONG,
                     ).show()
                 }
-                Log.e(TAG, "Errors in $queryName:\n$errorMsgs")
+                Log.e(TAG, "Errors in $queryName: ${response.errors}")
                 throw QueryException("($queryName), ${response.errors!!.size} errors in graphql response")
             }
         } catch (ex: ApolloNetworkException) {

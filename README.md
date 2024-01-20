@@ -42,6 +42,12 @@ The app does not auto-update, so you will need to repeat this process for each n
     - Do not enter an API Key if authentication is not enabled on your Stash server!
 1. Select `Test Connection` to verify that the app can connect to your Stash server
 
+### Compatibility
+
+The app strives to be compatible with the latest released version of Stash.
+
+Currently, the minimum supported server version is Stash `0.23.0`.
+
 ## Contributions
 
 Issues and pull requests are always welcome! UI/UX improvements are especially desired!

@@ -95,7 +95,7 @@ class MainFragment : BrowseSupportFragment() {
         super.onResume()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            if (testStashConnection(requireContext(), false)) {
+            if (testStashConnection(requireContext(), false) != null) {
                 if (rowsAdapter.size() == 0) {
                     fetchData()
                 }
@@ -216,8 +216,32 @@ class MainFragment : BrowseSupportFragment() {
 
     private fun fetchData() {
         clearData()
-        viewLifecycleOwner.lifecycleScope.launch {
-            if (testStashConnection(requireContext(), false)) {
+        viewLifecycleOwner.lifecycleScope.launch(
+            CoroutineExceptionHandler { _, ex ->
+                Log.e(TAG, "Exception in fetchData coroutine", ex)
+                Toast.makeText(
+                    requireContext(),
+                    "Error fetching data: ${ex.message}",
+                    Toast.LENGTH_LONG,
+                ).show()
+            },
+        ) {
+            val serverInfo = testStashConnection(requireContext(), false)
+            if (serverInfo?.version?.version == null) {
+                Log.w(TAG, "Version returned by server is null")
+                Toast.makeText(
+                    requireContext(),
+                    "Could not determine the server version. Things may not work!",
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+            if (serverInfo?.version?.version != null && !isStashVersionSupported(Version(serverInfo.version.version))) {
+                val msg =
+                    "Stash server version ${serverInfo.version.version} is not supported!"
+                Log.e(TAG, msg)
+                Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
+                rowsAdapter.clear()
+            } else if (serverInfo != null) {
                 try {
                     val queryEngine = QueryEngine(requireContext(), showToasts = true)
 
@@ -228,8 +252,12 @@ class MainFragment : BrowseSupportFragment() {
 
                     viewLifecycleOwner.lifecycleScope.launch(exHandler) {
                         val query = ConfigurationQuery()
-                        val ui = queryEngine.executeQuery(query).data?.configuration?.ui
-                        if (ui != null) {
+                        val config = queryEngine.executeQuery(query).data?.configuration
+                        val serverPreferences = ServerPreferences(requireContext())
+                        serverPreferences.updatePreferences(config)
+
+                        if (config?.ui != null) {
+                            val ui = config.ui
                             val frontPageContent =
                                 (ui as Map<String, *>)["frontPageContent"] as List<Map<String, *>>
                             for (frontPageFilter: Map<String, *> in frontPageContent) {
@@ -241,6 +269,8 @@ class MainFragment : BrowseSupportFragment() {
                                     addCustomFilterRow(frontPageFilter, adapter, queryEngine)
                                 } else if (filterType == "SavedFilter") {
                                     addSavedFilterRow(frontPageFilter, adapter, queryEngine)
+                                } else {
+                                    Log.w(TAG, "Unknown frontPageFilter typename: $filterType")
                                 }
                             }
                         }
@@ -267,58 +297,86 @@ class MainFragment : BrowseSupportFragment() {
             CoroutineExceptionHandler { _, ex ->
                 Log.e(TAG, "Exception in addCustomFilterRow", ex)
             }
-        val msg = frontPageFilter["message"] as Map<String, *>
-        val objType =
-            (msg["values"] as Map<String, String>)["objects"] as String
-        val description =
-            when (msg["id"] as String) {
-                "recently_added_objects" -> "Recently Added $objType"
-                "recently_released_objects" -> "Recently Released $objType"
-                else -> objType
+        try {
+            val msg = frontPageFilter["message"] as Map<String, *>
+            val objType =
+                (msg["values"] as Map<String, String>)["objects"] as String
+            val description =
+                when (msg["id"].toString()) {
+                    "recently_added_objects" -> "Recently Added $objType"
+                    "recently_released_objects" -> "Recently Released $objType"
+                    else -> objType
+                }
+
+            val sortBy =
+                (frontPageFilter.getCaseInsensitive("sortBy") as String?)
+                    ?: when (msg["id"].toString()) {
+                        // Just in case, fall back to a reasonable default
+                        "recently_added_objects" -> "created_at"
+                        "recently_released_objects" -> "date"
+                        else -> null
+                    }
+            val mode = FilterMode.safeValueOf(frontPageFilter["mode"] as String)
+            if (mode !in supportedFilterModes) {
+                Log.w(TAG, "CustomFilter mode is $mode which is not supported yet")
+                return
             }
-        val mode = FilterMode.valueOf(frontPageFilter["mode"] as String)
-        if (mode !in supportedFilterModes) {
-            return
-        }
-        rowsAdapter.add(
-            ListRow(
-                HeaderItem(description),
-                adapter,
-            ),
-        )
-        viewLifecycleOwner.lifecycleScope.launch(exHandler) {
-            val direction = frontPageFilter["direction"] as String
-            val sortBy = frontPageFilter["sortBy"] as String
-            val filter =
-                FindFilterType(
-                    direction =
-                        Optional.present(
-                            SortDirectionEnum.safeValueOf(
-                                direction,
-                            ),
-                        ),
-                    sort = Optional.present(sortBy),
-                    per_page = Optional.present(25),
-                )
+            rowsAdapter.add(
+                ListRow(
+                    HeaderItem(description),
+                    adapter,
+                ),
+            )
+            viewLifecycleOwner.lifecycleScope.launch(exHandler) {
+                val direction = frontPageFilter["direction"] as String?
+                val directionEnum =
+                    if (direction != null) {
+                        val enum = SortDirectionEnum.safeValueOf(direction.uppercase())
+                        if (enum == SortDirectionEnum.UNKNOWN__) {
+                            SortDirectionEnum.DESC
+                        }
+                        enum
+                    } else {
+                        SortDirectionEnum.DESC
+                    }
 
-            when (mode) {
-                FilterMode.SCENES -> {
-                    adapter.addAll(0, queryEngine.findScenes(filter))
-                }
+                val filter =
+                    FindFilterType(
+                        direction = Optional.presentIfNotNull(directionEnum),
+                        sort = Optional.presentIfNotNull(sortBy),
+                        per_page = Optional.present(25),
+                    )
 
-                FilterMode.STUDIOS -> {
-                    adapter.addAll(0, queryEngine.findStudios(filter))
-                }
+                when (mode) {
+                    FilterMode.SCENES -> {
+                        adapter.addAll(0, queryEngine.findScenes(filter))
+                    }
 
-                FilterMode.PERFORMERS -> {
-                    adapter.addAll(0, queryEngine.findPerformers(filter))
-                }
+                    FilterMode.STUDIOS -> {
+                        adapter.addAll(0, queryEngine.findStudios(filter))
+                    }
 
-                else -> {
-                    Log.i(TAG, "Unsupported mode in frontpage: $mode")
+                    FilterMode.PERFORMERS -> {
+                        adapter.addAll(0, queryEngine.findPerformers(filter))
+                    }
+
+                    FilterMode.MOVIES -> {
+                        adapter.addAll(0, queryEngine.findMovies(filter))
+                    }
+
+                    else -> {
+                        Log.w(TAG, "Unsupported mode in frontpage: $mode")
+                    }
                 }
+                adapter.add(StashCustomFilter(mode, direction, sortBy, description))
             }
-            adapter.add(StashCustomFilter(mode, direction, sortBy, description))
+        } catch (ex: Exception) {
+            Log.e(TAG, "Exception during addCustomFilterRow", ex)
+            Toast.makeText(
+                requireContext(),
+                "CustomFilter parse error: ${ex.message}",
+                Toast.LENGTH_LONG,
+            ).show()
         }
     }
 
@@ -336,11 +394,11 @@ class MainFragment : BrowseSupportFragment() {
                     Toast.LENGTH_LONG,
                 ).show()
             }
-        val filterId = frontPageFilter["savedFilterId"]
         val header = HeaderItem("")
         val listRow = ListRow(header, adapter)
         rowsAdapter.add(listRow)
         viewLifecycleOwner.lifecycleScope.launch(exHandler) {
+            val filterId = frontPageFilter["savedFilterId"]
             val result = queryEngine.getSavedFilter(filterId.toString())
 
             val index = rowsAdapter.indexOf(listRow)
@@ -401,13 +459,15 @@ class MainFragment : BrowseSupportFragment() {
                     }
 
                     else -> {
-                        Log.i(
+                        Log.w(
                             TAG,
                             "Unsupported mode in frontpage: ${result?.mode}",
                         )
                     }
                 }
                 adapter.add(StashSavedFilter(filterId.toString(), result!!.mode))
+            } else {
+                Log.w(TAG, "SavedFilter mode is ${result?.mode} which is not supported yet")
             }
         }
     }
