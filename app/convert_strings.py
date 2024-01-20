@@ -17,7 +17,8 @@ def parse_dict(d, keys=[]):
         else:
             yield keys + [key], value
 
-def convert_file(source_file, dest_file):
+def convert_file(source_file, dest_file, allowed_keys):
+    collected_keys = []
     with open(source_file, "r") as f:
         data = json.load(f)
     dest_file.parent.mkdir(parents=True, exist_ok=True)
@@ -26,17 +27,21 @@ def convert_file(source_file, dest_file):
         f.write("<resources>\n")
         for key, value in parse_dict(data, ["stashapp"]):
             key = "_".join(key)
-            f.write(f"    <string name=\"{key}\">{escape_value(value)}</string>\n")
+            if allowed_keys and key not in allowed_keys:
+                continue
+            collected_keys.append(key)
+            f.write(f"    <string name=\"{key}\" formatted=\"false\">{escape_value(value)}</string>\n")
         f.write("</resources>\n")
+    return set(collected_keys)
 
 main_file = source_dir / "en-GB.json"
 main_dest = Path(dest_prefix) / "stash_strings.xml"
 
-convert_file(main_file, main_dest)
+allowed_keys = convert_file(main_file, main_dest, set())
 
 for file in source_dir.glob("*.json"):
     if file.name.startswith("en-GB"):
         continue
     else:
         lang = file.name.replace(".json", "").replace("-", "+").replace("_", "+")
-        convert_file(file, Path(dest_prefix+"-b+"+lang) / "stash_strings.xml")
+        convert_file(file, Path(dest_prefix+"-b+"+lang) / "stash_strings.xml", allowed_keys)
