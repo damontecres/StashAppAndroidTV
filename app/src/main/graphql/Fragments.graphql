@@ -1,0 +1,9 @@
+fragment TagData on Tag {
+  id
+  name
+  description
+  aliases
+  scene_count
+  performer_count
+  image_path
+}

@@ -38,11 +38,14 @@ import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutine
 import com.github.damontecres.stashapp.actions.AddTagAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.data.fromSlimSceneDataTag
+import com.github.damontecres.stashapp.data.fromTagData
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
 /**
@@ -108,11 +111,37 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
                     if (id == ADD_TAG_SEARCH_ID) {
                         val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
-                        Toast.makeText(
-                            requireContext(),
-                            "Got search result: $tagId",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Log.d(TAG, "Adding tag $tagId to scene ${mSelectedMovie?.id}")
+                        viewLifecycleOwner.lifecycleScope.launch(
+                            CoroutineExceptionHandler { _, ex ->
+                                Log.e(TAG, "Exception setting tags", ex)
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to add tag: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            },
+                        ) {
+                            val tagIds =
+                                tagsAdapter.unmodifiableList<Tag>().map { it.id }.toMutableList()
+                            tagIds.add(tagId!!.toInt())
+                            val mutResult =
+                                MutationEngine(requireContext()).setTagsOnScene(
+                                    mSelectedMovie!!.id,
+                                    tagIds,
+                                )
+                            val newTags = mutResult?.tags?.map { fromTagData(it.tagData) }
+                            val newTagName =
+                                newTags?.first { it.id == tagId.toInt() }?.name
+                            tagsAdapter.clear()
+                            tagsAdapter.addAll(0, newTags)
+
+                            Toast.makeText(
+                                requireContext(),
+                                "Added tag '$newTagName' to scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
                     } else {
                         position = data.getLongExtra(POSITION_ARG, -1)
                         if (position > 10_000) {

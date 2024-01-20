@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.data
 import android.os.Parcelable
 import com.github.damontecres.stashapp.api.FindTagsQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -31,5 +32,15 @@ fun fromFindTag(findTag: FindTagsQuery.Tag): Tag {
         findTag.scene_count,
         findTag.performer_count,
         findTag.image_path,
+    )
+}
+
+fun fromTagData(tag: TagData): Tag {
+    return Tag(
+        tag.id.toInt(),
+        tag.name,
+        tag.scene_count,
+        tag.performer_count,
+        tag.image_path,
     )
 }
