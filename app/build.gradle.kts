@@ -85,7 +85,7 @@ tasks.register("generateStrings", Exec::class.java) {
     commandLine("python", "convert_strings.py")
 }
 
-tasks.assemble.dependsOn("generateStrings")
+tasks.build.dependsOn("generateStrings")
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
