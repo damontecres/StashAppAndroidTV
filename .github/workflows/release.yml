@@ -5,8 +5,13 @@ on:
     tags:
       - v*
 
+defaults:
+  run:
+    shell: bash
+
 env:
   APK_SHORT_NAME: StashAppAndroidTV.apk
+  BUILD_TOOLS_VERSION: 34.0.0
 
 jobs:
   publish:
@@ -31,6 +36,8 @@ jobs:
           cache: 'gradle'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: "tools platform-tools build-tools;${{ env.BUILD_TOOLS_VERSION }}"
       - name: Build app
         id: buildapp
         env:
@@ -43,7 +50,7 @@ jobs:
           echo "apk=$(ls app/build/outputs/apk/release/StashAppAndroidTV-release*.apk)" >> "$GITHUB_OUTPUT"
       - name: Verify signature
         run: |
-          apksigner verify --verbose --print-certs "${{ steps.buildapp.outputs.apk }}"
+          ${{env.ANDROID_SDK_ROOT}}/build-tools/${{ env.BUILD_TOOLS_VERSION }}/apksigner verify --verbose --print-certs "${{ steps.buildapp.outputs.apk }}"
       - name: Copy APK to ${{ env.APK_SHORT_NAME }}
         run: |
           cp ${{ steps.buildapp.outputs.apk }} ${{ env.APK_SHORT_NAME }}
