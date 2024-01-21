@@ -3,6 +3,13 @@ name: PR
 on:
   pull_request:
 
+defaults:
+  run:
+    shell: bash
+
+env:
+  BUILD_TOOLS_VERSION: 34.0.0
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
@@ -37,7 +44,15 @@ jobs:
           distribution: zulu
           java-version: '17'
           cache: 'gradle'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "tools platform-tools build-tools;${{ env.BUILD_TOOLS_VERSION }}"
       - name: Build app
+        id: buildapp
         run: |
-          python -c 'import sys; print(sys.version)'
           ./gradlew clean build
+          echo "apk=$(ls app/build/outputs/apk/debug/StashAppAndroidTV-debug*.apk)" >> "$GITHUB_OUTPUT"
+      - name: Verify signature
+        run: |
+          ${{env.ANDROID_SDK_ROOT}}/build-tools/${{ env.BUILD_TOOLS_VERSION }}/apksigner verify --verbose --print-certs "${{ steps.buildapp.outputs.apk }}"

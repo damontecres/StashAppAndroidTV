@@ -52,3 +52,6 @@ google-services.json
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local scripts
+local_scripts/

@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -12,6 +16,7 @@ concurrency:
 env:
   APK_SHORT_NAME: StashAppAndroidTV-debug.apk
   TAG_NAME: develop
+  BUILD_TOOLS_VERSION: 34.0.0
 
 jobs:
   build:
@@ -34,14 +39,26 @@ jobs:
           distribution: zulu
           java-version: '17'
           cache: 'gradle'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "tools platform-tools build-tools;${{ env.BUILD_TOOLS_VERSION }}"
       - name: Build app
         id: buildapp
+        env:
+          KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
+          KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
+          STORE_PASSWORD: "${{ secrets.STORE_PASSWORD }}"
+          SIGNING_KEY: "${{ secrets.SIGNING_KEY }}"
         run: |
           ./gradlew clean assembleDebug
           echo "apk=$(ls app/build/outputs/apk/debug/StashAppAndroidTV-debug*.apk)" >> "$GITHUB_OUTPUT"
+      - name: Verify signature
+        run: |
+          ${{env.ANDROID_SDK_ROOT}}/build-tools/${{ env.BUILD_TOOLS_VERSION }}/apksigner verify --verbose --print-certs "${{ steps.buildapp.outputs.apk }}"
       - name: Copy APK to ${{ env.APK_SHORT_NAME }}
         run: |
-          cp ${{ steps.buildapp.outputs.apk }} ${{ env.APK_SHORT_NAME }}
+          cp "${{ steps.buildapp.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
       - name: Advance ${{ env.TAG_NAME }} tag
         uses: actions/github-script@v7
         with:

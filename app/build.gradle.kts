@@ -1,5 +1,9 @@
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import java.io.ByteArrayOutputStream
+import java.util.Base64
+
+val isCI = if (System.getenv("CI") != null) System.getenv("CI").toBoolean() else false
+val shouldSign = isCI && System.getenv("KEY_ALIAS") != null
 
 plugins {
     id("com.android.application")
@@ -37,6 +41,23 @@ android {
         versionCode = getVersionCode()
         versionName = getAppVersion()
     }
+    signingConfigs {
+        if (shouldSign) {
+            create("ci") {
+                file("ci.keystore").writeBytes(
+                    Base64.getDecoder().decode(System.getenv("SIGNING_KEY")),
+                )
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+                storePassword = System.getenv("STORE_PASSWORD")
+                storeFile = file("ci.keystore")
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+                enableV4Signing = true
+            }
+        }
+    }
 
     buildTypes {
         release {
@@ -45,6 +66,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            if (shouldSign) {
+                signingConfig = signingConfigs.getByName("ci")
+            }
+        }
+        debug {
+            if (shouldSign) {
+                signingConfig = signingConfigs.getByName("ci")
+            }
         }
 
         applicationVariants.all {
