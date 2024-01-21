@@ -39,5 +39,4 @@ jobs:
           cache: 'gradle'
       - name: Build app
         run: |
-          python -c 'import sys; print(sys.version)'
           ./gradlew clean build

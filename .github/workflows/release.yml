@@ -5,6 +5,9 @@ on:
     tags:
       - v*
 
+env:
+  APK_SHORT_NAME: StashAppAndroidTV.apk
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -16,8 +19,38 @@ jobs:
         with:
           fetch-depth: 0 # Need the tags to build
           submodules: true # Need the submodules to build
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+          cache: 'gradle'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Build app
+        id: buildapp
+        env:
+          KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
+          KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
+          STORE_PASSWORD: "${{ secrets.STORE_PASSWORD }}"
+          SIGNING_KEY: "${{ secrets.SIGNING_KEY }}"
+        run: |
+          ./gradlew clean assembleRelease
+          echo "apk=$(ls app/build/outputs/apk/release/StashAppAndroidTV-release*.apk)" >> "$GITHUB_OUTPUT"
+      - name: Verify signature
+        run: |
+          apksigner verify --verbose --print-certs "${{ steps.buildapp.outputs.apk }}"
+      - name: Copy APK to ${{ env.APK_SHORT_NAME }}
+        run: |
+          cp ${{ steps.buildapp.outputs.apk }} ${{ env.APK_SHORT_NAME }}
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: ""
+          artifacts: "${{ steps.buildapp.outputs.apk }},${{ env.APK_SHORT_NAME }}"
+          makeLatest: true
+          prerelease: false
           generateReleaseNotes: true
