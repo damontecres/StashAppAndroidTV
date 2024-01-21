@@ -2,6 +2,8 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.Log
+import android.widget.Toast
 import androidx.leanback.app.SearchSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.HeaderItem
@@ -12,37 +14,31 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
-import com.github.damontecres.stashapp.presenters.MoviePresenter
-import com.github.damontecres.stashapp.presenters.PerformerPresenter
-import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StudioPresenter
-import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.EnumMap
 
 class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
 
     private val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-
-    private val sceneAdapter = ArrayObjectAdapter(ScenePresenter())
-    private val studioAdapter = ArrayObjectAdapter(StudioPresenter())
-    private val performerAdapter = ArrayObjectAdapter(PerformerPresenter())
-    private val tagAdapter = ArrayObjectAdapter(TagPresenter())
-    private val movieAdapter = ArrayObjectAdapter(MoviePresenter())
+    private val adapters = EnumMap<DataType, ArrayObjectAdapter>(DataType::class.java)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setSearchResultProvider(this)
         setOnItemViewClickedListener(StashItemViewClickListener(requireActivity()))
-        rowsAdapter.add(ListRow(HeaderItem("Scenes"), sceneAdapter))
-        rowsAdapter.add(ListRow(HeaderItem("Studios"), studioAdapter))
-        rowsAdapter.add(ListRow(HeaderItem("Performers"), performerAdapter))
-        rowsAdapter.add(ListRow(HeaderItem("Tags"), tagAdapter))
-        rowsAdapter.add(ListRow(HeaderItem("Movies"), movieAdapter))
+
+        DataType.entries.forEach {
+            val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+            adapters[it] = adapter
+            rowsAdapter.add(ListRow(HeaderItem(getString(it.pluralStringId)), adapter))
+        }
     }
 
     override fun getResultsAdapter(): ObjectAdapter {
@@ -72,13 +68,8 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
     }
 
     private suspend fun search(query: String) {
-        sceneAdapter.clear()
-        studioAdapter.clear()
-        performerAdapter.clear()
-        tagAdapter.clear()
-        movieAdapter.clear()
-
         if (!TextUtils.isEmpty(query)) {
+            adapters.values.forEach { it.clear() }
             val perPage =
                 PreferenceManager.getDefaultSharedPreferences(requireContext())
                     .getInt("maxSearchResults", 25)
@@ -88,21 +79,24 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                     per_page = Optional.present(perPage),
                 )
             val queryEngine = QueryEngine(requireContext(), true)
-            viewLifecycleOwner.lifecycleScope.async {
-                sceneAdapter.addAll(0, queryEngine.findScenes(filter))
-            }
-            viewLifecycleOwner.lifecycleScope.async {
-                studioAdapter.addAll(0, queryEngine.findStudios(filter))
-            }
-            viewLifecycleOwner.lifecycleScope.async {
-                performerAdapter.addAll(0, queryEngine.findPerformers(filter))
-            }
-            viewLifecycleOwner.lifecycleScope.async {
-                tagAdapter.addAll(0, queryEngine.findTags(filter))
-            }
-            viewLifecycleOwner.lifecycleScope.async {
-                movieAdapter.addAll(0, queryEngine.findMovies(filter))
+            DataType.entries.forEach {
+                viewLifecycleOwner.lifecycleScope.launch(
+                    CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception in search for $it", ex)
+                        Toast.makeText(
+                            requireContext(),
+                            "Search for ${getString(it.pluralStringId)} failed: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    },
+                ) {
+                    adapters[it]!!.addAll(0, queryEngine.find(it, filter))
+                }
             }
         }
+    }
+
+    companion object {
+        const val TAG = "StashSearchFragment"
     }
 }
