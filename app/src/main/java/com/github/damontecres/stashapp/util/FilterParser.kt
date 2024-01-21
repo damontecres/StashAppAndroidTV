@@ -20,6 +20,7 @@ import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.StudioFilterType
@@ -518,6 +519,24 @@ class FilterParser private constructor(context: Context, serverInfoQuery: Server
                 date = Optional.presentIfNotNull(convertDateCriterionInput(filter?.get("date"))),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("created_at"))),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("updated_at"))),
+            )
+        } else {
+            null
+        }
+    }
+
+    fun convertMarkerObjectFilter(f: Any?): SceneMarkerFilterType? {
+        return if (f != null) {
+            val filter = f as Map<String, Map<String, *>>
+            SceneMarkerFilterType(
+                tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
+                scene_tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["scene_tags"])),
+                performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
+                created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
+                updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+                scene_date = Optional.presentIfNotNull(convertDateCriterionInput(filter["scene_date"])),
+                scene_created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["scene_created_at"])),
+                scene_updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["scene_updated_at"])),
             )
         } else {
             null

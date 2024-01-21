@@ -33,11 +33,13 @@ import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
+import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -58,6 +60,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private var performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
     private var tagsAdapter: ArrayObjectAdapter = ArrayObjectAdapter(TagPresenter())
+    private var markersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(MarkerPresenter())
     private var actionsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
@@ -220,6 +223,28 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     tagsAdapter.addAll(0, scene.tags.map { Tag(it.tagData) })
                 }
 
+                if (scene.scene_markers.isNotEmpty()) {
+                    markersAdapter.addAll(
+                        0,
+                        scene.scene_markers.map {
+                            MarkerData(
+                                id = it.id,
+                                title = it.title,
+                                created_at = "",
+                                updated_at = "",
+                                stream = "",
+                                screenshot = it.screenshot,
+                                seconds = it.seconds,
+                                preview = "",
+                                primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData),
+                                scene = MarkerData.Scene("", scene),
+                                tags = emptyList(),
+                                __typename = "",
+                            )
+                        },
+                    )
+                }
+
                 val performerIds =
                     scene.performers.map {
                         it.id.toInt()
@@ -349,9 +374,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private fun setupRelatedMovieListRow() {
         // TODO related scenes
-        mAdapter.add(ListRow(HeaderItem(0, "Performers"), performersAdapter))
-        mAdapter.add(ListRow(HeaderItem(1, "Tags"), tagsAdapter))
-        mAdapter.add(ListRow(HeaderItem(2, "Actions"), actionsAdapter))
+        mAdapter.add(
+            ListRow(
+                HeaderItem(0, getString(R.string.stashapp_performers)),
+                performersAdapter,
+            ),
+        )
+        mAdapter.add(ListRow(HeaderItem(1, getString(R.string.stashapp_tags)), tagsAdapter))
+        mAdapter.add(ListRow(HeaderItem(2, getString(R.string.stashapp_markers)), markersAdapter))
+        mAdapter.add(ListRow(HeaderItem(3, "Actions"), actionsAdapter))
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 

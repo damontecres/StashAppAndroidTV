@@ -9,8 +9,10 @@ import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
+import com.github.damontecres.stashapp.VideoDetailsFragment.Companion.POSITION_ARG
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -82,6 +84,14 @@ class StashItemViewClickListener(
         } else if (item is MovieData) {
             val intent = Intent(activity, MovieActivity::class.java)
             intent.putExtra("movie", Movie(item))
+            activity.startActivity(intent)
+        } else if (item is MarkerData) {
+            val intent = Intent(activity, PlaybackActivity::class.java)
+            intent.putExtra(
+                DetailsActivity.MOVIE,
+                Scene.fromSlimSceneData(item.scene.slimSceneData),
+            )
+            intent.putExtra(POSITION_ARG, (item.seconds * 1000).toLong())
             activity.startActivity(intent)
         } else if (item is StashSavedFilter) {
             val intent = Intent(activity, FilterListActivity::class.java)

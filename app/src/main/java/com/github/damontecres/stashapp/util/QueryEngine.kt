@@ -12,12 +12,14 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
+import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.FindMoviesQuery
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
@@ -27,6 +29,7 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
@@ -186,6 +189,21 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         return tags.orEmpty()
     }
 
+    suspend fun findMarkers(
+        findFilter: FindFilterType? = null,
+        markerFilter: SceneMarkerFilterType? = null,
+    ): List<MarkerData> {
+        val query =
+            client.query(
+                FindMarkersQuery(
+                    filter = updateFilter(findFilter),
+                    scene_marker_filter = markerFilter,
+                ),
+            )
+        return executeQuery(query).data?.findSceneMarkers?.scene_markers?.map { it.markerData }
+            .orEmpty()
+    }
+
     /**
      * Search for a type of data with the given query. Users will need to cast the returned List.
      */
@@ -199,6 +217,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
             DataType.TAG -> findTags(findFilter)
             DataType.STUDIO -> findStudios(findFilter)
             DataType.MOVIE -> findMovies(findFilter)
+            DataType.MARKER -> findMarkers(findFilter)
         }
     }
 

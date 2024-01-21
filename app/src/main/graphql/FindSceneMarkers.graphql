@@ -1,0 +1,33 @@
+query FindMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType) {
+  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter) {
+    count
+    scene_markers {
+      ...MarkerData
+    }
+    __typename
+  }
+}
+
+fragment MarkerData on SceneMarker {
+  id
+  title
+  created_at
+  updated_at
+  stream
+  screenshot
+  seconds
+  preview
+  primary_tag {
+    ...TagData
+    __typename
+  }
+  tags {
+    ...TagData
+    __typename
+  }
+  scene {
+    ...SlimSceneData
+    __typename
+  }
+  __typename
+}

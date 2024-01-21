@@ -11,12 +11,14 @@ import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
 import com.github.damontecres.stashapp.suppliers.TagDataSupplier
 import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.MarkerComparator
 import com.github.damontecres.stashapp.util.MovieComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -63,6 +65,11 @@ class FilterListActivity : SecureFragmentActivity() {
             DataType.MOVIE -> {
                 val movieFilter = FilterParser.instance.convertMovieObjectFilter(objectFilter)
                 StashGridFragment(MovieComparator, MovieDataSupplier(findFilter, movieFilter))
+            }
+
+            DataType.MARKER -> {
+                val markerFilter = FilterParser.instance.convertMarkerObjectFilter(objectFilter)
+                StashGridFragment(MarkerComparator, MarkerDataSupplier(findFilter, markerFilter))
             }
         }
     }

@@ -105,6 +105,16 @@ fragment SlimSceneData on Scene {
     stash_id
     __typename
   }
+  scene_markers {
+    id
+    title
+    primary_tag{
+      ...TagData
+    }
+    screenshot
+    seconds
+    __typename
+  }
   __typename
 }
 
