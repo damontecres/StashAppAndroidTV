@@ -39,6 +39,8 @@ jobs:
           cache: 'gradle'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: "tools platform-tools build-tools"
       - name: Build app
         run: |
           ./gradlew clean build
