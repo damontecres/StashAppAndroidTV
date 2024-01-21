@@ -18,6 +18,7 @@ import androidx.leanback.widget.RowPresenter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -68,6 +69,7 @@ class SearchForFragment(
                     DataType.MOVIE -> (item as MovieData).id
                     DataType.STUDIO -> (item as StudioData).id
                     DataType.PERFORMER -> (item as PerformerData).id
+                    DataType.MARKER -> (item as MarkerData).id
                 }
             result.putExtra(RESULT_ID_KEY, resultId)
             result.putExtra(ID_KEY, requireActivity().intent.getLongExtra("id", -1))

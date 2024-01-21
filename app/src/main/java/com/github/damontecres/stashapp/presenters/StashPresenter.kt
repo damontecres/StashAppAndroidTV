@@ -8,6 +8,7 @@ import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.actions.StashAction
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -79,5 +80,6 @@ abstract class StashPresenter : Presenter() {
                 .addClassPresenter(StashSavedFilter::class.java, StashFilterPresenter())
                 .addClassPresenter(StashCustomFilter::class.java, StashFilterPresenter())
                 .addClassPresenter(StashAction::class.java, ActionPresenter())
+                .addClassPresenter(MarkerData::class.java, MarkerPresenter())
     }
 }

@@ -107,6 +107,13 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
             startActivity(context, intent, null)
         }
         moviesButton.onFocusChangeListener = onFocusChangeListener
+
+        val markersButton = root.findViewById<Button>(R.id.markers_button)
+        markersButton.setOnClickListener {
+            val intent = Intent(context, MarkerListActivity::class.java)
+            startActivity(context, intent, null)
+        }
+        markersButton.onFocusChangeListener = onFocusChangeListener
     }
 
     override fun getTitleViewAdapter(): TitleViewAdapter {
