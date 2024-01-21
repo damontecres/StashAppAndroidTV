@@ -1,13 +1,16 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.TextView
+import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
@@ -17,24 +20,24 @@ import kotlinx.coroutines.launch
 
 class FilterListActivity : SecureFragmentActivity() {
     private fun getFragment(
-        mode: FilterMode,
+        dataType: DataType,
         findFilter: FindFilterType?,
         objectFilter: Map<String, Map<String, *>>?,
     ): StashGridFragment<out Query.Data, out Any>? {
-        return when (mode) {
-            FilterMode.SCENES -> {
+        return when (dataType) {
+            DataType.SCENE -> {
                 val sceneFilter =
                     FilterParser.instance.convertSceneObjectFilter(objectFilter)
                 StashGridFragment(SceneComparator, SceneDataSupplier(findFilter, sceneFilter))
             }
 
-            FilterMode.STUDIOS -> {
+            DataType.STUDIO -> {
                 val studioFilter =
                     FilterParser.instance.convertStudioObjectFilter(objectFilter)
                 StashGridFragment(StudioComparator, StudioDataSupplier(findFilter, studioFilter))
             }
 
-            FilterMode.PERFORMERS -> {
+            DataType.PERFORMER -> {
                 val performerFilter =
                     FilterParser.instance.convertPerformerObjectFilter(objectFilter)
                 StashGridFragment(
@@ -43,19 +46,15 @@ class FilterListActivity : SecureFragmentActivity() {
                 )
             }
 
-            FilterMode.TAGS -> {
+            DataType.TAG -> {
                 val tagFilter =
                     FilterParser.instance.convertTagObjectFilter(objectFilter)
                 StashGridFragment(TagComparator, TagDataSupplier(findFilter, tagFilter))
             }
 
-            FilterMode.MOVIES -> {
+            DataType.MOVIE -> {
                 val movieFilter = FilterParser.instance.convertMovieObjectFilter(objectFilter)
                 StashGridFragment(MovieComparator, MovieDataSupplier(findFilter, movieFilter))
-            }
-
-            else -> {
-                null
             }
         }
     }
@@ -68,43 +67,53 @@ class FilterListActivity : SecureFragmentActivity() {
             val direction = intent.getStringExtra("direction")
             val sortBy = intent.getStringExtra("sortBy")
             val mode = FilterMode.safeValueOf(intent.getStringExtra("mode")!!)
-            val description = intent.getStringExtra("description")
+            val dataType = DataType.fromFilterMode(mode)
+            if (dataType == null) {
+                Log.w(TAG, "Got unsupported FilterMode: $mode")
+                Toast.makeText(this, "Unsupporited filter mode: $mode", Toast.LENGTH_LONG).show()
+            } else {
+                val description = intent.getStringExtra("description")
 
-            val title = findViewById<TextView>(R.id.tag_title)
-            title.text = description
+                val title = findViewById<TextView>(R.id.tag_title)
+                title.text = description
 
-            val queryEngine = QueryEngine(this, true)
-            lifecycleScope.launch {
-                val filter: FindFilterType?
-                val objectFilter: Map<String, Map<String, *>>?
-                if (savedFilterId.isNullOrEmpty()) {
-                    filter =
-                        FindFilterType(
-                            direction =
-                                Optional.presentIfNotNull(
-                                    SortDirectionEnum.safeValueOf(
-                                        direction!!,
+                val queryEngine = QueryEngine(this, true)
+                lifecycleScope.launch {
+                    val filter: FindFilterType?
+                    val objectFilter: Map<String, Map<String, *>>?
+                    if (savedFilterId.isNullOrEmpty()) {
+                        filter =
+                            FindFilterType(
+                                direction =
+                                    Optional.presentIfNotNull(
+                                        SortDirectionEnum.safeValueOf(
+                                            direction!!,
+                                        ),
                                     ),
-                                ),
-                            sort = Optional.presentIfNotNull(sortBy),
-                        )
-                    objectFilter = null
-                } else {
-                    val result = queryEngine.getSavedFilter(savedFilterId.toString())
+                                sort = Optional.presentIfNotNull(sortBy),
+                            )
+                        objectFilter = null
+                    } else {
+                        val result = queryEngine.getSavedFilter(savedFilterId.toString())
 
-                    title.text = result?.name
+                        title.text = result?.name
 
-                    filter = convertFilter(result?.find_filter)
-                    objectFilter =
-                        result?.object_filter as Map<String, Map<String, *>>?
+                        filter = convertFilter(result?.find_filter)
+                        objectFilter =
+                            result?.object_filter as Map<String, Map<String, *>>?
+                    }
+
+                    val fragment = getFragment(dataType, filter, objectFilter)
+
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.tag_fragment, fragment!!)
+                        .commitNow()
                 }
-
-                val fragment = getFragment(mode, filter, objectFilter)
-
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.tag_fragment, fragment!!)
-                    .commitNow()
             }
         }
+    }
+
+    companion object {
+        const val TAG = "FilterListActivity"
     }
 }

@@ -9,4 +9,13 @@ enum class DataType(val filterMode: FilterMode, val stringId: Int, val pluralStr
     STUDIO(FilterMode.STUDIOS, R.string.stashapp_studio, R.string.stashapp_studios),
     TAG(FilterMode.TAGS, R.string.stashapp_tag, R.string.stashapp_tags),
     MOVIE(FilterMode.MOVIES, R.string.stashapp_movie, R.string.stashapp_movies),
+    ;
+
+    companion object {
+        fun fromFilterMode(mode: FilterMode): DataType? {
+            return DataType.entries.firstOrNull {
+                it.filterMode == mode
+            }
+        }
+    }
 }
