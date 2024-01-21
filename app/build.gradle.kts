@@ -49,7 +49,7 @@ android {
                 )
                 keyAlias = System.getenv("KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD")
-                storePassword = System.getenv("STORE_PASSWORD")
+                storePassword = System.getenv("KEY_STORE_PASSWORD")
                 storeFile = file("ci.keystore")
                 enableV1Signing = true
                 enableV2Signing = true
