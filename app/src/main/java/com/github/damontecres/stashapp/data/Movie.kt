@@ -12,10 +12,8 @@ data class Movie(
     val studioId: String?,
     val front_image_path: String?,
     val back_image_path: String?,
-) : Parcelable
-
-fun fromMovieData(movie: MovieData): Movie {
-    return Movie(
+) : Parcelable {
+    constructor(movie: MovieData) : this(
         movie.id,
         movie.name,
         movie.aliases,

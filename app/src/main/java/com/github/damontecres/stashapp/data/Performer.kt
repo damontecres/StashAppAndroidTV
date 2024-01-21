@@ -7,14 +7,12 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Performer(
-    var id: Long,
-    var name: String,
-    var disambiguation: String?,
-    var gender: GenderEnum?,
-) : Parcelable
-
-fun performerFromPerformerData(p: PerformerData): Performer {
-    return Performer(
+    val id: Long,
+    val name: String,
+    val disambiguation: String?,
+    val gender: GenderEnum?,
+) : Parcelable {
+    constructor(p: PerformerData) : this(
         id = p.id.toLong(),
         name = p.name,
         disambiguation = p.disambiguation,
