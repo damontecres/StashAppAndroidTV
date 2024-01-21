@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.net.Uri
@@ -17,6 +17,7 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 
@@ -212,6 +213,9 @@ fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
 }
 
 val supportedFilterModes = DataType.entries.map { it.filterMode }.toSet()
+
+val FilterMode.isSupported: Boolean
+    get() = supportedFilterModes.contains(this)
 
 /**
  * Gets the value for the key trying first the key as provided and next the key lower cased

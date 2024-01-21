@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
+import com.github.damontecres.stashapp.util.SceneComparator
 
 class TagActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

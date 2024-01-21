@@ -4,7 +4,7 @@ import androidx.leanback.widget.ImageCardView
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.createGlideUrl
+import com.github.damontecres.stashapp.util.createGlideUrl
 
 class PerformerPresenter : StashPresenter() {
     override fun onBindViewHolder(

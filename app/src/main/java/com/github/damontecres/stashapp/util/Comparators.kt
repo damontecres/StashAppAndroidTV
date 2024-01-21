@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.util
 
 import androidx.recyclerview.widget.DiffUtil
 import com.github.damontecres.stashapp.api.fragment.MovieData

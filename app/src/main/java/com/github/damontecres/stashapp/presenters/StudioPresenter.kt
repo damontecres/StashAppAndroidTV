@@ -5,7 +5,7 @@ import androidx.leanback.widget.ImageCardView
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.api.fragment.StudioData
-import com.github.damontecres.stashapp.createGlideUrl
+import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlin.properties.Delegates
 
 class StudioPresenter : StashPresenter() {

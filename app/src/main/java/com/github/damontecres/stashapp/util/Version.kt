@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.util
 
 data class Version(val version: String) {
     val major: Int
@@ -29,7 +29,7 @@ data class Version(val version: String) {
             if (version == null) {
                 return false
             }
-            return version.isAtLeast(Version.MINIMUM_STASH_VERSION)
+            return version.isAtLeast(MINIMUM_STASH_VERSION)
         }
     }
 }

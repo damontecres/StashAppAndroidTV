@@ -12,6 +12,8 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlinx.coroutines.async
 
 class PerformerFragment : Fragment(R.layout.performer_view) {

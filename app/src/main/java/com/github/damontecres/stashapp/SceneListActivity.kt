@@ -5,6 +5,10 @@ import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
+import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.SceneComparator
+import com.github.damontecres.stashapp.util.convertFilter
 import kotlinx.coroutines.launch
 
 class SceneListActivity : SecureFragmentActivity() {

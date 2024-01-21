@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import com.apollographql.apollo3.api.Optional

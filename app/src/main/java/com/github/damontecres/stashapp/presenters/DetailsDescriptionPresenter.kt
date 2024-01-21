@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.presenters
 
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
 import com.github.damontecres.stashapp.data.Scene

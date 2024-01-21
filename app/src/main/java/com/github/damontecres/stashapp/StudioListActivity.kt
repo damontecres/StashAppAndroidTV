@@ -5,6 +5,10 @@ import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
+import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StudioComparator
+import com.github.damontecres.stashapp.util.convertFilter
 import kotlinx.coroutines.launch
 
 class StudioListActivity : SecureFragmentActivity() {

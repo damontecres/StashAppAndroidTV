@@ -9,6 +9,7 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
+import com.github.damontecres.stashapp.util.SceneComparator
 
 class PerformerActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

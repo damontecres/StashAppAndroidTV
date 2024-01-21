@@ -16,6 +16,14 @@ import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
 import com.github.damontecres.stashapp.suppliers.TagDataSupplier
+import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.MovieComparator
+import com.github.damontecres.stashapp.util.PerformerComparator
+import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.SceneComparator
+import com.github.damontecres.stashapp.util.StudioComparator
+import com.github.damontecres.stashapp.util.TagComparator
+import com.github.damontecres.stashapp.util.convertFilter
 import kotlinx.coroutines.launch
 
 class FilterListActivity : SecureFragmentActivity() {
