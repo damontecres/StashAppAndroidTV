@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.util.Log
@@ -33,6 +33,9 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Tag
 import kotlin.random.Random
 
+/**
+ * Handles making graphql queries to the server
+ */
 class QueryEngine(private val context: Context, private val showToasts: Boolean = false) {
     private val client = createApolloClient(context) ?: throw StashNotConfiguredException()
 

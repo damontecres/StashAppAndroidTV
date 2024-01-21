@@ -38,6 +38,14 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.Version
+import com.github.damontecres.stashapp.util.convertFilter
+import com.github.damontecres.stashapp.util.getCaseInsensitive
+import com.github.damontecres.stashapp.util.supportedFilterModes
+import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import java.util.Timer
@@ -235,7 +243,15 @@ class MainFragment : BrowseSupportFragment() {
                     Toast.LENGTH_LONG,
                 ).show()
             }
-            if (serverInfo?.version?.version != null && !isStashVersionSupported(Version(serverInfo.version.version))) {
+            FilterParser.initialize(requireContext(), serverInfo)
+
+            if (serverInfo?.version?.version != null &&
+                !Version.isStashVersionSupported(
+                    Version.fromString(
+                        serverInfo.version.version,
+                    ),
+                )
+            ) {
                 val msg =
                     "Stash server version ${serverInfo.version.version} is not supported!"
                 Log.e(TAG, msg)
@@ -418,7 +434,7 @@ class MainFragment : BrowseSupportFragment() {
                 when (result?.mode) {
                     FilterMode.SCENES -> {
                         val sceneFilter =
-                            convertSceneObjectFilter(objectFilter)
+                            FilterParser.instance.convertSceneObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findScenes(filter, sceneFilter),
@@ -427,7 +443,7 @@ class MainFragment : BrowseSupportFragment() {
 
                     FilterMode.STUDIOS -> {
                         val studioFilter =
-                            convertStudioObjectFilter(objectFilter)
+                            FilterParser.instance.convertStudioObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findStudios(
@@ -439,7 +455,7 @@ class MainFragment : BrowseSupportFragment() {
 
                     FilterMode.PERFORMERS -> {
                         val performerFilter =
-                            convertPerformerObjectFilter(objectFilter)
+                            FilterParser.instance.convertPerformerObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findPerformers(
@@ -451,7 +467,7 @@ class MainFragment : BrowseSupportFragment() {
 
                     FilterMode.TAGS -> {
                         val tagFilter =
-                            convertTagObjectFilter(objectFilter)
+                            FilterParser.instance.convertTagObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findTags(filter, tagFilter),

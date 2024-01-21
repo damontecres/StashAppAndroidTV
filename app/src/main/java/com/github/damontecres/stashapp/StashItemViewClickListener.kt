@@ -15,12 +15,12 @@ import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.data.Movie
+import com.github.damontecres.stashapp.data.Performer
+import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.data.Tag
-import com.github.damontecres.stashapp.data.fromMovieData
-import com.github.damontecres.stashapp.data.performerFromPerformerData
-import com.github.damontecres.stashapp.data.sceneFromSlimSceneData
 
 /**
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc
@@ -37,7 +37,7 @@ class StashItemViewClickListener(
     ) {
         if (item is SlimSceneData) {
             val intent = Intent(activity, DetailsActivity::class.java)
-            intent.putExtra(DetailsActivity.MOVIE, sceneFromSlimSceneData(item))
+            intent.putExtra(DetailsActivity.MOVIE, Scene.fromSlimSceneData(item))
 
             val bundle =
                 ActivityOptionsCompat.makeSceneTransitionAnimation(
@@ -49,7 +49,7 @@ class StashItemViewClickListener(
             activity.startActivity(intent, bundle)
         } else if (item is PerformerData) {
             val intent = Intent(activity, PerformerActivity::class.java)
-            intent.putExtra("performer", performerFromPerformerData(item))
+            intent.putExtra("performer", Performer(item))
             val bundle =
                 ActivityOptionsCompat.makeSceneTransitionAnimation(
                     activity,
@@ -81,7 +81,7 @@ class StashItemViewClickListener(
             activity.startActivity(intent, bundle)
         } else if (item is MovieData) {
             val intent = Intent(activity, MovieActivity::class.java)
-            intent.putExtra("movie", fromMovieData(item))
+            intent.putExtra("movie", Movie(item))
             activity.startActivity(intent)
         } else if (item is StashSavedFilter) {
             val intent = Intent(activity, FilterListActivity::class.java)

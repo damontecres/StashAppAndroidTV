@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.data.Movie
+import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlinx.coroutines.async
 
 class MovieFragment : Fragment(R.layout.performer_view) {

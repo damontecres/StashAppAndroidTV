@@ -6,11 +6,11 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Tag(
-    var id: Int,
-    var name: String,
-    var sceneCount: Int?,
-    var performerCount: Int?,
-    var imagePath: String?,
+    val id: Int,
+    val name: String,
+    val sceneCount: Int?,
+    val performerCount: Int?,
+    val imagePath: String?,
 ) : Parcelable {
     constructor(tag: TagData) : this(
         tag.id.toInt(),

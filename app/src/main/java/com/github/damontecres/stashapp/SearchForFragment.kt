@@ -26,6 +26,7 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.util.QueryEngine
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

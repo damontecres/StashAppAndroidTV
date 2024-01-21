@@ -11,7 +11,7 @@ import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.createGlideUrl
+import com.github.damontecres.stashapp.util.createGlideUrl
 import java.io.File
 import java.security.MessageDigest
 import kotlin.time.DurationUnit

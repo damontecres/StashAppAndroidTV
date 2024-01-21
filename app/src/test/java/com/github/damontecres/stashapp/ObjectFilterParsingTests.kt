@@ -1,16 +1,36 @@
 package com.github.damontecres.stashapp
 
+import android.content.Context
 import com.apollographql.apollo3.api.json.BufferedSourceJsonReader
 import com.apollographql.apollo3.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
+import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FilterMode
+import com.github.damontecres.stashapp.util.FilterParser
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.junit.MockitoJUnitRunner
+import org.mockito.kotlin.mock
 
+@RunWith(MockitoJUnitRunner::class)
 class ObjectFilterParsingTests {
+    val serverInfo =
+        ServerInfoQuery.Data(
+            version = ServerInfoQuery.Version("0.23.0"),
+            stats = ServerInfoQuery.Stats(1),
+        )
+
+    @Before
+    fun init() {
+        val mockContext = mock<Context> {}
+        FilterParser.initialize(mockContext, serverInfo)
+    }
+
     /**
      * Get the SavedFilterData from a json file resource
      */
@@ -27,7 +47,7 @@ class ObjectFilterParsingTests {
     fun testSceneFilter() {
         val savedFilterData = getSavedFilterData("scene_savedfilter.json")
         val sceneFilter =
-            convertSceneObjectFilter(savedFilterData.object_filter)
+            FilterParser.instance.convertSceneObjectFilter(savedFilterData.object_filter)
         Assert.assertNotNull(sceneFilter!!)
         Assert.assertEquals(FilterMode.SCENES, savedFilterData.mode)
         Assert.assertEquals(
@@ -59,7 +79,8 @@ class ObjectFilterParsingTests {
     @Test
     fun testPerformerFilter() {
         val savedFilterData = getSavedFilterData("performer_savedfilter.json")
-        val performerFilter = convertPerformerObjectFilter(savedFilterData.object_filter)
+        val performerFilter =
+            FilterParser.instance.convertPerformerObjectFilter(savedFilterData.object_filter)
         Assert.assertNotNull(performerFilter!!)
         Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
 

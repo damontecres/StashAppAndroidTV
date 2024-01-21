@@ -59,11 +59,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = JavaVersion.VERSION_11.toString()
     }
     lint {
         disable.add("MissingTranslation")
@@ -101,11 +101,15 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.11.0")
 
     implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
 
     implementation("com.apollographql.apollo3:apollo-runtime:3.8.2")
     implementation("androidx.preference:preference-ktx:1.2.1")
+
+    testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.9.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 }

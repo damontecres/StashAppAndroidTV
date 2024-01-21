@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.presenters.StashPagingSource
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.util.QueryEngine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
