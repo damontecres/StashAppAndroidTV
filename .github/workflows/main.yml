@@ -48,7 +48,7 @@ jobs:
         env:
           KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
           KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
-          STORE_PASSWORD: "${{ secrets.STORE_PASSWORD }}"
+          KEY_STORE_PASSWORD: "${{ secrets.KEY_STORE_PASSWORD }}"
           SIGNING_KEY: "${{ secrets.SIGNING_KEY }}"
         run: |
           ./gradlew clean assembleDebug
