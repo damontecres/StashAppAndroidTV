@@ -27,7 +27,7 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 
 class FilterParser private constructor(context: Context, serverInfoQuery: ServerInfoQuery.Data?) {
-    private val serverPreferences = ServerPreferences(context)
+//    private val serverPreferences = ServerPreferences(context)
     private val serverVersion =
         if (serverInfoQuery?.version?.version != null) Version.fromString(serverInfoQuery.version.version) else null
 
