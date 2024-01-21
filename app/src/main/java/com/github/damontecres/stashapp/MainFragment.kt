@@ -237,7 +237,13 @@ class MainFragment : BrowseSupportFragment() {
             }
             FilterParser.initialize(requireContext(), serverInfo)
 
-            if (serverInfo?.version?.version != null && !isStashVersionSupported(Version(serverInfo.version.version))) {
+            if (serverInfo?.version?.version != null &&
+                !Version.isStashVersionSupported(
+                    Version(
+                        serverInfo.version.version,
+                    ),
+                )
+            ) {
                 val msg =
                     "Stash server version ${serverInfo.version.version} is not supported!"
                 Log.e(TAG, msg)
