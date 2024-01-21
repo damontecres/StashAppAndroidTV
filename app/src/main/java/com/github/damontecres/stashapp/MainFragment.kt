@@ -247,7 +247,7 @@ class MainFragment : BrowseSupportFragment() {
 
             if (serverInfo?.version?.version != null &&
                 !Version.isStashVersionSupported(
-                    Version(
+                    Version.fromString(
                         serverInfo.version.version,
                     ),
                 )
