@@ -24,19 +24,19 @@ class FilterListActivity : SecureFragmentActivity() {
         return when (mode) {
             FilterMode.SCENES -> {
                 val sceneFilter =
-                    convertSceneObjectFilter(objectFilter)
+                    FilterParser.instance.convertSceneObjectFilter(objectFilter)
                 StashGridFragment(SceneComparator, SceneDataSupplier(findFilter, sceneFilter))
             }
 
             FilterMode.STUDIOS -> {
                 val studioFilter =
-                    convertStudioObjectFilter(objectFilter)
+                    FilterParser.instance.convertStudioObjectFilter(objectFilter)
                 StashGridFragment(StudioComparator, StudioDataSupplier(findFilter, studioFilter))
             }
 
             FilterMode.PERFORMERS -> {
                 val performerFilter =
-                    convertPerformerObjectFilter(objectFilter)
+                    FilterParser.instance.convertPerformerObjectFilter(objectFilter)
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(findFilter, performerFilter),
@@ -45,12 +45,12 @@ class FilterListActivity : SecureFragmentActivity() {
 
             FilterMode.TAGS -> {
                 val tagFilter =
-                    convertTagObjectFilter(objectFilter)
+                    FilterParser.instance.convertTagObjectFilter(objectFilter)
                 StashGridFragment(TagComparator, TagDataSupplier(findFilter, tagFilter))
             }
 
             FilterMode.MOVIES -> {
-                val movieFilter = convertMovieObjectFilter(objectFilter)
+                val movieFilter = FilterParser.instance.convertMovieObjectFilter(objectFilter)
                 StashGridFragment(MovieComparator, MovieDataSupplier(findFilter, movieFilter))
             }
 

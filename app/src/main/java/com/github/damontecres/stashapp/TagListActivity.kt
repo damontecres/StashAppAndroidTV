@@ -23,7 +23,7 @@ class TagListActivity : SecureFragmentActivity() {
                             TagComparator,
                             TagDataSupplier(
                                 convertFilter(filter?.find_filter),
-                                convertTagObjectFilter(filter?.object_filter),
+                                FilterParser.instance.convertTagObjectFilter(filter?.object_filter),
                             ),
                         ),
                     )

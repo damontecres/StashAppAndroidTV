@@ -24,7 +24,7 @@ class StudioListActivity : SecureFragmentActivity() {
                             StudioComparator,
                             StudioDataSupplier(
                                 convertFilter(filter?.find_filter),
-                                convertStudioObjectFilter(filter?.object_filter),
+                                FilterParser.instance.convertStudioObjectFilter(filter?.object_filter),
                             ),
                         ),
                     )

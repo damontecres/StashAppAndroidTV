@@ -24,7 +24,7 @@ class MovieListActivity : SecureFragmentActivity() {
                             MovieComparator,
                             MovieDataSupplier(
                                 convertFilter(filter?.find_filter),
-                                convertMovieObjectFilter(filter?.object_filter),
+                                FilterParser.instance.convertMovieObjectFilter(filter?.object_filter),
                             ),
                         ),
                     )

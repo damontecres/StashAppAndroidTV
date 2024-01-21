@@ -235,6 +235,8 @@ class MainFragment : BrowseSupportFragment() {
                     Toast.LENGTH_LONG,
                 ).show()
             }
+            FilterParser.initialize(requireContext(), serverInfo)
+
             if (serverInfo?.version?.version != null && !isStashVersionSupported(Version(serverInfo.version.version))) {
                 val msg =
                     "Stash server version ${serverInfo.version.version} is not supported!"
@@ -418,7 +420,7 @@ class MainFragment : BrowseSupportFragment() {
                 when (result?.mode) {
                     FilterMode.SCENES -> {
                         val sceneFilter =
-                            convertSceneObjectFilter(objectFilter)
+                            FilterParser.instance.convertSceneObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findScenes(filter, sceneFilter),
@@ -427,7 +429,7 @@ class MainFragment : BrowseSupportFragment() {
 
                     FilterMode.STUDIOS -> {
                         val studioFilter =
-                            convertStudioObjectFilter(objectFilter)
+                            FilterParser.instance.convertStudioObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findStudios(
@@ -439,7 +441,7 @@ class MainFragment : BrowseSupportFragment() {
 
                     FilterMode.PERFORMERS -> {
                         val performerFilter =
-                            convertPerformerObjectFilter(objectFilter)
+                            FilterParser.instance.convertPerformerObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findPerformers(
@@ -451,7 +453,7 @@ class MainFragment : BrowseSupportFragment() {
 
                     FilterMode.TAGS -> {
                         val tagFilter =
-                            convertTagObjectFilter(objectFilter)
+                            FilterParser.instance.convertTagObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findTags(filter, tagFilter),

@@ -25,7 +25,7 @@ class SceneListActivity : SecureFragmentActivity() {
                             SceneComparator,
                             SceneDataSupplier(
                                 convertFilter(filter?.find_filter),
-                                convertSceneObjectFilter(filter?.object_filter),
+                                FilterParser.instance.convertSceneObjectFilter(filter?.object_filter),
                             ),
                         ),
                     )

@@ -24,7 +24,7 @@ class PerformerListActivity : SecureFragmentActivity() {
                             PerformerComparator,
                             PerformerDataSupplier(
                                 convertFilter(filter?.find_filter),
-                                convertPerformerObjectFilter(filter?.object_filter),
+                                FilterParser.instance.convertPerformerObjectFilter(filter?.object_filter),
                             ),
                         ),
                     )
