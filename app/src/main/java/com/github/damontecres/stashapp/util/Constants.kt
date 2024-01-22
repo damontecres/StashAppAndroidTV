@@ -235,3 +235,10 @@ fun TextView.enableMarquee(selected: Boolean = false) {
     isSingleLine = true
     isSelected = selected
 }
+
+fun concatIfNotBlank(
+    sep: String,
+    vararg strings: String?,
+): String {
+    return strings.filter { !it.isNullOrBlank() }.joinToString(sep)
+}
