@@ -32,8 +32,17 @@ class ScenePresenter : StashPresenter() {
         } else {
             cardView.titleText = scene.title
         }
-        cardView.contentText =
-            """${scene.date.orEmpty()} (${scene.performers.size}P, ${scene.tags.size}T)"""
+        val details = mutableListOf<String>()
+        if (!scene.date.isNullOrBlank()) {
+            details.add(scene.date)
+        }
+        if (scene.tags.isNotEmpty()) {
+            details.add("${scene.tags.size}\uD83C\uDFF7\uFE0F")
+        }
+        if (scene.performers.isNotEmpty()) {
+            details.add("${scene.performers.size}\uD83D\uDC64")
+        }
+        cardView.contentText = details.joinToString("  ")
 
         if (!scene.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
