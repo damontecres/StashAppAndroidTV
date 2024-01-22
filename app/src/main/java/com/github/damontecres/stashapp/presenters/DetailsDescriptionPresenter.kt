@@ -12,7 +12,6 @@ class DetailsDescriptionPresenter : AbstractDetailsDescriptionPresenter() {
 
         viewHolder.title.text = scene.title
         viewHolder.subtitle.text = scene.studioName
-        // TODO: override max lines in the body text somehow
         viewHolder.body.text = scene.details
     }
 }

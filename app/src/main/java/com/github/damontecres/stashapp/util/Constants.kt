@@ -2,7 +2,9 @@ package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.net.Uri
+import android.text.TextUtils
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
@@ -225,4 +227,11 @@ fun <V> Map<String, V>.getCaseInsensitive(k: String?): V? {
         return null
     }
     return this[k] ?: this[k.lowercase()]
+}
+
+fun TextView.enableMarquee(selected: Boolean = false) {
+    marqueeRepeatLimit = -1
+    ellipsize = TextUtils.TruncateAt.MARQUEE
+    isSingleLine = true
+    isSelected = selected
 }
