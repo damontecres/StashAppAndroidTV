@@ -58,6 +58,12 @@ class PlaybackExoFragment :
         val apiKey =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getString("stashApiKey", "")
+        val skipForward =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("skip_forward_time", 30)
+        val skipBack =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("skip_back_time", 10)
 
         val dataSourceFactory =
             DataSource.Factory {
@@ -74,6 +80,8 @@ class PlaybackExoFragment :
                         dataSourceFactory,
                     ),
                 )
+                .setSeekBackIncrementMs(skipBack * 1000L)
+                .setSeekForwardIncrementMs(skipForward * 1000L)
                 .build()
                 .also { exoPlayer ->
                     videoView.player = exoPlayer
@@ -108,6 +116,7 @@ class PlaybackExoFragment :
                     exoPlayer.setMediaItem(mediaItem)
                     exoPlayer.playWhenReady = true
                     exoPlayer.prepare()
+                    videoView.hideController()
                     exoPlayer.addListener(
                         object : Player.Listener {
                             private var initialSeek = true
@@ -146,6 +155,7 @@ class PlaybackExoFragment :
         videoView = view.findViewById<PlayerView>(R.id.video_view)
         videoView.requestFocus()
         videoView.controllerShowTimeoutMs = 2000
+        videoView.hideController()
 
         val callback = ControlsListener(videoView)
         videoView.setControllerVisibilityListener(callback)
