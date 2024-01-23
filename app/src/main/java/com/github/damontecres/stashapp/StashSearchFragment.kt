@@ -10,6 +10,7 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.ObjectAdapter
+import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
@@ -21,24 +22,16 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.EnumMap
 
 class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
 
-    private val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
-    private val adapters = EnumMap<DataType, ArrayObjectAdapter>(DataType::class.java)
+    private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setSearchResultProvider(this)
         setOnItemViewClickedListener(StashItemViewClickListener(requireActivity()))
-
-        DataType.entries.forEach {
-            val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
-            adapters[it] = adapter
-            rowsAdapter.add(ListRow(HeaderItem(getString(it.pluralStringId)), adapter))
-        }
     }
 
     override fun getResultsAdapter(): ObjectAdapter {
@@ -69,7 +62,8 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
 
     private suspend fun search(query: String) {
         if (!TextUtils.isEmpty(query)) {
-            adapters.values.forEach { it.clear() }
+            rowsAdapter.clear()
+
             val perPage =
                 PreferenceManager.getDefaultSharedPreferences(requireContext())
                     .getInt("maxSearchResults", 25)
@@ -77,9 +71,16 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                 FindFilterType(
                     q = Optional.present(query),
                     per_page = Optional.present(perPage),
+                    page = Optional.present(1),
                 )
             val queryEngine = QueryEngine(requireContext(), true)
             DataType.entries.forEach {
+                val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                rowsAdapter.set(
+                    it.ordinal,
+                    ListRow(HeaderItem(getString(it.pluralStringId)), adapter),
+                )
+
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception in search for $it", ex)
@@ -90,7 +91,12 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                         ).show()
                     },
                 ) {
-                    adapters[it]!!.addAll(0, queryEngine.find(it, filter))
+                    val results = queryEngine.find(it, filter)
+                    if (results.isNotEmpty()) {
+                        adapter.addAll(0, results)
+                    } else {
+                        rowsAdapter.clear(it.ordinal)
+                    }
                 }
             }
         }
