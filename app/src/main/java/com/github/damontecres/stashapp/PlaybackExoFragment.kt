@@ -2,9 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.util.Log
-import android.view.KeyEvent
 import android.view.View
-import androidx.activity.OnBackPressedCallback
 import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -30,11 +28,9 @@ class PlaybackExoFragment :
     private lateinit var scene: Scene
     private lateinit var videoView: PlayerView
 
-    private var playWhenReady = true
-    private var mediaItemIndex = 0
-    private var playbackPosition = 0L
+    private var playbackPosition = -1L
 
-    override val currentVideoPosition get() = player!!.currentPosition
+    override val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
 
     override fun hideControlsIfVisible(): Boolean {
         if (videoView.isControllerFullyVisible) {
@@ -47,8 +43,6 @@ class PlaybackExoFragment :
     private fun releasePlayer() {
         player?.let { exoPlayer ->
             playbackPosition = exoPlayer.currentPosition
-            mediaItemIndex = exoPlayer.currentMediaItemIndex
-            playWhenReady = exoPlayer.playWhenReady
             exoPlayer.release()
         }
         player = null
@@ -69,8 +63,10 @@ class PlaybackExoFragment :
         val dataSourceFactory =
             DataSource.Factory {
                 val dataSource = DefaultHttpDataSource.Factory().createDataSource()
-                dataSource.setRequestProperty(Constants.STASH_API_HEADER, apiKey!!)
-                dataSource.setRequestProperty("apikey", apiKey!!)
+                if (!apiKey.isNullOrBlank()) {
+                    dataSource.setRequestProperty(Constants.STASH_API_HEADER, apiKey)
+                    dataSource.setRequestProperty(Constants.STASH_API_HEADER.lowercase(), apiKey)
+                }
                 dataSource
             }
 
@@ -133,10 +129,6 @@ class PlaybackExoFragment :
                 }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
     @OptIn(UnstableApi::class)
     override fun onViewCreated(
         view: View,
@@ -144,26 +136,16 @@ class PlaybackExoFragment :
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val scene = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE) as Scene?
-        if (scene == null) {
-            throw RuntimeException()
-        }
-        this.scene = scene
-        val position = requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
-        Log.d(TAG, "scene=${scene?.id}")
-        Log.d(TAG, "${VideoDetailsFragment.POSITION_ARG}=$position")
+        scene = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE) as Scene?
+            ?: throw RuntimeException()
 
-        videoView = view.findViewById<PlayerView>(R.id.video_view)
+        val position = requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
+        Log.d(TAG, "scene=${scene.id}, ${VideoDetailsFragment.POSITION_ARG}=$position")
+
+        videoView = view.findViewById(R.id.video_view)
         videoView.requestFocus()
         videoView.controllerShowTimeoutMs = 2000
         videoView.hideController()
-
-        val callback = ControlsListener(videoView)
-        videoView.setControllerVisibilityListener(callback)
-        requireActivity().onBackPressedDispatcher.addCallback(
-            viewLifecycleOwner,
-            callback,
-        )
 
         val mFocusedZoom =
             requireContext().resources.getFraction(
@@ -210,10 +192,6 @@ class PlaybackExoFragment :
 //            view.findViewById(androidx.media3.ui.R.id.exo_progress)
     }
 
-    fun dispatchKeyEvent(event: KeyEvent?): Boolean {
-        return videoView.dispatchKeyEvent(event!!)
-    }
-
     @OptIn(UnstableApi::class)
     override fun onStart() {
         super.onStart()
@@ -253,28 +231,5 @@ class PlaybackExoFragment :
 
     companion object {
         const val TAG = "PlaybackExoFragment"
-    }
-
-    class ControlsListener(private val view: PlayerView) : PlayerView.ControllerVisibilityListener,
-        OnBackPressedCallback(
-            view.isControllerFullyVisible,
-        ) {
-        init {
-//            Log.d(TAG, "ControlsListener initial isEnabled=$isEnabled")
-        }
-
-        override fun onVisibilityChanged(visibility: Int) {
-            when (visibility) {
-                View.VISIBLE -> isEnabled = true
-                View.GONE -> isEnabled = false
-            }
-//            Log.d(TAG, "ControlsListener isEnabled=$isEnabled")
-        }
-
-        @OptIn(UnstableApi::class)
-        override fun handleOnBackPressed() {
-//            Log.d(TAG, "ControlsListener handleOnBackPressed, isEnabled=$isEnabled")
-            view.hideController()
-        }
     }
 }

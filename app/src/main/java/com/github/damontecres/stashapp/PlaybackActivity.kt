@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.fragment.app.Fragment
 import androidx.media3.common.util.UnstableApi
@@ -49,7 +50,9 @@ class PlaybackActivity : SecureFragmentActivity() {
      */
     private fun returnPosition() {
         val intent = Intent()
-        intent.putExtra("position", (fragment as StashVideoPlayer).currentVideoPosition)
+        val position = (fragment as StashVideoPlayer).currentVideoPosition
+        Log.d(TAG, "Video playback ending, currentVideoPosition=$position")
+        intent.putExtra("position", position)
         setResult(Activity.RESULT_OK, intent)
         finish()
     }
@@ -63,5 +66,9 @@ class PlaybackActivity : SecureFragmentActivity() {
          * @return true if the controls needed to be hidden
          */
         fun hideControlsIfVisible(): Boolean
+    }
+
+    companion object {
+        const val TAG = "PlaybackActivity"
     }
 }
