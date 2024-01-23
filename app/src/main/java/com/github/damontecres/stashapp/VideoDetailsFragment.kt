@@ -25,6 +25,7 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
+import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
@@ -58,14 +59,14 @@ import kotlinx.coroutines.launch
 class VideoDetailsFragment : DetailsSupportFragment() {
     private var mSelectedMovie: Scene? = null
 
-    private var performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
-    private var tagsAdapter: ArrayObjectAdapter = ArrayObjectAdapter(TagPresenter())
-    private var markersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(MarkerPresenter())
-    private var actionsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+    private val performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
+    private val tagsAdapter: ArrayObjectAdapter = ArrayObjectAdapter(TagPresenter())
+    private val markersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(MarkerPresenter())
+    private val actionsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
-    private lateinit var mPresenterSelector: ClassPresenterSelector
-    private lateinit var mAdapter: ArrayObjectAdapter
+    private val mPresenterSelector = ClassPresenterSelector()
+    private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
     private val actionAdapter = ArrayObjectAdapter()
@@ -83,8 +84,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 //        mSelectedMovie = activity!!.intent.getSerializableExtra(DetailsActivity.MOVIE) as Scene
         mSelectedMovie = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE)
         if (mSelectedMovie != null) {
-            mPresenterSelector = ClassPresenterSelector()
-            mAdapter = ArrayObjectAdapter(mPresenterSelector)
             setupDetailsOverviewRow()
             setupDetailsOverviewRowPresenter()
             setupRelatedMovieListRow()
@@ -220,10 +219,18 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     queryEngine.findScenes(sceneIds = listOf(mSelectedMovie!!.id.toInt()))
                         .first()
                 if (scene.tags.isNotEmpty()) {
+                    mAdapter.set(
+                        TAG_POS,
+                        ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
+                    )
                     tagsAdapter.addAll(0, scene.tags.map { Tag(it.tagData) })
                 }
 
                 if (scene.scene_markers.isNotEmpty()) {
+                    mAdapter.set(
+                        MARKER_POS,
+                        ListRow(HeaderItem(getString(R.string.stashapp_markers)), markersAdapter),
+                    )
                     markersAdapter.addAll(
                         0,
                         scene.scene_markers.map {
@@ -251,7 +258,16 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     }
                 if (performerIds.isNotEmpty()) {
                     val perfs = queryEngine.findPerformers(performerIds = performerIds)
-                    performersAdapter.addAll(0, perfs)
+                    if (perfs.isNotEmpty()) {
+                        mAdapter.set(
+                            PERFORMER_POS,
+                            ListRow(
+                                HeaderItem(getString(R.string.stashapp_performers)),
+                                performersAdapter,
+                            ),
+                        )
+                        performersAdapter.addAll(0, perfs)
+                    }
                 }
             }
         }
@@ -336,7 +352,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         row.actionsAdapter = actionAdapter
 
-        mAdapter.add(row)
+        mAdapter.set(DETAILS_POS, row)
     }
 
     private fun setupDetailsOverviewRowPresenter() {
@@ -374,15 +390,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private fun setupRelatedMovieListRow() {
         // TODO related scenes
-        mAdapter.add(
-            ListRow(
-                HeaderItem(0, getString(R.string.stashapp_performers)),
-                performersAdapter,
-            ),
-        )
-        mAdapter.add(ListRow(HeaderItem(1, getString(R.string.stashapp_tags)), tagsAdapter))
-        mAdapter.add(ListRow(HeaderItem(2, getString(R.string.stashapp_markers)), markersAdapter))
-        mAdapter.add(ListRow(HeaderItem(3, "Actions"), actionsAdapter))
+        mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), actionsAdapter))
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 
@@ -408,5 +416,11 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         const val POSITION_ARG = "position"
 
         const val ADD_TAG_SEARCH_ID = 1L
+
+        private const val DETAILS_POS = 1
+        private const val MARKER_POS = DETAILS_POS + 1
+        private const val PERFORMER_POS = MARKER_POS + 1
+        private const val TAG_POS = PERFORMER_POS + 1
+        private const val ACTIONS_POS = TAG_POS + 1
     }
 }
