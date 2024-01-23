@@ -13,7 +13,7 @@
         app:auto_show="true"
         app:hide_on_touch="true"
         app:animation_enabled="true"
-        app:scrubber_color="@color/light_blue_400"
-        />
+        app:scrubber_dragged_size="22dp"
+        app:played_color="@color/selected_background" />
 
 </FrameLayout>

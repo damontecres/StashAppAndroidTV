@@ -6,6 +6,7 @@ import android.view.KeyEvent
 import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.OptIn
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -25,9 +26,9 @@ import com.github.damontecres.stashapp.util.Constants
 class PlaybackExoFragment :
     Fragment(R.layout.video_playback),
     PlaybackActivity.StashVideoPlayer {
-    var player: ExoPlayer? = null
+    private var player: ExoPlayer? = null
     private lateinit var scene: Scene
-    lateinit var videoView: PlayerView
+    private lateinit var videoView: PlayerView
 
     private var playWhenReady = true
     private var mediaItemIndex = 0
@@ -163,6 +164,50 @@ class PlaybackExoFragment :
             viewLifecycleOwner,
             callback,
         )
+
+        val mFocusedZoom =
+            requireContext().resources.getFraction(
+                androidx.leanback.R.fraction.lb_focus_zoom_factor_large,
+                1,
+                1,
+            )
+        val onFocusChangeListener =
+            View.OnFocusChangeListener { v, hasFocus ->
+                val zoom = if (hasFocus) mFocusedZoom else 1f
+                v.animate().scaleX(zoom).scaleY(zoom).setDuration(150.toLong()).start()
+
+                if (hasFocus) {
+                    v.setBackgroundColor(
+                        ContextCompat.getColor(
+                            requireContext(),
+                            R.color.selected_background,
+                        ),
+                    )
+                } else {
+                    v.setBackgroundColor(
+                        ContextCompat.getColor(
+                            requireContext(),
+                            android.R.color.transparent,
+                        ),
+                    )
+                }
+            }
+
+        val buttons =
+            listOf(
+                androidx.media3.ui.R.id.exo_rew_with_amount,
+                androidx.media3.ui.R.id.exo_ffwd_with_amount,
+                androidx.media3.ui.R.id.exo_settings,
+                androidx.media3.ui.R.id.exo_prev,
+                androidx.media3.ui.R.id.exo_play_pause,
+                androidx.media3.ui.R.id.exo_next,
+            )
+        buttons.forEach {
+            view.findViewById<View>(it)?.onFocusChangeListener = onFocusChangeListener
+        }
+
+//        val timeBar: DefaultTimeBar =
+//            view.findViewById(androidx.media3.ui.R.id.exo_progress)
     }
 
     fun dispatchKeyEvent(event: KeyEvent?): Boolean {
