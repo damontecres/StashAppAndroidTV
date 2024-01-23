@@ -6,14 +6,23 @@ import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.fragment.app.Fragment
 import androidx.media3.common.util.UnstableApi
+import androidx.preference.PreferenceManager
 
 /** Loads [PlaybackVideoFragment]. */
 class PlaybackActivity : SecureFragmentActivity() {
-    private val fragment: Fragment = PlaybackExoFragment()
+    private lateinit var fragment: Fragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) {
+            val useExo =
+                PreferenceManager.getDefaultSharedPreferences(this).getBoolean("playerChoice", true)
+            fragment =
+                if (useExo) {
+                    PlaybackExoFragment()
+                } else {
+                    PlaybackVideoFragment()
+                }
             supportFragmentManager.beginTransaction()
                 .replace(android.R.id.content, fragment)
                 .commit()
