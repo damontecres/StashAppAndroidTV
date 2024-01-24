@@ -239,6 +239,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     private fun updateFilter(filter: FindFilterType?): FindFilterType? {
         return if (filter != null) {
             if (filter.sort.getOrNull()?.startsWith("random_") == true) {
+                Log.v(TAG, "Updating random filter")
                 filter.copy(sort = Optional.present("random_" + Random.nextInt(1e8.toInt())))
             } else {
                 filter

@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.ImageView
 import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -19,6 +20,9 @@ import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.StashPreviewLoader
+import com.github.rubensousa.previewseekbar.PreviewBar
+import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
 
 @OptIn(UnstableApi::class)
 class PlaybackExoFragment :
@@ -187,6 +191,28 @@ class PlaybackExoFragment :
         buttons.forEach {
             view.findViewById<View>(it)?.onFocusChangeListener = onFocusChangeListener
         }
+
+        val previewImageView = view.findViewById<ImageView>(R.id.video_preview_image_view)
+        val previewTimeBar = view.findViewById<PreviewTimeBar>(R.id.exo_progress)
+        previewTimeBar.isPreviewEnabled = true
+        previewTimeBar.setPreviewLoader(StashPreviewLoader(previewImageView, scene))
+        previewTimeBar.addOnScrubListener(
+            object : PreviewBar.OnScrubListener {
+                override fun onScrubStart(previewBar: PreviewBar) {
+                    player!!.playWhenReady = false
+                }
+
+                override fun onScrubMove(
+                    previewBar: PreviewBar,
+                    progress: Int,
+                    fromUser: Boolean,
+                ) {}
+
+                override fun onScrubStop(previewBar: PreviewBar) {
+                    player!!.playWhenReady = true
+                }
+            },
+        )
 
 //        val timeBar: DefaultTimeBar =
 //            view.findViewById(androidx.media3.ui.R.id.exo_progress)

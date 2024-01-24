@@ -18,6 +18,7 @@ data class Scene(
     val duration: Double?,
     val resumeTime: Double?,
     val videoCodec: String?,
+    val spriteUrl: String?,
 ) : Parcelable {
     companion object {
         fun fromSlimSceneData(data: SlimSceneData): Scene {
@@ -50,6 +51,7 @@ data class Scene(
                 duration = fileData?.duration,
                 resumeTime = data.resume_time,
                 videoCodec = fileData?.video_codec,
+                spriteUrl = data.paths.sprite,
             )
         }
     }
