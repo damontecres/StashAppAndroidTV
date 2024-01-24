@@ -32,11 +32,15 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 /** Handles video playback with media controls. */
-class PlaybackVideoFragment : VideoSupportFragment() {
+class PlaybackVideoFragment : VideoSupportFragment(), PlaybackActivity.StashVideoPlayer {
     private lateinit var mTransportControlGlue: BasicTransportControlsGlue
     private lateinit var playerAdapter: BasicMediaPlayerAdapter
 
-    val currentVideoPosition get() = playerAdapter.currentPosition
+    override val currentVideoPosition get() = playerAdapter.currentPosition
+
+    override fun hideControlsIfVisible(): Boolean {
+        return false
+    }
 
     override fun onViewCreated(
         view: View,
