@@ -58,7 +58,7 @@ class StashPagingSource<T : Query.Data, D : Any>(
                 per_page = Optional.present(pageSize),
                 page = Optional.present(page),
             )
-        val query = dataSupplier.createQuery(filter)
+        val query = dataSupplier.createQuery(queryEngine.updateFilter(filter))
         val results = queryEngine.executeQuery(query)
         return dataSupplier.parseQuery(results.data)
     }
