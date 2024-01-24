@@ -236,7 +236,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
      *
      * Handles updating the random sort if requested
      */
-    private fun updateFilter(filter: FindFilterType?): FindFilterType? {
+    fun updateFilter(filter: FindFilterType?): FindFilterType? {
         return if (filter != null) {
             if (filter.sort.getOrNull()?.startsWith("random_") == true) {
                 Log.v(TAG, "Updating random filter")

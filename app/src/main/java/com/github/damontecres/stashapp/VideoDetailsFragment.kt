@@ -25,6 +25,7 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
+import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
@@ -58,33 +59,34 @@ import kotlinx.coroutines.launch
 class VideoDetailsFragment : DetailsSupportFragment() {
     private var mSelectedMovie: Scene? = null
 
-    private var performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
-    private var tagsAdapter: ArrayObjectAdapter = ArrayObjectAdapter(TagPresenter())
-    private var markersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(MarkerPresenter())
-    private var actionsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+    private val performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
+    private val tagsAdapter: ArrayObjectAdapter = ArrayObjectAdapter(TagPresenter())
+    private val markersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(MarkerPresenter())
+    private val sceneActionsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
-    private lateinit var mPresenterSelector: ClassPresenterSelector
-    private lateinit var mAdapter: ArrayObjectAdapter
+    private val mPresenterSelector = ClassPresenterSelector()
+    private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
-    private val actionAdapter = ArrayObjectAdapter()
+    private val playActionsAdapter = ArrayObjectAdapter()
     private var position = -1L // The position in the video
+    private val detailsPresenter =
+        FullWidthDetailsOverviewRowPresenter(DetailsDescriptionPresenter())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
-        actionsAdapter.add(StashAction.ADD_TAG)
-        actionsAdapter.add(StashAction.ADD_PERFORMER)
+        sceneActionsAdapter.add(StashAction.ADD_TAG)
+        sceneActionsAdapter.add(StashAction.ADD_PERFORMER)
+        sceneActionsAdapter.add(StashAction.FORCE_TRANSCODE)
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
 
 //        mSelectedMovie = activity!!.intent.getSerializableExtra(DetailsActivity.MOVIE) as Scene
         mSelectedMovie = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE)
         if (mSelectedMovie != null) {
-            mPresenterSelector = ClassPresenterSelector()
-            mAdapter = ArrayObjectAdapter(mPresenterSelector)
             setupDetailsOverviewRow()
             setupDetailsOverviewRowPresenter()
             setupRelatedMovieListRow()
@@ -93,15 +95,24 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
             val actionListener =
                 StashActionClickedListener { action: StashAction ->
-                    val intent = Intent(requireActivity(), SearchForActivity::class.java)
-                    val dataType =
-                        when (action) {
-                            StashAction.ADD_TAG -> DataType.TAG
-                            StashAction.ADD_PERFORMER -> DataType.PERFORMER
-                        }
-                    intent.putExtra("dataType", dataType.name)
-                    intent.putExtra(SearchForFragment.ID_KEY, action.id)
-                    resultLauncher.launch(intent)
+                    if (action in StashAction.SEARCH_FOR_ACTIONS) {
+                        val intent = Intent(requireActivity(), SearchForActivity::class.java)
+                        val dataType =
+                            when (action) {
+                                StashAction.ADD_TAG -> DataType.TAG
+                                StashAction.ADD_PERFORMER -> DataType.PERFORMER
+                                else -> throw RuntimeException("Unsupported search for type $action")
+                            }
+                        intent.putExtra("dataType", dataType.name)
+                        intent.putExtra(SearchForFragment.ID_KEY, action.id)
+                        resultLauncher.launch(intent)
+                    } else if (action == StashAction.FORCE_TRANSCODE) {
+                        detailsPresenter.onActionClickedListener.onActionClicked(
+                            Action(
+                                ACTION_TRANSCODE_RESUME_SCENE,
+                            ),
+                        )
+                    }
                 }
 
             onItemViewClickedListener =
@@ -189,9 +200,9 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         if (position > 10_000) {
                             // If some of the video played, reset the available actions
                             // This also causes the focused action to default to resume which is an added bonus
-                            actionAdapter.clear()
-                            actionAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
-                            actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+                            playActionsAdapter.clear()
+                            playActionsAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
+                            playActionsAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
 
                             val serverPreferences = ServerPreferences(requireContext())
                             if (serverPreferences.trackActivity) {
@@ -220,10 +231,18 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     queryEngine.findScenes(sceneIds = listOf(mSelectedMovie!!.id.toInt()))
                         .first()
                 if (scene.tags.isNotEmpty()) {
+                    mAdapter.set(
+                        TAG_POS,
+                        ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
+                    )
                     tagsAdapter.addAll(0, scene.tags.map { Tag(it.tagData) })
                 }
 
                 if (scene.scene_markers.isNotEmpty()) {
+                    mAdapter.set(
+                        MARKER_POS,
+                        ListRow(HeaderItem(getString(R.string.stashapp_markers)), markersAdapter),
+                    )
                     markersAdapter.addAll(
                         0,
                         scene.scene_markers.map {
@@ -251,7 +270,16 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     }
                 if (performerIds.isNotEmpty()) {
                     val perfs = queryEngine.findPerformers(performerIds = performerIds)
-                    performersAdapter.addAll(0, perfs)
+                    if (perfs.isNotEmpty()) {
+                        mAdapter.set(
+                            PERFORMER_POS,
+                            ListRow(
+                                HeaderItem(getString(R.string.stashapp_performers)),
+                                performersAdapter,
+                            ),
+                        )
+                        performersAdapter.addAll(0, perfs)
+                    }
                 }
             }
         }
@@ -323,10 +351,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val serverPreferences = ServerPreferences(requireContext())
         if (serverPreferences.trackActivity && mSelectedMovie?.resumeTime != null && mSelectedMovie?.resumeTime!! > 0) {
             position = (mSelectedMovie?.resumeTime!! * 1000).toLong()
-            actionAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
-            actionAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+            playActionsAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
+            playActionsAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
         } else {
-            actionAdapter.add(
+            playActionsAdapter.add(
                 Action(
                     ACTION_PLAY_SCENE,
                     resources.getString(R.string.play_scene),
@@ -334,14 +362,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             )
         }
 
-        row.actionsAdapter = actionAdapter
+        row.actionsAdapter = playActionsAdapter
 
-        mAdapter.add(row)
+        mAdapter.set(DETAILS_POS, row)
     }
 
     private fun setupDetailsOverviewRowPresenter() {
         // Set detail background.
-        val detailsPresenter = FullWidthDetailsOverviewRowPresenter(DetailsDescriptionPresenter())
         detailsPresenter.backgroundColor =
             ContextCompat.getColor(requireActivity(), R.color.default_card_background)
 
@@ -357,11 +384,20 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         detailsPresenter.onActionClickedListener =
             OnActionClickedListener { action ->
                 if (mSelectedMovie != null) {
-                    if (action.id in longArrayOf(ACTION_PLAY_SCENE, ACTION_RESUME_SCENE)) {
+                    if (action.id in
+                        longArrayOf(
+                            ACTION_PLAY_SCENE,
+                            ACTION_RESUME_SCENE,
+                            ACTION_TRANSCODE_RESUME_SCENE,
+                        )
+                    ) {
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
                         intent.putExtra(DetailsActivity.MOVIE, mSelectedMovie)
-                        if (action.id == ACTION_RESUME_SCENE) {
+                        if (action.id == ACTION_RESUME_SCENE || action.id == ACTION_TRANSCODE_RESUME_SCENE) {
                             intent.putExtra(POSITION_ARG, position)
+                        }
+                        if (action.id == ACTION_TRANSCODE_RESUME_SCENE) {
+                            intent.putExtra(FORCE_TRANSCODE, true)
                         }
                         resultLauncher.launch(intent)
                     } else {
@@ -374,15 +410,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private fun setupRelatedMovieListRow() {
         // TODO related scenes
-        mAdapter.add(
-            ListRow(
-                HeaderItem(0, getString(R.string.stashapp_performers)),
-                performersAdapter,
-            ),
-        )
-        mAdapter.add(ListRow(HeaderItem(1, getString(R.string.stashapp_tags)), tagsAdapter))
-        mAdapter.add(ListRow(HeaderItem(2, getString(R.string.stashapp_markers)), markersAdapter))
-        mAdapter.add(ListRow(HeaderItem(3, "Actions"), actionsAdapter))
+        mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 
@@ -399,6 +427,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         private val ACTION_PLAY_SCENE = 1L
         private val ACTION_RESUME_SCENE = 2L
+        private val ACTION_TRANSCODE_RESUME_SCENE = 3L
 
         private val DETAIL_THUMB_WIDTH = ScenePresenter.CARD_WIDTH
         private val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
@@ -406,7 +435,14 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private val NUM_COLS = 10
 
         const val POSITION_ARG = "position"
+        const val FORCE_TRANSCODE = "forceTranscode"
 
         const val ADD_TAG_SEARCH_ID = 1L
+
+        private const val DETAILS_POS = 1
+        private const val MARKER_POS = DETAILS_POS + 1
+        private const val PERFORMER_POS = MARKER_POS + 1
+        private const val TAG_POS = PERFORMER_POS + 1
+        private const val ACTIONS_POS = TAG_POS + 1
     }
 }

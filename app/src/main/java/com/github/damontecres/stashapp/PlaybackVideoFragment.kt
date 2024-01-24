@@ -60,6 +60,11 @@ class PlaybackVideoFragment : VideoSupportFragment(), PlaybackActivity.StashVide
         var skipBack =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("skip_back_time", 10)
+        val forceTranscode =
+            requireActivity().intent.getBooleanExtra(
+                VideoDetailsFragment.FORCE_TRANSCODE,
+                false,
+            )
 
         val serverPreferences = ServerPreferences(requireContext())
 
@@ -91,7 +96,7 @@ class PlaybackVideoFragment : VideoSupportFragment(), PlaybackActivity.StashVide
         mTransportControlGlue.playWhenPrepared()
 
         var streamUrl = scene?.streams?.get("Direct stream")
-        if (streamUrl == null) {
+        if (streamUrl == null || forceTranscode) {
             val streamChoice =
                 PreferenceManager.getDefaultSharedPreferences(requireContext())
                     .getString("stream_choice", "MP4")

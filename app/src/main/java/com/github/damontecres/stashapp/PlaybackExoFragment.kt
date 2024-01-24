@@ -53,7 +53,10 @@ class PlaybackExoFragment :
     }
 
     @OptIn(UnstableApi::class)
-    private fun initializePlayer(position: Long) {
+    private fun initializePlayer(
+        position: Long,
+        forceTranscode: Boolean,
+    ) {
         val apiKey =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getString("stashApiKey", "")
@@ -89,7 +92,7 @@ class PlaybackExoFragment :
                 }.also { exoPlayer ->
                     var mediaItem: MediaItem? = null
                     var streamUrl = scene.streams.get("Direct stream")
-                    if (streamUrl != null && scene.videoCodec != "av1") {
+                    if (streamUrl != null && scene.videoCodec != "av1" && !forceTranscode) {
                         mediaItem = MediaItem.fromUri(streamUrl)
                     } else {
                         val streamChoice =
@@ -224,7 +227,12 @@ class PlaybackExoFragment :
         if (Util.SDK_INT > 23) {
             val position =
                 requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
-            initializePlayer(position)
+            val forceTranscode =
+                requireActivity().intent.getBooleanExtra(
+                    VideoDetailsFragment.FORCE_TRANSCODE,
+                    false,
+                )
+            initializePlayer(position, forceTranscode)
         }
     }
 
@@ -235,7 +243,12 @@ class PlaybackExoFragment :
         if ((Util.SDK_INT <= 23 || player == null)) {
             val position =
                 requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
-            initializePlayer(position)
+            val forceTranscode =
+                requireActivity().intent.getBooleanExtra(
+                    VideoDetailsFragment.FORCE_TRANSCODE,
+                    false,
+                )
+            initializePlayer(position, forceTranscode)
         }
     }
 
