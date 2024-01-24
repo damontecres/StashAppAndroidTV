@@ -13,6 +13,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceDialogFragmentCompat
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceScreen
+import androidx.preference.SwitchPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -128,6 +129,18 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         ).show()
                     }
                     true
+                }
+
+            val playerChoice = findPreference<SwitchPreference>("playerChoice")
+            playerChoice?.summaryProvider =
+                object : Preference.SummaryProvider<SwitchPreference> {
+                    override fun provideSummary(preference: SwitchPreference): CharSequence {
+                        return if (preference.isChecked) {
+                            "Using ExoPlayer (recommended)"
+                        } else {
+                            "Using default player"
+                        }
+                    }
                 }
         }
 

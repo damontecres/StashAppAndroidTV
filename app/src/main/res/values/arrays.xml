@@ -1,8 +1,8 @@
 <resources>
     <string-array name="stream_options">
-        <item>MP4</item>
-        <item>WEBM</item>
         <item>HLS</item>
         <item>DASH</item>
+        <item>MP4</item>
+        <item>WEBM</item>
     </string-array>
 </resources>

@@ -97,9 +97,13 @@ fun createApolloClient(
             cleanedStashUrl = "http://$cleanedStashUrl"
         }
         var url = Uri.parse(cleanedStashUrl)
+        val pathSegments = url.pathSegments.toMutableList()
+        if (pathSegments.isEmpty() || pathSegments.last() != "graphql") {
+            pathSegments.add("graphql")
+        }
         url =
             url.buildUpon()
-                .path("/graphql") // Ensure the URL is the graphql endpoint
+                .path(pathSegments.joinToString("/")) // Ensure the URL is the graphql endpoint
                 .build()
         Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
         ApolloClient.Builder()

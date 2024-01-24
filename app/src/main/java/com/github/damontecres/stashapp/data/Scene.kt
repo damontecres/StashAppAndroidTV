@@ -18,6 +18,7 @@ data class Scene(
     val streams: Map<String, String>,
     val duration: Double?,
     val resumeTime: Double?,
+    val videoCodec: String?,
 ) : Parcelable {
     companion object {
         fun fromSlimSceneData(data: SlimSceneData): Scene {
@@ -37,7 +38,7 @@ data class Scene(
                 } else {
                     data.title
                 }
-            val duration = data.files.firstOrNull()?.videoFileData?.duration
+            val fileData = data.files.firstOrNull()?.videoFileData
             return Scene(
                 id = data.id.toLong(),
                 title = title,
@@ -48,8 +49,9 @@ data class Scene(
                 studioId = data.studio?.id,
                 studioName = data.studio?.name,
                 streams = streams,
-                duration = duration,
+                duration = fileData?.duration,
                 resumeTime = data.resume_time,
+                videoCodec = fileData?.video_codec,
             )
         }
     }

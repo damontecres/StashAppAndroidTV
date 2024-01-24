@@ -122,6 +122,8 @@ tasks.create("generateStrings", Exec::class.java) {
 
 tasks.preBuild.dependsOn("generateStrings")
 
+val mediaVersion = "1.2.1"
+
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.leanback:leanback:1.1.0-rc02")
@@ -136,6 +138,11 @@ dependencies {
 
     implementation("com.apollographql.apollo3:apollo-runtime:3.8.2")
     implementation("androidx.preference:preference-ktx:1.2.1")
+
+    implementation("androidx.media3:media3-exoplayer:$mediaVersion")
+    implementation("androidx.media3:media3-ui:$mediaVersion")
+    implementation("androidx.media3:media3-exoplayer-dash:$mediaVersion")
+    implementation("androidx.media3:media3-exoplayer-hls:$mediaVersion")
 
     testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("junit:junit:4.13.2")

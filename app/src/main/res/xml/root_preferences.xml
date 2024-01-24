@@ -71,9 +71,13 @@
             app:key="stream_choice"
             app:title="Stream Choice"
             app:summary="Which stream type to use when direct is unavailable"
-            app:defaultValue="MP4"
+            app:defaultValue="HLS"
             app:entries="@array/stream_options"
             app:entryValues="@array/stream_options" />
+        <SwitchPreference
+            app:key="playerChoice"
+            app:title="Which player to use for playback"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/stashapp_config_tasks_job_queue">
