@@ -12,6 +12,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/player_controls"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="bottom"
@@ -62,30 +63,25 @@
         app:layout_constraintStart_toStartOf="parent"
         tools:text="18:20" />
 
-    <FrameLayout
-        android:id="@+id/previewFrameLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        tools:ignore="MissingConstraints">
-<!--        android:background="@drawable/video_frame"-->
-
-
-        <ImageView
-            android:id="@+id/video_preview_image_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
-    </FrameLayout>
-
     <com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
         android:id="@+id/exo_progress"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/exo_position"
+        app:layout_constraintEnd_toStartOf="@id/exo_duration"
+        app:layout_constraintStart_toEndOf="@+id/exo_position"
+        app:layout_constraintTop_toTopOf="@+id/exo_position"
         app:previewAnimationEnabled="true"
         app:previewFrameLayout="@id/previewFrameLayout"
-        tools:ignore="MissingConstraints" />
+        app:scrubber_dragged_size="24dp"
+        app:scrubber_enabled_size="16dp"
+        app:played_color="@color/selected_background"
+        app:auto_show="true"
+        app:hide_on_touch="true"
+        app:animation_enabled="true"
+        app:previewAutoHide="true" />
 
     <TextView
         android:id="@id/exo_duration"
@@ -100,5 +96,31 @@
         app:layout_constraintBaseline_toBaselineOf="@id/exo_position"
         app:layout_constraintEnd_toEndOf="parent"
         tools:text="25:23" />
+
+    <FrameLayout
+        android:id="@+id/previewFrameLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/video_frame"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/exo_progress"
+        app:layout_constraintDimensionRatio="16:9"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintWidth_default="percent"
+        app:layout_constraintWidth_percent="0.35"
+        tools:visibility="visible">
+
+        <ImageView
+            android:id="@+id/video_preview_image_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="@dimen/video_frame_width"
+            android:scaleType="fitXY" />
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
