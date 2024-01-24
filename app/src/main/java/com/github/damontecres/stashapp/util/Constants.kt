@@ -22,6 +22,8 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 object Constants {
     /**
@@ -31,6 +33,16 @@ object Constants {
     const val PREF_KEY_STASH_URL = "stashUrl"
     const val PREF_KEY_STASH_API_KEY = "stashApi"
     const val TAG = "Constants"
+
+    /**
+     * Converts seconds into a Duration string where fractional seconds are removed
+     */
+    fun durationToString(duration: Double): String {
+        return duration
+            .times(100L).toLong()
+            .div(100L).toDuration(DurationUnit.SECONDS)
+            .toString()
+    }
 }
 
 /**

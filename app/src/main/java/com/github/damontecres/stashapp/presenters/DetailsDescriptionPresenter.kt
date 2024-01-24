@@ -2,9 +2,8 @@ package com.github.damontecres.stashapp.presenters
 
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.concatIfNotBlank
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 class DetailsDescriptionPresenter : AbstractDetailsDescriptionPresenter() {
     override fun onBindDescription(
@@ -21,12 +20,19 @@ class DetailsDescriptionPresenter : AbstractDetailsDescriptionPresenter() {
                 null
             }
 
+        val duration =
+            if (scene.duration != null) {
+                Constants.durationToString(scene.duration)
+            } else {
+                null
+            }
+
         viewHolder.subtitle.text =
             concatIfNotBlank(
                 " - ",
                 scene.studioName,
                 scene.date,
-                scene.duration?.toDuration(DurationUnit.SECONDS).toString(),
+                duration,
                 resolution,
             )
         viewHolder.body.text = scene.details

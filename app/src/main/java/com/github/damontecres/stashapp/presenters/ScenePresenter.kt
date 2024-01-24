@@ -11,11 +11,10 @@ import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.createGlideUrl
 import java.io.File
 import java.security.MessageDigest
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 class ScenePresenter : StashPresenter() {
     override fun onBindViewHolder(
@@ -89,9 +88,7 @@ class ScenePresenter : StashPresenter() {
                 paint.setShadowLayer(5F, 5F, 5F, Color.BLACK)
 
                 paint.textAlign = Paint.Align.RIGHT
-                val duration =
-                    videoFile.duration.times(100).toInt().div(100).toDuration(DurationUnit.SECONDS)
-                        .toString()
+                val duration = Constants.durationToString(videoFile.duration)
                 canvas.drawText(
                     duration,
                     outWidth.toFloat() - 5F,
