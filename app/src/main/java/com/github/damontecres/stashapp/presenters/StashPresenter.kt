@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.presenters
 
 import android.graphics.drawable.Drawable
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ImageCardView
@@ -16,6 +17,7 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.data.Tag
+import com.github.damontecres.stashapp.util.enableMarquee
 import kotlin.properties.Delegates
 
 abstract class StashPresenter : Presenter() {
@@ -41,9 +43,14 @@ abstract class StashPresenter : Presenter() {
             object : ImageCardView(parent.context) {
                 override fun setSelected(selected: Boolean) {
                     updateCardBackgroundColor(this, selected)
+                    val textView = findViewById<TextView>(androidx.leanback.R.id.title_text)
+                    textView.isSelected = selected
                     super.setSelected(selected)
                 }
             }
+
+        val textView = cardView.findViewById<TextView>(androidx.leanback.R.id.title_text)
+        textView.enableMarquee(false)
 
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true

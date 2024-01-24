@@ -9,6 +9,7 @@ import java.io.File
 data class Scene(
     val id: Long,
     val title: String?,
+    val date: String?,
     val details: String?,
     val streamUrl: String?,
     val screenshotUrl: String?,
@@ -18,6 +19,7 @@ data class Scene(
     val duration: Double?,
     val resumeTime: Double?,
     val videoCodec: String?,
+    val videoResolution: Int?,
 ) : Parcelable {
     companion object {
         fun fromSlimSceneData(data: SlimSceneData): Scene {
@@ -41,6 +43,7 @@ data class Scene(
             return Scene(
                 id = data.id.toLong(),
                 title = title,
+                date = data.date,
                 details = data.details,
                 streamUrl = data.paths.stream,
                 screenshotUrl = data.paths.screenshot,
@@ -50,6 +53,7 @@ data class Scene(
                 duration = fileData?.duration,
                 resumeTime = data.resume_time,
                 videoCodec = fileData?.video_codec,
+                videoResolution = fileData?.height,
             )
         }
     }

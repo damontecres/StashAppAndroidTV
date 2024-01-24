@@ -2,7 +2,9 @@ package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.net.Uri
+import android.text.TextUtils
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
@@ -20,6 +22,8 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 object Constants {
     /**
@@ -29,6 +33,16 @@ object Constants {
     const val PREF_KEY_STASH_URL = "stashUrl"
     const val PREF_KEY_STASH_API_KEY = "stashApi"
     const val TAG = "Constants"
+
+    /**
+     * Converts seconds into a Duration string where fractional seconds are removed
+     */
+    fun durationToString(duration: Double): String {
+        return duration
+            .times(100L).toLong()
+            .div(100L).toDuration(DurationUnit.SECONDS)
+            .toString()
+    }
 }
 
 /**
@@ -229,4 +243,18 @@ fun <V> Map<String, V>.getCaseInsensitive(k: String?): V? {
         return null
     }
     return this[k] ?: this[k.lowercase()]
+}
+
+fun TextView.enableMarquee(selected: Boolean = false) {
+    marqueeRepeatLimit = -1
+    ellipsize = TextUtils.TruncateAt.MARQUEE
+    isSingleLine = true
+    isSelected = selected
+}
+
+fun concatIfNotBlank(
+    sep: String,
+    vararg strings: String?,
+): String {
+    return strings.filter { !it.isNullOrBlank() }.joinToString(sep)
 }

@@ -13,6 +13,8 @@ The app is not intended to perform administrative functions such as scanning, sc
 
 Make sure your Stash server is running and that you can access it over the network (not `localhost`).
 
+Check the [Tips & Tricks](https://github.com/damontecres/StashAppAndroidTV/wiki/Tips-&-Tricks) page for some common issues and solutions!
+
 ### Installation
 
 1. Enable side-loading "unknown" apps
@@ -69,3 +71,7 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 
 ### Default filtered performers
 ![performers screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/7dded398-e327-414e-a2a3-fa60c11c92f1)
+
+### Demo
+
+https://github.com/damontecres/StashAppAndroidTV/assets/154766448/aff09ae7-afef-4df4-9ea7-4ef8fdabeb01
