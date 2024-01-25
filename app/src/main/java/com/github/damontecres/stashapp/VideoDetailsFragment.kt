@@ -154,6 +154,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                                 newTags?.first { it.id == tagId.toInt() }?.name
                             tagsAdapter.clear()
                             tagsAdapter.addAll(0, newTags)
+                            mAdapter.set(
+                                TAG_POS,
+                                ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
+                            )
 
                             Toast.makeText(
                                 requireContext(),
@@ -188,6 +192,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                                 resultPerformers?.first { it.id == performerId }
                             performersAdapter.clear()
                             performersAdapter.addAll(0, resultPerformers)
+                            mAdapter.set(
+                                PERFORMER_POS,
+                                ListRow(
+                                    HeaderItem(getString(R.string.stashapp_performers)),
+                                    performersAdapter,
+                                ),
+                            )
 
                             Toast.makeText(
                                 requireContext(),
