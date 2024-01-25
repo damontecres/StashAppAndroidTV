@@ -44,11 +44,14 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
 
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> {
         val queryName = query.operation.name()
-        Log.d(TAG, "executeQuery $queryName: ${query.operation}")
+        Log.v(
+            TAG,
+            "executeQuery $queryName",
+        )
         try {
             val response = query.execute()
             if (response.errors.isNullOrEmpty()) {
-                Log.d(TAG, "executeQuery $queryName successful")
+                Log.v(TAG, "executeQuery $queryName successful")
                 return response
             } else {
                 val errorMsgs = response.errors!!.map { it.message }.joinToString("\n")
