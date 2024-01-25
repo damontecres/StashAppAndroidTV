@@ -14,6 +14,8 @@
         app:hide_on_touch="true"
         app:animation_enabled="true"
         app:scrubber_dragged_size="22dp"
-        app:played_color="@color/selected_background" />
+        app:played_color="@color/selected_background"
+        app:controller_layout_id="@layout/exoplayer_controls"
+        app:use_controller="true" />
 
 </FrameLayout>

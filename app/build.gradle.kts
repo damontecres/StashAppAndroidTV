@@ -143,6 +143,9 @@ dependencies {
     implementation("androidx.media3:media3-ui:$mediaVersion")
     implementation("androidx.media3:media3-exoplayer-dash:$mediaVersion")
     implementation("androidx.media3:media3-exoplayer-hls:$mediaVersion")
+    implementation("com.github.rubensousa:previewseekbar:3.1.1")
+    implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
     testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("junit:junit:4.13.2")

@@ -3,7 +3,9 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.ImageView
 import androidx.annotation.OptIn
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.media3.common.MediaItem
@@ -19,6 +21,9 @@ import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.StashPreviewLoader
+import com.github.rubensousa.previewseekbar.PreviewBar
+import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
 
 @OptIn(UnstableApi::class)
 class PlaybackExoFragment :
@@ -27,6 +32,8 @@ class PlaybackExoFragment :
     private var player: ExoPlayer? = null
     private lateinit var scene: Scene
     private lateinit var videoView: PlayerView
+    private lateinit var previewTimeBar: PreviewTimeBar
+    private lateinit var controlsLayout: ConstraintLayout
 
     private var playbackPosition = -1L
 
@@ -35,6 +42,8 @@ class PlaybackExoFragment :
     override fun hideControlsIfVisible(): Boolean {
         if (videoView.isControllerFullyVisible) {
             videoView.hideController()
+            previewTimeBar.hidePreview()
+            previewTimeBar.hideScrubber(250L)
             return true
         }
         return false
@@ -139,6 +148,8 @@ class PlaybackExoFragment :
     ) {
         super.onViewCreated(view, savedInstanceState)
 
+        controlsLayout = view.findViewById(R.id.player_controls)
+
         scene = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE) as Scene?
             ?: throw RuntimeException()
 
@@ -186,13 +197,46 @@ class PlaybackExoFragment :
                 androidx.media3.ui.R.id.exo_prev,
                 androidx.media3.ui.R.id.exo_play_pause,
                 androidx.media3.ui.R.id.exo_next,
+                androidx.media3.ui.R.id.exo_rew,
+                androidx.media3.ui.R.id.exo_ffwd,
             )
         buttons.forEach {
             view.findViewById<View>(it)?.onFocusChangeListener = onFocusChangeListener
         }
 
-//        val timeBar: DefaultTimeBar =
-//            view.findViewById(androidx.media3.ui.R.id.exo_progress)
+        val previewImageView = view.findViewById<ImageView>(R.id.video_preview_image_view)
+        previewTimeBar = view.findViewById(R.id.exo_progress)
+
+        if (scene.spriteUrl != null) {
+            previewTimeBar.isPreviewEnabled = true
+            previewTimeBar.setPreviewLoader(
+                StashPreviewLoader(
+                    requireContext(),
+                    previewImageView,
+                    scene,
+                ),
+            )
+            previewTimeBar.addOnScrubListener(
+                object : PreviewBar.OnScrubListener {
+                    override fun onScrubStart(previewBar: PreviewBar) {
+                        player!!.playWhenReady = false
+                    }
+
+                    override fun onScrubMove(
+                        previewBar: PreviewBar,
+                        progress: Int,
+                        fromUser: Boolean,
+                    ) {
+                    }
+
+                    override fun onScrubStop(previewBar: PreviewBar) {
+                        player!!.playWhenReady = true
+                    }
+                },
+            )
+        } else {
+            previewTimeBar.isPreviewEnabled = false
+        }
     }
 
     @OptIn(UnstableApi::class)
