@@ -13,11 +13,22 @@ import androidx.appcompat.widget.ListPopupWindow
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
+import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
+import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
+import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
+import com.github.damontecres.stashapp.suppliers.TagDataSupplier
 import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.MarkerComparator
+import com.github.damontecres.stashapp.util.MovieComparator
+import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.SceneComparator
+import com.github.damontecres.stashapp.util.StudioComparator
+import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.toPx
 import kotlinx.coroutines.launch
@@ -108,29 +119,63 @@ class SceneListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
     }
 
     private fun setupFragment(filter: SavedFilterData) {
-        val dataType = DataType.fromFilterMode(filter.mode)
+        val dataType = DataType.fromFilterMode(filter.mode)!!
         if (filter.name.isBlank()) {
-            titleTextView.text = getString(dataType!!.pluralStringId)
+            titleTextView.text = getString(dataType.pluralStringId)
         } else {
             titleTextView.text = filter.name
         }
-        when (dataType) {
+        val fragment =
+            getFragment(dataType, convertFilter(filter.find_filter), filter.object_filter)
+
+        supportFragmentManager.beginTransaction()
+            .replace(
+                R.id.tag_fragment,
+                fragment,
+            ).commitNow()
+    }
+
+    private fun getFragment(
+        dataType: DataType,
+        findFilter: FindFilterType?,
+        objectFilter: Any?,
+    ): StashGridFragment<out Query.Data, out Any> {
+        return when (dataType) {
             DataType.SCENE -> {
-                supportFragmentManager.beginTransaction()
-                    .replace(
-                        R.id.tag_fragment,
-                        StashGridFragment(
-                            SceneComparator,
-                            SceneDataSupplier(
-                                convertFilter(filter.find_filter),
-                                FilterParser.instance.convertSceneObjectFilter(filter.object_filter),
-                            ),
-                            filter,
-                        ),
-                    ).commitNow()
+                val sceneFilter =
+                    FilterParser.instance.convertSceneObjectFilter(objectFilter)
+                StashGridFragment(SceneComparator, SceneDataSupplier(findFilter, sceneFilter))
             }
 
-            else -> {
+            DataType.STUDIO -> {
+                val studioFilter =
+                    FilterParser.instance.convertStudioObjectFilter(objectFilter)
+                StashGridFragment(StudioComparator, StudioDataSupplier(findFilter, studioFilter))
+            }
+
+            DataType.PERFORMER -> {
+                val performerFilter =
+                    FilterParser.instance.convertPerformerObjectFilter(objectFilter)
+                StashGridFragment(
+                    PerformerComparator,
+                    PerformerDataSupplier(findFilter, performerFilter),
+                )
+            }
+
+            DataType.TAG -> {
+                val tagFilter =
+                    FilterParser.instance.convertTagObjectFilter(objectFilter)
+                StashGridFragment(TagComparator, TagDataSupplier(findFilter, tagFilter))
+            }
+
+            DataType.MOVIE -> {
+                val movieFilter = FilterParser.instance.convertMovieObjectFilter(objectFilter)
+                StashGridFragment(MovieComparator, MovieDataSupplier(findFilter, movieFilter))
+            }
+
+            DataType.MARKER -> {
+                val markerFilter = FilterParser.instance.convertMarkerObjectFilter(objectFilter)
+                StashGridFragment(MarkerComparator, MarkerDataSupplier(findFilter, markerFilter))
             }
         }
     }
