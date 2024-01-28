@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.FindMoviesQuery
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
+import com.github.damontecres.stashapp.api.FindSavedFiltersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
@@ -227,6 +228,11 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun getSavedFilter(filterId: String): SavedFilterData? {
         val query = FindSavedFilterQuery(filterId)
         return executeQuery(query).data?.findSavedFilter?.savedFilterData
+    }
+
+    suspend fun getSavedFilters(dataType: DataType): List<SavedFilterData> {
+        val query = FindSavedFiltersQuery(dataType.filterMode)
+        return executeQuery(query).data?.findSavedFilters?.map { it.savedFilterData }.orEmpty()
     }
 
     suspend fun getDefaultFilter(type: DataType): SavedFilterData? {
