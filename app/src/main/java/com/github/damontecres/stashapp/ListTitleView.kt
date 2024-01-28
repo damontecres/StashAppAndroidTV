@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.RelativeLayout
-import android.widget.Toast
 import androidx.leanback.widget.TitleViewAdapter
 
 class ListTitleView(context: Context, attrs: AttributeSet) : RelativeLayout(context, attrs), TitleViewAdapter.Provider {
@@ -27,9 +26,7 @@ class ListTitleView(context: Context, attrs: AttributeSet) : RelativeLayout(cont
     init {
         val root = LayoutInflater.from(context).inflate(R.layout.list_title_view, this)
         filterButton = root.findViewById(R.id.filter_button)
-        filterButton.setOnClickListener {
-            Toast.makeText(context, "Filter button clicked!", Toast.LENGTH_SHORT).show()
-        }
+
         filterButton.setOnFocusChangeListener { view: View, focused: Boolean ->
             if (focused) {
                 filterButton.setBackgroundColor(context.getColor(R.color.selected_background))

@@ -18,7 +18,7 @@
         android:layout_height="match_parent"
         android:textSize="40sp"
         android:textAlignment="center"
-        android:text="" />
+        android:text="REPLACE" />
 
     <Button
         android:id="@+id/filter_button"

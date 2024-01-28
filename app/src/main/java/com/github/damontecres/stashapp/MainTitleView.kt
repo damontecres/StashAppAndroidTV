@@ -5,14 +5,13 @@ import android.content.Intent
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.OnFocusChangeListener
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RelativeLayout
-import androidx.core.content.ContextCompat
 import androidx.core.content.ContextCompat.startActivity
 import androidx.leanback.widget.SearchOrbView
 import androidx.leanback.widget.TitleViewAdapter
+import com.github.damontecres.stashapp.data.DataType
 
 class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
     private var mPreferencesView: ImageButton
@@ -38,44 +37,15 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
             },
         )
 
-        val mFocusedZoom =
-            context.resources.getFraction(
-                androidx.leanback.R.fraction.lb_search_orb_focused_zoom,
-                1,
-                1,
-            )
-        val mScaleDurationMs =
-            context.resources.getInteger(
-                androidx.leanback.R.integer.lb_search_orb_scale_duration_ms,
-            )
+        val onFocusChangeListener = StashOnFocusChangeListener(context)
 
-        val onFocusChangeListener =
-            OnFocusChangeListener { v, hasFocus ->
-                val zoom = if (hasFocus) mFocusedZoom else 1f
-                v.animate().scaleX(zoom).scaleY(zoom).setDuration(mScaleDurationMs.toLong()).start()
-
-                if (hasFocus) {
-                    v.setBackgroundColor(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.selected_background,
-                        ),
-                    )
-                } else {
-                    v.setBackgroundColor(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.default_card_background,
-                        ),
-                    )
-                }
-            }
         mSearchOrbView.onFocusChangeListener = onFocusChangeListener
         mPreferencesView.onFocusChangeListener = onFocusChangeListener
 
         val scenesButton = root.findViewById<Button>(R.id.scenes_button)
         scenesButton.setOnClickListener {
             val intent = Intent(context, SceneListActivity::class.java)
+            intent.putExtra("dataType", DataType.SCENE.name)
             startActivity(context, intent, null)
         }
         scenesButton.onFocusChangeListener = onFocusChangeListener

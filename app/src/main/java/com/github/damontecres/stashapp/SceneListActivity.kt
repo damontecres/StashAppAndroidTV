@@ -1,6 +1,9 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
@@ -15,28 +18,47 @@ class SceneListActivity : SecureFragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tag)
 
+        val dataTypeStr = intent.getStringExtra("dataType")
+        val dataType =
+            if (dataTypeStr != null) {
+                DataType.valueOf(dataTypeStr)
+            } else {
+                DataType.SCENE
+            }
+
+        val filterButton = findViewById<Button>(R.id.filter_button)
+        filterButton.setOnClickListener {
+            Toast.makeText(this, "Filter button clicked!", Toast.LENGTH_SHORT).show()
+        }
+        val onFocusChangeListener = StashOnFocusChangeListener(this)
+        filterButton.onFocusChangeListener = onFocusChangeListener
+
         val queryEngine = QueryEngine(this, true)
         lifecycleScope.launch {
-            val filter = queryEngine.getDefaultFilter(DataType.SCENE)
-
+            val filter = queryEngine.getDefaultFilter(dataType)
             if (savedInstanceState == null) {
-//                findViewById<TextView>(R.id.tag_title).text = getString(R.string.stashapp_scenes)
+                val titleTextView = findViewById<TextView>(R.id.tag_title)
+                if (filter?.name.isNullOrBlank()) {
+                    titleTextView.text = getString(dataType.pluralStringId)
+                } else {
+                    titleTextView.text = filter?.name
+                }
+
+                val fragment =
+                    StashGridFragment(
+                        SceneComparator,
+                        SceneDataSupplier(
+                            convertFilter(filter?.find_filter),
+                            FilterParser.instance.convertSceneObjectFilter(filter?.object_filter),
+                        ),
+                        filter,
+                    )
+
                 supportFragmentManager.beginTransaction()
-//                    .replace(
-//                        R.id.title_fragment,
-//                        ListTitleFragment()
-//                    )
                     .replace(
                         R.id.tag_fragment,
-                        StashGridFragment(
-                            SceneComparator,
-                            SceneDataSupplier(
-                                convertFilter(filter?.find_filter),
-                                FilterParser.instance.convertSceneObjectFilter(filter?.object_filter),
-                            ),
-                        ),
-                    )
-                    .commitNow()
+                        fragment,
+                    ).commitNow()
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.paging.PagingDataAdapter
@@ -16,6 +17,7 @@ import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
+import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.presenters.StashPagingSource
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -27,11 +29,18 @@ class StashGridFragment<T : Query.Data, D : Any>(
     presenter: PresenterSelector,
     comparator: DiffUtil.ItemCallback<D>,
     private val dataSupplier: StashPagingSource.DataSupplier<T, D>,
+    val filter: SavedFilterData?,
 ) : VerticalGridSupportFragment() {
     constructor(
         comparator: DiffUtil.ItemCallback<D>,
         dataSupplier: StashPagingSource.DataSupplier<T, D>,
-    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier)
+    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null)
+
+    constructor(
+        comparator: DiffUtil.ItemCallback<D>,
+        dataSupplier: StashPagingSource.DataSupplier<T, D>,
+        filter: SavedFilterData?,
+    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, filter)
 
     private val mAdapter = PagingDataAdapter(presenter, comparator)
 
@@ -55,17 +64,6 @@ class StashGridFragment<T : Query.Data, D : Any>(
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-
-        val browseFrameLayout =
-            requireView().findViewById<BrowseFrameLayout>(androidx.leanback.R.id.grid_frame)
-        browseFrameLayout.onFocusSearchListener =
-            BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
-                if (direction == View.FOCUS_UP) {
-                    requireActivity().findViewById<View>(R.id.filter_button)
-                } else {
-                    null
-                }
-            }
 
         onItemViewClickedListener = StashItemViewClickListener(requireActivity())
 
@@ -97,12 +95,34 @@ class StashGridFragment<T : Query.Data, D : Any>(
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+
+        val browseFrameLayout =
+            requireView().findViewById<BrowseFrameLayout>(androidx.leanback.R.id.grid_frame)
+        browseFrameLayout.onFocusSearchListener =
+            BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
+                if (direction == View.FOCUS_UP) {
+                    val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
+                    Log.v(TAG, "Found filterButton=$filterButton")
+                    filterButton
+                } else {
+                    null
+                }
+            }
+        browseFrameLayout.requestFocus()
+    }
+
+    companion object {
+        const val TAG = "StashGridFragment"
+    }
+
     private class StashGridPresenter(val paddingTop: Int) :
         VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
         override fun initializeGridViewHolder(vh: ViewHolder?) {
             super.initializeGridViewHolder(vh)
             val gridView = vh!!.gridView
-            val top = paddingTop // gridView.paddingTop
+            val top = 10 // gridView.paddingTop
             val bottom = gridView.paddingBottom
             val right = 20
             val left = 20
