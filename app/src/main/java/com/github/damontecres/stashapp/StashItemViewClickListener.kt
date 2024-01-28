@@ -17,6 +17,7 @@ import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.data.Scene
@@ -96,13 +97,13 @@ class StashItemViewClickListener(
         } else if (item is StashSavedFilter) {
             val intent = Intent(activity, FilterListActivity::class.java)
             intent.putExtra("savedFilterId", item.savedFilterId)
-            intent.putExtra("mode", item.mode.rawValue)
+            intent.putExtra("dataType", DataType.fromFilterMode(item.mode)!!.name)
             activity.startActivity(intent)
         } else if (item is StashCustomFilter) {
             val intent = Intent(activity, FilterListActivity::class.java)
             intent.putExtra("direction", item.direction)
             intent.putExtra("sortBy", item.sortBy)
-            intent.putExtra("mode", item.mode.rawValue)
+            intent.putExtra("dataType", DataType.fromFilterMode(item.mode)!!.name)
             intent.putExtra("description", item.description)
             activity.startActivity(intent)
         } else if (item is StashAction) {

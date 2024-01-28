@@ -44,7 +44,7 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
 
         val scenesButton = root.findViewById<Button>(R.id.scenes_button)
         scenesButton.setOnClickListener {
-            val intent = Intent(context, SceneListActivity::class.java)
+            val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.SCENE.name)
             startActivity(context, intent, null)
         }

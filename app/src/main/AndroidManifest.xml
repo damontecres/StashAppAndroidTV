@@ -64,7 +64,7 @@
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".SceneListActivity"
+            android:name=".FilterListActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
@@ -77,10 +77,6 @@
             android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".TagListActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".FilterListActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
