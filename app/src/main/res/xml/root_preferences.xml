@@ -78,6 +78,14 @@
             app:key="playerChoice"
             app:title="Which player to use for playback"
             app:defaultValue="true" />
+        <SeekBarPreference
+            app:key="controllerShowTimeoutMs"
+            app:title="Hide controls after (milliseconds)"
+            app:seekBarIncrement="100"
+            app:showSeekBarValue="true"
+            android:min="0"
+            android:max="15000"
+            app:defaultValue="5000" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/stashapp_config_tasks_job_queue">

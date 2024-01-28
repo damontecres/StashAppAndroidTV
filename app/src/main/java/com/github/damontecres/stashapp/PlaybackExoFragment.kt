@@ -17,6 +17,7 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.Scene
@@ -40,7 +41,7 @@ class PlaybackExoFragment :
     override val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
 
     override fun hideControlsIfVisible(): Boolean {
-        if (videoView.isControllerFullyVisible) {
+        if (videoView.isControllerFullyVisible || previewTimeBar.isShown) {
             videoView.hideController()
             previewTimeBar.hidePreview()
             previewTimeBar.hideScrubber(250L)
@@ -156,10 +157,12 @@ class PlaybackExoFragment :
         val position = requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
         Log.d(TAG, "scene=${scene.id}, ${VideoDetailsFragment.POSITION_ARG}=$position")
 
+        val controllerShowTimeoutMs =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("controllerShowTimeoutMs", PlayerControlView.DEFAULT_SHOW_TIMEOUT_MS)
+
         videoView = view.findViewById(R.id.video_view)
-        videoView.requestFocus()
-        videoView.controllerShowTimeoutMs = 2000
-        videoView.hideController()
+        videoView.controllerShowTimeoutMs = controllerShowTimeoutMs
 
         val mFocusedZoom =
             requireContext().resources.getFraction(
