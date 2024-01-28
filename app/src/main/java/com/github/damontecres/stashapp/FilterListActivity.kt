@@ -32,6 +32,7 @@ import com.github.damontecres.stashapp.util.StudioComparator
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.toPx
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
 class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
@@ -62,7 +63,13 @@ class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
 
         titleTextView = findViewById(R.id.list_title)
 
-        lifecycleScope.launch {
+        val exHandler =
+            CoroutineExceptionHandler { _, ex: Throwable ->
+                Log.e(TAG, "Error in filter coroutine", ex)
+                Toast.makeText(this, "Error: ${ex.message}", Toast.LENGTH_LONG).show()
+            }
+
+        lifecycleScope.launch(exHandler) {
             val filter = getStartingFilter()
             if (savedInstanceState == null) {
                 if (filter != null) {
@@ -73,9 +80,11 @@ class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
                 }
             }
         }
-        lifecycleScope.launch {
+        lifecycleScope.launch(exHandler) {
             val savedFilters = queryEngine.getSavedFilters(dataType)
             if (savedFilters.isEmpty()) {
+                // TODO: Hide the filter button?
+//                filterButton.visibility = View.INVISIBLE
                 filterButton.setOnClickListener {
                     Toast.makeText(
                         this@FilterListActivity,
