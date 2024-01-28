@@ -40,7 +40,7 @@ class PlaybackExoFragment :
     override val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
 
     override fun hideControlsIfVisible(): Boolean {
-        if (videoView.isControllerFullyVisible) {
+        if (videoView.isControllerFullyVisible || previewTimeBar.isShown) {
             videoView.hideController()
             previewTimeBar.hidePreview()
             previewTimeBar.hideScrubber(250L)
@@ -157,9 +157,7 @@ class PlaybackExoFragment :
         Log.d(TAG, "scene=${scene.id}, ${VideoDetailsFragment.POSITION_ARG}=$position")
 
         videoView = view.findViewById(R.id.video_view)
-        videoView.requestFocus()
         videoView.controllerShowTimeoutMs = 2000
-        videoView.hideController()
 
         val mFocusedZoom =
             requireContext().resources.getFraction(
