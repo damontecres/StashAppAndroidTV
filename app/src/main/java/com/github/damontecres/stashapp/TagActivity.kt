@@ -15,13 +15,13 @@ import com.github.damontecres.stashapp.util.SceneComparator
 class TagActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_tag)
+        setContentView(R.layout.grid_view)
         if (savedInstanceState == null) {
             val tag = this.intent.getParcelableExtra<Tag>("tag")
-            findViewById<TextView>(R.id.tag_title).text = "${tag?.name}"
+            findViewById<TextView>(R.id.grid_title).text = "${tag?.name}"
             supportFragmentManager.beginTransaction()
                 .replace(
-                    R.id.tag_fragment,
+                    R.id.grid_fragment,
                     StashGridFragment(
                         SceneComparator,
                         SceneDataSupplier(

@@ -14,14 +14,14 @@ import com.github.damontecres.stashapp.util.SceneComparator
 class StudioActivity : SecureFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_tag)
+        setContentView(R.layout.grid_view)
         if (savedInstanceState == null) {
             val studioId = this.intent.getIntExtra("studioId", -1)
             val studioName = this.intent.getStringExtra("studioName")
-            findViewById<TextView>(R.id.tag_title).text = "$studioName"
+            findViewById<TextView>(R.id.grid_title).text = "$studioName"
             supportFragmentManager.beginTransaction()
                 .replace(
-                    R.id.tag_fragment,
+                    R.id.grid_fragment,
                     StashGridFragment(
                         SceneComparator,
                         SceneDataSupplier(

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.text.TextUtils
 import android.util.Log
+import android.util.TypedValue
 import android.widget.TextView
 import android.widget.Toast
 import androidx.preference.PreferenceManager
@@ -258,3 +259,10 @@ fun concatIfNotBlank(
 ): String {
     return strings.filter { !it.isNullOrBlank() }.joinToString(sep)
 }
+
+fun Context.toPx(dp: Int): Float =
+    TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP,
+        dp.toFloat(),
+        resources.displayMetrics,
+    )

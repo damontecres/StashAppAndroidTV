@@ -2,12 +2,17 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.ListPopupWindow
 import androidx.lifecycle.lifecycleScope
-import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
-import com.github.damontecres.stashapp.api.type.FilterMode
+import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
@@ -26,14 +31,198 @@ import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.StudioComparator
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.convertFilter
+import com.github.damontecres.stashapp.util.toPx
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
 class FilterListActivity : SecureFragmentActivity() {
+    private lateinit var titleTextView: TextView
+    private lateinit var queryEngine: QueryEngine
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        queryEngine = QueryEngine(this, true)
+
+        setContentView(R.layout.filter_list)
+
+        val dataTypeStr = intent.getStringExtra("dataType")
+        val dataType =
+            if (dataTypeStr != null) {
+                DataType.valueOf(dataTypeStr)
+            } else {
+                DataType.SCENE
+            }
+
+        val filterButton = findViewById<Button>(R.id.filter_button)
+        filterButton.setOnClickListener {
+            Toast.makeText(this, "Filters not loaded yet!", Toast.LENGTH_SHORT).show()
+        }
+        val onFocusChangeListener = StashOnFocusChangeListener(this)
+        filterButton.onFocusChangeListener = onFocusChangeListener
+
+        titleTextView = findViewById(R.id.list_title)
+
+        val exHandler =
+            CoroutineExceptionHandler { _, ex: Throwable ->
+                Log.e(TAG, "Error in filter coroutine", ex)
+                Toast.makeText(this, "Error: ${ex.message}", Toast.LENGTH_LONG).show()
+            }
+
+        lifecycleScope.launch(exHandler) {
+            val filter = getStartingFilter()
+            if (savedInstanceState == null) {
+                if (filter != null) {
+                    setupFragment(filter)
+                } else {
+                    Log.e(TAG, "No starting filter found for $dataType was null")
+                    finish()
+                }
+            }
+        }
+        lifecycleScope.launch(exHandler) {
+            val savedFilters = queryEngine.getSavedFilters(dataType)
+            if (savedFilters.isEmpty()) {
+                // TODO: Hide the filter button?
+//                filterButton.visibility = View.INVISIBLE
+                filterButton.setOnClickListener {
+                    Toast.makeText(
+                        this@FilterListActivity,
+                        "No saved filters found",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            } else {
+                val listPopUp =
+                    ListPopupWindow(
+                        this@FilterListActivity,
+                        null,
+                        android.R.attr.listPopupWindowStyle,
+                    )
+                listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
+                listPopUp.anchorView = filterButton
+                // listPopUp.width = ViewGroup.LayoutParams.MATCH_PARENT
+                // TODO: Better width calculation
+                listPopUp.width = this@FilterListActivity.toPx(200).toInt()
+                listPopUp.isModal = true
+
+                val focusChangeListener = StashOnFocusChangeListener(this@FilterListActivity)
+
+                val adapter =
+                    object : ArrayAdapter<String>(
+                        this@FilterListActivity,
+                        android.R.layout.simple_list_item_1,
+                        savedFilters.map { it.name },
+                    ) {
+                        override fun getView(
+                            position: Int,
+                            convertView: View?,
+                            parent: ViewGroup,
+                        ): View {
+                            val itemView = super.getView(position, convertView, parent)
+                            // TODO: this doesn't seem to work?
+                            itemView.onFocusChangeListener = focusChangeListener
+                            return itemView
+                        }
+                    }
+                listPopUp.setAdapter(adapter)
+
+                listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
+                    val filter = savedFilters[position]
+                    listPopUp.dismiss()
+                    setupFragment(filter)
+                }
+
+                filterButton.setOnClickListener {
+                    listPopUp.show()
+                    listPopUp.listView?.requestFocus()
+                }
+            }
+        }
+    }
+
+    private suspend fun getStartingFilter(): SavedFilterData? {
+        val savedFilterId = intent.getStringExtra("savedFilterId")
+        val direction = intent.getStringExtra("direction")
+        val sortBy = intent.getStringExtra("sortBy")
+        val dataTypeStr = intent.getStringExtra("dataType")
+        val dataType =
+            if (dataTypeStr != null) {
+                DataType.valueOf(dataTypeStr)
+            } else {
+                throw RuntimeException("dataType is required")
+            }
+        if (savedFilterId != null) {
+            // Load a saved filter
+            return queryEngine.getSavedFilter(savedFilterId.toString())
+        } else if (direction != null || sortBy != null) {
+            // Generic filter
+            return SavedFilterData(
+                id = "-1",
+                mode = dataType.filterMode,
+                name = getString(dataType.pluralStringId),
+                find_filter =
+                    SavedFilterData.Find_filter(
+                        q = null,
+                        page = null,
+                        per_page = null,
+                        sort = sortBy,
+                        direction = if (direction != null) SortDirectionEnum.valueOf(direction) else null,
+                        __typename = "",
+                    ),
+                object_filter = null,
+                ui_options = null,
+                __typename = "",
+            )
+        } else {
+            // Default filter
+            val filter = queryEngine.getDefaultFilter(dataType)
+            if (filter == null) {
+                return SavedFilterData(
+                    id = "-1",
+                    mode = dataType.filterMode,
+                    name = getString(dataType.pluralStringId),
+                    find_filter =
+                        SavedFilterData.Find_filter(
+                            q = null,
+                            page = null,
+                            per_page = null,
+                            sort = null,
+                            direction = null,
+                            __typename = "",
+                        ),
+                    object_filter = null,
+                    ui_options = null,
+                    __typename = "",
+                )
+            } else {
+                return filter
+            }
+        }
+    }
+
+    private fun setupFragment(filter: SavedFilterData) {
+        val dataType = DataType.fromFilterMode(filter.mode)!!
+        if (filter.name.isBlank()) {
+            titleTextView.text = getString(dataType.pluralStringId)
+        } else {
+            titleTextView.text = filter.name
+        }
+        val fragment =
+            getFragment(dataType, convertFilter(filter.find_filter), filter.object_filter)
+
+        supportFragmentManager.beginTransaction()
+            .replace(
+                R.id.list_fragment,
+                fragment,
+            ).commitNow()
+    }
+
     private fun getFragment(
         dataType: DataType,
         findFilter: FindFilterType?,
-        objectFilter: Map<String, Map<String, *>>?,
-    ): StashGridFragment<out Query.Data, out Any>? {
+        objectFilter: Any?,
+    ): StashGridFragment<out Query.Data, out Any> {
         return when (dataType) {
             DataType.SCENE -> {
                 val sceneFilter =
@@ -70,60 +259,6 @@ class FilterListActivity : SecureFragmentActivity() {
             DataType.MARKER -> {
                 val markerFilter = FilterParser.instance.convertMarkerObjectFilter(objectFilter)
                 StashGridFragment(MarkerComparator, MarkerDataSupplier(findFilter, markerFilter))
-            }
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_tag)
-        if (savedInstanceState == null) {
-            val savedFilterId = intent.getStringExtra("savedFilterId")
-            val direction = intent.getStringExtra("direction")
-            val sortBy = intent.getStringExtra("sortBy")
-            val mode = FilterMode.safeValueOf(intent.getStringExtra("mode")!!)
-            val dataType = DataType.fromFilterMode(mode)
-            if (dataType == null) {
-                Log.w(TAG, "Got unsupported FilterMode: $mode")
-                Toast.makeText(this, "Unsupporited filter mode: $mode", Toast.LENGTH_LONG).show()
-            } else {
-                val description = intent.getStringExtra("description")
-
-                val title = findViewById<TextView>(R.id.tag_title)
-                title.text = description
-
-                val queryEngine = QueryEngine(this, true)
-                lifecycleScope.launch {
-                    val filter: FindFilterType?
-                    val objectFilter: Map<String, Map<String, *>>?
-                    if (savedFilterId.isNullOrEmpty()) {
-                        filter =
-                            FindFilterType(
-                                direction =
-                                    Optional.presentIfNotNull(
-                                        SortDirectionEnum.safeValueOf(
-                                            direction!!,
-                                        ),
-                                    ),
-                                sort = Optional.presentIfNotNull(sortBy),
-                            )
-                        objectFilter = null
-                    } else {
-                        val result = queryEngine.getSavedFilter(savedFilterId.toString())
-
-                        title.text = result?.name
-
-                        filter = convertFilter(result?.find_filter)
-                        objectFilter =
-                            result?.object_filter as Map<String, Map<String, *>>?
-                    }
-
-                    val fragment = getFragment(dataType, filter, objectFilter)
-
-                    supportFragmentManager.beginTransaction()
-                        .replace(R.id.tag_fragment, fragment!!)
-                        .commitNow()
-                }
             }
         }
     }

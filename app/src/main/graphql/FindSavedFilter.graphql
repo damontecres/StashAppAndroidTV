@@ -12,6 +12,13 @@ query FindDefaultFilter($mode: FilterMode!) {
   }
 }
 
+query FindSavedFilters($mode: FilterMode!) {
+  findSavedFilters(mode: $mode) {
+    ...SavedFilterData
+    __typename
+  }
+}
+
 fragment SavedFilterData on SavedFilter {
   id
   mode
