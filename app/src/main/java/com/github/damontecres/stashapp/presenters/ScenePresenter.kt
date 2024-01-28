@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.presenters
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -51,7 +52,7 @@ class ScenePresenter : StashPresenter() {
             val url = createGlideUrl(scene.paths.screenshot, apiKey)
             Glide.with(viewHolder.view.context)
                 .load(url)
-                .transform(CenterCrop(), TextOverlay(scene))
+                .transform(CenterCrop(), TextOverlay(viewHolder.view.context, scene))
                 .error(mDefaultCardImage)
                 .into(cardView.mainImageView!!)
         }
@@ -60,7 +61,7 @@ class ScenePresenter : StashPresenter() {
     /**
      * Adds some text on top of a scene's image
      */
-    private class TextOverlay(val scene: SlimSceneData) :
+    private class TextOverlay(val context: Context, val scene: SlimSceneData) :
         BitmapTransformation() {
         override fun updateDiskCacheKey(messageDigest: MessageDigest) {
             messageDigest.update(ID)
@@ -82,7 +83,7 @@ class ScenePresenter : StashPresenter() {
                 canvas.drawBitmap(toTransform, 0.0F, 0.0F, null)
                 val paint = Paint()
                 paint.color = Color.WHITE
-                paint.textSize = CARD_HEIGHT / 10F
+                paint.textSize = outHeight / 10F
                 paint.isAntiAlias = true
                 paint.style = Paint.Style.FILL
                 paint.setShadowLayer(5F, 5F, 5F, Color.BLACK)
@@ -91,8 +92,8 @@ class ScenePresenter : StashPresenter() {
                 val duration = Constants.durationToString(videoFile.duration)
                 canvas.drawText(
                     duration,
-                    outWidth.toFloat() - 5F,
-                    outHeight - 5F,
+                    outWidth.toFloat() - TEXT_PADDING,
+                    outHeight - (WATCHED_HEIGHT + TEXT_PADDING),
                     paint,
                 )
 
@@ -102,10 +103,21 @@ class ScenePresenter : StashPresenter() {
                 val resolution = "${videoFile.height}P"
                 canvas.drawText(
                     resolution,
-                    5F,
-                    outHeight - 5F,
+                    TEXT_PADDING,
+                    outHeight - (WATCHED_HEIGHT + TEXT_PADDING),
                     paint,
                 )
+                if (scene.resume_time != null) {
+                    val percentWatched = scene.resume_time / videoFile.duration
+                    val barWidth = percentWatched * outWidth
+                    canvas.drawRect(
+                        0F,
+                        outHeight.toFloat() - WATCHED_HEIGHT,
+                        barWidth.toFloat(),
+                        outHeight.toFloat(),
+                        paint,
+                    )
+                }
             }
             return result
         }
@@ -121,5 +133,8 @@ class ScenePresenter : StashPresenter() {
 
         const val CARD_WIDTH = 351
         const val CARD_HEIGHT = 198
+
+        const val TEXT_PADDING = 5F
+        const val WATCHED_HEIGHT = 3F
     }
 }
