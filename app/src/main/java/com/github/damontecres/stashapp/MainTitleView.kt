@@ -80,7 +80,8 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
 
         val markersButton = root.findViewById<Button>(R.id.markers_button)
         markersButton.setOnClickListener {
-            val intent = Intent(context, MarkerListActivity::class.java)
+            val intent = Intent(context, FilterListActivity::class.java)
+            intent.putExtra("dataType", DataType.MARKER.name)
             startActivity(context, intent, null)
         }
         markersButton.onFocusChangeListener = onFocusChangeListener

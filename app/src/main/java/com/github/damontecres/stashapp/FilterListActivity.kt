@@ -11,7 +11,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.lifecycle.lifecycleScope
-import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FindFilterType
@@ -76,49 +75,59 @@ class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
         }
         lifecycleScope.launch {
             val savedFilters = queryEngine.getSavedFilters(dataType)
-            val listPopUp =
-                ListPopupWindow(
-                    this@FilterListActivity,
-                    null,
-                    android.R.attr.listPopupWindowStyle,
-                )
-            listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
-            listPopUp.anchorView = filterButton
-            // listPopUp.width = ViewGroup.LayoutParams.MATCH_PARENT
-            // TODO: Better width calculation
-            listPopUp.width = this@FilterListActivity.toPx(200).toInt()
-            listPopUp.isModal = true
-
-            val focusChangeListener = StashOnFocusChangeListener(this@FilterListActivity)
-
-            val adapter =
-                object : ArrayAdapter<String>(
-                    this@FilterListActivity,
-                    android.R.layout.simple_list_item_1,
-                    savedFilters.map { it.name },
-                ) {
-                    override fun getView(
-                        position: Int,
-                        convertView: View?,
-                        parent: ViewGroup,
-                    ): View {
-                        val itemView = super.getView(position, convertView, parent)
-                        // TODO: this doesn't seem to work?
-                        itemView.onFocusChangeListener = focusChangeListener
-                        return itemView
-                    }
+            if (savedFilters.isEmpty()) {
+                filterButton.setOnClickListener {
+                    Toast.makeText(
+                        this@FilterListActivity,
+                        "No saved filters found",
+                        Toast.LENGTH_SHORT,
+                    ).show()
                 }
-            listPopUp.setAdapter(adapter)
+            } else {
+                val listPopUp =
+                    ListPopupWindow(
+                        this@FilterListActivity,
+                        null,
+                        android.R.attr.listPopupWindowStyle,
+                    )
+                listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
+                listPopUp.anchorView = filterButton
+                // listPopUp.width = ViewGroup.LayoutParams.MATCH_PARENT
+                // TODO: Better width calculation
+                listPopUp.width = this@FilterListActivity.toPx(200).toInt()
+                listPopUp.isModal = true
 
-            listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
-                val filter = savedFilters[position]
-                listPopUp.dismiss()
-                setupFragment(filter)
-            }
+                val focusChangeListener = StashOnFocusChangeListener(this@FilterListActivity)
 
-            filterButton.setOnClickListener {
-                listPopUp.show()
-                listPopUp.listView?.requestFocus()
+                val adapter =
+                    object : ArrayAdapter<String>(
+                        this@FilterListActivity,
+                        android.R.layout.simple_list_item_1,
+                        savedFilters.map { it.name },
+                    ) {
+                        override fun getView(
+                            position: Int,
+                            convertView: View?,
+                            parent: ViewGroup,
+                        ): View {
+                            val itemView = super.getView(position, convertView, parent)
+                            // TODO: this doesn't seem to work?
+                            itemView.onFocusChangeListener = focusChangeListener
+                            return itemView
+                        }
+                    }
+                listPopUp.setAdapter(adapter)
+
+                listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
+                    val filter = savedFilters[position]
+                    listPopUp.dismiss()
+                    setupFragment(filter)
+                }
+
+                filterButton.setOnClickListener {
+                    listPopUp.show()
+                    listPopUp.listView?.requestFocus()
+                }
             }
         }
     }
@@ -139,16 +148,6 @@ class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
             return queryEngine.getSavedFilter(savedFilterId.toString())
         } else if (direction != null || sortBy != null) {
             // Generic filter
-            val findFilter =
-                FindFilterType(
-                    direction =
-                        Optional.presentIfNotNull(
-                            SortDirectionEnum.safeValueOf(
-                                direction!!,
-                            ),
-                        ),
-                    sort = Optional.presentIfNotNull(sortBy),
-                )
             return SavedFilterData(
                 id = "-1",
                 mode = dataType.filterMode,
@@ -159,7 +158,7 @@ class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
                         page = null,
                         per_page = null,
                         sort = sortBy,
-                        direction = SortDirectionEnum.valueOf(direction),
+                        direction = if (direction != null) SortDirectionEnum.valueOf(direction) else null,
                         __typename = "",
                     ),
                 object_filter = null,
@@ -168,7 +167,28 @@ class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
             )
         } else {
             // Default filter
-            return queryEngine.getDefaultFilter(dataType)
+            val filter = queryEngine.getDefaultFilter(dataType)
+            if (filter == null) {
+                return SavedFilterData(
+                    id = "-1",
+                    mode = dataType.filterMode,
+                    name = getString(dataType.pluralStringId),
+                    find_filter =
+                        SavedFilterData.Find_filter(
+                            q = null,
+                            page = null,
+                            per_page = null,
+                            sort = null,
+                            direction = null,
+                            __typename = "",
+                        ),
+                    object_filter = null,
+                    ui_options = null,
+                    __typename = "",
+                )
+            } else {
+                return filter
+            }
         }
     }
 

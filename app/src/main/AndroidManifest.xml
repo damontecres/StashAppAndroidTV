@@ -88,10 +88,6 @@
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".MarkerListActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
             android:name=".SearchForActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
