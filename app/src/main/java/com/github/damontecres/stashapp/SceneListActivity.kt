@@ -11,9 +11,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.lifecycle.lifecycleScope
+import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
@@ -35,9 +37,13 @@ import kotlinx.coroutines.launch
 
 class SceneListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
     private lateinit var titleTextView: TextView
+    private lateinit var queryEngine: QueryEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        queryEngine = QueryEngine(this, true)
+
         setContentView(R.layout.activity_tag)
 
         val dataTypeStr = intent.getStringExtra("dataType")
@@ -57,14 +63,13 @@ class SceneListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
 
         titleTextView = findViewById(R.id.tag_title)
 
-        val queryEngine = QueryEngine(this, true)
         lifecycleScope.launch {
-            val filter = queryEngine.getDefaultFilter(dataType)
+            val filter = getStartingFilter()
             if (savedInstanceState == null) {
                 if (filter != null) {
                     setupFragment(filter)
                 } else {
-                    Log.e(TAG, "Default filter for $dataType was null")
+                    Log.e(TAG, "No starting filter found for $dataType was null")
                     finish()
                 }
             }
@@ -115,6 +120,55 @@ class SceneListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
                 listPopUp.show()
                 listPopUp.listView?.requestFocus()
             }
+        }
+    }
+
+    private suspend fun getStartingFilter(): SavedFilterData? {
+        val savedFilterId = intent.getStringExtra("savedFilterId")
+        val direction = intent.getStringExtra("direction")
+        val sortBy = intent.getStringExtra("sortBy")
+        val dataTypeStr = intent.getStringExtra("dataType")
+        val dataType =
+            if (dataTypeStr != null) {
+                DataType.valueOf(dataTypeStr)
+            } else {
+                throw RuntimeException("dataType is required")
+            }
+        if (savedFilterId != null) {
+            // Load a saved filter
+            return queryEngine.getSavedFilter(savedFilterId.toString())
+        } else if (direction != null || sortBy != null) {
+            // Generic filter
+            val findFilter =
+                FindFilterType(
+                    direction =
+                        Optional.presentIfNotNull(
+                            SortDirectionEnum.safeValueOf(
+                                direction!!,
+                            ),
+                        ),
+                    sort = Optional.presentIfNotNull(sortBy),
+                )
+            return SavedFilterData(
+                id = "-1",
+                mode = dataType.filterMode,
+                name = getString(dataType.pluralStringId),
+                find_filter =
+                    SavedFilterData.Find_filter(
+                        q = null,
+                        page = null,
+                        per_page = null,
+                        sort = sortBy,
+                        direction = SortDirectionEnum.valueOf(direction),
+                        __typename = "",
+                    ),
+                object_filter = null,
+                ui_options = null,
+                __typename = "",
+            )
+        } else {
+            // Default filter
+            return queryEngine.getDefaultFilter(dataType)
         }
     }
 
