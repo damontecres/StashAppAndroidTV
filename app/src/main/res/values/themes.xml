@@ -11,4 +11,8 @@
         <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Leanback</item>
         <item name="android:colorBackground">@color/default_background</item>
     </style>
+
+    <style name="Theme.StashAppAndroidTV.List" parent="@style/Theme.StashAppAndroidTV">
+        <item name="browseTitleViewLayout">@layout/list_title</item>
+    </style>
 </resources>

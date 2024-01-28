@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.paging.PagingDataAdapter
+import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
@@ -37,7 +38,10 @@ class StashGridFragment<T : Query.Data, D : Any>(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val gridPresenter = StashGridPresenter()
+        val paddingTop =
+            resources.getDimension(R.dimen.title_bar_height) + resources.getDimension(R.dimen.grid_top_padding)
+
+        val gridPresenter = StashGridPresenter(paddingTop.toInt())
         gridPresenter.numberOfColumns =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("numberOfColumns", 5)
@@ -51,6 +55,17 @@ class StashGridFragment<T : Query.Data, D : Any>(
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        val browseFrameLayout =
+            requireView().findViewById<BrowseFrameLayout>(androidx.leanback.R.id.grid_frame)
+        browseFrameLayout.onFocusSearchListener =
+            BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
+                if (direction == View.FOCUS_UP) {
+                    requireActivity().findViewById<View>(R.id.filter_button)
+                } else {
+                    null
+                }
+            }
 
         onItemViewClickedListener = StashItemViewClickListener(requireActivity())
 
@@ -82,12 +97,12 @@ class StashGridFragment<T : Query.Data, D : Any>(
         }
     }
 
-    private class StashGridPresenter :
+    private class StashGridPresenter(val paddingTop: Int) :
         VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
         override fun initializeGridViewHolder(vh: ViewHolder?) {
             super.initializeGridViewHolder(vh)
             val gridView = vh!!.gridView
-            val top = gridView.paddingTop
+            val top = paddingTop // gridView.paddingTop
             val bottom = gridView.paddingBottom
             val right = 20
             val left = 20

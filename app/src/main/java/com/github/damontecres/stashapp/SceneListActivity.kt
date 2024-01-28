@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
-import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
@@ -21,8 +20,12 @@ class SceneListActivity : SecureFragmentActivity() {
             val filter = queryEngine.getDefaultFilter(DataType.SCENE)
 
             if (savedInstanceState == null) {
-                findViewById<TextView>(R.id.tag_title).text = getString(R.string.stashapp_scenes)
+//                findViewById<TextView>(R.id.tag_title).text = getString(R.string.stashapp_scenes)
                 supportFragmentManager.beginTransaction()
+//                    .replace(
+//                        R.id.title_fragment,
+//                        ListTitleFragment()
+//                    )
                     .replace(
                         R.id.tag_fragment,
                         StashGridFragment(
