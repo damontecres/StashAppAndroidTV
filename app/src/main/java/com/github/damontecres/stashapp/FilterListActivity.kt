@@ -35,7 +35,7 @@ import com.github.damontecres.stashapp.util.toPx
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
-class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
+class FilterListActivity : SecureFragmentActivity() {
     private lateinit var titleTextView: TextView
     private lateinit var queryEngine: QueryEngine
 
@@ -264,6 +264,6 @@ class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
     }
 
     companion object {
-        const val TAG = "SceneListActivity"
+        const val TAG = "FilterListActivity"
     }
 }
