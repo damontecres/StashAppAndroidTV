@@ -43,7 +43,7 @@ class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
 
         queryEngine = QueryEngine(this, true)
 
-        setContentView(R.layout.activity_tag)
+        setContentView(R.layout.filter_list)
 
         val dataTypeStr = intent.getStringExtra("dataType")
         val dataType =
@@ -60,7 +60,7 @@ class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
         val onFocusChangeListener = StashOnFocusChangeListener(this)
         filterButton.onFocusChangeListener = onFocusChangeListener
 
-        titleTextView = findViewById(R.id.tag_title)
+        titleTextView = findViewById(R.id.list_title)
 
         lifecycleScope.launch {
             val filter = getStartingFilter()
@@ -204,7 +204,7 @@ class FilterListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
 
         supportFragmentManager.beginTransaction()
             .replace(
-                R.id.tag_fragment,
+                R.id.list_fragment,
                 fragment,
             ).commitNow()
     }

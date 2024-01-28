@@ -52,28 +52,32 @@ class MainTitleView : RelativeLayout, TitleViewAdapter.Provider {
 
         val performersButton = root.findViewById<Button>(R.id.performers_button)
         performersButton.setOnClickListener {
-            val intent = Intent(context, PerformerListActivity::class.java)
+            val intent = Intent(context, FilterListActivity::class.java)
+            intent.putExtra("dataType", DataType.PERFORMER.name)
             startActivity(context, intent, null)
         }
         performersButton.onFocusChangeListener = onFocusChangeListener
 
         val studiosButton = root.findViewById<Button>(R.id.studios_button)
         studiosButton.setOnClickListener {
-            val intent = Intent(context, StudioListActivity::class.java)
+            val intent = Intent(context, FilterListActivity::class.java)
+            intent.putExtra("dataType", DataType.STUDIO.name)
             startActivity(context, intent, null)
         }
         studiosButton.onFocusChangeListener = onFocusChangeListener
 
         val tagsButton = root.findViewById<Button>(R.id.tags_button)
         tagsButton.setOnClickListener {
-            val intent = Intent(context, TagListActivity::class.java)
+            val intent = Intent(context, FilterListActivity::class.java)
+            intent.putExtra("dataType", DataType.TAG.name)
             startActivity(context, intent, null)
         }
         tagsButton.onFocusChangeListener = onFocusChangeListener
 
         val moviesButton = root.findViewById<Button>(R.id.movies_button)
         moviesButton.setOnClickListener {
-            val intent = Intent(context, MovieListActivity::class.java)
+            val intent = Intent(context, FilterListActivity::class.java)
+            intent.putExtra("dataType", DataType.MOVIE.name)
             startActivity(context, intent, null)
         }
         moviesButton.onFocusChangeListener = onFocusChangeListener

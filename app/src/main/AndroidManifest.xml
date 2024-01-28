@@ -68,23 +68,7 @@
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".PerformerListActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".StudioListActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".TagListActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
             android:name=".MovieActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".MovieListActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
