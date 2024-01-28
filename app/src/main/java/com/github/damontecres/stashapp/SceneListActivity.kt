@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
@@ -10,6 +11,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.lifecycle.lifecycleScope
+import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.util.FilterParser
@@ -19,7 +22,7 @@ import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.toPx
 import kotlinx.coroutines.launch
 
-class SceneListActivity : SecureFragmentActivity() {
+class SceneListActivity<T : Query.Data, D : Any> : SecureFragmentActivity() {
     private lateinit var titleTextView: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,27 +50,12 @@ class SceneListActivity : SecureFragmentActivity() {
         lifecycleScope.launch {
             val filter = queryEngine.getDefaultFilter(dataType)
             if (savedInstanceState == null) {
-                if (filter?.name.isNullOrBlank()) {
-                    titleTextView.text = getString(dataType.pluralStringId)
+                if (filter != null) {
+                    setupFragment(filter)
                 } else {
-                    titleTextView.text = filter?.name
+                    Log.e(TAG, "Default filter for $dataType was null")
+                    finish()
                 }
-
-                val fragment =
-                    StashGridFragment(
-                        SceneComparator,
-                        SceneDataSupplier(
-                            convertFilter(filter?.find_filter),
-                            FilterParser.instance.convertSceneObjectFilter(filter?.object_filter),
-                        ),
-                        filter,
-                    )
-
-                supportFragmentManager.beginTransaction()
-                    .replace(
-                        R.id.tag_fragment,
-                        fragment,
-                    ).commitNow()
             }
         }
         lifecycleScope.launch {
@@ -109,22 +97,7 @@ class SceneListActivity : SecureFragmentActivity() {
             listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                 val filter = savedFilters[position]
                 listPopUp.dismiss()
-
-                val fragment =
-                    StashGridFragment(
-                        SceneComparator,
-                        SceneDataSupplier(
-                            convertFilter(filter.find_filter),
-                            FilterParser.instance.convertSceneObjectFilter(filter.object_filter),
-                        ),
-                        filter,
-                    )
-                titleTextView.text = filter.name
-                supportFragmentManager.beginTransaction()
-                    .replace(
-                        R.id.tag_fragment,
-                        fragment,
-                    ).commitNow()
+                setupFragment(filter)
             }
 
             filterButton.setOnClickListener {
@@ -132,5 +105,37 @@ class SceneListActivity : SecureFragmentActivity() {
                 listPopUp.listView?.requestFocus()
             }
         }
+    }
+
+    private fun setupFragment(filter: SavedFilterData) {
+        val dataType = DataType.fromFilterMode(filter.mode)
+        if (filter.name.isBlank()) {
+            titleTextView.text = getString(dataType!!.pluralStringId)
+        } else {
+            titleTextView.text = filter.name
+        }
+        when (dataType) {
+            DataType.SCENE -> {
+                supportFragmentManager.beginTransaction()
+                    .replace(
+                        R.id.tag_fragment,
+                        StashGridFragment(
+                            SceneComparator,
+                            SceneDataSupplier(
+                                convertFilter(filter.find_filter),
+                                FilterParser.instance.convertSceneObjectFilter(filter.object_filter),
+                            ),
+                            filter,
+                        ),
+                    ).commitNow()
+            }
+
+            else -> {
+            }
+        }
+    }
+
+    companion object {
+        const val TAG = "SceneListActivity"
     }
 }
