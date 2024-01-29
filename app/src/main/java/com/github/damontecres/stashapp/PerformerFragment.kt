@@ -4,12 +4,14 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -18,6 +20,7 @@ import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.createGlideUrl
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.Period
@@ -55,7 +58,17 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
             mPerformerDisambiguation.text = performer.disambiguation
 
             val queryEngine = QueryEngine(requireContext(), true)
-            viewLifecycleOwner.lifecycleScope.launch {
+
+            val exceptionHandler =
+                CoroutineExceptionHandler { _, ex ->
+                    Log.e(TAG, "\"Error fetching data", ex)
+                    Toast.makeText(
+                        requireContext(),
+                        "Error fetching data: ${ex.message}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+            viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val perf =
                     queryEngine.findPerformers(performerIds = listOf(performer.id.toInt())).first()
 
@@ -158,6 +171,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
     }
 
     companion object {
+        private const val TAG = "PerformerFragment"
         private const val TABLE_TEXT_SIZE = 13F
     }
 }
