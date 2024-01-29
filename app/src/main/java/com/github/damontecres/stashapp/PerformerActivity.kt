@@ -38,6 +38,7 @@ class PerformerActivity : SecureFragmentActivity() {
                                     ),
                             ),
                         ),
+                        3,
                     ),
                 )
                 .commitNow()

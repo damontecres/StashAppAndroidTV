@@ -69,8 +69,8 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 ### Default filtered scenes
 ![scenes screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/227254ef-325d-4284-b778-983f86453a24)
 
-### Default filtered performers
-![performers screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/7dded398-e327-414e-a2a3-fa60c11c92f1)
+### Performer
+![performer screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/9e5aec33-4cf1-4605-8a11-1056ceafd115)
 
 ### Demo
 
