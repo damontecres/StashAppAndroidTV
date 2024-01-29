@@ -4,14 +4,17 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
 import androidx.leanback.preference.LeanbackSettingsFragmentCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceDialogFragmentCompat
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreference
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -59,11 +62,16 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
     }
 
     class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
+        private var serverKeys = listOf<String>()
+        private var serverValues = listOf<String>()
+
         override fun onCreatePreferences(
             savedInstanceState: Bundle?,
             rootKey: String?,
         ) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
+
+            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
             val pkgInfo =
                 requireActivity().packageManager.getPackageInfo(requireContext().packageName, 0)
@@ -82,6 +90,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     }
                     true
                 }
+
+            val urlPref = findPreference<EditTextPreference>("stashUrl")
 
             val apiKayPref = findPreference<EditTextPreference>("stashApiKey")
             apiKayPref?.summaryProvider =
@@ -142,10 +152,135 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         }
                     }
                 }
+
+            setServers()
+            val chooseServer = findPreference<ListPreference>("chooseStashServer")
+            chooseServer?.entries = serverKeys.toTypedArray()
+            chooseServer?.entryValues = serverValues.toTypedArray()
+            chooseServer?.setOnPreferenceClickListener {
+                setServers()
+                chooseServer.entries = serverKeys.toTypedArray()
+                chooseServer.entryValues = serverValues.toTypedArray()
+                if (serverKeys.isEmpty()) {
+                    Toast.makeText(requireContext(), "No other servers defined", Toast.LENGTH_SHORT)
+                        .show()
+                    true
+                } else {
+                    false
+                }
+            }
+            chooseServer?.setOnPreferenceChangeListener { preference: Preference, newValue: Any ->
+                val currentUrl = urlPref?.text
+                val currentApiKey = apiKayPref?.text
+                if (!currentUrl.isNullOrBlank()) {
+                    manager.edit(true) {
+                        putString(SERVER_PREF_PREFIX + currentUrl, currentUrl)
+                        putString(SERVER_APIKEY_PREF_PREFIX + currentUrl, currentApiKey)
+                    }
+                }
+
+                val serverKey = newValue.toString()
+                val apiKeyKey = serverKey.replace(SERVER_PREF_PREFIX, SERVER_APIKEY_PREF_PREFIX)
+
+                val server = manager.getString(serverKey, null)
+                val apiKey = manager.getString(apiKeyKey, null)
+                urlPref?.text = server
+                apiKayPref?.text = apiKey
+//                manager.edit(true) {
+//                    putString("stashUrl", server)
+//                    putString("stashApiKey", apiKey)
+//                }
+
+                false
+            }
+
+            val newServer = findPreference<Preference>("newStashServer")
+            newServer?.setOnPreferenceClickListener {
+                val url = urlPref?.text
+                val apiKey = apiKayPref?.text
+                if (url.isNullOrBlank()) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Enter URL before adding a new one",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                } else {
+                    manager.edit(true) {
+                        putString(SERVER_PREF_PREFIX + url, url)
+                        putString(SERVER_APIKEY_PREF_PREFIX + url, apiKey)
+                    }
+
+                    urlPref?.text = null
+                    apiKayPref?.text = null
+                    setServers()
+                    Toast.makeText(
+                        requireContext(),
+                        "Enter details above",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+                true
+            }
+
+            val removeServer = findPreference<ListPreference>("deleteStashServer")
+            removeServer?.entries = serverKeys.toTypedArray()
+            removeServer?.entryValues = serverValues.toTypedArray()
+            removeServer?.setOnPreferenceClickListener {
+                setServers()
+                removeServer.entries = serverKeys.toTypedArray()
+                removeServer.entryValues = serverValues.toTypedArray()
+                if (serverKeys.isEmpty()) {
+                    Toast.makeText(requireContext(), "No servers defined", Toast.LENGTH_SHORT)
+                        .show()
+                    true
+                } else {
+                    false
+                }
+            }
+            removeServer?.setOnPreferenceChangeListener { preference, newValue ->
+                val key = newValue.toString()
+                manager.edit(true) {
+                    val apiKeyKey = key.replace(SERVER_PREF_PREFIX, SERVER_APIKEY_PREF_PREFIX)
+                    remove(key)
+                    remove(apiKeyKey)
+                }
+                val url = key.replace(SERVER_PREF_PREFIX, "")
+                if (url == urlPref?.text) {
+                    urlPref?.text = null
+                    apiKayPref?.text = null
+                }
+                setServers()
+                false
+            }
+        }
+
+        override fun onStop() {
+            super.onStop()
+            val url = findPreference<EditTextPreference>("stashUrl")?.text
+            val apiKey = findPreference<EditTextPreference>("stashApiKey")?.text
+            if (!url.isNullOrBlank()) {
+                PreferenceManager.getDefaultSharedPreferences(requireContext()).edit(true) {
+                    putString(SERVER_PREF_PREFIX + url, url)
+                    putString(SERVER_APIKEY_PREF_PREFIX + url, apiKey)
+                }
+            }
+        }
+
+        private fun setServers() {
+            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+            val keys =
+                manager.all.keys.filter { it.startsWith(SERVER_PREF_PREFIX) }.sorted().toList()
+            val values = keys.map { manager.all[it].toString() }.toList()
+
+            serverKeys = values
+            serverValues = keys
         }
 
         companion object {
             const val TAG = "SettingsFragment"
+
+            private const val SERVER_PREF_PREFIX = "server_"
+            private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
         }
     }
 }
