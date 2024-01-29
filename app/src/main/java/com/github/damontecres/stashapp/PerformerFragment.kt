@@ -91,7 +91,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                 if (perf.height_cm != null) {
                     val feet = floor(perf.height_cm / 30.48).toInt()
                     val inches = (perf.height_cm / 2.54 - feet * 12).roundToInt()
-                    addRow(R.string.stashapp_height, "${perf.height_cm} ($feet'$inches\")")
+                    addRow(R.string.stashapp_height, "${perf.height_cm} cm ($feet'$inches\")")
                 }
                 if (perf.weight != null) {
                     val pounds = (perf.weight * 2.2).roundToInt()
