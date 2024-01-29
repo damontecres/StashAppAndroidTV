@@ -1,54 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="horizontal"
+    android:weightSum="5"
+    android:layout_margin="5dp">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="600dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent"
+        android:layout_weight="3"
+        android:layout_margin="5dp">
 
         <ImageView
             android:id="@+id/performer_image"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/stashapp_performer_image" />
+            android:contentDescription="@string/stashapp_performer_image"
+            android:layout_centerHorizontal="true"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintWidth="match_parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent" />
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:orientation="vertical"
-
-            >
+            android:layout_margin="5dp"
+            app:layout_constraintTop_toBottomOf="@id/performer_image">
 
             <TextView
                 android:id="@+id/performer_name"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="50sp" />
+                android:textAlignment="center"
+                android:textSize="20sp"
+                android:text="@string/stashapp_name" />
 
             <TextView
                 android:id="@+id/performer_disambiguation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="30sp" />
+                android:textAlignment="center"
+                android:textSize="12sp"
+                android:text="@string/stashapp_aliases" />
+
+            <TableLayout
+                android:id="@+id/performer_table"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="3dp">
+
+            </TableLayout>
 
         </LinearLayout>
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginTop="10dp">
+        android:layout_height="match_parent"
+        android:layout_weight="2"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            android:text="@string/stashapp_scenes" />
 
         <FrameLayout
             android:id="@+id/performer_list_fragment"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="match_parent"
+            android:layout_margin="5dp" />
     </LinearLayout>
 
 </LinearLayout>

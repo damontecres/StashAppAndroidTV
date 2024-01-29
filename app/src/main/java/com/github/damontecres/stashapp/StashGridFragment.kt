@@ -30,17 +30,19 @@ class StashGridFragment<T : Query.Data, D : Any>(
     comparator: DiffUtil.ItemCallback<D>,
     private val dataSupplier: StashPagingSource.DataSupplier<T, D>,
     val filter: SavedFilterData?,
+    private val numberOfColumns: Int? = null,
 ) : VerticalGridSupportFragment() {
     constructor(
         comparator: DiffUtil.ItemCallback<D>,
         dataSupplier: StashPagingSource.DataSupplier<T, D>,
-    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null)
+        numberOfColumns: Int? = null,
+    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, numberOfColumns)
 
     constructor(
         comparator: DiffUtil.ItemCallback<D>,
         dataSupplier: StashPagingSource.DataSupplier<T, D>,
         filter: SavedFilterData?,
-    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, filter)
+    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, filter, null)
 
     private val mAdapter = PagingDataAdapter(presenter, comparator)
 
@@ -52,7 +54,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
 
         val gridPresenter = StashGridPresenter(paddingTop.toInt())
         gridPresenter.numberOfColumns =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+            numberOfColumns ?: PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("numberOfColumns", 5)
         setGridPresenter(gridPresenter)
 
