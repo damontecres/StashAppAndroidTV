@@ -27,6 +27,7 @@ import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
@@ -48,6 +49,7 @@ import com.github.damontecres.stashapp.util.supportedFilterModes
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
+import java.util.Objects
 import java.util.Timer
 import java.util.TimerTask
 
@@ -67,9 +69,15 @@ class MainFragment : BrowseSupportFragment() {
     private lateinit var mMetrics: DisplayMetrics
     private var mBackgroundTimer: Timer? = null
     private var mBackgroundUri: String? = null
+    private var serverHash: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val url = manager.getString("stashUrl", null)
+        val apiKey = manager.getString("stashApiKey", null)
+        serverHash = Objects.hash(url, apiKey)
 
         headersState = HEADERS_DISABLED
     }
@@ -101,6 +109,16 @@ class MainFragment : BrowseSupportFragment() {
 
     override fun onResume() {
         super.onResume()
+
+        val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val url = manager.getString("stashUrl", null)
+        val apiKey = manager.getString("stashApiKey", null)
+        val newServerHash = Objects.hash(url, apiKey)
+        if (serverHash != newServerHash) {
+            clearData()
+            rowsAdapter.clear()
+        }
+        serverHash = newServerHash
 
         viewLifecycleOwner.lifecycleScope.launch {
             if (testStashConnection(requireContext(), false) != null) {

@@ -18,6 +18,21 @@
             app:title="Test Connection"
             app:summary="Test connecting to Stash using the above settings" />
 
+        <ListPreference
+            app:key="chooseStashServer"
+            app:title="Switch servers"
+            app:summary="Switch to another Stash server" />
+
+        <Preference
+            app:key="newStashServer"
+            app:title="Add a Stash Server"
+            app:summary="" />
+
+        <ListPreference
+            app:key="deleteStashServer"
+            app:title="Remove a Stash Server"
+            app:summary="" />
+
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Search">
