@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.util
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 
@@ -9,8 +10,8 @@ import com.github.damontecres.stashapp.api.ConfigurationQuery
  *
  * Configuration is loaded into a SharedPreferences and made available throughout the app
  */
-class ServerPreferences(context: Context) {
-    val preferences =
+class ServerPreferences(private val context: Context) {
+    val preferences: SharedPreferences =
         context.getSharedPreferences(
             context.packageName + "_server_preferences",
             Context.MODE_PRIVATE,
@@ -18,13 +19,20 @@ class ServerPreferences(context: Context) {
 
     val trackActivity get() = preferences.getBoolean(PREF_TRACK_ACTIVITY, false)
 
+    suspend fun updatePreferences() {
+        val queryEngine = QueryEngine(context)
+        val query = ConfigurationQuery()
+        val config = queryEngine.executeQuery(query).data?.configuration
+        updatePreferences(config)
+    }
+
     /**
      * Update the local preferences from the server configuration
      */
     fun updatePreferences(config: ConfigurationQuery.Configuration?) {
         if (config != null) {
             val ui = config.ui as Map<String, *>
-            preferences.edit {
+            preferences.edit(true) {
                 putBoolean(
                     PREF_TRACK_ACTIVITY,
                     (ui.getCaseInsensitive(PREF_TRACK_ACTIVITY) as Boolean?) ?: false,
