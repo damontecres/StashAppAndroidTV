@@ -122,6 +122,7 @@ class MainFragment : BrowseSupportFragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             if (testStashConnection(requireContext(), false) != null) {
+                ServerPreferences(requireContext()).updatePreferences()
                 if (rowsAdapter.size() == 0) {
                     fetchData()
                 }

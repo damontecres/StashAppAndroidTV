@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -75,12 +76,23 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val pkgInfo =
                 requireActivity().packageManager.getPackageInfo(requireContext().packageName, 0)
-            findPreference<Preference>("versionName")?.summary = pkgInfo.versionName
+            val versionPref = findPreference<Preference>("versionName")
+            versionPref?.summary = pkgInfo.versionName
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 findPreference<Preference>("versionCode")?.summary =
                     pkgInfo.longVersionCode.toString()
             } else {
                 findPreference<Preference>("versionCode")?.summary = pkgInfo.versionCode.toString()
+            }
+            var clickCount = 0
+            versionPref?.setOnPreferenceClickListener {
+                if (clickCount > 2) {
+                    clickCount = 0
+                    startActivity(Intent(requireContext(), DebugActivity::class.java))
+                } else {
+                    clickCount++
+                }
+                true
             }
 
             findPreference<Preference>("testStashServer")
