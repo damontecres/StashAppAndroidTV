@@ -33,6 +33,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.api.ConfigurationQuery
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -48,6 +49,7 @@ import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.supportedFilterModes
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.Objects
 import java.util.Timer
@@ -109,6 +111,27 @@ class MainFragment : BrowseSupportFragment() {
 
     override fun onResume() {
         super.onResume()
+
+        try {
+            val rowPos = selectedPosition
+            if (rowPos >= 0) {
+                val columnPos =
+                    (selectedRowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition
+                Log.v(TAG, "row=$rowPos, column=$columnPos")
+                val adapter = adapters[rowPos]
+                val item = adapter.get(columnPos)
+                if (item is SlimSceneData) {
+                    viewLifecycleOwner.lifecycleScope.async {
+                        val queryEngine = QueryEngine(requireContext())
+                        queryEngine.getScene(item.id.toInt())?.let {
+                            adapter.replace(columnPos, it)
+                        }
+                    }
+                }
+            }
+        } catch (ex: Exception) {
+            Log.e(TAG, "Exception", ex)
+        }
 
         val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
         val url = manager.getString("stashUrl", null)
