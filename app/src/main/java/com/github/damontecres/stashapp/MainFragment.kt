@@ -113,18 +113,15 @@ class MainFragment : BrowseSupportFragment() {
         super.onResume()
 
         try {
-            val rowPos = selectedPosition
-            if (rowPos >= 0) {
-                val columnPos =
-                    (selectedRowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition
-                Log.v(TAG, "row=$rowPos, column=$columnPos")
-                val adapter = adapters[rowPos]
-                val item = adapter.get(columnPos)
+            val position = getCurrentPosition()
+            if (position != null) {
+                val adapter = adapters[position.row]
+                val item = adapter.get(position.column)
                 if (item is SlimSceneData) {
                     viewLifecycleOwner.lifecycleScope.async {
                         val queryEngine = QueryEngine(requireContext())
                         queryEngine.getScene(item.id.toInt())?.let {
-                            adapter.replace(columnPos, it)
+                            adapter.replace(position.column, it)
                         }
                     }
                 }
@@ -529,6 +526,39 @@ class MainFragment : BrowseSupportFragment() {
         }
     }
 
+    private fun getCurrentPosition(): Position? {
+        val rowPos = selectedPosition
+        if (rowPos >= 0) {
+            val columnPos =
+                (selectedRowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition
+            if (columnPos >= 0) {
+                Log.v(TAG, "row=$rowPos, column=$columnPos")
+                return Position(rowPos, columnPos)
+            }
+        }
+        return null
+    }
+
+    /**
+     * Return true if back was handled
+     */
+    fun onBackPressed(): Boolean {
+        val pos = getCurrentPosition()
+        if (pos != null) {
+            if (pos.column > 0) {
+                selectedPosition = pos.row
+                (selectedRowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition = 0
+                return true
+            } else if (pos.row > 0) {
+                selectedPosition = 0
+                return true
+            }
+        }
+        return false
+    }
+
+    data class Position(val row: Int, val column: Int)
+
     companion object {
         private val TAG = "MainFragment"
 
@@ -537,8 +567,5 @@ class MainFragment : BrowseSupportFragment() {
         private val GRID_ITEM_HEIGHT = 200
         private val NUM_ROWS = 6
         private val NUM_COLS = 15
-    }
-
-    private fun loadData() {
     }
 }
