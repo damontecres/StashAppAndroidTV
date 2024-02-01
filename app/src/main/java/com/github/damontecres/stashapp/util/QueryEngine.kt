@@ -123,6 +123,10 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         return scenes.orEmpty()
     }
 
+    suspend fun getScene(sceneId: Int): SlimSceneData? {
+        return findScenes(sceneIds = listOf(sceneId)).firstOrNull()
+    }
+
     suspend fun findPerformers(
         findFilter: FindFilterType? = null,
         performerFilter: PerformerFilterType? = null,
