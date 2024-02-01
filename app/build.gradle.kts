@@ -24,7 +24,7 @@ fun getVersionCode(): Int {
 fun getAppVersion(): String {
     val stdout = ByteArrayOutputStream()
     exec {
-        commandLine = listOf("git", "describe", "--tags", "--long")
+        commandLine = listOf("git", "describe", "--tags", "--long", "--match=v*")
         standardOutput = stdout
     }
     return stdout.toString().trim().removePrefix("v")
