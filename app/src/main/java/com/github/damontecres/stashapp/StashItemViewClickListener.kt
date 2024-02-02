@@ -19,6 +19,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Movie
+import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.StashCustomFilter
@@ -112,6 +113,8 @@ class StashItemViewClickListener(
             } else {
                 throw RuntimeException("Action $item clicked, but no actionListener was provided!")
             }
+        } else if (item is OCounter) {
+            actionListener!!.incrementOCounter(item)
         } else {
             Log.e(TAG, "Unknown item type: $item")
         }
