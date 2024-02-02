@@ -37,6 +37,7 @@ import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
@@ -50,6 +51,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 /**
@@ -78,10 +80,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
-        sceneActionsAdapter.add(StashAction.ADD_TAG)
-        sceneActionsAdapter.add(StashAction.ADD_PERFORMER)
-        sceneActionsAdapter.add(StashAction.FORCE_TRANSCODE)
-
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
 
 //        mSelectedMovie = activity!!.intent.getSerializableExtra(DetailsActivity.MOVIE) as Scene
@@ -93,27 +91,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             adapter = mAdapter
             initializeBackground(mSelectedMovie)
 
-            val actionListener =
-                StashActionClickedListener { action: StashAction ->
-                    if (action in StashAction.SEARCH_FOR_ACTIONS) {
-                        val intent = Intent(requireActivity(), SearchForActivity::class.java)
-                        val dataType =
-                            when (action) {
-                                StashAction.ADD_TAG -> DataType.TAG
-                                StashAction.ADD_PERFORMER -> DataType.PERFORMER
-                                else -> throw RuntimeException("Unsupported search for type $action")
-                            }
-                        intent.putExtra("dataType", dataType.name)
-                        intent.putExtra(SearchForFragment.ID_KEY, action.id)
-                        resultLauncher.launch(intent)
-                    } else if (action == StashAction.FORCE_TRANSCODE) {
-                        detailsPresenter.onActionClickedListener.onActionClicked(
-                            Action(
-                                ACTION_TRANSCODE_RESUME_SCENE,
-                            ),
-                        )
-                    }
-                }
+            val actionListener = SceneActionListener()
 
             onItemViewClickedListener =
                 StashItemViewClickListener(requireActivity(), actionListener)
@@ -237,6 +215,16 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     ): View? {
         val queryEngine = QueryEngine(requireContext(), true)
         if (mSelectedMovie != null) {
+            sceneActionsAdapter.add(StashAction.ADD_TAG)
+            sceneActionsAdapter.add(StashAction.ADD_PERFORMER)
+            sceneActionsAdapter.add(StashAction.FORCE_TRANSCODE)
+            sceneActionsAdapter.add(
+                OCounter(
+                    mSelectedMovie!!.id.toInt(),
+                    mSelectedMovie?.oCounter ?: 0,
+                ),
+            )
+
             viewLifecycleOwner.lifecycleScope.launch {
                 val scene =
                     queryEngine.findScenes(sceneIds = listOf(mSelectedMovie!!.id.toInt()))
@@ -431,6 +419,38 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     ): Int {
         val density = context.applicationContext.resources.displayMetrics.density
         return Math.round(dp.toFloat() * density)
+    }
+
+    private inner class SceneActionListener : StashActionClickedListener {
+        override fun onClicked(action: StashAction) {
+            if (action in StashAction.SEARCH_FOR_ACTIONS) {
+                val intent = Intent(requireActivity(), SearchForActivity::class.java)
+                val dataType =
+                    when (action) {
+                        StashAction.ADD_TAG -> DataType.TAG
+                        StashAction.ADD_PERFORMER -> DataType.PERFORMER
+                        else -> throw RuntimeException("Unsupported search for type $action")
+                    }
+                intent.putExtra("dataType", dataType.name)
+                intent.putExtra(SearchForFragment.ID_KEY, action.id)
+                resultLauncher.launch(intent)
+            } else if (action == StashAction.FORCE_TRANSCODE) {
+                detailsPresenter.onActionClickedListener.onActionClicked(
+                    Action(
+                        ACTION_TRANSCODE_RESUME_SCENE,
+                    ),
+                )
+            }
+        }
+
+        override fun incrementOCounter(counter: OCounter) {
+            viewLifecycleOwner.lifecycleScope.async {
+                val mutationEngine = MutationEngine(requireContext())
+                val newCounter = mutationEngine.incrementOCounter(counter.sceneId)
+                val index = sceneActionsAdapter.indexOf(counter)
+                sceneActionsAdapter.replace(index, newCounter)
+            }
+        }
     }
 
     companion object {

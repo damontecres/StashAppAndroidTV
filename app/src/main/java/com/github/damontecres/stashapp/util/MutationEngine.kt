@@ -11,11 +11,13 @@ import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
+import com.github.damontecres.stashapp.api.SceneIncrementOMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
+import com.github.damontecres.stashapp.data.OCounter
 
 /**
  * Class for sending graphql mutations
@@ -173,6 +175,12 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
             )
         val result = executeMutation(mutation)
         return result.data?.sceneUpdate
+    }
+
+    suspend fun incrementOCounter(sceneId: Int): OCounter {
+        val mutation = SceneIncrementOMutation(sceneId.toString())
+        val result = executeMutation(mutation)
+        return OCounter(sceneId, result.data!!.sceneIncrementO)
     }
 
     companion object {

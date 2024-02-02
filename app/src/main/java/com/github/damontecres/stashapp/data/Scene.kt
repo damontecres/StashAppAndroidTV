@@ -21,6 +21,7 @@ data class Scene(
     val resumeTime: Double?,
     val videoCodec: String?,
     val videoResolution: Int?,
+    val oCounter: Int?,
 ) : Parcelable {
     companion object {
         fun fromSlimSceneData(data: SlimSceneData): Scene {
@@ -56,6 +57,7 @@ data class Scene(
                 resumeTime = data.resume_time,
                 videoCodec = fileData?.video_codec,
                 videoResolution = fileData?.height,
+                oCounter = data.o_counter,
             )
         }
     }
