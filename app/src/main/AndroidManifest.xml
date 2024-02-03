@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -51,37 +50,40 @@
             android:name=".PlaybackActivity"
             android:exported="false" />
         <activity
-            android:name=".BrowseErrorActivity"
-            android:exported="false" />
-        <activity
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity
             android:name=".PerformerActivity"
             android:exported="false"
-            android:theme="@style/NoTitleTheme" /> <!-- Would be good to remove NoTitleTheme -->
+            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".TagActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".StudioActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".SearchActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".SceneListActivity"
-            android:exported="false" />
+            android:name=".FilterListActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".PerformerListActivity"
-            android:exported="false" />
+            android:name=".MovieActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".StudioListActivity"
-            android:exported="false" />
+            android:name=".SearchForActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".TagListActivity"
-            android:exported="false" />
+            android:name=".DebugActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
 
     </application>
 

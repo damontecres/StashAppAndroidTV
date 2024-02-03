@@ -1,12 +1,8 @@
 <resources>
-    <!-- Reply Preference -->
-    <string-array name="reply_entries">
-        <item>Reply</item>
-        <item>Reply to all</item>
-    </string-array>
-
-    <string-array name="reply_values">
-        <item>reply</item>
-        <item>reply_all</item>
+    <string-array name="stream_options">
+        <item>HLS</item>
+        <item>DASH</item>
+        <item>MP4</item>
+        <item>WEBM</item>
     </string-array>
 </resources>

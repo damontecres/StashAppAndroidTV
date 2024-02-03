@@ -1,0 +1,100 @@
+name: Development build
+
+on:
+  push:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APK_SHORT_NAME: StashAppAndroidTV-debug.apk
+  TAG_NAME: develop
+  BUILD_TOOLS_VERSION: 34.0.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need the tags to build
+          submodules: true # Need the submodules to build
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+          cache: 'gradle'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "tools platform-tools build-tools;${{ env.BUILD_TOOLS_VERSION }}"
+      - name: Build app
+        id: buildapp
+        env:
+          KEY_ALIAS: "${{ secrets.KEY_ALIAS }}"
+          KEY_PASSWORD: "${{ secrets.KEY_PASSWORD }}"
+          KEY_STORE_PASSWORD: "${{ secrets.KEY_STORE_PASSWORD }}"
+          SIGNING_KEY: "${{ secrets.SIGNING_KEY }}"
+        run: |
+          ./gradlew clean assembleDebug
+          echo "apk=$(ls app/build/outputs/apk/debug/StashAppAndroidTV-debug*.apk)" >> "$GITHUB_OUTPUT"
+      - name: Verify signature
+        run: |
+          ${{env.ANDROID_SDK_ROOT}}/build-tools/${{ env.BUILD_TOOLS_VERSION }}/apksigner verify --verbose --print-certs "${{ steps.buildapp.outputs.apk }}"
+      - name: Copy APK to ${{ env.APK_SHORT_NAME }}
+        run: |
+          cp "${{ steps.buildapp.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
+      - name: Advance ${{ env.TAG_NAME }} tag
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+                await github.rest.git.deleteRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: "tags/${{ env.TAG_NAME }}"
+                })
+            } catch (e) {
+              console.log("The ${{ env.TAG_NAME }} tag doesn't exist yet: " + e)
+            }
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: "refs/tags/${{ env.TAG_NAME }}",
+              sha: context.sha
+            })
+      - name: Create GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          artifacts: "${{ steps.buildapp.outputs.apk }},${{ env.APK_SHORT_NAME }}"
+          draft: false
+          generateReleaseNotes: false
+          makeLatest: false
+          name: "Develop build"
+          prerelease: true
+          removeArtifacts: true
+          replacesArtifacts: true
+          tag: "${{ env.TAG_NAME }}"
+
+          body: |
+            This pre-release tracks the latest development debug build of StashAppAndroidTV from the `main` branch
+
+            See https://github.com/damontecres/StashAppAndroidTV/releases/latest for the latest stable release

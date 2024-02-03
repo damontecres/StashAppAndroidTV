@@ -1,5 +1,6 @@
 # Hardcoded crentials
 StashCredentials.kt
+stash_strings.xml
 
 # Gradle files
 .gradle/
@@ -52,3 +53,5 @@ google-services.json
 .cxx
 local.properties
 
+# Local scripts
+local_scripts/

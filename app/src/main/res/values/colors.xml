@@ -3,8 +3,9 @@
     <color name="background_gradient_end">#DDDDDD</color>
     <color name="fastlane_background">#0096a6</color>
     <color name="search_opaque">#477ab5</color>
-    <color name="selected_background">#477ab5</color>
-    <color name="default_background">#3d3d3d</color>
+    <color name="selected_background">#4785b5</color>
+    <color name="default_background">#202b33</color>
+    <color name="default_card_background">#30404d</color>
     <color name="light_blue_400">#FF29B6F6</color>
     <color name="light_blue_600">#FF039BE5</color>
     <color name="gray_400">#FFBDBDBD</color>

@@ -18,21 +18,35 @@ import androidx.leanback.media.PlaybackTransportControlGlue
 import androidx.leanback.widget.Action
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.PlaybackControlsRow
+import androidx.lifecycle.LifecycleCoroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.VideoDetailsFragment.Companion.POSITION_ARG
 import com.github.damontecres.stashapp.data.Scene
-
+import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.ServerPreferences
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /** Handles video playback with media controls. */
-class PlaybackVideoFragment : VideoSupportFragment() {
-
+class PlaybackVideoFragment : VideoSupportFragment(), PlaybackActivity.StashVideoPlayer {
     private lateinit var mTransportControlGlue: BasicTransportControlsGlue
     private lateinit var playerAdapter: BasicMediaPlayerAdapter
 
-    val currentVideoPosition get() = playerAdapter.currentPosition
+    override val currentVideoPosition get() = playerAdapter.currentPosition
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun hideControlsIfVisible(): Boolean {
+        return false
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
 
         val scene = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE) as Scene?
         val position = requireActivity().intent.getLongExtra(POSITION_ARG, -1)
@@ -40,12 +54,40 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         Log.d(TAG, "$POSITION_ARG=$position")
 
         val glueHost = VideoSupportFragmentGlueHost(this@PlaybackVideoFragment)
-        var skipForward = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            .getInt("skip_forward_time", 30)
-        var skipBack = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            .getInt("skip_back_time", 10)
+        var skipForward =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("skip_forward_time", 30)
+        var skipBack =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("skip_back_time", 10)
+        val forceTranscode =
+            requireActivity().intent.getBooleanExtra(
+                VideoDetailsFragment.FORCE_TRANSCODE,
+                false,
+            )
 
-        playerAdapter = BasicMediaPlayerAdapter(requireActivity(), skipForward, skipBack)
+        val serverPreferences = ServerPreferences(requireContext())
+
+        playerAdapter =
+            BasicMediaPlayerAdapter(
+                requireActivity(),
+                viewLifecycleOwner.lifecycleScope,
+                skipForward,
+                skipBack,
+                scene?.duration,
+                scene!!.id,
+                serverPreferences.trackActivity,
+            )
+
+        if (serverPreferences.trackActivity) {
+            val mutationEngine = MutationEngine(requireContext(), false)
+            viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
+                while (true) {
+                    delay(30.toDuration(DurationUnit.SECONDS))
+                    mutationEngine.saveSceneActivity(scene.id, playerAdapter.currentPosition)
+                }
+            }
+        }
 
         mTransportControlGlue = BasicTransportControlsGlue(activity, playerAdapter)
         mTransportControlGlue.host = glueHost
@@ -53,22 +95,30 @@ class PlaybackVideoFragment : VideoSupportFragment() {
         mTransportControlGlue.subtitle = scene?.details
         mTransportControlGlue.playWhenPrepared()
 
-        val streamUrl = selectStream(scene)
+        var streamUrl = scene?.streams?.get("Direct stream")
+        if (streamUrl == null || forceTranscode) {
+            val streamChoice =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getString("stream_choice", "MP4")
+            streamUrl = scene?.streams?.get(streamChoice)
+        }
+
         if (streamUrl != null) {
             playerAdapter.setDataSource(Uri.parse(streamUrl))
             if (position > 0) {
                 // If a position was provided, resume playback from there
-                mTransportControlGlue.addPlayerCallback(object : PlayerCallback() {
-                    override fun onPlayStateChanged(glue: PlaybackGlue) {
-                        if (glue.isPlaying) {
-                            // Remove the callback so it's only run once
-                            glue.removePlayerCallback(this)
-                            playerAdapter.seekTo(position)
+                mTransportControlGlue.addPlayerCallback(
+                    object : PlayerCallback() {
+                        override fun onPlayStateChanged(glue: PlaybackGlue) {
+                            if (glue.isPlaying) {
+                                // Remove the callback so it's only run once
+                                glue.removePlayerCallback(this)
+                                playerAdapter.seekTo(position)
+                            }
                         }
-                    }
-                })
+                    },
+                )
             }
-
         }
     }
 
@@ -79,19 +129,44 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 
     class BasicMediaPlayerAdapter(
         context: Context,
+        private val lifecycleScope: LifecycleCoroutineScope,
         private var skipForward: Int,
-        private var skipBack: Int
+        private var skipBack: Int,
+        private val duration: Double?,
+        private val sceneId: Long,
+        private val trackActivity: Boolean,
     ) :
         MediaPlayerAdapter(context) {
+        val mutationEngine = MutationEngine(context, false)
 
         override fun fastForward() = seekTo(currentPosition + skipForward * 1000)
 
         override fun rewind() = seekTo(currentPosition - skipBack * 1000)
 
+        override fun seekTo(newPosition: Long) {
+            super.seekTo(newPosition)
+            if (trackActivity) {
+                lifecycleScope.launch(coroutineExceptionHandler) {
+                    mutationEngine.saveSceneActivity(sceneId, newPosition)
+                }
+            }
+        }
+
+        override fun getDuration(): Long {
+            val dur = super.getDuration()
+            return if (dur < 1) {
+                duration?.times(1000)?.toLong() ?: -1
+            } else {
+                dur
+            }
+        }
+
         override fun getSupportedActions(): Long {
-            return (ACTION_REWIND xor
+            return (
+                ACTION_REWIND xor
                     ACTION_PLAY_PAUSE xor
-                    ACTION_FAST_FORWARD).toLong()
+                    ACTION_FAST_FORWARD
+            ).toLong()
         }
     }
 
@@ -122,7 +197,11 @@ class PlaybackVideoFragment : VideoSupportFragment() {
             onUpdateProgress() // Updates seekbar progress
         }
 
-        override fun onKey(v: View?, keyCode: Int, event: KeyEvent): Boolean {
+        override fun onKey(
+            v: View?,
+            keyCode: Int,
+            event: KeyEvent,
+        ): Boolean {
             // TODO: left/right pauses
             // TODO: if visible, fast forward button doesn't work
             if (host.isControlsOverlayVisible || event.repeatCount > 0) {
@@ -131,13 +210,15 @@ class PlaybackVideoFragment : VideoSupportFragment() {
             if (event.action != KeyEvent.ACTION_DOWN) {
                 return when (keyCode) {
                     KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
-                    KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD, KeyEvent.KEYCODE_MEDIA_NEXT -> {
+                    KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD, KeyEvent.KEYCODE_MEDIA_NEXT,
+                    -> {
                         onActionClicked(forwardAction)
                         true
                     }
 
                     KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_MEDIA_REWIND,
-                    KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD, KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
+                    KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD, KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+                    -> {
                         onActionClicked(rewindAction)
                         true
                     }
@@ -151,7 +232,11 @@ class PlaybackVideoFragment : VideoSupportFragment() {
 
     companion object {
         private const val TAG = "PlaybackVideoFragment"
+
+        val coroutineExceptionHandler =
+            CoroutineExceptionHandler { _, ex ->
+                // Just log and ignore the error because it's not big deal to not save the resume time
+                Log.w(TAG, "Error during corountine", ex)
+            }
     }
-
-
 }

@@ -89,11 +89,7 @@ fragment SlimSceneData on Scene {
     __typename
   }
   tags {
-    id
-    name
-    scene_count
-    performer_count
-    image_path
+    ...TagData
     __typename
   }
   performers {
@@ -107,6 +103,16 @@ fragment SlimSceneData on Scene {
   stash_ids {
     endpoint
     stash_id
+    __typename
+  }
+  scene_markers {
+    id
+    title
+    primary_tag{
+      ...TagData
+    }
+    screenshot
+    seconds
     __typename
   }
   __typename

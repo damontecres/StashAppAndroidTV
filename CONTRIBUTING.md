@@ -23,3 +23,11 @@ You acknowledge that, if applicable, submitting and subsequent acceptance of any
 Certain assets are provided by the Stash repo (https://github.com/stashapp/stash) which is included as a submodule. Make sure to run `git submodule update --init --recursive --remote` after cloning this repo to get the latest version of the submodule.
 
 If you get compile errors such as `java.nio.file.NoSuchFileException: .../StashAppAndroidTV/app/src/main/res/mipmap-nodpi/stash_logo.png`, you need to update the submodule (or the paths in `stashapp/stash` have changed!).
+
+### Creating an object filter
+
+1. Copy the text of data class for the filter (e.g. `app/build/generated/source/apollo/app/com/github/damontecres/stashapp/api/type/SceneMarkerFilterType.kt`)
+2. Apply a find-replace
+    a. Find: `public val (\w+): Optional<(\w+)\?> = Optional.Absent,`
+    b. Replace: `$1 = Optional.presentIfNotNull(convert$2(filter["$1"])),`
+3. Copy the results to the constructor of the filter class

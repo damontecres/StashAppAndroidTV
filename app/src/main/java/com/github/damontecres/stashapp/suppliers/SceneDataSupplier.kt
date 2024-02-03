@@ -1,21 +1,26 @@
 package com.github.damontecres.stashapp.suppliers
 
-import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.CountAndList
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.StashPagingSource
 
-class SceneDataSupplier(private val sceneFilter: SceneFilterType? = null) :
+class SceneDataSupplier(
+    private val findFilter: FindFilterType?,
+    private val sceneFilter: SceneFilterType? = null,
+) :
     StashPagingSource.DataSupplier<FindScenesQuery.Data, SlimSceneData> {
+    override val dataType: DataType get() = DataType.SCENE
+
     override fun createQuery(filter: FindFilterType?): Query<FindScenesQuery.Data> {
         return FindScenesQuery(
-            filter = Optional.presentIfNotNull(filter),
-            scene_filter = Optional.presentIfNotNull(sceneFilter)
+            filter = filter,
+            scene_filter = sceneFilter,
+            scene_ids = null,
         )
     }
 
@@ -26,9 +31,6 @@ class SceneDataSupplier(private val sceneFilter: SceneFilterType? = null) :
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return FindFilterType(
-            sort = Optional.present("date"),
-            direction = Optional.present(SortDirectionEnum.DESC)
-        )
+        return findFilter ?: FindFilterType()
     }
 }

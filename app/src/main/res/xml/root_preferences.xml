@@ -1,7 +1,7 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory app:title="@string/pref_stash_server">
+    <PreferenceCategory app:title="@string/pref_stash_server_header">
 
         <EditTextPreference
             app:key="stashUrl"
@@ -10,13 +10,29 @@
 
         <EditTextPreference
             app:key="stashApiKey"
-            app:title="@string/pref_stash_api_key"
+            app:title="@string/stashapp_config_general_auth_api_key"
             app:useSimpleSummaryProvider="false" />
 
         <Preference
             app:key="testStashServer"
             app:title="Test Connection"
             app:summary="Test connecting to Stash using the above settings" />
+
+        <ListPreference
+            app:key="chooseStashServer"
+            app:title="Switch servers"
+            app:summary="Switch to another Stash server" />
+
+        <Preference
+            app:key="newStashServer"
+            app:title="Add a Stash Server"
+            app:summary="" />
+
+        <ListPreference
+            app:key="deleteStashServer"
+            app:title="Remove a Stash Server"
+            app:summary="" />
+        >>>>>>> main
 
     </PreferenceCategory>
 
@@ -77,6 +93,37 @@
             android:min="5"
             android:max="300"
             app:defaultValue="10" />
+        <ListPreference
+            app:key="stream_choice"
+            app:title="Stream Choice"
+            app:summary="Which stream type to use when direct is unavailable"
+            app:defaultValue="HLS"
+            app:entries="@array/stream_options"
+            app:entryValues="@array/stream_options" />
+        <SwitchPreference
+            app:key="playerChoice"
+            app:title="Which player to use for playback"
+            app:defaultValue="true" />
+        <SeekBarPreference
+            app:key="controllerShowTimeoutMs"
+            app:title="Hide controls after (milliseconds)"
+            app:seekBarIncrement="100"
+            app:showSeekBarValue="true"
+            android:min="0"
+            android:max="15000"
+            app:defaultValue="5000" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/stashapp_config_tasks_job_queue">
+        <Preference
+            app:key="triggerScan"
+            app:title="Trigger Default Library Scan"
+            app:summary="@string/stashapp_config_tasks_scan_for_content_desc" />
+
+        <Preference
+            app:key="triggerGenerate"
+            app:title="Trigger Default Generate"
+            app:summary="@string/stashapp_config_tasks_generate_desc" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="About">

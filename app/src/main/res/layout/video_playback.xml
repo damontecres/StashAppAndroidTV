@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/video_playback_frame"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/video_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:show_buffering="when_playing"
+        app:auto_show="false"
+        app:hide_on_touch="true"
+        app:animation_enabled="true"
+        app:scrubber_dragged_size="22dp"
+        app:played_color="@color/selected_background"
+        app:use_controller="true" />
+
+</FrameLayout>
