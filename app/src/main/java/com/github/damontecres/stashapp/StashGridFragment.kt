@@ -57,6 +57,25 @@ class StashGridFragment<T : Query.Data, D : Any>(
         setGridPresenter(gridPresenter)
 
         adapter = mAdapter
+
+        val pageSize =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("maxSearchResults", 50)
+        val scrollToNextResult =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean("scrollToNextResult", true)
+        val moveOnePage = requireActivity().intent.getBooleanExtra("moveOnePage", false)
+        if (moveOnePage && scrollToNextResult) {
+            adapter.registerObserver(
+                object : ObjectAdapter.DataObserver() {
+                    override fun onChanged() {
+                        Log.v(TAG, "Skipping one page")
+                        setSelectedPosition(pageSize)
+                        adapter.unregisterObserver(this)
+                    }
+                },
+            )
+        }
     }
 
     override fun onViewCreated(
@@ -117,21 +136,6 @@ class StashGridFragment<T : Query.Data, D : Any>(
                 }
             }
         browseFrameLayout.requestFocus()
-        val pageSize =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("maxSearchResults", 50)
-        val moveOnePage = requireActivity().intent.getBooleanExtra("moveOnePage", false)
-        if (moveOnePage) {
-            adapter.registerObserver(
-                object : ObjectAdapter.DataObserver() {
-                    override fun onChanged() {
-                        Log.v(TAG, "Skipping one page")
-                        setSelectedPosition(pageSize)
-                        adapter.unregisterObserver(this)
-                    }
-                },
-            )
-        }
     }
 
     companion object {
