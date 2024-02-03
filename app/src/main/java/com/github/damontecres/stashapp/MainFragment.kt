@@ -73,13 +73,21 @@ class MainFragment : BrowseSupportFragment() {
     private var mBackgroundUri: String? = null
     private var serverHash: Int? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
+    /**
+     * This just hashes a few preferences that affect what this fragment shows
+     */
+    private fun computeServerHash(): Int {
         val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
         val url = manager.getString("stashUrl", null)
         val apiKey = manager.getString("stashApiKey", null)
-        serverHash = Objects.hash(url, apiKey)
+        val maxSearchResults = manager.getInt("maxSearchResults", 0)
+        return Objects.hash(url, apiKey, maxSearchResults)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        serverHash = computeServerHash()
 
         headersState = HEADERS_DISABLED
     }
@@ -130,10 +138,7 @@ class MainFragment : BrowseSupportFragment() {
             Log.e(TAG, "Exception", ex)
         }
 
-        val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        val url = manager.getString("stashUrl", null)
-        val apiKey = manager.getString("stashApiKey", null)
-        val newServerHash = Objects.hash(url, apiKey)
+        val newServerHash = computeServerHash()
         if (serverHash != newServerHash) {
             clearData()
             rowsAdapter.clear()
