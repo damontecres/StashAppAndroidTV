@@ -9,9 +9,10 @@ import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
 
-class PinActivity : SecureFragmentActivity() {
+class PinActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)

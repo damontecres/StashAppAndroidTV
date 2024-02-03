@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.WindowManager
 import androidx.core.content.edit
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -88,6 +89,10 @@ class StashApplication : Application() {
             } else if (activity !is PinActivity) {
                 showPinActivityIfNeeded()
             }
+            activity.window.setFlags(
+                WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE,
+            )
         }
 
         override fun onActivityStarted(activity: Activity) {

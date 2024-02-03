@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.widget.TextView
+import androidx.fragment.app.FragmentActivity
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
@@ -11,7 +12,7 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.util.SceneComparator
 
-class StudioActivity : SecureFragmentActivity() {
+class StudioActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.grid_view)

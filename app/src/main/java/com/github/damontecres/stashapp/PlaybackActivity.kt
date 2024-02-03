@@ -6,11 +6,12 @@ import android.os.Bundle
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 
 /** Loads [PlaybackVideoFragment]. */
-class PlaybackActivity : SecureFragmentActivity() {
+class PlaybackActivity : FragmentActivity() {
     private lateinit var fragment: Fragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
