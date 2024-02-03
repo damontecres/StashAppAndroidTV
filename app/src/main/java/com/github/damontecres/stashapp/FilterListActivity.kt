@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
@@ -35,7 +36,7 @@ import com.github.damontecres.stashapp.util.toPx
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
-class FilterListActivity : SecureFragmentActivity() {
+class FilterListActivity : FragmentActivity() {
     private lateinit var titleTextView: TextView
     private lateinit var queryEngine: QueryEngine
 

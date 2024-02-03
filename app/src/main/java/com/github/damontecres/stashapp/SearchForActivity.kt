@@ -1,12 +1,13 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import androidx.fragment.app.FragmentActivity
 import com.github.damontecres.stashapp.data.DataType
 
 /**
  * Search for something
  */
-class SearchForActivity : SecureFragmentActivity() {
+class SearchForActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)

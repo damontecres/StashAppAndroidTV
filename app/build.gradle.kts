@@ -138,7 +138,6 @@ dependencies {
 
     implementation("com.apollographql.apollo3:apollo-runtime:3.8.2")
     implementation("androidx.preference:preference-ktx:1.2.1")
-
     implementation("androidx.media3:media3-exoplayer:$mediaVersion")
     implementation("androidx.media3:media3-ui:$mediaVersion")
     implementation("androidx.media3:media3-exoplayer-dash:$mediaVersion")
@@ -146,6 +145,7 @@ dependencies {
     implementation("com.github.rubensousa:previewseekbar:3.1.1")
     implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.lifecycle:lifecycle-process:2.6.2")
 
     testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("junit:junit:4.13.2")

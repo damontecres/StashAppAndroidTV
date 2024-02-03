@@ -8,10 +8,11 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.util.ServerPreferences
 
-class DebugActivity : SecureFragmentActivity() {
+class DebugActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.frame_layout)

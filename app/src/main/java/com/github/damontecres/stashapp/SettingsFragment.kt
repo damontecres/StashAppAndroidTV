@@ -3,10 +3,16 @@ package com.github.damontecres.stashapp
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.fragment.app.Fragment
+import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
 import androidx.leanback.preference.LeanbackSettingsFragmentCompat
 import androidx.lifecycle.lifecycleScope
@@ -62,6 +68,20 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         return true
     }
 
+    override fun onPreferenceDisplayDialog(
+        caller: PreferenceFragmentCompat,
+        pref: Preference,
+    ): Boolean {
+        if (pref.key == getString(R.string.pref_key_pin_code)) {
+            val f = NumberEditTextPreferencesDialog(pref.key)
+            f.setTargetFragment(caller, 0)
+            startPreferenceFragment(f)
+            return true
+        } else {
+            return super.onPreferenceDisplayDialog(caller, pref)
+        }
+    }
+
     class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
         private var serverKeys = listOf<String>()
         private var serverValues = listOf<String>()
@@ -73,6 +93,18 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
 
             val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+
+            val pinCodePref = findPreference<EditTextPreference>("pinCode")
+            pinCodePref?.summaryProvider =
+                object : Preference.SummaryProvider<EditTextPreference> {
+                    override fun provideSummary(preference: EditTextPreference): CharSequence? {
+                        return if (preference.text.isNullOrBlank()) {
+                            "No PIN is set"
+                        } else {
+                            "PIN is set"
+                        }
+                    }
+                }
 
             val pkgInfo =
                 requireActivity().packageManager.getPackageInfo(requireContext().packageName, 0)
@@ -293,6 +325,26 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             private const val SERVER_PREF_PREFIX = "server_"
             private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
+        }
+    }
+
+    class NumberEditTextPreferencesDialog(key: String) :
+        LeanbackEditTextPreferenceDialogFragmentCompat() {
+        init {
+            val args = Bundle(1)
+            args.putString(ARG_KEY, key)
+            arguments = args
+        }
+
+        override fun onCreateView(
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?,
+        ): View? {
+            val root = super.onCreateView(inflater, container, savedInstanceState)
+            val editTextView = root?.findViewById<EditText>(android.R.id.edit)
+            editTextView?.inputType = InputType.TYPE_CLASS_NUMBER
+            return root
         }
     }
 }

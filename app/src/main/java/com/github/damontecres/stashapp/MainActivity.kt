@@ -1,11 +1,12 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import androidx.fragment.app.FragmentActivity
 
 /**
  * Loads [MainFragment].
  */
-class MainActivity() : SecureFragmentActivity() {
+class MainActivity() : FragmentActivity() {
     private val fragment = MainFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
