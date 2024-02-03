@@ -76,6 +76,8 @@ class PinActivity : SecureFragmentActivity() {
         }
 
         private fun startMainActivity() {
+            (requireActivity().application as StashApplication).hasAskedForPin = true
+
             val mainDestroyed = requireActivity().intent.getBooleanExtra("mainDestroyed", false)
             if (requireActivity().isTaskRoot || mainDestroyed) {
                 // This is the task root when invoked from the start

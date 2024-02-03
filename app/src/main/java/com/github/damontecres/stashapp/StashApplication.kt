@@ -14,9 +14,12 @@ import androidx.preference.PreferenceManager
 class StashApplication : Application() {
     private var wasEnterBackground = false
     private var mainDestroyed = false
+    var hasAskedForPin = false
 
     override fun onCreate() {
         super.onCreate()
+
+        Log.v(TAG, "onCreate wasEnterBackground=$wasEnterBackground, mainDestroyed=$mainDestroyed")
 
         registerActivityLifecycleCallbacks(ActivityLifecycleCallbacksImpl())
         ProcessLifecycleOwner.get().lifecycle.addObserver(LifecycleObserverImpl())
@@ -40,7 +43,7 @@ class StashApplication : Application() {
         }
     }
 
-    private fun showPinActivity() {
+    fun showPinActivity() {
         Log.v(TAG, "showPinActivity, mainDestroyed=$mainDestroyed")
         val intent = Intent(this, PinActivity::class.java)
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -48,6 +51,13 @@ class StashApplication : Application() {
         intent.putExtra("mainDestroyed", mainDestroyed)
         mainDestroyed = false
         startActivity(intent)
+    }
+
+    fun showPinActivityIfNeeded() {
+        val pinCode = PreferenceManager.getDefaultSharedPreferences(this).getString("pinCode", "")
+        if (!pinCode.isNullOrBlank() && !hasAskedForPin) {
+            showPinActivity()
+        }
     }
 
     inner class LifecycleObserverImpl : DefaultLifecycleObserver {
@@ -75,6 +85,8 @@ class StashApplication : Application() {
             if (wasEnterBackground) {
                 wasEnterBackground = false
                 showPinActivity()
+            } else if (activity !is PinActivity) {
+                showPinActivityIfNeeded()
             }
         }
 
