@@ -32,7 +32,6 @@
             app:key="deleteStashServer"
             app:title="Remove a Stash Server"
             app:summary="" />
-        >>>>>>> main
 
     </PreferenceCategory>
 
