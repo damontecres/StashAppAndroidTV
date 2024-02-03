@@ -394,12 +394,14 @@ class MainFragment : BrowseSupportFragment() {
                     } else {
                         SortDirectionEnum.DESC
                     }
-
+                val pageSize =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        .getInt("maxSearchResults", 25)
                 val filter =
                     FindFilterType(
                         direction = Optional.presentIfNotNull(directionEnum),
                         sort = Optional.presentIfNotNull(sortBy),
-                        per_page = Optional.present(25),
+                        per_page = Optional.present(pageSize),
                     )
 
                 when (mode) {
@@ -463,8 +465,13 @@ class MainFragment : BrowseSupportFragment() {
                 // TODO doing it this way will result it adding an unsupported row then removing it which looks weird, in practice though it happens pretty fast
                 rowsAdapter.add(index, ListRow(HeaderItem(result?.name ?: ""), adapter))
 
+                val pageSize =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        .getInt("maxSearchResults", 25)
+
                 val filter =
                     queryEngine.updateFilter(convertFilter(result?.find_filter), useRandom = true)
+                        ?.copy(per_page = Optional.present(pageSize))
                 val objectFilter =
                     result?.object_filter as Map<String, Map<String, *>>?
 

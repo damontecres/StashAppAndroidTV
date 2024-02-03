@@ -78,7 +78,11 @@ class StashGridFragment<T : Query.Data, D : Any>(
 
         val flow =
             Pager(
-                PagingConfig(pageSize = pageSize, prefetchDistance = pageSize * 2),
+                PagingConfig(
+                    pageSize = pageSize,
+                    prefetchDistance = pageSize * 2,
+                    initialLoadSize = pageSize * 2,
+                ),
             ) {
                 StashPagingSource(
                     requireContext(),
@@ -120,11 +124,9 @@ class StashGridFragment<T : Query.Data, D : Any>(
         if (moveOnePage) {
             adapter.registerObserver(
                 object : ObjectAdapter.DataObserver() {
-                    private var first = true
-
                     override fun onChanged() {
                         Log.v(TAG, "Skipping one page")
-                        setSelectedPosition(pageSize + 1)
+                        setSelectedPosition(pageSize)
                         adapter.unregisterObserver(this)
                     }
                 },
