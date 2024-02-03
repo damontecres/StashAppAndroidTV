@@ -7,6 +7,7 @@ import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.paging.PagingDataAdapter
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
+import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
@@ -16,12 +17,9 @@ import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
-import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
-import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.presenters.StashPagingSource
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.util.QueryEngine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -93,13 +91,8 @@ class StashGridFragment<T : Query.Data, D : Any>(
                 .cachedIn(viewLifecycleOwner.lifecycleScope)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val queryEngine = QueryEngine(requireContext(), true)
-            val query = FindDefaultFilterQuery(FilterMode.TAGS)
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                flow.collectLatest {
-                    mAdapter.submitData(it)
-                }
+            flow.collectLatest {
+                mAdapter.submitData(it)
             }
         }
     }
@@ -120,6 +113,23 @@ class StashGridFragment<T : Query.Data, D : Any>(
                 }
             }
         browseFrameLayout.requestFocus()
+        val pageSize =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("maxSearchResults", 50)
+        val moveOnePage = requireActivity().intent.getBooleanExtra("moveOnePage", false)
+        if (moveOnePage) {
+            adapter.registerObserver(
+                object : ObjectAdapter.DataObserver() {
+                    private var first = true
+
+                    override fun onChanged() {
+                        Log.v(TAG, "Skipping one page")
+                        setSelectedPosition(pageSize + 1)
+                        adapter.unregisterObserver(this)
+                    }
+                },
+            )
+        }
     }
 
     companion object {
