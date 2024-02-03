@@ -41,6 +41,7 @@ class StashApplication : Application() {
     }
 
     private fun showPinActivity() {
+        Log.v(TAG, "showPinActivity, mainDestroyed=$mainDestroyed")
         val intent = Intent(this, PinActivity::class.java)
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.putExtra("wasResumed", true)
@@ -50,7 +51,18 @@ class StashApplication : Application() {
     }
 
     inner class LifecycleObserverImpl : DefaultLifecycleObserver {
+        override fun onPause(owner: LifecycleOwner) {
+            Log.v(TAG, "LifecycleObserverImpl.onPause")
+            wasEnterBackground = true
+        }
+
         override fun onStop(owner: LifecycleOwner) {
+            Log.v(TAG, "LifecycleObserverImpl.onStop")
+            wasEnterBackground = true
+        }
+
+        override fun onDestroy(owner: LifecycleOwner) {
+            Log.v(TAG, "LifecycleObserverImpl.onDestroy")
             wasEnterBackground = true
         }
     }
@@ -60,9 +72,17 @@ class StashApplication : Application() {
             activity: Activity,
             savedInstanceState: Bundle?,
         ) {
+            if (wasEnterBackground) {
+                wasEnterBackground = false
+                showPinActivity()
+            }
         }
 
         override fun onActivityStarted(activity: Activity) {
+            if (wasEnterBackground) {
+                wasEnterBackground = false
+                showPinActivity()
+            }
         }
 
         override fun onActivityResumed(activity: Activity) {
@@ -87,7 +107,7 @@ class StashApplication : Application() {
         }
 
         override fun onActivityDestroyed(activity: Activity) {
-            Log.d(TAG, "onActivityDestroyed: $activity")
+            Log.v(TAG, "onActivityDestroyed: $activity")
             if (activity is MainActivity) {
                 mainDestroyed = true
             }
