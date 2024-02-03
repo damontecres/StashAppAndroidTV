@@ -73,6 +73,11 @@ class StashGridFragment<T : Query.Data, D : Any>(
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 50)
 
+        val useRandom = requireActivity().intent.getBooleanExtra("useRandom", true)
+        val sortBy = requireActivity().intent.getStringExtra("sortBy")
+
+        Log.v(TAG, "useRandom=$useRandom, sortBy=$sortBy")
+
         val flow =
             Pager(
                 PagingConfig(pageSize = pageSize, prefetchDistance = pageSize * 2),
@@ -81,6 +86,8 @@ class StashGridFragment<T : Query.Data, D : Any>(
                     requireContext(),
                     pageSize,
                     dataSupplier = dataSupplier,
+                    useRandom = useRandom,
+                    sortByOverride = sortBy,
                 )
             }.flow
                 .cachedIn(viewLifecycleOwner.lifecycleScope)

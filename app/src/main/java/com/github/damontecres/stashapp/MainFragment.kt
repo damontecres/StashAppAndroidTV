@@ -461,12 +461,10 @@ class MainFragment : BrowseSupportFragment() {
 
             if (result?.mode in supportedFilterModes) {
                 // TODO doing it this way will result it adding an unsupported row then removing it which looks weird, in practice though it happens pretty fast
-                rowsAdapter.add(
-                    index,
-                    ListRow(HeaderItem(result?.name ?: ""), adapter),
-                )
+                rowsAdapter.add(index, ListRow(HeaderItem(result?.name ?: ""), adapter))
 
-                val filter = convertFilter(result?.find_filter)
+                val filter =
+                    queryEngine.updateFilter(convertFilter(result?.find_filter), useRandom = true)
                 val objectFilter =
                     result?.object_filter as Map<String, Map<String, *>>?
 
@@ -476,7 +474,7 @@ class MainFragment : BrowseSupportFragment() {
                             FilterParser.instance.convertSceneObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
-                            queryEngine.findScenes(filter, sceneFilter),
+                            queryEngine.findScenes(filter, sceneFilter, useRandom = false),
                         )
                     }
 
@@ -488,6 +486,7 @@ class MainFragment : BrowseSupportFragment() {
                             queryEngine.findStudios(
                                 filter,
                                 studioFilter,
+                                useRandom = false,
                             ),
                         )
                     }
@@ -500,6 +499,7 @@ class MainFragment : BrowseSupportFragment() {
                             queryEngine.findPerformers(
                                 filter,
                                 performerFilter,
+                                useRandom = false,
                             ),
                         )
                     }
@@ -509,7 +509,7 @@ class MainFragment : BrowseSupportFragment() {
                             FilterParser.instance.convertTagObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
-                            queryEngine.findTags(filter, tagFilter),
+                            queryEngine.findTags(filter, tagFilter, useRandom = false),
                         )
                     }
 
@@ -520,7 +520,13 @@ class MainFragment : BrowseSupportFragment() {
                         )
                     }
                 }
-                adapter.add(StashSavedFilter(filterId.toString(), result!!.mode))
+                adapter.add(
+                    StashSavedFilter(
+                        filterId.toString(),
+                        result!!.mode,
+                        filter?.sort?.getOrNull(),
+                    ),
+                )
             } else {
                 Log.w(TAG, "SavedFilter mode is ${result?.mode} which is not supported yet")
             }

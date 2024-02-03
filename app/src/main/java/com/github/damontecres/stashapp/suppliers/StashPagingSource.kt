@@ -22,6 +22,8 @@ class StashPagingSource<T : Query.Data, D : Any>(
     private val pageSize: Int,
     private val dataSupplier: DataSupplier<T, D>,
     showToasts: Boolean = false,
+    private val useRandom: Boolean = true,
+    private val sortByOverride: String? = null,
 ) :
     PagingSource<Int, D>() {
     private val queryEngine = QueryEngine(context, showToasts)
@@ -53,12 +55,15 @@ class StashPagingSource<T : Query.Data, D : Any>(
     }
 
     private suspend fun fetchPage(page: Int): CountAndList<D> {
-        val filter =
+        var filter =
             dataSupplier.getDefaultFilter().copy(
                 per_page = Optional.present(pageSize),
                 page = Optional.present(page),
             )
-        val query = dataSupplier.createQuery(queryEngine.updateFilter(filter))
+        if (!sortByOverride.isNullOrBlank()) {
+            filter = filter.copy(sort = Optional.present(sortByOverride))
+        }
+        val query = dataSupplier.createQuery(queryEngine.updateFilter(filter, useRandom))
         val results = queryEngine.executeQuery(query)
         return dataSupplier.parseQuery(results.data)
     }
