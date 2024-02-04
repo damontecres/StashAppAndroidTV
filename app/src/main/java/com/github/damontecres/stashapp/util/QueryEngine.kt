@@ -107,11 +107,12 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         findFilter: FindFilterType? = null,
         sceneFilter: SceneFilterType? = null,
         sceneIds: List<Int>? = null,
+        useRandom: Boolean = true,
     ): List<SlimSceneData> {
         val query =
             client.query(
                 FindScenesQuery(
-                    filter = updateFilter(findFilter),
+                    filter = updateFilter(findFilter, useRandom),
                     scene_filter = sceneFilter,
                     scene_ids = sceneIds,
                 ),
@@ -131,11 +132,12 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         findFilter: FindFilterType? = null,
         performerFilter: PerformerFilterType? = null,
         performerIds: List<Int>? = null,
+        useRandom: Boolean = true,
     ): List<PerformerData> {
         val query =
             client.query(
                 FindPerformersQuery(
-                    filter = updateFilter(findFilter),
+                    filter = updateFilter(findFilter, useRandom),
                     performer_filter = performerFilter,
                     performer_ids = performerIds,
                 ),
@@ -151,11 +153,12 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun findStudios(
         findFilter: FindFilterType? = null,
         studioFilter: StudioFilterType? = null,
+        useRandom: Boolean = true,
     ): List<StudioData> {
         val query =
             client.query(
                 FindStudiosQuery(
-                    filter = updateFilter(findFilter),
+                    filter = updateFilter(findFilter, useRandom),
                     studio_filter = studioFilter,
                 ),
             )
@@ -169,11 +172,12 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun findTags(
         findFilter: FindFilterType? = null,
         tagFilter: TagFilterType? = null,
+        useRandom: Boolean = true,
     ): List<Tag> {
         val query =
             client.query(
                 FindTagsQuery(
-                    filter = updateFilter(findFilter),
+                    filter = updateFilter(findFilter, useRandom),
                     tag_filter = tagFilter,
                 ),
             )
@@ -185,11 +189,12 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun findMovies(
         findFilter: FindFilterType? = null,
         movieFilter: MovieFilterType? = null,
+        useRandom: Boolean = true,
     ): List<MovieData> {
         val query =
             client.query(
                 FindMoviesQuery(
-                    filter = updateFilter(findFilter),
+                    filter = updateFilter(findFilter, useRandom),
                     movie_filter = movieFilter,
                 ),
             )
@@ -200,11 +205,12 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun findMarkers(
         findFilter: FindFilterType? = null,
         markerFilter: SceneMarkerFilterType? = null,
+        useRandom: Boolean = true,
     ): List<MarkerData> {
         val query =
             client.query(
                 FindMarkersQuery(
-                    filter = updateFilter(findFilter),
+                    filter = updateFilter(findFilter, useRandom),
                     scene_marker_filter = markerFilter,
                 ),
             )
@@ -249,9 +255,12 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
      *
      * Handles updating the random sort if requested
      */
-    fun updateFilter(filter: FindFilterType?): FindFilterType? {
+    fun updateFilter(
+        filter: FindFilterType?,
+        useRandom: Boolean = true,
+    ): FindFilterType? {
         return if (filter != null) {
-            if (filter.sort.getOrNull()?.startsWith("random_") == true) {
+            if (useRandom && filter.sort.getOrNull()?.startsWith("random_") == true) {
                 Log.v(TAG, "Updating random filter")
                 filter.copy(sort = Optional.present("random_" + Random.nextInt(1e8.toInt())))
             } else {

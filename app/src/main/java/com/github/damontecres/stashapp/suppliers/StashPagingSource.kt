@@ -22,6 +22,8 @@ class StashPagingSource<T : Query.Data, D : Any>(
     private val pageSize: Int,
     private val dataSupplier: DataSupplier<T, D>,
     showToasts: Boolean = false,
+    private val useRandom: Boolean = true,
+    private val sortByOverride: String? = null,
 ) :
     PagingSource<Int, D>() {
     private val queryEngine = QueryEngine(context, showToasts)
@@ -52,13 +54,19 @@ class StashPagingSource<T : Query.Data, D : Any>(
         fun getDefaultFilter(): FindFilterType
     }
 
-    private suspend fun fetchPage(page: Int): CountAndList<D> {
-        val filter =
+    private suspend fun fetchPage(
+        page: Int,
+        loadSize: Int,
+    ): CountAndList<D> {
+        var filter =
             dataSupplier.getDefaultFilter().copy(
-                per_page = Optional.present(pageSize),
+                per_page = Optional.present(loadSize),
                 page = Optional.present(page),
             )
-        val query = dataSupplier.createQuery(queryEngine.updateFilter(filter))
+        if (!sortByOverride.isNullOrBlank()) {
+            filter = filter.copy(sort = Optional.present(sortByOverride))
+        }
+        val query = dataSupplier.createQuery(queryEngine.updateFilter(filter, useRandom))
         val results = queryEngine.executeQuery(query)
         return dataSupplier.parseQuery(results.data)
     }
@@ -67,12 +75,16 @@ class StashPagingSource<T : Query.Data, D : Any>(
         try {
             // Start refresh at page 1 if undefined.
             val pageNum = (params.key ?: 1).toInt()
-            val results = fetchPage(pageNum)
+            // Round requested loadSize down to a multiple of pageSize
+            val loadSize = params.loadSize / pageSize * pageSize
+            val results = fetchPage(pageNum, loadSize)
             if (results.count < 0) {
                 return LoadResult.Error(RuntimeException("Invalid count"))
             }
             // If the total fetched results is less than the total number of items, then there is a next page
-            val nextPageNum = if (pageSize * pageNum < results.count) pageNum + 1 else null
+            // Advance the page by the number of requested items
+            val nextPageNum =
+                if (pageSize * pageNum < results.count) pageNum + (params.loadSize / pageSize) else null
 
             return LoadResult.Page(
                 data = results.list,

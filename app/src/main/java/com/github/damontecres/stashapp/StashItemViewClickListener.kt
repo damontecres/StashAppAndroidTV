@@ -99,6 +99,9 @@ class StashItemViewClickListener(
             val intent = Intent(activity, FilterListActivity::class.java)
             intent.putExtra("savedFilterId", item.savedFilterId)
             intent.putExtra("dataType", DataType.fromFilterMode(item.mode)!!.name)
+            intent.putExtra("useRandom", false)
+            intent.putExtra("sortBy", item.sortBy)
+            intent.putExtra("moveOnePage", true)
             activity.startActivity(intent)
         } else if (item is StashCustomFilter) {
             val intent = Intent(activity, FilterListActivity::class.java)
@@ -106,6 +109,8 @@ class StashItemViewClickListener(
             intent.putExtra("sortBy", item.sortBy)
             intent.putExtra("dataType", DataType.fromFilterMode(item.mode)!!.name)
             intent.putExtra("description", item.description)
+            intent.putExtra("useRandom", false)
+            intent.putExtra("moveOnePage", true)
             activity.startActivity(intent)
         } else if (item is StashAction) {
             if (actionListener != null) {
