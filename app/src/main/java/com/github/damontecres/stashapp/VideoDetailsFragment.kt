@@ -36,6 +36,7 @@ import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
@@ -60,7 +61,7 @@ import kotlin.math.roundToInt
  * It shows a detailed view of video and its metadata plus related videos.
  */
 class VideoDetailsFragment : DetailsSupportFragment() {
-    private var mSelectedMovie: Scene? = null
+    private var mSelectedMovie: SlimSceneData? = null
 
     private val performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
     private val tagsAdapter: ArrayObjectAdapter = ArrayObjectAdapter(TagPresenter())
@@ -84,23 +85,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
 
 //        mSelectedMovie = activity!!.intent.getSerializableExtra(DetailsActivity.MOVIE) as Scene
-        mSelectedMovie = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE)
-        if (mSelectedMovie != null) {
-            setupDetailsOverviewRow()
-            setupDetailsOverviewRowPresenter()
-            setupRelatedMovieListRow()
-            adapter = mAdapter
-            initializeBackground(mSelectedMovie)
-
-            val actionListener = SceneActionListener()
-
-            onItemViewClickedListener =
-                StashItemViewClickListener(requireActivity(), actionListener)
-        } else {
-            Log.w(TAG, "No movie found in intent")
-            val intent = Intent(requireActivity(), MainActivity::class.java)
-            startActivity(intent)
-        }
 
         resultLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -125,7 +109,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             tagIds.add(tagId!!.toInt())
                             val mutResult =
                                 MutationEngine(requireContext()).setTagsOnScene(
-                                    mSelectedMovie!!.id,
+                                    mSelectedMovie!!.id.toLong(),
                                     tagIds,
                                 )
                             val newTags = mutResult?.tags?.map { Tag(it.tagData) }
@@ -163,7 +147,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             performerIds.add(performerId.toString())
                             val mutResult =
                                 MutationEngine(requireContext()).setPerformersOnScene(
-                                    mSelectedMovie!!.id,
+                                    mSelectedMovie!!.id.toLong(),
                                     performerIds.map { it.toInt() },
                                 )
                             val resultPerformers = mutResult?.performers?.map { it.performerData }
@@ -198,7 +182,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             if (serverPreferences.trackActivity) {
                                 viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
                                     MutationEngine(requireContext(), false).saveSceneActivity(
-                                        mSelectedMovie!!.id,
+                                        mSelectedMovie!!.id.toLong(),
                                         position,
                                     )
                                 }
@@ -214,38 +198,52 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View? {
-        val queryEngine = QueryEngine(requireContext(), true)
-        if (mSelectedMovie != null) {
-            sceneActionsAdapter.add(StashAction.ADD_TAG)
-            sceneActionsAdapter.add(StashAction.ADD_PERFORMER)
-            sceneActionsAdapter.add(StashAction.FORCE_TRANSCODE)
-            sceneActionsAdapter.add(
-                OCounter(
-                    mSelectedMovie!!.id.toInt(),
-                    mSelectedMovie?.oCounter ?: 0,
-                ),
-            )
-
+        val sceneId = requireActivity().intent.getParcelableExtra<Scene>(DetailsActivity.MOVIE)?.id
+        if (sceneId == null) {
+            Log.w(TAG, "No scene found in intent")
+            val intent = Intent(requireActivity(), MainActivity::class.java)
+            startActivity(intent)
+        } else {
+            val queryEngine = QueryEngine(requireContext())
             viewLifecycleOwner.lifecycleScope.launch {
-                val scene =
-                    queryEngine.findScenes(sceneIds = listOf(mSelectedMovie!!.id.toInt()))
-                        .first()
-                if (scene.tags.isNotEmpty()) {
+                mSelectedMovie = queryEngine.getScene(sceneId.toInt())
+                setupDetailsOverviewRow()
+                setupDetailsOverviewRowPresenter()
+                setupRelatedMovieListRow()
+                adapter = mAdapter
+                initializeBackground()
+
+                val actionListener = SceneActionListener()
+
+                onItemViewClickedListener =
+                    StashItemViewClickListener(requireActivity(), actionListener)
+
+                sceneActionsAdapter.add(StashAction.ADD_TAG)
+                sceneActionsAdapter.add(StashAction.ADD_PERFORMER)
+                sceneActionsAdapter.add(StashAction.FORCE_TRANSCODE)
+                sceneActionsAdapter.add(
+                    OCounter(
+                        mSelectedMovie!!.id.toInt(),
+                        mSelectedMovie?.o_counter ?: 0,
+                    ),
+                )
+
+                if (mSelectedMovie!!.tags.isNotEmpty()) {
                     mAdapter.set(
                         TAG_POS,
                         ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
                     )
-                    tagsAdapter.addAll(0, scene.tags.map { Tag(it.tagData) })
+                    tagsAdapter.addAll(0, mSelectedMovie!!.tags.map { Tag(it.tagData) })
                 }
 
-                if (scene.scene_markers.isNotEmpty()) {
+                if (mSelectedMovie!!.scene_markers.isNotEmpty()) {
                     mAdapter.set(
                         MARKER_POS,
                         ListRow(HeaderItem(getString(R.string.stashapp_markers)), markersAdapter),
                     )
                     markersAdapter.addAll(
                         0,
-                        scene.scene_markers.map {
+                        mSelectedMovie!!.scene_markers.map {
                             MarkerData(
                                 id = it.id,
                                 title = it.title,
@@ -256,7 +254,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                                 seconds = it.seconds,
                                 preview = "",
                                 primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData),
-                                scene = MarkerData.Scene("", scene),
+                                scene = MarkerData.Scene("", mSelectedMovie!!),
                                 tags = emptyList(),
                                 __typename = "",
                             )
@@ -264,10 +262,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     )
                 }
 
-                val performerIds =
-                    scene.performers.map {
-                        it.id.toInt()
-                    }
+                val performerIds = mSelectedMovie!!.performers.map { it.id.toInt() }
                 if (performerIds.isNotEmpty()) {
                     val perfs = queryEngine.findPerformers(performerIds = performerIds)
                     if (perfs.isNotEmpty()) {
@@ -283,13 +278,14 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 }
             }
         }
+
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
-    private fun initializeBackground(movie: Scene?) {
+    private fun initializeBackground() {
         mDetailsBackground.enableParallax()
 
-        val screenshotUrl = movie?.screenshotUrl
+        val screenshotUrl = mSelectedMovie!!.paths.screenshot
 
         if (!screenshotUrl.isNullOrBlank()) {
             val apiKey =
@@ -323,12 +319,9 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
         val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
 
-        val screenshotUrl = mSelectedMovie?.screenshotUrl
+        val screenshotUrl = mSelectedMovie?.paths?.screenshot
         if (!screenshotUrl.isNullOrBlank()) {
-            val apiKey =
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
-                    .getString("stashApiKey", "")
-            val url = createGlideUrl(screenshotUrl, apiKey)
+            val url = createGlideUrl(screenshotUrl, requireContext())
             Glide.with(requireActivity())
                 .asBitmap()
                 .load(url)
@@ -349,8 +342,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         }
 
         val serverPreferences = ServerPreferences(requireContext())
-        if (serverPreferences.trackActivity && mSelectedMovie?.resumeTime != null && mSelectedMovie?.resumeTime!! > 0) {
-            position = (mSelectedMovie?.resumeTime!! * 1000).toLong()
+        if (serverPreferences.trackActivity && mSelectedMovie?.resume_time != null && mSelectedMovie?.resume_time!! > 0) {
+            position = (mSelectedMovie?.resume_time!! * 1000).toLong()
             playActionsAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
             playActionsAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
         } else {
@@ -392,7 +385,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         )
                     ) {
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
-                        intent.putExtra(DetailsActivity.MOVIE, mSelectedMovie)
+                        intent.putExtra(
+                            DetailsActivity.MOVIE,
+                            Scene.fromSlimSceneData(mSelectedMovie!!),
+                        )
                         if (action.id == ACTION_RESUME_SCENE || action.id == ACTION_TRANSCODE_RESUME_SCENE) {
                             intent.putExtra(POSITION_ARG, position)
                         }
