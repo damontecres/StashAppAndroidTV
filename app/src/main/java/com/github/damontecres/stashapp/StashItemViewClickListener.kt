@@ -41,7 +41,7 @@ class StashItemViewClickListener(
     ) {
         if (item is SlimSceneData) {
             val intent = Intent(activity, DetailsActivity::class.java)
-            intent.putExtra(DetailsActivity.MOVIE, Scene.fromSlimSceneData(item))
+            intent.putExtra(DetailsActivity.MOVIE, item.id)
 
             val bundle =
                 ActivityOptionsCompat.makeSceneTransitionAnimation(

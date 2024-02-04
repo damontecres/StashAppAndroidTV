@@ -96,7 +96,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View? {
-        val sceneId = requireActivity().intent.getParcelableExtra<Scene>(DetailsActivity.MOVIE)?.id
+        val sceneId = requireActivity().intent.getStringExtra(DetailsActivity.MOVIE)
         if (sceneId == null) {
             Log.w(TAG, "No scene found in intent")
             val intent = Intent(requireActivity(), MainActivity::class.java)
