@@ -120,7 +120,7 @@
             android:id="@+id/video_preview_image_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_margin="@dimen/video_frame_width"
+            android:layout_margin="2dp"
             android:scaleType="fitXY" />
     </FrameLayout>
 

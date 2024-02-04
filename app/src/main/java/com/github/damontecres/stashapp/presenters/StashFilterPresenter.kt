@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.presenters
 
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.FilterMode
@@ -65,7 +66,10 @@ class StashFilterPresenter : StashPresenter() {
         }
 
         cardView.mainImageView.setImageDrawable(
-            viewHolder.view.context.getDrawable(R.drawable.baseline_camera_indoor_48),
+            AppCompatResources.getDrawable(
+                viewHolder.view.context,
+                R.drawable.baseline_camera_indoor_48,
+            ),
         )
     }
 }

@@ -32,7 +32,7 @@ class MarkerPresenter : StashPresenter() {
     }
 
     companion object {
-        private val TAG = "MarkerPresenter"
+        private const val TAG = "MarkerPresenter"
 
         const val CARD_WIDTH = 351
         const val CARD_HEIGHT = 198

@@ -19,7 +19,7 @@ import org.mockito.kotlin.mock
 
 @RunWith(MockitoJUnitRunner::class)
 class ObjectFilterParsingTests {
-    val serverInfo =
+    private val serverInfo =
         ServerInfoQuery.Data(
             version = ServerInfoQuery.Version("0.23.0"),
             stats = ServerInfoQuery.Stats(1),

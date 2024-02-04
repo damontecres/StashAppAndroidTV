@@ -54,10 +54,10 @@ class PlaybackVideoFragment : VideoSupportFragment(), PlaybackActivity.StashVide
         Log.d(TAG, "$POSITION_ARG=$position")
 
         val glueHost = VideoSupportFragmentGlueHost(this@PlaybackVideoFragment)
-        var skipForward =
+        val skipForward =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("skip_forward_time", 30)
-        var skipBack =
+        val skipBack =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("skip_back_time", 10)
         val forceTranscode =
@@ -91,16 +91,16 @@ class PlaybackVideoFragment : VideoSupportFragment(), PlaybackActivity.StashVide
 
         mTransportControlGlue = BasicTransportControlsGlue(activity, playerAdapter)
         mTransportControlGlue.host = glueHost
-        mTransportControlGlue.title = scene?.title
-        mTransportControlGlue.subtitle = scene?.details
+        mTransportControlGlue.title = scene.title
+        mTransportControlGlue.subtitle = scene.details
         mTransportControlGlue.playWhenPrepared()
 
-        var streamUrl = scene?.streams?.get("Direct stream")
+        var streamUrl = scene.streams["Direct stream"]
         if (streamUrl == null || forceTranscode) {
             val streamChoice =
                 PreferenceManager.getDefaultSharedPreferences(requireContext())
                     .getString("stream_choice", "MP4")
-            streamUrl = scene?.streams?.get(streamChoice)
+            streamUrl = scene.streams[streamChoice]
         }
 
         if (streamUrl != null) {
@@ -137,7 +137,7 @@ class PlaybackVideoFragment : VideoSupportFragment(), PlaybackActivity.StashVide
         private val trackActivity: Boolean,
     ) :
         MediaPlayerAdapter(context) {
-        val mutationEngine = MutationEngine(context, false)
+        private val mutationEngine = MutationEngine(context, false)
 
         override fun fastForward() = seekTo(currentPosition + skipForward * 1000)
 

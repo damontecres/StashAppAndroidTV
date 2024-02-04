@@ -85,9 +85,6 @@ class StashPreviewLoader(
         companion object {
             const val MAX_LINES = 9
             const val MAX_COLUMNS = 9
-            const val IMAGE_WIDTH = 160
-            const val IMAGE_HEIGHT = IMAGE_WIDTH * 9 / 16
-            private const val THUMBNAILS_EACH = 5000 // milliseconds
         }
     }
 }

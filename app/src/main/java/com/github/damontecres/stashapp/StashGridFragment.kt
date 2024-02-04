@@ -18,8 +18,8 @@ import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
-import com.github.damontecres.stashapp.presenters.StashPagingSource
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -36,21 +36,12 @@ class StashGridFragment<T : Query.Data, D : Any>(
         numberOfColumns: Int? = null,
     ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, numberOfColumns)
 
-    constructor(
-        comparator: DiffUtil.ItemCallback<D>,
-        dataSupplier: StashPagingSource.DataSupplier<T, D>,
-        filter: SavedFilterData?,
-    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, filter, null)
-
     private val mAdapter = PagingDataAdapter(presenter, comparator)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val paddingTop =
-            resources.getDimension(R.dimen.title_bar_height) + resources.getDimension(R.dimen.grid_top_padding)
-
-        val gridPresenter = StashGridPresenter(paddingTop.toInt())
+        val gridPresenter = StashGridPresenter()
         gridPresenter.numberOfColumns =
             numberOfColumns ?: PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("numberOfColumns", 5)
@@ -142,7 +133,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
         const val TAG = "StashGridFragment"
     }
 
-    private class StashGridPresenter(val paddingTop: Int) :
+    private class StashGridPresenter :
         VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
         override fun initializeGridViewHolder(vh: ViewHolder?) {
             super.initializeGridViewHolder(vh)

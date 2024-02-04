@@ -20,7 +20,6 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
-import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import kotlin.time.DurationUnit
@@ -31,8 +30,6 @@ object Constants {
      * The name of the header for authenticating to Stash
      */
     const val STASH_API_HEADER = "ApiKey"
-    const val PREF_KEY_STASH_URL = "stashUrl"
-    const val PREF_KEY_STASH_API_KEY = "stashApi"
     const val TAG = "Constants"
 
     /**
@@ -81,7 +78,7 @@ fun createGlideUrl(
 /**
  * Add API key to headers for Apollo GraphQL requests
  */
-class AuthorizationInterceptor(val apiKey: String?) : HttpInterceptor {
+class AuthorizationInterceptor(private val apiKey: String?) : HttpInterceptor {
     override suspend fun intercept(
         request: HttpRequest,
         chain: HttpInterceptorChain,
@@ -232,9 +229,6 @@ fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
 }
 
 val supportedFilterModes = DataType.entries.map { it.filterMode }.toSet()
-
-val FilterMode.isSupported: Boolean
-    get() = supportedFilterModes.contains(this)
 
 /**
  * Gets the value for the key trying first the key as provided and next the key lower cased

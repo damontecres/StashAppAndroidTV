@@ -18,7 +18,7 @@ data class Version(
     }
 
     companion object {
-        val MINIMUM_STASH_VERSION = fromString("0.23.0")
+        private val MINIMUM_STASH_VERSION = fromString("0.23.0")
 
         fun fromString(version: String): Version {
             if (version.contains("-g")) {

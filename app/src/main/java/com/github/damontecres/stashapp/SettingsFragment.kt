@@ -72,13 +72,13 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         caller: PreferenceFragmentCompat,
         pref: Preference,
     ): Boolean {
-        if (pref.key == getString(R.string.pref_key_pin_code)) {
+        return if (pref.key == getString(R.string.pref_key_pin_code)) {
             val f = NumberEditTextPreferencesDialog(pref.key)
             f.setTargetFragment(caller, 0)
             startPreferenceFragment(f)
-            return true
+            true
         } else {
-            return super.onPreferenceDisplayDialog(caller, pref)
+            super.onPreferenceDisplayDialog(caller, pref)
         }
     }
 
@@ -96,13 +96,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val pinCodePref = findPreference<EditTextPreference>("pinCode")
             pinCodePref?.summaryProvider =
-                object : Preference.SummaryProvider<EditTextPreference> {
-                    override fun provideSummary(preference: EditTextPreference): CharSequence? {
-                        return if (preference.text.isNullOrBlank()) {
-                            "No PIN is set"
-                        } else {
-                            "PIN is set"
-                        }
+                Preference.SummaryProvider<EditTextPreference> { preference ->
+                    if (preference.text.isNullOrBlank()) {
+                        "No PIN is set"
+                    } else {
+                        "PIN is set"
                     }
                 }
 
@@ -139,13 +137,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val apiKayPref = findPreference<EditTextPreference>("stashApiKey")
             apiKayPref?.summaryProvider =
-                object : Preference.SummaryProvider<EditTextPreference> {
-                    override fun provideSummary(preference: EditTextPreference): CharSequence {
-                        return if (preference.text.isNullOrBlank()) {
-                            "No API key configured"
-                        } else {
-                            "API Key is configured"
-                        }
+                Preference.SummaryProvider<EditTextPreference> { preference ->
+                    if (preference.text.isNullOrBlank()) {
+                        "No API key configured"
+                    } else {
+                        "API Key is configured"
                     }
                 }
 
@@ -187,13 +183,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val playerChoice = findPreference<SwitchPreference>("playerChoice")
             playerChoice?.summaryProvider =
-                object : Preference.SummaryProvider<SwitchPreference> {
-                    override fun provideSummary(preference: SwitchPreference): CharSequence {
-                        return if (preference.isChecked) {
-                            "Using ExoPlayer (recommended)"
-                        } else {
-                            "Using default player"
-                        }
+                Preference.SummaryProvider<SwitchPreference> { preference ->
+                    if (preference.isChecked) {
+                        "Using ExoPlayer (recommended)"
+                    } else {
+                        "Using default player"
                     }
                 }
 
@@ -254,7 +248,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         putString(SERVER_APIKEY_PREF_PREFIX + url, apiKey)
                     }
 
-                    urlPref?.text = null
+                    urlPref.text = null
                     apiKayPref?.text = null
                     setServers()
                     Toast.makeText(
@@ -290,7 +284,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
                 val url = key.replace(SERVER_PREF_PREFIX, "")
                 if (url == urlPref?.text) {
-                    urlPref?.text = null
+                    urlPref.text = null
                     apiKayPref?.text = null
                 }
                 setServers()

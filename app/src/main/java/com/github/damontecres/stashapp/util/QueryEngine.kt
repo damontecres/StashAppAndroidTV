@@ -55,7 +55,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 Log.v(TAG, "executeQuery $queryName successful")
                 return response
             } else {
-                val errorMsgs = response.errors!!.map { it.message }.joinToString("\n")
+                val errorMsgs = response.errors!!.joinToString("\n") { it.message }
                 if (showToasts) {
                     Toast.makeText(
                         context,

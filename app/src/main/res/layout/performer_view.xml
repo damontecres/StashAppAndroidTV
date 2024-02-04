@@ -5,7 +5,8 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:weightSum="5"
-    android:layout_margin="5dp">
+    android:layout_margin="5dp"
+    android:baselineAligned="false">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"

@@ -9,8 +9,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.data.Movie
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.createGlideUrl
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 class MovieFragment : Fragment(R.layout.performer_view) {
     private lateinit var mPerformerImage: ImageView
@@ -32,9 +33,9 @@ class MovieFragment : Fragment(R.layout.performer_view) {
             mPerformerName.text = movie.name
             mPerformerDisambiguation.text = movie.aliases
 
-            if (movie.front_image_path != null) {
-                viewLifecycleOwner.lifecycleScope.async {
-                    val url = createGlideUrl(movie.front_image_path, requireContext())
+            if (movie.frontImagePath != null) {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val url = createGlideUrl(movie.frontImagePath, requireContext())
                     Glide.with(requireActivity())
                         .load(url)
                         .centerCrop()
