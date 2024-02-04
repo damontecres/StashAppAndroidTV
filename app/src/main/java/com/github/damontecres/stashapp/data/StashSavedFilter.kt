@@ -8,4 +8,5 @@ import kotlinx.parcelize.Parcelize
 data class StashSavedFilter(
     val savedFilterId: String,
     val mode: FilterMode,
+    val sortBy: String? = null,
 ) : Parcelable

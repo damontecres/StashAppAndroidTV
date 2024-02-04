@@ -73,6 +73,13 @@
             android:min="1"
             android:max="12"
             app:defaultValue="5" />
+
+        <SwitchPreference
+            app:key="scrollToNextResult"
+            app:title="Scroll to next on View All"
+            app:summary="Automatically scroll down to the 'next' results when clicking View All on main page"
+            app:defaultValue="true"
+            />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">

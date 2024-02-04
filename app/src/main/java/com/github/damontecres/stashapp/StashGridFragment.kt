@@ -7,6 +7,7 @@ import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.paging.PagingDataAdapter
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
+import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
@@ -16,12 +17,9 @@ import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
-import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
-import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
-import com.github.damontecres.stashapp.util.QueryEngine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -50,6 +48,25 @@ class StashGridFragment<T : Query.Data, D : Any>(
         setGridPresenter(gridPresenter)
 
         adapter = mAdapter
+
+        val pageSize =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("maxSearchResults", 50)
+        val scrollToNextResult =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean("scrollToNextResult", true)
+        val moveOnePage = requireActivity().intent.getBooleanExtra("moveOnePage", false)
+        if (moveOnePage && scrollToNextResult) {
+            adapter.registerObserver(
+                object : ObjectAdapter.DataObserver() {
+                    override fun onChanged() {
+                        Log.v(TAG, "Skipping one page")
+                        setSelectedPosition(pageSize)
+                        adapter.unregisterObserver(this)
+                    }
+                },
+            )
+        }
     }
 
     override fun onViewCreated(
@@ -64,26 +81,32 @@ class StashGridFragment<T : Query.Data, D : Any>(
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 50)
 
+        val useRandom = requireActivity().intent.getBooleanExtra("useRandom", true)
+        val sortBy = requireActivity().intent.getStringExtra("sortBy")
+
+        Log.v(TAG, "useRandom=$useRandom, sortBy=$sortBy")
+
         val flow =
             Pager(
-                PagingConfig(pageSize = pageSize, prefetchDistance = pageSize * 2),
+                PagingConfig(
+                    pageSize = pageSize,
+                    prefetchDistance = pageSize * 2,
+                    initialLoadSize = pageSize * 2,
+                ),
             ) {
                 StashPagingSource(
                     requireContext(),
                     pageSize,
                     dataSupplier = dataSupplier,
+                    useRandom = useRandom,
+                    sortByOverride = sortBy,
                 )
             }.flow
                 .cachedIn(viewLifecycleOwner.lifecycleScope)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val queryEngine = QueryEngine(requireContext(), true)
-            val query = FindDefaultFilterQuery(FilterMode.TAGS)
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                flow.collectLatest {
-                    mAdapter.submitData(it)
-                }
+            flow.collectLatest {
+                mAdapter.submitData(it)
             }
         }
     }
