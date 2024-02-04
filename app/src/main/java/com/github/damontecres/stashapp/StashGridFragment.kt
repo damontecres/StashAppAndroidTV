@@ -133,7 +133,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
         const val TAG = "StashGridFragment"
     }
 
-    private class StashGridPresenter() :
+    private class StashGridPresenter :
         VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
         override fun initializeGridViewHolder(vh: ViewHolder?) {
             super.initializeGridViewHolder(vh)

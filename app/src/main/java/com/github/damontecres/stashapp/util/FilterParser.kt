@@ -28,7 +28,7 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 
 class FilterParser private constructor(context: Context, serverInfoQuery: ServerInfoQuery.Data?) {
-//    private val serverPreferences = ServerPreferences(context)
+    @Suppress("unused")
     private val serverVersion =
         if (serverInfoQuery?.version?.version != null) Version.fromString(serverInfoQuery.version.version) else null
 
@@ -478,25 +478,23 @@ class FilterParser private constructor(context: Context, serverInfoQuery: Server
         return if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             MovieFilterType(
-                name = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("name"))),
-                director = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("director"))),
-                synopsis = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("synopsis"))),
-                duration = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("duration"))),
-                rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter?.get("rating100"))),
+                name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
+                director = Optional.presentIfNotNull(convertStringCriterionInput(filter["director"])),
+                synopsis = Optional.presentIfNotNull(convertStringCriterionInput(filter["synopsis"])),
+                duration = Optional.presentIfNotNull(convertIntCriterionInput(filter["duration"])),
+                rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
                 studios =
                     Optional.presentIfNotNull(
                         convertHierarchicalMultiCriterionInput(
-                            filter?.get(
-                                "studios",
-                            ),
+                            filter["studios"],
                         ),
                     ),
-                is_missing = Optional.presentIfNotNull(convertString(filter?.get("is_missing"))),
-                url = Optional.presentIfNotNull(convertStringCriterionInput(filter?.get("url"))),
-                performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter?.get("performers"))),
-                date = Optional.presentIfNotNull(convertDateCriterionInput(filter?.get("date"))),
-                created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("created_at"))),
-                updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter?.get("updated_at"))),
+                is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
+                url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
+                performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
+                date = Optional.presentIfNotNull(convertDateCriterionInput(filter["date"])),
+                created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
+                updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
             )
         } else {
             null

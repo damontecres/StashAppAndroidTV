@@ -244,8 +244,7 @@ class MainFragment : BrowseSupportFragment() {
                                 val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
                                 adapters.add(adapter)
 
-                                val filterType = frontPageFilter["__typename"] as String
-                                when (filterType) {
+                                when (val filterType = frontPageFilter["__typename"] as String) {
                                     "CustomFilter" -> {
                                         addCustomFilterRow(frontPageFilter, adapter, queryEngine)
                                     }

@@ -3,7 +3,7 @@
     android:shape="rectangle">
 
     <stroke
-        android:width="@dimen/video_frame_width"
+        android:width="2dp"
         android:color="@android:color/white" />
 
     <solid android:color="@android:color/black" />
