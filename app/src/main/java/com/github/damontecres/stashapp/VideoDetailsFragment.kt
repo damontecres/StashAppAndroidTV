@@ -49,10 +49,11 @@ import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
  * A wrapper fragment for leanback details screens.
@@ -339,7 +340,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             drawable: Bitmap,
                             transition: Transition<in Bitmap>?,
                         ) {
-                            Log.d(TAG, "details overview card image url ready: " + drawable)
+                            Log.d(TAG, "details overview card image url ready: $drawable")
                             row.setImageBitmap(requireContext(), drawable)
                             mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
                         }
@@ -418,7 +419,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         dp: Int,
     ): Int {
         val density = context.applicationContext.resources.displayMetrics.density
-        return Math.round(dp.toFloat() * density)
+        return (dp.toFloat() * density).roundToInt()
     }
 
     private inner class SceneActionListener : StashActionClickedListener {
@@ -444,7 +445,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         }
 
         override fun incrementOCounter(counter: OCounter) {
-            viewLifecycleOwner.lifecycleScope.async {
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val mutationEngine = MutationEngine(requireContext())
                 val newCounter = mutationEngine.incrementOCounter(counter.sceneId)
                 val index = sceneActionsAdapter.indexOf(counter)
@@ -454,21 +455,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     }
 
     companion object {
-        private val TAG = "VideoDetailsFragment"
+        private const val TAG = "VideoDetailsFragment"
 
-        private val ACTION_PLAY_SCENE = 1L
-        private val ACTION_RESUME_SCENE = 2L
-        private val ACTION_TRANSCODE_RESUME_SCENE = 3L
+        private const val ACTION_PLAY_SCENE = 1L
+        private const val ACTION_RESUME_SCENE = 2L
+        private const val ACTION_TRANSCODE_RESUME_SCENE = 3L
 
-        private val DETAIL_THUMB_WIDTH = ScenePresenter.CARD_WIDTH
-        private val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
-
-        private val NUM_COLS = 10
+        private const val DETAIL_THUMB_WIDTH = ScenePresenter.CARD_WIDTH
+        private const val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
 
         const val POSITION_ARG = "position"
         const val FORCE_TRANSCODE = "forceTranscode"
-
-        const val ADD_TAG_SEARCH_ID = 1L
 
         private const val DETAILS_POS = 1
         private const val MARKER_POS = DETAILS_POS + 1

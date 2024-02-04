@@ -1,17 +1,10 @@
 package com.github.damontecres.stashapp
 
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.DisplayMetrics
 import android.util.Log
-import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.leanback.app.BackgroundManager
@@ -29,9 +22,6 @@ import androidx.leanback.widget.RowPresenter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.SimpleTarget
-import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FilterMode
@@ -43,17 +33,15 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.supportedFilterModes
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.Objects
-import java.util.Timer
-import java.util.TimerTask
 
 /**
  * Loads a grid of cards with movies to browse.
@@ -61,16 +49,8 @@ import java.util.TimerTask
 class MainFragment : BrowseSupportFragment() {
     private val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()
-
-    //    private var performerAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
-//    private var studioAdapter: ArrayObjectAdapter = ArrayObjectAdapter(StudioPresenter())
-//    private var sceneAdapter: ArrayObjectAdapter = ArrayObjectAdapter(ScenePresenter())
-    private val mHandler = Handler(Looper.myLooper()!!)
     private lateinit var mBackgroundManager: BackgroundManager
-    private var mDefaultBackground: Drawable? = null
     private lateinit var mMetrics: DisplayMetrics
-    private var mBackgroundTimer: Timer? = null
-    private var mBackgroundUri: String? = null
     private var serverHash: Int? = null
 
     /**
@@ -109,7 +89,7 @@ class MainFragment : BrowseSupportFragment() {
         browseFrameLayout.onFocusSearchListener =
             OnFocusSearchListener { focused: View?, direction: Int ->
                 if (direction == View.FOCUS_UP) {
-                    requireActivity().findViewById<View>(androidx.leanback.R.id.search_orb)
+                    requireActivity().findViewById(androidx.leanback.R.id.search_orb)
                 } else {
                     null
                 }
@@ -126,7 +106,7 @@ class MainFragment : BrowseSupportFragment() {
                 val adapter = adapters[position.row]
                 val item = adapter.get(position.column)
                 if (item is SlimSceneData) {
-                    viewLifecycleOwner.lifecycleScope.async {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                         val queryEngine = QueryEngine(requireContext())
                         queryEngine.getScene(item.id.toInt())?.let {
                             adapter.replace(position.column, it)
@@ -158,12 +138,6 @@ class MainFragment : BrowseSupportFragment() {
                     .show()
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "onDestroy: " + mBackgroundTimer?.toString())
-        mBackgroundTimer?.cancel()
     }
 
     private fun prepareBackgroundManager() {
@@ -206,60 +180,6 @@ class MainFragment : BrowseSupportFragment() {
 //                startBackgroundTimer()
 //            }
         }
-    }
-
-    private fun updateBackground(uri: String?) {
-        val width = mMetrics.widthPixels
-        val height = mMetrics.heightPixels
-        Glide.with(requireActivity())
-            .load(uri)
-            .centerCrop()
-            .error(R.drawable.baseline_camera_indoor_48)
-            .into<SimpleTarget<Drawable>>(
-                object : SimpleTarget<Drawable>(width, height) {
-                    override fun onResourceReady(
-                        drawable: Drawable,
-                        transition: Transition<in Drawable>?,
-                    ) {
-                        mBackgroundManager.drawable = drawable
-                    }
-                },
-            )
-        mBackgroundTimer?.cancel()
-    }
-
-    private fun startBackgroundTimer() {
-        mBackgroundTimer?.cancel()
-        mBackgroundTimer = Timer()
-        mBackgroundTimer?.schedule(UpdateBackgroundTask(), BACKGROUND_UPDATE_DELAY.toLong())
-    }
-
-    private inner class UpdateBackgroundTask : TimerTask() {
-        override fun run() {
-            mHandler.post { updateBackground(mBackgroundUri) }
-        }
-    }
-
-    private inner class GridItemPresenter : Presenter() {
-        override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
-            val view = TextView(parent.context)
-            view.layoutParams = ViewGroup.LayoutParams(GRID_ITEM_WIDTH, GRID_ITEM_HEIGHT)
-            view.isFocusable = true
-            view.isFocusableInTouchMode = true
-            view.setBackgroundColor(ContextCompat.getColor(activity!!, R.color.default_background))
-            view.setTextColor(Color.WHITE)
-            view.gravity = Gravity.CENTER
-            return ViewHolder(view)
-        }
-
-        override fun onBindViewHolder(
-            viewHolder: ViewHolder,
-            item: Any,
-        ) {
-            (viewHolder.view as TextView).text = item as String
-        }
-
-        override fun onUnbindViewHolder(viewHolder: ViewHolder) {}
     }
 
     private fun clearData() {
@@ -325,12 +245,18 @@ class MainFragment : BrowseSupportFragment() {
                                 adapters.add(adapter)
 
                                 val filterType = frontPageFilter["__typename"] as String
-                                if (filterType == "CustomFilter") {
-                                    addCustomFilterRow(frontPageFilter, adapter, queryEngine)
-                                } else if (filterType == "SavedFilter") {
-                                    addSavedFilterRow(frontPageFilter, adapter, queryEngine)
-                                } else {
-                                    Log.w(TAG, "Unknown frontPageFilter typename: $filterType")
+                                when (filterType) {
+                                    "CustomFilter" -> {
+                                        addCustomFilterRow(frontPageFilter, adapter, queryEngine)
+                                    }
+
+                                    "SavedFilter" -> {
+                                        addSavedFilterRow(frontPageFilter, adapter, queryEngine)
+                                    }
+
+                                    else -> {
+                                        Log.w(TAG, "Unknown frontPageFilter typename: $filterType")
+                                    }
                                 }
                             }
                         }
@@ -566,12 +492,6 @@ class MainFragment : BrowseSupportFragment() {
     data class Position(val row: Int, val column: Int)
 
     companion object {
-        private val TAG = "MainFragment"
-
-        private val BACKGROUND_UPDATE_DELAY = 300
-        private val GRID_ITEM_WIDTH = 200
-        private val GRID_ITEM_HEIGHT = 200
-        private val NUM_ROWS = 6
-        private val NUM_COLS = 15
+        private const val TAG = "MainFragment"
     }
 }

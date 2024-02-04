@@ -6,7 +6,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.leanback.widget.ImageCardView
-import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
@@ -46,10 +45,7 @@ class ScenePresenter : StashPresenter() {
 
         if (!scene.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val apiKey =
-                PreferenceManager.getDefaultSharedPreferences(vParent.context)
-                    .getString("stashApiKey", "")
-            val url = createGlideUrl(scene.paths.screenshot, apiKey)
+            val url = createGlideUrl(scene.paths.screenshot, vParent.context)
             Glide.with(viewHolder.view.context)
                 .load(url)
                 .transform(CenterCrop(), TextOverlay(viewHolder.view.context, scene))
@@ -129,7 +125,7 @@ class ScenePresenter : StashPresenter() {
     }
 
     companion object {
-        private val TAG = "ScenePresenter"
+        private const val TAG = "ScenePresenter"
 
         const val CARD_WIDTH = 351
         const val CARD_HEIGHT = 198

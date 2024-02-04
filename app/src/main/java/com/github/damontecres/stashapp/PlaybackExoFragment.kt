@@ -97,14 +97,14 @@ class PlaybackExoFragment :
                     videoView.player = exoPlayer
                 }.also { exoPlayer ->
                     var mediaItem: MediaItem? = null
-                    var streamUrl = scene.streams.get("Direct stream")
+                    var streamUrl = scene.streams["Direct stream"]
                     if (streamUrl != null && scene.videoCodec != "av1" && !forceTranscode) {
                         mediaItem = MediaItem.fromUri(streamUrl)
                     } else {
                         val streamChoice =
                             PreferenceManager.getDefaultSharedPreferences(requireContext())
                                 .getString("stream_choice", "MP4")
-                        streamUrl = scene.streams.get(streamChoice)
+                        streamUrl = scene.streams[streamChoice]
                         val mimeType =
                             if (streamChoice == "DASH") {
                                 MimeTypes.APPLICATION_MPD

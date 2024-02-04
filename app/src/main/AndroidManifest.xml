@@ -28,7 +28,6 @@
             android:banner="@mipmap/stash_logo"
             android:exported="true"
             android:icon="@mipmap/stash_logo"
-            android:label="@string/app_name"
             android:logo="@mipmap/stash_logo"
             android:screenOrientation="landscape"
             android:theme="@style/NoTitleTheme"

@@ -5,14 +5,14 @@ import android.view.View
 import androidx.core.content.ContextCompat
 
 class StashOnFocusChangeListener(val context: Context) : View.OnFocusChangeListener {
-    val mFocusedZoom =
+    private val mFocusedZoom =
         context.resources.getFraction(
             androidx.leanback.R.fraction.lb_search_orb_focused_zoom,
             1,
             1,
         )
 
-    val mScaleDurationMs =
+    private val mScaleDurationMs =
         context.resources.getInteger(
             androidx.leanback.R.integer.lb_search_orb_scale_duration_ms,
         )

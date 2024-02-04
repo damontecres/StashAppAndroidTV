@@ -15,7 +15,8 @@
         android:id="@+id/pin_edit_text"
         android:inputType="numberPassword"
         android:layout_width="match_parent"
-        android:layout_height="80dp" />
+        android:layout_height="80dp"
+        android:autofillHints="password" />
 
     <Button
         android:id="@+id/pin_submit"

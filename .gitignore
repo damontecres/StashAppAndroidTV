@@ -37,7 +37,6 @@ google-services.json
 *.hprof
 
 # Android Studio generated
-*.iml
 .gradle
 /local.properties
 /.idea/caches
@@ -51,7 +50,6 @@ google-services.json
 /captures
 .externalNativeBuild
 .cxx
-local.properties
 
 # Local scripts
 local_scripts/

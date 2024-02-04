@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.presenters
+package com.github.damontecres.stashapp.suppliers
 
 import android.content.Context
 import androidx.paging.PagingSource

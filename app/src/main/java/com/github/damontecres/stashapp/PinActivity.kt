@@ -17,7 +17,7 @@ class PinActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
+            supportFragmentManager.beginTransaction()
                 .replace(R.id.main_browse_fragment, PinFragment())
                 .commitNow()
         }
@@ -84,7 +84,6 @@ class PinActivity : FragmentActivity() {
                 // This is the task root when invoked from the start
                 // mainDestroyed is true when the MainActivity was destroyed, but not the entire app
                 val intent = Intent(requireContext(), MainActivity::class.java)
-//                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(intent)
             }

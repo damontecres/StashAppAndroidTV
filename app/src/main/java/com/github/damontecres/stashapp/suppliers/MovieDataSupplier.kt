@@ -7,7 +7,6 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.presenters.StashPagingSource
 
 class MovieDataSupplier(
     private val findFilter: FindFilterType?,

@@ -10,8 +10,8 @@ data class Movie(
     val name: String,
     val aliases: String?,
     val studioId: String?,
-    val front_image_path: String?,
-    val back_image_path: String?,
+    val frontImagePath: String?,
+    val backImagePath: String?,
 ) : Parcelable {
     constructor(movie: MovieData) : this(
         movie.id,

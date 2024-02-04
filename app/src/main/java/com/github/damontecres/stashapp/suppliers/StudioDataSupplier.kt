@@ -7,7 +7,6 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.presenters.StashPagingSource
 
 class StudioDataSupplier(
     private val findFilter: FindFilterType?,
