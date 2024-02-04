@@ -48,7 +48,8 @@ class PlaybackVideoFragment : VideoSupportFragment(), PlaybackActivity.StashVide
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val scene = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE) as Scene?
+        val scene =
+            requireActivity().intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
         val position = requireActivity().intent.getLongExtra(POSITION_ARG, -1)
         Log.d(TAG, "scene=${scene?.id}")
         Log.d(TAG, "$POSITION_ARG=$position")

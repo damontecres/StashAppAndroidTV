@@ -29,7 +29,6 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.SimpleTarget
 import com.bumptech.glide.request.transition.Transition
@@ -54,6 +53,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -96,7 +96,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View? {
-        val sceneId = requireActivity().intent.getStringExtra(DetailsActivity.MOVIE)
+        val sceneId = requireActivity().intent.getStringExtra(VideoDetailsActivity.MOVIE)
         if (sceneId == null) {
             Log.w(TAG, "No scene found in intent")
             val intent = Intent(requireActivity(), MainActivity::class.java)
@@ -185,12 +185,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         val screenshotUrl = mSelectedMovie!!.paths.screenshot
 
-        if (!screenshotUrl.isNullOrBlank()) {
-            val apiKey =
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
-                    .getString("stashApiKey", "")
-            val url = createGlideUrl(screenshotUrl, apiKey)
-
+        if (screenshotUrl.isNotNullOrBlank()) {
+            val url = createGlideUrl(screenshotUrl, requireContext())
             Glide.with(requireActivity())
                 .asBitmap()
                 .centerCrop()
@@ -267,7 +263,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
         sharedElementHelper.setSharedElementEnterTransition(
             activity,
-            DetailsActivity.SHARED_ELEMENT_NAME,
+            VideoDetailsActivity.SHARED_ELEMENT_NAME,
         )
         detailsPresenter.setListener(sharedElementHelper)
         detailsPresenter.isParticipatingEntranceTransition = true
@@ -284,7 +280,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     ) {
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
                         intent.putExtra(
-                            DetailsActivity.MOVIE,
+                            VideoDetailsActivity.MOVIE,
                             Scene.fromSlimSceneData(mSelectedMovie!!),
                         )
                         if (action.id == ACTION_RESUME_SCENE || action.id == ACTION_TRANSCODE_RESUME_SCENE) {

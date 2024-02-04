@@ -40,14 +40,14 @@ class StashItemViewClickListener(
         row: Row?,
     ) {
         if (item is SlimSceneData) {
-            val intent = Intent(activity, DetailsActivity::class.java)
-            intent.putExtra(DetailsActivity.MOVIE, item.id)
+            val intent = Intent(activity, VideoDetailsActivity::class.java)
+            intent.putExtra(VideoDetailsActivity.MOVIE, item.id)
 
             val bundle =
                 ActivityOptionsCompat.makeSceneTransitionAnimation(
                     activity,
                     (itemViewHolder.view as ImageCardView).mainImageView,
-                    DetailsActivity.SHARED_ELEMENT_NAME,
+                    VideoDetailsActivity.SHARED_ELEMENT_NAME,
                 )
                     .toBundle()
             activity.startActivity(intent, bundle)
@@ -58,7 +58,7 @@ class StashItemViewClickListener(
                 ActivityOptionsCompat.makeSceneTransitionAnimation(
                     activity,
                     (itemViewHolder.view as ImageCardView).mainImageView,
-                    DetailsActivity.SHARED_ELEMENT_NAME,
+                    VideoDetailsActivity.SHARED_ELEMENT_NAME,
                 )
                     .toBundle()
             activity.startActivity(intent, bundle)
@@ -69,7 +69,7 @@ class StashItemViewClickListener(
                 ActivityOptionsCompat.makeSceneTransitionAnimation(
                     activity,
                     (itemViewHolder.view as ImageCardView).mainImageView,
-                    DetailsActivity.SHARED_ELEMENT_NAME,
+                    VideoDetailsActivity.SHARED_ELEMENT_NAME,
                 ).toBundle()
             activity.startActivity(intent, bundle)
         } else if (item is StudioData) {
@@ -80,7 +80,7 @@ class StashItemViewClickListener(
                 ActivityOptionsCompat.makeSceneTransitionAnimation(
                     activity,
                     (itemViewHolder.view as ImageCardView).mainImageView,
-                    DetailsActivity.SHARED_ELEMENT_NAME,
+                    VideoDetailsActivity.SHARED_ELEMENT_NAME,
                 ).toBundle()
             activity.startActivity(intent, bundle)
         } else if (item is MovieData) {
@@ -90,7 +90,7 @@ class StashItemViewClickListener(
         } else if (item is MarkerData) {
             val intent = Intent(activity, PlaybackActivity::class.java)
             intent.putExtra(
-                DetailsActivity.MOVIE,
+                VideoDetailsActivity.MOVIE,
                 Scene.fromSlimSceneData(item.scene.slimSceneData),
             )
             intent.putExtra(POSITION_ARG, (item.seconds * 1000).toLong())

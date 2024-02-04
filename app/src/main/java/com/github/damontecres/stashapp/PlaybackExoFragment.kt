@@ -172,7 +172,7 @@ class PlaybackExoFragment :
 
         controlsLayout = view.findViewById(R.id.player_controls)
 
-        scene = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE) as Scene?
+        scene = requireActivity().intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
             ?: throw RuntimeException()
 
         val position = requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)

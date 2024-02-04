@@ -22,6 +22,8 @@ import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -260,3 +262,11 @@ fun Context.toPx(dp: Int): Float =
         dp.toFloat(),
         resources.displayMetrics,
     )
+
+@OptIn(ExperimentalContracts::class)
+fun CharSequence?.isNotNullOrBlank(): Boolean {
+    contract {
+        returns(true) implies (this@isNotNullOrBlank != null)
+    }
+    return !this.isNullOrBlank()
+}
