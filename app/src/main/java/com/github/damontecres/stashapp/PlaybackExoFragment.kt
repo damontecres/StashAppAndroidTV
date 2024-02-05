@@ -116,7 +116,7 @@ class PlaybackExoFragment :
                     } else {
                         val streamChoice =
                             PreferenceManager.getDefaultSharedPreferences(requireContext())
-                                .getString("stream_choice", "MP4")
+                                .getString("stream_choice", "HLS")
                         streamUrl = scene.streams[streamChoice]
                         val mimeType =
                             when (streamChoice) {
