@@ -19,6 +19,8 @@ class ServerPreferences(private val context: Context) {
 
     val trackActivity get() = preferences.getBoolean(PREF_TRACK_ACTIVITY, false)
 
+    val minimumPlayPercent get() = preferences.getInt(PREF_MINIMUM_PLAY_PERCENT, 20)
+
     suspend fun updatePreferences() {
         val queryEngine = QueryEngine(context)
         val query = ConfigurationQuery()
@@ -36,6 +38,10 @@ class ServerPreferences(private val context: Context) {
                 putBoolean(
                     PREF_TRACK_ACTIVITY,
                     (ui.getCaseInsensitive(PREF_TRACK_ACTIVITY) as Boolean?) ?: false,
+                )
+                putInt(
+                    PREF_MINIMUM_PLAY_PERCENT,
+                    (ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT) as Int?) ?: 20,
                 )
 
                 val scan = config.defaults.scan
@@ -75,6 +81,7 @@ class ServerPreferences(private val context: Context) {
 
     companion object {
         const val PREF_TRACK_ACTIVITY = "trackActivity"
+        const val PREF_MINIMUM_PLAY_PERCENT = "minimumPlayPercent"
 
         // Scan default settings
         const val PREF_SCAN_GENERATE_COVERS = "scanGenerateCovers"

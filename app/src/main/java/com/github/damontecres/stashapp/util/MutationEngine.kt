@@ -12,6 +12,7 @@ import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
 import com.github.damontecres.stashapp.api.SceneIncrementOMutation
+import com.github.damontecres.stashapp.api.SceneIncrementPlayCountMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
@@ -89,13 +90,29 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
     suspend fun saveSceneActivity(
         sceneId: Long,
         position: Long,
+        duration: Long? = null,
     ): Boolean {
-        Log.v(TAG, "SceneSaveActivity sceneId=$sceneId, position=$position")
+        Log.v(
+            TAG,
+            "SceneSaveActivity sceneId=$sceneId, position=$position, playDuration=$duration",
+        )
         val resumeTime = position / 1000.0
+        val playDuration = if (duration != null && duration >= 1000.0) duration / 1000.0 else null
         val mutation =
-            SceneSaveActivityMutation(scene_id = sceneId.toString(), resume_time = resumeTime)
+            SceneSaveActivityMutation(
+                scene_id = sceneId.toString(),
+                resume_time = resumeTime,
+                play_duration = playDuration,
+            )
         val result = executeMutation(mutation)
         return result.data!!.sceneSaveActivity
+    }
+
+    suspend fun incrementPlayCount(sceneId: Long): Int {
+        Log.v(TAG, "incrementPlayCount on $sceneId")
+        val mutation = SceneIncrementPlayCountMutation(sceneId.toString())
+        val result = executeMutation(mutation)
+        return result.data!!.sceneIncrementPlayCount
     }
 
     private fun getServerBoolean(preferenceKey: String): Optional<Boolean> {

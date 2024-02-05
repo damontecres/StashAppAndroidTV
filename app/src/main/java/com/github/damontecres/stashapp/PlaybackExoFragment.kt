@@ -8,6 +8,7 @@ import androidx.annotation.OptIn
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
@@ -22,9 +23,18 @@ import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @OptIn(UnstableApi::class)
 class PlaybackExoFragment :
@@ -95,6 +105,9 @@ class PlaybackExoFragment :
                 .build()
                 .also { exoPlayer ->
                     videoView.player = exoPlayer
+                    if (ServerPreferences(requireContext()).trackActivity) {
+                        exoPlayer.addListener(PlaybackListener())
+                    }
                 }.also { exoPlayer ->
                     var mediaItem: MediaItem? = null
                     var streamUrl = scene.streams["Direct stream"]
@@ -159,7 +172,7 @@ class PlaybackExoFragment :
 
         controlsLayout = view.findViewById(R.id.player_controls)
 
-        scene = requireActivity().intent.getParcelableExtra(DetailsActivity.MOVIE) as Scene?
+        scene = requireActivity().intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
             ?: throw RuntimeException()
 
         val position = requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
@@ -294,6 +307,78 @@ class PlaybackExoFragment :
         super.onStop()
         if (Util.SDK_INT > 23) {
             releasePlayer()
+        }
+    }
+
+    private inner class PlaybackListener : Player.Listener {
+        private val job: Job
+        private val mutationEngine = MutationEngine(requireContext())
+        private val minimumPlayPercent = ServerPreferences(requireContext()).minimumPlayPercent
+
+        private var totalPlayDuration = 0L
+        private var previousPosition = 0L
+        private var isEnded = AtomicBoolean(false)
+        private var incrementedPlayCount = AtomicBoolean(false)
+
+        init {
+            job =
+                launch {
+                    while (true) {
+                        if (!isEnded.get()) {
+                            delay(10.toDuration(DurationUnit.SECONDS))
+                            Log.v(TAG, "Timer saveSceneActivity")
+                            saveSceneActivity(currentVideoPosition)
+                        }
+                    }
+                }
+        }
+
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            Log.v(TAG, "onIsPlayingChanged isPlaying=$isPlaying")
+            if (isPlaying) {
+                isEnded.set(false)
+            }
+            if (!isEnded.get()) {
+                launch {
+                    saveSceneActivity(currentVideoPosition)
+                }
+            }
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            if (playbackState == Player.STATE_ENDED) {
+                Log.v(TAG, "onPlaybackStateChanged STATE_ENDED")
+                isEnded.set(true)
+                playbackPosition = 0 // Needed?
+                launch {
+                    saveSceneActivity(0)
+                }
+            }
+        }
+
+        private suspend fun saveSceneActivity(position: Long) {
+            mutationEngine.saveSceneActivity(scene.id, position, getDuration())
+            if (scene.duration != null &&
+                totalPlayDuration >= minimumPlayPercent / 100.0 * scene.duration!! &&
+                !incrementedPlayCount.get()
+            ) {
+                mutationEngine.incrementPlayCount(scene.id)
+                incrementedPlayCount.set(true)
+            }
+        }
+
+        private fun getDuration(): Long {
+            val currentPosition = currentVideoPosition
+            val duration = currentPosition - previousPosition
+            previousPosition = currentPosition
+            totalPlayDuration += duration
+            return duration
+        }
+
+        private fun launch(block: suspend () -> Unit): Job {
+            return viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                block.invoke()
+            }
         }
     }
 
