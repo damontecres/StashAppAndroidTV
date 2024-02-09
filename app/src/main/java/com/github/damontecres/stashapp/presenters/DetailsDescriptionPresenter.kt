@@ -4,6 +4,7 @@ import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.concatIfNotBlank
+import com.github.damontecres.stashapp.util.titleOrFilename
 
 class DetailsDescriptionPresenter : AbstractDetailsDescriptionPresenter() {
     override fun onBindDescription(
@@ -12,7 +13,7 @@ class DetailsDescriptionPresenter : AbstractDetailsDescriptionPresenter() {
     ) {
         val scene = item as SlimSceneData
 
-        viewHolder.title.text = scene.title
+        viewHolder.title.text = scene.titleOrFilename
         viewHolder.body.text = scene.details
 
         val file = scene.files.firstOrNull()

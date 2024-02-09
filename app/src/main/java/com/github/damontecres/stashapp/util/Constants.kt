@@ -20,8 +20,10 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import java.io.File
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.time.DurationUnit
@@ -270,3 +272,19 @@ fun CharSequence?.isNotNullOrBlank(): Boolean {
     }
     return !this.isNullOrBlank()
 }
+
+/**
+ * Gets the scene's title if not null otherwise the first file's name
+ */
+val SlimSceneData.titleOrFilename: String?
+    get() =
+        if (title.isNullOrBlank()) {
+            val path = files.firstOrNull()?.videoFileData?.path
+            if (path != null) {
+                File(path).name
+            } else {
+                null
+            }
+        } else {
+            title
+        }

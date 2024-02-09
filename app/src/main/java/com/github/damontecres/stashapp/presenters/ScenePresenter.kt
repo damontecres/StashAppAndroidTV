@@ -13,7 +13,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.createGlideUrl
-import java.io.File
+import com.github.damontecres.stashapp.util.titleOrFilename
 import java.security.MessageDigest
 
 class ScenePresenter : StashPresenter() {
@@ -23,14 +23,8 @@ class ScenePresenter : StashPresenter() {
     ) {
         val scene = item as SlimSceneData
         val cardView = viewHolder.view as ImageCardView
-        if (scene.title.isNullOrBlank()) {
-            val path = scene.files.firstOrNull()?.videoFileData?.path
-            if (path != null) {
-                cardView.titleText = File(path).name
-            }
-        } else {
-            cardView.titleText = scene.title
-        }
+
+        cardView.titleText = scene.titleOrFilename
         val details = mutableListOf<String>()
         if (!scene.date.isNullOrBlank()) {
             details.add(scene.date)
