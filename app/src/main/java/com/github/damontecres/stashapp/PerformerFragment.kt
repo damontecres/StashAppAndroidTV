@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
@@ -37,6 +38,10 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        val scrollView = view.findViewById<ScrollView>(R.id.performer_scrollview)
+//        scrollView.isFocusable = true
+//        scrollView.isFocusableInTouchMode = false
 
         mPerformerImage = view.findViewById(R.id.performer_image)
         val lp = mPerformerImage.layoutParams
