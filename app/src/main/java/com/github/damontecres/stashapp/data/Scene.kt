@@ -2,8 +2,8 @@ package com.github.damontecres.stashapp.data
 
 import android.os.Parcelable
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.util.titleOrFilename
 import kotlinx.parcelize.Parcelize
-import java.io.File
 
 @Parcelize
 data class Scene(
@@ -30,21 +30,10 @@ data class Scene(
                     .filter { it.label != null }.associate {
                         Pair(it.label.toString(), it.url)
                     }
-            val title =
-                if (data.title.isNullOrBlank()) {
-                    val path = data.files.firstOrNull()?.videoFileData?.path
-                    if (path != null) {
-                        File(path).name
-                    } else {
-                        null
-                    }
-                } else {
-                    data.title
-                }
             val fileData = data.files.firstOrNull()?.videoFileData
             return Scene(
                 id = data.id.toLong(),
-                title = title,
+                title = data.titleOrFilename,
                 date = data.date,
                 details = data.details,
                 streamUrl = data.paths.stream,
