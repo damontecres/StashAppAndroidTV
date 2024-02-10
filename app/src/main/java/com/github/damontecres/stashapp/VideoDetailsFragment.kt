@@ -235,6 +235,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 )
         }
 
+        playActionsAdapter.clear()
         val serverPreferences = ServerPreferences(requireContext())
         if (serverPreferences.trackActivity && mSelectedMovie?.resume_time != null && mSelectedMovie?.resume_time!! > 0) {
             position = (mSelectedMovie?.resume_time!! * 1000).toLong()
