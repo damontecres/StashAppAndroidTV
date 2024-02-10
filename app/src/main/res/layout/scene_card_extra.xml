@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scene_card_extra"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentStart="true"
+    android:layout_below="@+id/content_text"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/scene_tag_icon"
+        android:text="@string/fa_tag"
+        style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon"
+        />
+    <TextView
+        android:id="@+id/scene_tag_count"
+        style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+        />
+
+    <TextView
+        android:id="@+id/scene_performer_icon"
+        android:text="@string/fa_user"
+        style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon"
+        />
+    <TextView
+        android:id="@+id/scene_performer_count"
+        style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+        />
+
+    <TextView
+        android:id="@+id/scene_movie_icon"
+        android:text="@string/fa_film"
+        style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon"
+        />
+    <TextView
+        android:id="@+id/scene_movie_count"
+        style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+        />
+
+    <TextView
+        android:id="@+id/scene_marker_icon"
+        android:text="@string/fa_location_dot"
+        style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon"
+        />
+    <TextView
+        android:id="@+id/scene_marker_count"
+        style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+        />
+
+    <TextView
+        android:id="@+id/scene_ocounter_icon"
+        android:text="@string/fa_user"
+        style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon"
+        />
+    <TextView
+        android:id="@+id/scene_ocounter_count"
+        style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+        />
+
+</LinearLayout>

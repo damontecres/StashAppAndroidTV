@@ -5,8 +5,13 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Typeface
+import android.util.Log
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.view.isVisible
+import androidx.core.view.size
 import androidx.leanback.widget.ImageCardView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
@@ -14,6 +19,7 @@ import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.createGlideUrl
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -27,22 +33,20 @@ class ScenePresenter : StashPresenter() {
         val scene = item as SlimSceneData
         val cardView = viewHolder.view as ImageCardView
 
-        val contentView = cardView.findViewById<TextView>(androidx.leanback.R.id.content_text)
-        contentView.typeface = Typeface.createFromAsset(cardView.context.assets, "fa-solid-900.ttf")
-
         cardView.titleText = scene.titleOrFilename
-        val details = mutableListOf<String>()
-        if (!scene.date.isNullOrBlank()) {
-            details.add(scene.date)
-        }
-        if (scene.tags.isNotEmpty()) {
-            val tagIcon = cardView.context.getString(R.string.fa_tag)
-            details.add("${scene.tags.size}$tagIcon")
-        }
-        if (scene.performers.isNotEmpty()) {
-            details.add("${scene.performers.size}\uD83D\uDC64")
-        }
-        cardView.contentText = details.joinToString("  ")
+        cardView.contentText = scene.date
+
+        val infoView = cardView.findViewById<ViewGroup>(androidx.leanback.R.id.info_field)
+        val sceneExtra =
+            LayoutInflater.from(infoView.context)
+                .inflate(R.layout.scene_card_extra, infoView, true) as ViewGroup
+
+        setUpIcon(sceneExtra, DataType.TAG, scene.tags.size)
+        setUpIcon(sceneExtra, DataType.PERFORMER, scene.performers.size)
+        setUpIcon(sceneExtra, DataType.MOVIE, scene.movies.size)
+        setUpIcon(sceneExtra, DataType.MARKER, scene.scene_markers.size)
+        setUpIcon(sceneExtra, DataType.SCENE, scene.o_counter ?: -1)
+        Log.v(TAG, "${scene.titleOrFilename} view count is ${sceneExtra.size}")
 
         if (!scene.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
@@ -52,6 +56,67 @@ class ScenePresenter : StashPresenter() {
                 .transform(CenterCrop(), TextOverlay(viewHolder.view.context, scene))
                 .error(mDefaultCardImage)
                 .into(cardView.mainImageView!!)
+        }
+    }
+
+    private fun setUpIcon(
+        rootView: View,
+        textResId: Int,
+        iconResId: Int,
+        text: String,
+    ) {
+        val textView = rootView.findViewById<TextView>(textResId)
+        textView.text = text
+        textView.isVisible = true
+        rootView.findViewById<TextView>(iconResId).isVisible = true
+    }
+
+    private fun setUpIcon(
+        rootView: ViewGroup,
+        dataType: DataType,
+        count: Int,
+    ) {
+        var textResId: Int
+        var iconResId: Int
+        when (dataType) {
+            DataType.MOVIE -> {
+                textResId = R.id.scene_movie_count
+                iconResId = R.id.scene_movie_icon
+            }
+
+            DataType.MARKER -> {
+                textResId = R.id.scene_marker_count
+                iconResId = R.id.scene_marker_icon
+            }
+
+            DataType.PERFORMER -> {
+                textResId = R.id.scene_performer_count
+                iconResId = R.id.scene_performer_icon
+            }
+
+            DataType.TAG -> {
+                textResId = R.id.scene_tag_count
+                iconResId = R.id.scene_tag_icon
+            }
+
+            // Workaround for O Counter
+            DataType.SCENE -> {
+                textResId = R.id.scene_ocounter_count
+                iconResId = R.id.scene_ocounter_icon
+            }
+
+            else -> throw IllegalArgumentException()
+        }
+        val textView = rootView.findViewById<TextView>(textResId)
+        val iconView = rootView.findViewById<TextView>(iconResId)
+        if (count > 0) {
+            textView.text = count.toString()
+            textView.visibility = View.VISIBLE
+            iconView.visibility = View.VISIBLE
+        } else {
+            Log.v(TAG, "Removing $dataType view")
+            textView.visibility = View.GONE
+            iconView.visibility = View.GONE
         }
     }
 
