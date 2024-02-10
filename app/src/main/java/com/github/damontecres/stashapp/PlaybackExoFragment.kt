@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.WindowManager
 import android.widget.ImageView
 import androidx.annotation.OptIn
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -105,6 +106,7 @@ class PlaybackExoFragment :
                 .build()
                 .also { exoPlayer ->
                     videoView.player = exoPlayer
+                    exoPlayer.addListener(AmbientPlaybackListener())
                     if (ServerPreferences(requireContext()).trackActivity) {
                         exoPlayer.addListener(PlaybackListener())
                     }
@@ -378,6 +380,17 @@ class PlaybackExoFragment :
         private fun launch(block: suspend () -> Unit): Job {
             return viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 block.invoke()
+            }
+        }
+    }
+
+    private inner class AmbientPlaybackListener : Player.Listener {
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            Log.v(TAG, "Keep screen on: $isPlaying")
+            if (isPlaying) {
+                requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
         }
     }
