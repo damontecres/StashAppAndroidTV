@@ -17,7 +17,7 @@ def escape_value(value: str):
     while param_pattern.search(value):
         value = param_pattern.sub(f"%{count}$s", value, 1)
         count+=1
-    return count==1, value.replace(r"'", r"\'")
+    return count>1, value.replace(r"'", r"\'")
 
 def parse_dict(d, keys=[]):
     for key, value in d.items():
