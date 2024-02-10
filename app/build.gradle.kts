@@ -40,6 +40,7 @@ android {
         targetSdk = 34
         versionCode = getVersionCode()
         versionName = getAppVersion()
+        vectorDrawables.useSupportLibrary = true
     }
     signingConfigs {
         if (shouldSign) {

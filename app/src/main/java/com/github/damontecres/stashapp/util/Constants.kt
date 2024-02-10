@@ -258,6 +258,13 @@ fun concatIfNotBlank(
     return strings.filter { !it.isNullOrBlank() }.joinToString(sep)
 }
 
+fun concatIfNotBlank(
+    sep: CharSequence,
+    strings: List<CharSequence?>,
+): String {
+    return strings.filter { !it.isNullOrBlank() }.joinToString(sep)
+}
+
 fun Context.toPx(dp: Int): Float =
     TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP,
