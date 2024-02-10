@@ -91,7 +91,7 @@ abstract class StashPresenter : Presenter() {
         val infoView = cardView.findViewById<ViewGroup>(androidx.leanback.R.id.info_field)
         val sceneExtra =
             LayoutInflater.from(infoView.context)
-                .inflate(R.layout.scene_card_extra, infoView, true) as ViewGroup
+                .inflate(R.layout.image_card_extra, infoView, true) as ViewGroup
 
         iconMap.forEach {
             setUpIcon(sceneExtra, it.key, it.value)
@@ -110,34 +110,34 @@ abstract class StashPresenter : Presenter() {
         val iconResId: Int
         when (dataType) {
             DataType.MOVIE -> {
-                textResId = R.id.scene_movie_count
-                iconResId = R.id.scene_movie_icon
+                textResId = R.id.extra_movie_count
+                iconResId = R.id.extra_movie_icon
             }
 
             DataType.MARKER -> {
-                textResId = R.id.scene_marker_count
-                iconResId = R.id.scene_marker_icon
+                textResId = R.id.extra_marker_count
+                iconResId = R.id.extra_marker_icon
             }
 
             DataType.PERFORMER -> {
-                textResId = R.id.scene_performer_count
-                iconResId = R.id.scene_performer_icon
+                textResId = R.id.extra_performer_count
+                iconResId = R.id.extra_performer_icon
             }
 
             DataType.TAG -> {
-                textResId = R.id.scene_tag_count
-                iconResId = R.id.scene_tag_icon
+                textResId = R.id.extra_tag_count
+                iconResId = R.id.extra_tag_icon
             }
 
             DataType.SCENE -> {
-                textResId = R.id.scene_scene_count
-                iconResId = R.id.scene_scene_icon
+                textResId = R.id.extra_scene_count
+                iconResId = R.id.extra_scene_icon
             }
 
             // Workaround for O Counter
             null -> {
-                textResId = R.id.scene_ocounter_count
-                iconResId = R.id.scene_ocounter_icon
+                textResId = R.id.extra_ocounter_count
+                iconResId = R.id.extra_ocounter_icon
             }
 
             else -> throw IllegalArgumentException()
