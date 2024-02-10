@@ -16,6 +16,7 @@ class TagPresenter : StashPresenter() {
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.SCENE] = tag.scene_count
         dataTypeMap[DataType.PERFORMER] = tag.performer_count
+        dataTypeMap[DataType.MARKER] = tag.scene_marker_count
         setUpExtraRow(cardView, dataTypeMap, null)
 
         cardView.titleText = tag.name
