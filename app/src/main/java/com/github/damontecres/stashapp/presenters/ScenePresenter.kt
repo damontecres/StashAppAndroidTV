@@ -5,13 +5,10 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.core.view.isVisible
-import androidx.core.view.size
 import androidx.leanback.widget.ImageCardView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
@@ -22,6 +19,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.security.MessageDigest
 
@@ -34,7 +32,11 @@ class ScenePresenter : StashPresenter() {
         val cardView = viewHolder.view as ImageCardView
 
         cardView.titleText = scene.titleOrFilename
-        cardView.contentText = scene.date
+        if (scene.date.isNotNullOrBlank()) {
+            cardView.contentText = scene.date
+        } else {
+//            cardView.findViewById<View>(androidx.leanback.R.id.content_text).visibility = View.GONE
+        }
 
         val infoView = cardView.findViewById<ViewGroup>(androidx.leanback.R.id.info_field)
         val sceneExtra =
@@ -45,8 +47,7 @@ class ScenePresenter : StashPresenter() {
         setUpIcon(sceneExtra, DataType.PERFORMER, scene.performers.size)
         setUpIcon(sceneExtra, DataType.MOVIE, scene.movies.size)
         setUpIcon(sceneExtra, DataType.MARKER, scene.scene_markers.size)
-        setUpIcon(sceneExtra, DataType.SCENE, scene.o_counter ?: -1)
-        Log.v(TAG, "${scene.titleOrFilename} view count is ${sceneExtra.size}")
+        setUpIcon(sceneExtra, null, scene.o_counter ?: -1)
 
         if (!scene.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
@@ -60,24 +61,12 @@ class ScenePresenter : StashPresenter() {
     }
 
     private fun setUpIcon(
-        rootView: View,
-        textResId: Int,
-        iconResId: Int,
-        text: String,
-    ) {
-        val textView = rootView.findViewById<TextView>(textResId)
-        textView.text = text
-        textView.isVisible = true
-        rootView.findViewById<TextView>(iconResId).isVisible = true
-    }
-
-    private fun setUpIcon(
         rootView: ViewGroup,
-        dataType: DataType,
+        dataType: DataType?,
         count: Int,
     ) {
-        var textResId: Int
-        var iconResId: Int
+        val textResId: Int
+        val iconResId: Int
         when (dataType) {
             DataType.MOVIE -> {
                 textResId = R.id.scene_movie_count
@@ -100,7 +89,7 @@ class ScenePresenter : StashPresenter() {
             }
 
             // Workaround for O Counter
-            DataType.SCENE -> {
+            null -> {
                 textResId = R.id.scene_ocounter_count
                 iconResId = R.id.scene_ocounter_icon
             }
@@ -108,15 +97,15 @@ class ScenePresenter : StashPresenter() {
             else -> throw IllegalArgumentException()
         }
         val textView = rootView.findViewById<TextView>(textResId)
-        val iconView = rootView.findViewById<TextView>(iconResId)
+        val iconView = rootView.findViewById<View>(iconResId)
         if (count > 0) {
             textView.text = count.toString()
             textView.visibility = View.VISIBLE
             iconView.visibility = View.VISIBLE
         } else {
-            Log.v(TAG, "Removing $dataType view")
             textView.visibility = View.GONE
             iconView.visibility = View.GONE
+            (textView.parent as ViewGroup).visibility = View.GONE
         }
     }
 
