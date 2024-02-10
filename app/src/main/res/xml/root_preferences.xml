@@ -141,6 +141,10 @@
             app:key="versionCode"
             app:title="Version Code"
             app:summary="" />
+        <Preference
+            app:key="license"
+            app:title="OSS License Information"
+            app:summary="" />
     </PreferenceCategory>
 
 </PreferenceScreen>

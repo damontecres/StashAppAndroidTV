@@ -252,8 +252,8 @@ fun TextView.enableMarquee(selected: Boolean = false) {
 }
 
 fun concatIfNotBlank(
-    sep: String,
-    vararg strings: String?,
+    sep: CharSequence,
+    vararg strings: CharSequence?,
 ): String {
     return strings.filter { !it.isNullOrBlank() }.joinToString(sep)
 }
