@@ -18,8 +18,8 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.createGlideUrl
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.security.MessageDigest
 
@@ -32,11 +32,11 @@ class ScenePresenter : StashPresenter() {
         val cardView = viewHolder.view as ImageCardView
 
         cardView.titleText = scene.titleOrFilename
-        if (scene.date.isNotNullOrBlank()) {
-            cardView.contentText = scene.date
-        } else {
-//            cardView.findViewById<View>(androidx.leanback.R.id.content_text).visibility = View.GONE
-        }
+
+        val details = mutableListOf<String?>()
+        details.add(scene.studio?.name)
+        details.add(scene.date)
+        cardView.contentText = concatIfNotBlank(" - ", details)
 
         val infoView = cardView.findViewById<ViewGroup>(androidx.leanback.R.id.info_field)
         val sceneExtra =

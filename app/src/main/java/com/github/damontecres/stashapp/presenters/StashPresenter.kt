@@ -52,6 +52,8 @@ abstract class StashPresenter : Presenter() {
 
         val textView = cardView.findViewById<TextView>(androidx.leanback.R.id.title_text)
         textView.enableMarquee(false)
+        val contentView = cardView.findViewById<TextView>(androidx.leanback.R.id.content_text)
+        contentView.enableMarquee(false)
 
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true
