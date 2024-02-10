@@ -1,7 +1,9 @@
 package com.github.damontecres.stashapp.presenters
 
 import androidx.leanback.widget.ImageCardView
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Tag
+import java.util.EnumMap
 
 class TagPresenter : StashPresenter() {
     override fun onBindViewHolder(
@@ -11,9 +13,12 @@ class TagPresenter : StashPresenter() {
         val tag = item as Tag
         val cardView = viewHolder.view as ImageCardView
 
+        val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+        dataTypeMap[DataType.SCENE] = tag.sceneCount
+        dataTypeMap[DataType.PERFORMER] = tag.performerCount
+        setUpExtraRow(cardView, dataTypeMap, null)
+
         cardView.titleText = tag.name
-        // TODO: content text
-        cardView.contentText = "${tag.sceneCount} scenes"
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 
         // TODO: fetch image

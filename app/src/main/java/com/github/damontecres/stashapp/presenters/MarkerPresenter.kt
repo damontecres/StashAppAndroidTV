@@ -20,7 +20,8 @@ class MarkerPresenter : StashPresenter() {
                 marker.primary_tag.tagData.name
             }
         cardView.titleText = "$title - ${marker.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
-        cardView.contentText = marker.primary_tag.tagData.name
+        cardView.contentText =
+            if (marker.title.isNotBlank()) marker.primary_tag.tagData.name else null
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         val url = createGlideUrl(marker.screenshot, viewHolder.view.context)

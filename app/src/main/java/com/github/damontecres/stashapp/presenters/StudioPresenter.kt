@@ -4,8 +4,11 @@ import android.widget.ImageView
 import androidx.leanback.widget.ImageCardView
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.createGlideUrl
+import java.util.EnumMap
 
 class StudioPresenter : StashPresenter() {
     override fun onBindViewHolder(
@@ -16,14 +19,16 @@ class StudioPresenter : StashPresenter() {
         val cardView = viewHolder.view as ImageCardView
 
         cardView.titleText = studio.name
-        val contentText = ArrayList<String>()
-        if (studio.scene_count > 0) {
-            contentText += "${studio.scene_count}S"
+        if (studio.parent_studio != null) {
+            cardView.contentText =
+                cardView.context.getString(R.string.stashapp_part_of, studio.parent_studio.name)
         }
-        if (studio.performer_count > 0) {
-            contentText += "${studio.performer_count}P"
-        }
-        cardView.contentText = contentText.joinToString(" ")
+
+        val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+        dataTypeMap[DataType.SCENE] = studio.scene_count
+        dataTypeMap[DataType.PERFORMER] = studio.performer_count
+        dataTypeMap[DataType.MOVIE] = studio.movie_count
+        setUpExtraRow(cardView, dataTypeMap, null)
 
         if (!studio.image_path.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)

@@ -11,6 +11,7 @@ fragment MovieData on Movie {
   id
   name
   aliases
+  date
   studio {
     id
     name
