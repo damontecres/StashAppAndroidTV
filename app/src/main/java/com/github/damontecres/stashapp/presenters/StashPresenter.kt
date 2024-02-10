@@ -16,11 +16,11 @@ import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
-import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.util.enableMarquee
 import java.util.EnumMap
 import kotlin.properties.Delegates
@@ -158,7 +158,7 @@ abstract class StashPresenter : Presenter() {
                 .addClassPresenter(PerformerData::class.java, PerformerPresenter())
                 .addClassPresenter(SlimSceneData::class.java, ScenePresenter())
                 .addClassPresenter(StudioData::class.java, StudioPresenter())
-                .addClassPresenter(Tag::class.java, TagPresenter())
+                .addClassPresenter(TagData::class.java, TagPresenter())
                 .addClassPresenter(MovieData::class.java, MoviePresenter())
                 .addClassPresenter(StashSavedFilter::class.java, StashFilterPresenter())
                 .addClassPresenter(StashCustomFilter::class.java, StashFilterPresenter())

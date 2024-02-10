@@ -1,8 +1,8 @@
 package com.github.damontecres.stashapp.presenters
 
 import androidx.leanback.widget.ImageCardView
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Tag
 import java.util.EnumMap
 
 class TagPresenter : StashPresenter() {
@@ -10,12 +10,12 @@ class TagPresenter : StashPresenter() {
         viewHolder: ViewHolder,
         item: Any?,
     ) {
-        val tag = item as Tag
+        val tag = item as TagData
         val cardView = viewHolder.view as ImageCardView
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-        dataTypeMap[DataType.SCENE] = tag.sceneCount
-        dataTypeMap[DataType.PERFORMER] = tag.performerCount
+        dataTypeMap[DataType.SCENE] = tag.scene_count
+        dataTypeMap[DataType.PERFORMER] = tag.performer_count
         setUpExtraRow(cardView, dataTypeMap, null)
 
         cardView.titleText = tag.name

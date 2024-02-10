@@ -38,10 +38,10 @@ import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
@@ -131,7 +131,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         TAG_POS,
                         ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
                     )
-                    tagsAdapter.addAll(0, mSelectedMovie!!.tags.map { Tag(it.tagData) })
+                    tagsAdapter.addAll(0, mSelectedMovie!!.tags.map { it.tagData })
                 }
 
                 if (mSelectedMovie!!.scene_markers.isNotEmpty()) {
@@ -364,16 +364,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         },
                     ) {
                         val tagIds =
-                            tagsAdapter.unmodifiableList<Tag>().map { it.id }.toMutableList()
+                            tagsAdapter.unmodifiableList<TagData>().map { it.id.toInt() }
+                                .toMutableList()
                         tagIds.add(tagId!!.toInt())
                         val mutResult =
                             MutationEngine(requireContext()).setTagsOnScene(
                                 mSelectedMovie!!.id.toLong(),
                                 tagIds,
                             )
-                        val newTags = mutResult?.tags?.map { Tag(it.tagData) }
+                        val newTags = mutResult?.tags?.map { it.tagData }
                         val newTagName =
-                            newTags?.first { it.id == tagId.toInt() }?.name
+                            newTags?.first { it.id == tagId }?.name
                         tagsAdapter.clear()
                         tagsAdapter.addAll(0, newTags)
                         mAdapter.set(

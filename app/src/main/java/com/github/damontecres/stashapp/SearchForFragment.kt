@@ -23,9 +23,9 @@ import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -64,7 +64,7 @@ class SearchForFragment(
             val result = Intent()
             val resultId =
                 when (dataType) {
-                    DataType.TAG -> (item as Tag).id.toString()
+                    DataType.TAG -> (item as TagData).id
                     DataType.SCENE -> (item as SlimSceneData).id
                     DataType.MOVIE -> (item as MovieData).id
                     DataType.STUDIO -> (item as StudioData).id

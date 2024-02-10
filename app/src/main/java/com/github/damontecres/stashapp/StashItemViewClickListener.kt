@@ -17,6 +17,7 @@ import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.data.OCounter
@@ -24,7 +25,6 @@ import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
-import com.github.damontecres.stashapp.data.Tag
 
 /**
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc
@@ -62,9 +62,10 @@ class StashItemViewClickListener(
                 )
                     .toBundle()
             activity.startActivity(intent, bundle)
-        } else if (item is Tag) {
+        } else if (item is TagData) {
             val intent = Intent(activity, TagActivity::class.java)
-            intent.putExtra("tag", item)
+            intent.putExtra("tagId", item.id)
+            intent.putExtra("tagName", item.name)
             val bundle =
                 ActivityOptionsCompat.makeSceneTransitionAnimation(
                     activity,
