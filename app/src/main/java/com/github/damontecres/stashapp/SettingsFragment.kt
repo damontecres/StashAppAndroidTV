@@ -290,6 +290,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 setServers()
                 false
             }
+
+            findPreference<Preference>("license")?.setOnPreferenceClickListener {
+                startActivity(Intent(requireContext(), LicenseActivity::class.java))
+                true
+            }
         }
 
         override fun onStop() {
