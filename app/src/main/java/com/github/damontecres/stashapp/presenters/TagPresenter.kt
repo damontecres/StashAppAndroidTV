@@ -20,6 +20,7 @@ class TagPresenter : StashPresenter() {
         setUpExtraRow(cardView, dataTypeMap, null)
 
         cardView.titleText = tag.name
+        cardView.contentText = tag.description
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 
         // TODO: fetch image
