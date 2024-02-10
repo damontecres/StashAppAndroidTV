@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
+import android.view.WindowManager
 import androidx.leanback.app.VideoSupportFragment
 import androidx.leanback.app.VideoSupportFragmentGlueHost
 import androidx.leanback.media.MediaPlayerAdapter
@@ -106,6 +107,20 @@ class PlaybackVideoFragment : VideoSupportFragment(), PlaybackActivity.StashVide
 
         if (streamUrl != null) {
             playerAdapter.setDataSource(Uri.parse(streamUrl))
+
+            mTransportControlGlue.addPlayerCallback(
+                object : PlayerCallback() {
+                    override fun onPlayStateChanged(glue: PlaybackGlue) {
+                        Log.v(TAG, "Keep screen on: ${glue.isPlaying}")
+                        if (glue.isPlaying) {
+                            requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        } else {
+                            requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        }
+                    }
+                },
+            )
+
             if (position > 0) {
                 // If a position was provided, resume playback from there
                 mTransportControlGlue.addPlayerCallback(
