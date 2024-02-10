@@ -2,14 +2,22 @@ import sys
 import json
 from pathlib import Path
 from xml.sax.saxutils import escape
+import re
 
 DEBUG = "--debug" in sys.argv
 
 source_dir = Path("../stash-server/ui/v2.5/src/locales")
 dest_prefix="src/main/res/values"
 
-def escape_value(value):
-    return escape(value).replace(r"'", r"\'")
+param_pattern = re.compile(r"{\w+}")
+
+def escape_value(value: str):
+    value = escape(value)
+    count=1
+    while param_pattern.search(value):
+        value = param_pattern.sub(f"%{count}$s", value, 1)
+        count+=1
+    return count==1, value.replace(r"'", r"\'")
 
 def parse_dict(d, keys=[]):
     for key, value in d.items():
@@ -36,7 +44,8 @@ def convert_file(source_file, dest_file, allowed_keys):
                     print(f"Skipping {key} in {source_file}")
                 continue
             collected_keys.append(key)
-            f.write(f"    <string name=\"{key}\" formatted=\"false\">{escape_value(value)}</string>\n")
+            formatted, value = escape_value(value)
+            f.write(f"    <string name=\"{key}\" formatted=\"{str(formatted).lower()}\">{value}</string>\n")
         f.write("</resources>\n")
     return set(collected_keys)
 
