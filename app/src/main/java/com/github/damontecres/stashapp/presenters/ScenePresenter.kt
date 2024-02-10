@@ -5,11 +5,14 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Typeface
+import android.widget.TextView
 import androidx.leanback.widget.ImageCardView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.createGlideUrl
@@ -24,13 +27,17 @@ class ScenePresenter : StashPresenter() {
         val scene = item as SlimSceneData
         val cardView = viewHolder.view as ImageCardView
 
+        val contentView = cardView.findViewById<TextView>(androidx.leanback.R.id.content_text)
+        contentView.typeface = Typeface.createFromAsset(cardView.context.assets, "fa-solid-900.ttf")
+
         cardView.titleText = scene.titleOrFilename
         val details = mutableListOf<String>()
         if (!scene.date.isNullOrBlank()) {
             details.add(scene.date)
         }
         if (scene.tags.isNotEmpty()) {
-            details.add("${scene.tags.size}\uD83C\uDFF7\uFE0F")
+            val tagIcon = cardView.context.getString(R.string.fa_tag)
+            details.add("${scene.tags.size}$tagIcon")
         }
         if (scene.performers.isNotEmpty()) {
             details.add("${scene.performers.size}\uD83D\uDC64")
