@@ -13,8 +13,18 @@ class LicenseActivity : Activity() {
 
         val attributions = resources.getTextArray(R.array.stash_license_attributions)
         val licenseText = assets.open("LICENSE").bufferedReader().use(BufferedReader::readText)
+        val otherLicenses =
+            assets.list("licenses")!!.map {
+                assets.open("licenses/$it").bufferedReader().use(BufferedReader::readText)
+            }.toTypedArray()
 
-        val text = concatIfNotBlank(getString(R.string.license_separator), *attributions, licenseText)
+        val text =
+            concatIfNotBlank(
+                getString(R.string.license_separator),
+                *attributions,
+                licenseText,
+                *otherLicenses,
+            )
 
         findViewById<TextView>(R.id.license_text).text = text
     }
