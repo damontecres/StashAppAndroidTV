@@ -1,6 +1,7 @@
 # Hardcoded crentials
 StashCredentials.kt
 stash_strings.xml
+test-server/
 
 # Gradle files
 .gradle/

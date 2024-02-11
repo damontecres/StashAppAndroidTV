@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.util
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Build
@@ -16,20 +17,29 @@ import com.apollographql.apollo3.api.http.HttpRequest
 import com.apollographql.apollo3.api.http.HttpResponse
 import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
+import com.apollographql.apollo3.network.http.DefaultHttpEngine
 import com.apollographql.apollo3.network.http.HttpInterceptor
 import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import okhttp3.OkHttpClient
 import java.io.File
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.time.DurationUnit
@@ -50,6 +60,60 @@ object Constants {
             .times(100L).toLong()
             .div(100L).toDuration(DurationUnit.SECONDS)
             .toString()
+    }
+}
+
+val TRUST_ALL_CERTS: TrustManager =
+    @SuppressLint("CustomX509TrustManager")
+    object : X509TrustManager {
+        @SuppressLint("TrustAllX509TrustManager")
+        override fun checkClientTrusted(
+            chain: Array<X509Certificate>,
+            authType: String,
+        ) {
+        }
+
+        @SuppressLint("TrustAllX509TrustManager")
+        override fun checkServerTrusted(
+            chain: Array<X509Certificate>,
+            authType: String,
+        ) {
+        }
+
+        override fun getAcceptedIssuers(): Array<X509Certificate> {
+            return arrayOf()
+        }
+    }
+
+fun createUnsafeOkHttpClient(): OkHttpClient {
+    val sslContext = SSLContext.getInstance("SSL")
+    sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
+    return OkHttpClient.Builder()
+        .sslSocketFactory(
+            sslContext.socketFactory,
+            TRUST_ALL_CERTS as X509TrustManager,
+        )
+        .hostnameVerifier { _, _ ->
+            true
+        }
+        .build()
+}
+
+fun configureHttpsTrust(
+    app: StashApplication,
+    trustAll: Boolean? = null,
+) {
+    val trust =
+        trustAll ?: PreferenceManager.getDefaultSharedPreferences(app.baseContext)
+            .getBoolean("trustAllCerts", false)
+    if (trust) {
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
+        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.socketFactory)
+        HttpsURLConnection.setDefaultHostnameVerifier { _, _ -> true }
+    } else {
+        HttpsURLConnection.setDefaultSSLSocketFactory(app.defaultSSLSocketFactory)
+        HttpsURLConnection.setDefaultHostnameVerifier(app.defaultHostnameVerifier)
     }
 }
 
@@ -104,12 +168,11 @@ class AuthorizationInterceptor(private val apiKey: String?) : HttpInterceptor {
 }
 
 /**
- * Create a client for accessing Stash's GraphQL API
+ * Create a client for accessing Stash's GraphQL API using the default shared preferences for the URL & API key
  */
-fun createApolloClient(
-    stashUrl: String?,
-    apiKey: String?,
-): ApolloClient? {
+fun createApolloClient(context: Context): ApolloClient? {
+    val stashUrl = PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
+    val apiKey = PreferenceManager.getDefaultSharedPreferences(context).getString("stashApiKey", "")
     return if (!stashUrl.isNullOrBlank()) {
         var cleanedStashUrl = stashUrl.trim()
         if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
@@ -126,8 +189,19 @@ fun createApolloClient(
                 .path(pathSegments.joinToString("/")) // Ensure the URL is the graphql endpoint
                 .build()
         Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
+
+        val trustAll =
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean("trustAllCerts", false)
+        val httpEngine =
+            if (trustAll) {
+                DefaultHttpEngine(createUnsafeOkHttpClient())
+            } else {
+                DefaultHttpEngine()
+            }
         ApolloClient.Builder()
             .serverUrl(url.toString())
+            .httpEngine(httpEngine)
             .addHttpInterceptor(AuthorizationInterceptor(apiKey))
             .build()
     } else {
@@ -137,15 +211,6 @@ fun createApolloClient(
         )
         null
     }
-}
-
-/**
- * Create a client for accessing Stash's GraphQL API using the default shared preferences for the URL & API key
- */
-fun createApolloClient(context: Context): ApolloClient? {
-    val stashUrl = PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
-    val apiKey = PreferenceManager.getDefaultSharedPreferences(context).getString("stashApiKey", "")
-    return createApolloClient(stashUrl, apiKey)
 }
 
 /**

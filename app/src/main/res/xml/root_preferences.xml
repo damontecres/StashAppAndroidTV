@@ -33,6 +33,12 @@
             app:title="Remove a Stash Server"
             app:summary="" />
 
+        <SwitchPreference
+            app:key="trustAllCerts"
+            app:title="Trust self-signed certificates"
+            app:summary="Restart may be required after changing this"
+            app:defaultValue="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Search">

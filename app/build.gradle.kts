@@ -10,6 +10,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
     id("com.apollographql.apollo3") version "3.8.2"
+    id("kotlin-kapt")
 }
 
 fun getVersionCode(): Int {
@@ -124,13 +125,16 @@ tasks.create("generateStrings", Exec::class.java) {
 tasks.preBuild.dependsOn("generateStrings")
 
 val mediaVersion = "1.2.1"
+val glideVersion = "4.16.0"
 
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.leanback:leanback:1.1.0-rc02")
     implementation("androidx.leanback:leanback-preference:1.1.0-rc01")
     implementation("androidx.leanback:leanback-paging:1.1.0-alpha11")
-    implementation("com.github.bumptech.glide:glide:4.11.0")
+    implementation("com.github.bumptech.glide:glide:$glideVersion")
+    implementation("com.github.bumptech.glide:okhttp3-integration:$glideVersion")
+    kapt("com.github.bumptech.glide:compiler:$glideVersion")
 
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
