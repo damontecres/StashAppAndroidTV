@@ -5,22 +5,20 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import java.util.EnumMap
 
-class TagPresenter : StashPresenter() {
-    override fun onBindViewHolder(
-        viewHolder: ViewHolder,
-        item: Any?,
+class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
+    StashPresenter<TagData>(callback) {
+    override fun doOnBindViewHolder(
+        cardView: ImageCardView,
+        item: TagData,
     ) {
-        val tag = item as TagData
-        val cardView = viewHolder.view as ImageCardView
-
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-        dataTypeMap[DataType.SCENE] = tag.scene_count
-        dataTypeMap[DataType.PERFORMER] = tag.performer_count
-        dataTypeMap[DataType.MARKER] = tag.scene_marker_count
+        dataTypeMap[DataType.SCENE] = item.scene_count
+        dataTypeMap[DataType.PERFORMER] = item.performer_count
+        dataTypeMap[DataType.MARKER] = item.scene_marker_count
         setUpExtraRow(cardView, dataTypeMap, null)
 
-        cardView.titleText = tag.name
-        cardView.contentText = tag.description
+        cardView.titleText = item.name
+        cardView.contentText = item.description
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 
         // TODO: fetch image

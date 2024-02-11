@@ -25,13 +25,13 @@ import com.github.damontecres.stashapp.util.enableMarquee
 import java.util.EnumMap
 import kotlin.properties.Delegates
 
-abstract class StashPresenter : Presenter() {
+abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = null) : Presenter() {
     protected var vParent: ViewGroup by Delegates.notNull()
     protected var mDefaultCardImage: Drawable? = null
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
     private var sDefaultBackgroundColor: Int by Delegates.notNull()
 
-    override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
+    final override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         vParent = parent
 
         sDefaultBackgroundColor =
@@ -65,7 +65,29 @@ abstract class StashPresenter : Presenter() {
         return ViewHolder(cardView)
     }
 
-    override fun onUnbindViewHolder(viewHolder: ViewHolder) {
+    final override fun onBindViewHolder(
+        viewHolder: ViewHolder,
+        item: Any,
+    ) {
+        val cardView = viewHolder.view as ImageCardView
+        if (callback != null) {
+            cardView.setOnLongClickListener(
+                PopupOnLongClickListener(
+                    callback.popUpItems,
+                ) { _, _, pos, _ ->
+                    callback.onItemLongClick(item as T, pos)
+                },
+            )
+        }
+        doOnBindViewHolder(viewHolder.view as ImageCardView, item as T)
+    }
+
+    abstract fun doOnBindViewHolder(
+        cardView: ImageCardView,
+        item: T,
+    )
+
+    final override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         val cardView = viewHolder.view as ImageCardView
         // Remove references to images so that the garbage collector can free up memory
         cardView.badgeImage = null
@@ -153,6 +175,15 @@ abstract class StashPresenter : Presenter() {
             iconView.visibility = View.GONE
             (textView.parent as ViewGroup).visibility = View.GONE
         }
+    }
+
+    interface LongClickCallBack<T> {
+        val popUpItems: List<String>
+
+        fun onItemLongClick(
+            item: T,
+            popUpItemPosition: Int,
+        )
     }
 
     companion object {

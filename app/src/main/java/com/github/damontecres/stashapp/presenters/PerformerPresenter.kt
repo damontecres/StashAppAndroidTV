@@ -10,32 +10,30 @@ import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.createGlideUrl
 import java.util.EnumMap
 
-class PerformerPresenter : StashPresenter() {
-    override fun onBindViewHolder(
-        viewHolder: ViewHolder,
-        item: Any?,
+class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
+    StashPresenter<PerformerData>(callback) {
+    override fun doOnBindViewHolder(
+        cardView: ImageCardView,
+        item: PerformerData,
     ) {
-        val performer = item as PerformerData
-        val cardView = viewHolder.view as ImageCardView
-
-        if (performer.image_path != null) {
+        if (item.image_path != null) {
             val title =
-                performer.name + (if (!performer.disambiguation.isNullOrBlank()) " (${performer.disambiguation})" else "")
+                item.name + (if (!item.disambiguation.isNullOrBlank()) " (${item.disambiguation})" else "")
             cardView.titleText = title
 
-            if (performer.birthdate != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (item.birthdate != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val yearsOldStr = cardView.context.getString(R.string.stashapp_years_old)
-                cardView.contentText = "${performer.ageInYears} $yearsOldStr"
+                cardView.contentText = "${item.ageInYears} $yearsOldStr"
             }
 
             val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-            dataTypeMap[DataType.SCENE] = performer.scene_count
+            dataTypeMap[DataType.SCENE] = item.scene_count
 
-            setUpExtraRow(cardView, dataTypeMap, performer.o_counter)
+            setUpExtraRow(cardView, dataTypeMap, item.o_counter)
 
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val url = createGlideUrl(performer.image_path, cardView.context)
-            Glide.with(viewHolder.view.context)
+            val url = createGlideUrl(item.image_path, cardView.context)
+            Glide.with(cardView.context)
                 .load(url)
                 .centerCrop()
                 .error(mDefaultCardImage)
