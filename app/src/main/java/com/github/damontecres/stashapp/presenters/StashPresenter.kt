@@ -93,12 +93,11 @@ abstract class StashPresenter : Presenter() {
             LayoutInflater.from(infoView.context)
                 .inflate(R.layout.image_card_extra, infoView, true) as ViewGroup
 
-        iconMap.forEach {
-            setUpIcon(sceneExtra, it.key, it.value)
+        DataType.entries.forEach {
+            val count = iconMap[it] ?: -1
+            setUpIcon(sceneExtra, it, count)
         }
-        if (oCounter != null && oCounter > 0) {
-            setUpIcon(sceneExtra, null, oCounter)
-        }
+        setUpIcon(sceneExtra, null, oCounter ?: -1)
     }
 
     private fun setUpIcon(
@@ -140,7 +139,7 @@ abstract class StashPresenter : Presenter() {
                 iconResId = R.id.extra_ocounter_icon
             }
 
-            else -> throw IllegalArgumentException()
+            else -> return
         }
         val textView = rootView.findViewById<TextView>(textResId)
         val iconView = rootView.findViewById<View>(iconResId)
@@ -149,6 +148,10 @@ abstract class StashPresenter : Presenter() {
             textView.visibility = View.VISIBLE
             iconView.visibility = View.VISIBLE
             (textView.parent as ViewGroup).visibility = View.VISIBLE
+        } else {
+            textView.visibility = View.GONE
+            iconView.visibility = View.GONE
+            (textView.parent as ViewGroup).visibility = View.GONE
         }
     }
 
