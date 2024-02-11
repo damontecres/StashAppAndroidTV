@@ -67,7 +67,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
 
     final override fun onBindViewHolder(
         viewHolder: ViewHolder,
-        item: Any?,
+        item: Any,
     ) {
         val cardView = viewHolder.view as ImageCardView
         if (callback != null) {
@@ -79,11 +79,11 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 },
             )
         }
-        doOnBindViewHolder(viewHolder, item as T)
+        doOnBindViewHolder(viewHolder.view as ImageCardView, item as T)
     }
 
     abstract fun doOnBindViewHolder(
-        viewHolder: ViewHolder,
+        cardView: ImageCardView,
         item: T,
     )
 

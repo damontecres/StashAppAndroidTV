@@ -11,10 +11,9 @@ import kotlin.time.toDuration
 class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
     StashPresenter<MarkerData>(callback) {
     override fun doOnBindViewHolder(
-        viewHolder: ViewHolder,
+        cardView: ImageCardView,
         item: MarkerData,
     ) {
-        val cardView = viewHolder.view as ImageCardView
         val title =
             item.title.ifBlank {
                 item.primary_tag.tagData.name
@@ -24,8 +23,8 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
             if (item.title.isNotBlank()) item.primary_tag.tagData.name else null
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-        val url = createGlideUrl(item.screenshot, viewHolder.view.context)
-        Glide.with(viewHolder.view.context)
+        val url = createGlideUrl(item.screenshot, cardView.context)
+        Glide.with(cardView.context)
             .load(url)
             .transform(CenterCrop())
             .error(mDefaultCardImage)

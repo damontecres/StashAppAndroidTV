@@ -8,19 +8,15 @@ import com.github.damontecres.stashapp.data.OCounter
 class OCounterPresenter(callback: LongClickCallBack<OCounter>? = null) :
     StashPresenter<OCounter>(callback) {
     override fun doOnBindViewHolder(
-        viewHolder: ViewHolder,
+        cardView: ImageCardView,
         item: OCounter,
     ) {
-        val cardView = viewHolder.view as ImageCardView
-
-        val context = viewHolder.view.context
-
-        val text = context.getString(R.string.stashapp_o_counter)
+        val text = cardView.context.getString(R.string.stashapp_o_counter)
         cardView.titleText = "$text (${item.count})"
         cardView.setMainImageDimensions(ActionPresenter.CARD_WIDTH, ActionPresenter.CARD_HEIGHT)
         cardView.mainImageView.setImageDrawable(
             AppCompatResources.getDrawable(
-                context,
+                cardView.context,
                 R.drawable.sweat_drops,
             ),
         )

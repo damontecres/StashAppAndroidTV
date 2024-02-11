@@ -10,11 +10,9 @@ import java.util.EnumMap
 class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
     StashPresenter<MovieData>(callback) {
     override fun doOnBindViewHolder(
-        viewHolder: ViewHolder,
+        cardView: ImageCardView,
         item: MovieData,
     ) {
-        val cardView = viewHolder.view as ImageCardView
-
         if (item.front_image_path != null) {
             cardView.titleText = item.name
             cardView.contentText = item.date
@@ -25,7 +23,7 @@ class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
 
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             val url = createGlideUrl(item.front_image_path, cardView.context)
-            Glide.with(viewHolder.view.context)
+            Glide.with(cardView.context)
                 .load(url)
                 .centerCrop()
                 .error(mDefaultCardImage)

@@ -6,10 +6,9 @@ import com.github.damontecres.stashapp.actions.StashAction
 class ActionPresenter(callback: LongClickCallBack<StashAction>? = null) :
     StashPresenter<StashAction>(callback) {
     override fun doOnBindViewHolder(
-        viewHolder: ViewHolder,
+        cardView: ImageCardView,
         item: StashAction,
     ) {
-        val cardView = viewHolder.view as ImageCardView
         cardView.titleText = item.actionName
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
     }

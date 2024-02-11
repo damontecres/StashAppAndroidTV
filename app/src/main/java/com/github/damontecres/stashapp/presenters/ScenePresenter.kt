@@ -22,11 +22,9 @@ import java.util.EnumMap
 class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
     StashPresenter<SlimSceneData>(callback) {
     override fun doOnBindViewHolder(
-        viewHolder: ViewHolder,
+        cardView: ImageCardView,
         item: SlimSceneData,
     ) {
-        val cardView = viewHolder.view as ImageCardView
-
         cardView.titleText = item.titleOrFilename
 
         val details = mutableListOf<String?>()
@@ -45,9 +43,9 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         if (!item.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             val url = createGlideUrl(item.paths.screenshot, vParent.context)
-            Glide.with(viewHolder.view.context)
+            Glide.with(cardView.context)
                 .load(url)
-                .transform(CenterCrop(), TextOverlay(viewHolder.view.context, item))
+                .transform(CenterCrop(), TextOverlay(cardView.context, item))
                 .error(mDefaultCardImage)
                 .into(cardView.mainImageView!!)
         }

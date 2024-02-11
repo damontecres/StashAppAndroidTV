@@ -13,11 +13,9 @@ import java.util.EnumMap
 class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
     StashPresenter<StudioData>(callback) {
     override fun doOnBindViewHolder(
-        viewHolder: ViewHolder,
+        cardView: ImageCardView,
         item: StudioData,
     ) {
-        val cardView = viewHolder.view as ImageCardView
-
         cardView.titleText = item.name
         if (item.parent_studio != null) {
             cardView.contentText =
@@ -37,7 +35,7 @@ class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
                 PreferenceManager.getDefaultSharedPreferences(vParent.context)
                     .getString("stashApiKey", "")
             val url = createGlideUrl(item.image_path, apiKey)
-            Glide.with(viewHolder.view.context)
+            Glide.with(cardView.context)
                 .load(url)
                 .fitCenter()
                 .error(mDefaultCardImage)

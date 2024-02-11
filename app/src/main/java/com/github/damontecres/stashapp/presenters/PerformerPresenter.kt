@@ -13,11 +13,9 @@ import java.util.EnumMap
 class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
     StashPresenter<PerformerData>(callback) {
     override fun doOnBindViewHolder(
-        viewHolder: ViewHolder,
+        cardView: ImageCardView,
         item: PerformerData,
     ) {
-        val cardView = viewHolder.view as ImageCardView
-
         if (item.image_path != null) {
             val title =
                 item.name + (if (!item.disambiguation.isNullOrBlank()) " (${item.disambiguation})" else "")
@@ -35,7 +33,7 @@ class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
 
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             val url = createGlideUrl(item.image_path, cardView.context)
-            Glide.with(viewHolder.view.context)
+            Glide.with(cardView.context)
                 .load(url)
                 .centerCrop()
                 .error(mDefaultCardImage)

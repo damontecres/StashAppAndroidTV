@@ -10,10 +10,9 @@ import com.github.damontecres.stashapp.data.StashSavedFilter
 class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
     StashPresenter<Any>(callback) {
     override fun doOnBindViewHolder(
-        viewHolder: ViewHolder,
+        cardView: ImageCardView,
         item: Any,
     ) {
-        val cardView = viewHolder.view as ImageCardView
         cardView.titleText = "View All"
 
         val mode: FilterMode =
@@ -68,7 +67,7 @@ class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
 
         cardView.mainImageView.setImageDrawable(
             AppCompatResources.getDrawable(
-                viewHolder.view.context,
+                cardView.context,
                 R.drawable.baseline_camera_indoor_48,
             ),
         )
