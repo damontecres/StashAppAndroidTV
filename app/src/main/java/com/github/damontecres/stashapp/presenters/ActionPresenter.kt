@@ -3,10 +3,10 @@ package com.github.damontecres.stashapp.presenters
 import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.actions.StashAction
 
-class ActionPresenter : StashPresenter() {
-    override fun onBindViewHolder(
+class ActionPresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+    override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
-        item: Any,
+        item: Any?,
     ) {
         val action = item as StashAction
         val cardView = viewHolder.view as ImageCardView

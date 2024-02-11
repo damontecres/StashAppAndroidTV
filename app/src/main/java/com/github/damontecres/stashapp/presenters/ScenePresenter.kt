@@ -19,8 +19,8 @@ import com.github.damontecres.stashapp.util.titleOrFilename
 import java.security.MessageDigest
 import java.util.EnumMap
 
-class ScenePresenter : StashPresenter() {
-    override fun onBindViewHolder(
+class ScenePresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+    override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
         item: Any?,
     ) {

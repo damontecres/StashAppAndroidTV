@@ -8,8 +8,8 @@ import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-class MarkerPresenter : StashPresenter() {
-    override fun onBindViewHolder(
+class MarkerPresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+    override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
         item: Any?,
     ) {

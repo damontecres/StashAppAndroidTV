@@ -10,8 +10,8 @@ import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.createGlideUrl
 import java.util.EnumMap
 
-class PerformerPresenter : StashPresenter() {
-    override fun onBindViewHolder(
+class PerformerPresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+    override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
         item: Any?,
     ) {

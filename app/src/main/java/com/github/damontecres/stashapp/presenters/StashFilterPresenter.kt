@@ -7,8 +7,8 @@ import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 
-class StashFilterPresenter : StashPresenter() {
-    override fun onBindViewHolder(
+class StashFilterPresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+    override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
         item: Any?,
     ) {

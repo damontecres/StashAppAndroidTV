@@ -5,10 +5,10 @@ import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.OCounter
 
-class OCounterPresenter : StashPresenter() {
-    override fun onBindViewHolder(
+class OCounterPresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+    override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
-        item: Any,
+        item: Any?,
     ) {
         val counter = item as OCounter
         val cardView = viewHolder.view as ImageCardView

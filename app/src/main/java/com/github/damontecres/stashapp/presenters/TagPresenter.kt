@@ -5,8 +5,8 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import java.util.EnumMap
 
-class TagPresenter : StashPresenter() {
-    override fun onBindViewHolder(
+class TagPresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+    override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
         item: Any?,
     ) {

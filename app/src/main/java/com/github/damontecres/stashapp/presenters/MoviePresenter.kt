@@ -7,8 +7,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.createGlideUrl
 import java.util.EnumMap
 
-class MoviePresenter : StashPresenter() {
-    override fun onBindViewHolder(
+class MoviePresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+    override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
         item: Any?,
     ) {
