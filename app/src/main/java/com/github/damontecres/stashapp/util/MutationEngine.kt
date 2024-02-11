@@ -9,14 +9,17 @@ import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
+import com.github.damontecres.stashapp.api.CreateMarkerMutation
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
 import com.github.damontecres.stashapp.api.SceneIncrementOMutation
 import com.github.damontecres.stashapp.api.SceneIncrementPlayCountMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
+import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
 import com.github.damontecres.stashapp.data.OCounter
 
@@ -198,6 +201,24 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         val mutation = SceneIncrementOMutation(sceneId.toString())
         val result = executeMutation(mutation)
         return OCounter(sceneId, result.data!!.sceneIncrementO)
+    }
+
+    suspend fun createMarker(
+        sceneId: String,
+        position: Long,
+        primaryTagId: String,
+    ): MarkerData? {
+        val input =
+            SceneMarkerCreateInput(
+                title = "",
+                seconds = position / 1000.0,
+                scene_id = sceneId,
+                primary_tag_id = primaryTagId,
+                tag_ids = Optional.absent(),
+            )
+        val mutation = CreateMarkerMutation(input)
+        val result = executeMutation(mutation)
+        return result.data?.sceneMarkerCreate?.markerData
     }
 
     companion object {

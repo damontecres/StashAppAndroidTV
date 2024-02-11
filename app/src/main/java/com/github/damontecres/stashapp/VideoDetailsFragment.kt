@@ -105,6 +105,9 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             val queryEngine = QueryEngine(requireContext())
             viewLifecycleOwner.lifecycleScope.launch {
                 mSelectedMovie = queryEngine.getScene(sceneId.toInt())
+                if (mSelectedMovie!!.resume_time != null) {
+                    position = (mSelectedMovie!!.resume_time!! * 1000).toLong()
+                }
                 setupDetailsOverviewRow()
                 setupDetailsOverviewRowPresenter()
                 setupRelatedMovieListRow()
@@ -116,15 +119,16 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 onItemViewClickedListener =
                     StashItemViewClickListener(requireActivity(), actionListener)
 
-                sceneActionsAdapter.add(StashAction.ADD_TAG)
-                sceneActionsAdapter.add(StashAction.ADD_PERFORMER)
-                sceneActionsAdapter.add(StashAction.FORCE_TRANSCODE)
                 sceneActionsAdapter.add(
                     OCounter(
                         mSelectedMovie!!.id.toInt(),
                         mSelectedMovie?.o_counter ?: 0,
                     ),
                 )
+                sceneActionsAdapter.add(StashAction.ADD_TAG)
+                sceneActionsAdapter.add(StashAction.ADD_PERFORMER)
+                sceneActionsAdapter.add(StashAction.FORCE_TRANSCODE)
+                sceneActionsAdapter.add(StashAction.CREATE_MARKER)
 
                 tagsAdapter =
                     ArrayObjectAdapter(
@@ -439,6 +443,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     when (action) {
                         StashAction.ADD_TAG -> DataType.TAG
                         StashAction.ADD_PERFORMER -> DataType.PERFORMER
+                        StashAction.CREATE_MARKER -> DataType.TAG
                         else -> throw RuntimeException("Unsupported search for type $action")
                     }
                 intent.putExtra("dataType", dataType.name)
@@ -544,6 +549,35 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         Toast.makeText(
                             requireContext(),
                             "Added performer '${newPerformer?.name}' to scene",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                } else if (id == StashAction.CREATE_MARKER.id) {
+                    viewLifecycleOwner.lifecycleScope.launch(
+                        CoroutineExceptionHandler { _, ex ->
+                            Log.e(TAG, "Exception creating marker", ex)
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to create marker: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        },
+                    ) {
+                        val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
+                        Log.d(
+                            TAG,
+                            "Adding marker at $position with tagId=$tagId to scene ${mSelectedMovie?.id}",
+                        )
+                        val newMarker =
+                            MutationEngine(requireContext()).createMarker(
+                                mSelectedMovie!!.id,
+                                position,
+                                tagId,
+                            )!!
+                        markersAdapter.add(newMarker)
+                        Toast.makeText(
+                            requireContext(),
+                            "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
                             Toast.LENGTH_SHORT,
                         ).show()
                     }
