@@ -7,24 +7,24 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.createGlideUrl
 import java.util.EnumMap
 
-class MoviePresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
+    StashPresenter<MovieData>(callback) {
     override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
-        item: Any?,
+        item: MovieData,
     ) {
-        val movie = item as MovieData
         val cardView = viewHolder.view as ImageCardView
 
-        if (movie.front_image_path != null) {
-            cardView.titleText = movie.name
-            cardView.contentText = movie.date
+        if (item.front_image_path != null) {
+            cardView.titleText = item.name
+            cardView.contentText = item.date
 
             val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-            dataTypeMap[DataType.SCENE] = movie.scene_count
+            dataTypeMap[DataType.SCENE] = item.scene_count
             setUpExtraRow(cardView, dataTypeMap, null)
 
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val url = createGlideUrl(movie.front_image_path, cardView.context)
+            val url = createGlideUrl(item.front_image_path, cardView.context)
             Glide.with(viewHolder.view.context)
                 .load(url)
                 .centerCrop()

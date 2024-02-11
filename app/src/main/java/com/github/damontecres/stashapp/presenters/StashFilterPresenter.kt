@@ -7,10 +7,11 @@ import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 
-class StashFilterPresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
+    StashPresenter<Any>(callback) {
     override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
-        item: Any?,
+        item: Any,
     ) {
         val cardView = viewHolder.view as ImageCardView
         cardView.titleText = "View All"

@@ -19,35 +19,35 @@ import com.github.damontecres.stashapp.util.titleOrFilename
 import java.security.MessageDigest
 import java.util.EnumMap
 
-class ScenePresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
+    StashPresenter<SlimSceneData>(callback) {
     override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
-        item: Any?,
+        item: SlimSceneData,
     ) {
-        val scene = item as SlimSceneData
         val cardView = viewHolder.view as ImageCardView
 
-        cardView.titleText = scene.titleOrFilename
+        cardView.titleText = item.titleOrFilename
 
         val details = mutableListOf<String?>()
-        details.add(scene.studio?.name)
-        details.add(scene.date)
+        details.add(item.studio?.name)
+        details.add(item.date)
         cardView.contentText = concatIfNotBlank(" - ", details)
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-        dataTypeMap[DataType.TAG] = scene.tags.size
-        dataTypeMap[DataType.PERFORMER] = scene.performers.size
-        dataTypeMap[DataType.MOVIE] = scene.movies.size
-        dataTypeMap[DataType.MARKER] = scene.scene_markers.size
+        dataTypeMap[DataType.TAG] = item.tags.size
+        dataTypeMap[DataType.PERFORMER] = item.performers.size
+        dataTypeMap[DataType.MOVIE] = item.movies.size
+        dataTypeMap[DataType.MARKER] = item.scene_markers.size
 
-        setUpExtraRow(cardView, dataTypeMap, scene.o_counter)
+        setUpExtraRow(cardView, dataTypeMap, item.o_counter)
 
-        if (!scene.paths.screenshot.isNullOrBlank()) {
+        if (!item.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val url = createGlideUrl(scene.paths.screenshot, vParent.context)
+            val url = createGlideUrl(item.paths.screenshot, vParent.context)
             Glide.with(viewHolder.view.context)
                 .load(url)
-                .transform(CenterCrop(), TextOverlay(viewHolder.view.context, scene))
+                .transform(CenterCrop(), TextOverlay(viewHolder.view.context, item))
                 .error(mDefaultCardImage)
                 .into(cardView.mainImageView!!)
         }

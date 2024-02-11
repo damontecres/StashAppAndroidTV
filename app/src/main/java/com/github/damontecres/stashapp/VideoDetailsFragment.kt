@@ -130,16 +130,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     ArrayObjectAdapter(
                         TagPresenter(
                             object :
-                                StashPresenter.LongClickCallBack {
+                                StashPresenter.LongClickCallBack<TagData> {
                                 override val popUpItems: List<String>
                                     get() = listOf("Remove")
 
                                 override fun onItemLongClick(
-                                    item: Any?,
+                                    item: TagData,
                                     popUpItemPosition: Int,
                                 ) {
                                     if (popUpItemPosition == 0) {
-                                        val tag = item as TagData
                                         viewLifecycleOwner.lifecycleScope.launch(
                                             CoroutineExceptionHandler { _, ex ->
                                                 Log.e(TAG, "Exception setting tags", ex)
@@ -154,7 +153,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                                                 tagsAdapter.unmodifiableList<TagData>()
                                                     .map { it.id.toInt() }
                                                     .toMutableList()
-                                            tagIds.remove(tag.id.toInt())
+                                            tagIds.remove(item.id.toInt())
                                             val mutResult =
                                                 MutationEngine(requireContext()).setTagsOnScene(
                                                     mSelectedMovie!!.id.toLong(),
@@ -173,7 +172,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
                                             Toast.makeText(
                                                 requireContext(),
-                                                "Removed tag '${tag.name}' from scene",
+                                                "Removed tag '${item.name}' from scene",
                                                 Toast.LENGTH_SHORT,
                                             ).show()
                                         }
@@ -221,17 +220,16 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     ArrayObjectAdapter(
                         PerformerPresenter(
                             object :
-                                StashPresenter.LongClickCallBack {
+                                StashPresenter.LongClickCallBack<PerformerData> {
                                 override val popUpItems: List<String>
                                     get() = listOf("Remove")
 
                                 override fun onItemLongClick(
-                                    item: Any?,
+                                    item: PerformerData,
                                     popUpItemPosition: Int,
                                 ) {
                                     if (popUpItemPosition == 0) {
-                                        val performer = item as PerformerData
-                                        val performerId = performer.id
+                                        val performerId = item.id
                                         Log.d(
                                             TAG,
                                             "Removing performer $performerId to scene ${mSelectedMovie?.id}",
@@ -270,7 +268,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
                                             Toast.makeText(
                                                 requireContext(),
-                                                "Removed performer '${performer.name}' from scene",
+                                                "Removed performer '${item.name}' from scene",
                                                 Toast.LENGTH_SHORT,
                                             ).show()
                                         }

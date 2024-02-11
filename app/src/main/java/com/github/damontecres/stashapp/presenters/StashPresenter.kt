@@ -25,7 +25,7 @@ import com.github.damontecres.stashapp.util.enableMarquee
 import java.util.EnumMap
 import kotlin.properties.Delegates
 
-abstract class StashPresenter(private val callback: LongClickCallBack? = null) : Presenter() {
+abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = null) : Presenter() {
     protected var vParent: ViewGroup by Delegates.notNull()
     protected var mDefaultCardImage: Drawable? = null
     private var sSelectedBackgroundColor: Int by Delegates.notNull()
@@ -75,16 +75,16 @@ abstract class StashPresenter(private val callback: LongClickCallBack? = null) :
                 PopupOnLongClickListener(
                     callback.popUpItems,
                 ) { _, _, pos, _ ->
-                    callback.onItemLongClick(item, pos)
+                    callback.onItemLongClick(item as T, pos)
                 },
             )
         }
-        doOnBindViewHolder(viewHolder, item)
+        doOnBindViewHolder(viewHolder, item as T)
     }
 
     abstract fun doOnBindViewHolder(
         viewHolder: ViewHolder,
-        item: Any?,
+        item: T,
     )
 
     final override fun onUnbindViewHolder(viewHolder: ViewHolder) {
@@ -177,11 +177,11 @@ abstract class StashPresenter(private val callback: LongClickCallBack? = null) :
         }
     }
 
-    interface LongClickCallBack {
+    interface LongClickCallBack<T> {
         val popUpItems: List<String>
 
         fun onItemLongClick(
-            item: Any?,
+            item: T,
             popUpItemPosition: Int,
         )
     }

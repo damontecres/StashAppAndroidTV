@@ -3,14 +3,14 @@ package com.github.damontecres.stashapp.presenters
 import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.actions.StashAction
 
-class ActionPresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+class ActionPresenter(callback: LongClickCallBack<StashAction>? = null) :
+    StashPresenter<StashAction>(callback) {
     override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
-        item: Any?,
+        item: StashAction,
     ) {
-        val action = item as StashAction
         val cardView = viewHolder.view as ImageCardView
-        cardView.titleText = action.actionName
+        cardView.titleText = item.actionName
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
     }
 

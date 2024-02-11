@@ -10,33 +10,33 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.createGlideUrl
 import java.util.EnumMap
 
-class StudioPresenter(callback: LongClickCallBack? = null) : StashPresenter(callback) {
+class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
+    StashPresenter<StudioData>(callback) {
     override fun doOnBindViewHolder(
         viewHolder: ViewHolder,
-        item: Any?,
+        item: StudioData,
     ) {
-        val studio = item as StudioData
         val cardView = viewHolder.view as ImageCardView
 
-        cardView.titleText = studio.name
-        if (studio.parent_studio != null) {
+        cardView.titleText = item.name
+        if (item.parent_studio != null) {
             cardView.contentText =
-                cardView.context.getString(R.string.stashapp_part_of, studio.parent_studio.name)
+                cardView.context.getString(R.string.stashapp_part_of, item.parent_studio.name)
         }
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-        dataTypeMap[DataType.SCENE] = studio.scene_count
-        dataTypeMap[DataType.PERFORMER] = studio.performer_count
-        dataTypeMap[DataType.MOVIE] = studio.movie_count
+        dataTypeMap[DataType.SCENE] = item.scene_count
+        dataTypeMap[DataType.PERFORMER] = item.performer_count
+        dataTypeMap[DataType.MOVIE] = item.movie_count
         setUpExtraRow(cardView, dataTypeMap, null)
 
-        if (!studio.image_path.isNullOrBlank()) {
+        if (!item.image_path.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER)
             val apiKey =
                 PreferenceManager.getDefaultSharedPreferences(vParent.context)
                     .getString("stashApiKey", "")
-            val url = createGlideUrl(studio.image_path, apiKey)
+            val url = createGlideUrl(item.image_path, apiKey)
             Glide.with(viewHolder.view.context)
                 .load(url)
                 .fitCenter()
