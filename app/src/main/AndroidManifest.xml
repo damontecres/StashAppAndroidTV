@@ -23,17 +23,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.StashAppAndroidTV"
         android:usesCleartextTraffic="true">
-        <activity
-            android:name=".PinActivity"
-            android:banner="@mipmap/stash_logo"
-            android:exported="true"
-            android:icon="@mipmap/stash_logo"
-            android:logo="@mipmap/stash_logo"
-            android:screenOrientation="landscape"
-            android:theme="@style/NoTitleTheme"
-            android:noHistory="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+    <activity
+        android:name=".PinActivity"
+        android:banner="@mipmap/stash_logo"
+        android:exported="true"
+        android:icon="@mipmap/stash_logo"
+        android:logo="@mipmap/stash_logo"
+        android:screenOrientation="landscape"
+        android:theme="@style/NoTitleTheme"
+        android:noHistory="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>

@@ -11,11 +11,16 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.util.configureHttpsTrust
+import javax.net.ssl.HttpsURLConnection
 
 class StashApplication : Application() {
     private var wasEnterBackground = false
     private var mainDestroyed = false
     var hasAskedForPin = false
+
+    val defaultSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory()
+    val defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier()
 
     override fun onCreate() {
         super.onCreate()
@@ -42,6 +47,8 @@ class StashApplication : Application() {
                 putLong(VERSION_CODE_CURRENT_KEY, pkgInfo.versionCode.toLong())
             }
         }
+
+        configureHttpsTrust(this)
     }
 
     fun showPinActivity() {

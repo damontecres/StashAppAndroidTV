@@ -25,6 +25,7 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SwitchPreference
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.configureHttpsTrust
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
@@ -293,6 +294,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             findPreference<Preference>("license")?.setOnPreferenceClickListener {
                 startActivity(Intent(requireContext(), LicenseActivity::class.java))
+                true
+            }
+
+            findPreference<Preference>("trustAllCerts")?.setOnPreferenceChangeListener { _, newValue ->
+                val app = requireActivity().application as StashApplication
+                configureHttpsTrust(app, newValue as Boolean)
                 true
             }
         }
