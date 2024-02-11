@@ -17,6 +17,16 @@ data class Version(
         )
     }
 
+    fun isGreaterThan(version: Version): Boolean {
+        return this.major > version.major || (
+            this.major == version.major &&
+                (
+                    this.minor > version.minor || this.minor == version.minor &&
+                        this.patch > version.patch
+                )
+        )
+    }
+
     companion object {
         private val MINIMUM_STASH_VERSION = fromString("0.23.0")
 

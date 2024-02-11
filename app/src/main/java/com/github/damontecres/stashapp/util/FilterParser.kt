@@ -30,7 +30,13 @@ import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 class FilterParser private constructor(context: Context, serverInfoQuery: ServerInfoQuery.Data?) {
     @Suppress("unused")
     private val serverVersion =
-        if (serverInfoQuery?.version?.version != null) Version.fromString(serverInfoQuery.version.version) else null
+        if (serverInfoQuery?.version?.version != null) {
+            Version.fromString(serverInfoQuery.version.version)
+        } else {
+            Version.fromString(
+                "0.0.0",
+            )
+        }
 
     companion object {
         lateinit var instance: FilterParser
@@ -170,11 +176,25 @@ class FilterParser private constructor(context: Context, serverInfoQuery: Server
 
     private fun convertGenderCriterionInput(it: Map<String, *>?): GenderCriterionInput? {
         return if (it != null) {
-            val value = it["value"].toString().uppercase().replace(" ", "_")
-            GenderCriterionInput(
-                Optional.presentIfNotNull(GenderEnum.valueOf(value)),
-                CriterionModifier.valueOf(it["modifier"]!! as String),
-            )
+            if (serverVersion.isGreaterThan(Version.fromString("0.24.3"))) {
+                // TODO requires more testing
+                val values =
+                    (it["value"] as List<String?>).filterNotNull()
+                        .map { it.uppercase().replace(" ", "_") }
+                        .map(GenderEnum::valueOf)
+                GenderCriterionInput(
+                    Optional.absent(),
+                    Optional.present(values),
+                    CriterionModifier.valueOf(it["modifier"]!! as String),
+                )
+            } else {
+                val value = it["value"].toString().uppercase().replace(" ", "_")
+                GenderCriterionInput(
+                    Optional.presentIfNotNull(GenderEnum.valueOf(value)),
+                    Optional.absent(),
+                    CriterionModifier.valueOf(it["modifier"]!! as String),
+                )
+            }
         } else {
             null
         }
