@@ -65,7 +65,7 @@ import kotlin.math.roundToInt
 class VideoDetailsFragment : DetailsSupportFragment() {
     private var mSelectedMovie: SlimSceneData? = null
 
-    private val performersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(PerformerPresenter())
+    private lateinit var performersAdapter: ArrayObjectAdapter
     private val tagsAdapter: ArrayObjectAdapter = ArrayObjectAdapter(TagPresenter())
     private val markersAdapter: ArrayObjectAdapter = ArrayObjectAdapter(MarkerPresenter())
     private val sceneActionsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
@@ -159,6 +159,62 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         },
                     )
                 }
+
+                performersAdapter =
+                    ArrayObjectAdapter(
+                        PerformerPresenter(
+                            object :
+                                StashPresenter.LongClickCallBack {
+                                override val popUpItems: List<String>
+                                    get() = listOf("Remove")
+
+                                override fun onItemLongClick(
+                                    item: Any?,
+                                    popUpItemPosition: Int,
+                                ) {
+                                    val performer = item as PerformerData
+                                    val performerId = performer.id
+                                    Log.d(TAG, "Removing performer $performerId to scene ${mSelectedMovie?.id}")
+                                    viewLifecycleOwner.lifecycleScope.launch(
+                                        CoroutineExceptionHandler { _, ex ->
+                                            Log.e(TAG, "Exception setting performers", ex)
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Failed to add performer: ${ex.message}",
+                                                Toast.LENGTH_LONG,
+                                            ).show()
+                                        },
+                                    ) {
+                                        val performerIds =
+                                            performersAdapter.unmodifiableList<PerformerData>().map { it.id }
+                                                .toMutableList()
+                                        performerIds.remove(performerId)
+                                        val mutResult =
+                                            MutationEngine(requireContext()).setPerformersOnScene(
+                                                mSelectedMovie!!.id.toLong(),
+                                                performerIds.map { it.toInt() },
+                                            )
+                                        val resultPerformers = mutResult?.performers?.map { it.performerData }
+                                        performersAdapter.clear()
+                                        performersAdapter.addAll(0, resultPerformers)
+                                        mAdapter.set(
+                                            PERFORMER_POS,
+                                            ListRow(
+                                                HeaderItem(getString(R.string.stashapp_performers)),
+                                                performersAdapter,
+                                            ),
+                                        )
+
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Removed performer '${performer.name}' from scene",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                }
+                            },
+                        ),
+                    )
 
                 val performerIds = mSelectedMovie!!.performers.map { it.id.toInt() }
                 if (performerIds.isNotEmpty()) {
