@@ -26,6 +26,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
@@ -34,7 +35,6 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Tag
 import kotlin.random.Random
 
 /**
@@ -173,7 +173,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         findFilter: FindFilterType? = null,
         tagFilter: TagFilterType? = null,
         useRandom: Boolean = true,
-    ): List<Tag> {
+    ): List<TagData> {
         val query =
             client.query(
                 FindTagsQuery(
@@ -182,7 +182,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 ),
             )
         val tags =
-            executeQuery(query).data?.findTags?.tags?.map { Tag(it.tagData) }
+            executeQuery(query).data?.findTags?.tags?.map { it.tagData }
         return tags.orEmpty()
     }
 

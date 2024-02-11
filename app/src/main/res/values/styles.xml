@@ -11,14 +11,19 @@
         <item name="android:layout_margin">5dp</item>
     </style>
 
-    <style name="Widget.Theme.StashAppAndroidTV.SceneExtraText" parent="">
+    <style name="Widget.Theme.StashAppAndroidTV.ExtraWrapper" parent="">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_marginStart">@dimen/scene_extra_spacing</item>
+        <item name="android:layout_marginEnd">@dimen/scene_extra_spacing</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="Widget.Theme.StashAppAndroidTV.SceneExtraText" parent="Widget.Theme.StashAppAndroidTV.ExtraWrapper">
         <item name="android:gravity">center</item>
         <item name="android:textAlignment">center</item>
         <item name="android:textColor">@color/lb_basic_card_content_text_color</item>
         <item name="android:textSize">@dimen/lb_basic_card_content_text_size</item>
-        <item name="android:visibility">invisible</item>
         <item name="android:layout_margin">2dp</item>
     </style>
 

@@ -2,11 +2,13 @@ package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.text.TextUtils
 import android.util.Log
 import android.util.TypedValue
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
@@ -19,11 +21,15 @@ import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import java.io.File
+import java.time.LocalDate
+import java.time.Period
+import java.time.format.DateTimeFormatter
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.time.DurationUnit
@@ -294,4 +300,16 @@ val SlimSceneData.titleOrFilename: String?
             }
         } else {
             title
+        }
+
+val PerformerData.ageInYears: Int?
+    @RequiresApi(Build.VERSION_CODES.O)
+    get() =
+        if (birthdate != null) {
+            Period.between(
+                LocalDate.parse(birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
+                LocalDate.now(),
+            ).years
+        } else {
+            null
         }

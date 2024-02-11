@@ -5,5 +5,6 @@ fragment TagData on Tag {
   aliases
   scene_count
   performer_count
+  scene_marker_count
   image_path
 }

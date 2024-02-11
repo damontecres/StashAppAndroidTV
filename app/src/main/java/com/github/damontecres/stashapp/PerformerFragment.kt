@@ -19,12 +19,10 @@ import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.Period
-import java.time.format.DateTimeFormatter
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -89,11 +87,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                 }
                 if (!perf.birthdate.isNullOrBlank()) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        val age =
-                            Period.between(
-                                LocalDate.parse(perf.birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
-                                LocalDate.now(),
-                            ).years.toString()
+                        val age = perf.ageInYears.toString()
                         addRow(R.string.stashapp_age, "$age (${perf.birthdate})")
                     }
                 }
