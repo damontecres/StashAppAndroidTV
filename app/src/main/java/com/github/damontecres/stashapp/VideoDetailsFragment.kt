@@ -246,22 +246,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     )
                     markersAdapter.addAll(
                         0,
-                        mSelectedMovie!!.scene_markers.map {
-                            MarkerData(
-                                id = it.id,
-                                title = it.title,
-                                created_at = "",
-                                updated_at = "",
-                                stream = "",
-                                screenshot = it.screenshot,
-                                seconds = it.seconds,
-                                preview = "",
-                                primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData),
-                                scene = MarkerData.Scene("", mSelectedMovie!!),
-                                tags = emptyList(),
-                                __typename = "",
-                            )
-                        },
+                        mSelectedMovie!!.scene_markers.map(::convertMarker),
                     )
                 }
 
@@ -630,7 +615,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                                 position,
                                 tagId,
                             )!!
-                        markersAdapter.add(newMarker)
+                        val markers =
+                            newMarker.scene.slimSceneData.scene_markers.map(::convertMarker)
+                        markersAdapter.clear()
+                        markersAdapter.addAll(0, markers)
                         Toast.makeText(
                             requireContext(),
                             "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
@@ -659,6 +647,23 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 }
             }
         }
+    }
+
+    private fun convertMarker(it: SlimSceneData.Scene_marker): MarkerData {
+        return MarkerData(
+            id = it.id,
+            title = it.title,
+            created_at = "",
+            updated_at = "",
+            stream = "",
+            screenshot = it.screenshot,
+            seconds = it.seconds,
+            preview = "",
+            primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData),
+            scene = MarkerData.Scene("", mSelectedMovie!!),
+            tags = emptyList(),
+            __typename = "",
+        )
     }
 
     companion object {
