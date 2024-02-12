@@ -197,72 +197,56 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     tagsAdapter.addAll(0, mSelectedMovie!!.tags.map { it.tagData })
                 }
 
-                if (mSelectedMovie!!.scene_markers.isNotEmpty()) {
-                    markersAdapter =
-                        ArrayObjectAdapter(
-                            MarkerPresenter(
-                                object :
-                                    StashPresenter.LongClickCallBack<MarkerData> {
-                                    override val popUpItems: List<String>
-                                        get() = listOf("Remove")
+                markersAdapter =
+                    ArrayObjectAdapter(
+                        MarkerPresenter(
+                            object :
+                                StashPresenter.LongClickCallBack<MarkerData> {
+                                override val popUpItems: List<String>
+                                    get() = listOf("Remove")
 
-                                    override fun onItemLongClick(
-                                        item: MarkerData,
-                                        popUpItemPosition: Int,
-                                    ) {
-                                        if (popUpItemPosition == 0) {
-                                            viewLifecycleOwner.lifecycleScope.launch(
-                                                CoroutineExceptionHandler { _, ex ->
-                                                    Log.e(TAG, "Exception setting tags", ex)
-                                                    Toast.makeText(
-                                                        requireContext(),
-                                                        "Failed to remove tag: ${ex.message}",
-                                                        Toast.LENGTH_LONG,
-                                                    ).show()
-                                                },
-                                            ) {
-                                                val mutResult =
-                                                    MutationEngine(requireContext()).deleteMarker(item.id)
-                                                if (mutResult) {
-                                                    markersAdapter.remove(item)
-                                                    if (markersAdapter.size() == 0) {
-                                                        mAdapter.clear(MARKER_POS)
-                                                    }
-                                                    Toast.makeText(
-                                                        requireContext(),
-                                                        "Removed marker from scene",
-                                                        Toast.LENGTH_SHORT,
-                                                    ).show()
+                                override fun onItemLongClick(
+                                    item: MarkerData,
+                                    popUpItemPosition: Int,
+                                ) {
+                                    if (popUpItemPosition == 0) {
+                                        viewLifecycleOwner.lifecycleScope.launch(
+                                            CoroutineExceptionHandler { _, ex ->
+                                                Log.e(TAG, "Exception setting tags", ex)
+                                                Toast.makeText(
+                                                    requireContext(),
+                                                    "Failed to remove tag: ${ex.message}",
+                                                    Toast.LENGTH_LONG,
+                                                ).show()
+                                            },
+                                        ) {
+                                            val mutResult =
+                                                MutationEngine(requireContext()).deleteMarker(item.id)
+                                            if (mutResult) {
+                                                markersAdapter.remove(item)
+                                                if (markersAdapter.size() == 0) {
+                                                    mAdapter.clear(MARKER_POS)
                                                 }
+                                                Toast.makeText(
+                                                    requireContext(),
+                                                    "Removed marker from scene",
+                                                    Toast.LENGTH_SHORT,
+                                                ).show()
                                             }
                                         }
                                     }
-                                },
-                            ),
-                        )
-
+                                }
+                            },
+                        ),
+                    )
+                if (mSelectedMovie!!.scene_markers.isNotEmpty()) {
                     mAdapter.set(
                         MARKER_POS,
                         ListRow(HeaderItem(getString(R.string.stashapp_markers)), markersAdapter),
                     )
                     markersAdapter.addAll(
                         0,
-                        mSelectedMovie!!.scene_markers.map {
-                            MarkerData(
-                                id = it.id,
-                                title = it.title,
-                                created_at = "",
-                                updated_at = "",
-                                stream = "",
-                                screenshot = it.screenshot,
-                                seconds = it.seconds,
-                                preview = "",
-                                primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData),
-                                scene = MarkerData.Scene("", mSelectedMovie!!),
-                                tags = emptyList(),
-                                __typename = "",
-                            )
-                        },
+                        mSelectedMovie!!.scene_markers.map(::convertMarker),
                     )
                 }
 
@@ -631,7 +615,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                                 position,
                                 tagId,
                             )!!
-                        markersAdapter.add(newMarker)
+                        val markers =
+                            newMarker.scene.slimSceneData.scene_markers.map(::convertMarker)
+                        markersAdapter.clear()
+                        markersAdapter.addAll(0, markers)
                         Toast.makeText(
                             requireContext(),
                             "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
@@ -660,6 +647,23 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 }
             }
         }
+    }
+
+    private fun convertMarker(it: SlimSceneData.Scene_marker): MarkerData {
+        return MarkerData(
+            id = it.id,
+            title = it.title,
+            created_at = "",
+            updated_at = "",
+            stream = "",
+            screenshot = it.screenshot,
+            seconds = it.seconds,
+            preview = "",
+            primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData),
+            scene = MarkerData.Scene("", mSelectedMovie!!),
+            tags = emptyList(),
+            __typename = "",
+        )
     }
 
     companion object {
