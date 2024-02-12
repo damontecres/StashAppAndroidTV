@@ -42,7 +42,6 @@ class SearchForFragment(
     private var taskJob: Job? = null
 
     private val adapter = ArrayObjectAdapter(ListRowPresenter())
-    private val resultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
 
     private val exceptionHandler =
         CoroutineExceptionHandler { _: CoroutineContext, ex: Throwable ->
@@ -53,7 +52,8 @@ class SearchForFragment(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        title = getString(dataType.pluralStringId)
+        title =
+            requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
         setSearchResultProvider(this)
         setOnItemViewClickedListener {
                 itemViewHolder: Presenter.ViewHolder,
@@ -76,7 +76,6 @@ class SearchForFragment(
             requireActivity().setResult(Activity.RESULT_OK, result)
             requireActivity().finish()
         }
-        adapter.add(ListRow(HeaderItem("Results"), resultsAdapter))
     }
 
     override fun getResultsAdapter(): ObjectAdapter {
@@ -106,7 +105,7 @@ class SearchForFragment(
     }
 
     private suspend fun search(query: String) {
-        resultsAdapter.clear()
+        adapter.clear()
 
         if (!TextUtils.isEmpty(query)) {
             val perPage =
@@ -119,6 +118,8 @@ class SearchForFragment(
                 )
             val queryEngine = QueryEngine(requireContext(), true)
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
+                val resultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                adapter.add(ListRow(HeaderItem("Results"), resultsAdapter))
                 resultsAdapter.addAll(0, queryEngine.find(dataType, filter))
             }
         }
@@ -129,5 +130,6 @@ class SearchForFragment(
 
         const val ID_KEY = "id"
         const val RESULT_ID_KEY = "resultId"
+        const val TITLE_KEY = "title"
     }
 }

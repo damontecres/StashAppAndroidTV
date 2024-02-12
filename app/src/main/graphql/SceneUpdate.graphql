@@ -15,3 +15,7 @@ mutation CreateMarker($input: SceneMarkerCreateInput!) {
     ...MarkerData
   }
 }
+
+mutation DeleteMarker($id: ID!) {
+  sceneMarkerDestroy(id: $id)
+}

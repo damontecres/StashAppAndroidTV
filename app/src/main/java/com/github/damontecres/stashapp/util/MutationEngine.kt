@@ -10,6 +10,7 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.CreateMarkerMutation
+import com.github.damontecres.stashapp.api.DeleteMarkerMutation
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
 import com.github.damontecres.stashapp.api.SceneIncrementOMutation
@@ -219,6 +220,12 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         val mutation = CreateMarkerMutation(input)
         val result = executeMutation(mutation)
         return result.data?.sceneMarkerCreate?.markerData
+    }
+
+    suspend fun deleteMarker(id: String): Boolean {
+        val mutation = DeleteMarkerMutation(id)
+        val result = executeMutation(mutation)
+        return result.data?.sceneMarkerDestroy ?: false
     }
 
     companion object {
