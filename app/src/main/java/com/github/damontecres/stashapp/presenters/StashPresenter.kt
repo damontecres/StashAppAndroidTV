@@ -105,15 +105,18 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         view.setInfoAreaBackgroundColor(color)
     }
 
+    protected fun setUpExtraRow(cardView: View): ViewGroup {
+        val infoView = cardView.findViewById<ViewGroup>(androidx.leanback.R.id.info_field)
+        return LayoutInflater.from(infoView.context)
+            .inflate(R.layout.image_card_extra, infoView, true) as ViewGroup
+    }
+
     protected fun setUpExtraRow(
         cardView: View,
         iconMap: EnumMap<DataType, Int>,
         oCounter: Int?,
     ) {
-        val infoView = cardView.findViewById<ViewGroup>(androidx.leanback.R.id.info_field)
-        val sceneExtra =
-            LayoutInflater.from(infoView.context)
-                .inflate(R.layout.image_card_extra, infoView, true) as ViewGroup
+        val sceneExtra = setUpExtraRow(cardView)
 
         DataType.entries.forEach {
             val count = iconMap[it] ?: -1
