@@ -24,6 +24,7 @@ import androidx.leanback.widget.DetailsOverviewRow
 import androidx.leanback.widget.FullWidthDetailsOverviewRowPresenter
 import androidx.leanback.widget.FullWidthDetailsOverviewSharedElementHelper
 import androidx.leanback.widget.HeaderItem
+import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
@@ -42,12 +43,15 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
@@ -68,7 +72,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private lateinit var performersAdapter: ArrayObjectAdapter
     private lateinit var tagsAdapter: ArrayObjectAdapter
     private lateinit var markersAdapter: ArrayObjectAdapter
-    private val sceneActionsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+    private val sceneActionsAdapter =
+        ArrayObjectAdapter(
+            ClassPresenterSelector().addClassPresenter(
+                StashAction::class.java,
+                VideoDetailsActionPresenter(),
+            ).addClassPresenter(OCounter::class.java, OCounterPresenter()),
+        )
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
     private val mPresenterSelector = ClassPresenterSelector()
@@ -664,6 +674,19 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             tags = emptyList(),
             __typename = "",
         )
+    }
+
+    private inner class VideoDetailsActionPresenter : StashPresenter<StashAction>() {
+        override fun doOnBindViewHolder(
+            cardView: ImageCardView,
+            item: StashAction,
+        ) {
+            cardView.titleText = item.actionName
+            if (item == StashAction.CREATE_MARKER) {
+                cardView.contentText = Constants.durationToString(position / 1000.0)
+            }
+            cardView.setMainImageDimensions(ActionPresenter.CARD_WIDTH, ActionPresenter.CARD_HEIGHT)
+        }
     }
 
     companion object {
