@@ -28,11 +28,15 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
+import com.github.damontecres.stashapp.util.createOkHttpClient
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.Request
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -149,19 +153,21 @@ class PlaybackExoFragment :
                     exoPlayer.setMediaItem(mediaItem)
                     exoPlayer.playWhenReady = true
                     exoPlayer.prepare()
-                    videoView.hideController()
-                    exoPlayer.addListener(
-                        object : Player.Listener {
-                            private var initialSeek = true
-
-                            override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
-                                if (initialSeek && position > 0 && Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM in availableCommands) {
-                                    exoPlayer.seekTo(position)
-                                    initialSeek = false
+                    if (videoView.controllerShowTimeoutMs > 0) {
+                        videoView.hideController()
+                    }
+                    if (position > 0) {
+                        exoPlayer.addListener(
+                            object : Player.Listener {
+                                override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
+                                    if (Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM in availableCommands) {
+                                        exoPlayer.seekTo(position)
+                                        exoPlayer.removeListener(this)
+                                    }
                                 }
-                            }
-                        },
-                    )
+                            },
+                        )
+                    }
                 }
     }
 
@@ -186,6 +192,18 @@ class PlaybackExoFragment :
 
         videoView = view.findViewById(R.id.video_view)
         videoView.controllerShowTimeoutMs = controllerShowTimeoutMs
+        videoView.setControllerVisibilityListener(
+            PlayerView.ControllerVisibilityListener {
+                val visStr =
+                    when (it) {
+                        View.VISIBLE -> "VISIBLE"
+                        View.INVISIBLE -> "INVISIBLE"
+                        View.GONE -> "GONE"
+                        else -> it.toString()
+                    }
+                Log.v(TAG, "ControllerVisibilityListener visibility=$visStr")
+            },
+        )
 
         val mFocusedZoom =
             requireContext().resources.getFraction(
@@ -233,35 +251,50 @@ class PlaybackExoFragment :
         val previewImageView = view.findViewById<ImageView>(R.id.video_preview_image_view)
         previewTimeBar = view.findViewById(R.id.exo_progress)
 
+        previewTimeBar.isPreviewEnabled = false
+        previewTimeBar.addOnScrubListener(
+            object : PreviewBar.OnScrubListener {
+                override fun onScrubStart(previewBar: PreviewBar) {
+                    player!!.playWhenReady = false
+                }
+
+                override fun onScrubMove(
+                    previewBar: PreviewBar,
+                    progress: Int,
+                    fromUser: Boolean,
+                ) {
+                }
+
+                override fun onScrubStop(previewBar: PreviewBar) {
+                    player!!.playWhenReady = true
+                }
+            },
+        )
+
         if (scene.spriteUrl != null) {
-            previewTimeBar.isPreviewEnabled = true
-            previewTimeBar.setPreviewLoader(
-                StashPreviewLoader(
-                    requireContext(),
-                    previewImageView,
-                    scene,
-                ),
-            )
-            previewTimeBar.addOnScrubListener(
-                object : PreviewBar.OnScrubListener {
-                    override fun onScrubStart(previewBar: PreviewBar) {
-                        player!!.playWhenReady = false
+            // Usually even if not null, there may not be sprites and the server will return a 404
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                withContext(Dispatchers.IO) {
+                    val client = createOkHttpClient(requireContext())
+                    val request = Request.Builder().url(scene.spriteUrl!!).get().build()
+                    client.newCall(request).execute().use {
+                        Log.d(
+                            TAG,
+                            "Sprite URL check isSuccessful=${it.isSuccessful}, code=${it.code}",
+                        )
+                        if (it.isSuccessful) {
+                            previewTimeBar.isPreviewEnabled = true
+                            previewTimeBar.setPreviewLoader(
+                                StashPreviewLoader(
+                                    requireContext(),
+                                    previewImageView,
+                                    scene,
+                                ),
+                            )
+                        }
                     }
-
-                    override fun onScrubMove(
-                        previewBar: PreviewBar,
-                        progress: Int,
-                        fromUser: Boolean,
-                    ) {
-                    }
-
-                    override fun onScrubStop(previewBar: PreviewBar) {
-                        player!!.playWhenReady = true
-                    }
-                },
-            )
-        } else {
-            previewTimeBar.isPreviewEnabled = false
+                }
+            }
         }
     }
 

@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import okhttp3.OkHttpClient
 import java.io.File
 import java.security.SecureRandom
@@ -85,18 +86,33 @@ val TRUST_ALL_CERTS: TrustManager =
         }
     }
 
-fun createUnsafeOkHttpClient(): OkHttpClient {
-    val sslContext = SSLContext.getInstance("SSL")
-    sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-    return OkHttpClient.Builder()
-        .sslSocketFactory(
+fun createOkHttpClient(context: Context): OkHttpClient {
+    val trustAll =
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .getBoolean("trustAllCerts", false)
+    val apiKey =
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .getString("stashApiKey", null)
+    val builder = OkHttpClient.Builder()
+    if (trustAll) {
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
+        builder.sslSocketFactory(
             sslContext.socketFactory,
             TRUST_ALL_CERTS as X509TrustManager,
         )
-        .hostnameVerifier { _, _ ->
-            true
+            .hostnameVerifier { _, _ ->
+                true
+            }
+    }
+    if (apiKey.isNotNullOrBlank()) {
+        builder.addInterceptor {
+            val request =
+                it.request().newBuilder().addHeader(STASH_API_HEADER, apiKey.trim()).build()
+            it.proceed(request)
         }
-        .build()
+    }
+    return builder.build()
 }
 
 fun configureHttpsTrust(
@@ -195,7 +211,7 @@ fun createApolloClient(context: Context): ApolloClient? {
                 .getBoolean("trustAllCerts", false)
         val httpEngine =
             if (trustAll) {
-                DefaultHttpEngine(createUnsafeOkHttpClient())
+                DefaultHttpEngine(createOkHttpClient(context))
             } else {
                 DefaultHttpEngine()
             }

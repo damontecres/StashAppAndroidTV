@@ -472,7 +472,7 @@ class MainFragment : BrowseSupportFragment() {
 
     private fun getCurrentPosition(): Position? {
         val rowPos = selectedPosition
-        if (rowPos >= 0) {
+        if (rowPos >= 0 && selectedRowViewHolder != null) {
             val columnPos =
                 (selectedRowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition
             if (columnPos >= 0) {

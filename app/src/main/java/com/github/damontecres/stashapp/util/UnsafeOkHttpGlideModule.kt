@@ -28,7 +28,7 @@ class UnsafeOkHttpGlideModule : AppGlideModule() {
             registry.replace<GlideUrl, InputStream>(
                 GlideUrl::class.java,
                 InputStream::class.java,
-                OkHttpUrlLoader.Factory(createUnsafeOkHttpClient()),
+                OkHttpUrlLoader.Factory(createOkHttpClient(context)),
             )
         }
     }

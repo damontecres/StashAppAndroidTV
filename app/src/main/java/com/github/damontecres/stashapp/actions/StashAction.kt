@@ -4,7 +4,7 @@ enum class StashAction(val id: Long, val actionName: String) {
     ADD_TAG(1L, "Add Tag"),
     ADD_PERFORMER(2L, "Add Performer"),
     FORCE_TRANSCODE(3L, "Play with Transcoding"),
-    CREATE_MARKER(4L, "Create Marker from current position"),
+    CREATE_MARKER(4L, "Create Marker"),
     ;
 
     companion object {
