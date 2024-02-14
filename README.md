@@ -1,13 +1,14 @@
 # Stash App for Android TV
 
-This is a basic Android TV app for browsing and playing videos from a [Stash](https://github.com/stashapp/stash) server.
+This is an Android TV app for browsing and playing videos from a [Stash](https://github.com/stashapp/stash) server.
 
-Not all features of Stash are supported, but the basics for browsing, searching, and playing scenes should work.
+Not all features of Stash are supported, but the basics for browsing, searching, and playing scenes work well.
 
-The app is not intended to perform administrative functions such as scanning, scraping, or editing details.
+The app is not intended to perform administrative functions such as scraping or editing details. Some curation tasks are available such as adding tags or performers to scenes.
 
 ### Dashboard
-![dashboard screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/24387c5a-4c57-4cdc-8cb7-be455fa3bfbd)
+![ss_main_page](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/220f81a1-6877-4ac0-97db-f685d0345dea)
+
 
 ## Setup
 
@@ -47,7 +48,7 @@ This build has the latest features, but may be unstable or have bugs.
 1. If you have enabled authentication on your Stash server, enter the API Key
     1. Use your phone to browse to your Stash server and copy the API Key from the Settings->Security page (e.g. http://192.168.1.122:9999/settings?tab=security)
     1. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) to paste the API Key into the TV app
-    - Do not enter an API Key if authentication is not enabled on your Stash server!
+        - Do not enter an API Key if authentication is not enabled on your Stash server!
 1. Select `Test Connection` to verify that the app can connect to your Stash server
 
 ### Compatibility
@@ -67,11 +68,11 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 ## Additional screenshots
 
 ### Default filtered scenes
-![scenes screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/227254ef-325d-4284-b778-983f86453a24)
+![ss_scenes](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/efa994e1-b77b-4b33-93b4-d9ad0c08c3b4)
 
 ### Performer
-![performer screenshot](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/9e5aec33-4cf1-4605-8a11-1056ceafd115)
+![ss_performer](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/3451be85-8492-4364-b89e-f88ab512da64)
 
-### Demo
+### Demo (v0.1.0)
 
 https://github.com/damontecres/StashAppAndroidTV/assets/154766448/aff09ae7-afef-4df4-9ea7-4ef8fdabeb01
