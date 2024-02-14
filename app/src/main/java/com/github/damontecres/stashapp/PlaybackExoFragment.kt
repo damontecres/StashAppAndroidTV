@@ -149,7 +149,9 @@ class PlaybackExoFragment :
                     exoPlayer.setMediaItem(mediaItem)
                     exoPlayer.playWhenReady = true
                     exoPlayer.prepare()
-                    videoView.hideController()
+                    if (videoView.controllerShowTimeoutMs > 0) {
+                        videoView.hideController()
+                    }
                     exoPlayer.addListener(
                         object : Player.Listener {
                             private var initialSeek = true
@@ -158,6 +160,7 @@ class PlaybackExoFragment :
                                 if (initialSeek && position > 0 && Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM in availableCommands) {
                                     exoPlayer.seekTo(position)
                                     initialSeek = false
+                                    exoPlayer.removeListener(this)
                                 }
                             }
                         },
@@ -186,6 +189,15 @@ class PlaybackExoFragment :
 
         videoView = view.findViewById(R.id.video_view)
         videoView.controllerShowTimeoutMs = controllerShowTimeoutMs
+        videoView.setControllerVisibilityListener(PlayerView.ControllerVisibilityListener {
+            val visStr = when (it) {
+                View.VISIBLE -> "VISIBLE"
+                View.INVISIBLE -> "INVISIBLE"
+                View.GONE -> "GONE"
+                else -> it.toString()
+            }
+            Log.v(TAG, "ControllerVisibilityListener visibility=$visStr")
+        })
 
         val mFocusedZoom =
             requireContext().resources.getFraction(
