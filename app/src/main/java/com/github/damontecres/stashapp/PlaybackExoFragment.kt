@@ -156,19 +156,18 @@ class PlaybackExoFragment :
                     if (videoView.controllerShowTimeoutMs > 0) {
                         videoView.hideController()
                     }
-                    exoPlayer.addListener(
-                        object : Player.Listener {
-                            private var initialSeek = true
-
-                            override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
-                                if (initialSeek && position > 0 && Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM in availableCommands) {
-                                    exoPlayer.seekTo(position)
-                                    initialSeek = false
-                                    exoPlayer.removeListener(this)
+                    if (position > 0) {
+                        exoPlayer.addListener(
+                            object : Player.Listener {
+                                override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
+                                    if (Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM in availableCommands) {
+                                        exoPlayer.seekTo(position)
+                                        exoPlayer.removeListener(this)
+                                    }
                                 }
-                            }
-                        },
-                    )
+                            },
+                        )
+                    }
                 }
     }
 
