@@ -629,6 +629,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             newMarker.scene.slimSceneData.scene_markers.map(::convertMarker)
                         markersAdapter.clear()
                         markersAdapter.addAll(0, markers)
+                        mAdapter.set(
+                            MARKER_POS,
+                            ListRow(
+                                HeaderItem(getString(R.string.stashapp_markers)),
+                                markersAdapter,
+                            ),
+                        )
                         Toast.makeText(
                             requireContext(),
                             "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
