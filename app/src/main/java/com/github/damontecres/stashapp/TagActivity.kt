@@ -9,7 +9,6 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
-import com.github.damontecres.stashapp.data.Tag
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.util.SceneComparator
 
@@ -18,8 +17,9 @@ class TagActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.grid_view)
         if (savedInstanceState == null) {
-            val tag = this.intent.getParcelableExtra<Tag>("tag")
-            findViewById<TextView>(R.id.grid_title).text = "${tag?.name}"
+            val tagId = intent.getStringExtra("tagId")!!
+            val tagName = intent.getStringExtra("tagName")
+            findViewById<TextView>(R.id.grid_title).text = tagName
             supportFragmentManager.beginTransaction()
                 .replace(
                     R.id.grid_fragment,
@@ -34,7 +34,7 @@ class TagActivity : FragmentActivity() {
                                 tags =
                                     Optional.present(
                                         HierarchicalMultiCriterionInput(
-                                            value = Optional.present(listOf(tag?.id.toString())),
+                                            value = Optional.present(listOf(tagId)),
                                             modifier = CriterionModifier.INCLUDES_ALL,
                                         ),
                                     ),

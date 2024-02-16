@@ -6,7 +6,7 @@ import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
-import com.github.damontecres.stashapp.data.Tag
+import com.github.damontecres.stashapp.api.fragment.TagData
 
 object SceneComparator : DiffUtil.ItemCallback<SlimSceneData>() {
     override fun areItemsTheSame(
@@ -56,17 +56,17 @@ object StudioComparator : DiffUtil.ItemCallback<StudioData>() {
     }
 }
 
-object TagComparator : DiffUtil.ItemCallback<Tag>() {
+object TagComparator : DiffUtil.ItemCallback<TagData>() {
     override fun areItemsTheSame(
-        oldItem: Tag,
-        newItem: Tag,
+        oldItem: TagData,
+        newItem: TagData,
     ): Boolean {
         return oldItem.id == newItem.id
     }
 
     override fun areContentsTheSame(
-        oldItem: Tag,
-        newItem: Tag,
+        oldItem: TagData,
+        newItem: TagData,
     ): Boolean {
         return oldItem == newItem
     }

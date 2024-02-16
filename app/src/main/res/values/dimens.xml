@@ -3,4 +3,5 @@
     <dimen name="title_bar_height">60dp</dimen>
     <dimen name="title_bar_margin">10dp</dimen>
     <dimen name="table_text_size">13sp</dimen>
+    <dimen name="scene_extra_spacing">4dp</dimen>
 </resources>

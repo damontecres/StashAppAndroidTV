@@ -4,35 +4,38 @@ import android.widget.ImageView
 import androidx.leanback.widget.ImageCardView
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.createGlideUrl
+import java.util.EnumMap
 
-class StudioPresenter : StashPresenter() {
-    override fun onBindViewHolder(
-        viewHolder: ViewHolder,
-        item: Any?,
+class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
+    StashPresenter<StudioData>(callback) {
+    override fun doOnBindViewHolder(
+        cardView: ImageCardView,
+        item: StudioData,
     ) {
-        val studio = item as StudioData
-        val cardView = viewHolder.view as ImageCardView
-
-        cardView.titleText = studio.name
-        val contentText = ArrayList<String>()
-        if (studio.scene_count > 0) {
-            contentText += "${studio.scene_count}S"
+        cardView.titleText = item.name
+        if (item.parent_studio != null) {
+            cardView.contentText =
+                cardView.context.getString(R.string.stashapp_part_of, item.parent_studio.name)
         }
-        if (studio.performer_count > 0) {
-            contentText += "${studio.performer_count}P"
-        }
-        cardView.contentText = contentText.joinToString(" ")
 
-        if (!studio.image_path.isNullOrBlank()) {
+        val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+        dataTypeMap[DataType.SCENE] = item.scene_count
+        dataTypeMap[DataType.PERFORMER] = item.performer_count
+        dataTypeMap[DataType.MOVIE] = item.movie_count
+        setUpExtraRow(cardView, dataTypeMap, null)
+
+        if (!item.image_path.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER)
             val apiKey =
                 PreferenceManager.getDefaultSharedPreferences(vParent.context)
                     .getString("stashApiKey", "")
-            val url = createGlideUrl(studio.image_path, apiKey)
-            Glide.with(viewHolder.view.context)
+            val url = createGlideUrl(item.image_path, apiKey)
+            Glide.with(cardView.context)
                 .load(url)
                 .fitCenter()
                 .error(mDefaultCardImage)

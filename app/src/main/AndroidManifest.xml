@@ -29,9 +29,9 @@
             android:exported="true"
             android:icon="@mipmap/stash_logo"
             android:logo="@mipmap/stash_logo"
+            android:noHistory="true"
             android:screenOrientation="landscape"
-            android:theme="@style/NoTitleTheme"
-            android:noHistory="true">
+            android:theme="@style/NoTitleTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -82,6 +82,10 @@
             android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".DebugActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
+        <activity
+            android:name=".LicenseActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
 

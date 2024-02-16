@@ -11,44 +11,41 @@ import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.createGlideUrl
-import java.io.File
+import com.github.damontecres.stashapp.util.titleOrFilename
 import java.security.MessageDigest
+import java.util.EnumMap
 
-class ScenePresenter : StashPresenter() {
-    override fun onBindViewHolder(
-        viewHolder: ViewHolder,
-        item: Any?,
+class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
+    StashPresenter<SlimSceneData>(callback) {
+    override fun doOnBindViewHolder(
+        cardView: ImageCardView,
+        item: SlimSceneData,
     ) {
-        val scene = item as SlimSceneData
-        val cardView = viewHolder.view as ImageCardView
-        if (scene.title.isNullOrBlank()) {
-            val path = scene.files.firstOrNull()?.videoFileData?.path
-            if (path != null) {
-                cardView.titleText = File(path).name
-            }
-        } else {
-            cardView.titleText = scene.title
-        }
-        val details = mutableListOf<String>()
-        if (!scene.date.isNullOrBlank()) {
-            details.add(scene.date)
-        }
-        if (scene.tags.isNotEmpty()) {
-            details.add("${scene.tags.size}\uD83C\uDFF7\uFE0F")
-        }
-        if (scene.performers.isNotEmpty()) {
-            details.add("${scene.performers.size}\uD83D\uDC64")
-        }
-        cardView.contentText = details.joinToString("  ")
+        cardView.titleText = item.titleOrFilename
 
-        if (!scene.paths.screenshot.isNullOrBlank()) {
+        val details = mutableListOf<String?>()
+        details.add(item.studio?.name)
+        details.add(item.date)
+        cardView.contentText = concatIfNotBlank(" - ", details)
+
+        val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+        dataTypeMap[DataType.TAG] = item.tags.size
+        dataTypeMap[DataType.PERFORMER] = item.performers.size
+        dataTypeMap[DataType.MOVIE] = item.movies.size
+        dataTypeMap[DataType.MARKER] = item.scene_markers.size
+
+        setUpExtraRow(cardView, dataTypeMap, item.o_counter)
+
+        if (!item.paths.screenshot.isNullOrBlank()) {
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            val url = createGlideUrl(scene.paths.screenshot, vParent.context)
-            Glide.with(viewHolder.view.context)
+            val url = createGlideUrl(item.paths.screenshot, vParent.context)
+            Glide.with(cardView.context)
                 .load(url)
-                .transform(CenterCrop(), TextOverlay(viewHolder.view.context, scene))
+                .transform(CenterCrop(), TextOverlay(cardView.context, item))
                 .error(mDefaultCardImage)
                 .into(cardView.mainImageView!!)
         }

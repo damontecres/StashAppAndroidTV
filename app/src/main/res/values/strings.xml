@@ -4,4 +4,11 @@
     <string name="play_scene" translatable="false">Play</string>
     <string name="pref_stash_server_header" translatable="false">Stash</string>
     <string name="pref_stash_server_url" translatable="false">Stash URL</string>
+
+    <string name="fa_tag" translatable="false">&#xf02b;</string>
+    <string name="fa_user" translatable="false">&#xf007;</string>
+    <string name="fa_location_dot" translatable="false">&#xf3c5;</string>
+    <string name="fa_film" translatable="false">&#xf008;</string>
+    <string name="fa_circle_play" translatable="false">&#xf144;</string>
+
 </resources>

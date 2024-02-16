@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -37,6 +38,9 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         val onFocusChangeListener = StashOnFocusChangeListener(context)
         mSearchOrbView.onFocusChangeListener = onFocusChangeListener
         mPreferencesView.onFocusChangeListener = onFocusChangeListener
+        mSearchOrbView.enableOrbColorAnimation(false)
+        mSearchOrbView.orbColor = Color.TRANSPARENT
+
         val scenesButton = root.findViewById<Button>(R.id.scenes_button)
         scenesButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
