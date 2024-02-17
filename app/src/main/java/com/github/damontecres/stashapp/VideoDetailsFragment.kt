@@ -73,11 +73,14 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private lateinit var tagsAdapter: ArrayObjectAdapter
     private lateinit var markersAdapter: ArrayObjectAdapter
     private val sceneActionsAdapter =
-        ArrayObjectAdapter(
+        SparseArrayObjectAdapter(
             ClassPresenterSelector().addClassPresenter(
                 StashAction::class.java,
                 VideoDetailsActionPresenter(),
-            ).addClassPresenter(OCounter::class.java, OCounterPresenter()),
+            ).addClassPresenter(
+                OCounter::class.java,
+                OCounterPresenter(OCounterLongClickCallBack()),
+            ),
         )
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
@@ -129,16 +132,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 onItemViewClickedListener =
                     StashItemViewClickListener(requireActivity(), actionListener)
 
-                sceneActionsAdapter.add(
+                sceneActionsAdapter.set(
+                    O_COUNTER_POS,
                     OCounter(
                         mSelectedMovie!!.id.toInt(),
                         mSelectedMovie?.o_counter ?: 0,
                     ),
                 )
-                sceneActionsAdapter.add(StashAction.ADD_TAG)
-                sceneActionsAdapter.add(StashAction.ADD_PERFORMER)
-                sceneActionsAdapter.add(StashAction.CREATE_MARKER)
-                sceneActionsAdapter.add(StashAction.FORCE_TRANSCODE)
+                sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
+                sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
+                sceneActionsAdapter.set(CREATE_MARKER_POS, StashAction.CREATE_MARKER)
+                sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
 
                 tagsAdapter =
                     ArrayObjectAdapter(
@@ -513,8 +517,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val mutationEngine = MutationEngine(requireContext())
                 val newCounter = mutationEngine.incrementOCounter(counter.sceneId)
-                val index = sceneActionsAdapter.indexOf(counter)
-                sceneActionsAdapter.replace(index, newCounter)
+                sceneActionsAdapter.set(O_COUNTER_POS, newCounter)
             }
         }
     }
@@ -644,6 +647,9 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     }
                 } else {
                     position = data.getLongExtra(POSITION_ARG, -1)
+                    if (position >= 0) {
+                        sceneActionsAdapter.notifyItemRangeChanged(CREATE_MARKER_POS, 1)
+                    }
                     if (position > 10_000) {
                         // If some of the video played, reset the available actions
                         // This also causes the focused action to default to resume which is an added bonus
@@ -690,9 +696,47 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         ) {
             cardView.titleText = item.actionName
             if (item == StashAction.CREATE_MARKER) {
-                cardView.contentText = Constants.durationToString(position / 1000.0)
+                cardView.contentText =
+                    if (position >= 0) {
+                        Constants.durationToString(position / 1000.0)
+                    } else {
+                        null
+                    }
             }
             cardView.setMainImageDimensions(ActionPresenter.CARD_WIDTH, ActionPresenter.CARD_HEIGHT)
+        }
+    }
+
+    private inner class OCounterLongClickCallBack : StashPresenter.LongClickCallBack<OCounter> {
+        override val popUpItems: List<String>
+            get() = listOf("Decrement", "Reset")
+
+        override fun onItemLongClick(
+            item: OCounter,
+            popUpItemPosition: Int,
+        ) {
+            val mutationEngine = MutationEngine(requireContext())
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                when (popUpItemPosition) {
+                    0 -> {
+                        // Decrement
+                        val newCount = mutationEngine.decrementOCounter(mSelectedMovie!!.id.toInt())
+                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
+                    }
+
+                    1 -> {
+                        // Reset
+                        val newCount = mutationEngine.resetOCounter(mSelectedMovie!!.id.toInt())
+                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
+                    }
+
+                    else ->
+                        Log.w(
+                            TAG,
+                            "Unknown position for OCounterLongClickCallBack: $popUpItemPosition",
+                        )
+                }
+            }
         }
     }
 
@@ -709,10 +753,18 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         const val POSITION_ARG = "position"
         const val FORCE_TRANSCODE = "forceTranscode"
 
+        // Row order
         private const val DETAILS_POS = 1
         private const val MARKER_POS = DETAILS_POS + 1
         private const val PERFORMER_POS = MARKER_POS + 1
         private const val TAG_POS = PERFORMER_POS + 1
         private const val ACTIONS_POS = TAG_POS + 1
+
+        // Actions row order
+        private const val O_COUNTER_POS = 1
+        private const val ADD_TAG_POS = O_COUNTER_POS + 1
+        private const val ADD_PERFORMER_POS = ADD_TAG_POS + 1
+        private const val CREATE_MARKER_POS = ADD_PERFORMER_POS + 1
+        private const val FORCE_TRANSCODE_POS = CREATE_MARKER_POS + 1
     }
 }
