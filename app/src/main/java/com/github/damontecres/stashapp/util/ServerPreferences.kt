@@ -37,6 +37,7 @@ class ServerPreferences(private val context: Context) {
             val ui = config.ui as Map<String, *>
             preferences.edit(true) {
                 ui.getCaseInsensitive(PREF_TRACK_ACTIVITY).also {
+                    // If null, toString()=>"null".toBoolean()=>false
                     putBoolean(PREF_TRACK_ACTIVITY, it.toString().toBoolean())
                 }
                 ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT)?.let {
