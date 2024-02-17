@@ -105,7 +105,7 @@
         android:padding="@dimen/exo_styled_controls_padding"
         app:layout_constraintTop_toTopOf="@id/exo_center_controls"
         app:layout_constraintBottom_toBottomOf="@id/exo_center_controls"
-        app:layout_constraintEnd_toStartOf="@id/exo_settings">
+        app:layout_constraintStart_toStartOf="parent">
 
         <ImageButton
             android:id="@+id/controls_o_counter_button"
@@ -129,13 +129,6 @@
             android:text="12" />
 
     </LinearLayout>
-
-    <ImageButton
-        android:id="@id/exo_settings"
-        app:layout_constraintTop_toTopOf="@id/exo_center_controls"
-        app:layout_constraintBottom_toBottomOf="@id/exo_center_controls"
-        app:layout_constraintEnd_toEndOf="parent"
-        style="@style/ExoStyledControls.Button.Bottom.Settings" />
 
     <FrameLayout
         android:id="@+id/previewFrameLayout"
