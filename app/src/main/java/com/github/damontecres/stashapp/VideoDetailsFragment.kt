@@ -109,6 +109,16 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View? {
+        val actionListener = SceneActionListener()
+        onItemViewClickedListener =
+            StashItemViewClickListener(requireActivity(), actionListener)
+
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
         val sceneId = requireActivity().intent.getStringExtra(VideoDetailsActivity.MOVIE)
         if (sceneId == null) {
             Log.w(TAG, "No scene found in intent")
@@ -116,7 +126,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             startActivity(intent)
         } else {
             val queryEngine = QueryEngine(requireContext())
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 mSelectedMovie = queryEngine.getScene(sceneId.toInt())
                 if (mSelectedMovie!!.resume_time != null) {
                     position = (mSelectedMovie!!.resume_time!! * 1000).toLong()
@@ -126,11 +136,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 setupRelatedMovieListRow()
                 adapter = mAdapter
                 initializeBackground()
-
-                val actionListener = SceneActionListener()
-
-                onItemViewClickedListener =
-                    StashItemViewClickListener(requireActivity(), actionListener)
 
                 sceneActionsAdapter.set(
                     O_COUNTER_POS,
@@ -346,8 +351,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 }
             }
         }
-
-        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     private fun initializeBackground() {
@@ -517,6 +520,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val mutationEngine = MutationEngine(requireContext())
                 val newCounter = mutationEngine.incrementOCounter(counter.sceneId)
+                mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCounter.count)
                 sceneActionsAdapter.set(O_COUNTER_POS, newCounter)
             }
         }
@@ -722,11 +726,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         // Decrement
                         val newCount = mutationEngine.decrementOCounter(mSelectedMovie!!.id.toInt())
                         sceneActionsAdapter.set(O_COUNTER_POS, newCount)
+                        mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCount.count)
                     }
 
                     1 -> {
                         // Reset
                         val newCount = mutationEngine.resetOCounter(mSelectedMovie!!.id.toInt())
+                        mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCount.count)
                         sceneActionsAdapter.set(O_COUNTER_POS, newCount)
                     }
 

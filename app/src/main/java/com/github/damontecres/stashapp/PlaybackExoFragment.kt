@@ -253,7 +253,7 @@ class PlaybackExoFragment :
         if (scene.oCounter != null) {
             oCounterText.text = scene.oCounter.toString()
         } else {
-            oCounterText.text = null
+            oCounterText.text = "0"
         }
 
         val oCounterButton = view.findViewById<ImageButton>(R.id.controls_o_counter_button)
@@ -281,14 +281,14 @@ class PlaybackExoFragment :
                             if (newCount.count > 0) {
                                 oCounterText.text = newCount.count.toString()
                             } else {
-                                oCounterText.text = null
+                                oCounterText.text = "0"
                             }
                         }
 
                         1 -> {
                             // Reset
                             mutationEngine.resetOCounter(scene.id.toInt())
-                            oCounterText.text = null
+                            oCounterText.text = "0"
                         }
 
                         else ->
