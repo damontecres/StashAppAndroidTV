@@ -77,7 +77,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             ClassPresenterSelector().addClassPresenter(
                 StashAction::class.java,
                 VideoDetailsActionPresenter(),
-            ).addClassPresenter(OCounter::class.java, OCounterPresenter()),
+            ).addClassPresenter(
+                OCounter::class.java,
+                OCounterPresenter(OCounterLongClickCallBack()),
+            ),
         )
 
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
@@ -701,6 +704,39 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     }
             }
             cardView.setMainImageDimensions(ActionPresenter.CARD_WIDTH, ActionPresenter.CARD_HEIGHT)
+        }
+    }
+
+    private inner class OCounterLongClickCallBack : StashPresenter.LongClickCallBack<OCounter> {
+        override val popUpItems: List<String>
+            get() = listOf("Decrement", "Reset")
+
+        override fun onItemLongClick(
+            item: OCounter,
+            popUpItemPosition: Int,
+        ) {
+            val mutationEngine = MutationEngine(requireContext())
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                when (popUpItemPosition) {
+                    0 -> {
+                        // Decrement
+                        val newCount = mutationEngine.decrementOCounter(mSelectedMovie!!.id.toInt())
+                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
+                    }
+
+                    1 -> {
+                        // Reset
+                        val newCount = mutationEngine.resetOCounter(mSelectedMovie!!.id.toInt())
+                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
+                    }
+
+                    else ->
+                        Log.w(
+                            TAG,
+                            "Unknown position for OCounterLongClickCallBack: $popUpItemPosition",
+                        )
+                }
+            }
         }
     }
 
