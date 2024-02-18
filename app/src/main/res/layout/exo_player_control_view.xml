@@ -98,6 +98,13 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:text="25:23" />
 
+    <ImageButton
+        android:id="@id/exo_settings"
+        app:layout_constraintTop_toTopOf="@id/exo_center_controls"
+        app:layout_constraintBottom_toBottomOf="@id/exo_center_controls"
+        app:layout_constraintEnd_toEndOf="parent"
+        style="@style/ExoStyledControls.Button.Bottom.Settings" />
+
     <FrameLayout
         android:id="@+id/previewFrameLayout"
         android:layout_width="0dp"
