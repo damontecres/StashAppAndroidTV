@@ -1,13 +1,12 @@
 package com.github.damontecres.stashapp
 
 import android.content.Intent
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
@@ -127,6 +126,19 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        val scrollView = requireView().findViewById<ScrollView>(R.id.performer_scrollview)
+
+        scrollView.viewTreeObserver.addOnGlobalLayoutListener {
+            val childHeight = scrollView.getChildAt(0).height
+            val isScrollable =
+                scrollView.height < childHeight + scrollView.paddingTop + scrollView.paddingBottom
+            Log.v(TAG, "isScrollable=$isScrollable")
+            scrollView.isFocusable = isScrollable
+        }
+    }
+
     private fun addRow(
         key: Int,
         value: String?,
@@ -136,30 +148,14 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         }
         val keyString = getString(key) + ":"
 
-        val row = TableRow(requireContext())
-        row.layoutParams =
-            TableLayout.LayoutParams(
-                TableLayout.LayoutParams.MATCH_PARENT,
-                TableLayout.LayoutParams.MATCH_PARENT,
-            )
-        row.gravity = Gravity.CENTER_HORIZONTAL
+        val row =
+            requireActivity().layoutInflater.inflate(R.layout.table_row, table, false) as TableRow
 
-        val keyView = TextView(requireContext())
+        val keyView = row.findViewById<TextView>(R.id.table_row_key)
         keyView.text = keyString
-        keyView.textSize = TABLE_TEXT_SIZE
-        keyView.setTextColor(Color.WHITE)
-        keyView.textAlignment = TextView.TEXT_ALIGNMENT_VIEW_START
-        keyView.setPadding(5, 3, 5, 3)
 
-        val valueView = TextView(requireContext())
+        val valueView = row.findViewById<TextView>(R.id.table_row_value)
         valueView.text = value
-        valueView.textSize = TABLE_TEXT_SIZE
-        valueView.setTextColor(Color.WHITE)
-        valueView.textAlignment = TextView.TEXT_ALIGNMENT_VIEW_START
-        valueView.setPadding(15, 3, 5, 3)
-
-        row.addView(keyView)
-        row.addView(valueView)
 
         table.addView(row)
     }

@@ -36,7 +36,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
         numberOfColumns: Int? = null,
     ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, numberOfColumns)
 
-    private val mAdapter = PagingDataAdapter(presenter, comparator)
+    val mAdapter = PagingDataAdapter(presenter, comparator)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,7 +126,6 @@ class StashGridFragment<T : Query.Data, D : Any>(
                     null
                 }
             }
-        browseFrameLayout.requestFocus()
     }
 
     companion object {
