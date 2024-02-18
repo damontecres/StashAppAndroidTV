@@ -59,8 +59,10 @@ class PlaybackExoFragment :
 
     override val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
 
+    val isControllerVisible get() = videoView.isControllerFullyVisible || previewTimeBar.isShown
+
     override fun hideControlsIfVisible(): Boolean {
-        if (videoView.isControllerFullyVisible || previewTimeBar.isShown) {
+        if (isControllerVisible) {
             videoView.hideController()
             previewTimeBar.hidePreview()
             previewTimeBar.hideScrubber(250L)
