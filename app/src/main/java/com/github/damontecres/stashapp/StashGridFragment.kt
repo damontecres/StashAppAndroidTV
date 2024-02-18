@@ -126,6 +126,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
                     null
                 }
             }
+        browseFrameLayout.requestFocus()
     }
 
     companion object {

@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -11,12 +13,16 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.fragment.app.FragmentActivity
+import androidx.leanback.widget.ClassPresenterSelector
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
@@ -259,8 +265,33 @@ class FilterListActivity : FragmentActivity() {
 
             DataType.MARKER -> {
                 val markerFilter = FilterParser.instance.convertMarkerObjectFilter(objectFilter)
-                StashGridFragment(MarkerComparator, MarkerDataSupplier(findFilter, markerFilter))
+                val selectorPresenter =
+                    ClassPresenterSelector().addClassPresenter(
+                        MarkerData::class.java,
+                        MarkerPresenter(MarkerLongClickCallBack(this)),
+                    )
+                StashGridFragment(
+                    selectorPresenter,
+                    MarkerComparator,
+                    MarkerDataSupplier(findFilter, markerFilter),
+                    null,
+                )
             }
+        }
+    }
+
+    class MarkerLongClickCallBack(private val context: Context) :
+        StashPresenter.LongClickCallBack<MarkerData> {
+        override val popUpItems: List<String>
+            get() = listOf(context.getString(R.string.go_to_scene))
+
+        override fun onItemLongClick(
+            item: MarkerData,
+            popUpItemPosition: Int,
+        ) {
+            val intent = Intent(context, VideoDetailsActivity::class.java)
+            intent.putExtra(VideoDetailsActivity.MOVIE, item.scene.slimSceneData.id)
+            context.startActivity(intent)
         }
     }
 
