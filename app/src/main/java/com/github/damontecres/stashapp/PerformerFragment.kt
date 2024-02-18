@@ -37,10 +37,6 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val scrollView = view.findViewById<ScrollView>(R.id.performer_scrollview)
-//        scrollView.isFocusable = true
-//        scrollView.isFocusableInTouchMode = false
-
         mPerformerImage = view.findViewById(R.id.performer_image)
         val lp = mPerformerImage.layoutParams
         val scale = 1.33
@@ -127,6 +123,19 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         } else {
             val intent = Intent(requireActivity(), MainActivity::class.java)
             startActivity(intent)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val scrollView = requireView().findViewById<ScrollView>(R.id.performer_scrollview)
+
+        scrollView.viewTreeObserver.addOnGlobalLayoutListener {
+            val childHeight = scrollView.getChildAt(0).height
+            val isScrollable =
+                scrollView.height < childHeight + scrollView.paddingTop + scrollView.paddingBottom
+            Log.v(TAG, "isScrollable=$isScrollable")
+            scrollView.isFocusable = isScrollable
         }
     }
 
