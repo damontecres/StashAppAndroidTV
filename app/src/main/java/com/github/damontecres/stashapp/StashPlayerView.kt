@@ -7,16 +7,20 @@ import androidx.annotation.OptIn
 import androidx.fragment.app.findFragment
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
+import androidx.preference.PreferenceManager
 
 class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : PlayerView(context, attrs, defStyleAttr) {
     constructor(context: Context, attrs: AttributeSet? = null) : this(context, attrs, 0)
 
     constructor(context: Context) : this(context, null)
 
+    private val dPadSkipEnabled: Boolean =
+        PreferenceManager.getDefaultSharedPreferences(context).getBoolean("skipWithDpad", true)
+
     @OptIn(UnstableApi::class)
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val keyCode = event.keyCode
-        if (player != null && !findFragment<PlaybackExoFragment>().isControllerVisible &&
+        if (dPadSkipEnabled && player != null && !findFragment<PlaybackExoFragment>().isControllerVisible &&
             (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_DPAD_LEFT)
         ) {
             if (event.action == KeyEvent.ACTION_DOWN) {
