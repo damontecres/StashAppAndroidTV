@@ -21,7 +21,9 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         cardView.contentText = item.description
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 
-        // TODO: fetch image
+        if (item.image_path != null) {
+            loadImage(cardView, item.image_path)
+        }
     }
 
     companion object {
