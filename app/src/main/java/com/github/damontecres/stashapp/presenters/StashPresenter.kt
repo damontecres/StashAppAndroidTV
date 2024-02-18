@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.presenters
 
+import android.content.Context
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.PictureDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +11,8 @@ import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
+import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestBuilder
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -21,7 +25,9 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.util.createGlideUrl
 import com.github.damontecres.stashapp.util.enableMarquee
+import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
 import java.util.EnumMap
 import kotlin.properties.Delegates
 
@@ -80,6 +86,18 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
             )
         }
         doOnBindViewHolder(viewHolder.view as ImageCardView, item as T)
+    }
+
+    fun loadImage(
+        cardView: ImageCardView,
+        url: String,
+    ) {
+        val glideUrl = createGlideUrl(url, cardView.context)
+        Glide.with(cardView.context)
+            .load(glideUrl)
+            .fitCenter()
+            .error(glideError(cardView.context))
+            .into(cardView.mainImageView!!)
     }
 
     abstract fun doOnBindViewHolder(
@@ -202,5 +220,11 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 .addClassPresenter(StashAction::class.java, ActionPresenter())
                 .addClassPresenter(MarkerData::class.java, MarkerPresenter())
                 .addClassPresenter(OCounter::class.java, OCounterPresenter())
+
+        fun glideError(context: Context): RequestBuilder<PictureDrawable> {
+            return Glide.with(context).`as`(PictureDrawable::class.java)
+                .error(ContextCompat.getDrawable(context, R.drawable.baseline_camera_indoor_48))
+                .listener(SvgSoftwareLayerSetter())
+        }
     }
 }

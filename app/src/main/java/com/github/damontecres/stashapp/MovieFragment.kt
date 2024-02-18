@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.data.Movie
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlinx.coroutines.launch
@@ -39,7 +40,7 @@ class MovieFragment : Fragment(R.layout.performer_view) {
                     Glide.with(requireActivity())
                         .load(url)
                         .centerCrop()
-                        .error(R.drawable.default_background)
+                        .error(StashPresenter.glideError(requireContext()))
                         .into(mPerformerImage)
                 }
             }

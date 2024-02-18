@@ -1,10 +1,7 @@
 package com.github.damontecres.stashapp.presenters
 
 import androidx.leanback.widget.ImageCardView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -23,12 +20,7 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
             if (item.title.isNotBlank()) item.primary_tag.tagData.name else null
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-        val url = createGlideUrl(item.screenshot, cardView.context)
-        Glide.with(cardView.context)
-            .load(url)
-            .transform(CenterCrop())
-            .error(mDefaultCardImage)
-            .into(cardView.mainImageView!!)
+        loadImage(cardView, item.screenshot)
     }
 
     companion object {

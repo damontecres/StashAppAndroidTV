@@ -46,7 +46,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
             Glide.with(cardView.context)
                 .load(url)
                 .transform(CenterCrop(), TextOverlay(cardView.context, item))
-                .error(mDefaultCardImage)
+                .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
         }
     }

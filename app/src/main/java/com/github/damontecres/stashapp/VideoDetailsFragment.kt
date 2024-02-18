@@ -363,8 +363,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             Glide.with(requireActivity())
                 .asBitmap()
                 .centerCrop()
-                .error(R.drawable.default_background)
                 .load(url)
+                .error(StashPresenter.glideError(requireContext()))
                 .into<SimpleTarget<Bitmap>>(
                     object : SimpleTarget<Bitmap>() {
                         override fun onResourceReady(
@@ -393,7 +393,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 .asBitmap()
                 .load(url)
                 .centerCrop()
-                .error(R.drawable.default_background)
+                .error(StashPresenter.glideError(requireContext()))
                 .into<SimpleTarget<Bitmap>>(
                     object : SimpleTarget<Bitmap>(width, height) {
                         override fun onResourceReady(

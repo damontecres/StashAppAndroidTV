@@ -2,12 +2,10 @@ package com.github.damontecres.stashapp.presenters
 
 import android.widget.ImageView
 import androidx.leanback.widget.ImageCardView
-import androidx.preference.PreferenceManager
-import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
 
 class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
@@ -28,18 +26,10 @@ class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
         dataTypeMap[DataType.MOVIE] = item.movie_count
         setUpExtraRow(cardView, dataTypeMap, null)
 
-        if (!item.image_path.isNullOrBlank()) {
-            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER)
-            val apiKey =
-                PreferenceManager.getDefaultSharedPreferences(vParent.context)
-                    .getString("stashApiKey", "")
-            val url = createGlideUrl(item.image_path, apiKey)
-            Glide.with(cardView.context)
-                .load(url)
-                .fitCenter()
-                .error(mDefaultCardImage)
-                .into(cardView.mainImageView!!)
+        cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
+        cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER)
+        if (item.image_path.isNotNullOrBlank()) {
+            loadImage(cardView, item.image_path)
         }
     }
 
