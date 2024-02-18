@@ -4,10 +4,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.annotation.OptIn
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
@@ -23,6 +26,7 @@ import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
@@ -49,7 +53,7 @@ class PlaybackExoFragment :
     private lateinit var scene: Scene
     private lateinit var videoView: PlayerView
     private lateinit var previewTimeBar: PreviewTimeBar
-    private lateinit var controlsLayout: ConstraintLayout
+    private lateinit var exoCenterControls: View
 
     private var playbackPosition = -1L
 
@@ -178,7 +182,7 @@ class PlaybackExoFragment :
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        controlsLayout = view.findViewById(R.id.player_controls)
+        exoCenterControls = view.findViewById(androidx.media3.ui.R.id.exo_center_controls)
 
         scene = requireActivity().intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
             ?: throw RuntimeException()
@@ -194,16 +198,13 @@ class PlaybackExoFragment :
         videoView.controllerShowTimeoutMs = controllerShowTimeoutMs
         videoView.setControllerVisibilityListener(
             PlayerView.ControllerVisibilityListener {
-                val visStr =
-                    when (it) {
-                        View.VISIBLE -> "VISIBLE"
-                        View.INVISIBLE -> "INVISIBLE"
-                        View.GONE -> "GONE"
-                        else -> it.toString()
-                    }
-                Log.v(TAG, "ControllerVisibilityListener visibility=$visStr")
+                if (!exoCenterControls.isVisible) {
+                    hideControlsIfVisible()
+                }
             },
         )
+        val controller =
+            videoView.findViewById<PlayerControlView>(androidx.media3.ui.R.id.exo_controller)
 
         val mFocusedZoom =
             requireContext().resources.getFraction(
@@ -247,6 +248,58 @@ class PlaybackExoFragment :
         buttons.forEach {
             view.findViewById<View>(it)?.onFocusChangeListener = onFocusChangeListener
         }
+
+        val oCounterText = view.findViewById<TextView>(R.id.controls_o_counter_text)
+        if (scene.oCounter != null) {
+            oCounterText.text = scene.oCounter.toString()
+        } else {
+            oCounterText.text = "0"
+        }
+
+        val oCounterButton = view.findViewById<ImageButton>(R.id.controls_o_counter_button)
+        oCounterButton.onFocusChangeListener = onFocusChangeListener
+        oCounterButton.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val newCounter =
+                    MutationEngine(requireContext()).incrementOCounter(scene.id.toInt())
+                oCounterText.text = newCounter.count.toString()
+            }
+        }
+        oCounterButton.setOnLongClickListener(
+            PopupOnLongClickListener(
+                listOf(
+                    "Decrement",
+                    "Reset",
+                ),
+            ) { _: AdapterView<*>, _: View, popUpItemPosition: Int, id: Long ->
+                val mutationEngine = MutationEngine(requireContext())
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    when (popUpItemPosition) {
+                        0 -> {
+                            // Decrement
+                            val newCount = mutationEngine.decrementOCounter(scene.id.toInt())
+                            if (newCount.count > 0) {
+                                oCounterText.text = newCount.count.toString()
+                            } else {
+                                oCounterText.text = "0"
+                            }
+                        }
+
+                        1 -> {
+                            // Reset
+                            mutationEngine.resetOCounter(scene.id.toInt())
+                            oCounterText.text = "0"
+                        }
+
+                        else ->
+                            Log.w(
+                                TAG,
+                                "Unknown position for oCounterButton.setOnLongClickListener: $popUpItemPosition",
+                            )
+                    }
+                }
+            },
+        )
 
         val previewImageView = view.findViewById<ImageView>(R.id.video_preview_image_view)
         previewTimeBar = view.findViewById(R.id.exo_progress)

@@ -13,8 +13,10 @@ import com.github.damontecres.stashapp.api.CreateMarkerMutation
 import com.github.damontecres.stashapp.api.DeleteMarkerMutation
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
+import com.github.damontecres.stashapp.api.SceneDecrementOMutation
 import com.github.damontecres.stashapp.api.SceneIncrementOMutation
 import com.github.damontecres.stashapp.api.SceneIncrementPlayCountMutation
+import com.github.damontecres.stashapp.api.SceneResetOMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -202,6 +204,18 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         val mutation = SceneIncrementOMutation(sceneId.toString())
         val result = executeMutation(mutation)
         return OCounter(sceneId, result.data!!.sceneIncrementO)
+    }
+
+    suspend fun decrementOCounter(sceneId: Int): OCounter {
+        val mutation = SceneDecrementOMutation(sceneId.toString())
+        val result = executeMutation(mutation)
+        return OCounter(sceneId, result.data!!.sceneDecrementO)
+    }
+
+    suspend fun resetOCounter(sceneId: Int): OCounter {
+        val mutation = SceneResetOMutation(sceneId.toString())
+        val result = executeMutation(mutation)
+        return OCounter(sceneId, result.data!!.sceneResetO)
     }
 
     suspend fun createMarker(

@@ -9,3 +9,11 @@ mutation SceneIncrementO($scene_id: ID!) {
 mutation SceneIncrementPlayCount($id: ID!) {
   sceneIncrementPlayCount(id: $id)
 }
+
+mutation SceneDecrementO($scene_id: ID!) {
+  sceneDecrementO(id: $scene_id)
+}
+
+mutation SceneResetO($scene_id: ID!) {
+  sceneResetO(id: $scene_id)
+}

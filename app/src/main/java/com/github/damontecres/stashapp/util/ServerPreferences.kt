@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.content.edit
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 
@@ -35,14 +36,17 @@ class ServerPreferences(private val context: Context) {
         if (config != null) {
             val ui = config.ui as Map<String, *>
             preferences.edit(true) {
-                putBoolean(
-                    PREF_TRACK_ACTIVITY,
-                    (ui.getCaseInsensitive(PREF_TRACK_ACTIVITY) as Boolean?) ?: false,
-                )
-                putInt(
-                    PREF_MINIMUM_PLAY_PERCENT,
-                    (ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT) as Int?) ?: 20,
-                )
+                ui.getCaseInsensitive(PREF_TRACK_ACTIVITY).also {
+                    // If null, toString()=>"null".toBoolean()=>false
+                    putBoolean(PREF_TRACK_ACTIVITY, it.toString().toBoolean())
+                }
+                ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT)?.let {
+                    try {
+                        putInt(PREF_MINIMUM_PLAY_PERCENT, it.toString().toInt())
+                    } catch (ex: NumberFormatException) {
+                        Log.w(TAG, "$PREF_MINIMUM_PLAY_PERCENT is not an integer: '$it'")
+                    }
+                }
 
                 val scan = config.defaults.scan
                 if (scan != null) {
@@ -80,6 +84,8 @@ class ServerPreferences(private val context: Context) {
     }
 
     companion object {
+        const val TAG = "ServerPreferences"
+
         const val PREF_TRACK_ACTIVITY = "trackActivity"
         const val PREF_MINIMUM_PLAY_PERCENT = "minimumPlayPercent"
 
