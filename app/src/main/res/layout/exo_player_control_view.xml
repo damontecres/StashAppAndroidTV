@@ -98,6 +98,38 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:text="25:23" />
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/exo_styled_controls_padding"
+        app:layout_constraintTop_toTopOf="@id/exo_center_controls"
+        app:layout_constraintBottom_toBottomOf="@id/exo_center_controls"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageButton
+            android:id="@+id/controls_o_counter_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="12dp"
+
+            android:layout_gravity="center_vertical"
+            android:scaleType="fitXY"
+            android:src="@drawable/sweat_drops"
+            android:background="@android:color/transparent" />
+
+        <TextView
+            android:id="@+id/controls_o_counter_text"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:padding="@dimen/exo_icon_padding"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textAlignment="center"
+            android:text="12" />
+
+    </LinearLayout>
+
     <ImageButton
         android:id="@id/exo_settings"
         app:layout_constraintTop_toTopOf="@id/exo_center_controls"
