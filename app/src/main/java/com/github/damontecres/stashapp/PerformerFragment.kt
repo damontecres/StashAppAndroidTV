@@ -17,6 +17,7 @@ import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.createGlideUrl
@@ -74,7 +75,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                     Glide.with(requireContext())
                         .load(url)
                         .centerCrop()
-                        .error(R.drawable.default_background)
+                        .error(StashPresenter.glideError(requireContext()))
                         .into(mPerformerImage)
                 }
 
