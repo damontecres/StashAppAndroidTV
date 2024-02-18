@@ -100,6 +100,13 @@
             app:showSeekBarValue="true"
             android:max="300"
             app:defaultValue="10" />
+        <SwitchPreference
+            app:key="skipWithDpad"
+            app:title="D-Pad skipping"
+            app:summaryOn="Skip back/forward with D-Pad left/right on ExoPlayer"
+            app:summaryOff="Don't skip back/forward with D-Pad left/right on ExoPlayer"
+            app:defaultValue="true"
+            />
         <ListPreference
             app:key="stream_choice"
             app:title="Stream Choice"
