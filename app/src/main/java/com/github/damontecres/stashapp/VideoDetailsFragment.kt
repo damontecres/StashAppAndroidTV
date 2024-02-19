@@ -93,9 +93,28 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private val detailsPresenter =
         FullWidthDetailsOverviewRowPresenter(
             DetailsDescriptionPresenter { sceneId: Int, rating100: Int ->
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                viewLifecycleOwner.lifecycleScope.launch(
+                    StashCoroutineExceptionHandler(
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to set rating",
+                            Toast.LENGTH_SHORT,
+                        ),
+                    ),
+                ) {
                     MutationEngine(requireContext()).setRating(sceneId, rating100)
-                    Toast.makeText(requireContext(), "Set a new rating!", Toast.LENGTH_SHORT).show()
+                    val ratingsAsStars = ServerPreferences(requireContext()).ratingsAsStars
+                    val ratingStr =
+                        if (ratingsAsStars) {
+                            (rating100 / 20.0).toString() + " stars"
+                        } else {
+                            (rating100 / 10.0).toString()
+                        }
+                    Toast.makeText(
+                        requireContext(),
+                        "Set rating to $ratingStr!",
+                        Toast.LENGTH_SHORT,
+                    ).show()
                 }
             },
         )
@@ -133,7 +152,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             startActivity(intent)
         } else {
             val queryEngine = QueryEngine(requireContext())
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            viewLifecycleOwner.lifecycleScope.launch(
+                StashCoroutineExceptionHandler(
+                    Toast.makeText(
+                        requireContext(),
+                        "Failed to load scene",
+                        Toast.LENGTH_LONG,
+                    ),
+                ),
+            ) {
                 mSelectedMovie = queryEngine.getScene(sceneId.toInt())
                 if (mSelectedMovie!!.resume_time != null) {
                     position = (mSelectedMovie!!.resume_time!! * 1000).toLong()
@@ -524,7 +551,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         }
 
         override fun incrementOCounter(counter: OCounter) {
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            viewLifecycleOwner.lifecycleScope.launch(
+                StashCoroutineExceptionHandler(
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.failed_o_counter),
+                        Toast.LENGTH_SHORT,
+                    ),
+                ),
+            ) {
                 val mutationEngine = MutationEngine(requireContext())
                 val newCounter = mutationEngine.incrementOCounter(counter.sceneId)
                 mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCounter.count)
@@ -727,7 +762,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             popUpItemPosition: Int,
         ) {
             val mutationEngine = MutationEngine(requireContext())
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            viewLifecycleOwner.lifecycleScope.launch(
+                StashCoroutineExceptionHandler(
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.failed_o_counter),
+                        Toast.LENGTH_SHORT,
+                    ),
+                ),
+            ) {
                 when (popUpItemPosition) {
                     0 -> {
                         // Decrement
