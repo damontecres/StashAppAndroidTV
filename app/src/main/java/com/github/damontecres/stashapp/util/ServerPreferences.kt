@@ -22,6 +22,8 @@ class ServerPreferences(private val context: Context) {
 
     val minimumPlayPercent get() = preferences.getInt(PREF_MINIMUM_PLAY_PERCENT, 20)
 
+    val ratingsAsStars get() = preferences.getString(PREF_RATING_TYPE, "stars") == "star"
+
     suspend fun updatePreferences() {
         val queryEngine = QueryEngine(context)
         val query = ConfigurationQuery()

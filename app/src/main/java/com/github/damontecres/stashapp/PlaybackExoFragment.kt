@@ -8,6 +8,7 @@ import android.widget.AdapterView
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -261,7 +262,15 @@ class PlaybackExoFragment :
         val oCounterButton = view.findViewById<ImageButton>(R.id.controls_o_counter_button)
         oCounterButton.onFocusChangeListener = onFocusChangeListener
         oCounterButton.setOnClickListener {
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            viewLifecycleOwner.lifecycleScope.launch(
+                StashCoroutineExceptionHandler(
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.failed_o_counter),
+                        Toast.LENGTH_SHORT,
+                    ),
+                ),
+            ) {
                 val newCounter =
                     MutationEngine(requireContext()).incrementOCounter(scene.id.toInt())
                 oCounterText.text = newCounter.count.toString()
@@ -275,7 +284,15 @@ class PlaybackExoFragment :
                 ),
             ) { _: AdapterView<*>, _: View, popUpItemPosition: Int, id: Long ->
                 val mutationEngine = MutationEngine(requireContext())
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                viewLifecycleOwner.lifecycleScope.launch(
+                    StashCoroutineExceptionHandler(
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.failed_o_counter),
+                            Toast.LENGTH_SHORT,
+                        ),
+                    ),
+                ) {
                     when (popUpItemPosition) {
                         0 -> {
                             // Decrement
