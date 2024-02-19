@@ -242,6 +242,22 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         return result.data?.sceneMarkerDestroy ?: false
     }
 
+    suspend fun setRating(
+        sceneId: Int,
+        rating100: Int,
+    ) {
+        Log.v(TAG, "setRating sceneId=$sceneId, rating=$rating100")
+        val mutation =
+            SceneUpdateMutation(
+                input =
+                    SceneUpdateInput(
+                        id = sceneId.toString(),
+                        rating100 = Optional.present(rating100),
+                    ),
+            )
+        executeMutation(mutation)
+    }
+
     companion object {
         const val TAG = "MutationEngine"
     }

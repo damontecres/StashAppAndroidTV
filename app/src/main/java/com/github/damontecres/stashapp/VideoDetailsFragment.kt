@@ -91,7 +91,14 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private val playActionsAdapter = ArrayObjectAdapter()
     private var position = -1L // The position in the video
     private val detailsPresenter =
-        FullWidthDetailsOverviewRowPresenter(DetailsDescriptionPresenter())
+        FullWidthDetailsOverviewRowPresenter(
+            DetailsDescriptionPresenter { sceneId: Int, rating100: Int ->
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    MutationEngine(requireContext()).setRating(sceneId, rating100)
+                    Toast.makeText(requireContext(), "Set a new rating!", Toast.LENGTH_SHORT).show()
+                }
+            },
+        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate DetailsFragment")

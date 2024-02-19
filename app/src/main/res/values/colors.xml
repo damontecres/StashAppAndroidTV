@@ -6,4 +6,5 @@
     <color name="selected_background">#4785b5</color>
     <color name="default_background">#202b33</color>
     <color name="default_card_background">#30404d</color>
+    <color name="gold">#FFD700</color>
 </resources>
