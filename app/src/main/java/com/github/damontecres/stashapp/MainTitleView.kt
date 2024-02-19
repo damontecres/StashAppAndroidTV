@@ -19,6 +19,13 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
     private var mPreferencesView: ImageButton
     private lateinit var searchButton: ImageButton
 
+    private val scenesButton: Button
+    private val performersButton: Button
+    private val studiosButton: Button
+    private val tagsButton: Button
+    private val moviesButton: Button
+    private val markersButton: Button
+
     private val mTitleViewAdapter =
         object : TitleViewAdapter() {
             override fun getSearchAffordanceView(): View {
@@ -38,80 +45,80 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         searchButton.onFocusChangeListener = onFocusChangeListener
         mPreferencesView.onFocusChangeListener = onFocusChangeListener
 
-        val menuItems =
-            ServerPreferences(context).preferences.getStringSet(
-                ServerPreferences.PREF_INTERFACE_MENU_ITEMS,
-                ServerPreferences.DEFAULT_MENU_ITEMS,
-            )!!
-
-        val scenesButton = root.findViewById<Button>(R.id.scenes_button)
+        scenesButton = root.findViewById<Button>(R.id.scenes_button)
         scenesButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.SCENE.name)
             startActivity(context, intent, null)
         }
         scenesButton.onFocusChangeListener = onFocusChangeListener
-        if ("scenes" !in menuItems) {
-            scenesButton.visibility = View.GONE
-        }
 
-        val performersButton = root.findViewById<Button>(R.id.performers_button)
+        performersButton = root.findViewById<Button>(R.id.performers_button)
         performersButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.PERFORMER.name)
             startActivity(context, intent, null)
         }
         performersButton.onFocusChangeListener = onFocusChangeListener
-        if ("performers" !in menuItems) {
-            performersButton.visibility = View.GONE
-        }
 
-        val studiosButton = root.findViewById<Button>(R.id.studios_button)
+        studiosButton = root.findViewById<Button>(R.id.studios_button)
         studiosButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.STUDIO.name)
             startActivity(context, intent, null)
         }
         studiosButton.onFocusChangeListener = onFocusChangeListener
-        if ("studios" !in menuItems) {
-            studiosButton.visibility = View.GONE
-        }
 
-        val tagsButton = root.findViewById<Button>(R.id.tags_button)
+        tagsButton = root.findViewById<Button>(R.id.tags_button)
         tagsButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.TAG.name)
             startActivity(context, intent, null)
         }
         tagsButton.onFocusChangeListener = onFocusChangeListener
-        if ("tags" !in menuItems) {
-            tagsButton.visibility = View.GONE
-        }
 
-        val moviesButton = root.findViewById<Button>(R.id.movies_button)
+        moviesButton = root.findViewById<Button>(R.id.movies_button)
         moviesButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.MOVIE.name)
             startActivity(context, intent, null)
         }
         moviesButton.onFocusChangeListener = onFocusChangeListener
-        if ("movies" !in menuItems) {
-            moviesButton.visibility = View.GONE
-        }
 
-        val markersButton = root.findViewById<Button>(R.id.markers_button)
+        markersButton = root.findViewById<Button>(R.id.markers_button)
         markersButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.MARKER.name)
             startActivity(context, intent, null)
         }
         markersButton.onFocusChangeListener = onFocusChangeListener
-        if ("markers" !in menuItems) {
-            markersButton.visibility = View.GONE
-        }
+
+        refreshMenuItems()
     }
 
     override fun getTitleViewAdapter(): TitleViewAdapter {
         return mTitleViewAdapter
+    }
+
+    fun refreshMenuItems() {
+        val menuItems =
+            ServerPreferences(context).preferences.getStringSet(
+                ServerPreferences.PREF_INTERFACE_MENU_ITEMS,
+                ServerPreferences.DEFAULT_MENU_ITEMS,
+            )!!
+
+        fun getVis(key: String): Int {
+            return if (key in menuItems) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
+        }
+        scenesButton.visibility = getVis("scenes")
+        performersButton.visibility = getVis("performers")
+        studiosButton.visibility = getVis("studios")
+        tagsButton.visibility = getVis("tags")
+        moviesButton.visibility = getVis("movies")
+        markersButton.visibility = getVis("markers")
     }
 }
