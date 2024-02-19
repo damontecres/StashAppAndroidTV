@@ -112,6 +112,7 @@ class StashItemViewClickListener(
             intent.putExtra("description", item.description)
             intent.putExtra("useRandom", false)
             intent.putExtra("moveOnePage", true)
+            intent.putExtra("query", item.query)
             activity.startActivity(intent)
         } else if (item is StashAction) {
             if (actionListener != null) {

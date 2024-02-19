@@ -159,10 +159,11 @@ class FilterListActivity : FragmentActivity() {
             } else {
                 throw RuntimeException("dataType is required")
             }
+        val query = intent.getStringExtra("query")
         if (savedFilterId != null) {
             // Load a saved filter
             return queryEngine.getSavedFilter(savedFilterId.toString())
-        } else if (direction != null || sortBy != null) {
+        } else if (direction != null || sortBy != null || query != null) {
             // Generic filter
             return SavedFilterData(
                 id = "-1",
@@ -170,7 +171,7 @@ class FilterListActivity : FragmentActivity() {
                 name = getString(dataType.pluralStringId),
                 find_filter =
                     SavedFilterData.Find_filter(
-                        q = null,
+                        q = query,
                         page = null,
                         per_page = null,
                         sort = sortBy,
