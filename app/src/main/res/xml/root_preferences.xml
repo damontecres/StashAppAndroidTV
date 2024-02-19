@@ -81,8 +81,13 @@
             app:key="scrollToNextResult"
             app:title="Scroll to next on View All"
             app:summary="Automatically scroll down to the 'next' results when clicking View All on main page"
-            app:defaultValue="true"
-            />
+            app:defaultValue="true" />
+        <SwitchPreference
+            app:key="scrollSceneDetails"
+            app:title="Long scene details behavior"
+            app:summaryOn="Scroll if needed"
+            app:summaryOff="Truncate details"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">

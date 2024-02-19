@@ -5,13 +5,16 @@ import android.view.View
 import android.widget.RatingBar
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.concatIfNotBlank
+import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.titleOrFilename
 
 class DetailsDescriptionPresenter(val ratingCallback: RatingCallback) :
@@ -24,6 +27,17 @@ class DetailsDescriptionPresenter(val ratingCallback: RatingCallback) :
 
         viewHolder.title.text = scene.titleOrFilename
         viewHolder.body.text = scene.details
+
+        val scrollView = viewHolder.view.findViewById<NestedScrollView>(R.id.description_scrollview)
+        val useScrollbar =
+            PreferenceManager.getDefaultSharedPreferences(viewHolder.view.context)
+                .getBoolean("scrollSceneDetails", true)
+        if (useScrollbar) {
+            scrollView.onlyScrollIfNeeded()
+        } else {
+            scrollView.isFocusable = false
+            scrollView.isVerticalScrollBarEnabled = false
+        }
 
         val file = scene.files.firstOrNull()
         if (file != null) {

@@ -1,7 +1,7 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     >
 
@@ -45,13 +45,22 @@
         android:id="@+id/lb_details_description_subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="?attr/detailsDescriptionSubtitleStyle"
-        />
+        style="?attr/detailsDescriptionSubtitleStyle" />
 
-    <TextView
-        android:id="@+id/lb_details_description_body"
-        android:layout_width="wrap_content"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/description_scrollview"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        style="?attr/detailsDescriptionBodyStyle"
-        />
+        android:paddingBottom="25dp"
+        android:fadeScrollbars="false"
+        android:scrollbars="vertical"
+        android:scrollbarAlwaysDrawVerticalTrack="true"
+        android:scrollbarThumbVertical="@color/focus_color">
+
+        <TextView
+            android:id="@+id/lb_details_description_body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="?attr/detailsDescriptionBodyStyle" />
+    </androidx.core.widget.NestedScrollView>
 </LinearLayout>
