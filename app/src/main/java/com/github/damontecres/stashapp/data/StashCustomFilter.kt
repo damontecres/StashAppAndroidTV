@@ -10,4 +10,5 @@ data class StashCustomFilter(
     val direction: String?,
     val sortBy: String?,
     val description: String,
+    val query: String? = null,
 ) : Parcelable
