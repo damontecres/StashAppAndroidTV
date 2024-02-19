@@ -47,6 +47,30 @@ class ServerPreferences(private val context: Context) {
                         Log.w(TAG, "$PREF_MINIMUM_PLAY_PERCENT is not an integer: '$it'")
                     }
                 }
+                val ratingSystemOptionsRaw = ui.getCaseInsensitive("ratingSystemOptions")
+                if (ratingSystemOptionsRaw != null) {
+                    try {
+                        val ratingSystemOptions = ratingSystemOptionsRaw as Map<String, String>
+                        val type = ratingSystemOptions["type"] ?: "star"
+                        val starPrecision =
+                            when (ratingSystemOptions["starPrecision"]?.lowercase()) {
+                                "full" -> 1.0f
+                                "half" -> 0.5f
+                                "quarter" -> 0.25f
+                                "tenth" -> 0.1f
+                                else -> null
+                            }
+                        putString(PREF_RATING_TYPE, type)
+                        if (starPrecision != null) {
+                            putFloat(PREF_RATING_PRECISION, starPrecision)
+                        }
+                    } catch (ex: Exception) {
+                        Log.e(
+                            TAG,
+                            "Exception parsing ratingSystemOptions: $ratingSystemOptionsRaw",
+                        )
+                    }
+                }
 
                 val scan = config.defaults.scan
                 if (scan != null) {
@@ -88,6 +112,8 @@ class ServerPreferences(private val context: Context) {
 
         const val PREF_TRACK_ACTIVITY = "trackActivity"
         const val PREF_MINIMUM_PLAY_PERCENT = "minimumPlayPercent"
+        const val PREF_RATING_TYPE = "ratingSystemOptions.type"
+        const val PREF_RATING_PRECISION = "ratingSystemOptions.starPrecision"
 
         // Scan default settings
         const val PREF_SCAN_GENERATE_COVERS = "scanGenerateCovers"
