@@ -128,6 +128,9 @@ class MainFragment : BrowseSupportFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             if (testStashConnection(requireContext(), false) != null) {
                 ServerPreferences(requireContext()).updatePreferences()
+                val mainTitleView =
+                    requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
+                mainTitleView.refreshMenuItems()
                 if (rowsAdapter.size() == 0) {
                     fetchData()
                 }
