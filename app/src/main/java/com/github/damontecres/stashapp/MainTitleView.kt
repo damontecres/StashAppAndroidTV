@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +9,6 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat.startActivity
-import androidx.leanback.widget.SearchOrbView
 import androidx.leanback.widget.TitleViewAdapter
 import com.github.damontecres.stashapp.data.DataType
 
@@ -18,28 +16,26 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
     RelativeLayout(context, attrs),
     TitleViewAdapter.Provider {
     private var mPreferencesView: ImageButton
-    private lateinit var mSearchOrbView: SearchOrbView
+    private lateinit var searchButton: ImageButton
 
     private val mTitleViewAdapter =
         object : TitleViewAdapter() {
             override fun getSearchAffordanceView(): View {
-                return mSearchOrbView
+                return searchButton
             }
         }
 
     init {
         val root = LayoutInflater.from(context).inflate(R.layout.title, this)
-        mSearchOrbView = root.findViewById(R.id.search_orb)
+        searchButton = root.findViewById(R.id.search_button)
         mPreferencesView = root.findViewById(R.id.settings_button)
         mPreferencesView.setOnClickListener {
             val intent = Intent(context, SettingsActivity::class.java)
             startActivity(context, intent, null)
         }
         val onFocusChangeListener = StashOnFocusChangeListener(context)
-        mSearchOrbView.onFocusChangeListener = onFocusChangeListener
+        searchButton.onFocusChangeListener = onFocusChangeListener
         mPreferencesView.onFocusChangeListener = onFocusChangeListener
-        mSearchOrbView.enableOrbColorAnimation(false)
-        mSearchOrbView.orbColor = Color.TRANSPARENT
 
         val scenesButton = root.findViewById<Button>(R.id.scenes_button)
         scenesButton.setOnClickListener {

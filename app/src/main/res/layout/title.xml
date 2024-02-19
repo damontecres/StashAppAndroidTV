@@ -13,19 +13,21 @@
         android:contentDescription="@string/stashapp_image"
         android:layout_alignParentStart="true" />
 
-    <androidx.leanback.widget.SearchOrbView
-        android:id="@+id/search_orb"
-        android:layout_width="80dp"
+    <ImageButton
+        android:id="@+id/search_button"
+        android:layout_width="56dp"
         android:layout_height="80dp"
+        android:src="@drawable/lb_ic_in_app_search"
         android:layout_toEndOf="@id/icon"
-        style="@style/TitleBarButton" />
+        style="@style/TitleBarButton"
+        android:contentDescription="@string/stashapp_actions_search" />
 
     <Button
         android:id="@+id/scenes_button"
         android:text="@string/stashapp_scenes"
         android:layout_width="88dp"
         android:layout_height="80dp"
-        android:layout_toEndOf="@+id/search_orb"
+        android:layout_toEndOf="@id/search_button"
         style="@style/TitleBarButton" />
 
     <Button
