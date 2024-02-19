@@ -11,6 +11,7 @@ import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat.startActivity
 import androidx.leanback.widget.TitleViewAdapter
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.ServerPreferences
 
 class MainTitleView(context: Context, attrs: AttributeSet) :
     RelativeLayout(context, attrs),
@@ -37,6 +38,12 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         searchButton.onFocusChangeListener = onFocusChangeListener
         mPreferencesView.onFocusChangeListener = onFocusChangeListener
 
+        val menuItems =
+            ServerPreferences(context).preferences.getStringSet(
+                ServerPreferences.PREF_INTERFACE_MENU_ITEMS,
+                ServerPreferences.DEFAULT_MENU_ITEMS,
+            )!!
+
         val scenesButton = root.findViewById<Button>(R.id.scenes_button)
         scenesButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
@@ -44,6 +51,10 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             startActivity(context, intent, null)
         }
         scenesButton.onFocusChangeListener = onFocusChangeListener
+        if ("scenes" !in menuItems) {
+            scenesButton.visibility = View.GONE
+        }
+
         val performersButton = root.findViewById<Button>(R.id.performers_button)
         performersButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
@@ -51,6 +62,10 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             startActivity(context, intent, null)
         }
         performersButton.onFocusChangeListener = onFocusChangeListener
+        if ("performers" !in menuItems) {
+            performersButton.visibility = View.GONE
+        }
+
         val studiosButton = root.findViewById<Button>(R.id.studios_button)
         studiosButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
@@ -58,6 +73,10 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             startActivity(context, intent, null)
         }
         studiosButton.onFocusChangeListener = onFocusChangeListener
+        if ("studios" !in menuItems) {
+            studiosButton.visibility = View.GONE
+        }
+
         val tagsButton = root.findViewById<Button>(R.id.tags_button)
         tagsButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
@@ -65,6 +84,10 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             startActivity(context, intent, null)
         }
         tagsButton.onFocusChangeListener = onFocusChangeListener
+        if ("tags" !in menuItems) {
+            tagsButton.visibility = View.GONE
+        }
+
         val moviesButton = root.findViewById<Button>(R.id.movies_button)
         moviesButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
@@ -72,6 +95,10 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             startActivity(context, intent, null)
         }
         moviesButton.onFocusChangeListener = onFocusChangeListener
+        if ("movies" !in menuItems) {
+            moviesButton.visibility = View.GONE
+        }
+
         val markersButton = root.findViewById<Button>(R.id.markers_button)
         markersButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
@@ -79,6 +106,9 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             startActivity(context, intent, null)
         }
         markersButton.onFocusChangeListener = onFocusChangeListener
+        if ("markers" !in menuItems) {
+            markersButton.visibility = View.GONE
+        }
     }
 
     override fun getTitleViewAdapter(): TitleViewAdapter {

@@ -103,12 +103,17 @@ class ServerPreferences(private val context: Context) {
                     putBoolean(PREF_GEN_SPRITES, generate.sprites ?: false)
                     putBoolean(PREF_GEN_TRANSCODES, generate.transcodes ?: false)
                 }
+
+                val menuItems = config.`interface`.menuItems?.map(String::lowercase)?.toSet()
+                putStringSet(PREF_INTERFACE_MENU_ITEMS, menuItems)
             }
         }
     }
 
     companion object {
         const val TAG = "ServerPreferences"
+        val DEFAULT_MENU_ITEMS =
+            setOf("scenes", "movies", "markers", "performers", "studios", "tags")
 
         const val PREF_TRACK_ACTIVITY = "trackActivity"
         const val PREF_MINIMUM_PLAY_PERCENT = "minimumPlayPercent"
@@ -136,5 +141,7 @@ class ServerPreferences(private val context: Context) {
         const val PREF_GEN_PREVIEWS = "previews"
         const val PREF_GEN_SPRITES = "sprites"
         const val PREF_GEN_TRANSCODES = "transcodes"
+
+        const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
     }
 }
