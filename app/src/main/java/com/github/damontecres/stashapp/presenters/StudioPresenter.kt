@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.presenters
 
 import android.widget.ImageView
-import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.DataType
@@ -11,7 +10,7 @@ import java.util.EnumMap
 class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
     StashPresenter<StudioData>(callback) {
     override fun doOnBindViewHolder(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         item: StudioData,
     ) {
         cardView.titleText = item.name

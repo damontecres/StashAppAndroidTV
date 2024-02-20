@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.presenters
 
-import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.data.DataType
 import java.util.EnumMap
@@ -8,7 +7,7 @@ import java.util.EnumMap
 class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
     StashPresenter<MovieData>(callback) {
     override fun doOnBindViewHolder(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         item: MovieData,
     ) {
         if (item.front_image_path != null) {

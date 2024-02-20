@@ -6,7 +6,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.Log
-import androidx.leanback.widget.ImageCardView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
@@ -24,11 +23,10 @@ import java.util.EnumMap
 class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
     StashPresenter<SlimSceneData>(callback) {
     override fun doOnBindViewHolder(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         item: SlimSceneData,
     ) {
         Log.v(TAG, "doOnBindViewHolder for ${item.titleOrFilename}")
-        val stashCardView = cardView as StashImageCardView
 
         cardView.titleText = item.titleOrFilename
 
@@ -55,12 +53,8 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                 .into(cardView.mainImageView!!)
         }
         if (item.paths.preview.isNotNullOrBlank()) {
-            stashCardView.videoUrl = item.paths.preview
+            cardView.videoUrl = item.paths.preview
         }
-    }
-
-    override fun onUnbindViewHolder(viewHolder: ViewHolder) {
-        super.onUnbindViewHolder(viewHolder)
     }
 
     /**

@@ -83,7 +83,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 },
             )
         }
-        doOnBindViewHolder(viewHolder.view as ImageCardView, item as T)
+        doOnBindViewHolder(viewHolder.view as StashImageCardView, item as T)
     }
 
     fun loadImage(
@@ -99,7 +99,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
     }
 
     abstract fun doOnBindViewHolder(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         item: T,
     )
 
