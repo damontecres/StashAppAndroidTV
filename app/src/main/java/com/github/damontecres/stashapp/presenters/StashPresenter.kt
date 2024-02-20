@@ -4,15 +4,26 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.PictureDrawable
 import android.net.Uri
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.VideoView
+import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
@@ -31,12 +42,12 @@ import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.createGlideUrl
 import com.github.damontecres.stashapp.util.enableMarquee
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
 import java.util.EnumMap
 import kotlin.properties.Delegates
 
-abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = null) : Presenter() {
+abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = null) :
+    Presenter() {
     protected var vParent: ViewGroup by Delegates.notNull()
     protected var mDefaultCardImage: Drawable? = null
 
@@ -55,6 +66,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true
         cardView.updateCardBackgroundColor(cardView, false)
+
         return ViewHolder(cardView)
     }
 
@@ -126,13 +138,32 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         item: T,
     )
 
-    final override fun onUnbindViewHolder(viewHolder: ViewHolder) {
+    open override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         val cardView = viewHolder.view as StashImageCardView
         // Remove references to images so that the garbage collector can free up memory
         cardView.badgeImage = null
         cardView.mainImage = null
-        cardView.videoView.stopPlayback()
+        Log.v(
+            TAG,
+            "onUnbindViewHolder ${cardView.videoView.player?.currentMediaItem?.requestMetadata?.mediaUri}",
+        )
+        cardView.videoView.player?.release()
     }
+
+//     override fun onViewAttachedToWindow(holder: ViewHolder) {
+//         super.onViewAttachedToWindow(holder)
+//         val cardView = holder.view as StashImageCardView
+//         Log.v(TAG, "onViewAttachedToWindow: ${cardView.videoUrl}")
+//         cardView.initPlayer()
+//     }
+//
+//     override fun onViewDetachedFromWindow(holder: ViewHolder) {
+//         super.onViewDetachedFromWindow(holder)
+//         val cardView = holder.view as StashImageCardView
+//         Log.v(TAG, "onViewDetachedFromWindow: ${cardView.videoUrl}")
+//         cardView.videoView.player?.release()
+//         cardView.videoView.player = null
+//     }
 
     protected fun setUpExtraRow(cardView: View): ViewGroup {
         val infoView = cardView.findViewById<ViewGroup>(androidx.leanback.R.id.info_field)
@@ -228,30 +259,28 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         private val sDefaultBackgroundColor: Int =
             ContextCompat.getColor(context, R.color.default_card_background)
 
-        val videoView = findViewById<VideoView>(R.id.main_video)
-        private var videoEnabled = false
-
-        private var layoutParams: ViewGroup.LayoutParams? = null
+        var videoUrl: String? = null
+        val videoView: PlayerView = findViewById(R.id.main_video)
 
         override fun setSelected(selected: Boolean) {
-            if (videoEnabled) {
+            if (videoView.player != null) {
                 if (selected) {
-                    val lp = mainImageView.layoutParams
-                    setLayout(videoView!!, lp.width, lp.height)
-                    setLayout(mainImageView, 0, 0)
-                    videoView.setOnErrorListener { mp, what, extra ->
-                        videoEnabled = false
-                        setLayout(mainImageView, lp.width, lp.height)
-                        setLayout(videoView, 0, 0)
-                        true
-                    }
-                    videoView.start()
-                    videoView.seekTo(0)
+                    Log.v(
+                        TAG,
+                        "Playing ${videoView.player}",
+                    )
+                    videoView.player?.seekTo(0)
+                    videoView.player?.playWhenReady = true
                 } else {
-                    val lp = videoView!!.layoutParams
-                    setLayout(mainImageView, lp.width, lp.height)
-                    setLayout(videoView, 0, 0)
-                    videoView.pause()
+//                    val lp = videoView!!.layoutParams
+//                    setLayout(mainImageView, lp.width, lp.height)
+//                    setLayout(videoView, 0, 0)
+                    Log.v(
+                        TAG,
+                        "Pausing ${videoView.player}",
+                    )
+                    videoView.player?.seekTo(0)
+                    videoView.player?.playWhenReady = false
                 }
             }
             updateCardBackgroundColor(this, selected)
@@ -271,27 +300,6 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
             view.setInfoAreaBackgroundColor(color)
         }
 
-        fun setVideoUrl(url: String) {
-            val apiKey =
-                PreferenceManager.getDefaultSharedPreferences(context)
-                    .getString("stashApiKey", null)
-            val headers =
-                if (apiKey.isNotNullOrBlank()) {
-                    mapOf(
-                        Pair(Constants.STASH_API_HEADER, apiKey),
-                        Pair(Constants.STASH_API_HEADER.lowercase(), apiKey),
-                    )
-                } else {
-                    mapOf()
-                }
-
-            videoEnabled = true
-            videoView.setVideoURI(Uri.parse(url), headers)
-            videoView.setOnCompletionListener {
-                it.start()
-            }
-        }
-
         private fun setLayout(
             view: View,
             width: Int,
@@ -307,9 +315,69 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 view.visibility = View.VISIBLE
             }
         }
+
+        @OptIn(UnstableApi::class)
+        fun initPlayer() {
+            if (videoUrl != null) {
+                val apiKey =
+                    PreferenceManager.getDefaultSharedPreferences(context)
+                        .getString("stashApiKey", null)
+                val dataSourceFactory =
+                    DataSource.Factory {
+                        val dataSource = DefaultHttpDataSource.Factory().createDataSource()
+                        if (!apiKey.isNullOrBlank()) {
+                            dataSource.setRequestProperty(Constants.STASH_API_HEADER, apiKey)
+                            dataSource.setRequestProperty(
+                                Constants.STASH_API_HEADER.lowercase(),
+                                apiKey,
+                            )
+                        }
+                        dataSource
+                    }
+
+                val player =
+                    ExoPlayer.Builder(context)
+                        .setMediaSourceFactory(
+                            DefaultMediaSourceFactory(context).setDataSourceFactory(
+                                dataSourceFactory,
+                            ),
+                        )
+                        .build()
+                val mediaItem =
+                    MediaItem.Builder()
+                        .setUri(Uri.parse(videoUrl))
+                        .setMimeType(MimeTypes.VIDEO_MP4)
+                        .build()
+
+                val lp = mainImageView.layoutParams
+                val width = lp.width
+                val height = lp.height
+                player.addListener(
+                    object : Player.Listener {
+                        override fun onIsPlayingChanged(isPlaying: Boolean) {
+                            Log.v(TAG, "isPlaying=$isPlaying, width=$width, height=$height")
+                            if (isPlaying) {
+                                setLayout(videoView!!, width, height)
+                                setLayout(mainImageView, 0, 0)
+                            } else {
+                                setLayout(videoView!!, 0, 0)
+                                setLayout(mainImageView, width, height)
+                            }
+                        }
+                    },
+                )
+
+                videoView.player = player
+                player.setMediaItem(mediaItem)
+                player.prepare()
+                player.repeatMode = Player.REPEAT_MODE_ONE
+            }
+        }
     }
 
     companion object {
+        private const val TAG = "StashPresenter"
+
         val SELECTOR: ClassPresenterSelector =
             ClassPresenterSelector()
                 .addClassPresenter(PerformerData::class.java, PerformerPresenter())

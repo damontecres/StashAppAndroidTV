@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.Log
 import androidx.leanback.widget.ImageCardView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
@@ -15,6 +16,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.security.MessageDigest
 import java.util.EnumMap
@@ -25,10 +27,8 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         cardView: ImageCardView,
         item: SlimSceneData,
     ) {
+        Log.v(TAG, "doOnBindViewHolder for ${item.titleOrFilename}")
         val stashCardView = cardView as StashImageCardView
-        if (item.paths.preview != null) {
-            stashCardView.setVideoUrl(item.paths.preview)
-        }
 
         cardView.titleText = item.titleOrFilename
 
@@ -45,8 +45,8 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
 
         setUpExtraRow(cardView, dataTypeMap, item.o_counter)
 
+        cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         if (!item.paths.screenshot.isNullOrBlank()) {
-            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             val url = createGlideUrl(item.paths.screenshot, vParent.context)
             Glide.with(cardView.context)
                 .load(url)
@@ -54,6 +54,13 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
         }
+        if (item.paths.preview.isNotNullOrBlank()) {
+            stashCardView.videoUrl = item.paths.preview
+        }
+    }
+
+    override fun onUnbindViewHolder(viewHolder: ViewHolder) {
+        super.onUnbindViewHolder(viewHolder)
     }
 
     /**
