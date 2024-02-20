@@ -12,7 +12,6 @@ class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
         cardView: StashImageCardView,
         item: Any,
     ) {
-        setUpExtraRow(cardView)
         cardView.titleText = "View All"
 
         val mode: FilterMode =

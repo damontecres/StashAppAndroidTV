@@ -41,7 +41,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         dataTypeMap[DataType.MOVIE] = item.movies.size
         dataTypeMap[DataType.MARKER] = item.scene_markers.size
 
-        setUpExtraRow(cardView, dataTypeMap, item.o_counter)
+        cardView.setUpExtraRow(dataTypeMap, item.o_counter)
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         if (!item.paths.screenshot.isNullOrBlank()) {

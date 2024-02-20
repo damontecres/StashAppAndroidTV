@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.PictureDrawable
 import android.net.Uri
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -112,81 +111,6 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         cardView.videoView.player = null
     }
 
-    protected fun setUpExtraRow(cardView: View): ViewGroup {
-        val infoView = cardView.findViewById<ViewGroup>(androidx.leanback.R.id.info_field)
-        return LayoutInflater.from(infoView.context)
-            .inflate(R.layout.image_card_extra, infoView, true) as ViewGroup
-    }
-
-    protected fun setUpExtraRow(
-        cardView: View,
-        iconMap: EnumMap<DataType, Int>,
-        oCounter: Int?,
-    ) {
-        val sceneExtra = setUpExtraRow(cardView)
-
-        DataType.entries.forEach {
-            val count = iconMap[it] ?: -1
-            setUpIcon(sceneExtra, it, count)
-        }
-        setUpIcon(sceneExtra, null, oCounter ?: -1)
-    }
-
-    private fun setUpIcon(
-        rootView: ViewGroup,
-        dataType: DataType?,
-        count: Int,
-    ) {
-        val textResId: Int
-        val iconResId: Int
-        when (dataType) {
-            DataType.MOVIE -> {
-                textResId = R.id.extra_movie_count
-                iconResId = R.id.extra_movie_icon
-            }
-
-            DataType.MARKER -> {
-                textResId = R.id.extra_marker_count
-                iconResId = R.id.extra_marker_icon
-            }
-
-            DataType.PERFORMER -> {
-                textResId = R.id.extra_performer_count
-                iconResId = R.id.extra_performer_icon
-            }
-
-            DataType.TAG -> {
-                textResId = R.id.extra_tag_count
-                iconResId = R.id.extra_tag_icon
-            }
-
-            DataType.SCENE -> {
-                textResId = R.id.extra_scene_count
-                iconResId = R.id.extra_scene_icon
-            }
-
-            // Workaround for O Counter
-            null -> {
-                textResId = R.id.extra_ocounter_count
-                iconResId = R.id.extra_ocounter_icon
-            }
-
-            else -> return
-        }
-        val textView = rootView.findViewById<TextView>(textResId)
-        val iconView = rootView.findViewById<View>(iconResId)
-        if (count > 0) {
-            textView.text = count.toString()
-            textView.visibility = View.VISIBLE
-            iconView.visibility = View.VISIBLE
-            (textView.parent as ViewGroup).visibility = View.VISIBLE
-        } else {
-            textView.visibility = View.GONE
-            iconView.visibility = View.GONE
-            (textView.parent as ViewGroup).visibility = View.GONE
-        }
-    }
-
     interface LongClickCallBack<T> {
         val popUpItems: List<String>
 
@@ -205,6 +129,10 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         var videoUrl: String? = null
         var videoPosition = -1L
         val videoView: PlayerView = findViewById(R.id.main_video)
+        private val dataTypeViews =
+            EnumMap<DataType, Pair<TextView, View>>(DataType::class.java)
+        private val oCounterTextView: TextView
+        private val oCounterIconView: View
 
         private var imageWidth by Delegates.notNull<Int>()
         private var imageHeight by Delegates.notNull<Int>()
@@ -212,6 +140,41 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         private val playVideoPreviews =
             PreferenceManager.getDefaultSharedPreferences(context)
                 .getBoolean("playVideoPreviews", true)
+
+        init {
+            dataTypeViews[DataType.MOVIE] =
+                Pair(
+                    findViewById(R.id.extra_movie_count),
+                    findViewById(R.id.extra_movie_icon),
+                )
+            dataTypeViews[DataType.MARKER] =
+                Pair(
+                    findViewById(R.id.extra_marker_count),
+                    findViewById(R.id.extra_marker_icon),
+                )
+            dataTypeViews[DataType.PERFORMER] =
+                Pair(
+                    findViewById(R.id.extra_performer_count),
+                    findViewById(R.id.extra_performer_icon),
+                )
+            dataTypeViews[DataType.TAG] =
+                Pair(
+                    findViewById(R.id.extra_tag_count),
+                    findViewById(R.id.extra_tag_icon),
+                )
+            dataTypeViews[DataType.SCENE] =
+                Pair(
+                    findViewById(R.id.extra_scene_count),
+                    findViewById(R.id.extra_scene_icon),
+                )
+            dataTypeViews[DataType.MOVIE] =
+                Pair(
+                    findViewById(R.id.extra_movie_count),
+                    findViewById(R.id.extra_movie_icon),
+                )
+            oCounterTextView = findViewById(R.id.extra_ocounter_count)
+            oCounterIconView = findViewById(R.id.extra_ocounter_icon)
+        }
 
         override fun setSelected(selected: Boolean) {
             if (playVideoPreviews && videoUrl != null) {
@@ -322,6 +285,47 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                     player.seekTo(videoPosition)
                 }
                 player.playWhenReady = true
+            }
+        }
+
+        fun setUpExtraRow(
+            iconMap: EnumMap<DataType, Int>,
+            oCounter: Int?,
+        ) {
+            DataType.entries.forEach {
+                val count = iconMap[it] ?: -1
+                setUpIcon(it, count)
+            }
+            if ((oCounter ?: -1) > 0) {
+                oCounterTextView.text = oCounter.toString()
+                oCounterTextView.visibility = View.VISIBLE
+                oCounterIconView.visibility = View.VISIBLE
+                (oCounterTextView.parent as ViewGroup).visibility = View.VISIBLE
+            } else {
+                oCounterTextView.visibility = View.GONE
+                oCounterIconView.visibility = View.GONE
+                (oCounterTextView.parent as ViewGroup).visibility = View.GONE
+            }
+        }
+
+        private fun setUpIcon(
+            dataType: DataType,
+            count: Int,
+        ) {
+            val views = dataTypeViews[dataType]
+            if (views != null) {
+                val textView = views.first
+                val iconView = views.second
+                if (count > 0) {
+                    textView.text = count.toString()
+                    textView.visibility = View.VISIBLE
+                    iconView.visibility = View.VISIBLE
+                    (textView.parent as ViewGroup).visibility = View.VISIBLE
+                } else {
+                    textView.visibility = View.GONE
+                    iconView.visibility = View.GONE
+                    (textView.parent as ViewGroup).visibility = View.GONE
+                }
             }
         }
     }

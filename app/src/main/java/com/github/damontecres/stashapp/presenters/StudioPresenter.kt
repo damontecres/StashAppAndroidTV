@@ -23,7 +23,7 @@ class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
         dataTypeMap[DataType.SCENE] = item.scene_count
         dataTypeMap[DataType.PERFORMER] = item.performer_count
         dataTypeMap[DataType.MOVIE] = item.movie_count
-        setUpExtraRow(cardView, dataTypeMap, null)
+        cardView.setUpExtraRow(dataTypeMap, null)
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER)

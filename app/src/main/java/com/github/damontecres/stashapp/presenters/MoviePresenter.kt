@@ -16,7 +16,8 @@ class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
 
             val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
             dataTypeMap[DataType.SCENE] = item.scene_count
-            setUpExtraRow(cardView, dataTypeMap, null)
+
+            cardView.setUpExtraRow(dataTypeMap, null)
 
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             loadImage(cardView, item.front_image_path)

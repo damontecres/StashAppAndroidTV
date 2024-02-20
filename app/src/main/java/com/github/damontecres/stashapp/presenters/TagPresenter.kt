@@ -14,7 +14,7 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         dataTypeMap[DataType.SCENE] = item.scene_count
         dataTypeMap[DataType.PERFORMER] = item.performer_count
         dataTypeMap[DataType.MARKER] = item.scene_marker_count
-        setUpExtraRow(cardView, dataTypeMap, null)
+        cardView.setUpExtraRow(dataTypeMap, null)
 
         cardView.titleText = item.name
         cardView.contentText = item.description

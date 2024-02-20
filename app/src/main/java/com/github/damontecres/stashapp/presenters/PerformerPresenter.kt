@@ -25,7 +25,7 @@ class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.SCENE] = item.scene_count
 
-        setUpExtraRow(cardView, dataTypeMap, item.o_counter)
+        cardView.setUpExtraRow(dataTypeMap, item.o_counter)
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         if (item.image_path != null) {
