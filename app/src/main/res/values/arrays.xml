@@ -6,19 +6,13 @@
         <item>WEBM</item>
     </string-array>
 
+    <string name="playback_finished_do_nothing">Do nothing</string>
+    <string name="playback_finished_repeat">Repeat scene</string>
+    <string name="playback_finished_return">Return to scene details</string>
     <string-array name="playback_finished_behavior_options">
-        <item>Do nothing</item>
-        <item>Repeat scene</item>
-        <item>Return to scene details</item>
-    </string-array>
-
-    <integer name="playback_finished_do_nothing">0</integer>
-    <integer name="playback_finished_repeat">1</integer>
-    <integer name="playback_finished_return">2</integer>
-    <string-array name="playback_finished_behavior_options_values">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
+        <item>@string/playback_finished_do_nothing</item>
+        <item>@string/playback_finished_repeat</item>
+        <item>@string/playback_finished_return</item>
     </string-array>
 
 </resources>

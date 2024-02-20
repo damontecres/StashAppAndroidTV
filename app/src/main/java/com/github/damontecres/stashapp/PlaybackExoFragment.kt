@@ -126,16 +126,19 @@ class PlaybackExoFragment :
                         PreferenceManager.getDefaultSharedPreferences(requireContext())
                             .getString(
                                 "playbackFinishedBehavior",
-                                R.integer.playback_finished_do_nothing.toString(),
-                            )!!.toInt()
+                                getString(R.string.playback_finished_do_nothing),
+                            )
                     when (finishedBehavior) {
-                        resources.getInteger(R.integer.playback_finished_repeat) -> {
+                        getString(R.string.playback_finished_repeat) -> {
                             exoPlayer.addListener(
                                 object :
                                     Player.Listener {
                                     override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
                                         if (Player.COMMAND_SET_REPEAT_MODE in availableCommands) {
-                                            Log.v(TAG, "Listener setting repeatMode to REPEAT_MODE_ONE")
+                                            Log.v(
+                                                TAG,
+                                                "Listener setting repeatMode to REPEAT_MODE_ONE",
+                                            )
                                             exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
                                             exoPlayer.removeListener(this)
                                         }
@@ -144,7 +147,7 @@ class PlaybackExoFragment :
                             )
                         }
 
-                        resources.getInteger(R.integer.playback_finished_return) ->
+                        getString(R.string.playback_finished_return) ->
                             exoPlayer.addListener(
                                 object :
                                     Player.Listener {
@@ -156,7 +159,7 @@ class PlaybackExoFragment :
                                     }
                                 })
 
-                        resources.getInteger(R.integer.playback_finished_do_nothing) -> {
+                        getString(R.string.playback_finished_do_nothing) -> {
                             // no-op
                         }
 
