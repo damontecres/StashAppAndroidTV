@@ -122,6 +122,47 @@ class PlaybackExoFragment :
                         exoPlayer.addListener(PlaybackListener())
                     }
                 }.also { exoPlayer ->
+                    val finishedBehavior =
+                        PreferenceManager.getDefaultSharedPreferences(requireContext())
+                            .getString(
+                                "playbackFinishedBehavior",
+                                R.integer.playback_finished_do_nothing.toString(),
+                            )!!.toInt()
+                    when (finishedBehavior) {
+                        resources.getInteger(R.integer.playback_finished_repeat) -> {
+                            exoPlayer.addListener(
+                                object :
+                                    Player.Listener {
+                                    override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
+                                        if (Player.COMMAND_SET_REPEAT_MODE in availableCommands) {
+                                            Log.v(TAG, "Listener setting repeatMode to REPEAT_MODE_ONE")
+                                            exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
+                                            exoPlayer.removeListener(this)
+                                        }
+                                    }
+                                },
+                            )
+                        }
+
+                        resources.getInteger(R.integer.playback_finished_return) ->
+                            exoPlayer.addListener(
+                                object :
+                                    Player.Listener {
+                                    override fun onPlaybackStateChanged(playbackState: Int) {
+                                        if (playbackState == Player.STATE_ENDED) {
+                                            Log.v(TAG, "Finishing activity")
+                                            requireActivity().finish()
+                                        }
+                                    }
+                                })
+
+                        resources.getInteger(R.integer.playback_finished_do_nothing) -> {
+                            // no-op
+                        }
+
+                        else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
+                    }
+                }.also { exoPlayer ->
                     var mediaItem: MediaItem? = null
                     var streamUrl = scene.streams["Direct stream"]
                     if (streamUrl != null && scene.videoCodec != "av1" && !forceTranscode) {

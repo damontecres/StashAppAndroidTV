@@ -125,6 +125,14 @@
             app:showSeekBarValue="true"
             android:max="15000"
             app:defaultValue="5000" />
+        <ListPreference
+            app:key="playbackFinishedBehavior"
+            app:title="Playback finished behavior"
+            app:defaultValue="0"
+            app:useSimpleSummaryProvider="true"
+            app:entries="@array/playback_finished_behavior_options"
+            app:entryValues="@array/playback_finished_behavior_options_values"
+            />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/stashapp_config_tasks_job_queue">
