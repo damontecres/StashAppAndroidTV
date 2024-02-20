@@ -88,6 +88,12 @@
             app:summaryOn="Scroll if needed"
             app:summaryOff="Truncate details"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="playVideoPreviews"
+            app:title="Play video previews"
+            app:summaryOn="Video preview will play when item is selected"
+            app:summaryOff="Video previews will not play"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">

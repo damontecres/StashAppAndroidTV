@@ -209,8 +209,12 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         private var imageWidth by Delegates.notNull<Int>()
         private var imageHeight by Delegates.notNull<Int>()
 
+        private val playVideoPreviews =
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean("playVideoPreviews", true)
+
         override fun setSelected(selected: Boolean) {
-            if (videoUrl != null) {
+            if (playVideoPreviews && videoUrl != null) {
                 if (selected) {
                     initPlayer()
                     videoView.player?.seekTo(0)
@@ -265,7 +269,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         }
 
         @OptIn(UnstableApi::class)
-        fun initPlayer() {
+        private fun initPlayer() {
             if (videoUrl != null) {
                 val apiKey =
                     PreferenceManager.getDefaultSharedPreferences(context)
