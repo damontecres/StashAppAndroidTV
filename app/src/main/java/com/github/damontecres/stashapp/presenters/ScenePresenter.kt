@@ -25,6 +25,11 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         cardView: ImageCardView,
         item: SlimSceneData,
     ) {
+        val stashCardView = cardView as StashImageCardView
+        if (item.paths.preview != null) {
+            stashCardView.setVideoUrl(item.paths.preview)
+        }
+
         cardView.titleText = item.titleOrFilename
 
         val details = mutableListOf<String?>()

@@ -3,14 +3,17 @@ package com.github.damontecres.stashapp.presenters
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.PictureDrawable
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.VideoView
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
+import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.github.damontecres.stashapp.R
@@ -25,8 +28,10 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.createGlideUrl
 import com.github.damontecres.stashapp.util.enableMarquee
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
 import java.util.EnumMap
 import kotlin.properties.Delegates
@@ -34,31 +39,13 @@ import kotlin.properties.Delegates
 abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = null) : Presenter() {
     protected var vParent: ViewGroup by Delegates.notNull()
     protected var mDefaultCardImage: Drawable? = null
-    private var sSelectedBackgroundColor: Int by Delegates.notNull()
-    private var sDefaultBackgroundColor: Int by Delegates.notNull()
 
     final override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         vParent = parent
-
-        sDefaultBackgroundColor =
-            ContextCompat.getColor(parent.context, R.color.default_card_background)
-        sSelectedBackgroundColor =
-            ContextCompat.getColor(
-                parent.context,
-                R.color.selected_background,
-            )
         mDefaultCardImage =
             ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
 
-        val cardView =
-            object : ImageCardView(parent.context) {
-                override fun setSelected(selected: Boolean) {
-                    updateCardBackgroundColor(this, selected)
-                    val textView = findViewById<TextView>(androidx.leanback.R.id.title_text)
-                    textView.isSelected = selected
-                    super.setSelected(selected)
-                }
-            }
+        val cardView = StashImageCardView(parent.context)
 
         val textView = cardView.findViewById<TextView>(androidx.leanback.R.id.title_text)
         textView.enableMarquee(false)
@@ -67,7 +54,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
 
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true
-        updateCardBackgroundColor(cardView, false)
+        cardView.updateCardBackgroundColor(cardView, false)
         return ViewHolder(cardView)
     }
 
@@ -75,7 +62,8 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         viewHolder: ViewHolder,
         item: Any,
     ) {
-        val cardView = viewHolder.view as ImageCardView
+        val cardView = viewHolder.view as StashImageCardView
+
         if (callback != null) {
             cardView.setOnLongClickListener(
                 PopupOnLongClickListener(
@@ -100,27 +88,50 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
             .into(cardView.mainImageView!!)
     }
 
+    fun showVideoOrImage(
+        stashCardView: StashImageCardView,
+        video: Boolean,
+        callback: (VideoView) -> Unit,
+    ) {
+        val videoView = stashCardView.findViewById<VideoView>(R.id.main_video)
+        if (video) {
+            stashCardView.mainImageView.visibility = View.GONE
+            videoView.visibility = View.VISIBLE
+            val lp = videoView.layoutParams
+            lp.width = ScenePresenter.CARD_WIDTH
+            lp.height = ScenePresenter.CARD_HEIGHT
+            videoView.layoutParams = lp
+            callback(videoView)
+//            videoView.setVideoURI(
+//                Uri.parse(item.paths.preview),
+//                mapOf(
+//                    Pair(Constants.STASH_API_HEADER, apiKey),
+//                    Pair(Constants.STASH_API_HEADER.lowercase(), apiKey)
+//                )
+//            )
+            videoView.start()
+        } else {
+            videoView.stopPlayback()
+            stashCardView.mainImageView.visibility = View.VISIBLE
+            videoView.visibility = View.GONE
+            val lp = videoView.layoutParams
+            lp.width = 0
+            lp.height = 0
+            videoView.layoutParams = lp
+        }
+    }
+
     abstract fun doOnBindViewHolder(
         cardView: ImageCardView,
         item: T,
     )
 
     final override fun onUnbindViewHolder(viewHolder: ViewHolder) {
-        val cardView = viewHolder.view as ImageCardView
+        val cardView = viewHolder.view as StashImageCardView
         // Remove references to images so that the garbage collector can free up memory
         cardView.badgeImage = null
         cardView.mainImage = null
-    }
-
-    private fun updateCardBackgroundColor(
-        view: ImageCardView,
-        selected: Boolean,
-    ) {
-        val color = if (selected) sSelectedBackgroundColor else sDefaultBackgroundColor
-        // Both background colors should be set because the view"s background is temporarily visible
-        // during animations.
-        view.setBackgroundColor(color)
-        view.setInfoAreaBackgroundColor(color)
+        cardView.videoView.stopPlayback()
     }
 
     protected fun setUpExtraRow(cardView: View): ViewGroup {
@@ -205,6 +216,97 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
             item: T,
             popUpItemPosition: Int,
         )
+    }
+
+    fun interface SelectedCallBack {
+        fun setSelected(selected: Boolean)
+    }
+
+    class StashImageCardView(context: Context) : ImageCardView(context) {
+        private val sSelectedBackgroundColor: Int =
+            ContextCompat.getColor(context, R.color.selected_background)
+        private val sDefaultBackgroundColor: Int =
+            ContextCompat.getColor(context, R.color.default_card_background)
+
+        val videoView = findViewById<VideoView>(R.id.main_video)
+        private var videoEnabled = false
+
+        private var layoutParams: ViewGroup.LayoutParams? = null
+
+        override fun setSelected(selected: Boolean) {
+            if (videoEnabled) {
+                if (selected) {
+                    val lp = mainImageView.layoutParams
+                    setLayout(videoView!!, lp.width, lp.height)
+                    setLayout(mainImageView, 0, 0)
+                    videoView.setOnErrorListener { mp, what, extra ->
+                        videoEnabled = false
+                        setLayout(mainImageView, lp.width, lp.height)
+                        setLayout(videoView, 0, 0)
+                        true
+                    }
+                    videoView.start()
+                    videoView.seekTo(0)
+                } else {
+                    val lp = videoView!!.layoutParams
+                    setLayout(mainImageView, lp.width, lp.height)
+                    setLayout(videoView, 0, 0)
+                    videoView.pause()
+                }
+            }
+            updateCardBackgroundColor(this, selected)
+            val textView = findViewById<TextView>(androidx.leanback.R.id.title_text)
+            textView.isSelected = selected
+            super.setSelected(selected)
+        }
+
+        fun updateCardBackgroundColor(
+            view: ImageCardView,
+            selected: Boolean,
+        ) {
+            val color = if (selected) sSelectedBackgroundColor else sDefaultBackgroundColor
+            // Both background colors should be set because the view"s background is temporarily visible
+            // during animations.
+            view.setBackgroundColor(color)
+            view.setInfoAreaBackgroundColor(color)
+        }
+
+        fun setVideoUrl(url: String) {
+            val apiKey =
+                PreferenceManager.getDefaultSharedPreferences(context)
+                    .getString("stashApiKey", null)
+            val headers =
+                if (apiKey.isNotNullOrBlank()) {
+                    mapOf(
+                        Pair(Constants.STASH_API_HEADER, apiKey),
+                        Pair(Constants.STASH_API_HEADER.lowercase(), apiKey),
+                    )
+                } else {
+                    mapOf()
+                }
+
+            videoEnabled = true
+            videoView.setVideoURI(Uri.parse(url), headers)
+            videoView.setOnCompletionListener {
+                it.start()
+            }
+        }
+
+        private fun setLayout(
+            view: View,
+            width: Int,
+            height: Int,
+        ) {
+            val lp = view.layoutParams
+            lp.width = width
+            lp.height = height
+            view.layoutParams = lp
+            if (width == 0 && height == 0) {
+                view.visibility = View.GONE
+            } else {
+                view.visibility = View.VISIBLE
+            }
+        }
     }
 
     companion object {
