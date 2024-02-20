@@ -21,7 +21,6 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         loadImage(cardView, item.screenshot)
         cardView.videoUrl = item.stream
-        cardView.videoPosition = (item.seconds * 1000).toLong()
     }
 
     companion object {
