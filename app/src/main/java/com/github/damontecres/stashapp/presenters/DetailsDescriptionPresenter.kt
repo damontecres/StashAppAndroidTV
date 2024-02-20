@@ -53,8 +53,6 @@ class DetailsDescriptionPresenter(val ratingCallback: RatingCallback) :
                 )
         }
         val serverPreferences = ServerPreferences(viewHolder.view.context)
-        val type =
-            serverPreferences.preferences.getString(ServerPreferences.PREF_RATING_TYPE, "star")
         val precision =
             serverPreferences.preferences.getFloat(ServerPreferences.PREF_RATING_PRECISION, 1.0f)
 
@@ -62,11 +60,11 @@ class DetailsDescriptionPresenter(val ratingCallback: RatingCallback) :
         val ratingBarDecimal = viewHolder.view.findViewById<SeekBar>(R.id.rating_decimal)
         val ratingBarDecimalHolder = viewHolder.view.findViewById<View>(R.id.rating_decimal_holder)
         val ratingBarDecimalText = viewHolder.view.findViewById<TextView>(R.id.rating_decimal_text)
-        if (type == "decimal") {
-            ratingBar.visibility = View.GONE
-        } else {
-            // star
+        if (serverPreferences.ratingsAsStars) {
             ratingBarDecimalHolder.visibility = View.GONE
+        } else {
+            // decimal
+            ratingBar.visibility = View.GONE
         }
 
         var currentRating = scene.rating100 ?: 0
