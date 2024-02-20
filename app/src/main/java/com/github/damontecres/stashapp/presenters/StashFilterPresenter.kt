@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.presenters
 
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.data.StashCustomFilter
@@ -10,10 +9,9 @@ import com.github.damontecres.stashapp.data.StashSavedFilter
 class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
     StashPresenter<Any>(callback) {
     override fun doOnBindViewHolder(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         item: Any,
     ) {
-        setUpExtraRow(cardView)
         cardView.titleText = "View All"
 
         val mode: FilterMode =

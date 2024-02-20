@@ -1,5 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <integer tools:override="true" name="lb_details_description_body_max_lines">1000</integer>
+    <dimen tools:override="true" name="lb_basic_card_info_padding">6dp</dimen>
     <dimen name="title_bar_height">60dp</dimen>
     <dimen name="title_bar_margin">10dp</dimen>
     <dimen name="table_text_size">13sp</dimen>

@@ -1,14 +1,13 @@
 package com.github.damontecres.stashapp.presenters
 
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.OCounter
 
 class OCounterPresenter(callback: LongClickCallBack<OCounter>? = null) :
     StashPresenter<OCounter>(callback) {
     override fun doOnBindViewHolder(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         item: OCounter,
     ) {
         val text = cardView.context.getString(R.string.stashapp_o_counter)

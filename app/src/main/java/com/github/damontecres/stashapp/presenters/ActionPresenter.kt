@@ -1,12 +1,11 @@
 package com.github.damontecres.stashapp.presenters
 
-import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.actions.StashAction
 
 class ActionPresenter(callback: LongClickCallBack<StashAction>? = null) :
     StashPresenter<StashAction>(callback) {
     override fun doOnBindViewHolder(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         item: StashAction,
     ) {
         cardView.titleText = item.actionName

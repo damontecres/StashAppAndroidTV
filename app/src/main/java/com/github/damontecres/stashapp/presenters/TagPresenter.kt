@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.presenters
 
-import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import java.util.EnumMap
@@ -8,14 +7,14 @@ import java.util.EnumMap
 class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
     StashPresenter<TagData>(callback) {
     override fun doOnBindViewHolder(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         item: TagData,
     ) {
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.SCENE] = item.scene_count
         dataTypeMap[DataType.PERFORMER] = item.performer_count
         dataTypeMap[DataType.MARKER] = item.scene_marker_count
-        setUpExtraRow(cardView, dataTypeMap, null)
+        cardView.setUpExtraRow(dataTypeMap, null)
 
         cardView.titleText = item.name
         cardView.contentText = item.description

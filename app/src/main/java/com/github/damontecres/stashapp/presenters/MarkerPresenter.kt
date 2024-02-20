@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.presenters
 
-import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -8,7 +7,7 @@ import kotlin.time.toDuration
 class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
     StashPresenter<MarkerData>(callback) {
     override fun doOnBindViewHolder(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         item: MarkerData,
     ) {
         val title =
@@ -21,6 +20,7 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         loadImage(cardView, item.screenshot)
+        cardView.videoUrl = item.stream
     }
 
     companion object {

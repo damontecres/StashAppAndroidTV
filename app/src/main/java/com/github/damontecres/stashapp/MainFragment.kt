@@ -61,7 +61,8 @@ class MainFragment : BrowseSupportFragment() {
         val url = manager.getString("stashUrl", null)
         val apiKey = manager.getString("stashApiKey", null)
         val maxSearchResults = manager.getInt("maxSearchResults", 0)
-        return Objects.hash(url, apiKey, maxSearchResults)
+        val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
+        return Objects.hash(url, apiKey, maxSearchResults, playVideoPreviews)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

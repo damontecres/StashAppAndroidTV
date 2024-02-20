@@ -24,7 +24,6 @@ import androidx.leanback.widget.DetailsOverviewRow
 import androidx.leanback.widget.FullWidthDetailsOverviewRowPresenter
 import androidx.leanback.widget.FullWidthDetailsOverviewSharedElementHelper
 import androidx.leanback.widget.HeaderItem
-import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
@@ -49,6 +48,7 @@ import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.Constants
@@ -737,7 +737,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private inner class VideoDetailsActionPresenter : StashPresenter<StashAction>() {
         override fun doOnBindViewHolder(
-            cardView: ImageCardView,
+            cardView: StashImageCardView,
             item: StashAction,
         ) {
             cardView.titleText = item.actionName

@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import androidx.leanback.widget.ImageCardView
+import android.util.Log
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.security.MessageDigest
 import java.util.EnumMap
@@ -22,9 +23,11 @@ import java.util.EnumMap
 class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
     StashPresenter<SlimSceneData>(callback) {
     override fun doOnBindViewHolder(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         item: SlimSceneData,
     ) {
+        Log.v(TAG, "doOnBindViewHolder for ${item.titleOrFilename}")
+
         cardView.titleText = item.titleOrFilename
 
         val details = mutableListOf<String?>()
@@ -38,16 +41,19 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         dataTypeMap[DataType.MOVIE] = item.movies.size
         dataTypeMap[DataType.MARKER] = item.scene_markers.size
 
-        setUpExtraRow(cardView, dataTypeMap, item.o_counter)
+        cardView.setUpExtraRow(dataTypeMap, item.o_counter)
 
+        cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         if (!item.paths.screenshot.isNullOrBlank()) {
-            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
             val url = createGlideUrl(item.paths.screenshot, vParent.context)
             Glide.with(cardView.context)
                 .load(url)
                 .transform(CenterCrop(), TextOverlay(cardView.context, item))
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
+        }
+        if (item.paths.preview.isNotNullOrBlank()) {
+            cardView.videoUrl = item.paths.preview
         }
     }
 
