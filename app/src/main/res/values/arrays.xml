@@ -5,4 +5,14 @@
         <item>MP4</item>
         <item>WEBM</item>
     </string-array>
+
+    <string name="playback_finished_do_nothing">Do nothing</string>
+    <string name="playback_finished_repeat">Repeat scene</string>
+    <string name="playback_finished_return">Return to scene details</string>
+    <string-array name="playback_finished_behavior_options">
+        <item>@string/playback_finished_do_nothing</item>
+        <item>@string/playback_finished_repeat</item>
+        <item>@string/playback_finished_return</item>
+    </string-array>
+
 </resources>
