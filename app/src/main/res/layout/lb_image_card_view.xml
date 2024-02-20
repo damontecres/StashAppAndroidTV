@@ -19,26 +19,30 @@
     xmlns:lb="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <ImageView
-        android:id="@+id/main_image"
+    <FrameLayout
+        android:id="@+id/main_view"
         lb:layout_viewType="main"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:scaleType="centerCrop"
-        android:adjustViewBounds="true"
-        android:contentDescription="@null" />
+        android:layout_height="wrap_content">
 
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/main_video"
-        android:visibility="gone"
-        lb:layout_viewType="main"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        app:use_controller="false"
-        app:show_buffering="never"
-        app:auto_show="false" />
+        <ImageView
+            android:id="@+id/main_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:adjustViewBounds="true"
+            android:contentDescription="@null" />
 
+        <androidx.media3.ui.PlayerView
+            android:id="@+id/main_video"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            app:use_controller="false"
+            app:show_buffering="never"
+            app:auto_show="false" />
+    </FrameLayout>
     <androidx.leanback.widget.NonOverlappingFrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

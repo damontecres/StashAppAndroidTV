@@ -22,7 +22,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
 import java.util.EnumMap
-import kotlin.properties.Delegates
 
 class StashImageCardView(context: Context) : ImageCardView(context) {
     private val sSelectedBackgroundColor: Int =
@@ -33,19 +32,20 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     var videoUrl: String? = null
     var videoPosition = -1L
     val videoView: PlayerView = findViewById(R.id.main_video)
+    val mainView: View = findViewById(R.id.main_view)
+
     private val dataTypeViews =
         EnumMap<DataType, Pair<TextView, View>>(DataType::class.java)
     private val oCounterTextView: TextView
     private val oCounterIconView: View
-
-    private var imageWidth by Delegates.notNull<Int>()
-    private var imageHeight by Delegates.notNull<Int>()
 
     private val playVideoPreviews =
         PreferenceManager.getDefaultSharedPreferences(context)
             .getBoolean("playVideoPreviews", true)
 
     init {
+        mainImageView.visibility = View.VISIBLE
+
         dataTypeViews[DataType.MOVIE] =
             Pair(
                 findViewById(R.id.extra_movie_count),
@@ -87,8 +87,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                 videoView.player?.seekTo(0)
                 videoView.player?.playWhenReady = true
             } else {
-                setLayout(videoView, 0, 0)
-                setLayout(mainImageView, imageWidth, imageHeight)
+                showImage()
                 videoView.player?.release()
                 videoView.player = null
             }
@@ -103,9 +102,10 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         width: Int,
         height: Int,
     ) {
-        super.setMainImageDimensions(width, height)
-        imageWidth = width
-        imageHeight = height
+        val lp = mainView.layoutParams
+        lp.width = width
+        lp.height = height
+        mainView.layoutParams = lp
     }
 
     fun updateCardBackgroundColor(
@@ -119,25 +119,12 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         view.setInfoAreaBackgroundColor(color)
     }
 
-    private fun setLayout(
-        view: View,
-        width: Int,
-        height: Int,
-    ) {
-        val lp = view.layoutParams
-        lp.width = width
-        lp.height = height
-        view.layoutParams = lp
-        if (width == 0 && height == 0) {
-            view.visibility = View.GONE
-        } else {
-            view.visibility = View.VISIBLE
-        }
-    }
-
     @OptIn(UnstableApi::class)
     private fun initPlayer() {
         if (videoUrl != null) {
+            videoView.player?.release()
+            videoView.player = null
+
             val apiKey =
                 PreferenceManager.getDefaultSharedPreferences(context)
                     .getString("stashApiKey", null)
@@ -171,11 +158,9 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                 object : Player.Listener {
                     override fun onIsPlayingChanged(isPlaying: Boolean) {
                         if (isPlaying) {
-                            setLayout(videoView, imageWidth, imageHeight)
-                            setLayout(mainImageView, 0, 0)
+                            showVideo()
                         } else {
-                            setLayout(videoView, 0, 0)
-                            setLayout(mainImageView, imageWidth, imageHeight)
+                            showImage()
                         }
                     }
                 },
@@ -231,5 +216,15 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                 (textView.parent as ViewGroup).visibility = View.GONE
             }
         }
+    }
+
+    fun showVideo() {
+        mainImageView.visibility = View.GONE
+        videoView.visibility = View.VISIBLE
+    }
+
+    fun showImage() {
+        videoView.visibility = View.GONE
+        mainImageView.visibility = View.VISIBLE
     }
 }
