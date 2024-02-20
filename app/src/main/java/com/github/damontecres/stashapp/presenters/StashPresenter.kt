@@ -263,12 +263,13 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         val videoView: PlayerView = findViewById(R.id.main_video)
 
         override fun setSelected(selected: Boolean) {
-            if (videoView.player != null) {
+            if (videoUrl != null) {
                 if (selected) {
                     Log.v(
                         TAG,
                         "Playing ${videoView.player}",
                     )
+                    initPlayer()
                     videoView.player?.seekTo(0)
                     videoView.player?.playWhenReady = true
                 } else {
@@ -279,8 +280,12 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                         TAG,
                         "Pausing ${videoView.player}",
                     )
-                    videoView.player?.seekTo(0)
-                    videoView.player?.playWhenReady = false
+                    val width = 351
+                    val height = 198
+                    setLayout(videoView, 0, 0)
+                    setLayout(mainImageView, width, height)
+                    videoView.player?.release()
+                    videoView.player = null
                 }
             }
             updateCardBackgroundColor(this, selected)
@@ -371,6 +376,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 player.setMediaItem(mediaItem)
                 player.prepare()
                 player.repeatMode = Player.REPEAT_MODE_ONE
+                player.playWhenReady = true
             }
         }
     }
