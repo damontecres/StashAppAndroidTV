@@ -4,12 +4,10 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.PictureDrawable
 import android.net.Uri
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.VideoView
 import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ClassPresenterSelector
@@ -100,39 +98,6 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
             .into(cardView.mainImageView!!)
     }
 
-    fun showVideoOrImage(
-        stashCardView: StashImageCardView,
-        video: Boolean,
-        callback: (VideoView) -> Unit,
-    ) {
-        val videoView = stashCardView.findViewById<VideoView>(R.id.main_video)
-        if (video) {
-            stashCardView.mainImageView.visibility = View.GONE
-            videoView.visibility = View.VISIBLE
-            val lp = videoView.layoutParams
-            lp.width = ScenePresenter.CARD_WIDTH
-            lp.height = ScenePresenter.CARD_HEIGHT
-            videoView.layoutParams = lp
-            callback(videoView)
-//            videoView.setVideoURI(
-//                Uri.parse(item.paths.preview),
-//                mapOf(
-//                    Pair(Constants.STASH_API_HEADER, apiKey),
-//                    Pair(Constants.STASH_API_HEADER.lowercase(), apiKey)
-//                )
-//            )
-            videoView.start()
-        } else {
-            videoView.stopPlayback()
-            stashCardView.mainImageView.visibility = View.VISIBLE
-            videoView.visibility = View.GONE
-            val lp = videoView.layoutParams
-            lp.width = 0
-            lp.height = 0
-            videoView.layoutParams = lp
-        }
-    }
-
     abstract fun doOnBindViewHolder(
         cardView: ImageCardView,
         item: T,
@@ -143,27 +108,9 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         // Remove references to images so that the garbage collector can free up memory
         cardView.badgeImage = null
         cardView.mainImage = null
-        Log.v(
-            TAG,
-            "onUnbindViewHolder ${cardView.videoView.player?.currentMediaItem?.requestMetadata?.mediaUri}",
-        )
         cardView.videoView.player?.release()
+        cardView.videoView.player = null
     }
-
-//     override fun onViewAttachedToWindow(holder: ViewHolder) {
-//         super.onViewAttachedToWindow(holder)
-//         val cardView = holder.view as StashImageCardView
-//         Log.v(TAG, "onViewAttachedToWindow: ${cardView.videoUrl}")
-//         cardView.initPlayer()
-//     }
-//
-//     override fun onViewDetachedFromWindow(holder: ViewHolder) {
-//         super.onViewDetachedFromWindow(holder)
-//         val cardView = holder.view as StashImageCardView
-//         Log.v(TAG, "onViewDetachedFromWindow: ${cardView.videoUrl}")
-//         cardView.videoView.player?.release()
-//         cardView.videoView.player = null
-//     }
 
     protected fun setUpExtraRow(cardView: View): ViewGroup {
         val infoView = cardView.findViewById<ViewGroup>(androidx.leanback.R.id.info_field)
@@ -249,10 +196,6 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         )
     }
 
-    fun interface SelectedCallBack {
-        fun setSelected(selected: Boolean)
-    }
-
     class StashImageCardView(context: Context) : ImageCardView(context) {
         private val sSelectedBackgroundColor: Int =
             ContextCompat.getColor(context, R.color.selected_background)
@@ -260,30 +203,21 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
             ContextCompat.getColor(context, R.color.default_card_background)
 
         var videoUrl: String? = null
+        var videoPosition = -1L
         val videoView: PlayerView = findViewById(R.id.main_video)
+
+        private var imageWidth by Delegates.notNull<Int>()
+        private var imageHeight by Delegates.notNull<Int>()
 
         override fun setSelected(selected: Boolean) {
             if (videoUrl != null) {
                 if (selected) {
-                    Log.v(
-                        TAG,
-                        "Playing ${videoView.player}",
-                    )
                     initPlayer()
                     videoView.player?.seekTo(0)
                     videoView.player?.playWhenReady = true
                 } else {
-//                    val lp = videoView!!.layoutParams
-//                    setLayout(mainImageView, lp.width, lp.height)
-//                    setLayout(videoView, 0, 0)
-                    Log.v(
-                        TAG,
-                        "Pausing ${videoView.player}",
-                    )
-                    val width = 351
-                    val height = 198
                     setLayout(videoView, 0, 0)
-                    setLayout(mainImageView, width, height)
+                    setLayout(mainImageView, imageWidth, imageHeight)
                     videoView.player?.release()
                     videoView.player = null
                 }
@@ -292,6 +226,15 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
             val textView = findViewById<TextView>(androidx.leanback.R.id.title_text)
             textView.isSelected = selected
             super.setSelected(selected)
+        }
+
+        override fun setMainImageDimensions(
+            width: Int,
+            height: Int,
+        ) {
+            super.setMainImageDimensions(width, height)
+            imageWidth = width
+            imageHeight = height
         }
 
         fun updateCardBackgroundColor(
@@ -353,20 +296,15 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                         .setUri(Uri.parse(videoUrl))
                         .setMimeType(MimeTypes.VIDEO_MP4)
                         .build()
-
-                val lp = mainImageView.layoutParams
-                val width = lp.width
-                val height = lp.height
                 player.addListener(
                     object : Player.Listener {
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
-                            Log.v(TAG, "isPlaying=$isPlaying, width=$width, height=$height")
                             if (isPlaying) {
-                                setLayout(videoView!!, width, height)
+                                setLayout(videoView, imageWidth, imageHeight)
                                 setLayout(mainImageView, 0, 0)
                             } else {
-                                setLayout(videoView!!, 0, 0)
-                                setLayout(mainImageView, width, height)
+                                setLayout(videoView, 0, 0)
+                                setLayout(mainImageView, imageWidth, imageHeight)
                             }
                         }
                     },
@@ -376,6 +314,9 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 player.setMediaItem(mediaItem)
                 player.prepare()
                 player.repeatMode = Player.REPEAT_MODE_ONE
+                if (videoPosition > 0) {
+                    player.seekTo(videoPosition)
+                }
                 player.playWhenReady = true
             }
         }
