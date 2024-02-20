@@ -48,6 +48,7 @@ import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.Constants
