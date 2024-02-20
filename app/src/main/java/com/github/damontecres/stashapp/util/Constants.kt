@@ -7,9 +7,11 @@ import android.os.Build
 import android.text.TextUtils
 import android.util.Log
 import android.util.TypedValue
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.widget.NestedScrollView
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
@@ -394,3 +396,21 @@ val PerformerData.ageInYears: Int?
         } else {
             null
         }
+
+fun ScrollView.onlyScrollIfNeeded() {
+    viewTreeObserver.addOnGlobalLayoutListener {
+        val childHeight = getChildAt(0).height
+        val isScrollable =
+            height < childHeight + paddingTop + paddingBottom
+        isFocusable = isScrollable
+    }
+}
+
+fun NestedScrollView.onlyScrollIfNeeded() {
+    viewTreeObserver.addOnGlobalLayoutListener {
+        val childHeight = getChildAt(0).height
+        val isScrollable =
+            height < childHeight + paddingTop + paddingBottom
+        isFocusable = isScrollable
+    }
+}

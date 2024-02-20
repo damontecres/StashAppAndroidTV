@@ -21,6 +21,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import kotlin.math.floor
@@ -130,14 +131,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
     override fun onResume() {
         super.onResume()
         val scrollView = requireView().findViewById<ScrollView>(R.id.performer_scrollview)
-
-        scrollView.viewTreeObserver.addOnGlobalLayoutListener {
-            val childHeight = scrollView.getChildAt(0).height
-            val isScrollable =
-                scrollView.height < childHeight + scrollView.paddingTop + scrollView.paddingBottom
-            Log.v(TAG, "isScrollable=$isScrollable")
-            scrollView.isFocusable = isScrollable
-        }
+        scrollView.onlyScrollIfNeeded()
     }
 
     private fun addRow(
