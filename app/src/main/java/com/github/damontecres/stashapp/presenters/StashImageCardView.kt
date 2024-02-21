@@ -12,15 +12,11 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.Constants
 import java.util.EnumMap
 
 class StashImageCardView(context: Context) : ImageCardView(context) {
@@ -42,6 +38,17 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     private val playVideoPreviews =
         PreferenceManager.getDefaultSharedPreferences(context)
             .getBoolean("playVideoPreviews", true)
+
+    private val listener =
+        object : Player.Listener {
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (isPlaying) {
+                    showVideo()
+                } else {
+                    showImage()
+                }
+            }
+        }
 
     init {
         mainImageView.visibility = View.VISIBLE
@@ -84,11 +91,11 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         if (playVideoPreviews && videoUrl != null) {
             if (selected) {
                 initPlayer()
-                videoView.player?.seekTo(0)
+                videoView.player?.seekToDefaultPosition()
                 videoView.player?.playWhenReady = true
             } else {
                 showImage()
-                videoView.player?.release()
+                StashExoPlayer.removeListeners()
                 videoView.player = null
             }
         }
@@ -121,65 +128,29 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
 
     @OptIn(UnstableApi::class)
     private fun initPlayer() {
-        if (videoUrl != null) {
-            videoView.player?.release()
-            videoView.player = null
+        val mediaItem =
+            MediaItem.Builder()
+                .setUri(Uri.parse(videoUrl))
+                .setMimeType(MimeTypes.VIDEO_MP4)
+                .build()
+        val player = StashExoPlayer.getInstance(context)
+        StashExoPlayer.addListener(listener)
 
-            val apiKey =
-                PreferenceManager.getDefaultSharedPreferences(context)
-                    .getString("stashApiKey", null)
-            val dataSourceFactory =
-                DataSource.Factory {
-                    val dataSource = DefaultHttpDataSource.Factory().createDataSource()
-                    if (!apiKey.isNullOrBlank()) {
-                        dataSource.setRequestProperty(Constants.STASH_API_HEADER, apiKey)
-                        dataSource.setRequestProperty(
-                            Constants.STASH_API_HEADER.lowercase(),
-                            apiKey,
-                        )
-                    }
-                    dataSource
-                }
-
-            val player =
-                ExoPlayer.Builder(context)
-                    .setMediaSourceFactory(
-                        DefaultMediaSourceFactory(context).setDataSourceFactory(
-                            dataSourceFactory,
-                        ),
-                    )
-                    .build()
-            val mediaItem =
-                MediaItem.Builder()
-                    .setUri(Uri.parse(videoUrl))
-                    .setMimeType(MimeTypes.VIDEO_MP4)
-                    .build()
-            player.addListener(
-                object : Player.Listener {
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        if (isPlaying) {
-                            showVideo()
-                        } else {
-                            showImage()
-                        }
-                    }
-                },
-            )
-
-            videoView.player = player
-            player.setMediaItem(mediaItem)
-            if (!PreferenceManager.getDefaultSharedPreferences(context)
-                    .getBoolean("videoPreviewAudio", true)
-            ) {
-                player.volume = 0f
-            }
-            player.prepare()
-            player.repeatMode = Player.REPEAT_MODE_ONE
-            if (videoPosition > 0) {
-                player.seekTo(videoPosition)
-            }
-            player.playWhenReady = true
+        videoView.player = player
+        player.setMediaItem(mediaItem)
+        if (PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean("videoPreviewAudio", true)
+        ) {
+            player.volume = 1f
+        } else {
+            player.volume = 0f
         }
+        player.prepare()
+        player.repeatMode = Player.REPEAT_MODE_ONE
+        if (videoPosition > 0) {
+            player.seekTo(videoPosition)
+        }
+        player.playWhenReady = true
     }
 
     fun setUpExtraRow(
