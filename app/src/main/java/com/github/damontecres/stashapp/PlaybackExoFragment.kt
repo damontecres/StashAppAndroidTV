@@ -14,21 +14,18 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -85,41 +82,13 @@ class PlaybackExoFragment :
         position: Long,
         forceTranscode: Boolean,
     ) {
-        val apiKey =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getString("stashApiKey", "")
-        val skipForward =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("skip_forward_time", 30)
-        val skipBack =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("skip_back_time", 10)
-
-        val dataSourceFactory =
-            DataSource.Factory {
-                val dataSource = DefaultHttpDataSource.Factory().createDataSource()
-                if (!apiKey.isNullOrBlank()) {
-                    dataSource.setRequestProperty(Constants.STASH_API_HEADER, apiKey)
-                    dataSource.setRequestProperty(Constants.STASH_API_HEADER.lowercase(), apiKey)
-                }
-                dataSource
-            }
-
         player =
-            ExoPlayer.Builder(requireContext())
-                .setMediaSourceFactory(
-                    DefaultMediaSourceFactory(requireContext()).setDataSourceFactory(
-                        dataSourceFactory,
-                    ),
-                )
-                .setSeekBackIncrementMs(skipBack * 1000L)
-                .setSeekForwardIncrementMs(skipForward * 1000L)
-                .build()
+            StashExoPlayer.getInstance(requireContext())
                 .also { exoPlayer ->
                     videoView.player = exoPlayer
-                    exoPlayer.addListener(AmbientPlaybackListener())
+                    StashExoPlayer.addListener(AmbientPlaybackListener())
                     if (ServerPreferences(requireContext()).trackActivity) {
-                        exoPlayer.addListener(PlaybackListener())
+                        StashExoPlayer.addListener(PlaybackListener())
                     }
                 }.also { exoPlayer ->
                     val finishedBehavior =
@@ -130,7 +99,7 @@ class PlaybackExoFragment :
                             )
                     when (finishedBehavior) {
                         getString(R.string.playback_finished_repeat) -> {
-                            exoPlayer.addListener(
+                            StashExoPlayer.addListener(
                                 object :
                                     Player.Listener {
                                     override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
@@ -148,7 +117,7 @@ class PlaybackExoFragment :
                         }
 
                         getString(R.string.playback_finished_return) ->
-                            exoPlayer.addListener(
+                            StashExoPlayer.addListener(
                                 object :
                                     Player.Listener {
                                     override fun onPlaybackStateChanged(playbackState: Int) {
@@ -200,24 +169,12 @@ class PlaybackExoFragment :
                                 .setMimeType(mimeType)
                                 .build()
                     }
-
-                    exoPlayer.setMediaItem(mediaItem)
-                    exoPlayer.playWhenReady = true
+                    exoPlayer.setMediaItem(mediaItem, if (position > 0) position else C.TIME_UNSET)
                     exoPlayer.prepare()
+                    exoPlayer.playWhenReady = true
+                    exoPlayer.volume = 1f
                     if (videoView.controllerShowTimeoutMs > 0) {
                         videoView.hideController()
-                    }
-                    if (position > 0) {
-                        exoPlayer.addListener(
-                            object : Player.Listener {
-                                override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
-                                    if (Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM in availableCommands) {
-                                        exoPlayer.seekTo(position)
-                                        exoPlayer.removeListener(this)
-                                    }
-                                }
-                            },
-                        )
                     }
                 }
     }

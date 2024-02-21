@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.util.Log
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
@@ -26,8 +25,6 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         cardView: StashImageCardView,
         item: SlimSceneData,
     ) {
-        Log.v(TAG, "doOnBindViewHolder for ${item.titleOrFilename}")
-
         cardView.titleText = item.titleOrFilename
 
         val details = mutableListOf<String?>()

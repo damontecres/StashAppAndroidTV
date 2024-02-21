@@ -52,6 +52,7 @@ fragment SlimSceneData on Scene {
     id
     title
     seconds
+    stream
     primary_tag {
       id
       name
