@@ -69,13 +69,13 @@
             app:summary="Submit PIN automatically when typed"
             app:defaultValue="false" />
 
-        <SeekBarPreference
-            app:key="numberOfColumns"
-            app:title="Number of Columns"
-            app:seekBarIncrement="1"
-            app:showSeekBarValue="true"
-            android:max="12"
-            app:defaultValue="5" />
+        <ListPreference
+            app:key="cardSize"
+            app:title="Card size"
+            app:useSimpleSummaryProvider="true"
+            app:defaultValue="@string/card_size_default"
+            app:entries="@array/card_sizes"
+            app:entryValues="@array/card_size_cols" />
 
         <SwitchPreference
             app:key="scrollToNextResult"

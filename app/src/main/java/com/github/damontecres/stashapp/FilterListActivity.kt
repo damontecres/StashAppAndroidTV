@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.StudioComparator
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.convertFilter
+import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.toPx
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
@@ -234,11 +235,12 @@ class FilterListActivity : FragmentActivity() {
         findFilter: FindFilterType?,
         objectFilter: Any?,
     ): StashGridFragment<out Query.Data, out Any> {
-        val columns =
+        val cardSize =
             PreferenceManager.getDefaultSharedPreferences(this)
-                .getInt("numberOfColumns", 5)
-        val numCols =
-            (columns * (ScenePresenter.CARD_WIDTH.toDouble() / PerformerPresenter.CARD_WIDTH)).toInt()
+                .getInt("cardSize", getString(R.string.card_size_default))
+        val performerCardSize =
+            (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / PerformerPresenter.CARD_WIDTH)).toInt()
+        // TODO other sizes
         return when (dataType) {
             DataType.SCENE -> {
                 val sceneFilter =
@@ -258,7 +260,7 @@ class FilterListActivity : FragmentActivity() {
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(findFilter, performerFilter),
-                    numCols,
+                    performerCardSize,
                 )
             }
 

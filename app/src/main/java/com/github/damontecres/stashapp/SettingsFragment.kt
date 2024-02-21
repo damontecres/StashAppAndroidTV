@@ -305,7 +305,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<SeekBarPreference>("maxSearchResults")?.min = 5
             findPreference<SeekBarPreference>("skip_back_time")?.min = 5
             findPreference<SeekBarPreference>("skip_forward_time")?.min = 5
-            findPreference<SeekBarPreference>("numberOfColumns")?.min = 1
             findPreference<SeekBarPreference>("searchDelay")?.min = 50
         }
 

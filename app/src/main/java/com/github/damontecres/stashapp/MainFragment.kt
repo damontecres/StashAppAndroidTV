@@ -37,6 +37,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getCaseInsensitive
+import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.supportedFilterModes
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -62,7 +63,7 @@ class MainFragment : BrowseSupportFragment() {
         val apiKey = manager.getString("stashApiKey", null)
         val maxSearchResults = manager.getInt("maxSearchResults", 0)
         val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
-        val columns = manager.getInt("numberOfColumns", 5)
+        val columns = manager.getInt("cardSize", getString(R.string.card_size_default))
         return Objects.hash(url, apiKey, maxSearchResults, playVideoPreviews, columns)
     }
 
