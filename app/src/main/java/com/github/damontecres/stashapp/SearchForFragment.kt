@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
@@ -28,7 +29,9 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
@@ -63,6 +66,16 @@ class SearchForFragment(
         title =
             requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
         adapter.set(0, ListRow(HeaderItem("Results"), searchResultsAdapter))
+
+        searchResultsAdapter.presenterSelector =
+            StashPresenter.SELECTOR.addClassPresenter(
+                PerformerData::class.java,
+                PerformerPresenter(GoToLongClick(requireContext())),
+            ).addClassPresenter(
+                TagData::class.java,
+                TagPresenter(GoToLongClick(requireContext())),
+            )
+
         setSearchResultProvider(this)
         setOnItemViewClickedListener {
                 itemViewHolder: Presenter.ViewHolder,
@@ -91,7 +104,16 @@ class SearchForFragment(
         super.onResume()
         if (dataType in DATA_TYPE_SUGGESTIONS) {
             viewLifecycleOwner.lifecycleScope.launch {
-                val results = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                val results =
+                    ArrayObjectAdapter(
+                        StashPresenter.SELECTOR.addClassPresenter(
+                            PerformerData::class.java,
+                            PerformerPresenter(GoToLongClick(requireContext())),
+                        ).addClassPresenter(
+                            TagData::class.java,
+                            TagPresenter(GoToLongClick(requireContext())),
+                        ),
+                    )
                 val queryEngine = QueryEngine(requireContext(), false)
                 val filter =
                     FindFilterType(
@@ -144,6 +166,19 @@ class SearchForFragment(
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 searchResultsAdapter.addAll(0, queryEngine.find(dataType, filter))
             }
+        }
+    }
+
+    class GoToLongClick<T : Any>(private val context: Context) :
+        StashPresenter.LongClickCallBack<T> {
+        override val popUpItems: List<String>
+            get() = listOf("Go to")
+
+        override fun onItemLongClick(
+            item: T,
+            popUpItemPosition: Int,
+        ) {
+            StashItemViewClickListener(context).onItemClicked(null, item, null, null)
         }
     }
 
