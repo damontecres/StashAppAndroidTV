@@ -1,10 +1,8 @@
 package com.github.damontecres.stashapp
 
-import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.core.app.ActivityOptionsCompat
-import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
@@ -30,82 +28,55 @@ import com.github.damontecres.stashapp.data.StashSavedFilter
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc
  */
 class StashItemViewClickListener(
-    private val activity: Activity,
+    private val context: Context,
     private val actionListener: StashActionClickedListener? = null,
 ) : OnItemViewClickedListener {
     override fun onItemClicked(
-        itemViewHolder: Presenter.ViewHolder,
+        itemViewHolder: Presenter.ViewHolder?,
         item: Any,
         rowViewHolder: RowPresenter.ViewHolder?,
         row: Row?,
     ) {
         if (item is SlimSceneData) {
-            val intent = Intent(activity, VideoDetailsActivity::class.java)
+            val intent = Intent(context, VideoDetailsActivity::class.java)
             intent.putExtra(VideoDetailsActivity.MOVIE, item.id)
-
-            val bundle =
-                ActivityOptionsCompat.makeSceneTransitionAnimation(
-                    activity,
-                    (itemViewHolder.view as ImageCardView).mainImageView,
-                    VideoDetailsActivity.SHARED_ELEMENT_NAME,
-                )
-                    .toBundle()
-            activity.startActivity(intent, bundle)
+            context.startActivity(intent)
         } else if (item is PerformerData) {
-            val intent = Intent(activity, PerformerActivity::class.java)
+            val intent = Intent(context, PerformerActivity::class.java)
             intent.putExtra("performer", Performer(item))
-            val bundle =
-                ActivityOptionsCompat.makeSceneTransitionAnimation(
-                    activity,
-                    (itemViewHolder.view as ImageCardView).mainImageView,
-                    VideoDetailsActivity.SHARED_ELEMENT_NAME,
-                )
-                    .toBundle()
-            activity.startActivity(intent, bundle)
+            context.startActivity(intent, null)
         } else if (item is TagData) {
-            val intent = Intent(activity, TagActivity::class.java)
+            val intent = Intent(context, TagActivity::class.java)
             intent.putExtra("tagId", item.id)
             intent.putExtra("tagName", item.name)
-            val bundle =
-                ActivityOptionsCompat.makeSceneTransitionAnimation(
-                    activity,
-                    (itemViewHolder.view as ImageCardView).mainImageView,
-                    VideoDetailsActivity.SHARED_ELEMENT_NAME,
-                ).toBundle()
-            activity.startActivity(intent, bundle)
+            context.startActivity(intent)
         } else if (item is StudioData) {
-            val intent = Intent(activity, StudioActivity::class.java)
+            val intent = Intent(context, StudioActivity::class.java)
             intent.putExtra("studioId", item.id.toInt())
             intent.putExtra("studioName", item.name)
-            val bundle =
-                ActivityOptionsCompat.makeSceneTransitionAnimation(
-                    activity,
-                    (itemViewHolder.view as ImageCardView).mainImageView,
-                    VideoDetailsActivity.SHARED_ELEMENT_NAME,
-                ).toBundle()
-            activity.startActivity(intent, bundle)
+            context.startActivity(intent)
         } else if (item is MovieData) {
-            val intent = Intent(activity, MovieActivity::class.java)
+            val intent = Intent(context, MovieActivity::class.java)
             intent.putExtra("movie", Movie(item))
-            activity.startActivity(intent)
+            context.startActivity(intent)
         } else if (item is MarkerData) {
-            val intent = Intent(activity, PlaybackActivity::class.java)
+            val intent = Intent(context, PlaybackActivity::class.java)
             intent.putExtra(
                 VideoDetailsActivity.MOVIE,
                 Scene.fromSlimSceneData(item.scene.slimSceneData),
             )
             intent.putExtra(POSITION_ARG, (item.seconds * 1000).toLong())
-            activity.startActivity(intent)
+            context.startActivity(intent)
         } else if (item is StashSavedFilter) {
-            val intent = Intent(activity, FilterListActivity::class.java)
+            val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("savedFilterId", item.savedFilterId)
             intent.putExtra("dataType", DataType.fromFilterMode(item.mode)!!.name)
             intent.putExtra("useRandom", false)
             intent.putExtra("sortBy", item.sortBy)
             intent.putExtra("moveOnePage", true)
-            activity.startActivity(intent)
+            context.startActivity(intent)
         } else if (item is StashCustomFilter) {
-            val intent = Intent(activity, FilterListActivity::class.java)
+            val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("direction", item.direction)
             intent.putExtra("sortBy", item.sortBy)
             intent.putExtra("dataType", DataType.fromFilterMode(item.mode)!!.name)
@@ -113,7 +84,7 @@ class StashItemViewClickListener(
             intent.putExtra("useRandom", false)
             intent.putExtra("moveOnePage", true)
             intent.putExtra("query", item.query)
-            activity.startActivity(intent)
+            context.startActivity(intent)
         } else if (item is StashAction) {
             if (actionListener != null) {
                 actionListener.onClicked(item)
