@@ -17,6 +17,7 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
 
 class StashImageCardView(context: Context) : ImageCardView(context) {
@@ -88,7 +89,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     }
 
     override fun setSelected(selected: Boolean) {
-        if (playVideoPreviews && videoUrl != null) {
+        if (playVideoPreviews && videoUrl.isNotNullOrBlank()) {
             if (selected) {
                 initPlayer()
                 videoView.player?.seekToDefaultPosition()
