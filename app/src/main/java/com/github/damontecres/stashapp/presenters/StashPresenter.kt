@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.presenters
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.PictureDrawable
+import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -66,6 +67,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 },
             )
         }
+        cardView.mainImageView.visibility = View.VISIBLE
         doOnBindViewHolder(viewHolder.view as StashImageCardView, item as T)
     }
 
