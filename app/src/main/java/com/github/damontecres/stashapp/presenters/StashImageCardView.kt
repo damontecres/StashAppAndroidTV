@@ -168,6 +168,11 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
 
             videoView.player = player
             player.setMediaItem(mediaItem)
+            if (!PreferenceManager.getDefaultSharedPreferences(context)
+                    .getBoolean("videoPreviewAudio", true)
+            ) {
+                player.volume = 0f
+            }
             player.prepare()
             player.repeatMode = Player.REPEAT_MODE_ONE
             if (videoPosition > 0) {

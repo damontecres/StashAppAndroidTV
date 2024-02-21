@@ -94,6 +94,12 @@
             app:summaryOn="Video preview will play when item is selected"
             app:summaryOff="Video previews will not play"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="videoPreviewAudio"
+            app:title="Play audio for video previews"
+            app:summaryOn="Play audio"
+            app:summaryOff="Don't play audio"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">
