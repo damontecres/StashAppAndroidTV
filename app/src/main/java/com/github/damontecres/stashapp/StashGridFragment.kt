@@ -42,9 +42,11 @@ class StashGridFragment<T : Query.Data, D : Any>(
         super.onCreate(savedInstanceState)
 
         val gridPresenter = StashGridPresenter()
-        gridPresenter.numberOfColumns =
+        var columns =
             numberOfColumns ?: PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("numberOfColumns", 5)
+
+        gridPresenter.numberOfColumns = columns
         setGridPresenter(gridPresenter)
 
         adapter = mAdapter

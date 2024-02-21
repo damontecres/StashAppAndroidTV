@@ -102,9 +102,14 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         width: Int,
         height: Int,
     ) {
+        val columns =
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .getInt("numberOfColumns", 5)
+        val scaledWidth = (width * 5.0 / columns).toInt()
+        val scaledHeight = (height * 5.0 / columns).toInt()
         val lp = mainView.layoutParams
-        lp.width = width
-        lp.height = height
+        lp.width = scaledWidth
+        lp.height = scaledHeight
         mainView.layoutParams = lp
     }
 

@@ -15,6 +15,7 @@ import androidx.appcompat.widget.ListPopupWindow
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
@@ -22,6 +23,8 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.presenters.PerformerPresenter
+import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
@@ -231,6 +234,11 @@ class FilterListActivity : FragmentActivity() {
         findFilter: FindFilterType?,
         objectFilter: Any?,
     ): StashGridFragment<out Query.Data, out Any> {
+        val columns =
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .getInt("numberOfColumns", 5)
+        val numCols =
+            (columns * (ScenePresenter.CARD_WIDTH.toDouble() / PerformerPresenter.CARD_WIDTH)).toInt()
         return when (dataType) {
             DataType.SCENE -> {
                 val sceneFilter =
@@ -250,6 +258,7 @@ class FilterListActivity : FragmentActivity() {
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(findFilter, performerFilter),
+                    numCols,
                 )
             }
 
