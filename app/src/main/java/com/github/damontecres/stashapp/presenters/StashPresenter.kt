@@ -69,6 +69,9 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         }
         cardView.mainImageView.visibility = View.VISIBLE
         doOnBindViewHolder(viewHolder.view as StashImageCardView, item as T)
+        if (cardView.isSelected) {
+            cardView.isSelected = true
+        }
     }
 
     fun loadImage(

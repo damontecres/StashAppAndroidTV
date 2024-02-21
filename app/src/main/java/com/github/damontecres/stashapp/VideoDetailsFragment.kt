@@ -724,7 +724,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             title = it.title,
             created_at = "",
             updated_at = "",
-            stream = "",
+            stream = it.stream,
             screenshot = it.screenshot,
             seconds = it.seconds,
             preview = "",
