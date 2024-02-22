@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.api.DeleteMarkerMutation
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
 import com.github.damontecres.stashapp.api.SceneAddOMutation
+import com.github.damontecres.stashapp.api.SceneAddPlayCountMutation
 import com.github.damontecres.stashapp.api.SceneDecrementOMutation
 import com.github.damontecres.stashapp.api.SceneDeleteOMutation
 import com.github.damontecres.stashapp.api.SceneIncrementOMutation
@@ -122,9 +123,15 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
 
     suspend fun incrementPlayCount(sceneId: Long): Int {
         Log.v(TAG, "incrementPlayCount on $sceneId")
-        val mutation = SceneIncrementPlayCountMutation(sceneId.toString())
-        val result = executeMutation(mutation)
-        return result.data!!.sceneIncrementPlayCount
+        return if (ServerPreferences(context).serverVersion.isAtLeast(Version.V0_25_0)) {
+            val mutation = SceneAddPlayCountMutation(sceneId.toString(), emptyList())
+            val result = executeMutation(mutation)
+            result.data.sceneAddPlay.count
+        } else {
+            val mutation = SceneIncrementPlayCountMutation(sceneId.toString())
+            val result = executeMutation(mutation)
+            result.data!!.sceneIncrementPlayCount
+        }
     }
 
     private fun getServerBoolean(preferenceKey: String): Optional<Boolean> {
