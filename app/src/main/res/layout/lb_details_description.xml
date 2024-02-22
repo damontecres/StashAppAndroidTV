@@ -1,0 +1,66 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    >
+
+    <TextView
+        android:id="@+id/lb_details_description_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="?attr/detailsDescriptionTitleStyle"
+        />
+
+    <RatingBar
+        android:id="@+id/rating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:numStars="5"
+        android:stepSize=".5"
+        android:isIndicator="false"
+        android:theme="@style/RatingBar"
+        />
+
+    <LinearLayout
+        android:id="@+id/rating_decimal_holder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/rating_decimal_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/stashapp_rating"
+            style="?attr/detailsDescriptionSubtitleStyle"/>
+        <SeekBar
+            android:id="@+id/rating_decimal"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="45dp"
+            android:max="100" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/lb_details_description_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style="?attr/detailsDescriptionSubtitleStyle" />
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/description_scrollview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="25dp"
+        android:fadeScrollbars="false"
+        android:scrollbars="vertical"
+        android:scrollbarAlwaysDrawVerticalTrack="true"
+        android:scrollbarThumbVertical="@color/focus_color">
+
+        <TextView
+            android:id="@+id/lb_details_description_body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="?attr/detailsDescriptionBodyStyle" />
+    </androidx.core.widget.NestedScrollView>
+</LinearLayout>

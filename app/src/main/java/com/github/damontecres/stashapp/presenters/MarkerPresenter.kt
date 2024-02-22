@@ -1,35 +1,26 @@
 package com.github.damontecres.stashapp.presenters
 
-import androidx.leanback.widget.ImageCardView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-class MarkerPresenter : StashPresenter() {
-    override fun onBindViewHolder(
-        viewHolder: ViewHolder,
-        item: Any?,
+class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
+    StashPresenter<MarkerData>(callback) {
+    override fun doOnBindViewHolder(
+        cardView: StashImageCardView,
+        item: MarkerData,
     ) {
-        val marker = item as MarkerData
-        val cardView = viewHolder.view as ImageCardView
         val title =
-            marker.title.ifBlank {
-                marker.primary_tag.tagData.name
+            item.title.ifBlank {
+                item.primary_tag.tagData.name
             }
-        cardView.titleText = "$title - ${marker.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
+        cardView.titleText = "$title - ${item.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
         cardView.contentText =
-            if (marker.title.isNotBlank()) marker.primary_tag.tagData.name else null
+            if (item.title.isNotBlank()) item.primary_tag.tagData.name else null
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-        val url = createGlideUrl(marker.screenshot, viewHolder.view.context)
-        Glide.with(viewHolder.view.context)
-            .load(url)
-            .transform(CenterCrop())
-            .error(mDefaultCardImage)
-            .into(cardView.mainImageView!!)
+        loadImage(cardView, item.screenshot)
+        cardView.videoUrl = item.stream
     }
 
     companion object {

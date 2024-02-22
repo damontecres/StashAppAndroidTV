@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.media3.ui.PlayerView
+    <com.github.damontecres.stashapp.StashPlayerView
         android:id="@+id/video_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -15,6 +15,7 @@
         app:animation_enabled="true"
         app:scrubber_dragged_size="22dp"
         app:played_color="@color/selected_background"
-        app:use_controller="true" />
+        app:use_controller="true"
+        app:hide_during_ads="false" />
 
 </FrameLayout>

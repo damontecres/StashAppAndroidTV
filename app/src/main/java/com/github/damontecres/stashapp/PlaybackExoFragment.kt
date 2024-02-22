@@ -4,35 +4,41 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.annotation.OptIn
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
+import com.github.damontecres.stashapp.util.createOkHttpClient
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.Request
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -45,14 +51,16 @@ class PlaybackExoFragment :
     private lateinit var scene: Scene
     private lateinit var videoView: PlayerView
     private lateinit var previewTimeBar: PreviewTimeBar
-    private lateinit var controlsLayout: ConstraintLayout
+    private lateinit var exoCenterControls: View
 
     private var playbackPosition = -1L
 
     override val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
 
+    val isControllerVisible get() = videoView.isControllerFullyVisible || previewTimeBar.isShown
+
     override fun hideControlsIfVisible(): Boolean {
-        if (videoView.isControllerFullyVisible || previewTimeBar.isShown) {
+        if (isControllerVisible) {
             videoView.hideController()
             previewTimeBar.hidePreview()
             previewTimeBar.hideScrubber(250L)
@@ -74,41 +82,57 @@ class PlaybackExoFragment :
         position: Long,
         forceTranscode: Boolean,
     ) {
-        val apiKey =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getString("stashApiKey", "")
-        val skipForward =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("skip_forward_time", 30)
-        val skipBack =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("skip_back_time", 10)
-
-        val dataSourceFactory =
-            DataSource.Factory {
-                val dataSource = DefaultHttpDataSource.Factory().createDataSource()
-                if (!apiKey.isNullOrBlank()) {
-                    dataSource.setRequestProperty(Constants.STASH_API_HEADER, apiKey)
-                    dataSource.setRequestProperty(Constants.STASH_API_HEADER.lowercase(), apiKey)
-                }
-                dataSource
-            }
-
         player =
-            ExoPlayer.Builder(requireContext())
-                .setMediaSourceFactory(
-                    DefaultMediaSourceFactory(requireContext()).setDataSourceFactory(
-                        dataSourceFactory,
-                    ),
-                )
-                .setSeekBackIncrementMs(skipBack * 1000L)
-                .setSeekForwardIncrementMs(skipForward * 1000L)
-                .build()
+            StashExoPlayer.getInstance(requireContext())
                 .also { exoPlayer ->
                     videoView.player = exoPlayer
-                    exoPlayer.addListener(AmbientPlaybackListener())
+                    StashExoPlayer.addListener(AmbientPlaybackListener())
                     if (ServerPreferences(requireContext()).trackActivity) {
-                        exoPlayer.addListener(PlaybackListener())
+                        StashExoPlayer.addListener(PlaybackListener())
+                    }
+                }.also { exoPlayer ->
+                    val finishedBehavior =
+                        PreferenceManager.getDefaultSharedPreferences(requireContext())
+                            .getString(
+                                "playbackFinishedBehavior",
+                                getString(R.string.playback_finished_do_nothing),
+                            )
+                    when (finishedBehavior) {
+                        getString(R.string.playback_finished_repeat) -> {
+                            StashExoPlayer.addListener(
+                                object :
+                                    Player.Listener {
+                                    override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
+                                        if (Player.COMMAND_SET_REPEAT_MODE in availableCommands) {
+                                            Log.v(
+                                                TAG,
+                                                "Listener setting repeatMode to REPEAT_MODE_ONE",
+                                            )
+                                            exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
+                                            exoPlayer.removeListener(this)
+                                        }
+                                    }
+                                },
+                            )
+                        }
+
+                        getString(R.string.playback_finished_return) ->
+                            StashExoPlayer.addListener(
+                                object :
+                                    Player.Listener {
+                                    override fun onPlaybackStateChanged(playbackState: Int) {
+                                        if (playbackState == Player.STATE_ENDED) {
+                                            Log.v(TAG, "Finishing activity")
+                                            requireActivity().finish()
+                                        }
+                                    }
+                                })
+
+                        getString(R.string.playback_finished_do_nothing) -> {
+                            // no-op
+                        }
+
+                        else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
                     }
                 }.also { exoPlayer ->
                     var mediaItem: MediaItem? = null
@@ -145,23 +169,13 @@ class PlaybackExoFragment :
                                 .setMimeType(mimeType)
                                 .build()
                     }
-
-                    exoPlayer.setMediaItem(mediaItem)
-                    exoPlayer.playWhenReady = true
+                    exoPlayer.setMediaItem(mediaItem, if (position > 0) position else C.TIME_UNSET)
                     exoPlayer.prepare()
-                    videoView.hideController()
-                    exoPlayer.addListener(
-                        object : Player.Listener {
-                            private var initialSeek = true
-
-                            override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
-                                if (initialSeek && position > 0 && Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM in availableCommands) {
-                                    exoPlayer.seekTo(position)
-                                    initialSeek = false
-                                }
-                            }
-                        },
-                    )
+                    exoPlayer.playWhenReady = true
+                    exoPlayer.volume = 1f
+                    if (videoView.controllerShowTimeoutMs > 0) {
+                        videoView.hideController()
+                    }
                 }
     }
 
@@ -172,7 +186,7 @@ class PlaybackExoFragment :
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        controlsLayout = view.findViewById(R.id.player_controls)
+        exoCenterControls = view.findViewById(androidx.media3.ui.R.id.exo_center_controls)
 
         scene = requireActivity().intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
             ?: throw RuntimeException()
@@ -186,6 +200,15 @@ class PlaybackExoFragment :
 
         videoView = view.findViewById(R.id.video_view)
         videoView.controllerShowTimeoutMs = controllerShowTimeoutMs
+        videoView.setControllerVisibilityListener(
+            PlayerView.ControllerVisibilityListener {
+                if (!exoCenterControls.isVisible) {
+                    hideControlsIfVisible()
+                }
+            },
+        )
+        val controller =
+            videoView.findViewById<PlayerControlView>(androidx.media3.ui.R.id.exo_controller)
 
         val mFocusedZoom =
             requireContext().resources.getFraction(
@@ -230,38 +253,121 @@ class PlaybackExoFragment :
             view.findViewById<View>(it)?.onFocusChangeListener = onFocusChangeListener
         }
 
+        val oCounterText = view.findViewById<TextView>(R.id.controls_o_counter_text)
+        if (scene.oCounter != null) {
+            oCounterText.text = scene.oCounter.toString()
+        } else {
+            oCounterText.text = "0"
+        }
+
+        val oCounterButton = view.findViewById<ImageButton>(R.id.controls_o_counter_button)
+        oCounterButton.onFocusChangeListener = onFocusChangeListener
+        oCounterButton.setOnClickListener {
+            viewLifecycleOwner.lifecycleScope.launch(
+                StashCoroutineExceptionHandler(
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.failed_o_counter),
+                        Toast.LENGTH_SHORT,
+                    ),
+                ),
+            ) {
+                val newCounter =
+                    MutationEngine(requireContext()).incrementOCounter(scene.id.toInt())
+                oCounterText.text = newCounter.count.toString()
+            }
+        }
+        oCounterButton.setOnLongClickListener(
+            PopupOnLongClickListener(
+                listOf(
+                    "Decrement",
+                    "Reset",
+                ),
+            ) { _: AdapterView<*>, _: View, popUpItemPosition: Int, id: Long ->
+                val mutationEngine = MutationEngine(requireContext())
+                viewLifecycleOwner.lifecycleScope.launch(
+                    StashCoroutineExceptionHandler(
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.failed_o_counter),
+                            Toast.LENGTH_SHORT,
+                        ),
+                    ),
+                ) {
+                    when (popUpItemPosition) {
+                        0 -> {
+                            // Decrement
+                            val newCount = mutationEngine.decrementOCounter(scene.id.toInt())
+                            if (newCount.count > 0) {
+                                oCounterText.text = newCount.count.toString()
+                            } else {
+                                oCounterText.text = "0"
+                            }
+                        }
+
+                        1 -> {
+                            // Reset
+                            mutationEngine.resetOCounter(scene.id.toInt())
+                            oCounterText.text = "0"
+                        }
+
+                        else ->
+                            Log.w(
+                                TAG,
+                                "Unknown position for oCounterButton.setOnLongClickListener: $popUpItemPosition",
+                            )
+                    }
+                }
+            },
+        )
+
         val previewImageView = view.findViewById<ImageView>(R.id.video_preview_image_view)
         previewTimeBar = view.findViewById(R.id.exo_progress)
 
+        previewTimeBar.isPreviewEnabled = false
+        previewTimeBar.addOnScrubListener(
+            object : PreviewBar.OnScrubListener {
+                override fun onScrubStart(previewBar: PreviewBar) {
+                    player!!.playWhenReady = false
+                }
+
+                override fun onScrubMove(
+                    previewBar: PreviewBar,
+                    progress: Int,
+                    fromUser: Boolean,
+                ) {
+                }
+
+                override fun onScrubStop(previewBar: PreviewBar) {
+                    player!!.playWhenReady = true
+                }
+            },
+        )
+
         if (scene.spriteUrl != null) {
-            previewTimeBar.isPreviewEnabled = true
-            previewTimeBar.setPreviewLoader(
-                StashPreviewLoader(
-                    requireContext(),
-                    previewImageView,
-                    scene,
-                ),
-            )
-            previewTimeBar.addOnScrubListener(
-                object : PreviewBar.OnScrubListener {
-                    override fun onScrubStart(previewBar: PreviewBar) {
-                        player!!.playWhenReady = false
+            // Usually even if not null, there may not be sprites and the server will return a 404
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                withContext(Dispatchers.IO) {
+                    val client = createOkHttpClient(requireContext())
+                    val request = Request.Builder().url(scene.spriteUrl!!).get().build()
+                    client.newCall(request).execute().use {
+                        Log.d(
+                            TAG,
+                            "Sprite URL check isSuccessful=${it.isSuccessful}, code=${it.code}",
+                        )
+                        if (it.isSuccessful) {
+                            previewTimeBar.isPreviewEnabled = true
+                            previewTimeBar.setPreviewLoader(
+                                StashPreviewLoader(
+                                    requireContext(),
+                                    previewImageView,
+                                    scene,
+                                ),
+                            )
+                        }
                     }
-
-                    override fun onScrubMove(
-                        previewBar: PreviewBar,
-                        progress: Int,
-                        fromUser: Boolean,
-                    ) {
-                    }
-
-                    override fun onScrubStop(previewBar: PreviewBar) {
-                        player!!.playWhenReady = true
-                    }
-                },
-            )
-        } else {
-            previewTimeBar.isPreviewEnabled = false
+                }
+            }
         }
     }
 

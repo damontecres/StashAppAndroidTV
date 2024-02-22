@@ -37,6 +37,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getCaseInsensitive
+import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.supportedFilterModes
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -61,7 +62,9 @@ class MainFragment : BrowseSupportFragment() {
         val url = manager.getString("stashUrl", null)
         val apiKey = manager.getString("stashApiKey", null)
         val maxSearchResults = manager.getInt("maxSearchResults", 0)
-        return Objects.hash(url, apiKey, maxSearchResults)
+        val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
+        val columns = manager.getInt("cardSize", getString(R.string.card_size_default))
+        return Objects.hash(url, apiKey, maxSearchResults, playVideoPreviews, columns)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,7 +92,7 @@ class MainFragment : BrowseSupportFragment() {
         browseFrameLayout.onFocusSearchListener =
             OnFocusSearchListener { focused: View?, direction: Int ->
                 if (direction == View.FOCUS_UP) {
-                    requireActivity().findViewById(androidx.leanback.R.id.search_orb)
+                    requireActivity().findViewById(R.id.search_button)
                 } else {
                     null
                 }
@@ -128,6 +131,9 @@ class MainFragment : BrowseSupportFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             if (testStashConnection(requireContext(), false) != null) {
                 ServerPreferences(requireContext()).updatePreferences()
+                val mainTitleView =
+                    requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
+                mainTitleView.refreshMenuItems()
                 if (rowsAdapter.size() == 0) {
                     fetchData()
                 }
@@ -472,7 +478,7 @@ class MainFragment : BrowseSupportFragment() {
 
     private fun getCurrentPosition(): Position? {
         val rowPos = selectedPosition
-        if (rowPos >= 0) {
+        if (rowPos >= 0 && selectedRowViewHolder != null) {
             val columnPos =
                 (selectedRowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition
             if (columnPos >= 0) {

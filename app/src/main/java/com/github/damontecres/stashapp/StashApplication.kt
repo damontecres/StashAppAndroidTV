@@ -72,16 +72,19 @@ class StashApplication : Application() {
         override fun onPause(owner: LifecycleOwner) {
             Log.v(TAG, "LifecycleObserverImpl.onPause")
             wasEnterBackground = true
+            StashExoPlayer.releasePlayer()
         }
 
         override fun onStop(owner: LifecycleOwner) {
             Log.v(TAG, "LifecycleObserverImpl.onStop")
             wasEnterBackground = true
+            StashExoPlayer.releasePlayer()
         }
 
         override fun onDestroy(owner: LifecycleOwner) {
             Log.v(TAG, "LifecycleObserverImpl.onDestroy")
             wasEnterBackground = true
+            StashExoPlayer.releasePlayer()
         }
     }
 
@@ -118,6 +121,7 @@ class StashApplication : Application() {
 
         override fun onActivityPaused(activity: Activity) {
             Log.d(TAG, "onActivityPaused: $activity")
+            StashExoPlayer.releasePlayer()
         }
 
         override fun onActivityStopped(activity: Activity) {

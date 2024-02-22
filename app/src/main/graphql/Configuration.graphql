@@ -24,6 +24,9 @@ query Configuration {
         transcodes
       }
     }
+    interface {
+      menuItems
+    }
     ui
   }
 }

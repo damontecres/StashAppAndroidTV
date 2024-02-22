@@ -7,5 +7,16 @@ mutation SceneUpdate($input: SceneUpdateInput!) {
     performers {
       ...PerformerData
     }
+    rating100
   }
+}
+
+mutation CreateMarker($input: SceneMarkerCreateInput!) {
+  sceneMarkerCreate(input: $input) {
+    ...MarkerData
+  }
+}
+
+mutation DeleteMarker($id: ID!) {
+  sceneMarkerDestroy(id: $id)
 }

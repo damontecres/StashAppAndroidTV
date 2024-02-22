@@ -1,18 +1,17 @@
 package com.github.damontecres.stashapp.presenters
 
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.leanback.widget.ImageCardView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 
-class StashFilterPresenter : StashPresenter() {
-    override fun onBindViewHolder(
-        viewHolder: ViewHolder,
-        item: Any?,
+class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
+    StashPresenter<Any>(callback) {
+    override fun doOnBindViewHolder(
+        cardView: StashImageCardView,
+        item: Any,
     ) {
-        val cardView = viewHolder.view as ImageCardView
         cardView.titleText = "View All"
 
         val mode: FilterMode =
@@ -62,12 +61,22 @@ class StashFilterPresenter : StashPresenter() {
                 )
             }
 
+            FilterMode.SCENE_MARKERS -> {
+                cardView.setMainImageDimensions(
+                    MarkerPresenter.CARD_WIDTH,
+                    MarkerPresenter.CARD_HEIGHT,
+                )
+            }
+
             else -> {}
+//            FilterMode.GALLERIES -> TODO()
+//            FilterMode.IMAGES -> TODO()
+//            FilterMode.UNKNOWN__ -> TODO()
         }
 
         cardView.mainImageView.setImageDrawable(
             AppCompatResources.getDrawable(
-                viewHolder.view.context,
+                cardView.context,
                 R.drawable.baseline_camera_indoor_48,
             ),
         )

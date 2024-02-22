@@ -20,6 +20,7 @@ import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.getInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -28,23 +29,25 @@ class StashGridFragment<T : Query.Data, D : Any>(
     comparator: DiffUtil.ItemCallback<D>,
     private val dataSupplier: StashPagingSource.DataSupplier<T, D>,
     val filter: SavedFilterData?,
-    private val numberOfColumns: Int? = null,
+    private val cardSize: Int? = null,
 ) : VerticalGridSupportFragment() {
     constructor(
         comparator: DiffUtil.ItemCallback<D>,
         dataSupplier: StashPagingSource.DataSupplier<T, D>,
-        numberOfColumns: Int? = null,
-    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, numberOfColumns)
+        cardSize: Int? = null,
+    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, cardSize)
 
-    private val mAdapter = PagingDataAdapter(presenter, comparator)
+    val mAdapter = PagingDataAdapter(presenter, comparator)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val gridPresenter = StashGridPresenter()
-        gridPresenter.numberOfColumns =
-            numberOfColumns ?: PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("numberOfColumns", 5)
+        val columns =
+            cardSize ?: PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("cardSize", requireContext().getString(R.string.card_size_default))
+
+        gridPresenter.numberOfColumns = columns
         setGridPresenter(gridPresenter)
 
         adapter = mAdapter

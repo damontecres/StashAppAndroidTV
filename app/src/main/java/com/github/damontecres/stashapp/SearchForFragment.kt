@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
@@ -15,6 +16,7 @@ import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
+import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
@@ -25,14 +27,18 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
+import kotlin.properties.Delegates
 
 class SearchForFragment(
     private val dataType: DataType,
@@ -41,8 +47,9 @@ class SearchForFragment(
         SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
 
-    private val adapter = ArrayObjectAdapter(ListRowPresenter())
-    private val resultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+    private val adapter = SparseArrayObjectAdapter(ListRowPresenter())
+    private val searchResultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+    private var perPage by Delegates.notNull<Int>()
 
     private val exceptionHandler =
         CoroutineExceptionHandler { _: CoroutineContext, ex: Throwable ->
@@ -53,7 +60,22 @@ class SearchForFragment(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        title = getString(dataType.pluralStringId)
+        perPage =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getInt("maxSearchResults", 25)
+        title =
+            requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
+        adapter.set(0, ListRow(HeaderItem("Results"), searchResultsAdapter))
+
+        searchResultsAdapter.presenterSelector =
+            StashPresenter.SELECTOR.addClassPresenter(
+                PerformerData::class.java,
+                PerformerPresenter(GoToLongClick(requireContext())),
+            ).addClassPresenter(
+                TagData::class.java,
+                TagPresenter(GoToLongClick(requireContext())),
+            )
+
         setSearchResultProvider(this)
         setOnItemViewClickedListener {
                 itemViewHolder: Presenter.ViewHolder,
@@ -76,7 +98,33 @@ class SearchForFragment(
             requireActivity().setResult(Activity.RESULT_OK, result)
             requireActivity().finish()
         }
-        adapter.add(ListRow(HeaderItem("Results"), resultsAdapter))
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (dataType in DATA_TYPE_SUGGESTIONS) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                val results =
+                    ArrayObjectAdapter(
+                        StashPresenter.SELECTOR.addClassPresenter(
+                            PerformerData::class.java,
+                            PerformerPresenter(GoToLongClick(requireContext())),
+                        ).addClassPresenter(
+                            TagData::class.java,
+                            TagPresenter(GoToLongClick(requireContext())),
+                        ),
+                    )
+                val queryEngine = QueryEngine(requireContext(), false)
+                val filter =
+                    FindFilterType(
+                        direction = Optional.present(SortDirectionEnum.DESC),
+                        per_page = Optional.present(perPage),
+                        sort = Optional.present("scenes_count"),
+                    )
+                results.addAll(0, queryEngine.find(dataType, filter))
+                adapter.set(1, ListRow(HeaderItem("Suggestions"), results))
+            }
+        }
     }
 
     override fun getResultsAdapter(): ObjectAdapter {
@@ -106,12 +154,9 @@ class SearchForFragment(
     }
 
     private suspend fun search(query: String) {
-        resultsAdapter.clear()
+        searchResultsAdapter.clear()
 
         if (!TextUtils.isEmpty(query)) {
-            val perPage =
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
-                    .getInt("maxSearchResults", 25)
             val filter =
                 FindFilterType(
                     q = Optional.present(query),
@@ -119,8 +164,21 @@ class SearchForFragment(
                 )
             val queryEngine = QueryEngine(requireContext(), true)
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                resultsAdapter.addAll(0, queryEngine.find(dataType, filter))
+                searchResultsAdapter.addAll(0, queryEngine.find(dataType, filter))
             }
+        }
+    }
+
+    class GoToLongClick<T : Any>(private val context: Context) :
+        StashPresenter.LongClickCallBack<T> {
+        override val popUpItems: List<String>
+            get() = listOf("Go to")
+
+        override fun onItemLongClick(
+            item: T,
+            popUpItemPosition: Int,
+        ) {
+            StashItemViewClickListener(context).onItemClicked(null, item, null, null)
         }
     }
 
@@ -129,5 +187,8 @@ class SearchForFragment(
 
         const val ID_KEY = "id"
         const val RESULT_ID_KEY = "resultId"
+        const val TITLE_KEY = "title"
+
+        val DATA_TYPE_SUGGESTIONS = setOf(DataType.TAG, DataType.PERFORMER)
     }
 }

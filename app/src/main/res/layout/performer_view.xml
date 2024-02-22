@@ -8,57 +8,63 @@
     android:layout_margin="5dp"
     android:baselineAligned="false">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+
+    <ScrollView
+        android:id="@+id/performer_scrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="3"
-        android:layout_margin="5dp">
+        android:layout_margin="5dp"
+        android:fadeScrollbars="false"
+        android:scrollbarThumbVertical="@color/focus_color">
 
-        <ImageView
-            android:id="@+id/performer_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:contentDescription="@string/stashapp_performer_image"
-            android:layout_centerHorizontal="true"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth="match_parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent" />
-
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_margin="5dp"
-            app:layout_constraintTop_toBottomOf="@id/performer_image">
+            android:layout_margin="5dp">
 
-            <TextView
-                android:id="@+id/performer_name"
+            <ImageView
+                android:id="@+id/performer_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/stashapp_performer_image"
+                android:layout_centerHorizontal="true"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintWidth="match_parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent" />
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAlignment="center"
-                android:textSize="20sp"
-                android:text="@string/stashapp_name" />
+                android:orientation="vertical"
+                android:layout_margin="5dp"
+                app:layout_constraintTop_toBottomOf="@id/performer_image">
 
-            <TextView
-                android:id="@+id/performer_disambiguation"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAlignment="center"
-                android:textSize="12sp"
-                android:text="@string/stashapp_aliases" />
+                <TextView
+                    android:id="@+id/performer_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAlignment="center"
+                    android:textSize="20sp"
+                    android:text="@string/stashapp_name" />
 
-            <TableLayout
-                android:id="@+id/performer_table"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="3dp">
+                <TextView
+                    android:id="@+id/performer_disambiguation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAlignment="center"
+                    android:textSize="12sp"
+                    android:text="@string/stashapp_aliases" />
 
-            </TableLayout>
-
-        </LinearLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
+                <TableLayout
+                    android:id="@+id/performer_table"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp" />
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"

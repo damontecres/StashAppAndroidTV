@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -11,12 +13,19 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.fragment.app.FragmentActivity
+import androidx.leanback.widget.ClassPresenterSelector
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.presenters.PerformerPresenter
+import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
@@ -32,6 +41,7 @@ import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.StudioComparator
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.convertFilter
+import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.toPx
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
@@ -153,10 +163,11 @@ class FilterListActivity : FragmentActivity() {
             } else {
                 throw RuntimeException("dataType is required")
             }
+        val query = intent.getStringExtra("query")
         if (savedFilterId != null) {
             // Load a saved filter
             return queryEngine.getSavedFilter(savedFilterId.toString())
-        } else if (direction != null || sortBy != null) {
+        } else if (direction != null || sortBy != null || query != null) {
             // Generic filter
             return SavedFilterData(
                 id = "-1",
@@ -164,7 +175,7 @@ class FilterListActivity : FragmentActivity() {
                 name = getString(dataType.pluralStringId),
                 find_filter =
                     SavedFilterData.Find_filter(
-                        q = null,
+                        q = query,
                         page = null,
                         per_page = null,
                         sort = sortBy,
@@ -224,6 +235,12 @@ class FilterListActivity : FragmentActivity() {
         findFilter: FindFilterType?,
         objectFilter: Any?,
     ): StashGridFragment<out Query.Data, out Any> {
+        val cardSize =
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .getInt("cardSize", getString(R.string.card_size_default))
+        val performerCardSize =
+            (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / PerformerPresenter.CARD_WIDTH)).toInt()
+        // TODO other sizes
         return when (dataType) {
             DataType.SCENE -> {
                 val sceneFilter =
@@ -243,6 +260,7 @@ class FilterListActivity : FragmentActivity() {
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(findFilter, performerFilter),
+                    performerCardSize,
                 )
             }
 
@@ -259,8 +277,33 @@ class FilterListActivity : FragmentActivity() {
 
             DataType.MARKER -> {
                 val markerFilter = FilterParser.instance.convertMarkerObjectFilter(objectFilter)
-                StashGridFragment(MarkerComparator, MarkerDataSupplier(findFilter, markerFilter))
+                val selectorPresenter =
+                    ClassPresenterSelector().addClassPresenter(
+                        MarkerData::class.java,
+                        MarkerPresenter(MarkerLongClickCallBack(this)),
+                    )
+                StashGridFragment(
+                    selectorPresenter,
+                    MarkerComparator,
+                    MarkerDataSupplier(findFilter, markerFilter),
+                    null,
+                )
             }
+        }
+    }
+
+    class MarkerLongClickCallBack(private val context: Context) :
+        StashPresenter.LongClickCallBack<MarkerData> {
+        override val popUpItems: List<String>
+            get() = listOf(context.getString(R.string.go_to_scene))
+
+        override fun onItemLongClick(
+            item: MarkerData,
+            popUpItemPosition: Int,
+        ) {
+            val intent = Intent(context, VideoDetailsActivity::class.java)
+            intent.putExtra(VideoDetailsActivity.MOVIE, item.scene.slimSceneData.id)
+            context.startActivity(intent)
         }
     }
 

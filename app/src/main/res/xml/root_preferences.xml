@@ -47,7 +47,6 @@
             app:title="Maximum number of search results"
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"
-            android:min="1"
             android:max="100"
             app:defaultValue="25" />
         <SeekBarPreference
@@ -55,7 +54,6 @@
             app:title="Wait for searching (ms)"
             app:seekBarIncrement="50"
             app:showSeekBarValue="true"
-            android:min="50"
             android:max="2000"
             app:defaultValue="500" />
     </PreferenceCategory>
@@ -71,21 +69,37 @@
             app:summary="Submit PIN automatically when typed"
             app:defaultValue="false" />
 
-        <SeekBarPreference
-            app:key="numberOfColumns"
-            app:title="Number of Columns"
-            app:seekBarIncrement="1"
-            app:showSeekBarValue="true"
-            android:min="1"
-            android:max="12"
-            app:defaultValue="5" />
+        <ListPreference
+            app:key="cardSize"
+            app:title="Card size"
+            app:useSimpleSummaryProvider="true"
+            app:defaultValue="@string/card_size_default"
+            app:entries="@array/card_sizes"
+            app:entryValues="@array/card_size_cols" />
 
         <SwitchPreference
             app:key="scrollToNextResult"
             app:title="Scroll to next on View All"
             app:summary="Automatically scroll down to the 'next' results when clicking View All on main page"
-            app:defaultValue="true"
-            />
+            app:defaultValue="true" />
+        <SwitchPreference
+            app:key="scrollSceneDetails"
+            app:title="Long scene details behavior"
+            app:summaryOn="Scroll if needed"
+            app:summaryOff="Truncate details"
+            app:defaultValue="true" />
+        <SwitchPreference
+            app:key="playVideoPreviews"
+            app:title="Play video previews"
+            app:summaryOn="Video preview will play when item is selected"
+            app:summaryOff="Video previews will not play"
+            app:defaultValue="true" />
+        <SwitchPreference
+            app:key="videoPreviewAudio"
+            app:title="Play audio for video previews"
+            app:summaryOn="Play audio"
+            app:summaryOff="Don't play audio"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">
@@ -94,7 +108,6 @@
             app:title="Skip forward (seconds)"
             app:seekBarIncrement="5"
             app:showSeekBarValue="true"
-            android:min="5"
             android:max="300"
             app:defaultValue="30" />
         <SeekBarPreference
@@ -102,9 +115,15 @@
             app:title="Skip back (seconds)"
             app:seekBarIncrement="5"
             app:showSeekBarValue="true"
-            android:min="5"
             android:max="300"
             app:defaultValue="10" />
+        <SwitchPreference
+            app:key="skipWithDpad"
+            app:title="D-Pad skipping"
+            app:summaryOn="Skip back/forward with D-Pad left/right on ExoPlayer"
+            app:summaryOff="Don't skip back/forward with D-Pad left/right on ExoPlayer"
+            app:defaultValue="true"
+            />
         <ListPreference
             app:key="stream_choice"
             app:title="Stream Choice"
@@ -121,9 +140,16 @@
             app:title="Hide controls after (milliseconds)"
             app:seekBarIncrement="100"
             app:showSeekBarValue="true"
-            android:min="0"
             android:max="15000"
             app:defaultValue="5000" />
+        <ListPreference
+            app:key="playbackFinishedBehavior"
+            app:title="Playback finished behavior"
+            app:defaultValue="@string/playback_finished_do_nothing"
+            app:useSimpleSummaryProvider="true"
+            app:entries="@array/playback_finished_behavior_options"
+            app:entryValues="@array/playback_finished_behavior_options"
+            />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/stashapp_config_tasks_job_queue">

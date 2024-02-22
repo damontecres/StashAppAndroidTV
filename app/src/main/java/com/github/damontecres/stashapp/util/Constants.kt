@@ -2,14 +2,17 @@ package com.github.damontecres.stashapp.util
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.text.TextUtils
 import android.util.Log
 import android.util.TypedValue
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.widget.NestedScrollView
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
@@ -29,6 +32,9 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import java.io.File
 import java.security.SecureRandom
@@ -85,18 +91,33 @@ val TRUST_ALL_CERTS: TrustManager =
         }
     }
 
-fun createUnsafeOkHttpClient(): OkHttpClient {
-    val sslContext = SSLContext.getInstance("SSL")
-    sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-    return OkHttpClient.Builder()
-        .sslSocketFactory(
+fun createOkHttpClient(context: Context): OkHttpClient {
+    val trustAll =
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .getBoolean("trustAllCerts", false)
+    val apiKey =
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .getString("stashApiKey", null)
+    val builder = OkHttpClient.Builder()
+    if (trustAll) {
+        val sslContext = SSLContext.getInstance("SSL")
+        sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
+        builder.sslSocketFactory(
             sslContext.socketFactory,
             TRUST_ALL_CERTS as X509TrustManager,
         )
-        .hostnameVerifier { _, _ ->
-            true
+            .hostnameVerifier { _, _ ->
+                true
+            }
+    }
+    if (apiKey.isNotNullOrBlank()) {
+        builder.addInterceptor {
+            val request =
+                it.request().newBuilder().addHeader(STASH_API_HEADER, apiKey.trim()).build()
+            it.proceed(request)
         }
-        .build()
+    }
+    return builder.build()
 }
 
 fun configureHttpsTrust(
@@ -195,7 +216,7 @@ fun createApolloClient(context: Context): ApolloClient? {
                 .getBoolean("trustAllCerts", false)
         val httpEngine =
             if (trustAll) {
-                DefaultHttpEngine(createUnsafeOkHttpClient())
+                DefaultHttpEngine(createOkHttpClient(context))
             } else {
                 DefaultHttpEngine()
             }
@@ -223,50 +244,61 @@ suspend fun testStashConnection(
     context: Context,
     showToast: Boolean,
 ): ServerInfoQuery.Data? {
-    val client = createApolloClient(context)
-    if (client == null) {
-        if (showToast) {
-            Toast.makeText(
-                context,
-                "Stash server URL is not set.",
-                Toast.LENGTH_LONG,
-            ).show()
-        }
-    } else {
-        try {
-            val info = client.query(ServerInfoQuery()).execute()
-            if (info.hasErrors()) {
-                if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Failed to connect to Stash. Check URL or API Key.",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-                Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
-            } else {
-                if (showToast) {
-                    val version = info.data?.version?.version
-                    val sceneCount = info.data?.stats?.scene_count
-                    Toast.makeText(
-                        context,
-                        "Connected to Stash ($version) with $sceneCount scenes!",
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                }
-                return info.data
+    return withContext(Dispatchers.IO) {
+        val client = createApolloClient(context)
+        if (client == null) {
+            if (showToast) {
+                Toast.makeText(
+                    context,
+                    "Stash server URL is not set.",
+                    Toast.LENGTH_LONG,
+                ).show()
             }
-        } catch (ex: ApolloHttpException) {
-            Log.e(Constants.TAG, "ApolloHttpException", ex)
-            if (ex.statusCode == 401 || ex.statusCode == 403) {
-                if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Failed to connect to Stash. API Key was not valid.",
-                        Toast.LENGTH_LONG,
-                    ).show()
+        } else {
+            try {
+                val info = client.query(ServerInfoQuery()).execute()
+                if (info.hasErrors()) {
+                    if (showToast) {
+                        Toast.makeText(
+                            context,
+                            "Failed to connect to Stash. Check URL or API Key.",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                    Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
+                } else {
+                    if (showToast) {
+                        val version = info.data?.version?.version
+                        val sceneCount = info.data?.stats?.scene_count
+                        Toast.makeText(
+                            context,
+                            "Connected to Stash ($version) with $sceneCount scenes!",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                    return@withContext info.data
                 }
-            } else {
+            } catch (ex: ApolloHttpException) {
+                Log.e(Constants.TAG, "ApolloHttpException", ex)
+                if (ex.statusCode == 401 || ex.statusCode == 403) {
+                    if (showToast) {
+                        Toast.makeText(
+                            context,
+                            "Failed to connect to Stash. API Key was not valid.",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                } else {
+                    if (showToast) {
+                        Toast.makeText(
+                            context,
+                            "Failed to connect to Stash. Error was '${ex.message}'",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                }
+            } catch (ex: ApolloException) {
+                Log.e(Constants.TAG, "ApolloException", ex)
                 if (showToast) {
                     Toast.makeText(
                         context,
@@ -275,18 +307,9 @@ suspend fun testStashConnection(
                     ).show()
                 }
             }
-        } catch (ex: ApolloException) {
-            Log.e(Constants.TAG, "ApolloException", ex)
-            if (showToast) {
-                Toast.makeText(
-                    context,
-                    "Failed to connect to Stash. Error was '${ex.message}'",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
         }
+        return@withContext null
     }
-    return null
 }
 
 fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
@@ -378,3 +401,35 @@ val PerformerData.ageInYears: Int?
         } else {
             null
         }
+
+fun ScrollView.onlyScrollIfNeeded() {
+    viewTreeObserver.addOnGlobalLayoutListener {
+        val childHeight = getChildAt(0).height
+        val isScrollable =
+            height < childHeight + paddingTop + paddingBottom
+        isFocusable = isScrollable
+    }
+}
+
+fun NestedScrollView.onlyScrollIfNeeded() {
+    viewTreeObserver.addOnGlobalLayoutListener {
+        val childHeight = getChildAt(0).height
+        val isScrollable =
+            height < childHeight + paddingTop + paddingBottom
+        isFocusable = isScrollable
+    }
+}
+
+fun SharedPreferences.getStringNotNull(
+    key: String,
+    defValue: String,
+): String {
+    return getString(key, defValue)!!
+}
+
+fun SharedPreferences.getInt(
+    key: String,
+    defValue: String,
+): Int {
+    return getStringNotNull(key, defValue).toInt()
+}

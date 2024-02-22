@@ -23,8 +23,11 @@ import androidx.preference.PreferenceDialogFragmentCompat
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
+import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.configureHttpsTrust
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -225,10 +228,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 val apiKey = manager.getString(apiKeyKey, null)
                 urlPref?.text = server
                 apiKayPref?.text = apiKey
-//                manager.edit(true) {
-//                    putString("stashUrl", server)
-//                    putString("stashApiKey", apiKey)
-//                }
 
                 false
             }
@@ -301,6 +300,18 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 val app = requireActivity().application as StashApplication
                 configureHttpsTrust(app, newValue as Boolean)
                 true
+            }
+
+            findPreference<SeekBarPreference>("maxSearchResults")?.min = 5
+            findPreference<SeekBarPreference>("skip_back_time")?.min = 5
+            findPreference<SeekBarPreference>("skip_forward_time")?.min = 5
+            findPreference<SeekBarPreference>("searchDelay")?.min = 50
+        }
+
+        override fun onResume() {
+            super.onResume()
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                ServerPreferences(requireContext()).updatePreferences()
             }
         }
 

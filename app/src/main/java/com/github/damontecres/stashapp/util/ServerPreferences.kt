@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.core.content.edit
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 
@@ -21,6 +22,8 @@ class ServerPreferences(private val context: Context) {
 
     val minimumPlayPercent get() = preferences.getInt(PREF_MINIMUM_PLAY_PERCENT, 20)
 
+    val ratingsAsStars get() = preferences.getString(PREF_RATING_TYPE, "stars") == "stars"
+
     suspend fun updatePreferences() {
         val queryEngine = QueryEngine(context)
         val query = ConfigurationQuery()
@@ -35,14 +38,41 @@ class ServerPreferences(private val context: Context) {
         if (config != null) {
             val ui = config.ui as Map<String, *>
             preferences.edit(true) {
-                putBoolean(
-                    PREF_TRACK_ACTIVITY,
-                    (ui.getCaseInsensitive(PREF_TRACK_ACTIVITY) as Boolean?) ?: false,
-                )
-                putInt(
-                    PREF_MINIMUM_PLAY_PERCENT,
-                    (ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT) as Int?) ?: 20,
-                )
+                ui.getCaseInsensitive(PREF_TRACK_ACTIVITY).also {
+                    // If null, toString()=>"null".toBoolean()=>false
+                    putBoolean(PREF_TRACK_ACTIVITY, it.toString().toBoolean())
+                }
+                ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT)?.let {
+                    try {
+                        putInt(PREF_MINIMUM_PLAY_PERCENT, it.toString().toInt())
+                    } catch (ex: NumberFormatException) {
+                        Log.w(TAG, "$PREF_MINIMUM_PLAY_PERCENT is not an integer: '$it'")
+                    }
+                }
+                val ratingSystemOptionsRaw = ui.getCaseInsensitive("ratingSystemOptions")
+                if (ratingSystemOptionsRaw != null) {
+                    try {
+                        val ratingSystemOptions = ratingSystemOptionsRaw as Map<String, String>
+                        val type = ratingSystemOptions["type"] ?: "star"
+                        val starPrecision =
+                            when (ratingSystemOptions["starPrecision"]?.lowercase()) {
+                                "full" -> 1.0f
+                                "half" -> 0.5f
+                                "quarter" -> 0.25f
+                                "tenth" -> 0.1f
+                                else -> null
+                            }
+                        putString(PREF_RATING_TYPE, type)
+                        if (starPrecision != null) {
+                            putFloat(PREF_RATING_PRECISION, starPrecision)
+                        }
+                    } catch (ex: Exception) {
+                        Log.e(
+                            TAG,
+                            "Exception parsing ratingSystemOptions: $ratingSystemOptionsRaw",
+                        )
+                    }
+                }
 
                 val scan = config.defaults.scan
                 if (scan != null) {
@@ -75,13 +105,22 @@ class ServerPreferences(private val context: Context) {
                     putBoolean(PREF_GEN_SPRITES, generate.sprites ?: false)
                     putBoolean(PREF_GEN_TRANSCODES, generate.transcodes ?: false)
                 }
+
+                val menuItems = config.`interface`.menuItems?.map(String::lowercase)?.toSet()
+                putStringSet(PREF_INTERFACE_MENU_ITEMS, menuItems)
             }
         }
     }
 
     companion object {
+        const val TAG = "ServerPreferences"
+        val DEFAULT_MENU_ITEMS =
+            setOf("scenes", "movies", "markers", "performers", "studios", "tags")
+
         const val PREF_TRACK_ACTIVITY = "trackActivity"
         const val PREF_MINIMUM_PLAY_PERCENT = "minimumPlayPercent"
+        const val PREF_RATING_TYPE = "ratingSystemOptions.type"
+        const val PREF_RATING_PRECISION = "ratingSystemOptions.starPrecision"
 
         // Scan default settings
         const val PREF_SCAN_GENERATE_COVERS = "scanGenerateCovers"
@@ -104,5 +143,7 @@ class ServerPreferences(private val context: Context) {
         const val PREF_GEN_PREVIEWS = "previews"
         const val PREF_GEN_SPRITES = "sprites"
         const val PREF_GEN_TRANSCODES = "transcodes"
+
+        const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
     }
 }
