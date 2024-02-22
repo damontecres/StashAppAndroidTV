@@ -17,6 +17,7 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
 
@@ -110,9 +111,14 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         width: Int,
         height: Int,
     ) {
+        val cardSize =
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .getInt("cardSize", context.getString(R.string.card_size_default))
+        val scaledWidth = (width * 5.0 / cardSize).toInt()
+        val scaledHeight = (height * 5.0 / cardSize).toInt()
         val lp = mainView.layoutParams
-        lp.width = width
-        lp.height = height
+        lp.width = scaledWidth
+        lp.height = scaledHeight
         mainView.layoutParams = lp
     }
 

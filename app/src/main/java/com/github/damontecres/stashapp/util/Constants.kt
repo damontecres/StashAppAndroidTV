@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.util
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.text.TextUtils
@@ -417,4 +418,18 @@ fun NestedScrollView.onlyScrollIfNeeded() {
             height < childHeight + paddingTop + paddingBottom
         isFocusable = isScrollable
     }
+}
+
+fun SharedPreferences.getStringNotNull(
+    key: String,
+    defValue: String,
+): String {
+    return getString(key, defValue)!!
+}
+
+fun SharedPreferences.getInt(
+    key: String,
+    defValue: String,
+): Int {
+    return getStringNotNull(key, defValue).toInt()
 }

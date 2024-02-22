@@ -15,4 +15,30 @@
         <item>@string/playback_finished_return</item>
     </string-array>
 
+    <string name="card_size_extra_small">Extra small</string>
+    <string name="card_size_small">Small</string>
+    <string name="card_size_medium">Medium</string>
+    <string name="card_size_large">Large</string>
+    <string name="card_size_extra_large">Extra Large</string>
+    <string-array name="card_sizes">
+        <item>@string/card_size_extra_small</item>
+        <item>@string/card_size_small</item>
+        <item>@string/card_size_medium</item>
+        <item>@string/card_size_large</item>
+        <item>@string/card_size_extra_large</item>
+    </string-array>
+
+    <string name="card_size_default">5</string>
+    <string-array name="card_size_cols">
+        <item>7</item>
+        <item>6</item>
+        <item>5</item>
+        <item>4</item>
+        <item>3</item>
+    </string-array>
+
+    <fraction name="card_zoom_extra_large">100%</fraction>
+    <fraction name="card_zoom_large">110%</fraction>
+    <fraction name="card_zoom">120%</fraction>
+
 </resources>
