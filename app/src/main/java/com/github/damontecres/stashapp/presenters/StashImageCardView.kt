@@ -98,6 +98,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             } else {
                 showImage()
                 StashExoPlayer.removeListeners()
+                videoView.player?.stop()
                 videoView.player = null
             }
         }
