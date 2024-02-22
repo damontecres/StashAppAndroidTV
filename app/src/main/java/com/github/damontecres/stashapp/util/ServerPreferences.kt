@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import com.github.damontecres.stashapp.api.ConfigurationQuery
+import com.github.damontecres.stashapp.api.ServerInfoQuery
 
 /**
  * Represents configuration that users have set server-side
@@ -18,23 +19,37 @@ class ServerPreferences(private val context: Context) {
             Context.MODE_PRIVATE,
         )
 
+    val serverVersion
+        get() =
+            Version.fromString(
+                preferences.getStringNotNull(
+                    PREF_SERVER_VERSION,
+                    "0.0.0",
+                ),
+            )
+
     val trackActivity get() = preferences.getBoolean(PREF_TRACK_ACTIVITY, false)
 
     val minimumPlayPercent get() = preferences.getInt(PREF_MINIMUM_PLAY_PERCENT, 20)
 
     val ratingsAsStars get() = preferences.getString(PREF_RATING_TYPE, "stars") == "stars"
 
-    suspend fun updatePreferences() {
+    suspend fun updatePreferences(): ServerPreferences {
         val queryEngine = QueryEngine(context)
         val query = ConfigurationQuery()
         val config = queryEngine.executeQuery(query).data?.configuration
-        updatePreferences(config)
+        val serverInfo = queryEngine.executeQuery(ServerInfoQuery()).data
+        updatePreferences(config, serverInfo)
+        return this
     }
 
     /**
      * Update the local preferences from the server configuration
      */
-    fun updatePreferences(config: ConfigurationQuery.Configuration?) {
+    private fun updatePreferences(
+        config: ConfigurationQuery.Configuration?,
+        serverInfo: ServerInfoQuery.Data?,
+    ) {
         if (config != null) {
             val ui = config.ui as Map<String, *>
             preferences.edit(true) {
@@ -110,12 +125,20 @@ class ServerPreferences(private val context: Context) {
                 putStringSet(PREF_INTERFACE_MENU_ITEMS, menuItems)
             }
         }
+
+        if (serverInfo != null) {
+            preferences.edit(true) {
+                putString(PREF_SERVER_VERSION, serverInfo.version.version)
+            }
+        }
     }
 
     companion object {
         const val TAG = "ServerPreferences"
         val DEFAULT_MENU_ITEMS =
             setOf("scenes", "movies", "markers", "performers", "studios", "tags")
+
+        const val PREF_SERVER_VERSION = "serverInfo.version"
 
         const val PREF_TRACK_ACTIVITY = "trackActivity"
         const val PREF_MINIMUM_PLAY_PERCENT = "minimumPlayPercent"

@@ -129,6 +129,7 @@ class MainFragment : BrowseSupportFragment() {
         serverHash = newServerHash
 
         viewLifecycleOwner.lifecycleScope.launch {
+            ServerPreferences(requireContext()).updatePreferences()
             if (testStashConnection(requireContext(), false) != null) {
                 ServerPreferences(requireContext()).updatePreferences()
                 val mainTitleView =
@@ -239,8 +240,7 @@ class MainFragment : BrowseSupportFragment() {
                     viewLifecycleOwner.lifecycleScope.launch(exHandler) {
                         val query = ConfigurationQuery()
                         val config = queryEngine.executeQuery(query).data?.configuration
-                        val serverPreferences = ServerPreferences(requireContext())
-                        serverPreferences.updatePreferences(config)
+                        ServerPreferences(requireContext()).updatePreferences()
 
                         if (config?.ui != null) {
                             val ui = config.ui
