@@ -142,8 +142,11 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
 
         val sceneId = requireActivity().intent.getStringExtra(VideoDetailsActivity.MOVIE)
         if (sceneId == null) {
@@ -387,6 +390,22 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         performersAdapter.addAll(0, perfs)
                     }
                 }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            if (mSelectedMovie != null) {
+                val queryEngine = QueryEngine(requireContext())
+                mSelectedMovie = queryEngine.getScene(mSelectedMovie!!.id.toInt())
+                // Refresh the o-counter which could have changed
+                sceneActionsAdapter.set(
+                    O_COUNTER_POS,
+                    OCounter(mSelectedMovie!!.id.toInt(), mSelectedMovie!!.o_counter ?: 0),
+                )
             }
         }
     }
