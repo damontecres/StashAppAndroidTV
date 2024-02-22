@@ -1,8 +1,6 @@
 package com.github.damontecres.stashapp.util
 
-import android.content.Context
 import com.apollographql.apollo3.api.Optional
-import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -27,26 +25,9 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 
-class FilterParser private constructor(context: Context, serverInfoQuery: ServerInfoQuery.Data?) {
-    @Suppress("unused")
-    private val serverVersion =
-        if (serverInfoQuery?.version?.version != null) {
-            Version.fromString(serverInfoQuery.version.version)
-        } else {
-            Version.fromString(
-                "0.0.0",
-            )
-        }
-
+class FilterParser(private val serverVersion: Version) {
     companion object {
-        lateinit var instance: FilterParser
-
-        fun initialize(
-            context: Context,
-            serverInfoQuery: ServerInfoQuery.Data?,
-        ) {
-            instance = FilterParser(context, serverInfoQuery)
-        }
+        const val TAG = "FilterParser"
     }
 
     private fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {

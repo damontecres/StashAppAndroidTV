@@ -33,7 +33,6 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getCaseInsensitive
@@ -103,24 +102,6 @@ class MainFragment : BrowseSupportFragment() {
     override fun onResume() {
         super.onResume()
 
-        try {
-            val position = getCurrentPosition()
-            if (position != null) {
-                val adapter = adapters[position.row]
-                val item = adapter.get(position.column)
-                if (item is SlimSceneData) {
-                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        val queryEngine = QueryEngine(requireContext())
-                        queryEngine.getScene(item.id.toInt())?.let {
-                            adapter.replace(position.column, it)
-                        }
-                    }
-                }
-            }
-        } catch (ex: Exception) {
-            Log.e(TAG, "Exception", ex)
-        }
-
         val newServerHash = computeServerHash()
         if (serverHash != newServerHash) {
             clearData()
@@ -130,13 +111,28 @@ class MainFragment : BrowseSupportFragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             ServerPreferences(requireContext()).updatePreferences()
+
             if (testStashConnection(requireContext(), false) != null) {
-                ServerPreferences(requireContext()).updatePreferences()
                 val mainTitleView =
                     requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                 mainTitleView.refreshMenuItems()
                 if (rowsAdapter.size() == 0) {
                     fetchData()
+                }
+                try {
+                    val position = getCurrentPosition()
+                    if (position != null) {
+                        val adapter = adapters[position.row]
+                        val item = adapter.get(position.column)
+                        if (item is SlimSceneData) {
+                            val queryEngine = QueryEngine(requireContext())
+                            queryEngine.getScene(item.id.toInt())?.let {
+                                adapter.replace(position.column, it)
+                            }
+                        }
+                    }
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Exception", ex)
                 }
             } else {
                 clearData()
@@ -214,7 +210,6 @@ class MainFragment : BrowseSupportFragment() {
                     Toast.LENGTH_LONG,
                 ).show()
             }
-            FilterParser.initialize(requireContext(), serverInfo)
 
             if (serverInfo?.version?.version != null &&
                 !Version.isStashVersionSupported(
@@ -411,10 +406,12 @@ class MainFragment : BrowseSupportFragment() {
                 val objectFilter =
                     result?.object_filter as Map<String, Map<String, *>>?
 
+                val filterParser = FilterParser(ServerPreferences(requireContext()).serverVersion)
+
                 when (result?.mode) {
                     FilterMode.SCENES -> {
                         val sceneFilter =
-                            FilterParser.instance.convertSceneObjectFilter(objectFilter)
+                            filterParser.convertSceneObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findScenes(filter, sceneFilter, useRandom = false),
@@ -423,7 +420,7 @@ class MainFragment : BrowseSupportFragment() {
 
                     FilterMode.STUDIOS -> {
                         val studioFilter =
-                            FilterParser.instance.convertStudioObjectFilter(objectFilter)
+                            filterParser.convertStudioObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findStudios(
@@ -436,7 +433,7 @@ class MainFragment : BrowseSupportFragment() {
 
                     FilterMode.PERFORMERS -> {
                         val performerFilter =
-                            FilterParser.instance.convertPerformerObjectFilter(objectFilter)
+                            filterParser.convertPerformerObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findPerformers(
@@ -449,7 +446,7 @@ class MainFragment : BrowseSupportFragment() {
 
                     FilterMode.TAGS -> {
                         val tagFilter =
-                            FilterParser.instance.convertTagObjectFilter(objectFilter)
+                            filterParser.convertTagObjectFilter(objectFilter)
                         adapter.addAll(
                             0,
                             queryEngine.findTags(filter, tagFilter, useRandom = false),
