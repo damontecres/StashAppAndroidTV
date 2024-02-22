@@ -126,7 +126,7 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         return if (ServerPreferences(context).serverVersion.isAtLeast(Version.V0_25_0)) {
             val mutation = SceneAddPlayCountMutation(sceneId.toString(), emptyList())
             val result = executeMutation(mutation)
-            result.data.sceneAddPlay.count
+            result.data!!.sceneAddPlay.count
         } else {
             val mutation = SceneIncrementPlayCountMutation(sceneId.toString())
             val result = executeMutation(mutation)
@@ -217,7 +217,7 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         return if (ServerPreferences(context).serverVersion.isAtLeast(Version.V0_25_0)) {
             val mutation = SceneAddOMutation(sceneId.toString(), emptyList())
             val result = executeMutation(mutation)
-            OCounter(sceneId, result.data.sceneAddO.count)
+            OCounter(sceneId, result.data!!.sceneAddO.count)
         } else {
             val mutation = SceneIncrementOMutation(sceneId.toString())
             val result = executeMutation(mutation)
