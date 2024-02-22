@@ -152,6 +152,11 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             startActivity(intent)
         } else {
             val queryEngine = QueryEngine(requireContext())
+
+            setupDetailsOverviewRowPresenter()
+            mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
+            mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
+
             viewLifecycleOwner.lifecycleScope.launch(
                 StashCoroutineExceptionHandler(
                     Toast.makeText(
@@ -166,8 +171,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     position = (mSelectedMovie!!.resume_time!! * 1000).toLong()
                 }
                 setupDetailsOverviewRow()
-                setupDetailsOverviewRowPresenter()
-                setupRelatedMovieListRow()
+
                 adapter = mAdapter
                 initializeBackground()
 
@@ -504,12 +508,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 }
             }
         mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
-    }
-
-    private fun setupRelatedMovieListRow() {
-        // TODO related scenes
-        mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
-        mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 
     private fun convertDpToPixel(
