@@ -35,6 +35,8 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
 /**
@@ -44,58 +46,60 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     private val client = createApolloClient(context) ?: throw StashNotConfiguredException()
 
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> {
-        val queryName = query.operation.name()
-        Log.v(
-            TAG,
-            "executeQuery $queryName",
-        )
-        try {
-            val response = query.execute()
-            if (response.errors.isNullOrEmpty()) {
-                Log.v(TAG, "executeQuery $queryName successful")
-                return response
-            } else {
-                val errorMsgs = response.errors!!.joinToString("\n") { it.message }
+        return withContext(Dispatchers.IO) {
+            val queryName = query.operation.name()
+            Log.v(
+                TAG,
+                "executeQuery $queryName",
+            )
+            try {
+                val response = query.execute()
+                if (response.errors.isNullOrEmpty()) {
+                    Log.v(TAG, "executeQuery $queryName successful")
+                    return@withContext response
+                } else {
+                    val errorMsgs = response.errors!!.joinToString("\n") { it.message }
+                    if (showToasts) {
+                        Toast.makeText(
+                            context,
+                            "${response.errors!!.size} errors in response ($queryName)\n$errorMsgs",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                    Log.e(TAG, "Errors in $queryName: ${response.errors}")
+                    throw QueryException("($queryName), ${response.errors!!.size} errors in graphql response")
+                }
+            } catch (ex: ApolloNetworkException) {
                 if (showToasts) {
                     Toast.makeText(
                         context,
-                        "${response.errors!!.size} errors in response ($queryName)\n$errorMsgs",
+                        "Network error ($queryName). Message: ${ex.message}, ${ex.cause?.message}",
                         Toast.LENGTH_LONG,
                     ).show()
                 }
-                Log.e(TAG, "Errors in $queryName: ${response.errors}")
-                throw QueryException("($queryName), ${response.errors!!.size} errors in graphql response")
+                Log.e(TAG, "Network error in $queryName", ex)
+                throw QueryException("Network error ($queryName)", ex)
+            } catch (ex: ApolloHttpException) {
+                if (showToasts) {
+                    Toast.makeText(
+                        context,
+                        "HTTP error ($queryName). Status=${ex.statusCode}, Msg=${ex.message}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+                Log.e(TAG, "HTTP ${ex.statusCode} error in $queryName", ex)
+                throw QueryException("HTTP ${ex.statusCode} ($queryName)", ex)
+            } catch (ex: ApolloException) {
+                if (showToasts) {
+                    Toast.makeText(
+                        context,
+                        "Server query error ($queryName). Msg=${ex.message}, ${ex.cause?.message}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+                Log.e(TAG, "ApolloException in $queryName", ex)
+                throw QueryException("Apollo exception ($queryName)", ex)
             }
-        } catch (ex: ApolloNetworkException) {
-            if (showToasts) {
-                Toast.makeText(
-                    context,
-                    "Network error ($queryName). Message: ${ex.message}, ${ex.cause?.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-            Log.e(TAG, "Network error in $queryName", ex)
-            throw QueryException("Network error ($queryName)", ex)
-        } catch (ex: ApolloHttpException) {
-            if (showToasts) {
-                Toast.makeText(
-                    context,
-                    "HTTP error ($queryName). Status=${ex.statusCode}, Msg=${ex.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-            Log.e(TAG, "HTTP ${ex.statusCode} error in $queryName", ex)
-            throw QueryException("HTTP ${ex.statusCode} ($queryName)", ex)
-        } catch (ex: ApolloException) {
-            if (showToasts) {
-                Toast.makeText(
-                    context,
-                    "Server query error ($queryName). Msg=${ex.message}, ${ex.cause?.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-            Log.e(TAG, "ApolloException in $queryName", ex)
-            throw QueryException("Apollo exception ($queryName)", ex)
         }
     }
 

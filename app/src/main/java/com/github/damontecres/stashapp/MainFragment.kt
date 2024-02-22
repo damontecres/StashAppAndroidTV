@@ -92,7 +92,7 @@ class MainFragment : BrowseSupportFragment() {
         browseFrameLayout.onFocusSearchListener =
             OnFocusSearchListener { focused: View?, direction: Int ->
                 if (direction == View.FOCUS_UP) {
-                    requireActivity().findViewById(androidx.leanback.R.id.search_orb)
+                    requireActivity().findViewById(R.id.search_button)
                 } else {
                     null
                 }
