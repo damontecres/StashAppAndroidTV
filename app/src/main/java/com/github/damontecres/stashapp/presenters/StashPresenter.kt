@@ -23,7 +23,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
-import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.enableMarquee
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
 import kotlin.properties.Delegates
@@ -78,9 +78,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         cardView: ImageCardView,
         url: String,
     ) {
-        val glideUrl = createGlideUrl(url, cardView.context)
-        Glide.with(cardView.context)
-            .load(glideUrl)
+        StashGlide.with(cardView.context, url)
             .fitCenter()
             .error(glideError(cardView.context))
             .into(cardView.mainImageView!!)

@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.graphics.drawable.PictureDrawable
-import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.Registry
 import com.bumptech.glide.annotation.GlideModule
@@ -25,16 +24,11 @@ class StashGlideModule : AppGlideModule() {
         glide: Glide,
         registry: Registry,
     ) {
-        val trustAll =
-            PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean("trustAllCerts", false)
-        if (trustAll) {
-            registry.replace<GlideUrl, InputStream>(
-                GlideUrl::class.java,
-                InputStream::class.java,
-                OkHttpUrlLoader.Factory(createOkHttpClient(context)),
-            )
-        }
+        registry.replace<GlideUrl, InputStream>(
+            GlideUrl::class.java,
+            InputStream::class.java,
+            OkHttpUrlLoader.Factory(createOkHttpClient(context)),
+        )
         registry
             .register(SVG::class.java, PictureDrawable::class.java, SvgDrawableTranscoder())
             .append(InputStream::class.java, SVG::class.java, SvgDecoder())

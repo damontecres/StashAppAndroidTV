@@ -35,6 +35,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.Cache
+import okhttp3.CacheControl
 import okhttp3.OkHttpClient
 import java.io.File
 import java.security.SecureRandom
@@ -42,6 +44,7 @@ import java.security.cert.X509Certificate
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
@@ -98,25 +101,39 @@ fun createOkHttpClient(context: Context): OkHttpClient {
     val apiKey =
         PreferenceManager.getDefaultSharedPreferences(context)
             .getString("stashApiKey", null)
-    val builder = OkHttpClient.Builder()
+    var builder = OkHttpClient.Builder()
     if (trustAll) {
         val sslContext = SSLContext.getInstance("SSL")
         sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-        builder.sslSocketFactory(
-            sslContext.socketFactory,
-            TRUST_ALL_CERTS as X509TrustManager,
-        )
-            .hostnameVerifier { _, _ ->
+        builder =
+            builder.sslSocketFactory(
+                sslContext.socketFactory,
+                TRUST_ALL_CERTS as X509TrustManager,
+            ).hostnameVerifier { _, _ ->
                 true
             }
     }
     if (apiKey.isNotNullOrBlank()) {
+        builder =
+            builder.addInterceptor {
+                val request =
+                    it.request().newBuilder()
+                        .addHeader(STASH_API_HEADER, apiKey.trim())
+                        .build()
+                it.proceed(request)
+            }
+    }
+    builder =
         builder.addInterceptor {
             val request =
-                it.request().newBuilder().addHeader(STASH_API_HEADER, apiKey.trim()).build()
+                it.request().newBuilder()
+                    .cacheControl(CacheControl.Builder().maxAge(1, TimeUnit.DAYS).build())
+                    .build()
             it.proceed(request)
         }
-    }
+    val cacheSize = 100L * 1024 * 1024 // 100MB
+    //
+    builder = builder.cache(Cache(context.cacheDir, cacheSize))
     return builder.build()
 }
 
