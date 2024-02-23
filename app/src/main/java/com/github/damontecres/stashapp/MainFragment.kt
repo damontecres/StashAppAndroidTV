@@ -158,8 +158,6 @@ class MainFragment : BrowseSupportFragment() {
 
         // set fastLane (or headers) background color
         brandColor = ContextCompat.getColor(requireActivity(), R.color.fastlane_background)
-        // set search icon color
-        searchAffordanceColor = ContextCompat.getColor(requireActivity(), R.color.search_opaque)
     }
 
     private fun setupEventListeners() {

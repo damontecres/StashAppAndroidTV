@@ -2,11 +2,10 @@ package com.github.damontecres.stashapp.presenters
 
 import android.view.View
 import android.view.View.OnLongClickListener
-import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.appcompat.widget.ListPopupWindow
-import com.github.damontecres.stashapp.StashOnFocusChangeListener
+import com.github.damontecres.stashapp.R
 
 /**
  * An OnLongClickListener which shows a popup of predefined options
@@ -24,30 +23,15 @@ class PopupOnLongClickListener(
             )
         listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
         listPopUp.anchorView = view
-        // listPopUp.width = ViewGroup.LayoutParams.MATCH_PARENT
-        // TODO: Better width calculation
-        listPopUp.width = 200
+        listPopUp.width = ListPopupWindow.WRAP_CONTENT
         listPopUp.isModal = true
 
-        val focusChangeListener = StashOnFocusChangeListener(view.context)
-
         val adapter =
-            object : ArrayAdapter<String>(
+            ArrayAdapter(
                 view.context,
-                android.R.layout.simple_list_item_1,
+                R.layout.popup_item,
                 popupOptions,
-            ) {
-                override fun getView(
-                    position: Int,
-                    convertView: View?,
-                    parent: ViewGroup,
-                ): View {
-                    val itemView = super.getView(position, convertView, parent)
-                    // TODO: this doesn't seem to work?
-                    itemView.onFocusChangeListener = focusChangeListener
-                    return itemView
-                }
-            }
+            )
         listPopUp.setAdapter(adapter)
 
         listPopUp.setOnItemClickListener { parent: AdapterView<*>, v: View, position: Int, id: Long ->
