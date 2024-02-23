@@ -229,48 +229,40 @@ class MainFragment : BrowseSupportFragment() {
             } else if (serverInfo != null) {
                 try {
                     val queryEngine = QueryEngine(requireContext(), showToasts = true)
+                    val query = ConfigurationQuery()
+                    val config = queryEngine.executeQuery(query).data?.configuration
+                    val serverPreferences = ServerPreferences(requireContext())
+                    serverPreferences.updatePreferences(config)
 
-                    val exHandler =
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception in coroutine", ex)
-                        }
+                    if (config?.ui != null) {
+                        val ui = config.ui
+                        val frontPageContent =
+                            (ui as Map<String, *>)["frontPageContent"] as List<Map<String, *>>
+                        frontPageContent.forEachIndexed { index, frontPageFilter ->
+                            val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                            adapters.add(adapter)
 
-                    viewLifecycleOwner.lifecycleScope.launch(exHandler) {
-                        val query = ConfigurationQuery()
-                        val config = queryEngine.executeQuery(query).data?.configuration
-                        val serverPreferences = ServerPreferences(requireContext())
-                        serverPreferences.updatePreferences(config)
+                            when (val filterType = frontPageFilter["__typename"] as String) {
+                                "CustomFilter" -> {
+                                    addCustomFilterRow(
+                                        index,
+                                        frontPageFilter,
+                                        adapter,
+                                        queryEngine,
+                                    )
+                                }
 
-                        if (config?.ui != null) {
-                            val ui = config.ui
-                            val frontPageContent =
-                                (ui as Map<String, *>)["frontPageContent"] as List<Map<String, *>>
-                            frontPageContent.forEachIndexed { index, frontPageFilter ->
-                                val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
-                                adapters.add(adapter)
+                                "SavedFilter" -> {
+                                    addSavedFilterRow(
+                                        index,
+                                        frontPageFilter,
+                                        adapter,
+                                        queryEngine,
+                                    )
+                                }
 
-                                when (val filterType = frontPageFilter["__typename"] as String) {
-                                    "CustomFilter" -> {
-                                        addCustomFilterRow(
-                                            index,
-                                            frontPageFilter,
-                                            adapter,
-                                            queryEngine,
-                                        )
-                                    }
-
-                                    "SavedFilter" -> {
-                                        addSavedFilterRow(
-                                            index,
-                                            frontPageFilter,
-                                            adapter,
-                                            queryEngine,
-                                        )
-                                    }
-
-                                    else -> {
-                                        Log.w(TAG, "Unknown frontPageFilter typename: $filterType")
-                                    }
+                                else -> {
+                                    Log.w(TAG, "Unknown frontPageFilter typename: $filterType")
                                 }
                             }
                         }
@@ -288,16 +280,12 @@ class MainFragment : BrowseSupportFragment() {
         }
     }
 
-    private fun addCustomFilterRow(
+    private suspend fun addCustomFilterRow(
         index: Int,
         frontPageFilter: Map<String, *>,
         adapter: ArrayObjectAdapter,
         queryEngine: QueryEngine,
     ) {
-        val exHandler =
-            CoroutineExceptionHandler { _, ex ->
-                Log.e(TAG, "Exception in addCustomFilterRow", ex)
-            }
         try {
             val msg = frontPageFilter["message"] as Map<String, *>
             val objType =
@@ -329,51 +317,50 @@ class MainFragment : BrowseSupportFragment() {
                     adapter,
                 ),
             )
-            viewLifecycleOwner.lifecycleScope.launch(exHandler) {
-                val direction = frontPageFilter["direction"] as String?
-                val directionEnum =
-                    if (direction != null) {
-                        val enum = SortDirectionEnum.safeValueOf(direction.uppercase())
-                        if (enum == SortDirectionEnum.UNKNOWN__) {
-                            SortDirectionEnum.DESC
-                        }
-                        enum
-                    } else {
+
+            val direction = frontPageFilter["direction"] as String?
+            val directionEnum =
+                if (direction != null) {
+                    val enum = SortDirectionEnum.safeValueOf(direction.uppercase())
+                    if (enum == SortDirectionEnum.UNKNOWN__) {
                         SortDirectionEnum.DESC
                     }
-                val pageSize =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
-                        .getInt("maxSearchResults", 25)
-                val filter =
-                    FindFilterType(
-                        direction = Optional.presentIfNotNull(directionEnum),
-                        sort = Optional.presentIfNotNull(sortBy),
-                        per_page = Optional.present(pageSize),
-                    )
-
-                when (mode) {
-                    FilterMode.SCENES -> {
-                        adapter.addAll(0, queryEngine.findScenes(filter))
-                    }
-
-                    FilterMode.STUDIOS -> {
-                        adapter.addAll(0, queryEngine.findStudios(filter))
-                    }
-
-                    FilterMode.PERFORMERS -> {
-                        adapter.addAll(0, queryEngine.findPerformers(filter))
-                    }
-
-                    FilterMode.MOVIES -> {
-                        adapter.addAll(0, queryEngine.findMovies(filter))
-                    }
-
-                    else -> {
-                        Log.w(TAG, "Unsupported mode in frontpage: $mode")
-                    }
+                    enum
+                } else {
+                    SortDirectionEnum.DESC
                 }
-                adapter.add(StashCustomFilter(mode, direction, sortBy, description))
+            val pageSize =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getInt("maxSearchResults", 25)
+            val filter =
+                FindFilterType(
+                    direction = Optional.presentIfNotNull(directionEnum),
+                    sort = Optional.presentIfNotNull(sortBy),
+                    per_page = Optional.present(pageSize),
+                )
+
+            when (mode) {
+                FilterMode.SCENES -> {
+                    adapter.addAll(0, queryEngine.findScenes(filter))
+                }
+
+                FilterMode.STUDIOS -> {
+                    adapter.addAll(0, queryEngine.findStudios(filter))
+                }
+
+                FilterMode.PERFORMERS -> {
+                    adapter.addAll(0, queryEngine.findPerformers(filter))
+                }
+
+                FilterMode.MOVIES -> {
+                    adapter.addAll(0, queryEngine.findMovies(filter))
+                }
+
+                else -> {
+                    Log.w(TAG, "Unsupported mode in frontpage: $mode")
+                }
             }
+            adapter.add(StashCustomFilter(mode, direction, sortBy, description))
         } catch (ex: Exception) {
             Log.e(TAG, "Exception during addCustomFilterRow", ex)
             Toast.makeText(
@@ -384,100 +371,89 @@ class MainFragment : BrowseSupportFragment() {
         }
     }
 
-    private fun addSavedFilterRow(
+    private suspend fun addSavedFilterRow(
         index: Int,
         frontPageFilter: Map<String, *>,
         adapter: ArrayObjectAdapter,
         queryEngine: QueryEngine,
     ) {
-        val exHandler =
-            CoroutineExceptionHandler { _, ex ->
-                Log.e(TAG, "Exception in addSavedFilterRow", ex)
-                Toast.makeText(
-                    requireContext(),
-                    "Error fetching saved filter. This is probably a bug!",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-        viewLifecycleOwner.lifecycleScope.launch(exHandler) {
-            val filterId = frontPageFilter["savedFilterId"]
-            val result = queryEngine.getSavedFilter(filterId.toString())
+        val filterId = frontPageFilter["savedFilterId"]
+        val result = queryEngine.getSavedFilter(filterId.toString())
 
-            if (result?.mode in supportedFilterModes) {
-                rowsAdapter.set(index, ListRow(HeaderItem(result?.name ?: ""), adapter))
+        if (result?.mode in supportedFilterModes) {
+            rowsAdapter.set(index, ListRow(HeaderItem(result?.name ?: ""), adapter))
 
-                val pageSize =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
-                        .getInt("maxSearchResults", 25)
+            val pageSize =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getInt("maxSearchResults", 25)
 
-                val filter =
-                    queryEngine.updateFilter(convertFilter(result?.find_filter), useRandom = true)
-                        ?.copy(per_page = Optional.present(pageSize))
-                val objectFilter =
-                    result?.object_filter as Map<String, Map<String, *>>?
+            val filter =
+                queryEngine.updateFilter(convertFilter(result?.find_filter), useRandom = true)
+                    ?.copy(per_page = Optional.present(pageSize))
+            val objectFilter =
+                result?.object_filter as Map<String, Map<String, *>>?
 
-                when (result?.mode) {
-                    FilterMode.SCENES -> {
-                        val sceneFilter =
-                            FilterParser.instance.convertSceneObjectFilter(objectFilter)
-                        adapter.addAll(
-                            0,
-                            queryEngine.findScenes(filter, sceneFilter, useRandom = false),
-                        )
-                    }
-
-                    FilterMode.STUDIOS -> {
-                        val studioFilter =
-                            FilterParser.instance.convertStudioObjectFilter(objectFilter)
-                        adapter.addAll(
-                            0,
-                            queryEngine.findStudios(
-                                filter,
-                                studioFilter,
-                                useRandom = false,
-                            ),
-                        )
-                    }
-
-                    FilterMode.PERFORMERS -> {
-                        val performerFilter =
-                            FilterParser.instance.convertPerformerObjectFilter(objectFilter)
-                        adapter.addAll(
-                            0,
-                            queryEngine.findPerformers(
-                                filter,
-                                performerFilter,
-                                useRandom = false,
-                            ),
-                        )
-                    }
-
-                    FilterMode.TAGS -> {
-                        val tagFilter =
-                            FilterParser.instance.convertTagObjectFilter(objectFilter)
-                        adapter.addAll(
-                            0,
-                            queryEngine.findTags(filter, tagFilter, useRandom = false),
-                        )
-                    }
-
-                    else -> {
-                        Log.w(
-                            TAG,
-                            "Unsupported mode in frontpage: ${result?.mode}",
-                        )
-                    }
+            when (result?.mode) {
+                FilterMode.SCENES -> {
+                    val sceneFilter =
+                        FilterParser.instance.convertSceneObjectFilter(objectFilter)
+                    adapter.addAll(
+                        0,
+                        queryEngine.findScenes(filter, sceneFilter, useRandom = false),
+                    )
                 }
-                adapter.add(
-                    StashSavedFilter(
-                        filterId.toString(),
-                        result!!.mode,
-                        filter?.sort?.getOrNull(),
-                    ),
-                )
-            } else {
-                Log.w(TAG, "SavedFilter mode is ${result?.mode} which is not supported yet")
+
+                FilterMode.STUDIOS -> {
+                    val studioFilter =
+                        FilterParser.instance.convertStudioObjectFilter(objectFilter)
+                    adapter.addAll(
+                        0,
+                        queryEngine.findStudios(
+                            filter,
+                            studioFilter,
+                            useRandom = false,
+                        ),
+                    )
+                }
+
+                FilterMode.PERFORMERS -> {
+                    val performerFilter =
+                        FilterParser.instance.convertPerformerObjectFilter(objectFilter)
+                    adapter.addAll(
+                        0,
+                        queryEngine.findPerformers(
+                            filter,
+                            performerFilter,
+                            useRandom = false,
+                        ),
+                    )
+                }
+
+                FilterMode.TAGS -> {
+                    val tagFilter =
+                        FilterParser.instance.convertTagObjectFilter(objectFilter)
+                    adapter.addAll(
+                        0,
+                        queryEngine.findTags(filter, tagFilter, useRandom = false),
+                    )
+                }
+
+                else -> {
+                    Log.w(
+                        TAG,
+                        "Unsupported mode in frontpage: ${result?.mode}",
+                    )
+                }
             }
+            adapter.add(
+                StashSavedFilter(
+                    filterId.toString(),
+                    result!!.mode,
+                    filter?.sort?.getOrNull(),
+                ),
+            )
+        } else {
+            Log.w(TAG, "SavedFilter mode is ${result?.mode} which is not supported yet")
         }
     }
 
