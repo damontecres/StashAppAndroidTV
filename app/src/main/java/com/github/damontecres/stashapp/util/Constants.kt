@@ -244,61 +244,53 @@ suspend fun testStashConnection(
     context: Context,
     showToast: Boolean,
 ): ServerInfoQuery.Data? {
-    return withContext(Dispatchers.IO) {
-        val client = createApolloClient(context)
-        if (client == null) {
-            if (showToast) {
-                Toast.makeText(
-                    context,
-                    "Stash server URL is not set.",
-                    Toast.LENGTH_LONG,
-                ).show()
+    val client = createApolloClient(context)
+    if (client == null) {
+        if (showToast) {
+            Toast.makeText(
+                context,
+                "Stash server URL is not set.",
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+    } else {
+        try {
+            val info =
+                withContext(Dispatchers.IO) {
+                    client.query(ServerInfoQuery()).execute()
+                }
+            if (info.hasErrors()) {
+                if (showToast) {
+                    Toast.makeText(
+                        context,
+                        "Failed to connect to Stash. Check URL or API Key.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+                Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
+            } else {
+                if (showToast) {
+                    val version = info.data?.version?.version
+                    val sceneCount = info.data?.stats?.scene_count
+                    Toast.makeText(
+                        context,
+                        "Connected to Stash ($version) with $sceneCount scenes!",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+                return info.data
             }
-        } else {
-            try {
-                val info = client.query(ServerInfoQuery()).execute()
-                if (info.hasErrors()) {
-                    if (showToast) {
-                        Toast.makeText(
-                            context,
-                            "Failed to connect to Stash. Check URL or API Key.",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                    Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
-                } else {
-                    if (showToast) {
-                        val version = info.data?.version?.version
-                        val sceneCount = info.data?.stats?.scene_count
-                        Toast.makeText(
-                            context,
-                            "Connected to Stash ($version) with $sceneCount scenes!",
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    }
-                    return@withContext info.data
+        } catch (ex: ApolloHttpException) {
+            Log.e(Constants.TAG, "ApolloHttpException", ex)
+            if (ex.statusCode == 401 || ex.statusCode == 403) {
+                if (showToast) {
+                    Toast.makeText(
+                        context,
+                        "Failed to connect to Stash. API Key was not valid.",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 }
-            } catch (ex: ApolloHttpException) {
-                Log.e(Constants.TAG, "ApolloHttpException", ex)
-                if (ex.statusCode == 401 || ex.statusCode == 403) {
-                    if (showToast) {
-                        Toast.makeText(
-                            context,
-                            "Failed to connect to Stash. API Key was not valid.",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                } else {
-                    if (showToast) {
-                        Toast.makeText(
-                            context,
-                            "Failed to connect to Stash. Error was '${ex.message}'",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                }
-            } catch (ex: ApolloException) {
-                Log.e(Constants.TAG, "ApolloException", ex)
+            } else {
                 if (showToast) {
                     Toast.makeText(
                         context,
@@ -307,9 +299,18 @@ suspend fun testStashConnection(
                     ).show()
                 }
             }
+        } catch (ex: ApolloException) {
+            Log.e(Constants.TAG, "ApolloException", ex)
+            if (showToast) {
+                Toast.makeText(
+                    context,
+                    "Failed to connect to Stash. Error was '${ex.message}'",
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
         }
-        return@withContext null
     }
+    return null
 }
 
 fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
