@@ -19,6 +19,7 @@ import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
+import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
@@ -48,7 +49,7 @@ import java.util.Objects
  * Loads a grid of cards with movies to browse.
  */
 class MainFragment : BrowseSupportFragment() {
-    private val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
+    private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()
     private lateinit var mBackgroundManager: BackgroundManager
     private lateinit var mMetrics: DisplayMetrics
@@ -244,17 +245,27 @@ class MainFragment : BrowseSupportFragment() {
                             val ui = config.ui
                             val frontPageContent =
                                 (ui as Map<String, *>)["frontPageContent"] as List<Map<String, *>>
-                            for (frontPageFilter: Map<String, *> in frontPageContent) {
+                            frontPageContent.forEachIndexed { index, frontPageFilter ->
                                 val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
                                 adapters.add(adapter)
 
                                 when (val filterType = frontPageFilter["__typename"] as String) {
                                     "CustomFilter" -> {
-                                        addCustomFilterRow(frontPageFilter, adapter, queryEngine)
+                                        addCustomFilterRow(
+                                            index,
+                                            frontPageFilter,
+                                            adapter,
+                                            queryEngine,
+                                        )
                                     }
 
                                     "SavedFilter" -> {
-                                        addSavedFilterRow(frontPageFilter, adapter, queryEngine)
+                                        addSavedFilterRow(
+                                            index,
+                                            frontPageFilter,
+                                            adapter,
+                                            queryEngine,
+                                        )
                                     }
 
                                     else -> {
@@ -278,6 +289,7 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun addCustomFilterRow(
+        index: Int,
         frontPageFilter: Map<String, *>,
         adapter: ArrayObjectAdapter,
         queryEngine: QueryEngine,
@@ -310,7 +322,8 @@ class MainFragment : BrowseSupportFragment() {
                 Log.w(TAG, "CustomFilter mode is $mode which is not supported yet")
                 return
             }
-            rowsAdapter.add(
+            rowsAdapter.set(
+                index,
                 ListRow(
                     HeaderItem(description),
                     adapter,
@@ -372,6 +385,7 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun addSavedFilterRow(
+        index: Int,
         frontPageFilter: Map<String, *>,
         adapter: ArrayObjectAdapter,
         queryEngine: QueryEngine,
@@ -385,19 +399,12 @@ class MainFragment : BrowseSupportFragment() {
                     Toast.LENGTH_LONG,
                 ).show()
             }
-        val header = HeaderItem("")
-        val listRow = ListRow(header, adapter)
-        rowsAdapter.add(listRow)
         viewLifecycleOwner.lifecycleScope.launch(exHandler) {
             val filterId = frontPageFilter["savedFilterId"]
             val result = queryEngine.getSavedFilter(filterId.toString())
 
-            val index = rowsAdapter.indexOf(listRow)
-            rowsAdapter.removeItems(index, 1)
-
             if (result?.mode in supportedFilterModes) {
-                // TODO doing it this way will result it adding an unsupported row then removing it which looks weird, in practice though it happens pretty fast
-                rowsAdapter.add(index, ListRow(HeaderItem(result?.name ?: ""), adapter))
+                rowsAdapter.set(index, ListRow(HeaderItem(result?.name ?: ""), adapter))
 
                 val pageSize =
                     PreferenceManager.getDefaultSharedPreferences(requireContext())
