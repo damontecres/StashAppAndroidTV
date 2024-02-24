@@ -37,12 +37,6 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
             ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
 
         val cardView = StashImageCardView(parent.context)
-
-//        val textView = cardView.findViewById<TextView>(R.id.title_text)
-//        textView.enableMarquee(false)
-//        val contentView = cardView.findViewById<TextView>(R.id.content_text)
-//        contentView.enableMarquee(false)
-
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true
         cardView.updateCardBackgroundColor(cardView, false)
