@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.ViewSwitcher
 import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
@@ -32,7 +33,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     var videoUrl: String? = null
     var videoPosition = -1L
     val videoView: PlayerView = findViewById(R.id.main_video)
-    val mainView: View = findViewById(R.id.main_view)
+    val mainView: ViewSwitcher = findViewById(R.id.main_view)
 
     private val dataTypeViews =
         EnumMap<DataType, Pair<TextView, View>>(DataType::class.java)
@@ -48,8 +49,6 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (isPlaying) {
                     showVideo()
-                } else {
-                    showImage()
                 }
             }
         }
@@ -210,12 +209,10 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     }
 
     fun showVideo() {
-        mainImageView.visibility = View.GONE
-        videoView.visibility = View.VISIBLE
+        mainView.showNext()
     }
 
     fun showImage() {
-        videoView.visibility = View.GONE
-        mainImageView.visibility = View.VISIBLE
+        mainView.showPrevious()
     }
 }
