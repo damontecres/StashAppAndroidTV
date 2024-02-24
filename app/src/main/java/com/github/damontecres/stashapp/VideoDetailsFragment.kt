@@ -88,7 +88,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
-    private val playActionsAdapter = ArrayObjectAdapter()
+    private val playActionsAdapter = SparseArrayObjectAdapter()
     private var position = -1L // The position in the video
     private val detailsPresenter =
         FullWidthDetailsOverviewRowPresenter(
@@ -465,19 +465,20 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 )
         }
 
-        playActionsAdapter.clear()
         val serverPreferences = ServerPreferences(requireContext())
         if (serverPreferences.trackActivity && mSelectedMovie?.resume_time != null && mSelectedMovie?.resume_time!! > 0) {
             position = (mSelectedMovie?.resume_time!! * 1000).toLong()
-            playActionsAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
-            playActionsAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
+            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
         } else {
-            playActionsAdapter.add(
+            playActionsAdapter.set(
+                0,
                 Action(
                     ACTION_PLAY_SCENE,
                     resources.getString(R.string.play_scene),
                 ),
             )
+            playActionsAdapter.clear(1)
         }
 
         row.actionsAdapter = playActionsAdapter
@@ -716,9 +717,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     if (position > 10_000) {
                         // If some of the video played, reset the available actions
                         // This also causes the focused action to default to resume which is an added bonus
-                        playActionsAdapter.clear()
-                        playActionsAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
-                        playActionsAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+                        playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
+                        playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
 
                         val serverPreferences = ServerPreferences(requireContext())
                         if (serverPreferences.trackActivity) {
