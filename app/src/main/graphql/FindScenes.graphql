@@ -1,5 +1,5 @@
-query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $scene_ids: [Int!]) {
-  findScenes(filter: $filter, scene_filter: $scene_filter, scene_ids: $scene_ids) {
+query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $scene_ids: [Int!], $ids: [ID!]) {
+  findScenes(filter: $filter, scene_filter: $scene_filter, scene_ids: $scene_ids, ids: $ids) {
     count
     filesize
     duration
