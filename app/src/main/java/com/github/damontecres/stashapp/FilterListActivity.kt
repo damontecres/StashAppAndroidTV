@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
@@ -112,30 +111,16 @@ class FilterListActivity : FragmentActivity() {
                     )
                 listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
                 listPopUp.anchorView = filterButton
-                // listPopUp.width = ViewGroup.LayoutParams.MATCH_PARENT
                 // TODO: Better width calculation
-                listPopUp.width = this@FilterListActivity.toPx(200).toInt()
+                listPopUp.width = this@FilterListActivity.toPx(250).toInt()
                 listPopUp.isModal = true
 
-                val focusChangeListener = StashOnFocusChangeListener(this@FilterListActivity)
-
                 val adapter =
-                    object : ArrayAdapter<String>(
+                    ArrayAdapter(
                         this@FilterListActivity,
-                        android.R.layout.simple_list_item_1,
+                        R.layout.popup_item,
                         savedFilters.map { it.name },
-                    ) {
-                        override fun getView(
-                            position: Int,
-                            convertView: View?,
-                            parent: ViewGroup,
-                        ): View {
-                            val itemView = super.getView(position, convertView, parent)
-                            // TODO: this doesn't seem to work?
-                            itemView.onFocusChangeListener = focusChangeListener
-                            return itemView
-                        }
-                    }
+                    )
                 listPopUp.setAdapter(adapter)
 
                 listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
