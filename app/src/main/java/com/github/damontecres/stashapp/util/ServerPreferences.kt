@@ -113,7 +113,6 @@ class ServerPreferences(private val context: Context) {
                         PREF_GEN_MARKER_IMAGE_PREVIEWS,
                         generate.markerImagePreviews ?: false,
                     )
-                    putBoolean(PREF_GEN_IMAGE_THUMBNAILS, generate.imageThumbnails ?: false)
                     putBoolean(PREF_GEN_MARKERS, generate.markers ?: false)
                     putBoolean(PREF_GEN_MARKER_SCREENSHOTS, generate.markerScreenshots ?: false)
                     putBoolean(PREF_GEN_PHASHES, generate.phashes ?: false)
@@ -167,7 +166,6 @@ class ServerPreferences(private val context: Context) {
         const val PREF_GEN_PREVIEWS = "previews"
         const val PREF_GEN_SPRITES = "sprites"
         const val PREF_GEN_TRANSCODES = "transcodes"
-        const val PREF_GEN_IMAGE_THUMBNAILS = "imageThumbnails"
 
         const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
     }
