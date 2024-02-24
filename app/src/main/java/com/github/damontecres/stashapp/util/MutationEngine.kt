@@ -161,22 +161,25 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
     }
 
     suspend fun triggerGenerate() {
-        val mutation =
-            MetadataGenerateMutation(
-                GenerateMetadataInput(
-                    clipPreviews = getServerBoolean(ServerPreferences.PREF_GEN_CLIP_PREVIEWS),
-                    covers = getServerBoolean(ServerPreferences.PREF_GEN_COVERS),
-                    imagePreviews = getServerBoolean(ServerPreferences.PREF_GEN_IMAGE_PREVIEWS),
-                    interactiveHeatmapsSpeeds = getServerBoolean(ServerPreferences.PREF_GEN_INTERACTIVE_HEATMAPS_SPEEDS),
-                    markerImagePreviews = getServerBoolean(ServerPreferences.PREF_GEN_MARKER_IMAGE_PREVIEWS),
-                    markers = getServerBoolean(ServerPreferences.PREF_GEN_MARKERS),
-                    markerScreenshots = getServerBoolean(ServerPreferences.PREF_GEN_MARKER_SCREENSHOTS),
-                    phashes = getServerBoolean(ServerPreferences.PREF_GEN_PHASHES),
-                    previews = getServerBoolean(ServerPreferences.PREF_GEN_PREVIEWS),
-                    sprites = getServerBoolean(ServerPreferences.PREF_GEN_SPRITES),
-                    transcodes = getServerBoolean(ServerPreferences.PREF_GEN_TRANSCODES),
-                ),
+        var input =
+            GenerateMetadataInput(
+                clipPreviews = getServerBoolean(ServerPreferences.PREF_GEN_CLIP_PREVIEWS),
+                covers = getServerBoolean(ServerPreferences.PREF_GEN_COVERS),
+                imagePreviews = getServerBoolean(ServerPreferences.PREF_GEN_IMAGE_PREVIEWS),
+                interactiveHeatmapsSpeeds = getServerBoolean(ServerPreferences.PREF_GEN_INTERACTIVE_HEATMAPS_SPEEDS),
+                markerImagePreviews = getServerBoolean(ServerPreferences.PREF_GEN_MARKER_IMAGE_PREVIEWS),
+                markers = getServerBoolean(ServerPreferences.PREF_GEN_MARKERS),
+                markerScreenshots = getServerBoolean(ServerPreferences.PREF_GEN_MARKER_SCREENSHOTS),
+                phashes = getServerBoolean(ServerPreferences.PREF_GEN_PHASHES),
+                previews = getServerBoolean(ServerPreferences.PREF_GEN_PREVIEWS),
+                sprites = getServerBoolean(ServerPreferences.PREF_GEN_SPRITES),
+                transcodes = getServerBoolean(ServerPreferences.PREF_GEN_TRANSCODES),
             )
+        if (serverPreferences.serverVersion.isGreaterThan(Version.V0_24_3)) {
+            input =
+                input.copy(imageThumbnails = getServerBoolean(ServerPreferences.PREF_GEN_IMAGE_THUMBNAILS))
+        }
+        val mutation = MetadataGenerateMutation(input)
         executeMutation(mutation)
     }
 
