@@ -45,8 +45,6 @@ import kotlin.random.Random
 class QueryEngine(private val context: Context, private val showToasts: Boolean = false) {
     private val client = createApolloClient(context) ?: throw StashNotConfiguredException()
 
-    private val serverVersion = ServerPreferences(context).serverVersion
-
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> {
         val queryName = query.operation.name()
         Log.v(
@@ -117,25 +115,15 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         useRandom: Boolean = true,
     ): List<SlimSceneData> {
         val query =
-            if (serverVersion.isGreaterThan(Version.V0_24_3)) {
-                FindScenesQuery(
-                    filter = updateFilter(findFilter, useRandom),
-                    scene_filter = sceneFilter,
-                    scene_ids = null,
-                    ids = sceneIds?.map { it.toString() },
-                )
-            } else {
+            client.query(
                 FindScenesQuery(
                     filter = updateFilter(findFilter, useRandom),
                     scene_filter = sceneFilter,
                     scene_ids = sceneIds,
-                    ids = null,
-                )
-            }
-
-        val call = client.query(query)
+                ),
+            )
         val scenes =
-            executeQuery(call).data?.findScenes?.scenes?.map {
+            executeQuery(query).data?.findScenes?.scenes?.map {
                 it.slimSceneData
             }
         return scenes.orEmpty()
@@ -152,24 +140,15 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         useRandom: Boolean = true,
     ): List<PerformerData> {
         val query =
-            if (serverVersion.isGreaterThan(Version.V0_24_3)) {
-                FindPerformersQuery(
-                    filter = updateFilter(findFilter, useRandom),
-                    performer_filter = performerFilter,
-                    performer_ids = null,
-                    ids = performerIds?.map { it.toString() },
-                )
-            } else {
+            client.query(
                 FindPerformersQuery(
                     filter = updateFilter(findFilter, useRandom),
                     performer_filter = performerFilter,
                     performer_ids = performerIds,
-                    ids = null,
-                )
-            }
-        val call = client.query(query)
+                ),
+            )
         val performers =
-            executeQuery(call).data?.findPerformers?.performers?.map {
+            executeQuery(query).data?.findPerformers?.performers?.map {
                 it.performerData
             }
         return performers.orEmpty()

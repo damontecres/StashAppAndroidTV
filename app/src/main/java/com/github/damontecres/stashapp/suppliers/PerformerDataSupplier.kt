@@ -20,7 +20,6 @@ class PerformerDataSupplier(
             filter = filter,
             performer_filter = performerFilter,
             performer_ids = null,
-            ids = null,
         )
     }
 
