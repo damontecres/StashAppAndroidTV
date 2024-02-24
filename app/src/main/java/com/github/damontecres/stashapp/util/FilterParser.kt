@@ -157,14 +157,23 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertGenderCriterionInput(it: Map<String, *>?): GenderCriterionInput? {
         return if (it != null) {
-            if (serverVersion.isGreaterThan(Version.fromString("0.24.3"))) {
+            if (serverVersion.isGreaterThan(Version.V0_24_3)) {
+                val value = it["value"]
                 val values =
-                    (it["value"] as List<String?>).filterNotNull()
-                        .map { it.uppercase().replace(" ", "_") }
-                        .map(GenderEnum::valueOf)
+                    if (value is List<*>) {
+                        val v = value.filterNotNull().map { it.toString() }
+                        v
+                    } else if (value != null) {
+                        val v = listOf(value.toString())
+                        v
+                    } else {
+                        val v = emptyList<String>()
+                        v
+                    }.map { it.uppercase().replace(" ", "_") }
+
                 GenderCriterionInput(
                     Optional.absent(),
-                    Optional.present(values),
+                    Optional.present(values.map(GenderEnum::valueOf)),
                     CriterionModifier.valueOf(it["modifier"]!! as String),
                 )
             } else {
@@ -406,32 +415,38 @@ class FilterParser(private val serverVersion: Version) {
     fun convertStudioObjectFilter(f: Any?): StudioFilterType? {
         return if (f != null) {
             val filter = f as Map<String, Map<String, *>>
-            StudioFilterType(
-                AND = Optional.presentIfNotNull(convertStudioObjectFilter(filter["AND"] as Map<String, Map<String, *>>?)),
-                OR = Optional.presentIfNotNull(convertStudioObjectFilter(filter["OR"] as Map<String, Map<String, *>>?)),
-                NOT = Optional.presentIfNotNull(convertStudioObjectFilter(filter["NOT"] as Map<String, Map<String, *>>?)),
-                name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
-                details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
-                parents = Optional.presentIfNotNull(convertMultiCriterionInput(filter["parents"])),
-                stash_id_endpoint =
-                    Optional.presentIfNotNull(
-                        convertStashIDCriterionInput(
-                            filter["stash_id_endpoint"],
+            var studioFilter =
+                StudioFilterType(
+                    AND = Optional.presentIfNotNull(convertStudioObjectFilter(filter["AND"] as Map<String, Map<String, *>>?)),
+                    OR = Optional.presentIfNotNull(convertStudioObjectFilter(filter["OR"] as Map<String, Map<String, *>>?)),
+                    NOT = Optional.presentIfNotNull(convertStudioObjectFilter(filter["NOT"] as Map<String, Map<String, *>>?)),
+                    name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
+                    details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
+                    parents = Optional.presentIfNotNull(convertMultiCriterionInput(filter["parents"])),
+                    stash_id_endpoint =
+                        Optional.presentIfNotNull(
+                            convertStashIDCriterionInput(
+                                filter["stash_id_endpoint"],
+                            ),
                         ),
-                    ),
-                is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
-                rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
-                scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
-                image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["image_count"])),
-                gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
-                url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
-                aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
-                ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
-                created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
-                updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
-                // 0.25.0
-                child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
-            )
+                    is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
+                    rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
+                    scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
+                    image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["image_count"])),
+                    gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
+                    url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
+                    aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
+                    ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
+                    created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
+                    updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+                )
+            if (serverVersion.isGreaterThan(Version.V0_24_3)) {
+                studioFilter =
+                    studioFilter.copy(
+                        child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
+                    )
+            }
+            studioFilter
         } else {
             null
         }
