@@ -132,7 +132,6 @@ fun createOkHttpClient(context: Context): OkHttpClient {
             it.proceed(request)
         }
     val cacheSize = 100L * 1024 * 1024 // 100MB
-    //
     builder = builder.cache(Cache(context.cacheDir, cacheSize))
     return builder.build()
 }
@@ -231,12 +230,7 @@ fun createApolloClient(context: Context): ApolloClient? {
         val trustAll =
             PreferenceManager.getDefaultSharedPreferences(context)
                 .getBoolean("trustAllCerts", false)
-        val httpEngine =
-            if (trustAll) {
-                DefaultHttpEngine(createOkHttpClient(context))
-            } else {
-                DefaultHttpEngine()
-            }
+        val httpEngine = DefaultHttpEngine(createOkHttpClient(context))
         ApolloClient.Builder()
             .serverUrl(url.toString())
             .httpEngine(httpEngine)
