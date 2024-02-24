@@ -124,7 +124,7 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
 
     suspend fun incrementPlayCount(sceneId: Long): Int {
         Log.v(TAG, "incrementPlayCount on $sceneId")
-        return if (ServerPreferences(context).serverVersion.isAtLeast(Version.V0_25_0)) {
+        return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
             val mutation = SceneAddPlayCountMutation(sceneId.toString(), emptyList())
             val result = executeMutation(mutation)
             result.data!!.sceneAddPlay.count
@@ -218,7 +218,7 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
     }
 
     suspend fun incrementOCounter(sceneId: Int): OCounter {
-        return if (ServerPreferences(context).serverVersion.isAtLeast(Version.V0_25_0)) {
+        return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
             val mutation = SceneAddOMutation(sceneId.toString(), emptyList())
             val result = executeMutation(mutation)
             OCounter(sceneId, result.data!!.sceneAddO.count)
@@ -230,7 +230,7 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
     }
 
     suspend fun decrementOCounter(sceneId: Int): OCounter {
-        return if (ServerPreferences(context).serverVersion.isAtLeast(Version.V0_25_0)) {
+        return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
             val mutation = SceneDeleteOMutation(sceneId.toString(), emptyList())
             val result = executeMutation(mutation)
             OCounter(sceneId, result.data!!.sceneDeleteO.count)
