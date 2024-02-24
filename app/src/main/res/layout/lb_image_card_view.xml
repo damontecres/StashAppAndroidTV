@@ -19,11 +19,15 @@
     xmlns:lb="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <FrameLayout
+    <ViewSwitcher
         android:id="@+id/main_view"
         lb:layout_viewType="main"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@android:color/black"
+        android:inAnimation="@android:anim/fade_in"
+        android:outAnimation="@android:anim/fade_out"
+        android:animateFirstView="true">
 
         <ImageView
             android:id="@+id/main_image"
@@ -42,7 +46,7 @@
             app:use_controller="false"
             app:show_buffering="never"
             app:auto_show="false" />
-    </FrameLayout>
+    </ViewSwitcher>
     <androidx.leanback.widget.NonOverlappingFrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
