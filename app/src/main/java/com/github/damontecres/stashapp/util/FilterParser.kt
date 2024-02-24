@@ -158,7 +158,6 @@ class FilterParser(private val serverVersion: Version) {
     private fun convertGenderCriterionInput(it: Map<String, *>?): GenderCriterionInput? {
         return if (it != null) {
             if (serverVersion.isGreaterThan(Version.fromString("0.24.3"))) {
-                // TODO requires more testing
                 val values =
                     (it["value"] as List<String?>).filterNotNull()
                         .map { it.uppercase().replace(" ", "_") }
