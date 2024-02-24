@@ -429,6 +429,8 @@ class FilterParser(private val serverVersion: Version) {
                 ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+                // 0.25.0
+                child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
             )
         } else {
             null
