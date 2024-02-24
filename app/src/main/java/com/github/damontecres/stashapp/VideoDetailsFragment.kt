@@ -138,7 +138,9 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val actionListener = SceneActionListener()
         onItemViewClickedListener =
             StashItemViewClickListener(requireActivity(), actionListener)
-
+        setupDetailsOverviewRowPresenter()
+        mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
+        mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -155,11 +157,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             startActivity(intent)
         } else {
             val queryEngine = QueryEngine(requireContext())
-
-            setupDetailsOverviewRowPresenter()
-            mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
-            mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
-
             viewLifecycleOwner.lifecycleScope.launch(
                 StashCoroutineExceptionHandler(
                     Toast.makeText(
