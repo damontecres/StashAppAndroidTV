@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
 import android.net.Uri
+import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -18,6 +19,7 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.enableMarquee
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
@@ -53,39 +55,46 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
 
     init {
         mainImageView.visibility = View.VISIBLE
+        val infoArea = findViewById<ViewGroup>(R.id.info_field)
+        val iconRow = LayoutInflater.from(context).inflate(R.layout.image_card_icon_row, infoArea)
+
+        val titleTextView = findViewById<TextView>(androidx.leanback.R.id.title_text)
+        titleTextView.enableMarquee(false)
+        val contentTextView = findViewById<TextView>(androidx.leanback.R.id.content_text)
+        contentTextView.enableMarquee(false)
 
         dataTypeViews[DataType.MOVIE] =
             Pair(
-                findViewById(R.id.extra_movie_count),
-                findViewById(R.id.extra_movie_icon),
+                iconRow.findViewById(R.id.extra_movie_count),
+                iconRow.findViewById(R.id.extra_movie_icon),
             )
         dataTypeViews[DataType.MARKER] =
             Pair(
-                findViewById(R.id.extra_marker_count),
-                findViewById(R.id.extra_marker_icon),
+                iconRow.findViewById(R.id.extra_marker_count),
+                iconRow.findViewById(R.id.extra_marker_icon),
             )
         dataTypeViews[DataType.PERFORMER] =
             Pair(
-                findViewById(R.id.extra_performer_count),
-                findViewById(R.id.extra_performer_icon),
+                iconRow.findViewById(R.id.extra_performer_count),
+                iconRow.findViewById(R.id.extra_performer_icon),
             )
         dataTypeViews[DataType.TAG] =
             Pair(
-                findViewById(R.id.extra_tag_count),
-                findViewById(R.id.extra_tag_icon),
+                iconRow.findViewById(R.id.extra_tag_count),
+                iconRow.findViewById(R.id.extra_tag_icon),
             )
         dataTypeViews[DataType.SCENE] =
             Pair(
-                findViewById(R.id.extra_scene_count),
-                findViewById(R.id.extra_scene_icon),
+                iconRow.findViewById(R.id.extra_scene_count),
+                iconRow.findViewById(R.id.extra_scene_icon),
             )
         dataTypeViews[DataType.MOVIE] =
             Pair(
-                findViewById(R.id.extra_movie_count),
-                findViewById(R.id.extra_movie_icon),
+                iconRow.findViewById(R.id.extra_movie_count),
+                iconRow.findViewById(R.id.extra_movie_icon),
             )
-        oCounterTextView = findViewById(R.id.extra_ocounter_count)
-        oCounterIconView = findViewById(R.id.extra_ocounter_icon)
+        oCounterTextView = iconRow.findViewById(R.id.extra_ocounter_count)
+        oCounterIconView = iconRow.findViewById(R.id.extra_ocounter_icon)
     }
 
     override fun setSelected(selected: Boolean) {
@@ -102,8 +111,6 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             }
         }
         updateCardBackgroundColor(this, selected)
-        val textView = findViewById<TextView>(androidx.leanback.R.id.title_text)
-        textView.isSelected = selected
         super.setSelected(selected)
     }
 
