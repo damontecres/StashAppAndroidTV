@@ -435,8 +435,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private fun setupDetailsOverviewRow() {
         val row = DetailsOverviewRow(mSelectedMovie!!)
-        row.imageDrawable =
-            ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
         val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
         val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
 
