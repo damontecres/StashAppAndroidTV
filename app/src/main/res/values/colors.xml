@@ -2,9 +2,10 @@
     <color name="background_gradient_start">#000000</color>
     <color name="background_gradient_end">#DDDDDD</color>
     <color name="fastlane_background">#0096a6</color>
-    <color name="search_opaque">#477ab5</color>
     <color name="selected_background">#4785b5</color>
     <color name="default_background">#202b33</color>
     <color name="default_card_background">#30404d</color>
     <color name="gold">#FFD700</color>
+    <color name="popup_selected_background">#3c719a</color>
+    <color name="popup_background">#111a20</color>
 </resources>

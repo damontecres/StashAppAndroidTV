@@ -19,6 +19,7 @@ import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
+import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
@@ -41,6 +42,8 @@ import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.supportedFilterModes
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.Objects
 
@@ -48,7 +51,7 @@ import java.util.Objects
  * Loads a grid of cards with movies to browse.
  */
 class MainFragment : BrowseSupportFragment() {
-    private val rowsAdapter = ArrayObjectAdapter(ListRowPresenter())
+    private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()
     private lateinit var mBackgroundManager: BackgroundManager
     private lateinit var mMetrics: DisplayMetrics
@@ -139,7 +142,7 @@ class MainFragment : BrowseSupportFragment() {
                 }
             } else {
                 clearData()
-                rowsAdapter.clear()
+                requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                 Toast.makeText(requireContext(), "Connection to Stash failed.", Toast.LENGTH_LONG)
                     .show()
             }
@@ -158,8 +161,6 @@ class MainFragment : BrowseSupportFragment() {
 
         // set fastLane (or headers) background color
         brandColor = ContextCompat.getColor(requireActivity(), R.color.fastlane_background)
-        // set search icon color
-        searchAffordanceColor = ContextCompat.getColor(requireActivity(), R.color.search_opaque)
     }
 
     private fun setupEventListeners() {
@@ -189,6 +190,7 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun clearData() {
+        rowsAdapter.clear()
         adapters.forEach { it.clear() }
     }
 
@@ -226,7 +228,8 @@ class MainFragment : BrowseSupportFragment() {
                     "Stash server version ${serverInfo.version.version} is not supported!"
                 Log.e(TAG, msg)
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
-                rowsAdapter.clear()
+                clearData()
+                requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
             } else if (serverInfo != null) {
                 try {
                     val queryEngine = QueryEngine(requireContext(), showToasts = true)
@@ -246,23 +249,38 @@ class MainFragment : BrowseSupportFragment() {
                             val ui = config.ui
                             val frontPageContent =
                                 (ui as Map<String, *>)["frontPageContent"] as List<Map<String, *>>
-                            for (frontPageFilter: Map<String, *> in frontPageContent) {
-                                val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
-                                adapters.add(adapter)
+                            val jobs =
+                                frontPageContent.map { frontPageFilter ->
+                                    val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                                    adapters.add(adapter)
+                                    when (
+                                        val filterType =
+                                            frontPageFilter["__typename"] as String
+                                    ) {
+                                        "CustomFilter" -> {
+                                            addCustomFilterRow(
+                                                frontPageFilter,
+                                                adapter,
+                                                queryEngine,
+                                            )
+                                        }
 
-                                when (val filterType = frontPageFilter["__typename"] as String) {
-                                    "CustomFilter" -> {
-                                        addCustomFilterRow(frontPageFilter, adapter, queryEngine)
-                                    }
+                                        "SavedFilter" -> {
+                                            addSavedFilterRow(
+                                                frontPageFilter,
+                                                adapter,
+                                                queryEngine,
+                                            )
+                                        }
 
-                                    "SavedFilter" -> {
-                                        addSavedFilterRow(frontPageFilter, adapter, queryEngine)
-                                    }
-
-                                    else -> {
-                                        Log.w(TAG, "Unknown frontPageFilter typename: $filterType")
+                                        else -> {
+                                            Log.w(TAG, "Unknown frontPageFilter typename: $filterType")
+                                            null
+                                        }
                                     }
                                 }
+                            jobs.forEachIndexed { index, job ->
+                                job?.await()?.let { row -> rowsAdapter.set(index, row) }
                             }
                         }
                     }
@@ -272,9 +290,11 @@ class MainFragment : BrowseSupportFragment() {
                         "Stash not configured. Please enter the URL in settings!",
                         Toast.LENGTH_LONG,
                     ).show()
+                    requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                 }
             } else {
-                rowsAdapter.clear()
+                clearData()
+                requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
             }
         }
     }
@@ -283,7 +303,7 @@ class MainFragment : BrowseSupportFragment() {
         frontPageFilter: Map<String, *>,
         adapter: ArrayObjectAdapter,
         queryEngine: QueryEngine,
-    ) {
+    ): Deferred<ListRow?>? {
         val exHandler =
             CoroutineExceptionHandler { _, ex ->
                 Log.e(TAG, "Exception in addCustomFilterRow", ex)
@@ -310,59 +330,58 @@ class MainFragment : BrowseSupportFragment() {
             val mode = FilterMode.safeValueOf(frontPageFilter["mode"] as String)
             if (mode !in supportedFilterModes) {
                 Log.w(TAG, "CustomFilter mode is $mode which is not supported yet")
-                return
+                return null
             }
-            rowsAdapter.add(
-                ListRow(
-                    HeaderItem(description),
-                    adapter,
-                ),
-            )
-            viewLifecycleOwner.lifecycleScope.launch(exHandler) {
-                val direction = frontPageFilter["direction"] as String?
-                val directionEnum =
-                    if (direction != null) {
-                        val enum = SortDirectionEnum.safeValueOf(direction.uppercase())
-                        if (enum == SortDirectionEnum.UNKNOWN__) {
+            val job =
+                viewLifecycleOwner.lifecycleScope.async(exHandler) {
+                    val direction = frontPageFilter["direction"] as String?
+                    val directionEnum =
+                        if (direction != null) {
+                            val enum = SortDirectionEnum.safeValueOf(direction.uppercase())
+                            if (enum == SortDirectionEnum.UNKNOWN__) {
+                                SortDirectionEnum.DESC
+                            }
+                            enum
+                        } else {
                             SortDirectionEnum.DESC
                         }
-                        enum
-                    } else {
-                        SortDirectionEnum.DESC
+                    val pageSize =
+                        PreferenceManager.getDefaultSharedPreferences(requireContext())
+                            .getInt("maxSearchResults", 25)
+                    val filter =
+                        FindFilterType(
+                            direction = Optional.presentIfNotNull(directionEnum),
+                            sort = Optional.presentIfNotNull(sortBy),
+                            per_page = Optional.present(pageSize),
+                        )
+                    when (mode) {
+                        FilterMode.SCENES -> {
+                            adapter.addAll(0, queryEngine.findScenes(filter))
+                        }
+
+                        FilterMode.STUDIOS -> {
+                            adapter.addAll(0, queryEngine.findStudios(filter))
+                        }
+
+                        FilterMode.PERFORMERS -> {
+                            adapter.addAll(0, queryEngine.findPerformers(filter))
+                        }
+
+                        FilterMode.MOVIES -> {
+                            adapter.addAll(0, queryEngine.findMovies(filter))
+                        }
+
+                        else -> {
+                            Log.w(TAG, "Unsupported mode in frontpage: $mode")
+                        }
                     }
-                val pageSize =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
-                        .getInt("maxSearchResults", 25)
-                val filter =
-                    FindFilterType(
-                        direction = Optional.presentIfNotNull(directionEnum),
-                        sort = Optional.presentIfNotNull(sortBy),
-                        per_page = Optional.present(pageSize),
+                    adapter.add(StashCustomFilter(mode, direction, sortBy, description))
+                    ListRow(
+                        HeaderItem(description),
+                        adapter,
                     )
-
-                when (mode) {
-                    FilterMode.SCENES -> {
-                        adapter.addAll(0, queryEngine.findScenes(filter))
-                    }
-
-                    FilterMode.STUDIOS -> {
-                        adapter.addAll(0, queryEngine.findStudios(filter))
-                    }
-
-                    FilterMode.PERFORMERS -> {
-                        adapter.addAll(0, queryEngine.findPerformers(filter))
-                    }
-
-                    FilterMode.MOVIES -> {
-                        adapter.addAll(0, queryEngine.findMovies(filter))
-                    }
-
-                    else -> {
-                        Log.w(TAG, "Unsupported mode in frontpage: $mode")
-                    }
                 }
-                adapter.add(StashCustomFilter(mode, direction, sortBy, description))
-            }
+            return job
         } catch (ex: Exception) {
             Log.e(TAG, "Exception during addCustomFilterRow", ex)
             Toast.makeText(
@@ -370,6 +389,7 @@ class MainFragment : BrowseSupportFragment() {
                 "CustomFilter parse error: ${ex.message}",
                 Toast.LENGTH_LONG,
             ).show()
+            return null
         }
     }
 
@@ -377,7 +397,7 @@ class MainFragment : BrowseSupportFragment() {
         frontPageFilter: Map<String, *>,
         adapter: ArrayObjectAdapter,
         queryEngine: QueryEngine,
-    ) {
+    ): Deferred<ListRow?> {
         val exHandler =
             CoroutineExceptionHandler { _, ex ->
                 Log.e(TAG, "Exception in addSavedFilterRow", ex)
@@ -387,20 +407,11 @@ class MainFragment : BrowseSupportFragment() {
                     Toast.LENGTH_LONG,
                 ).show()
             }
-        val header = HeaderItem("")
-        val listRow = ListRow(header, adapter)
-        rowsAdapter.add(listRow)
-        viewLifecycleOwner.lifecycleScope.launch(exHandler) {
+        return viewLifecycleOwner.lifecycleScope.async(exHandler) {
             val filterId = frontPageFilter["savedFilterId"]
             val result = queryEngine.getSavedFilter(filterId.toString())
 
-            val index = rowsAdapter.indexOf(listRow)
-            rowsAdapter.removeItems(index, 1)
-
             if (result?.mode in supportedFilterModes) {
-                // TODO doing it this way will result it adding an unsupported row then removing it which looks weird, in practice though it happens pretty fast
-                rowsAdapter.add(index, ListRow(HeaderItem(result?.name ?: ""), adapter))
-
                 val pageSize =
                     PreferenceManager.getDefaultSharedPreferences(requireContext())
                         .getInt("maxSearchResults", 25)
@@ -470,8 +481,10 @@ class MainFragment : BrowseSupportFragment() {
                         filter?.sort?.getOrNull(),
                     ),
                 )
+                ListRow(HeaderItem(result?.name ?: ""), adapter)
             } else {
                 Log.w(TAG, "SavedFilter mode is ${result?.mode} which is not supported yet")
+                null
             }
         }
     }
