@@ -13,6 +13,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.widget.NestedScrollView
+import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
@@ -440,3 +441,7 @@ fun SharedPreferences.getInt(
 ): Int {
     return getStringNotNull(key, defValue).toInt()
 }
+
+fun ArrayObjectAdapter.isEmpty(): Boolean = size() == 0
+
+fun ArrayObjectAdapter.isNotEmpty(): Boolean = !isEmpty()

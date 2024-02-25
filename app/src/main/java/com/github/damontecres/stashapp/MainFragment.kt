@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.isNotEmpty
 import com.github.damontecres.stashapp.util.supportedFilterModes
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -375,11 +376,15 @@ class MainFragment : BrowseSupportFragment() {
                             Log.w(TAG, "Unsupported mode in frontpage: $mode")
                         }
                     }
-                    adapter.add(StashCustomFilter(mode, direction, sortBy, description))
-                    ListRow(
-                        HeaderItem(description),
-                        adapter,
-                    )
+                    if (adapter.isNotEmpty()) {
+                        adapter.add(StashCustomFilter(mode, direction, sortBy, description))
+                        ListRow(
+                            HeaderItem(description),
+                            adapter,
+                        )
+                    } else {
+                        null
+                    }
                 }
             return job
         } catch (ex: Exception) {
@@ -474,14 +479,18 @@ class MainFragment : BrowseSupportFragment() {
                         )
                     }
                 }
-                adapter.add(
-                    StashSavedFilter(
-                        filterId.toString(),
-                        result!!.mode,
-                        filter?.sort?.getOrNull(),
-                    ),
-                )
-                ListRow(HeaderItem(result?.name ?: ""), adapter)
+                if (adapter.isNotEmpty()) {
+                    adapter.add(
+                        StashSavedFilter(
+                            filterId.toString(),
+                            result!!.mode,
+                            filter?.sort?.getOrNull(),
+                        ),
+                    )
+                    ListRow(HeaderItem(result?.name ?: ""), adapter)
+                } else {
+                    null
+                }
             } else {
                 Log.w(TAG, "SavedFilter mode is ${result?.mode} which is not supported yet")
                 null
