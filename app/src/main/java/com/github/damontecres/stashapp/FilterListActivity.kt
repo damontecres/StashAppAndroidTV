@@ -85,8 +85,8 @@ class FilterListActivity : FragmentActivity() {
         }
         supportFragmentManager.addOnBackStackChangedListener {
             val fragment =
-                supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment<*, *>
-            titleTextView.text = fragment.name
+                supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment<*, *>?
+            titleTextView.text = fragment?.name
         }
 
         val exHandler =
@@ -99,7 +99,7 @@ class FilterListActivity : FragmentActivity() {
             val filter = getStartingFilter()
             if (savedInstanceState == null) {
                 if (filter != null) {
-                    setupFragment(filter)
+                    setupFragment(filter, true)
                 } else {
                     Log.e(TAG, "No starting filter found for $dataType was null")
                     finish()
@@ -142,7 +142,7 @@ class FilterListActivity : FragmentActivity() {
                 listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                     val filter = savedFilters[position]
                     listPopUp.dismiss()
-                    setupFragment(filter)
+                    setupFragment(filter, false)
                 }
 
                 filterButton.setOnClickListener {
@@ -214,7 +214,10 @@ class FilterListActivity : FragmentActivity() {
         }
     }
 
-    private fun setupFragment(filter: SavedFilterData) {
+    private fun setupFragment(
+        filter: SavedFilterData,
+        first: Boolean,
+    ) {
         val dataType = DataType.fromFilterMode(filter.mode)!!
         val name =
             if (filter.name.isBlank()) {
@@ -230,7 +233,7 @@ class FilterListActivity : FragmentActivity() {
                     R.id.list_fragment,
                     fragment,
                 )
-        if (transaction.isAddToBackStackAllowed) {
+        if (!first && transaction.isAddToBackStackAllowed) {
             transaction = transaction.addToBackStack(null)
         }
         transaction.commit()
@@ -396,7 +399,7 @@ class FilterListActivity : FragmentActivity() {
                         ui_options = null,
                         __typename = "",
                     )
-                setupFragment(filter)
+                setupFragment(filter, false)
             }
         }
     }

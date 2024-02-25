@@ -127,6 +127,7 @@ class MainFragment : BrowseSupportFragment() {
 
         val newServerHash = computeServerHash()
         if (serverHash != newServerHash) {
+            Log.v(TAG, "server hash changed")
             clearData()
             rowsAdapter.clear()
         }
