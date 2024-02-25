@@ -30,12 +30,14 @@ class StashGridFragment<T : Query.Data, D : Any>(
     private val dataSupplier: StashPagingSource.DataSupplier<T, D>,
     val filter: SavedFilterData?,
     private val cardSize: Int? = null,
+    val name: String?,
 ) : VerticalGridSupportFragment() {
     constructor(
         comparator: DiffUtil.ItemCallback<D>,
         dataSupplier: StashPagingSource.DataSupplier<T, D>,
         cardSize: Int? = null,
-    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, cardSize)
+        name: String? = null,
+    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, cardSize, name)
 
     val mAdapter = PagingDataAdapter(presenter, comparator)
 

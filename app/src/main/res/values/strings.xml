@@ -12,6 +12,8 @@
     <string name="fa_circle_play" translatable="false">&#xf144;</string>
 
     <string name="go_to_scene">Go to scene</string>
+    <string name="view_scenes">View scenes</string>
+    <string name="view_markers">View markers</string>
     <string name="failed_o_counter">Failed to update o-counter</string>
 
 </resources>
