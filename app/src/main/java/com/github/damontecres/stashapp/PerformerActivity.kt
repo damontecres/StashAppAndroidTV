@@ -58,11 +58,11 @@ class PerformerActivity : FragmentActivity() {
                 .replace(R.id.performer_list_fragment, sceneFragment)
                 .commitNow()
 
-            sceneFragment.mAdapter.registerObserver(
+            sceneFragment.pagingAdapter.registerObserver(
                 object : ObjectAdapter.DataObserver() {
                     override fun onChanged() {
                         sceneFragment.view!!.requestFocus()
-                        sceneFragment.mAdapter.unregisterObserver(this)
+                        sceneFragment.pagingAdapter.unregisterObserver(this)
                     }
                 },
             )
