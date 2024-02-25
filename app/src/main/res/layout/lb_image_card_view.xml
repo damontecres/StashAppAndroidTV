@@ -24,7 +24,6 @@
         lb:layout_viewType="main"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
         android:inAnimation="@android:anim/fade_in"
         android:outAnimation="@android:anim/fade_out"
         android:animateFirstView="true">
@@ -43,6 +42,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
+            android:background="@android:color/black"
             app:use_controller="false"
             app:show_buffering="never"
             app:auto_show="false" />

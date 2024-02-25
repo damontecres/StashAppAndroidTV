@@ -209,10 +209,10 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     }
 
     fun showVideo() {
-        mainView.showNext()
+        mainView.displayedChild = 1
     }
 
     fun showImage() {
-        mainView.showPrevious()
+        mainView.displayedChild = 0
     }
 }
