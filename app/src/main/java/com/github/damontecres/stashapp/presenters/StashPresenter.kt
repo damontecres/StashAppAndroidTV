@@ -5,7 +5,6 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.PictureDrawable
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ImageCardView
@@ -24,7 +23,6 @@ import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.util.StashGlide
-import com.github.damontecres.stashapp.util.enableMarquee
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
 import kotlin.properties.Delegates
 
@@ -39,12 +37,6 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
             ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
 
         val cardView = StashImageCardView(parent.context)
-
-        val textView = cardView.findViewById<TextView>(androidx.leanback.R.id.title_text)
-        textView.enableMarquee(false)
-        val contentView = cardView.findViewById<TextView>(androidx.leanback.R.id.content_text)
-        contentView.enableMarquee(false)
-
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = true
         cardView.updateCardBackgroundColor(cardView, false)
