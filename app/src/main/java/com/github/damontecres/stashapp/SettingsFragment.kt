@@ -25,6 +25,7 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
+import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -32,6 +33,7 @@ import com.github.damontecres.stashapp.util.configureHttpsTrust
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
+import okhttp3.Cache
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
@@ -306,6 +308,26 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<SeekBarPreference>("skip_back_time")?.min = 5
             findPreference<SeekBarPreference>("skip_forward_time")?.min = 5
             findPreference<SeekBarPreference>("searchDelay")?.min = 50
+
+            val cacheSizePref = findPreference<SeekBarPreference>("networkCacheSize")!!
+            val cache = Cache(requireContext().cacheDir, cacheSizePref.value * 1024L * 1024)
+            setUsedCachedSummary(cacheSizePref, cache)
+
+            findPreference<Preference>("clearCache")?.setOnPreferenceClickListener {
+                cache.evictAll()
+                Glide.get(requireContext()).clearMemory()
+                setUsedCachedSummary(cacheSizePref, cache)
+                true
+            }
+        }
+
+        private fun setUsedCachedSummary(
+            cacheSizePref: Preference,
+            cache: Cache,
+        ) {
+            val cacheSize = cache.size() / 1024.0 / 1024
+            val cacheSizeFormatted = String.format("%.2f", cacheSize)
+            cacheSizePref.summary = "Using $cacheSizeFormatted MB"
         }
 
         override fun onResume() {

@@ -166,9 +166,9 @@
 
     <PreferenceCategory app:title="Advanced">
         <SeekBarPreference
-            app:key="networkCache"
-            app:title="Network data cache (MB)"
-            app:seekBarIncrement="10"
+            app:key="networkCacheSize"
+            app:title="Max network data cache (MB)"
+            app:seekBarIncrement="25"
             app:showSeekBarValue="true"
             android:max="1000"
             app:defaultValue="200" />
