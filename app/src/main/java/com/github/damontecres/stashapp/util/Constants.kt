@@ -95,12 +95,11 @@ val TRUST_ALL_CERTS: TrustManager =
     }
 
 fun createOkHttpClient(context: Context): OkHttpClient {
-    val trustAll =
-        PreferenceManager.getDefaultSharedPreferences(context)
-            .getBoolean("trustAllCerts", false)
-    val apiKey =
-        PreferenceManager.getDefaultSharedPreferences(context)
-            .getString("stashApiKey", null)
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val trustAll = manager.getBoolean("trustAllCerts", false)
+    val apiKey = manager.getString("stashApiKey", null)
+    val cacheSize = manager.getLong("networkCache", 100) * 1024 * 1024
+
     var builder = OkHttpClient.Builder()
     if (trustAll) {
         val sslContext = SSLContext.getInstance("SSL")
@@ -131,7 +130,6 @@ fun createOkHttpClient(context: Context): OkHttpClient {
                     .build()
             it.proceed(request)
         }
-    val cacheSize = 100L * 1024 * 1024 // 100MB
     builder = builder.cache(Cache(context.cacheDir, cacheSize))
     return builder.build()
 }
@@ -227,9 +225,6 @@ fun createApolloClient(context: Context): ApolloClient? {
                 .build()
         Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
 
-        val trustAll =
-            PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean("trustAllCerts", false)
         val httpEngine = DefaultHttpEngine(createOkHttpClient(context))
         ApolloClient.Builder()
             .serverUrl(url.toString())

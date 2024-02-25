@@ -2,7 +2,7 @@ package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.graphics.drawable.Drawable
-import android.util.Log
+import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -16,14 +16,15 @@ class StashGlide private constructor() {
             context: Context,
             url: GlideUrl,
         ): RequestBuilder<Drawable> {
-            // TODO
-            val cacheTime = TimeUnit.MINUTES.toMillis(15).toDouble()
+            val cacheTimeout =
+                PreferenceManager.getDefaultSharedPreferences(context)
+                    .getInt("memoryCacheTimeout", 15).toLong()
+            val cacheTime = TimeUnit.MINUTES.toMillis(cacheTimeout).toDouble()
             val cacheKey = (System.currentTimeMillis() / cacheTime).toInt()
-            Log.v(TAG, "${url.toURL()}, cacheTime=$cacheTime, cacheKey=$cacheKey")
             return Glide.with(context).load(url)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .signature(ObjectKey(cacheKey))
-                .skipMemoryCache(false)
+                .skipMemoryCache(cacheTimeout == 0L)
         }
 
         fun with(
