@@ -88,7 +88,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
-    private val playActionsAdapter = ArrayObjectAdapter()
+    private val playActionsAdapter = SparseArrayObjectAdapter()
     private var position = -1L // The position in the video
     private val detailsPresenter =
         FullWidthDetailsOverviewRowPresenter(
@@ -138,12 +138,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val actionListener = SceneActionListener()
         onItemViewClickedListener =
             StashItemViewClickListener(requireActivity(), actionListener)
-
+        setupDetailsOverviewRowPresenter()
+        mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
+        mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
 
         val sceneId = requireActivity().intent.getStringExtra(VideoDetailsActivity.MOVIE)
         if (sceneId == null) {
@@ -166,8 +171,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     position = (mSelectedMovie!!.resume_time!! * 1000).toLong()
                 }
                 setupDetailsOverviewRow()
-                setupDetailsOverviewRowPresenter()
-                setupRelatedMovieListRow()
+
                 adapter = mAdapter
                 initializeBackground()
 
@@ -387,6 +391,22 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            if (mSelectedMovie != null) {
+                val queryEngine = QueryEngine(requireContext())
+                mSelectedMovie = queryEngine.getScene(mSelectedMovie!!.id.toInt())
+                // Refresh the o-counter which could have changed
+                sceneActionsAdapter.set(
+                    O_COUNTER_POS,
+                    OCounter(mSelectedMovie!!.id.toInt(), mSelectedMovie!!.o_counter ?: 0),
+                )
+            }
+        }
+    }
+
     private fun initializeBackground() {
         mDetailsBackground.enableParallax()
 
@@ -415,8 +435,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private fun setupDetailsOverviewRow() {
         val row = DetailsOverviewRow(mSelectedMovie!!)
-        row.imageDrawable =
-            ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
         val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
         val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
 
@@ -442,19 +460,20 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 )
         }
 
-        playActionsAdapter.clear()
         val serverPreferences = ServerPreferences(requireContext())
         if (serverPreferences.trackActivity && mSelectedMovie?.resume_time != null && mSelectedMovie?.resume_time!! > 0) {
             position = (mSelectedMovie?.resume_time!! * 1000).toLong()
-            playActionsAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
-            playActionsAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
+            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
         } else {
-            playActionsAdapter.add(
+            playActionsAdapter.set(
+                0,
                 Action(
                     ACTION_PLAY_SCENE,
                     resources.getString(R.string.play_scene),
                 ),
             )
+            playActionsAdapter.clear(1)
         }
 
         row.actionsAdapter = playActionsAdapter
@@ -504,12 +523,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 }
             }
         mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
-    }
-
-    private fun setupRelatedMovieListRow() {
-        // TODO related scenes
-        mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
-        mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 
     private fun convertDpToPixel(
@@ -699,9 +712,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     if (position > 10_000) {
                         // If some of the video played, reset the available actions
                         // This also causes the focused action to default to resume which is an added bonus
-                        playActionsAdapter.clear()
-                        playActionsAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
-                        playActionsAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
+                        playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
+                        playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
 
                         val serverPreferences = ServerPreferences(requireContext())
                         if (serverPreferences.trackActivity) {
