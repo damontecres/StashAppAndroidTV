@@ -133,7 +133,15 @@ class MainFragment : BrowseSupportFragment() {
         }
         serverHash = newServerHash
 
-        viewLifecycleOwner.lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch(
+            StashCoroutineExceptionHandler { ex ->
+                Toast.makeText(
+                    requireContext(),
+                    "Exception: ${ex.message}",
+                    Toast.LENGTH_LONG,
+                )
+            },
+        ) {
             if (testStashConnection(requireContext(), false) != null) {
                 ServerPreferences(requireContext()).updatePreferences()
                 val mainTitleView =

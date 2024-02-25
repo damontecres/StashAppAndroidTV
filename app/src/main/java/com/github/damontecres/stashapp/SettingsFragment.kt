@@ -131,7 +131,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             findPreference<Preference>("testStashServer")
                 ?.setOnPreferenceClickListener {
-                    viewLifecycleOwner.lifecycleScope.launch {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                         testStashConnection(requireContext(), true)
                     }
                     true
