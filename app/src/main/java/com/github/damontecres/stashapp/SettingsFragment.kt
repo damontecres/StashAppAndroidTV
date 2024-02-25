@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.content.ComponentCallbacks2
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -32,7 +33,9 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.configureHttpsTrust
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.Cache
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
@@ -310,12 +313,20 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<SeekBarPreference>("searchDelay")?.min = 50
 
             val cacheSizePref = findPreference<SeekBarPreference>("networkCacheSize")!!
+            cacheSizePref.min = 25
             val cache = Cache(requireContext().cacheDir, cacheSizePref.value * 1024L * 1024)
             setUsedCachedSummary(cacheSizePref, cache)
 
             findPreference<Preference>("clearCache")?.setOnPreferenceClickListener {
                 cache.evictAll()
-                Glide.get(requireContext()).clearMemory()
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    withContext(Dispatchers.Default) {
+                        Glide.get(requireContext()).clearMemory()
+                        Glide.get(requireContext()).clearDiskCache()
+                        Glide.get(requireContext())
+                            .trimMemory(ComponentCallbacks2.TRIM_MEMORY_COMPLETE)
+                    }
+                }
                 setUsedCachedSummary(cacheSizePref, cache)
                 true
             }
