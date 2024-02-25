@@ -170,8 +170,8 @@
             app:title="Max network data cache (MB)"
             app:seekBarIncrement="25"
             app:showSeekBarValue="true"
-            android:max="1000"
-            app:defaultValue="200" />
+            android:max="500"
+            app:defaultValue="100" />
         <SeekBarPreference
             app:key="memoryCacheTimeout"
             app:title="Memory cache timeout (min)"

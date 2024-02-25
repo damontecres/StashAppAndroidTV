@@ -6,10 +6,9 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.StashGlide
 
 class MovieFragment : Fragment(R.layout.performer_view) {
     private lateinit var mPerformerImage: ImageView
@@ -32,9 +31,7 @@ class MovieFragment : Fragment(R.layout.performer_view) {
             mPerformerDisambiguation.text = movie.aliases
 
             if (movie.frontImagePath != null) {
-                val url = createGlideUrl(movie.frontImagePath, requireContext())
-                Glide.with(requireActivity())
-                    .load(url)
+                StashGlide.with(requireActivity(), movie.frontImagePath)
                     .centerCrop()
                     .error(StashPresenter.glideError(requireContext()))
                     .into(mPerformerImage)

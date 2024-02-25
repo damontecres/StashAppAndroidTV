@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.util
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
@@ -32,6 +33,23 @@ class StashGlide private constructor() {
             url: String,
         ): RequestBuilder<Drawable> {
             return with(context, createGlideUrl(url, context))
+        }
+
+        fun withBitmap(
+            context: Context,
+            url: String,
+        ): RequestBuilder<Bitmap> {
+            val cacheTimeout =
+                PreferenceManager.getDefaultSharedPreferences(context)
+                    .getInt("memoryCacheTimeout", 15).toLong()
+            val cacheTime = TimeUnit.MINUTES.toMillis(cacheTimeout).toDouble()
+            val cacheKey = (System.currentTimeMillis() / cacheTime).toInt()
+            return Glide.with(context)
+                .asBitmap()
+                .load(url)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .signature(ObjectKey(cacheKey))
+                .skipMemoryCache(cacheTimeout == 0L)
         }
 
         const val TAG = "StashGlide"
