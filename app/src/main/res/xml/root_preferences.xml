@@ -172,13 +172,6 @@
             app:showSeekBarValue="true"
             android:max="500"
             app:defaultValue="100" />
-        <SeekBarPreference
-            app:key="memoryCacheTimeout"
-            app:title="Memory cache timeout (min)"
-            app:seekBarIncrement="1"
-            app:showSeekBarValue="true"
-            android:max="60"
-            app:defaultValue="15" />
         <Preference
             app:key="clearCache"
             app:title="Clear all caches"

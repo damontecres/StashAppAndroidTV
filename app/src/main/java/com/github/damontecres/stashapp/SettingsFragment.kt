@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.content.ComponentCallbacks2
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -26,16 +25,13 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
-import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.configureHttpsTrust
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import okhttp3.Cache
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
@@ -319,14 +315,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             findPreference<Preference>("clearCache")?.setOnPreferenceClickListener {
                 cache.evictAll()
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    withContext(Dispatchers.Default) {
-                        Glide.get(requireContext()).clearMemory()
-                        Glide.get(requireContext()).clearDiskCache()
-                        Glide.get(requireContext())
-                            .trimMemory(ComponentCallbacks2.TRIM_MEMORY_COMPLETE)
-                    }
-                }
                 setUsedCachedSummary(cacheSizePref, cache)
                 true
             }
