@@ -45,6 +45,7 @@ import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
@@ -72,6 +73,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private lateinit var performersAdapter: ArrayObjectAdapter
     private lateinit var tagsAdapter: ArrayObjectAdapter
     private lateinit var markersAdapter: ArrayObjectAdapter
+    private lateinit var moviesAdapter: ArrayObjectAdapter
     private val sceneActionsAdapter =
         SparseArrayObjectAdapter(
             ClassPresenterSelector().addClassPresenter(
@@ -386,6 +388,19 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         )
                         performersAdapter.addAll(0, perfs)
                     }
+                }
+
+                moviesAdapter = ArrayObjectAdapter(MoviePresenter())
+                if (mSelectedMovie!!.movies.isNotEmpty()) {
+                    val movies = mSelectedMovie!!.movies.map { it.movie.movieData }
+                    moviesAdapter.addAll(0, movies)
+                    mAdapter.set(
+                        MOVIE_POS,
+                        ListRow(
+                            HeaderItem(getString(R.string.stashapp_movies)),
+                            moviesAdapter,
+                        ),
+                    )
                 }
             }
         }
@@ -824,7 +839,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         // Row order
         private const val DETAILS_POS = 1
         private const val MARKER_POS = DETAILS_POS + 1
-        private const val PERFORMER_POS = MARKER_POS + 1
+        private const val MOVIE_POS = MARKER_POS + 1
+        private const val PERFORMER_POS = MOVIE_POS + 1
         private const val TAG_POS = PERFORMER_POS + 1
         private const val ACTIONS_POS = TAG_POS + 1
 

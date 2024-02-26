@@ -81,9 +81,7 @@ fragment SlimSceneData on Scene {
   }
   movies {
     movie {
-      id
-      name
-      front_image_path
+      ...MovieData
       __typename
     }
     scene_index
