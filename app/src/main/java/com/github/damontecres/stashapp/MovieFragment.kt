@@ -8,11 +8,17 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.createGlideUrl
+import kotlinx.coroutines.launch
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class MovieFragment : Fragment(R.layout.movie_view) {
     private lateinit var frontImage: ImageView
@@ -53,10 +59,19 @@ class MovieFragment : Fragment(R.layout.movie_view) {
                     .error(StashPresenter.glideError(requireContext()))
                     .into(backImage)
             }
-//            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-//                val queryEngine = QueryEngine(requireContext())
-//
-//            }
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val queryEngine = QueryEngine(requireContext())
+                val movie = queryEngine.getMovie(movie.id)
+                addRow(
+                    R.string.stashapp_duration,
+                    movie?.duration?.toDuration(DurationUnit.MINUTES).toString(),
+                )
+                addRow(R.string.stashapp_date, movie?.date)
+                addRow(R.string.stashapp_studio, movie?.studio?.name)
+                addRow(R.string.stashapp_director, movie?.director)
+                addRow(R.string.stashapp_synopsis, movie?.synopsis)
+                table.setColumnShrinkable(1, true)
+            }
         } else {
             val intent = Intent(requireActivity(), MainActivity::class.java)
             startActivity(intent)
@@ -65,7 +80,7 @@ class MovieFragment : Fragment(R.layout.movie_view) {
 
     private fun configureLayout(view: ImageView) {
         val lp = view.layoutParams
-        val scale = 1.75
+        val scale = 2.0
         lp.width = (MoviePresenter.CARD_WIDTH * scale).toInt()
         lp.height = (MoviePresenter.CARD_HEIGHT * scale).toInt()
         view.layoutParams = lp
