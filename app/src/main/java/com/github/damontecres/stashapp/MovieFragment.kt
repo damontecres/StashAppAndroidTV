@@ -64,7 +64,7 @@ class MovieFragment : Fragment(R.layout.movie_view) {
                 val movie = queryEngine.getMovie(movie.id)
                 addRow(
                     R.string.stashapp_duration,
-                    movie?.duration?.toDuration(DurationUnit.MINUTES).toString(),
+                    movie?.duration?.toDuration(DurationUnit.MINUTES)?.toString(),
                 )
                 addRow(R.string.stashapp_date, movie?.date)
                 addRow(R.string.stashapp_studio, movie?.studio?.name)
