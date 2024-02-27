@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.content.Context
 import com.apollographql.apollo3.api.json.BufferedSourceJsonReader
 import com.apollographql.apollo3.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
@@ -15,7 +14,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.mock
 
 @RunWith(MockitoJUnitRunner::class)
 class ObjectFilterParsingTests {
@@ -27,8 +25,8 @@ class ObjectFilterParsingTests {
 
     @Before
     fun init() {
-        val mockContext = mock<Context> {}
-        FilterParser.initialize(mockContext, serverInfo)
+//        val mockContext = mock<Context> {}
+        FilterParser.initialize(serverInfo)
     }
 
     /**
