@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -30,7 +31,7 @@ import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.SimpleTarget
+import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
 import com.github.damontecres.stashapp.actions.StashAction
@@ -433,15 +434,19 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 .asBitmap()
                 .centerCrop()
                 .load(url)
-                .error(StashPresenter.glideError(requireContext()))
-                .into<SimpleTarget<Bitmap>>(
-                    object : SimpleTarget<Bitmap>() {
+                .error(R.drawable.baseline_camera_indoor_48)
+                .into<CustomTarget<Bitmap>>(
+                    object : CustomTarget<Bitmap>() {
                         override fun onResourceReady(
                             bitmap: Bitmap,
                             transition: Transition<in Bitmap>?,
                         ) {
                             mDetailsBackground.coverBitmap = bitmap
                             mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            mDetailsBackground.coverBitmap = null
                         }
                     },
                 )
@@ -457,19 +462,21 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         if (!screenshotUrl.isNullOrBlank()) {
             val url = createGlideUrl(screenshotUrl, requireContext())
             Glide.with(requireActivity())
-                .asBitmap()
                 .load(url)
                 .centerCrop()
                 .error(StashPresenter.glideError(requireContext()))
-                .into<SimpleTarget<Bitmap>>(
-                    object : SimpleTarget<Bitmap>(width, height) {
+                .into<CustomTarget<Drawable>>(
+                    object : CustomTarget<Drawable>(width, height) {
                         override fun onResourceReady(
-                            drawable: Bitmap,
-                            transition: Transition<in Bitmap>?,
+                            resource: Drawable,
+                            transition: Transition<in Drawable>?,
                         ) {
-                            Log.d(TAG, "details overview card image url ready: $drawable")
-                            row.setImageBitmap(requireContext(), drawable)
+                            row.imageDrawable = resource
                             mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            row.imageDrawable = null
                         }
                     },
                 )

@@ -53,9 +53,12 @@ class ServerPreferences(private val context: Context) {
                 if (ratingSystemOptionsRaw != null) {
                     try {
                         val ratingSystemOptions = ratingSystemOptionsRaw as Map<String, String>
-                        val type = ratingSystemOptions["type"] ?: "star"
+                        val type = ratingSystemOptions.getCaseInsensitive("type") ?: "stars"
                         val starPrecision =
-                            when (ratingSystemOptions["starPrecision"]?.lowercase()) {
+                            when (
+                                ratingSystemOptions.getCaseInsensitive("starPrecision")
+                                    ?.lowercase()
+                            ) {
                                 "full" -> 1.0f
                                 "half" -> 0.5f
                                 "quarter" -> 0.25f

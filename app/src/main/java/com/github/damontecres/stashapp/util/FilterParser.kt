@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.util
 
-import android.content.Context
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
@@ -27,7 +26,7 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 
-class FilterParser private constructor(context: Context, serverInfoQuery: ServerInfoQuery.Data?) {
+class FilterParser private constructor(serverInfoQuery: ServerInfoQuery.Data?) {
     @Suppress("unused")
     private val serverVersion =
         if (serverInfoQuery?.version?.version != null) Version.fromString(serverInfoQuery.version.version) else null
@@ -35,20 +34,17 @@ class FilterParser private constructor(context: Context, serverInfoQuery: Server
     companion object {
         lateinit var instance: FilterParser
 
-        fun initialize(
-            context: Context,
-            serverInfoQuery: ServerInfoQuery.Data?,
-        ) {
-            instance = FilterParser(context, serverInfoQuery)
+        fun initialize(serverInfoQuery: ServerInfoQuery.Data?) {
+            instance = FilterParser(serverInfoQuery)
         }
     }
 
     private fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, Int?>
+            val values = it["value"]!! as Map<String, *>
             IntCriterionInput(
-                values["value"] ?: 0,
-                Optional.presentIfNotNull(values["value2"]),
+                values["value"]?.toString()?.toInt() ?: 0,
+                Optional.presentIfNotNull(values["value2"]?.toString()?.toInt()),
                 CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
@@ -58,10 +54,10 @@ class FilterParser private constructor(context: Context, serverInfoQuery: Server
 
     private fun convertFloatCriterionInput(it: Map<String, *>?): FloatCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, Number?> // Might be an int or double
+            val values = it["value"]!! as Map<String, *> // Might be an int or double
             FloatCriterionInput(
-                values["value"]?.toDouble() ?: 0.0,
-                Optional.presentIfNotNull(values["value2"]?.toDouble()),
+                values["value"]?.toString()?.toDouble() ?: 0.0,
+                Optional.presentIfNotNull(values["value2"]?.toString()?.toDouble()),
                 CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
@@ -81,7 +77,7 @@ class FilterParser private constructor(context: Context, serverInfoQuery: Server
     }
 
     private fun mapToIds(list: Any?): List<String>? {
-        return (list as List<*>?)?.map { (it as Map<String, String>)["id"].orEmpty() }?.toList()
+        return (list as List<*>?)?.mapNotNull { (it as Map<*, *>)["id"]?.toString() }?.toList()
     }
 
     private fun convertHierarchicalMultiCriterionInput(it: Map<String, *>?): HierarchicalMultiCriterionInput? {
@@ -92,7 +88,7 @@ class FilterParser private constructor(context: Context, serverInfoQuery: Server
             HierarchicalMultiCriterionInput(
                 Optional.presentIfNotNull(items),
                 CriterionModifier.valueOf(it["modifier"]!!.toString()),
-                Optional.presentIfNotNull(it["depth"] as Int?),
+                Optional.presentIfNotNull(values["depth"] as Int?),
                 Optional.presentIfNotNull(excludes),
             )
         } else {
@@ -190,10 +186,10 @@ class FilterParser private constructor(context: Context, serverInfoQuery: Server
 
     private fun convertStashIDCriterionInput(it: Map<String, *>?): StashIDCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, String?>
+            val values = it["value"] as Map<String, String?>?
             StashIDCriterionInput(
-                Optional.presentIfNotNull(values["endpoint"]),
-                Optional.presentIfNotNull(values["stash_id"]),
+                Optional.presentIfNotNull(values?.get("endpoint")),
+                Optional.presentIfNotNull(values?.get("stash_id")),
                 CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
@@ -207,7 +203,7 @@ class FilterParser private constructor(context: Context, serverInfoQuery: Server
             PhashDistanceCriterionInput(
                 values["value"]!! as String,
                 CriterionModifier.valueOf(it["modifier"]!!.toString()),
-                Optional.presentIfNotNull(values["distance"].toString().toInt()),
+                Optional.presentIfNotNull(values["distance"]?.toString()?.toInt()),
             )
         } else {
             null
