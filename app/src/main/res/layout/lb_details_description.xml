@@ -55,7 +55,7 @@
         android:fadeScrollbars="false"
         android:scrollbars="vertical"
         android:scrollbarAlwaysDrawVerticalTrack="true"
-        android:scrollbarThumbVertical="@color/focus_color">
+        android:scrollbarThumbVertical="@drawable/scrollbar_thumb">
 
         <TextView
             android:id="@+id/lb_details_description_body"
