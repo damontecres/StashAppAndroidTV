@@ -1,9 +1,11 @@
 package com.github.damontecres.stashapp
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.fragment.app.Fragment
@@ -40,6 +42,18 @@ class PlaybackActivity : FragmentActivity() {
         if (!(fragment as StashVideoPlayer).hideControlsIfVisible()) {
             returnPosition()
             super.onBackPressed()
+        }
+    }
+
+    @SuppressLint("RestrictedApi")
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        return if (fragment is PlaybackExoFragment) {
+            (fragment as PlaybackExoFragment).videoView.dispatchKeyEvent(event) ||
+                super.dispatchKeyEvent(
+                    event,
+                )
+        } else {
+            super.dispatchKeyEvent(event)
         }
     }
 
