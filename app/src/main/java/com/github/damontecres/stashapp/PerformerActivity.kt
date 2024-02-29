@@ -21,10 +21,12 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
+import com.github.damontecres.stashapp.suppliers.PerformerTagDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.util.MovieComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
+import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.getInt
 
 class PerformerActivity : FragmentActivity() {
@@ -61,14 +63,15 @@ class PerformerActivity : FragmentActivity() {
     ) :
         FragmentStatePagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
         override fun getCount(): Int {
-            return 3
+            return 4
         }
 
-        override fun getPageTitle(position: Int): CharSequence? {
+        override fun getPageTitle(position: Int): CharSequence {
             return when (position) {
                 0 -> "Scenes"
                 1 -> "Movies"
-                2 -> "Appears With"
+                2 -> "Tags"
+                3 -> "Appears With"
                 else -> throw IllegalStateException()
             }
         }
@@ -115,6 +118,12 @@ class PerformerActivity : FragmentActivity() {
                     columns,
                 )
             } else if (position == 2) {
+                StashGridFragment(
+                    TagComparator,
+                    PerformerTagDataSupplier(performerId),
+                    columns,
+                )
+            } else if (position == 3) {
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(
