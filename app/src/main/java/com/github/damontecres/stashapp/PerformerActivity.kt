@@ -1,19 +1,29 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import androidx.leanback.widget.ObjectAdapter
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentStatePagerAdapter
+import androidx.leanback.tab.LeanbackTabLayout
+import androidx.leanback.tab.LeanbackViewPager
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.Performer
+import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
+import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
+import com.github.damontecres.stashapp.util.MovieComparator
+import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.getInt
 
@@ -32,7 +42,39 @@ class PerformerActivity : FragmentActivity() {
             // At medium size, 3 scenes fit in the space vs 5 normally
             val columns = cardSize * 3 / 5
 
-            sceneFragment =
+            val tabLayout = findViewById<LeanbackTabLayout>(R.id.performer_tab_layout)
+            val viewPager = findViewById<LeanbackViewPager>(R.id.performer_view_pager)
+            viewPager.adapter =
+                PagerAdapter(performer!!.id.toString(), columns, supportFragmentManager)
+            tabLayout.setupWithViewPager(viewPager)
+
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.performer_details, PerformerFragment())
+                .commitNow()
+        }
+    }
+
+    class PagerAdapter(
+        private val performerId: String,
+        private val columns: Int,
+        fm: FragmentManager,
+    ) :
+        FragmentStatePagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
+        override fun getCount(): Int {
+            return 3
+        }
+
+        override fun getPageTitle(position: Int): CharSequence? {
+            return when (position) {
+                0 -> "Scenes"
+                1 -> "Movies"
+                2 -> "Appears With"
+                else -> throw IllegalStateException()
+            }
+        }
+
+        override fun getItem(position: Int): Fragment {
+            return if (position == 0) {
                 StashGridFragment(
                     SceneComparator,
                     SceneDataSupplier(
@@ -44,7 +86,7 @@ class PerformerActivity : FragmentActivity() {
                             performers =
                                 Optional.present(
                                     MultiCriterionInput(
-                                        value = Optional.present(listOf(performer?.id.toString())),
+                                        value = Optional.present(listOf(performerId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
                                     ),
                                 ),
@@ -52,20 +94,49 @@ class PerformerActivity : FragmentActivity() {
                     ),
                     columns,
                 )
-
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.performer_fragment, PerformerFragment())
-                .replace(R.id.performer_list_fragment, sceneFragment)
-                .commitNow()
-
-            sceneFragment.mAdapter.registerObserver(
-                object : ObjectAdapter.DataObserver() {
-                    override fun onChanged() {
-                        sceneFragment.view!!.requestFocus()
-                        sceneFragment.mAdapter.unregisterObserver(this)
-                    }
-                },
-            )
+            } else if (position == 1) {
+                StashGridFragment(
+                    MovieComparator,
+                    MovieDataSupplier(
+                        FindFilterType(
+                            sort = Optional.present("name"),
+                            direction = Optional.present(SortDirectionEnum.ASC),
+                        ),
+                        MovieFilterType(
+                            performers =
+                                Optional.present(
+                                    MultiCriterionInput(
+                                        value = Optional.present(listOf(performerId)),
+                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                    ),
+                                ),
+                        ),
+                    ),
+                    columns,
+                )
+            } else if (position == 2) {
+                StashGridFragment(
+                    PerformerComparator,
+                    PerformerDataSupplier(
+                        FindFilterType(
+                            sort = Optional.present("name"),
+                            direction = Optional.present(SortDirectionEnum.ASC),
+                        ),
+                        PerformerFilterType(
+                            performers =
+                                Optional.present(
+                                    MultiCriterionInput(
+                                        value = Optional.present(listOf(performerId)),
+                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                    ),
+                                ),
+                        ),
+                    ),
+                    columns,
+                )
+            } else {
+                throw IllegalStateException()
+            }
         }
     }
 }
