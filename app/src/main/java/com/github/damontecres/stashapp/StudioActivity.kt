@@ -5,7 +5,6 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import com.apollographql.apollo3.api.Optional
@@ -18,10 +17,12 @@ import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StudioFilterType
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
+import com.github.damontecres.stashapp.util.ListFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.MovieComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
@@ -39,28 +40,22 @@ class StudioActivity : FragmentActivity() {
             val viewPager = findViewById<LeanbackViewPager>(R.id.view_pager)
             val tabLayout = findViewById<LeanbackTabLayout>(R.id.tab_layout)
 
-            val tagAdapter = PagerAdapter(studioId.toString(), supportFragmentManager)
+            val tabTitles =
+                listOf(
+                    getString(DataType.SCENE.pluralStringId),
+                    getString(DataType.PERFORMER.pluralStringId),
+                    getString(DataType.MOVIE.pluralStringId),
+                    getString(R.string.stashapp_subsidiary_studios),
+                )
+
+            val tagAdapter = PagerAdapter(tabTitles, studioId.toString(), supportFragmentManager)
             viewPager.adapter = tagAdapter
             tabLayout.setupWithViewPager(viewPager)
         }
     }
 
-    class PagerAdapter(private val studioId: String, fm: FragmentManager) :
-        FragmentStatePagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
-        override fun getCount(): Int {
-            return 4
-        }
-
-        override fun getPageTitle(position: Int): CharSequence? {
-            return when (position) {
-                0 -> "Scenes"
-                1 -> "Performers"
-                2 -> "Movies"
-                3 -> "Subsidiary Studios"
-                else -> throw IllegalStateException()
-            }
-        }
-
+    class PagerAdapter(tabTitles: List<String>, private val studioId: String, fm: FragmentManager) :
+        ListFragmentPagerAdapter(tabTitles, fm) {
         override fun getItem(position: Int): Fragment {
             return if (position == 0) {
                 StashGridFragment(
