@@ -9,13 +9,11 @@ import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
@@ -61,10 +59,6 @@ class StudioActivity : FragmentActivity() {
                 StashGridFragment(
                     SceneComparator,
                     SceneDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("date"),
-                            direction = Optional.present(SortDirectionEnum.DESC),
-                        ),
                         SceneFilterType(
                             studios =
                                 Optional.present(
@@ -80,10 +74,6 @@ class StudioActivity : FragmentActivity() {
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("name"),
-                            direction = Optional.present(SortDirectionEnum.ASC),
-                        ),
                         PerformerFilterType(
                             studios =
                                 Optional.present(
@@ -99,10 +89,6 @@ class StudioActivity : FragmentActivity() {
                 StashGridFragment(
                     MovieComparator,
                     MovieDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("name"),
-                            direction = Optional.present(SortDirectionEnum.ASC),
-                        ),
                         MovieFilterType(
                             studios =
                                 Optional.present(
@@ -118,10 +104,6 @@ class StudioActivity : FragmentActivity() {
                 StashGridFragment(
                     StudioComparator,
                     StudioDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("name"),
-                            direction = Optional.present(SortDirectionEnum.ASC),
-                        ),
                         StudioFilterType(
                             parents =
                                 Optional.present(

@@ -23,7 +23,7 @@ class PerformerTagDataSupplier(private val performerId: String) : StashPagingSou
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return FindFilterType()
+        return DataType.TAG.asDefaultFindFilterType
     }
 
     override fun parseQuery(data: FindPerformersQuery.Data?): CountAndList<TagData> {

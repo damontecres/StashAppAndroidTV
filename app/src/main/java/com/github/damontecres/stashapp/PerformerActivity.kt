@@ -12,12 +12,10 @@ import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
@@ -81,10 +79,6 @@ class PerformerActivity : FragmentActivity() {
                 StashGridFragment(
                     SceneComparator,
                     SceneDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("date"),
-                            direction = Optional.present(SortDirectionEnum.DESC),
-                        ),
                         SceneFilterType(
                             performers =
                                 Optional.present(
@@ -101,10 +95,6 @@ class PerformerActivity : FragmentActivity() {
                 StashGridFragment(
                     MovieComparator,
                     MovieDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("name"),
-                            direction = Optional.present(SortDirectionEnum.ASC),
-                        ),
                         MovieFilterType(
                             performers =
                                 Optional.present(
@@ -127,10 +117,6 @@ class PerformerActivity : FragmentActivity() {
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("name"),
-                            direction = Optional.present(SortDirectionEnum.ASC),
-                        ),
                         PerformerFilterType(
                             performers =
                                 Optional.present(

@@ -10,12 +10,10 @@ import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
@@ -63,10 +61,6 @@ class TagActivity : FragmentActivity() {
                 StashGridFragment(
                     SceneComparator,
                     SceneDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("date"),
-                            direction = Optional.present(SortDirectionEnum.DESC),
-                        ),
                         SceneFilterType(
                             tags =
                                 Optional.present(
@@ -82,10 +76,6 @@ class TagActivity : FragmentActivity() {
                 StashGridFragment(
                     MarkerComparator,
                     MarkerDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("created_at"),
-                            direction = Optional.present(SortDirectionEnum.DESC),
-                        ),
                         SceneMarkerFilterType(
                             tags =
                                 Optional.present(
@@ -101,10 +91,6 @@ class TagActivity : FragmentActivity() {
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("name"),
-                            direction = Optional.present(SortDirectionEnum.DESC),
-                        ),
                         PerformerFilterType(
                             tags =
                                 Optional.present(
