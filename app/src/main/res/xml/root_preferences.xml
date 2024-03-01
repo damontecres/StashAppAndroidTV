@@ -174,8 +174,8 @@
             app:defaultValue="100" />
         <Preference
             app:key="clearCache"
-            app:title="Clear all caches"
-            app:summary="Clears the network and memory caches" />
+            app:title="Clear cache"
+            app:summary="Clear the network caches" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="About">
