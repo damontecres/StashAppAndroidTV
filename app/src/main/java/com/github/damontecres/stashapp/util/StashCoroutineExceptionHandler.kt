@@ -5,7 +5,10 @@ import android.widget.Toast
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlin.coroutines.CoroutineContext
 
-class StashCoroutineExceptionHandler(private val toast: Toast? = null) : CoroutineExceptionHandler {
+class StashCoroutineExceptionHandler(
+    private val toast: Toast? = null,
+    private val makeToast: ((Throwable) -> Toast)? = null,
+) : CoroutineExceptionHandler {
     override val key: CoroutineContext.Key<*>
         get() = CoroutineExceptionHandler
 
@@ -15,6 +18,7 @@ class StashCoroutineExceptionHandler(private val toast: Toast? = null) : Corouti
     ) {
         Log.e(TAG, "Exception in coroutine", exception)
         toast?.show()
+        makeToast?.let { it(exception).show() }
     }
 
     companion object {

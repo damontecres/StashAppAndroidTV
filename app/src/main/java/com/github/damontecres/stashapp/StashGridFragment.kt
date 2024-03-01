@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.paging.PagingDataAdapter
 import androidx.leanback.widget.BrowseFrameLayout
@@ -19,6 +20,7 @@ import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.getInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -88,7 +90,15 @@ class StashGridFragment<T : Query.Data, D : Any>(
             }.flow
                 .cachedIn(viewLifecycleOwner.lifecycleScope)
 
-        viewLifecycleOwner.lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch(
+            StashCoroutineExceptionHandler {
+                Toast.makeText(
+                    requireContext(),
+                    "Error loading results: ${it.message}",
+                    Toast.LENGTH_LONG,
+                )
+            },
+        ) {
             flow.collectLatest {
                 pagingAdapter.submitData(it)
             }
