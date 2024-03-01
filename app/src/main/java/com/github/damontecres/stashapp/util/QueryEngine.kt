@@ -13,6 +13,7 @@ import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
+import com.github.damontecres.stashapp.api.FindMovieQuery
 import com.github.damontecres.stashapp.api.FindMoviesQuery
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
@@ -205,6 +206,11 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
             )
         val tags = executeQuery(query).data?.findMovies?.movies?.map { it.movieData }
         return tags.orEmpty()
+    }
+
+    suspend fun getMovie(movieId: String): MovieData? {
+        val query = client.query(FindMovieQuery(movieId))
+        return query.execute().data?.findMovie?.movieData
     }
 
     suspend fun findMarkers(

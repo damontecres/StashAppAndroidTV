@@ -7,11 +7,22 @@ query FindMovies($filter: FindFilterType, $movie_filter: MovieFilterType){
   }
 }
 
+query FindMovie($id: ID!) {
+  findMovie(id: $id) {
+    ...MovieData
+  }
+}
+
 fragment MovieData on Movie {
   id
   name
   aliases
   date
+  duration
+  rating100
+  synopsis
+  director
+  url
   studio {
     id
     name
