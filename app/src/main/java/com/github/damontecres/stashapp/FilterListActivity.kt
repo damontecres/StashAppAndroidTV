@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.widget.ClassPresenterSelector
+import androidx.leanback.widget.ObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
@@ -227,6 +228,28 @@ class FilterListActivity : FragmentActivity() {
             }
         val fragment =
             getFragment(name, dataType, convertFilter(filter.find_filter), filter.object_filter)
+        if (first) {
+            // If the first page, maybe scroll
+            val pageSize =
+                PreferenceManager.getDefaultSharedPreferences(this)
+                    .getInt("maxSearchResults", 50)
+            val scrollToNextResult =
+                PreferenceManager.getDefaultSharedPreferences(this)
+                    .getBoolean("scrollToNextResult", true)
+            val moveOnePage = intent.getBooleanExtra("moveOnePage", false)
+            if (moveOnePage && scrollToNextResult) {
+                // Caller wants to scroll and user has it enabled
+                fragment.pagingAdapter.registerObserver(
+                    object : ObjectAdapter.DataObserver() {
+                        override fun onChanged() {
+                            Log.v(TAG, "Skipping one page")
+                            fragment.setSelectedPosition(pageSize)
+                            fragment.pagingAdapter.unregisterObserver(this)
+                        }
+                    },
+                )
+            }
+        }
         var transaction =
             supportFragmentManager.beginTransaction()
                 .replace(
