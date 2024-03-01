@@ -8,7 +8,6 @@ import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.paging.PagingDataAdapter
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
-import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
@@ -41,7 +40,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
         name: String? = null,
     ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, cardSize, name)
 
-    val mAdapter = PagingDataAdapter(presenter, comparator)
+    val pagingAdapter = PagingDataAdapter(presenter, comparator)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,27 +52,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
 
         gridPresenter.numberOfColumns = columns
         setGridPresenter(gridPresenter)
-
-        adapter = mAdapter
-
-        val pageSize =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("maxSearchResults", 50)
-        val scrollToNextResult =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getBoolean("scrollToNextResult", true)
-        val moveOnePage = requireActivity().intent.getBooleanExtra("moveOnePage", false)
-        if (moveOnePage && scrollToNextResult) {
-            adapter.registerObserver(
-                object : ObjectAdapter.DataObserver() {
-                    override fun onChanged() {
-                        Log.v(TAG, "Skipping one page")
-                        setSelectedPosition(pageSize)
-                        adapter.unregisterObserver(this)
-                    }
-                },
-            )
-        }
+        adapter = pagingAdapter
     }
 
     override fun onViewCreated(
@@ -121,7 +100,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
             },
         ) {
             flow.collectLatest {
-                mAdapter.submitData(it)
+                pagingAdapter.submitData(it)
             }
         }
     }
