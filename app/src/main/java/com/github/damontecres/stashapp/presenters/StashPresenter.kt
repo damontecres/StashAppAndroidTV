@@ -11,6 +11,7 @@ import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -117,6 +118,8 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
 
         fun glideError(context: Context): RequestBuilder<PictureDrawable> {
             return Glide.with(context).`as`(PictureDrawable::class.java)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
                 .error(ContextCompat.getDrawable(context, R.drawable.baseline_camera_indoor_48))
                 .listener(SvgSoftwareLayerSetter())
         }
