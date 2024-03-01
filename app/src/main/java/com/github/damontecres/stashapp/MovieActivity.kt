@@ -53,11 +53,11 @@ class MovieActivity : FragmentActivity() {
                 .replace(R.id.movie_fragment, MovieFragment())
                 .replace(R.id.movie_list_fragment, sceneFragment)
                 .commitNow()
-            sceneFragment.mAdapter.registerObserver(
+            sceneFragment.pagingAdapter.registerObserver(
                 object : ObjectAdapter.DataObserver() {
                     override fun onChanged() {
                         sceneFragment.view!!.requestFocus()
-                        sceneFragment.mAdapter.unregisterObserver(this)
+                        sceneFragment.pagingAdapter.unregisterObserver(this)
                     }
                 },
             )
