@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -29,7 +30,7 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.request.target.SimpleTarget
+import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
 import com.github.damontecres.stashapp.actions.StashAction
@@ -44,6 +45,7 @@ import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
@@ -71,6 +73,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private lateinit var performersAdapter: ArrayObjectAdapter
     private lateinit var tagsAdapter: ArrayObjectAdapter
     private lateinit var markersAdapter: ArrayObjectAdapter
+    private lateinit var moviesAdapter: ArrayObjectAdapter
     private val sceneActionsAdapter =
         SparseArrayObjectAdapter(
             ClassPresenterSelector().addClassPresenter(
@@ -386,6 +389,19 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         performersAdapter.addAll(0, perfs)
                     }
                 }
+
+                moviesAdapter = ArrayObjectAdapter(MoviePresenter())
+                if (mSelectedMovie!!.movies.isNotEmpty()) {
+                    val movies = mSelectedMovie!!.movies.map { it.movie.movieData }
+                    moviesAdapter.addAll(0, movies)
+                    mAdapter.set(
+                        MOVIE_POS,
+                        ListRow(
+                            HeaderItem(getString(R.string.stashapp_movies)),
+                            moviesAdapter,
+                        ),
+                    )
+                }
             }
         }
     }
@@ -414,15 +430,19 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         if (screenshotUrl.isNotNullOrBlank()) {
             StashGlide.withBitmap(requireActivity(), screenshotUrl)
                 .centerCrop()
-                .error(StashPresenter.glideError(requireContext()))
-                .into<SimpleTarget<Bitmap>>(
-                    object : SimpleTarget<Bitmap>() {
+                .error(R.drawable.baseline_camera_indoor_48)
+                .into<CustomTarget<Bitmap>>(
+                    object : CustomTarget<Bitmap>() {
                         override fun onResourceReady(
                             bitmap: Bitmap,
                             transition: Transition<in Bitmap>?,
                         ) {
                             mDetailsBackground.coverBitmap = bitmap
                             mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            mDetailsBackground.coverBitmap = null
                         }
                     },
                 )
@@ -436,18 +456,21 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         val screenshotUrl = mSelectedMovie?.paths?.screenshot
         if (!screenshotUrl.isNullOrBlank()) {
-            StashGlide.withBitmap(requireContext(), screenshotUrl)
+            StashGlide.with(requireActivity(), screenshotUrl)
                 .centerCrop()
                 .error(StashPresenter.glideError(requireContext()))
-                .into<SimpleTarget<Bitmap>>(
-                    object : SimpleTarget<Bitmap>(width, height) {
+                .into<CustomTarget<Drawable>>(
+                    object : CustomTarget<Drawable>(width, height) {
                         override fun onResourceReady(
-                            drawable: Bitmap,
-                            transition: Transition<in Bitmap>?,
+                            resource: Drawable,
+                            transition: Transition<in Drawable>?,
                         ) {
-                            Log.d(TAG, "details overview card image url ready: $drawable")
-                            row.setImageBitmap(requireContext(), drawable)
+                            row.imageDrawable = resource
                             mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            row.imageDrawable = null
                         }
                     },
                 )
@@ -817,7 +840,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         // Row order
         private const val DETAILS_POS = 1
         private const val MARKER_POS = DETAILS_POS + 1
-        private const val PERFORMER_POS = MARKER_POS + 1
+        private const val MOVIE_POS = MARKER_POS + 1
+        private const val PERFORMER_POS = MOVIE_POS + 1
         private const val TAG_POS = PERFORMER_POS + 1
         private const val ACTIONS_POS = TAG_POS + 1
 

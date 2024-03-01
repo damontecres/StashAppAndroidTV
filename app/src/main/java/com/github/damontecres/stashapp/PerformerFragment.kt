@@ -118,6 +118,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                 addRow(R.string.stashapp_tattoos, perf.tattoos)
                 addRow(R.string.stashapp_piercings, perf.piercings)
                 addRow(R.string.stashapp_career_length, perf.career_length)
+                table.setColumnShrinkable(1, true)
             }
         } else {
             val intent = Intent(requireActivity(), MainActivity::class.java)

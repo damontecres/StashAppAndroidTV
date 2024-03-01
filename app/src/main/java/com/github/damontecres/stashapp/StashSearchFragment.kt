@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.Log
 import android.widget.Toast
 import androidx.leanback.app.SearchSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -19,7 +18,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
-import kotlinx.coroutines.CoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -42,7 +41,7 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
     override fun onQueryTextChange(newQuery: String): Boolean {
         taskJob?.cancel()
         taskJob =
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val searchDelay =
                     PreferenceManager.getDefaultSharedPreferences(requireContext())
                         .getInt("searchDelay", 500)
@@ -55,7 +54,7 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
     override fun onQueryTextSubmit(query: String): Boolean {
         taskJob?.cancel()
         taskJob =
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 search(query)
             }
         return true
@@ -83,13 +82,12 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                 )
 
                 viewLifecycleOwner.lifecycleScope.launch(
-                    CoroutineExceptionHandler { _, ex ->
-                        Log.e(TAG, "Exception in search for $it", ex)
+                    StashCoroutineExceptionHandler { ex ->
                         Toast.makeText(
                             requireContext(),
                             "Search for ${getString(it.pluralStringId)} failed: ${ex.message}",
                             Toast.LENGTH_LONG,
-                        ).show()
+                        )
                     },
                 ) {
                     val results = queryEngine.find(it, filter)
