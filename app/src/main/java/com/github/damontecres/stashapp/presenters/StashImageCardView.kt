@@ -209,10 +209,16 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     }
 
     fun showVideo() {
+        // Image's don't have a background so that transparent images show the card background
+        // Since the entire card's background changes when selected, this means the selected color will flash for a moment when switching to the video
+        // Changing the background to black before switching will remove that flash since the video background is also black
+        mainView.setBackgroundColor(resources.getColor(android.R.color.black, null))
         mainView.displayedChild = 1
     }
 
     fun showImage() {
+        // Reset the background back for images so transparent ones show through
+        mainView.setBackgroundColor(resources.getColor(R.color.default_card_background, null))
         mainView.displayedChild = 0
     }
 }
