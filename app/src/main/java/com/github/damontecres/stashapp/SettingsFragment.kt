@@ -28,6 +28,7 @@ import androidx.preference.SwitchPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.configureHttpsTrust
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -318,6 +319,26 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 setUsedCachedSummary(cacheSizePref, cache)
                 true
             }
+
+            val cacheDurationPref = findPreference<SeekBarPreference>("networkCacheDuration")
+            setCacheDurationSummary(cacheDurationPref!!, cacheDurationPref.value)
+            cacheDurationPref.setOnPreferenceChangeListener { _, newValue ->
+                setCacheDurationSummary(cacheDurationPref, newValue)
+                true
+            }
+        }
+
+        private fun setCacheDurationSummary(
+            pref: SeekBarPreference,
+            value: Any,
+        ) {
+            val duration = cacheDurationPrefToDuration(value.toString().toInt())
+            pref.summary =
+                if (duration != null) {
+                    duration.toString()
+                } else {
+                    "Always request from server"
+                }
         }
 
         private fun setUsedCachedSummary(
