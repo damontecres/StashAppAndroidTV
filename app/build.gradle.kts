@@ -13,22 +13,24 @@ plugins {
     id("kotlin-kapt")
 }
 
-fun getVersionCode(): Int {
-    val stdout = ByteArrayOutputStream()
-    exec {
-        commandLine = listOf("git", "tag", "--list", "v*")
-        standardOutput = stdout
-    }
-    return stdout.toString().trim().lines().size
-}
-
-fun getAppVersion(): String {
+fun getAppVersionFromGit(): String {
     val stdout = ByteArrayOutputStream()
     exec {
         commandLine = listOf("git", "describe", "--tags", "--long", "--match=v*")
         standardOutput = stdout
     }
     return stdout.toString().trim().removePrefix("v")
+}
+
+val appVersion = getAppVersionFromGit()
+
+fun getVersionCode(): Int {
+    val splits = appVersion.split(".", "-")
+    val major = splits[0].toInt() * 1_000_000_000
+    val minor = splits[1].toInt() * 1_000_000
+    val patch = splits[2].toInt() * 1_000
+    val commits = splits[3].toInt()
+    return major + minor + patch + commits
 }
 
 android {
@@ -40,7 +42,7 @@ android {
         minSdk = 23
         targetSdk = 34
         versionCode = getVersionCode()
-        versionName = getAppVersion()
+        versionName = appVersion
         vectorDrawables.useSupportLibrary = true
     }
     signingConfigs {
