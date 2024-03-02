@@ -128,7 +128,7 @@ class PlaybackExoFragment :
                                             val result = Intent()
                                             result.putExtra(
                                                 SearchForFragment.ID_KEY,
-                                                -1,
+                                                -1L,
                                             )
                                             result.putExtra(VideoDetailsFragment.POSITION_ARG, 0L)
                                             requireActivity().setResult(Activity.RESULT_OK, result)
