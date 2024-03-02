@@ -33,6 +33,7 @@ import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
+import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -43,16 +44,15 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.ActionPresenter
+import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
@@ -78,10 +78,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         SparseArrayObjectAdapter(
             ClassPresenterSelector().addClassPresenter(
                 StashAction::class.java,
-                VideoDetailsActionPresenter(),
+                ActionPresenter(),
             ).addClassPresenter(
                 OCounter::class.java,
                 OCounterPresenter(OCounterLongClickCallBack()),
+            ).addClassPresenter(
+                CreateMarkerAction::class.java,
+                CreateMarkerActionPresenter(),
             ),
         )
 
@@ -139,7 +142,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     ): View? {
         val actionListener = SceneActionListener()
         onItemViewClickedListener =
-            StashItemViewClickListener(requireActivity(), actionListener)
+            ClassOnItemViewClickedListener(
+                StashItemViewClickListener(
+                    requireActivity(),
+                    actionListener,
+                ),
+            ).addListenerForClass(CreateMarkerAction::class.java) { _ ->
+                actionListener.onClicked(StashAction.CREATE_MARKER)
+            }
+
         setupDetailsOverviewRowPresenter()
         mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
@@ -186,7 +197,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 )
                 sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
                 sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
-                sceneActionsAdapter.set(CREATE_MARKER_POS, StashAction.CREATE_MARKER)
+                sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
                 sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
 
                 tagsAdapter =
@@ -723,7 +734,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 } else {
                     position = data.getLongExtra(POSITION_ARG, -1)
                     if (position >= 0) {
-                        sceneActionsAdapter.notifyItemRangeChanged(CREATE_MARKER_POS, 1)
+                        sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
                     }
                     if (position > 10_000) {
                         // If some of the video played, reset the available actions
@@ -761,24 +772,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             tags = emptyList(),
             __typename = "",
         )
-    }
-
-    private inner class VideoDetailsActionPresenter : StashPresenter<StashAction>() {
-        override fun doOnBindViewHolder(
-            cardView: StashImageCardView,
-            item: StashAction,
-        ) {
-            cardView.titleText = item.actionName
-            if (item == StashAction.CREATE_MARKER) {
-                cardView.contentText =
-                    if (position >= 0) {
-                        Constants.durationToString(position / 1000.0)
-                    } else {
-                        null
-                    }
-            }
-            cardView.setMainImageDimensions(ActionPresenter.CARD_WIDTH, ActionPresenter.CARD_HEIGHT)
-        }
     }
 
     private inner class OCounterLongClickCallBack : StashPresenter.LongClickCallBack<OCounter> {

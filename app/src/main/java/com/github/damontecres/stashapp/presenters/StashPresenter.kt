@@ -13,6 +13,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
@@ -115,6 +116,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 .addClassPresenter(StashAction::class.java, ActionPresenter())
                 .addClassPresenter(MarkerData::class.java, MarkerPresenter())
                 .addClassPresenter(OCounter::class.java, OCounterPresenter())
+                .addClassPresenter(CreateMarkerAction::class.java, CreateMarkerActionPresenter())
 
         fun glideError(context: Context): RequestBuilder<PictureDrawable> {
             return Glide.with(context).`as`(PictureDrawable::class.java)

@@ -49,7 +49,7 @@ class PlaybackExoFragment :
     PlaybackActivity.StashVideoPlayer {
     private var player: ExoPlayer? = null
     private lateinit var scene: Scene
-    private lateinit var videoView: PlayerView
+    lateinit var videoView: PlayerView
     private lateinit var previewTimeBar: PreviewTimeBar
     private lateinit var exoCenterControls: View
 
