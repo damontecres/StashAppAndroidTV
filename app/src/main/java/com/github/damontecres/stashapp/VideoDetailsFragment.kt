@@ -496,18 +496,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val serverPreferences = ServerPreferences(requireContext())
         if (serverPreferences.trackActivity && mSelectedMovie?.resume_time != null && mSelectedMovie?.resume_time!! > 0) {
             position = (mSelectedMovie?.resume_time!! * 1000).toLong()
-            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
-            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
-        } else {
-            playActionsAdapter.set(
-                0,
-                Action(
-                    ACTION_PLAY_SCENE,
-                    resources.getString(R.string.play_scene),
-                ),
-            )
-            playActionsAdapter.clear(1)
         }
+        setupPlayActionsAdapter()
 
         row.actionsAdapter = playActionsAdapter
 
@@ -611,6 +601,21 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCounter.count)
                 sceneActionsAdapter.set(O_COUNTER_POS, newCounter)
             }
+        }
+    }
+
+    private fun setupPlayActionsAdapter() {
+        if (position > 0) {
+            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
+            // Force focus to move to Resume
+            playActionsAdapter.clear(1)
+            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
+        } else {
+            playActionsAdapter.set(
+                0,
+                Action(ACTION_PLAY_SCENE, resources.getString(R.string.play_scene)),
+            )
+            playActionsAdapter.clear(1)
         }
     }
 
@@ -742,20 +747,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     if (position >= 0) {
                         sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
                     }
-                    if (position > 10_000) {
-                        // If some of the video played, reset the available actions
-                        // This also causes the focused action to default to resume which is an added bonus
-                        playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
-                        playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
-
-                        val serverPreferences = ServerPreferences(requireContext())
-                        if (serverPreferences.trackActivity) {
-                            viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
-                                MutationEngine(requireContext(), false).saveSceneActivity(
-                                    mSelectedMovie!!.id.toLong(),
-                                    position,
-                                )
-                            }
+                    setupPlayActionsAdapter()
+                    val serverPreferences = ServerPreferences(requireContext())
+                    if (serverPreferences.trackActivity) {
+                        viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
+                            Log.v(TAG, "ResultCallback saveSceneActivity start")
+                            MutationEngine(requireContext(), false).saveSceneActivity(
+                                mSelectedMovie!!.id.toLong(),
+                                position,
+                            )
                         }
                     }
                 }
