@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -26,6 +28,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlinx.coroutines.launch
+import kotlin.properties.Delegates
 
 class ImageActivity : FragmentActivity() {
     private val imageFragment = ImageFragment()
@@ -67,10 +70,14 @@ class ImageActivity : FragmentActivity() {
         lateinit var table: TableLayout
         lateinit var image: ImageData
 
+        private var animationDuration by Delegates.notNull<Long>()
+
         override fun onViewCreated(
             view: View,
             savedInstanceState: Bundle?,
         ) {
+            animationDuration =
+                resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
             titleText = view.findViewById(R.id.image_view_title)
             val mainImage = view.findViewById<ImageView>(R.id.image_view_image)
             table = view.findViewById(R.id.image_view_table)
@@ -133,13 +140,31 @@ class ImageActivity : FragmentActivity() {
         }
 
         fun showOverlay() {
-            titleText.visibility = View.VISIBLE
-            table.visibility = View.VISIBLE
+            listOf(titleText, table).forEach {
+                it.alpha = 0.0f
+                it.visibility = View.VISIBLE
+                it.animate()
+                    .alpha(1f)
+                    .setDuration(animationDuration)
+                    .setListener(null)
+            }
         }
 
         fun hideOverlay() {
-            titleText.visibility = View.GONE
-            table.visibility = View.GONE
+            listOf(titleText, table).forEach {
+                it.alpha = 1.0f
+                it.visibility = View.VISIBLE
+                it.animate()
+                    .alpha(0f)
+                    .setDuration(animationDuration)
+                    .setListener(
+                        object : AnimatorListenerAdapter() {
+                            override fun onAnimationEnd(animation: Animator) {
+                                it.visibility = View.GONE
+                            }
+                        },
+                    )
+            }
         }
 
         private fun addRow(
