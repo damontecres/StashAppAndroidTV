@@ -64,6 +64,24 @@
         app:layout_constraintStart_toStartOf="parent"
         tools:text="18:20" />
 
+    <TextView
+        android:id="@+id/playback_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="3dp"
+        android:textColor="#FFBEBEBE"
+        android:textSize="22sp"
+        android:padding="3dp"
+        android:textAlignment="viewStart"
+        app:layout_constraintBottom_toTopOf="@id/exo_position"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/exo_center_controls"
+        tools:text="This is a sample title"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
     <com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
         android:id="@+id/exo_progress"
         android:layout_width="0dp"
@@ -143,10 +161,10 @@
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="6dp"
         android:background="@drawable/video_frame"
         android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@+id/exo_progress"
+        app:layout_constraintBottom_toTopOf="@+id/playback_title"
         app:layout_constraintDimensionRatio="16:9"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
