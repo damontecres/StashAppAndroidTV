@@ -19,7 +19,6 @@ class ImageDataSupplier(
         return FindImagesQuery(
             filter = filter,
             image_filter = imageFilter,
-            image_ids = emptyList(),
         )
     }
 

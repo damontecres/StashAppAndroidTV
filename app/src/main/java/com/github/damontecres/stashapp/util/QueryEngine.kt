@@ -12,6 +12,7 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
+import com.github.damontecres.stashapp.api.FindImageQuery
 import com.github.damontecres.stashapp.api.FindImagesQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.FindMovieQuery
@@ -235,7 +236,6 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun findImages(
         findFilter: FindFilterType? = null,
         imageFilter: ImageFilterType? = null,
-        imageIds: List<Int> = emptyList(),
         useRandom: Boolean = true,
     ): List<ImageData> {
         val query =
@@ -243,10 +243,14 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 FindImagesQuery(
                     updateFilter(findFilter, useRandom),
                     imageFilter,
-                    imageIds,
                 ),
             )
         return executeQuery(query).data?.findImages?.images?.map { it.imageData }.orEmpty()
+    }
+
+    suspend fun getImage(imageId: String): ImageData? {
+        val query = client.query(FindImageQuery(imageId))
+        return executeQuery(query).data?.findImage?.imageData
     }
 
     /**
