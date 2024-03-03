@@ -13,13 +13,12 @@ import androidx.media3.common.util.UnstableApi
 
 /** Loads [PlaybackVideoFragment]. */
 class PlaybackActivity : FragmentActivity() {
-    private lateinit var fragment: PlaybackExoFragment
+    private val fragment = PlaybackExoFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         if (savedInstanceState == null) {
-            fragment = PlaybackExoFragment()
             supportFragmentManager.beginTransaction()
                 .replace(android.R.id.content, fragment)
                 .commit()
