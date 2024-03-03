@@ -3,11 +3,11 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.leanback.app.VerticalGridSupportFragment
 import androidx.leanback.paging.PagingDataAdapter
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
-import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
@@ -20,6 +20,7 @@ import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.getInt
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -30,14 +31,16 @@ class StashGridFragment<T : Query.Data, D : Any>(
     private val dataSupplier: StashPagingSource.DataSupplier<T, D>,
     val filter: SavedFilterData?,
     private val cardSize: Int? = null,
+    val name: String?,
 ) : VerticalGridSupportFragment() {
     constructor(
         comparator: DiffUtil.ItemCallback<D>,
         dataSupplier: StashPagingSource.DataSupplier<T, D>,
         cardSize: Int? = null,
-    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, cardSize)
+        name: String? = null,
+    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, cardSize, name)
 
-    val mAdapter = PagingDataAdapter(presenter, comparator)
+    val pagingAdapter = PagingDataAdapter(presenter, comparator)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,27 +52,7 @@ class StashGridFragment<T : Query.Data, D : Any>(
 
         gridPresenter.numberOfColumns = columns
         setGridPresenter(gridPresenter)
-
-        adapter = mAdapter
-
-        val pageSize =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("maxSearchResults", 50)
-        val scrollToNextResult =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getBoolean("scrollToNextResult", true)
-        val moveOnePage = requireActivity().intent.getBooleanExtra("moveOnePage", false)
-        if (moveOnePage && scrollToNextResult) {
-            adapter.registerObserver(
-                object : ObjectAdapter.DataObserver() {
-                    override fun onChanged() {
-                        Log.v(TAG, "Skipping one page")
-                        setSelectedPosition(pageSize)
-                        adapter.unregisterObserver(this)
-                    }
-                },
-            )
-        }
+        adapter = pagingAdapter
     }
 
     override fun onViewCreated(
@@ -107,9 +90,17 @@ class StashGridFragment<T : Query.Data, D : Any>(
             }.flow
                 .cachedIn(viewLifecycleOwner.lifecycleScope)
 
-        viewLifecycleOwner.lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch(
+            StashCoroutineExceptionHandler {
+                Toast.makeText(
+                    requireContext(),
+                    "Error loading results: ${it.message}",
+                    Toast.LENGTH_LONG,
+                )
+            },
+        ) {
             flow.collectLatest {
-                mAdapter.submitData(it)
+                pagingAdapter.submitData(it)
             }
         }
     }

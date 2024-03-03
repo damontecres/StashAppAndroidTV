@@ -34,10 +34,10 @@ def convert_file(source_file, dest_file, allowed_keys):
     if DEBUG:
         print(f"Converting {source_file} to {dest_file}")
     collected_keys = []
-    with open(source_file, "r") as f:
+    with open(source_file, "r", encoding="utf-8") as f:
         data = json.load(f)
     dest_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(dest_file, "w") as f:
+    with open(dest_file, "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="utf-8"?>\n')
         f.write("<resources>\n")
         for key, value in parse_dict(data, ["stashapp"]):

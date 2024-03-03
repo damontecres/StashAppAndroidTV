@@ -33,6 +33,7 @@ import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -103,7 +104,15 @@ class SearchForFragment(
     override fun onResume() {
         super.onResume()
         if (dataType in DATA_TYPE_SUGGESTIONS) {
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch(
+                StashCoroutineExceptionHandler {
+                    Toast.makeText(
+                        requireContext(),
+                        "Error loading suggestions: ${it.message}",
+                        Toast.LENGTH_LONG,
+                    )
+                },
+            ) {
                 val results =
                     ArrayObjectAdapter(
                         StashPresenter.SELECTOR.addClassPresenter(
@@ -134,7 +143,7 @@ class SearchForFragment(
     override fun onQueryTextChange(newQuery: String): Boolean {
         taskJob?.cancel()
         taskJob =
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val searchDelay =
                     PreferenceManager.getDefaultSharedPreferences(requireContext())
                         .getInt("searchDelay", 500)
@@ -147,7 +156,7 @@ class SearchForFragment(
     override fun onQueryTextSubmit(query: String): Boolean {
         taskJob?.cancel()
         taskJob =
-            viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 search(query)
             }
         return true

@@ -12,6 +12,7 @@ import androidx.leanback.widget.Presenter
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
@@ -88,6 +89,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         // Remove references to images so that the garbage collector can free up memory
         cardView.badgeImage = null
         cardView.mainImage = null
+        cardView.videoUrl = null
         cardView.videoView.player?.release()
         cardView.videoView.player = null
     }
@@ -116,6 +118,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 .addClassPresenter(StashAction::class.java, ActionPresenter())
                 .addClassPresenter(MarkerData::class.java, MarkerPresenter())
                 .addClassPresenter(OCounter::class.java, OCounterPresenter())
+                .addClassPresenter(CreateMarkerAction::class.java, CreateMarkerActionPresenter())
 
         fun glideError(context: Context): RequestBuilder<PictureDrawable> {
             return Glide.with(context).`as`(PictureDrawable::class.java)

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -30,9 +31,10 @@ import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.SimpleTarget
+import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
+import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -43,15 +45,15 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.ActionPresenter
+import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
@@ -72,14 +74,18 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private lateinit var performersAdapter: ArrayObjectAdapter
     private lateinit var tagsAdapter: ArrayObjectAdapter
     private lateinit var markersAdapter: ArrayObjectAdapter
+    private lateinit var moviesAdapter: ArrayObjectAdapter
     private val sceneActionsAdapter =
         SparseArrayObjectAdapter(
             ClassPresenterSelector().addClassPresenter(
                 StashAction::class.java,
-                VideoDetailsActionPresenter(),
+                ActionPresenter(),
             ).addClassPresenter(
                 OCounter::class.java,
                 OCounterPresenter(OCounterLongClickCallBack()),
+            ).addClassPresenter(
+                CreateMarkerAction::class.java,
+                CreateMarkerActionPresenter(),
             ),
         )
 
@@ -88,7 +94,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
-    private val playActionsAdapter = ArrayObjectAdapter()
+    private val playActionsAdapter = SparseArrayObjectAdapter()
     private var position = -1L // The position in the video
     private val detailsPresenter =
         FullWidthDetailsOverviewRowPresenter(
@@ -137,13 +143,26 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     ): View? {
         val actionListener = SceneActionListener()
         onItemViewClickedListener =
-            StashItemViewClickListener(requireActivity(), actionListener)
+            ClassOnItemViewClickedListener(
+                StashItemViewClickListener(
+                    requireActivity(),
+                    actionListener,
+                ),
+            ).addListenerForClass(CreateMarkerAction::class.java) { _ ->
+                actionListener.onClicked(StashAction.CREATE_MARKER)
+            }
 
+        setupDetailsOverviewRowPresenter()
+        mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
+        mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
 
         val sceneId = requireActivity().intent.getStringExtra(VideoDetailsActivity.MOVIE)
         if (sceneId == null) {
@@ -166,8 +185,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     position = (mSelectedMovie!!.resume_time!! * 1000).toLong()
                 }
                 setupDetailsOverviewRow()
-                setupDetailsOverviewRowPresenter()
-                setupRelatedMovieListRow()
+
                 adapter = mAdapter
                 initializeBackground()
 
@@ -180,7 +198,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 )
                 sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
                 sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
-                sceneActionsAdapter.set(CREATE_MARKER_POS, StashAction.CREATE_MARKER)
+                sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
                 sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
 
                 tagsAdapter =
@@ -383,6 +401,35 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         performersAdapter.addAll(0, perfs)
                     }
                 }
+
+                moviesAdapter = ArrayObjectAdapter(MoviePresenter())
+                if (mSelectedMovie!!.movies.isNotEmpty()) {
+                    val movies = mSelectedMovie!!.movies.map { it.movie.movieData }
+                    moviesAdapter.addAll(0, movies)
+                    mAdapter.set(
+                        MOVIE_POS,
+                        ListRow(
+                            HeaderItem(getString(R.string.stashapp_movies)),
+                            moviesAdapter,
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            if (mSelectedMovie != null) {
+                val queryEngine = QueryEngine(requireContext())
+                mSelectedMovie = queryEngine.getScene(mSelectedMovie!!.id.toInt())
+                // Refresh the o-counter which could have changed
+                sceneActionsAdapter.set(
+                    O_COUNTER_POS,
+                    OCounter(mSelectedMovie!!.id.toInt(), mSelectedMovie!!.o_counter ?: 0),
+                )
             }
         }
     }
@@ -398,15 +445,19 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 .asBitmap()
                 .centerCrop()
                 .load(url)
-                .error(StashPresenter.glideError(requireContext()))
-                .into<SimpleTarget<Bitmap>>(
-                    object : SimpleTarget<Bitmap>() {
+                .error(R.drawable.baseline_camera_indoor_48)
+                .into<CustomTarget<Bitmap>>(
+                    object : CustomTarget<Bitmap>() {
                         override fun onResourceReady(
                             bitmap: Bitmap,
                             transition: Transition<in Bitmap>?,
                         ) {
                             mDetailsBackground.coverBitmap = bitmap
                             mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            mDetailsBackground.coverBitmap = null
                         }
                     },
                 )
@@ -415,8 +466,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
     private fun setupDetailsOverviewRow() {
         val row = DetailsOverviewRow(mSelectedMovie!!)
-        row.imageDrawable =
-            ContextCompat.getDrawable(requireActivity(), R.drawable.default_background)
         val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
         val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
 
@@ -424,38 +473,31 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         if (!screenshotUrl.isNullOrBlank()) {
             val url = createGlideUrl(screenshotUrl, requireContext())
             Glide.with(requireActivity())
-                .asBitmap()
                 .load(url)
                 .centerCrop()
                 .error(StashPresenter.glideError(requireContext()))
-                .into<SimpleTarget<Bitmap>>(
-                    object : SimpleTarget<Bitmap>(width, height) {
+                .into<CustomTarget<Drawable>>(
+                    object : CustomTarget<Drawable>(width, height) {
                         override fun onResourceReady(
-                            drawable: Bitmap,
-                            transition: Transition<in Bitmap>?,
+                            resource: Drawable,
+                            transition: Transition<in Drawable>?,
                         ) {
-                            Log.d(TAG, "details overview card image url ready: $drawable")
-                            row.setImageBitmap(requireContext(), drawable)
+                            row.imageDrawable = resource
                             mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
+
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            row.imageDrawable = null
                         }
                     },
                 )
         }
 
-        playActionsAdapter.clear()
         val serverPreferences = ServerPreferences(requireContext())
         if (serverPreferences.trackActivity && mSelectedMovie?.resume_time != null && mSelectedMovie?.resume_time!! > 0) {
             position = (mSelectedMovie?.resume_time!! * 1000).toLong()
-            playActionsAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
-            playActionsAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
-        } else {
-            playActionsAdapter.add(
-                Action(
-                    ACTION_PLAY_SCENE,
-                    resources.getString(R.string.play_scene),
-                ),
-            )
         }
+        setupPlayActionsAdapter()
 
         row.actionsAdapter = playActionsAdapter
 
@@ -504,12 +546,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 }
             }
         mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
-    }
-
-    private fun setupRelatedMovieListRow() {
-        // TODO related scenes
-        mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
-        mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
     }
 
     private fun convertDpToPixel(
@@ -565,6 +601,21 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCounter.count)
                 sceneActionsAdapter.set(O_COUNTER_POS, newCounter)
             }
+        }
+    }
+
+    private fun setupPlayActionsAdapter() {
+        if (position > 0) {
+            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
+            // Force focus to move to Resume
+            playActionsAdapter.clear(1)
+            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
+        } else {
+            playActionsAdapter.set(
+                0,
+                Action(ACTION_PLAY_SCENE, resources.getString(R.string.play_scene)),
+            )
+            playActionsAdapter.clear(1)
         }
     }
 
@@ -694,23 +745,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 } else {
                     position = data.getLongExtra(POSITION_ARG, -1)
                     if (position >= 0) {
-                        sceneActionsAdapter.notifyItemRangeChanged(CREATE_MARKER_POS, 1)
+                        sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
                     }
-                    if (position > 10_000) {
-                        // If some of the video played, reset the available actions
-                        // This also causes the focused action to default to resume which is an added bonus
-                        playActionsAdapter.clear()
-                        playActionsAdapter.add(Action(ACTION_RESUME_SCENE, "Resume"))
-                        playActionsAdapter.add(Action(ACTION_PLAY_SCENE, "Restart"))
-
-                        val serverPreferences = ServerPreferences(requireContext())
-                        if (serverPreferences.trackActivity) {
-                            viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
-                                MutationEngine(requireContext(), false).saveSceneActivity(
-                                    mSelectedMovie!!.id.toLong(),
-                                    position,
-                                )
-                            }
+                    setupPlayActionsAdapter()
+                    val serverPreferences = ServerPreferences(requireContext())
+                    if (serverPreferences.trackActivity) {
+                        viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
+                            Log.v(TAG, "ResultCallback saveSceneActivity start")
+                            MutationEngine(requireContext(), false).saveSceneActivity(
+                                mSelectedMovie!!.id.toLong(),
+                                position,
+                            )
                         }
                     }
                 }
@@ -733,24 +778,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             tags = emptyList(),
             __typename = "",
         )
-    }
-
-    private inner class VideoDetailsActionPresenter : StashPresenter<StashAction>() {
-        override fun doOnBindViewHolder(
-            cardView: StashImageCardView,
-            item: StashAction,
-        ) {
-            cardView.titleText = item.actionName
-            if (item == StashAction.CREATE_MARKER) {
-                cardView.contentText =
-                    if (position >= 0) {
-                        Constants.durationToString(position / 1000.0)
-                    } else {
-                        null
-                    }
-            }
-            cardView.setMainImageDimensions(ActionPresenter.CARD_WIDTH, ActionPresenter.CARD_HEIGHT)
-        }
     }
 
     private inner class OCounterLongClickCallBack : StashPresenter.LongClickCallBack<OCounter> {
@@ -812,7 +839,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         // Row order
         private const val DETAILS_POS = 1
         private const val MARKER_POS = DETAILS_POS + 1
-        private const val PERFORMER_POS = MARKER_POS + 1
+        private const val MOVIE_POS = MARKER_POS + 1
+        private const val PERFORMER_POS = MOVIE_POS + 1
         private const val TAG_POS = PERFORMER_POS + 1
         private const val ACTIONS_POS = TAG_POS + 1
 

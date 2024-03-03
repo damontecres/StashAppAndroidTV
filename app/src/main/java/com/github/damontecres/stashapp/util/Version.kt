@@ -51,14 +51,26 @@ data class Version(
 
     companion object {
         private val VERSION_REGEX = Regex("v?(\\d+)\\.(\\d+)\\.(\\d+)(-(\\d+)-g([a-zA-Z0-9]+))?")
-        private val MINIMUM_STASH_VERSION = fromString("0.23.0")
+        val MINIMUM_STASH_VERSION = fromString("0.23.0")
         val V0_24_3 = fromString("v0.24.3")
         val V0_25_0 = fromString("v0.25.0")
 
         fun fromString(version: String): Version {
-            val m = VERSION_REGEX.matchEntire(version)
-            if (m == null) {
+            val v = tryFromString(version)
+            if (v == null) {
                 throw IllegalArgumentException()
+            } else {
+                return v
+            }
+        }
+
+        fun tryFromString(version: String?): Version? {
+            if (version == null) {
+                return null
+            }
+            val m = VERSION_REGEX.matchEntire(version)
+            return if (m == null) {
+                null
             } else {
                 val major = m.groups[1]!!.value.toInt()
                 val minor = m.groups[2]!!.value.toInt()
@@ -66,7 +78,7 @@ data class Version(
                 // group 4 is the optional commit info
                 val numCommits = m.groups[5]?.value?.toInt()
                 val hash = m.groups[6]?.value
-                return Version(major, minor, patch, numCommits, hash)
+                Version(major, minor, patch, numCommits, hash)
             }
         }
 

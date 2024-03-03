@@ -19,7 +19,6 @@ import org.mockito.junit.MockitoJUnitRunner
 class ObjectFilterParsingTests {
     @Before
     fun init() {
-//        val mockContext = mock<Context> {}
     }
 
     /**

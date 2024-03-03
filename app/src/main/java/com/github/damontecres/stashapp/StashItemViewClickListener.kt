@@ -31,6 +31,10 @@ class StashItemViewClickListener(
     private val context: Context,
     private val actionListener: StashActionClickedListener? = null,
 ) : OnItemViewClickedListener {
+    fun onItemClicked(item: Any) {
+        onItemClicked(null, item, null, null)
+    }
+
     override fun onItemClicked(
         itemViewHolder: Presenter.ViewHolder?,
         item: Any,
