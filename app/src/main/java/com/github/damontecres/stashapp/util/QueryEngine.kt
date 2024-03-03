@@ -12,6 +12,7 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
+import com.github.damontecres.stashapp.api.FindImagesQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.FindMovieQuery
 import com.github.damontecres.stashapp.api.FindMoviesQuery
@@ -21,6 +22,7 @@ import com.github.damontecres.stashapp.api.FindSavedFiltersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -29,6 +31,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
@@ -229,6 +232,23 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
             .orEmpty()
     }
 
+    suspend fun findImages(
+        findFilter: FindFilterType? = null,
+        imageFilter: ImageFilterType? = null,
+        imageIds: List<Int> = emptyList(),
+        useRandom: Boolean = true,
+    ): List<ImageData> {
+        val query =
+            client.query(
+                FindImagesQuery(
+                    updateFilter(findFilter, useRandom),
+                    imageFilter,
+                    imageIds,
+                ),
+            )
+        return executeQuery(query).data?.findImages?.images?.map { it.imageData }.orEmpty()
+    }
+
     /**
      * Search for a type of data with the given query. Users will need to cast the returned List.
      */
@@ -243,6 +263,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
             DataType.STUDIO -> findStudios(findFilter)
             DataType.MOVIE -> findMovies(findFilter)
             DataType.MARKER -> findMarkers(findFilter)
+            DataType.IMAGE -> findImages(findFilter)
         }
     }
 

@@ -33,6 +33,7 @@ import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
@@ -40,6 +41,7 @@ import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
 import com.github.damontecres.stashapp.suppliers.TagDataSupplier
 import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.ImageComparator
 import com.github.damontecres.stashapp.util.MarkerComparator
 import com.github.damontecres.stashapp.util.MovieComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
@@ -353,6 +355,16 @@ class FilterListActivity : FragmentActivity() {
                     MarkerComparator,
                     MarkerDataSupplier(findFilter, markerFilter),
                     null,
+                    null,
+                    name,
+                )
+            }
+
+            DataType.IMAGE -> {
+                // TODO image filter
+                StashGridFragment(
+                    ImageComparator,
+                    ImageDataSupplier(findFilter, null),
                     null,
                     name,
                 )

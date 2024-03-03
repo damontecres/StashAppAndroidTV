@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.util
 
 import androidx.recyclerview.widget.DiffUtil
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -99,6 +100,22 @@ object MarkerComparator : DiffUtil.ItemCallback<MarkerData>() {
     override fun areContentsTheSame(
         oldItem: MarkerData,
         newItem: MarkerData,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}
+
+object ImageComparator : DiffUtil.ItemCallback<ImageData>() {
+    override fun areItemsTheSame(
+        oldItem: ImageData,
+        newItem: ImageData,
+    ): Boolean {
+        return oldItem.id == newItem.id
+    }
+
+    override fun areContentsTheSame(
+        oldItem: ImageData,
+        newItem: ImageData,
     ): Boolean {
         return oldItem == newItem
     }

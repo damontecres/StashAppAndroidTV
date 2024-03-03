@@ -28,8 +28,8 @@ class TagDataSupplier(
 
     override fun parseQuery(data: FindTagsQuery.Data?): CountAndList<TagData> {
         val count = data?.findTags?.count ?: -1
-        val studios =
+        val tags =
             data?.findTags?.tags?.map { it.tagData }.orEmpty()
-        return CountAndList(count, studios)
+        return CountAndList(count, tags)
     }
 }

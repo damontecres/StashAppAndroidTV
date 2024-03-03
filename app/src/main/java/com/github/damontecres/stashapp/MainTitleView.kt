@@ -25,6 +25,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
     private val tagsButton: Button
     private val moviesButton: Button
     private val markersButton: Button
+    private val imagesButton: Button
 
     private val mTitleViewAdapter =
         object : TitleViewAdapter() {
@@ -52,6 +53,14 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             startActivity(context, intent, null)
         }
         scenesButton.onFocusChangeListener = onFocusChangeListener
+
+        imagesButton = root.findViewById<Button>(R.id.images_button)
+        imagesButton.setOnClickListener {
+            val intent = Intent(context, FilterListActivity::class.java)
+            intent.putExtra("dataType", DataType.IMAGE.name)
+            startActivity(context, intent, null)
+        }
+        imagesButton.onFocusChangeListener = onFocusChangeListener
 
         performersButton = root.findViewById<Button>(R.id.performers_button)
         performersButton.setOnClickListener {
@@ -115,6 +124,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             }
         }
         scenesButton.visibility = getVis("scenes")
+        imagesButton.visibility = getVis("images")
         performersButton.visibility = getVis("performers")
         studiosButton.visibility = getVis("studios")
         tagsButton.visibility = getVis("tags")

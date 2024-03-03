@@ -31,11 +31,19 @@
         style="@style/TitleBarButton" />
 
     <Button
+        android:id="@+id/images_button"
+        android:text="@string/stashapp_images"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_toEndOf="@+id/scenes_button"
+        style="@style/TitleBarButton" />
+
+    <Button
         android:id="@+id/movies_button"
         android:text="@string/stashapp_movies"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_toEndOf="@+id/scenes_button"
+        android:layout_toEndOf="@+id/images_button"
         style="@style/TitleBarButton" />
 
     <Button

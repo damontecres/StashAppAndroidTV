@@ -10,6 +10,8 @@ enum class DataType(val filterMode: FilterMode, val stringId: Int, val pluralStr
     PERFORMER(FilterMode.PERFORMERS, R.string.stashapp_performer, R.string.stashapp_performers),
     STUDIO(FilterMode.STUDIOS, R.string.stashapp_studio, R.string.stashapp_studios),
     TAG(FilterMode.TAGS, R.string.stashapp_tag, R.string.stashapp_tags),
+    IMAGE(FilterMode.IMAGES, R.string.stashapp_image, R.string.stashapp_images),
+//    GALLERY(FilterMode.GALLERIES, R.string.stashapp_gallery, R.string.stashapp_galleries),
     ;
 
     companion object {

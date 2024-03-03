@@ -1,0 +1,36 @@
+query FindImages($filter: FindFilterType, $image_filter: ImageFilterType, $image_ids: [Int!]) {
+  findImages(filter: $filter, image_filter: $image_filter, image_ids: $image_ids) {
+    count
+    images {
+      ...ImageData
+    }
+  }
+}
+
+fragment ImageData on Image {
+  id
+  title
+  code
+  rating100
+  date
+  details
+  photographer
+  o_counter
+  paths {
+    thumbnail
+    preview
+    image
+  }
+  performers{
+    ...PerformerData
+  }
+  studio {
+    ...StudioData
+  }
+  tags {
+    ...TagData
+  }
+  galleries {
+    id
+  }
+}
