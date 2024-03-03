@@ -478,6 +478,15 @@ class MainFragment : BrowseSupportFragment() {
                             )
                         }
 
+                        FilterMode.IMAGES -> {
+                            val imageFilter =
+                                FilterParser.instance.convertImageObjectFilter(objectFilter)
+                            adapter.addAll(
+                                0,
+                                queryEngine.findImages(filter, imageFilter, useRandom = false),
+                            )
+                        }
+
                         else -> {
                             Log.w(
                                 TAG,

@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -509,6 +510,49 @@ class FilterParser private constructor(serverInfoQuery: ServerInfoQuery.Data?) {
                 scene_date = Optional.presentIfNotNull(convertDateCriterionInput(filter["scene_date"])),
                 scene_created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["scene_created_at"])),
                 scene_updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["scene_updated_at"])),
+            )
+        } else {
+            null
+        }
+    }
+
+    fun convertImageObjectFilter(f: Any?): ImageFilterType? {
+        return if (f != null) {
+            val filter = f as Map<String, Map<String, *>>
+            ImageFilterType(
+                AND = Optional.presentIfNotNull(convertImageObjectFilter(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertImageObjectFilter(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertImageObjectFilter(filter["NOT"])),
+                title = Optional.presentIfNotNull(convertStringCriterionInput(filter["title"])),
+                details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
+                id = Optional.presentIfNotNull(convertIntCriterionInput(filter["id"])),
+                checksum = Optional.presentIfNotNull(convertStringCriterionInput(filter["checksum"])),
+                path = Optional.presentIfNotNull(convertStringCriterionInput(filter["path"])),
+                file_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["file_count"])),
+                rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
+                date = Optional.presentIfNotNull(convertDateCriterionInput(filter["date"])),
+                url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
+                organized = Optional.presentIfNotNull(convertBoolean(filter["organized"])),
+                o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter["o_counter"])),
+                resolution = Optional.presentIfNotNull(convertResolutionCriterionInput(filter["resolution"])),
+                is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
+                studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
+                tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
+                tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["tag_count"])),
+                performer_tags =
+                    Optional.presentIfNotNull(
+                        convertHierarchicalMultiCriterionInput(
+                            filter["performer_tags"],
+                        ),
+                    ),
+                performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
+                performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_count"])),
+                performer_favorite = Optional.presentIfNotNull(convertBoolean(filter["performer_favorite"])),
+                galleries = Optional.presentIfNotNull(convertMultiCriterionInput(filter["galleries"])),
+                created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
+                updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+                code = Optional.presentIfNotNull(convertStringCriterionInput(filter["code"])),
+                photographer = Optional.presentIfNotNull(convertStringCriterionInput(filter["photographer"])),
             )
         } else {
             null

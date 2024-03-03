@@ -33,4 +33,25 @@ fragment ImageData on Image {
   galleries {
     id
   }
+  visual_files {
+    ... on BaseFile{
+      id
+      path
+      size
+      __typename
+    }
+    ... on ImageFile {
+      width
+      height
+
+    }
+    ... on VideoFile{
+      width
+      height
+      format
+			video_codec
+      audio_codec
+      duration
+    }
+  }
 }

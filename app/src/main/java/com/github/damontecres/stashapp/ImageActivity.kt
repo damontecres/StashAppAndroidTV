@@ -5,11 +5,11 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
@@ -38,16 +38,12 @@ class ImageActivity : FragmentActivity() {
             savedInstanceState: Bundle?,
         ) {
             val mainImage = view.findViewById<ImageView>(R.id.image_view_image)
-//            val lp = mainImage.layoutParams
-//            lp.width=view.width
-//            lp.height=view.height
-//            mainImage.layoutParams=lp
-
             val imageUrl = requireActivity().intent.getStringExtra(INTENT_IMAGE_URL)!!
+
+            // Images larger than 5mb need disk cache
+            // https://github.com/bumptech/glide/issues/4950
             Glide.with(requireContext())
                 .load(createGlideUrl(imageUrl, requireContext()))
-                .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .skipMemoryCache(true)
                 .listener(
                     object : RequestListener<Drawable?> {
                         override fun onLoadFailed(
@@ -56,8 +52,13 @@ class ImageActivity : FragmentActivity() {
                             target: Target<Drawable?>,
                             isFirstResource: Boolean,
                         ): Boolean {
-                            Log.v(TAG, "onLoadFailed")
-                            return false
+                            Log.v(TAG, "onLoadFailed for $imageUrl")
+                            Toast.makeText(
+                                requireContext(),
+                                "Image loading failed!",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            return true
                         }
 
                         override fun onResourceReady(
@@ -67,7 +68,6 @@ class ImageActivity : FragmentActivity() {
                             dataSource: DataSource,
                             isFirstResource: Boolean,
                         ): Boolean {
-                            Log.v(TAG, "onResourceReady ${resource.bounds}")
                             return false
                         }
                     },
