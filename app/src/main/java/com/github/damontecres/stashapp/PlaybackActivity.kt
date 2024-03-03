@@ -8,27 +8,18 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.annotation.OptIn
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.media3.common.util.UnstableApi
-import androidx.preference.PreferenceManager
 
 /** Loads [PlaybackVideoFragment]. */
 class PlaybackActivity : FragmentActivity() {
-    private lateinit var fragment: Fragment
+    private lateinit var fragment: PlaybackExoFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         if (savedInstanceState == null) {
-            val useExo =
-                PreferenceManager.getDefaultSharedPreferences(this).getBoolean("playerChoice", true)
-            fragment =
-                if (useExo) {
-                    PlaybackExoFragment()
-                } else {
-                    PlaybackVideoFragment()
-                }
+            fragment = PlaybackExoFragment()
             supportFragmentManager.beginTransaction()
                 .replace(android.R.id.content, fragment)
                 .commit()
@@ -39,7 +30,7 @@ class PlaybackActivity : FragmentActivity() {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         // TODO: deprecated, so use https://stackoverflow.com/a/72634975/608317 eventually
-        if (!(fragment as StashVideoPlayer).hideControlsIfVisible()) {
+        if (!fragment.hideControlsIfVisible()) {
             returnPosition()
             super.onBackPressed()
         }
@@ -47,14 +38,7 @@ class PlaybackActivity : FragmentActivity() {
 
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        return if (fragment is PlaybackExoFragment) {
-            (fragment as PlaybackExoFragment).videoView.dispatchKeyEvent(event) ||
-                super.dispatchKeyEvent(
-                    event,
-                )
-        } else {
-            super.dispatchKeyEvent(event)
-        }
+        return fragment.videoView.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
     }
 
     override fun onStop() {
@@ -67,7 +51,7 @@ class PlaybackActivity : FragmentActivity() {
      */
     private fun returnPosition() {
         val intent = Intent()
-        val position = (fragment as StashVideoPlayer).currentVideoPosition
+        val position = fragment.currentVideoPosition
         Log.d(TAG, "Video playback ending, currentVideoPosition=$position")
         intent.putExtra("position", position)
         setResult(Activity.RESULT_OK, intent)
