@@ -86,4 +86,16 @@
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
     </LinearLayout>
 
+    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+
+        <TextView
+            android:id="@+id/extra_gallery_icon"
+            android:text="@string/fa_images"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
+
+        <TextView
+            android:id="@+id/extra_gallery_count"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
+    </LinearLayout>
+
 </LinearLayout>

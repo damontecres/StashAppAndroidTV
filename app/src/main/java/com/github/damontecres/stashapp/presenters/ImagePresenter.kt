@@ -24,7 +24,7 @@ class ImagePresenter(callback: LongClickCallBack<ImageData>? = null) : StashPres
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.TAG] = item.tags.size
         dataTypeMap[DataType.PERFORMER] = item.performers.size
-//        dataTypeMap[DataType.GALLERY] = item.galleries.size
+        dataTypeMap[DataType.GALLERY] = item.galleries.size
 
         cardView.setUpExtraRow(dataTypeMap, item.o_counter)
 

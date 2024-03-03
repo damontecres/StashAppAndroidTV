@@ -93,6 +93,11 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                 iconRow.findViewById(R.id.extra_movie_count),
                 iconRow.findViewById(R.id.extra_movie_icon),
             )
+        dataTypeViews[DataType.GALLERY] =
+            Pair(
+                iconRow.findViewById(R.id.extra_gallery_count),
+                iconRow.findViewById(R.id.extra_gallery_icon),
+            )
         oCounterTextView = iconRow.findViewById(R.id.extra_ocounter_count)
         oCounterIconView = iconRow.findViewById(R.id.extra_ocounter_icon)
     }

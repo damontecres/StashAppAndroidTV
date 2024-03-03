@@ -95,6 +95,7 @@ class SearchForFragment(
                     DataType.PERFORMER -> (item as PerformerData).id
                     DataType.MARKER -> (item as MarkerData).id
                     DataType.IMAGE -> (item as ImageData).id
+                    DataType.GALLERY -> TODO()
                 }
             result.putExtra(RESULT_ID_KEY, resultId)
             result.putExtra(ID_KEY, requireActivity().intent.getLongExtra("id", -1))

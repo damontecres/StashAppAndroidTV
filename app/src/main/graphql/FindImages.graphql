@@ -49,7 +49,7 @@ fragment ImageData on Image {
       width
       height
       format
-			video_codec
+      video_codec
       audio_codec
       duration
     }

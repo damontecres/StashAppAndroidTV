@@ -264,6 +264,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
             DataType.MOVIE -> findMovies(findFilter)
             DataType.MARKER -> findMarkers(findFilter)
             DataType.IMAGE -> findImages(findFilter)
+            DataType.GALLERY -> TODO()
         }
     }
 

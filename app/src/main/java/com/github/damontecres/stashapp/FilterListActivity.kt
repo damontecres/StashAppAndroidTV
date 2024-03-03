@@ -25,6 +25,7 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
@@ -361,13 +362,22 @@ class FilterListActivity : FragmentActivity() {
             }
 
             DataType.IMAGE -> {
-                // TODO image filter
+                val imageFilter =
+                    if (objectFilter is ImageFilterType) {
+                        objectFilter
+                    } else {
+                        FilterParser.instance.convertImageObjectFilter(objectFilter)
+                    }
                 StashGridFragment(
                     ImageComparator,
-                    ImageDataSupplier(findFilter, null),
+                    ImageDataSupplier(findFilter, imageFilter),
                     null,
                     name,
                 )
+            }
+
+            DataType.GALLERY -> {
+                TODO()
             }
         }
     }
