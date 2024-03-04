@@ -26,6 +26,7 @@ class GalleryPresenter(callback: LongClickCallBack<GalleryData>? = null) : Stash
         dataTypeMap[DataType.TAG] = item.tags.size
         dataTypeMap[DataType.PERFORMER] = item.performers.size
         dataTypeMap[DataType.SCENE] = item.scenes.size
+        dataTypeMap[DataType.IMAGE] = item.image_count
 
         cardView.setUpExtraRow(dataTypeMap, null)
 

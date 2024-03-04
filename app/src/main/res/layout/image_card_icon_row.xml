@@ -12,6 +12,18 @@
     <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
 
         <TextView
+            android:id="@+id/extra_image_icon"
+            android:text="@string/fa_images"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
+
+        <TextView
+            android:id="@+id/extra_image_count"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
+    </LinearLayout>
+
+    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+
+        <TextView
             android:id="@+id/extra_tag_icon"
             android:text="@string/fa_tag"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
