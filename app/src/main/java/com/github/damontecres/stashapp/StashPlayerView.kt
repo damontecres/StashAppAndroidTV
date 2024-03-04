@@ -9,7 +9,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 
-class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : PlayerView(context, attrs, defStyleAttr) {
+class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
+    PlayerView(context, attrs, defStyleAttr) {
     constructor(context: Context, attrs: AttributeSet? = null) : this(context, attrs, 0)
 
     constructor(context: Context) : this(context, null)

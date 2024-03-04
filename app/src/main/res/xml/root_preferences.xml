@@ -120,8 +120,8 @@
         <SwitchPreference
             app:key="skipWithDpad"
             app:title="D-Pad skipping"
-            app:summaryOn="Skip back/forward with D-Pad left/right on ExoPlayer"
-            app:summaryOff="Don't skip back/forward with D-Pad left/right on ExoPlayer"
+            app:summaryOn="Skip back/forward with D-Pad left/right"
+            app:summaryOff="Don't skip back/forward with D-Pad left/right"
             app:defaultValue="true"
             />
         <ListPreference
@@ -131,10 +131,6 @@
             app:defaultValue="HLS"
             app:entries="@array/stream_options"
             app:entryValues="@array/stream_options" />
-        <SwitchPreference
-            app:key="playerChoice"
-            app:title="Which player to use for playback"
-            app:defaultValue="true" />
         <SeekBarPreference
             app:key="controllerShowTimeoutMs"
             app:title="Hide controls after (milliseconds)"
@@ -148,8 +144,13 @@
             app:defaultValue="@string/playback_finished_do_nothing"
             app:useSimpleSummaryProvider="true"
             app:entries="@array/playback_finished_behavior_options"
-            app:entryValues="@array/playback_finished_behavior_options"
-            />
+            app:entryValues="@array/playback_finished_behavior_options" />
+        <SwitchPreference
+            app:key="exoShowTitle"
+            app:title="Scene title"
+            app:summaryOn="Show title"
+            app:summaryOff="Hide title"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/stashapp_config_tasks_job_queue">
