@@ -78,6 +78,7 @@ class ImageActivity : FragmentActivity() {
         const val TAG = "ImageActivity"
         const val INTENT_IMAGE_ID = "image.id"
         const val INTENT_IMAGE_URL = "image.url"
+        const val INTENT_IMAGE_SIZE = "image.size"
     }
 
     class ImageFragment : Fragment(R.layout.image_layout) {
@@ -98,6 +99,7 @@ class ImageActivity : FragmentActivity() {
             table = view.findViewById(R.id.image_view_table)
             val imageUrl = requireActivity().intent.getStringExtra(INTENT_IMAGE_URL)!!
             val imageId = requireActivity().intent.getStringExtra(INTENT_IMAGE_ID)!!
+            val imageSize = requireActivity().intent.getIntExtra(INTENT_IMAGE_SIZE, -1)
             Log.v(TAG, "imageId=$imageId")
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val queryEngine = QueryEngine(requireContext())
@@ -119,9 +121,7 @@ class ImageActivity : FragmentActivity() {
                 )
             }
 
-            // Images larger than 5mb need disk cache
-            // https://github.com/bumptech/glide/issues/4950
-            StashGlide.with(requireContext(), imageUrl)
+            StashGlide.with(requireContext(), imageUrl, imageSize)
                 .listener(
                     object : RequestListener<Drawable?> {
                         override fun onLoadFailed(

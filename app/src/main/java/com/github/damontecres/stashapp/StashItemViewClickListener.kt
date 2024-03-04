@@ -78,6 +78,12 @@ class StashItemViewClickListener(
             val intent = Intent(context, ImageActivity::class.java)
             intent.putExtra(ImageActivity.INTENT_IMAGE_ID, item.id)
             intent.putExtra(ImageActivity.INTENT_IMAGE_URL, item.paths.image)
+            intent.putExtra(
+                ImageActivity.INTENT_IMAGE_SIZE,
+                item.visual_files.maxOfOrNull {
+                    it.onBaseFile?.size?.toString()?.toInt() ?: -1
+                } ?: -1,
+            )
             context.startActivity(intent)
         } else if (item is GalleryData) {
             val intent = Intent(context, GalleryActivity::class.java)
