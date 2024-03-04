@@ -27,9 +27,8 @@
             app:layout_constraintStart_toEndOf="@id/icon"
             app:layout_constraintEnd_toStartOf="@id/tab_layout"
             app:layout_constraintTop_toTopOf="parent"
-            android:textSize="40sp"
-            android:textAlignment="center"
-            tools:text="Test Title" />
+            tools:text="Test Title"
+            style="@style/GridTitleText" />
 
         <androidx.leanback.tab.LeanbackTabLayout
             android:id="@+id/tab_layout"

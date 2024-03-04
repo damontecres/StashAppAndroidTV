@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical">
 
     <RelativeLayout
@@ -21,9 +22,8 @@
             android:id="@+id/list_title"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:textSize="40sp"
-            android:textAlignment="center"
-            android:text="REPLACE" />
+            style="@style/GridTitleText"
+            tools:text="Test Title" />
 
         <Button
             android:id="@+id/filter_button"
