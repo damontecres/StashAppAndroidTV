@@ -25,6 +25,7 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
+import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -317,6 +318,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<Preference>("clearCache")?.setOnPreferenceClickListener {
                 cache.evictAll()
                 setUsedCachedSummary(cacheSizePref, cache)
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    Glide.get(requireContext()).clearDiskCache()
+                }
                 true
             }
 
