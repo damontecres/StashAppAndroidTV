@@ -9,8 +9,6 @@ import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
-import com.github.damontecres.stashapp.api.FindScenesQuery
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -28,8 +26,6 @@ import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.getInt
 
 class PerformerActivity : FragmentActivity() {
-    private lateinit var sceneFragment: StashGridFragment<FindScenesQuery.Data, SlimSceneData>
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_performer)
