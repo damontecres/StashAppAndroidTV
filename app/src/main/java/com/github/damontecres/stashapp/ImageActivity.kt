@@ -4,6 +4,7 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -47,16 +48,31 @@ class ImageActivity : FragmentActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
             if (event.keyCode == KeyEvent.KEYCODE_BACK) {
-                if (imageFragment.titleText.isVisible) {
+                if (imageFragment.isOverlayVisible()) {
                     imageFragment.hideOverlay()
                     return true
                 }
-            } else if (!imageFragment.titleText.isVisible) {
+            } else if (isDpadKey(event.keyCode) && !imageFragment.isOverlayVisible()) {
                 imageFragment.showOverlay()
                 return true
             }
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    private fun isDpadKey(keyCode: Int): Boolean {
+        return keyCode == KeyEvent.KEYCODE_DPAD_UP ||
+            keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
+            keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
+            keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
+            keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+            (
+                keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT ||
+                    keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
+                    keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
+                    keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+            )
     }
 
     companion object {
@@ -137,6 +153,10 @@ class ImageActivity : FragmentActivity() {
                     },
                 )
                 .into(mainImage)
+        }
+
+        fun isOverlayVisible(): Boolean {
+            return titleText.isVisible
         }
 
         fun showOverlay() {
