@@ -42,6 +42,8 @@ class StashGridFragment<T : Query.Data, D : Any>(
 
     val pagingAdapter = PagingDataAdapter(presenter, comparator)
 
+    var requestFocus: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -120,7 +122,9 @@ class StashGridFragment<T : Query.Data, D : Any>(
                     null
                 }
             }
-        browseFrameLayout.requestFocus()
+        if (requestFocus) {
+            browseFrameLayout.requestFocus()
+        }
     }
 
     companion object {
