@@ -14,6 +14,7 @@ import com.bumptech.glide.RequestBuilder
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
@@ -119,6 +120,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 .addClassPresenter(StashAction::class.java, ActionPresenter())
                 .addClassPresenter(MarkerData::class.java, MarkerPresenter())
                 .addClassPresenter(ImageData::class.java, ImagePresenter())
+                .addClassPresenter(GalleryData::class.java, GalleryPresenter())
                 .addClassPresenter(OCounter::class.java, OCounterPresenter())
                 .addClassPresenter(CreateMarkerAction::class.java, CreateMarkerActionPresenter())
 

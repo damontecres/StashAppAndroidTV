@@ -487,6 +487,15 @@ class MainFragment : BrowseSupportFragment() {
                             )
                         }
 
+                        FilterMode.GALLERIES -> {
+                            val galleryFilter =
+                                FilterParser.instance.convertGalleryObjectFilter(objectFilter)
+                            adapter.addAll(
+                                0,
+                                queryEngine.findGalleries(filter, galleryFilter, useRandom = false),
+                            )
+                        }
+
                         else -> {
                             Log.w(
                                 TAG,

@@ -7,6 +7,7 @@ import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
@@ -549,6 +550,56 @@ class FilterParser private constructor(serverInfoQuery: ServerInfoQuery.Data?) {
                 performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_count"])),
                 performer_favorite = Optional.presentIfNotNull(convertBoolean(filter["performer_favorite"])),
                 galleries = Optional.presentIfNotNull(convertMultiCriterionInput(filter["galleries"])),
+                created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
+                updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+                code = Optional.presentIfNotNull(convertStringCriterionInput(filter["code"])),
+                photographer = Optional.presentIfNotNull(convertStringCriterionInput(filter["photographer"])),
+            )
+        } else {
+            null
+        }
+    }
+
+    fun convertGalleryObjectFilter(f: Any?): GalleryFilterType? {
+        return if (f != null) {
+            val filter = f as Map<String, Map<String, *>>
+            GalleryFilterType(
+                AND = Optional.presentIfNotNull(convertGalleryObjectFilter(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertGalleryObjectFilter(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertGalleryObjectFilter(filter["NOT"])),
+                id = Optional.presentIfNotNull(convertIntCriterionInput(filter["id"])),
+                title = Optional.presentIfNotNull(convertStringCriterionInput(filter["title"])),
+                details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
+                checksum = Optional.presentIfNotNull(convertStringCriterionInput(filter["checksum"])),
+                path = Optional.presentIfNotNull(convertStringCriterionInput(filter["path"])),
+                file_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["file_count"])),
+                is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
+                is_zip = Optional.presentIfNotNull(convertBoolean(filter["is_zip"])),
+                rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
+                organized = Optional.presentIfNotNull(convertBoolean(filter["organized"])),
+                average_resolution =
+                    Optional.presentIfNotNull(
+                        convertResolutionCriterionInput(
+                            filter["average_resolution"],
+                        ),
+                    ),
+                has_chapters = Optional.presentIfNotNull(convertString(filter["has_chapters"])),
+                studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
+                tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
+                tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["tag_count"])),
+                performer_tags =
+                    Optional.presentIfNotNull(
+                        convertHierarchicalMultiCriterionInput(
+                            filter["performer_tags"],
+                        ),
+                    ),
+                performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
+                performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_count"])),
+                performer_favorite = Optional.presentIfNotNull(convertBoolean(filter["performer_favorite"])),
+                performer_age = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_age"])),
+                image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["image_count"])),
+                url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
+                date = Optional.presentIfNotNull(convertDateCriterionInput(filter["date"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
                 code = Optional.presentIfNotNull(convertStringCriterionInput(filter["code"])),

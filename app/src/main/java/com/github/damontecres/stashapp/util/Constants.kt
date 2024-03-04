@@ -28,6 +28,7 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -400,6 +401,18 @@ val PerformerData.ageInYears: Int?
                 LocalDate.parse(birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
                 LocalDate.now(),
             ).years
+        } else {
+            null
+        }
+
+val GalleryData.name: String?
+    get() =
+        if (title.isNotNullOrBlank()) {
+            title
+        } else if (folder != null && folder.path.isNotNullOrBlank()) {
+            Uri.parse(folder.path).pathSegments.last()
+        } else if (files.firstOrNull()?.path.isNotNullOrBlank()) {
+            Uri.parse(files.firstOrNull()?.path).pathSegments.last()
         } else {
             null
         }
