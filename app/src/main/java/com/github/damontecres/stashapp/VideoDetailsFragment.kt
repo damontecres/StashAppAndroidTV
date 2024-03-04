@@ -32,7 +32,6 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
-import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
@@ -744,7 +743,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     setupPlayActionsAdapter()
                     val serverPreferences = ServerPreferences(requireContext())
                     if (serverPreferences.trackActivity) {
-                        viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                             Log.v(TAG, "ResultCallback saveSceneActivity start")
                             MutationEngine(requireContext(), false).saveSceneActivity(
                                 mSelectedMovie!!.id.toLong(),
