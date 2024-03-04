@@ -28,10 +28,12 @@ import androidx.preference.SwitchPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.configureHttpsTrust
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
+import okhttp3.Cache
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
@@ -306,6 +308,46 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<SeekBarPreference>("skip_back_time")?.min = 5
             findPreference<SeekBarPreference>("skip_forward_time")?.min = 5
             findPreference<SeekBarPreference>("searchDelay")?.min = 50
+
+            val cacheSizePref = findPreference<SeekBarPreference>("networkCacheSize")!!
+            cacheSizePref.min = 25
+            val cache = Cache(requireContext().cacheDir, cacheSizePref.value * 1024L * 1024)
+            setUsedCachedSummary(cacheSizePref, cache)
+
+            findPreference<Preference>("clearCache")?.setOnPreferenceClickListener {
+                cache.evictAll()
+                setUsedCachedSummary(cacheSizePref, cache)
+                true
+            }
+
+            val cacheDurationPref = findPreference<SeekBarPreference>("networkCacheDuration")
+            setCacheDurationSummary(cacheDurationPref!!, cacheDurationPref.value)
+            cacheDurationPref.setOnPreferenceChangeListener { _, newValue ->
+                setCacheDurationSummary(cacheDurationPref, newValue)
+                true
+            }
+        }
+
+        private fun setCacheDurationSummary(
+            pref: SeekBarPreference,
+            value: Any,
+        ) {
+            val duration = cacheDurationPrefToDuration(value.toString().toInt())
+            pref.summary =
+                if (duration != null) {
+                    duration.toString()
+                } else {
+                    "Always request from server"
+                }
+        }
+
+        private fun setUsedCachedSummary(
+            cacheSizePref: Preference,
+            cache: Cache,
+        ) {
+            val cacheSize = cache.size() / 1024.0 / 1024
+            val cacheSizeFormatted = String.format("%.2f", cacheSize)
+            cacheSizePref.summary = "Using $cacheSizeFormatted MB"
         }
 
         override fun onResume() {

@@ -33,22 +33,30 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.Constants.OK_HTTP_TAG
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.Cache
+import okhttp3.CacheControl
+import okhttp3.Call
+import okhttp3.EventListener
 import okhttp3.OkHttpClient
+import okhttp3.Response
 import java.io.File
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -58,6 +66,7 @@ object Constants {
      */
     const val STASH_API_HEADER = "ApiKey"
     const val TAG = "Constants"
+    const val OK_HTTP_TAG = "$TAG.OkHttpClient"
 
     /**
      * Converts seconds into a Duration string where fractional seconds are removed
@@ -93,31 +102,78 @@ val TRUST_ALL_CERTS: TrustManager =
     }
 
 fun createOkHttpClient(context: Context): OkHttpClient {
-    val trustAll =
-        PreferenceManager.getDefaultSharedPreferences(context)
-            .getBoolean("trustAllCerts", false)
-    val apiKey =
-        PreferenceManager.getDefaultSharedPreferences(context)
-            .getString("stashApiKey", null)
-    val builder = OkHttpClient.Builder()
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val trustAll = manager.getBoolean("trustAllCerts", false)
+    val apiKey = manager.getString("stashApiKey", null)
+    val cacheSize = manager.getLong("networkCache", 100) * 1024 * 1024
+    val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
+    val cacheLogging = manager.getBoolean("networkCacheLogging", false)
+
+    var builder = OkHttpClient.Builder()
     if (trustAll) {
         val sslContext = SSLContext.getInstance("SSL")
         sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-        builder.sslSocketFactory(
-            sslContext.socketFactory,
-            TRUST_ALL_CERTS as X509TrustManager,
-        )
-            .hostnameVerifier { _, _ ->
+        builder =
+            builder.sslSocketFactory(
+                sslContext.socketFactory,
+                TRUST_ALL_CERTS as X509TrustManager,
+            ).hostnameVerifier { _, _ ->
                 true
             }
     }
     if (apiKey.isNotNullOrBlank()) {
-        builder.addInterceptor {
-            val request =
-                it.request().newBuilder().addHeader(STASH_API_HEADER, apiKey.trim()).build()
-            it.proceed(request)
-        }
+        builder =
+            builder.addInterceptor {
+                val request =
+                    it.request().newBuilder()
+                        .addHeader(STASH_API_HEADER, apiKey.trim())
+                        .build()
+                it.proceed(request)
+            }
     }
+    if (cacheLogging) {
+        Log.d(OK_HTTP_TAG, "cacheDuration in hours: ${cacheDuration?.toInt(DurationUnit.HOURS)}")
+        builder =
+            builder.eventListener(
+                object : EventListener() {
+                    override fun cacheHit(
+                        call: Call,
+                        response: Response,
+                    ) {
+                        Log.v(OK_HTTP_TAG, "cacheHit: ${call.request().url} => ${response.code}")
+                    }
+
+                    override fun cacheMiss(call: Call) {
+                        Log.v(OK_HTTP_TAG, "cacheMiss: ${call.request().url}")
+                    }
+
+                    override fun cacheConditionalHit(
+                        call: Call,
+                        cachedResponse: Response,
+                    ) {
+                        Log.v(
+                            OK_HTTP_TAG,
+                            "cacheConditionalHit: ${call.request().url} => ${cachedResponse.code}",
+                        )
+                    }
+                },
+            )
+    }
+    if (cacheDuration != null) {
+        builder =
+            builder.addInterceptor {
+                val request =
+                    it.request().newBuilder()
+                        .cacheControl(
+                            CacheControl.Builder()
+                                .maxAge(cacheDuration.toInt(DurationUnit.HOURS), TimeUnit.HOURS)
+                                .build(),
+                        )
+                        .build()
+                it.proceed(request)
+            }
+    }
+    builder = builder.cache(Cache(context.cacheDir, cacheSize))
     return builder.build()
 }
 
@@ -212,15 +268,7 @@ fun createApolloClient(context: Context): ApolloClient? {
                 .build()
         Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
 
-        val trustAll =
-            PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean("trustAllCerts", false)
-        val httpEngine =
-            if (trustAll) {
-                DefaultHttpEngine(createOkHttpClient(context))
-            } else {
-                DefaultHttpEngine()
-            }
+        val httpEngine = DefaultHttpEngine(createOkHttpClient(context))
         ApolloClient.Builder()
             .serverUrl(url.toString())
             .httpEngine(httpEngine)
@@ -359,6 +407,16 @@ fun concatIfNotBlank(
     strings: List<CharSequence?>,
 ): String {
     return strings.filter { !it.isNullOrBlank() }.joinToString(sep)
+}
+
+fun cacheDurationPrefToDuration(value: Int): Duration? {
+    return when (value) {
+        0 -> null
+        1 -> 1.toDuration(DurationUnit.HOURS)
+        2 -> 4.toDuration(DurationUnit.HOURS)
+        3 -> 12.toDuration(DurationUnit.HOURS)
+        else -> (value - 3).toDuration(DurationUnit.DAYS)
+    }
 }
 
 fun Context.toPx(dp: Int): Float =
