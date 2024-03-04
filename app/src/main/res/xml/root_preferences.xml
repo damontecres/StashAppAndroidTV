@@ -148,8 +148,13 @@
             app:defaultValue="@string/playback_finished_do_nothing"
             app:useSimpleSummaryProvider="true"
             app:entries="@array/playback_finished_behavior_options"
-            app:entryValues="@array/playback_finished_behavior_options"
-            />
+            app:entryValues="@array/playback_finished_behavior_options" />
+        <SwitchPreference
+            app:key="exoShowTitle"
+            app:title="Scene title on ExoPlayer"
+            app:summaryOn="Show title"
+            app:summaryOff="Hide title"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/stashapp_config_tasks_job_queue">

@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -123,10 +125,18 @@ class PlaybackExoFragment :
                                     override fun onPlaybackStateChanged(playbackState: Int) {
                                         if (playbackState == Player.STATE_ENDED) {
                                             Log.v(TAG, "Finishing activity")
+                                            val result = Intent()
+                                            result.putExtra(
+                                                SearchForFragment.ID_KEY,
+                                                -1L,
+                                            )
+                                            result.putExtra(VideoDetailsFragment.POSITION_ARG, 0L)
+                                            requireActivity().setResult(Activity.RESULT_OK, result)
                                             requireActivity().finish()
                                         }
                                     }
-                                })
+                                },
+                            )
 
                         getString(R.string.playback_finished_do_nothing) -> {
                             // no-op
@@ -190,6 +200,16 @@ class PlaybackExoFragment :
 
         scene = requireActivity().intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
             ?: throw RuntimeException()
+
+        val showTitle =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean("exoShowTitle", true)
+        val titleText = view.findViewById<TextView>(R.id.playback_title)
+        if (showTitle) {
+            titleText.text = scene.title
+        } else {
+            titleText.visibility = View.GONE
+        }
 
         val position = requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
         Log.d(TAG, "scene=${scene.id}, ${VideoDetailsFragment.POSITION_ARG}=$position")
