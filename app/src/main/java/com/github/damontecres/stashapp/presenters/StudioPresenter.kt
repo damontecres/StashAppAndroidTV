@@ -14,10 +14,12 @@ class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
         item: StudioData,
     ) {
         cardView.titleText = item.name
-        if (item.parent_studio != null) {
-            cardView.contentText =
+        cardView.contentText =
+            if (item.parent_studio != null) {
                 cardView.context.getString(R.string.stashapp_part_of, item.parent_studio.name)
-        }
+            } else {
+                null
+            }
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.SCENE] = item.scene_count
