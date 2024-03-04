@@ -81,6 +81,10 @@
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
+            android:name=".GalleryActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
+        <activity
             android:name=".SearchForActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
