@@ -284,7 +284,10 @@ class MainFragment : BrowseSupportFragment() {
                                         }
 
                                         else -> {
-                                            Log.w(TAG, "Unknown frontPageFilter typename: $filterType")
+                                            Log.w(
+                                                TAG,
+                                                "Unknown frontPageFilter typename: $filterType",
+                                            )
                                             null
                                         }
                                     }
