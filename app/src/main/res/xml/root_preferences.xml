@@ -165,6 +165,33 @@
             app:summary="@string/stashapp_config_tasks_generate_desc" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="Cache">
+        <SeekBarPreference
+            app:key="networkCacheSize"
+            app:title="Max network cache size (MB)"
+            app:seekBarIncrement="25"
+            app:showSeekBarValue="true"
+            android:max="500"
+            app:defaultValue="100" />
+        <SeekBarPreference
+            app:key="networkCacheDuration"
+            app:title="Invalidate cache after"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="false"
+            android:max="10"
+            app:defaultValue="3" />
+        <SwitchPreference
+            app:key="networkCacheLogging"
+            app:title="Cache logging"
+            app:summaryOn="Log cache hits/misses"
+            app:summaryOff="Don't log cache hits/misses"
+            app:defaultValue="false"/>
+        <Preference
+            app:key="clearCache"
+            app:title="Clear cache"
+            app:summary="Clear the network caches" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="About">
         <Preference
             app:key="versionName"

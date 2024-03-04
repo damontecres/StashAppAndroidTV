@@ -31,3 +31,9 @@ If you get compile errors such as `java.nio.file.NoSuchFileException: .../StashA
     a. Find: `public val (\w+): Optional<(\w+)\?> = Optional.Absent,`
     b. Replace: `$1 = Optional.presentIfNotNull(convert$2(filter["$1"])),`
 3. Copy the results to the constructor of the filter class
+
+### Image loading
+
+This project uses [`Glide`](https://github.com/bumptech/glide) for image loading. However, developers should use the `StashGlide` class which handles setting some defaults related to caching.
+
+For example: `Glide.with(context).load(url)` should be `StashGlide.with(context, url)`

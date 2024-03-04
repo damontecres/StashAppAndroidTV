@@ -5,15 +5,14 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
-import com.github.damontecres.stashapp.util.createGlideUrl
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.security.MessageDigest
@@ -42,9 +41,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         if (!item.paths.screenshot.isNullOrBlank()) {
-            val url = createGlideUrl(item.paths.screenshot, vParent.context)
-            Glide.with(cardView.context)
-                .load(url)
+            StashGlide.with(cardView.context, item.paths.screenshot)
                 .transform(CenterCrop(), TextOverlay(cardView.context, item))
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)

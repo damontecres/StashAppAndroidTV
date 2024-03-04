@@ -9,13 +9,12 @@ import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.StashGlide
 import kotlinx.coroutines.launch
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -43,18 +42,14 @@ class MovieFragment : Fragment(R.layout.movie_view) {
             titleText.text = movie.name
             if (movie.frontImagePath != null) {
                 configureLayout(frontImage)
-                val url = createGlideUrl(movie.frontImagePath, requireContext())
-                Glide.with(requireActivity())
-                    .load(url)
+                StashGlide.with(requireActivity(), movie.frontImagePath)
                     .centerCrop()
                     .error(StashPresenter.glideError(requireContext()))
                     .into(frontImage)
             }
             if (movie.backImagePath != null) {
                 configureLayout(backImage)
-                val url = createGlideUrl(movie.backImagePath, requireContext())
-                Glide.with(requireActivity())
-                    .load(url)
+                StashGlide.with(requireActivity(), movie.backImagePath)
                     .centerCrop()
                     .error(StashPresenter.glideError(requireContext()))
                     .into(backImage)
