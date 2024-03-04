@@ -18,7 +18,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
@@ -26,8 +25,8 @@ import com.bumptech.glide.request.target.Target
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
-import com.github.damontecres.stashapp.util.createGlideUrl
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
@@ -122,8 +121,7 @@ class ImageActivity : FragmentActivity() {
 
             // Images larger than 5mb need disk cache
             // https://github.com/bumptech/glide/issues/4950
-            Glide.with(requireContext())
-                .load(createGlideUrl(imageUrl, requireContext()))
+            StashGlide.with(requireContext(), imageUrl)
                 .listener(
                     object : RequestListener<Drawable?> {
                         override fun onLoadFailed(

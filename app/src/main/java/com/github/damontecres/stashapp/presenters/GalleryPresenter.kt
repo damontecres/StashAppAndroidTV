@@ -1,11 +1,10 @@
 package com.github.damontecres.stashapp.presenters
 
-import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
-import com.github.damontecres.stashapp.util.createGlideUrl
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import java.util.EnumMap
@@ -33,9 +32,7 @@ class GalleryPresenter(callback: LongClickCallBack<GalleryData>? = null) : Stash
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         val coverPaths = item.cover?.paths
         if (coverPaths?.thumbnail.isNotNullOrBlank()) {
-            val url = createGlideUrl(coverPaths!!.thumbnail!!, vParent.context)
-            Glide.with(cardView.context)
-                .load(url)
+            StashGlide.with(cardView.context, coverPaths!!.thumbnail!!)
                 .transform(CenterCrop())
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
