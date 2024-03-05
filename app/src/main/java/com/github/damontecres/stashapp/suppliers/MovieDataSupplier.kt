@@ -13,6 +13,11 @@ class MovieDataSupplier(
     private val movieFilter: MovieFilterType?,
 ) :
     StashPagingSource.DataSupplier<FindMoviesQuery.Data, MovieData> {
+    constructor(movieFilter: MovieFilterType? = null) : this(
+        DataType.MOVIE.asDefaultFindFilterType,
+        movieFilter,
+    )
+
     override val dataType: DataType get() = DataType.PERFORMER
 
     override fun createQuery(filter: FindFilterType?): Query<FindMoviesQuery.Data> {

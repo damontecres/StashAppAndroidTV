@@ -134,6 +134,7 @@ dependencies {
     implementation("androidx.leanback:leanback-paging:1.1.0-alpha11")
     implementation("com.github.bumptech.glide:glide:$glideVersion")
     implementation("com.github.bumptech.glide:okhttp3-integration:$glideVersion")
+    implementation("androidx.leanback:leanback-tab:1.1.0-beta01")
     kapt("com.github.bumptech.glide:compiler:$glideVersion")
     implementation("com.caverock:androidsvg-aar:1.4")
 

@@ -21,7 +21,6 @@ class MovieActivity : FragmentActivity() {
         setContentView(R.layout.activity_movie)
         if (savedInstanceState == null) {
             val movie = this.intent.getParcelableExtra<Movie>("movie")
-
             val cardSize =
                 PreferenceManager.getDefaultSharedPreferences(this)
                     .getInt("cardSize", getString(R.string.card_size_default))

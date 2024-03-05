@@ -234,6 +234,8 @@ class FilterListActivity : FragmentActivity() {
             }
         val fragment =
             getFragment(name, dataType, convertFilter(filter.find_filter), filter.object_filter)
+        fragment.requestFocus = true
+
         if (first) {
             // If the first page, maybe scroll
             val pageSize =
