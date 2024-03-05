@@ -13,6 +13,11 @@ class ImageDataSupplier(
     private val imageFilter: ImageFilterType?,
 ) :
     StashPagingSource.DataSupplier<FindImagesQuery.Data, ImageData> {
+    constructor(imageFilter: ImageFilterType? = null) : this(
+        DataType.IMAGE.asDefaultFindFilterType,
+        imageFilter,
+    )
+
     override val dataType: DataType get() = DataType.TAG
 
     override fun createQuery(filter: FindFilterType?): Query<FindImagesQuery.Data> {

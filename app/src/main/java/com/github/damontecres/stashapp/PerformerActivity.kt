@@ -4,21 +4,27 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.Performer
+import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
+import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerTagDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
+import com.github.damontecres.stashapp.util.GalleryComparator
+import com.github.damontecres.stashapp.util.ImageComparator
+import com.github.damontecres.stashapp.util.ListFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.MovieComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
@@ -55,21 +61,17 @@ class PerformerActivity : FragmentActivity() {
         private val columns: Int,
         fm: FragmentManager,
     ) :
-        FragmentStatePagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
-        override fun getCount(): Int {
-            return 4
-        }
-
-        override fun getPageTitle(position: Int): CharSequence {
-            return when (position) {
-                0 -> "Scenes"
-                1 -> "Movies"
-                2 -> "Tags"
-                3 -> "Appears With"
-                else -> throw IllegalStateException()
-            }
-        }
-
+        ListFragmentPagerAdapter(
+                listOf(
+                    "Scenes",
+                    "Galleries",
+                    "Images",
+                    "Movies",
+                    "Tags",
+                    "Appears With",
+                ),
+                fm,
+            ) {
         override fun getItem(position: Int): Fragment {
             return if (position == 0) {
                 StashGridFragment(
@@ -89,6 +91,38 @@ class PerformerActivity : FragmentActivity() {
                 )
             } else if (position == 1) {
                 StashGridFragment(
+                    GalleryComparator,
+                    GalleryDataSupplier(
+                        GalleryFilterType(
+                            performers =
+                                Optional.present(
+                                    MultiCriterionInput(
+                                        value = Optional.present(listOf(performerId)),
+                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                    ),
+                                ),
+                        ),
+                    ),
+                    columns,
+                )
+            } else if (position == 2) {
+                StashGridFragment(
+                    ImageComparator,
+                    ImageDataSupplier(
+                        ImageFilterType(
+                            performers =
+                                Optional.present(
+                                    MultiCriterionInput(
+                                        value = Optional.present(listOf(performerId)),
+                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                    ),
+                                ),
+                        ),
+                    ),
+                    columns,
+                )
+            } else if (position == 3) {
+                StashGridFragment(
                     MovieComparator,
                     MovieDataSupplier(
                         MovieFilterType(
@@ -103,13 +137,13 @@ class PerformerActivity : FragmentActivity() {
                     ),
                     columns,
                 )
-            } else if (position == 2) {
+            } else if (position == 4) {
                 StashGridFragment(
                     TagComparator,
                     PerformerTagDataSupplier(performerId),
                     columns,
                 )
-            } else if (position == 3) {
+            } else if (position == 5) {
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(
