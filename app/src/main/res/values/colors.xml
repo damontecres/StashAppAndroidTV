@@ -8,4 +8,5 @@
     <color name="gold">#FFD700</color>
     <color name="popup_selected_background">#3c719a</color>
     <color name="popup_background">#111a20</color>
+    <color name="transparent_black">#80000000</color>
 </resources>

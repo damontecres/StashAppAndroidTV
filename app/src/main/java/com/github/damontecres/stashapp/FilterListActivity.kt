@@ -24,7 +24,9 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
@@ -33,6 +35,8 @@ import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
+import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
@@ -40,6 +44,8 @@ import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
 import com.github.damontecres.stashapp.suppliers.TagDataSupplier
 import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.GalleryComparator
+import com.github.damontecres.stashapp.util.ImageComparator
 import com.github.damontecres.stashapp.util.MarkerComparator
 import com.github.damontecres.stashapp.util.MovieComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
@@ -353,6 +359,36 @@ class FilterListActivity : FragmentActivity() {
                     MarkerComparator,
                     MarkerDataSupplier(findFilter, markerFilter),
                     null,
+                    null,
+                    name,
+                )
+            }
+
+            DataType.IMAGE -> {
+                val imageFilter =
+                    if (objectFilter is ImageFilterType) {
+                        objectFilter
+                    } else {
+                        FilterParser.instance.convertImageObjectFilter(objectFilter)
+                    }
+                StashGridFragment(
+                    ImageComparator,
+                    ImageDataSupplier(findFilter, imageFilter),
+                    null,
+                    name,
+                )
+            }
+
+            DataType.GALLERY -> {
+                val galleryFilter =
+                    if (objectFilter is GalleryFilterType) {
+                        objectFilter
+                    } else {
+                        FilterParser.instance.convertGalleryObjectFilter(objectFilter)
+                    }
+                StashGridFragment(
+                    GalleryComparator,
+                    GalleryDataSupplier(findFilter, galleryFilter),
                     null,
                     name,
                 )

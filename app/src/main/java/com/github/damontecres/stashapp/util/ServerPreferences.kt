@@ -118,7 +118,16 @@ class ServerPreferences(private val context: Context) {
     companion object {
         const val TAG = "ServerPreferences"
         val DEFAULT_MENU_ITEMS =
-            setOf("scenes", "movies", "markers", "performers", "studios", "tags")
+            setOf(
+                "scenes",
+                "images",
+                "movies",
+                "markers",
+                "galleries",
+                "performers",
+                "studios",
+                "tags",
+            )
 
         const val PREF_TRACK_ACTIVITY = "trackActivity"
         const val PREF_MINIMUM_PLAY_PERCENT = "minimumPlayPercent"

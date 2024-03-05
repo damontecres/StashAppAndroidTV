@@ -1,0 +1,52 @@
+query FindGalleries($filter: FindFilterType, $gallery_filter: GalleryFilterType) {
+  findGalleries(filter: $filter, gallery_filter: $gallery_filter) {
+    count
+    galleries {
+      ...GalleryData
+    }
+  }
+}
+
+query FindGallery($id: ID!) {
+  findGallery(id: $id) {
+    ...GalleryData
+  }
+}
+
+fragment GalleryData on Gallery {
+  id
+  title
+  image_count
+  date
+  details
+  rating100
+  files {
+    path
+  }
+  folder {
+    path
+  }
+  performers {
+    id
+    name
+  }
+  tags {
+    id
+    name
+  }
+  studio {
+    id
+    name
+  }
+  scenes {
+    id
+  }
+  cover {
+    id
+    paths {
+      thumbnail
+      image
+      preview
+    }
+  }
+}

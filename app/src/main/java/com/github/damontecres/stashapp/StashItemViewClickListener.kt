@@ -10,6 +10,8 @@ import androidx.leanback.widget.RowPresenter
 import com.github.damontecres.stashapp.VideoDetailsFragment.Companion.POSITION_ARG
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
+import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -23,6 +25,7 @@ import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.util.name
 
 /**
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc
@@ -70,6 +73,22 @@ class StashItemViewClickListener(
                 Scene.fromSlimSceneData(item.scene.slimSceneData),
             )
             intent.putExtra(POSITION_ARG, (item.seconds * 1000).toLong())
+            context.startActivity(intent)
+        } else if (item is ImageData) {
+            val intent = Intent(context, ImageActivity::class.java)
+            intent.putExtra(ImageActivity.INTENT_IMAGE_ID, item.id)
+            intent.putExtra(ImageActivity.INTENT_IMAGE_URL, item.paths.image)
+            intent.putExtra(
+                ImageActivity.INTENT_IMAGE_SIZE,
+                item.visual_files.maxOfOrNull {
+                    it.onBaseFile?.size?.toString()?.toInt() ?: -1
+                } ?: -1,
+            )
+            context.startActivity(intent)
+        } else if (item is GalleryData) {
+            val intent = Intent(context, GalleryActivity::class.java)
+            intent.putExtra(GalleryActivity.INTENT_GALLERY_ID, item.id)
+            intent.putExtra(GalleryActivity.INTENT_GALLERY_NAME, item.name)
             context.startActivity(intent)
         } else if (item is StashSavedFilter) {
             val intent = Intent(context, FilterListActivity::class.java)

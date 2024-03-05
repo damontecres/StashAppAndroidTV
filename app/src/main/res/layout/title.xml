@@ -7,7 +7,7 @@
 
     <ImageView
         android:id="@+id/icon"
-        android:layout_width="80dp"
+        android:layout_width="60dp"
         android:layout_height="match_parent"
         android:src="@mipmap/stash_logo"
         android:contentDescription="@string/stashapp_image"
@@ -16,7 +16,6 @@
     <ImageButton
         android:id="@+id/search_button"
         android:layout_width="56dp"
-        android:layout_height="80dp"
         android:src="@drawable/lb_ic_in_app_search"
         android:layout_toEndOf="@id/icon"
         style="@style/TitleBarButton"
@@ -25,55 +24,56 @@
     <Button
         android:id="@+id/scenes_button"
         android:text="@string/stashapp_scenes"
-        android:layout_width="88dp"
-        android:layout_height="80dp"
         android:layout_toEndOf="@id/search_button"
+        style="@style/TitleBarButton" />
+
+    <Button
+        android:id="@+id/images_button"
+        android:text="@string/stashapp_images"
+        android:layout_toEndOf="@+id/scenes_button"
         style="@style/TitleBarButton" />
 
     <Button
         android:id="@+id/movies_button"
         android:text="@string/stashapp_movies"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:layout_toEndOf="@+id/scenes_button"
+        android:layout_toEndOf="@+id/images_button"
         style="@style/TitleBarButton" />
 
     <Button
         android:id="@+id/markers_button"
         android:text="@string/stashapp_markers"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
         android:layout_toEndOf="@+id/movies_button"
+        style="@style/TitleBarButton" />
+
+    <Button
+        android:id="@+id/galleries_button"
+        android:text="@string/stashapp_galleries"
+        android:layout_toEndOf="@+id/markers_button"
         style="@style/TitleBarButton" />
 
     <Button
         android:id="@+id/performers_button"
         android:text="@string/stashapp_performers"
         android:layout_width="120dp"
-        android:layout_height="80dp"
-        android:layout_toEndOf="@+id/markers_button"
+        android:layout_toEndOf="@+id/galleries_button"
         style="@style/TitleBarButton" />
 
     <Button
         android:id="@+id/studios_button"
         android:text="@string/stashapp_studios"
-        android:layout_width="88dp"
-        android:layout_height="80dp"
         android:layout_toEndOf="@+id/performers_button"
         style="@style/TitleBarButton" />
 
     <Button
         android:id="@+id/tags_button"
         android:text="@string/stashapp_tags"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+        android:layout_width="60dp"
         android:layout_toEndOf="@+id/studios_button"
         style="@style/TitleBarButton" />
 
     <ImageButton
         android:id="@+id/settings_button"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+        android:layout_width="56dp"
         android:layout_gravity="end"
         android:contentDescription="@string/stashapp_settings"
         android:src="@drawable/vector_settings"
