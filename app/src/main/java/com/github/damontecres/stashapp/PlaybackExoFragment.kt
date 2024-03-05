@@ -135,7 +135,8 @@ class PlaybackExoFragment :
                                             requireActivity().finish()
                                         }
                                     }
-                                })
+                                },
+                            )
 
                         getString(R.string.playback_finished_do_nothing) -> {
                             // no-op

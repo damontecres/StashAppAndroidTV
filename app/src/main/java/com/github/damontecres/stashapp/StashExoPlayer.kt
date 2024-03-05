@@ -15,7 +15,8 @@ class StashExoPlayer private constructor() {
     companion object {
         private val listeners: MutableList<Player.Listener> = mutableListOf()
 
-        @Volatile private var instance: ExoPlayer? = null // Volatile modifier is necessary
+        @Volatile
+        private var instance: ExoPlayer? = null // Volatile modifier is necessary
 
         @OptIn(UnstableApi::class)
         fun getInstance(context: Context): ExoPlayer {

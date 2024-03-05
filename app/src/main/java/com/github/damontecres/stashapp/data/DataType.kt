@@ -41,6 +41,18 @@ enum class DataType(
         SortAndDirection.NAME_ASC,
     ),
     TAG(FilterMode.TAGS, R.string.stashapp_tag, R.string.stashapp_tags, SortAndDirection.NAME_ASC),
+    IMAGE(
+        FilterMode.IMAGES,
+        R.string.stashapp_image,
+        R.string.stashapp_images,
+        SortAndDirection.PATH_ASC,
+    ),
+    GALLERY(
+        FilterMode.GALLERIES,
+        R.string.stashapp_gallery,
+        R.string.stashapp_galleries,
+        SortAndDirection.PATH_ASC,
+    ),
     ;
 
     val asDefaultFindFilterType get() = defaultSort.asFindFilterType

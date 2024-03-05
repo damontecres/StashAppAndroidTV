@@ -8,7 +8,8 @@ import androidx.leanback.widget.RowPresenter
 /**
  * An OnItemViewClickedListener which delegates clicks based on the class of the item, falling back to a default implementation if available
  */
-class ClassOnItemViewClickedListener(private val defaultListener: OnItemViewClickedListener? = null) : OnItemViewClickedListener {
+class ClassOnItemViewClickedListener(private val defaultListener: OnItemViewClickedListener? = null) :
+    OnItemViewClickedListener {
     private val classMap = mutableMapOf<Class<*>, OnItemViewClickedListener>()
 
     fun addListenerForClass(

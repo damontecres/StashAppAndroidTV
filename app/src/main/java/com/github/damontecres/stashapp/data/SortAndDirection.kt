@@ -9,5 +9,6 @@ data class SortAndDirection(val sort: String, val direction: SortDirectionEnum) 
 
     companion object {
         val NAME_ASC = SortAndDirection("name", SortDirectionEnum.ASC)
+        val PATH_ASC = SortAndDirection("path", SortDirectionEnum.ASC)
     }
 }

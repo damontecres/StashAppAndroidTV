@@ -68,6 +68,13 @@ class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
                 )
             }
 
+            FilterMode.IMAGES -> {
+                cardView.setMainImageDimensions(
+                    ImagePresenter.CARD_WIDTH,
+                    ImagePresenter.CARD_HEIGHT,
+                )
+            }
+
             else -> {}
 //            FilterMode.GALLERIES -> TODO()
 //            FilterMode.IMAGES -> TODO()

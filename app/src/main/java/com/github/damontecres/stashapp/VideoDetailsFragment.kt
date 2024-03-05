@@ -30,10 +30,8 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
-import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
@@ -58,7 +56,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
@@ -440,11 +438,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val screenshotUrl = mSelectedMovie!!.paths.screenshot
 
         if (screenshotUrl.isNotNullOrBlank()) {
-            val url = createGlideUrl(screenshotUrl, requireContext())
-            Glide.with(requireActivity())
-                .asBitmap()
+            StashGlide.withBitmap(requireActivity(), screenshotUrl)
                 .centerCrop()
-                .load(url)
                 .error(R.drawable.baseline_camera_indoor_48)
                 .into<CustomTarget<Bitmap>>(
                     object : CustomTarget<Bitmap>() {
@@ -471,9 +466,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         val screenshotUrl = mSelectedMovie?.paths?.screenshot
         if (!screenshotUrl.isNullOrBlank()) {
-            val url = createGlideUrl(screenshotUrl, requireContext())
-            Glide.with(requireActivity())
-                .load(url)
+            StashGlide.with(requireActivity(), screenshotUrl)
                 .centerCrop()
                 .error(StashPresenter.glideError(requireContext()))
                 .into<CustomTarget<Drawable>>(
@@ -750,7 +743,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     setupPlayActionsAdapter()
                     val serverPreferences = ServerPreferences(requireContext())
                     if (serverPreferences.trackActivity) {
-                        viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                             Log.v(TAG, "ResultCallback saveSceneActivity start")
                             MutationEngine(requireContext(), false).saveSceneActivity(
                                 mSelectedMovie!!.id.toLong(),

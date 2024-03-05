@@ -2,11 +2,12 @@ package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.graphics.drawable.PictureDrawable
-import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
+import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
 import com.bumptech.glide.annotation.GlideModule
 import com.bumptech.glide.integration.okhttp3.OkHttpUrlLoader
+import com.bumptech.glide.load.engine.cache.InternalCacheDiskCacheFactory
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.module.AppGlideModule
 import com.caverock.androidsvg.SVG
@@ -25,18 +26,21 @@ class StashGlideModule : AppGlideModule() {
         glide: Glide,
         registry: Registry,
     ) {
-        val trustAll =
-            PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean("trustAllCerts", false)
-        if (trustAll) {
-            registry.replace<GlideUrl, InputStream>(
-                GlideUrl::class.java,
-                InputStream::class.java,
-                OkHttpUrlLoader.Factory(createOkHttpClient(context)),
-            )
-        }
+        registry.replace<GlideUrl, InputStream>(
+            GlideUrl::class.java,
+            InputStream::class.java,
+            OkHttpUrlLoader.Factory(createOkHttpClient(context)),
+        )
         registry
             .register(SVG::class.java, PictureDrawable::class.java, SvgDrawableTranscoder())
             .append(InputStream::class.java, SVG::class.java, SvgDecoder())
+    }
+
+    override fun applyOptions(
+        context: Context,
+        builder: GlideBuilder,
+    ) {
+        val diskCacheSizeBytes = 1024 * 1024 * 100 // 100 MB
+        builder.setDiskCache(InternalCacheDiskCacheFactory(context, diskCacheSizeBytes.toLong()))
     }
 }
