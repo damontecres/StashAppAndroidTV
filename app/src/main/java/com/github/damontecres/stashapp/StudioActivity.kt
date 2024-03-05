@@ -9,17 +9,23 @@ import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
+import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
+import com.github.damontecres.stashapp.util.GalleryComparator
+import com.github.damontecres.stashapp.util.ImageComparator
 import com.github.damontecres.stashapp.util.ListFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.MovieComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
@@ -41,6 +47,8 @@ class StudioActivity : FragmentActivity() {
             val tabTitles =
                 listOf(
                     getString(DataType.SCENE.pluralStringId),
+                    getString(DataType.GALLERY.pluralStringId),
+                    getString(DataType.IMAGE.pluralStringId),
                     getString(DataType.PERFORMER.pluralStringId),
                     getString(DataType.MOVIE.pluralStringId),
                     getString(R.string.stashapp_subsidiary_studios),
@@ -72,6 +80,36 @@ class StudioActivity : FragmentActivity() {
                 )
             } else if (position == 1) {
                 StashGridFragment(
+                    GalleryComparator,
+                    GalleryDataSupplier(
+                        GalleryFilterType(
+                            studios =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(listOf(studioId)),
+                                        modifier = CriterionModifier.INCLUDES,
+                                    ),
+                                ),
+                        ),
+                    ),
+                )
+            } else if (position == 2) {
+                StashGridFragment(
+                    ImageComparator,
+                    ImageDataSupplier(
+                        ImageFilterType(
+                            studios =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(listOf(studioId)),
+                                        modifier = CriterionModifier.INCLUDES,
+                                    ),
+                                ),
+                        ),
+                    ),
+                )
+            } else if (position == 3) {
+                StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(
                         PerformerFilterType(
@@ -85,7 +123,7 @@ class StudioActivity : FragmentActivity() {
                         ),
                     ),
                 )
-            } else if (position == 2) {
+            } else if (position == 4) {
                 StashGridFragment(
                     MovieComparator,
                     MovieDataSupplier(
@@ -100,7 +138,7 @@ class StudioActivity : FragmentActivity() {
                         ),
                     ),
                 )
-            } else if (position == 3) {
+            } else if (position == 5) {
                 StashGridFragment(
                     StudioComparator,
                     StudioDataSupplier(
