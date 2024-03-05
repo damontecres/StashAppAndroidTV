@@ -26,6 +26,8 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.cache.DiskCache
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -33,8 +35,11 @@ import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.configureHttpsTrust
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.Cache
+import java.io.File
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
@@ -312,14 +317,16 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val cacheSizePref = findPreference<SeekBarPreference>("networkCacheSize")!!
             cacheSizePref.min = 25
-            val cache = Cache(requireContext().cacheDir, cacheSizePref.value * 1024L * 1024)
+            val cache = Constants.getNetworkCache(requireContext())
             setUsedCachedSummary(cacheSizePref, cache)
 
             findPreference<Preference>("clearCache")?.setOnPreferenceClickListener {
                 cache.evictAll()
-                setUsedCachedSummary(cacheSizePref, cache)
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    Glide.get(requireContext()).clearDiskCache()
+                    withContext(Dispatchers.IO) {
+                        Glide.get(requireContext()).clearDiskCache()
+                    }
+                    setUsedCachedSummary(cacheSizePref, cache)
                 }
                 true
             }
@@ -350,8 +357,17 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             cache: Cache,
         ) {
             val cacheSize = cache.size() / 1024.0 / 1024
+            val glideCacheSize =
+                File(
+                    requireContext().cacheDir,
+                    DiskCache.Factory.DEFAULT_DISK_CACHE_DIR,
+                ).walkTopDown()
+                    .filter { it.isFile }.map { it.length() }.sum() / 1024.0 / 1024.0
             val cacheSizeFormatted = String.format("%.2f", cacheSize)
-            cacheSizePref.summary = "Using $cacheSizeFormatted MB"
+            val glideCacheSizeFormatted = String.format("%.2f", glideCacheSize)
+
+            cacheSizePref.summary =
+                "Using $cacheSizeFormatted MB (Images $glideCacheSizeFormatted MB)"
         }
 
         override fun onResume() {

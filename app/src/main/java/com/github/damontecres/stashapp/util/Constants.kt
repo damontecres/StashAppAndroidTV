@@ -36,6 +36,7 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants.OK_HTTP_TAG
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
+import com.github.damontecres.stashapp.util.Constants.getNetworkCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Cache
@@ -68,6 +69,7 @@ object Constants {
     const val STASH_API_HEADER = "ApiKey"
     const val TAG = "Constants"
     const val OK_HTTP_TAG = "$TAG.OkHttpClient"
+    const val OK_HTTP_CACHE_DIR = "okhttpcache"
 
     /**
      * Converts seconds into a Duration string where fractional seconds are removed
@@ -77,6 +79,13 @@ object Constants {
             .times(100L).toLong()
             .div(100L).toDuration(DurationUnit.SECONDS)
             .toString()
+    }
+
+    fun getNetworkCache(context: Context): Cache {
+        val cacheSize =
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .getLong("networkCache", 100) * 1024 * 1024
+        return Cache(File(context.cacheDir, OK_HTTP_CACHE_DIR), cacheSize)
     }
 }
 
@@ -106,7 +115,6 @@ fun createOkHttpClient(context: Context): OkHttpClient {
     val manager = PreferenceManager.getDefaultSharedPreferences(context)
     val trustAll = manager.getBoolean("trustAllCerts", false)
     val apiKey = manager.getString("stashApiKey", null)
-    val cacheSize = manager.getLong("networkCache", 100) * 1024 * 1024
     val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
     val cacheLogging = manager.getBoolean("networkCacheLogging", false)
 
@@ -174,7 +182,7 @@ fun createOkHttpClient(context: Context): OkHttpClient {
                 it.proceed(request)
             }
     }
-    builder = builder.cache(Cache(context.cacheDir, cacheSize))
+    builder = builder.cache(getNetworkCache(context))
     return builder.build()
 }
 
