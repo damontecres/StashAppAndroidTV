@@ -1,0 +1,18 @@
+{
+  "data": {
+    "findSavedFilter": {
+      "id": "51",
+      "mode": "STUDIOS",
+      "name": "Child Studios",
+      "object_filter": {
+        "child_count": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": 3
+          }
+        }
+      },
+      "__typename": "SavedFilter"
+    }
+  }
+}

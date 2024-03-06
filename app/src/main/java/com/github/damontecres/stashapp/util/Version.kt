@@ -8,35 +8,77 @@ data class Version(
     val hash: String? = null,
 ) {
     fun isAtLeast(version: Version): Boolean {
-        return this.major > version.major || (
-            this.major == version.major &&
-                (
-                    this.minor > version.minor || this.minor == version.minor &&
-                        this.patch >= version.patch
-                )
-        )
+        if (this.major > version.major) {
+            return true
+        } else if (this.major == version.major) {
+            if (this.minor > version.minor) {
+                return true
+            } else if (this.minor == version.minor) {
+                if (this.patch > version.patch) {
+                    return true
+                } else if (this.patch == version.patch) {
+                    if (this.compareNumCommits(version) >= 0) {
+                        return true
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    fun isGreaterThan(version: Version): Boolean {
+        if (this.major > version.major) {
+            return true
+        } else if (this.major == version.major) {
+            if (this.minor > version.minor) {
+                return true
+            } else if (this.minor == version.minor) {
+                if (this.patch > version.patch) {
+                    return true
+                } else if (this.patch == version.patch) {
+                    if (this.compareNumCommits(version) > 0) {
+                        return true
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    private fun compareNumCommits(version: Version): Int {
+        return (this.numCommits ?: 0) - (version.numCommits ?: 0)
     }
 
     companion object {
-        private val MINIMUM_STASH_VERSION = fromString("0.23.0")
+        private val VERSION_REGEX = Regex("v?(\\d+)\\.(\\d+)\\.(\\d+)(-(\\d+)-g([a-zA-Z0-9]+))?")
+        val MINIMUM_STASH_VERSION = fromString("0.23.0")
+        val V0_24_3 = fromString("v0.24.3")
+        val V0_25_0 = fromString("v0.25.0")
 
         fun fromString(version: String): Version {
-            if (version.contains("-g")) {
-                val splits = version.removePrefix("v").split(".")
-                val major = splits[0].toInt()
-                val minor = splits[1].toInt()
-                val patchString = splits[2]
-                val patchSplit = patchString.split("-")
-                val patch = patchSplit[0].toInt()
-                val numCommits = patchSplit[1].toInt()
-                val hash = patchSplit[2].removePrefix("g")
-                return Version(major, minor, patch, numCommits, hash)
+            val v = tryFromString(version)
+            if (v == null) {
+                throw IllegalArgumentException()
             } else {
-                val splits = version.removePrefix("v").split(".")
-                val major = splits[0].toInt()
-                val minor = splits[1].toInt()
-                val patch = splits[2].toInt()
-                return Version(major, minor, patch)
+                return v
+            }
+        }
+
+        fun tryFromString(version: String?): Version? {
+            if (version == null) {
+                return null
+            }
+            val m = VERSION_REGEX.matchEntire(version)
+            return if (m == null) {
+                null
+            } else {
+                val major = m.groups[1]!!.value.toInt()
+                val minor = m.groups[2]!!.value.toInt()
+                val patch = m.groups[3]!!.value.toInt()
+                // group 4 is the optional commit info
+                val numCommits = m.groups[5]?.value?.toInt()
+                val hash = m.groups[6]?.value
+                Version(major, minor, patch, numCommits, hash)
             }
         }
 

@@ -3,10 +3,11 @@ package com.github.damontecres.stashapp
 import com.apollographql.apollo3.api.json.BufferedSourceJsonReader
 import com.apollographql.apollo3.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
-import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FilterMode
+import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.Version
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import org.junit.Assert
@@ -17,16 +18,8 @@ import org.mockito.junit.MockitoJUnitRunner
 
 @RunWith(MockitoJUnitRunner::class)
 class ObjectFilterParsingTests {
-    private val serverInfo =
-        ServerInfoQuery.Data(
-            version = ServerInfoQuery.Version("0.23.0"),
-            stats = ServerInfoQuery.Stats(1),
-        )
-
     @Before
     fun init() {
-//        val mockContext = mock<Context> {}
-        FilterParser.initialize(serverInfo)
     }
 
     /**
@@ -45,7 +38,7 @@ class ObjectFilterParsingTests {
     fun testSceneFilter() {
         val savedFilterData = getSavedFilterData("scene_savedfilter.json")
         val sceneFilter =
-            FilterParser.instance.convertSceneObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.V0_24_3).convertSceneObjectFilter(savedFilterData.object_filter)
         Assert.assertNotNull(sceneFilter!!)
         Assert.assertEquals(FilterMode.SCENES, savedFilterData.mode)
         Assert.assertEquals(
@@ -78,7 +71,7 @@ class ObjectFilterParsingTests {
     fun testPerformerFilter() {
         val savedFilterData = getSavedFilterData("performer_savedfilter.json")
         val performerFilter =
-            FilterParser.instance.convertPerformerObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.V0_24_3).convertPerformerObjectFilter(savedFilterData.object_filter)
         Assert.assertNotNull(performerFilter!!)
         Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
 
@@ -89,5 +82,37 @@ class ObjectFilterParsingTests {
             "94",
             performerFilter.studios.getOrThrow()!!.excludes.getOrThrow()!!.first(),
         )
+        Assert.assertNull(performerFilter.gender.getOrThrow()!!.value_list.getOrNull())
+    }
+
+    @Test
+    fun testGenderFilter() {
+        val savedFilterData = getSavedFilterData("gender_savedfilter.json")
+        val performerFilter =
+            FilterParser(Version.V0_25_0).convertPerformerObjectFilter(savedFilterData.object_filter)
+        Assert.assertNotNull(performerFilter!!)
+        Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
+
+        Assert.assertNull(performerFilter.gender.getOrThrow()!!.value.getOrNull())
+        Assert.assertEquals(2, performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!.size)
+        Assert.assertTrue(
+            performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!
+                .contains(GenderEnum.MALE),
+        )
+        Assert.assertTrue(
+            performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!
+                .contains(GenderEnum.FEMALE),
+        )
+    }
+
+    @Test
+    fun testStudioChildrenFilter() {
+        val savedFilterData = getSavedFilterData("studio_children_savedfilter.json")
+        val studioFilter =
+            FilterParser(Version.V0_25_0).convertStudioObjectFilter(savedFilterData.object_filter)
+        Assert.assertNotNull(studioFilter!!)
+        Assert.assertEquals(FilterMode.STUDIOS, savedFilterData.mode)
+
+        Assert.assertEquals(3, studioFilter.child_count.getOrThrow()!!.value)
     }
 }
