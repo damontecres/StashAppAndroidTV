@@ -370,7 +370,7 @@ class FilterListActivity : FragmentActivity() {
                     if (objectFilter is ImageFilterType) {
                         objectFilter
                     } else {
-                        FilterParser.instance.convertImageObjectFilter(objectFilter)
+                        filterParser.convertImageObjectFilter(objectFilter)
                     }
                 StashGridFragment(
                     ImageComparator,
@@ -385,7 +385,7 @@ class FilterListActivity : FragmentActivity() {
                     if (objectFilter is GalleryFilterType) {
                         objectFilter
                     } else {
-                        FilterParser.instance.convertGalleryObjectFilter(objectFilter)
+                        filterParser.convertGalleryObjectFilter(objectFilter)
                     }
                 StashGridFragment(
                     GalleryComparator,
