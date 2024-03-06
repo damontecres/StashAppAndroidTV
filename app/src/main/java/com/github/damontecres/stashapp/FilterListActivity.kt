@@ -51,6 +51,7 @@ import com.github.damontecres.stashapp.util.MovieComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.SceneComparator
+import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StudioComparator
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.convertFilter
@@ -282,10 +283,10 @@ class FilterListActivity : FragmentActivity() {
         val performerCardSize =
             (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / PerformerPresenter.CARD_WIDTH)).toInt()
         // TODO other sizes
+        val filterParser = FilterParser(ServerPreferences(this).serverVersion)
         return when (dataType) {
             DataType.SCENE -> {
-                val sceneFilter =
-                    FilterParser.instance.convertSceneObjectFilter(objectFilter)
+                val sceneFilter = filterParser.convertSceneObjectFilter(objectFilter)
                 StashGridFragment(
                     SceneComparator,
                     SceneDataSupplier(findFilter, sceneFilter),
@@ -295,8 +296,7 @@ class FilterListActivity : FragmentActivity() {
             }
 
             DataType.STUDIO -> {
-                val studioFilter =
-                    FilterParser.instance.convertStudioObjectFilter(objectFilter)
+                val studioFilter = filterParser.convertStudioObjectFilter(objectFilter)
                 StashGridFragment(
                     StudioComparator,
                     StudioDataSupplier(findFilter, studioFilter),
@@ -307,7 +307,7 @@ class FilterListActivity : FragmentActivity() {
 
             DataType.PERFORMER -> {
                 val performerFilter =
-                    FilterParser.instance.convertPerformerObjectFilter(objectFilter)
+                    filterParser.convertPerformerObjectFilter(objectFilter)
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(findFilter, performerFilter),
@@ -317,8 +317,7 @@ class FilterListActivity : FragmentActivity() {
             }
 
             DataType.TAG -> {
-                val tagFilter =
-                    FilterParser.instance.convertTagObjectFilter(objectFilter)
+                val tagFilter = filterParser.convertTagObjectFilter(objectFilter)
                 val selectorPresenter =
                     ClassPresenterSelector().addClassPresenter(
                         TagData::class.java,
@@ -335,7 +334,7 @@ class FilterListActivity : FragmentActivity() {
             }
 
             DataType.MOVIE -> {
-                val movieFilter = FilterParser.instance.convertMovieObjectFilter(objectFilter)
+                val movieFilter = filterParser.convertMovieObjectFilter(objectFilter)
                 StashGridFragment(
                     MovieComparator,
                     MovieDataSupplier(findFilter, movieFilter),
@@ -349,7 +348,7 @@ class FilterListActivity : FragmentActivity() {
                     if (objectFilter is SceneMarkerFilterType) {
                         objectFilter
                     } else {
-                        FilterParser.instance.convertMarkerObjectFilter(objectFilter)
+                        filterParser.convertMarkerObjectFilter(objectFilter)
                     }
                 val selectorPresenter =
                     ClassPresenterSelector().addClassPresenter(

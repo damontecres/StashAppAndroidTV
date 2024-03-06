@@ -13,7 +13,10 @@ import com.github.damontecres.stashapp.api.CreateMarkerMutation
 import com.github.damontecres.stashapp.api.DeleteMarkerMutation
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
+import com.github.damontecres.stashapp.api.SceneAddOMutation
+import com.github.damontecres.stashapp.api.SceneAddPlayCountMutation
 import com.github.damontecres.stashapp.api.SceneDecrementOMutation
+import com.github.damontecres.stashapp.api.SceneDeleteOMutation
 import com.github.damontecres.stashapp.api.SceneIncrementOMutation
 import com.github.damontecres.stashapp.api.SceneIncrementPlayCountMutation
 import com.github.damontecres.stashapp.api.SceneResetOMutation
@@ -121,9 +124,15 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
 
     suspend fun incrementPlayCount(sceneId: Long): Int {
         Log.v(TAG, "incrementPlayCount on $sceneId")
-        val mutation = SceneIncrementPlayCountMutation(sceneId.toString())
-        val result = executeMutation(mutation)
-        return result.data!!.sceneIncrementPlayCount
+        return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
+            val mutation = SceneAddPlayCountMutation(sceneId.toString(), emptyList())
+            val result = executeMutation(mutation)
+            result.data!!.sceneAddPlay.count
+        } else {
+            val mutation = SceneIncrementPlayCountMutation(sceneId.toString())
+            val result = executeMutation(mutation)
+            result.data!!.sceneIncrementPlayCount
+        }
     }
 
     private fun getServerBoolean(preferenceKey: String): Optional<Boolean> {
@@ -206,15 +215,27 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
     }
 
     suspend fun incrementOCounter(sceneId: Int): OCounter {
-        val mutation = SceneIncrementOMutation(sceneId.toString())
-        val result = executeMutation(mutation)
-        return OCounter(sceneId, result.data!!.sceneIncrementO)
+        return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
+            val mutation = SceneAddOMutation(sceneId.toString(), emptyList())
+            val result = executeMutation(mutation)
+            OCounter(sceneId, result.data!!.sceneAddO.count)
+        } else {
+            val mutation = SceneIncrementOMutation(sceneId.toString())
+            val result = executeMutation(mutation)
+            OCounter(sceneId, result.data!!.sceneIncrementO)
+        }
     }
 
     suspend fun decrementOCounter(sceneId: Int): OCounter {
-        val mutation = SceneDecrementOMutation(sceneId.toString())
-        val result = executeMutation(mutation)
-        return OCounter(sceneId, result.data!!.sceneDecrementO)
+        return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
+            val mutation = SceneDeleteOMutation(sceneId.toString(), emptyList())
+            val result = executeMutation(mutation)
+            OCounter(sceneId, result.data!!.sceneDeleteO.count)
+        } else {
+            val mutation = SceneDecrementOMutation(sceneId.toString())
+            val result = executeMutation(mutation)
+            OCounter(sceneId, result.data!!.sceneDecrementO)
+        }
     }
 
     suspend fun resetOCounter(sceneId: Int): OCounter {
