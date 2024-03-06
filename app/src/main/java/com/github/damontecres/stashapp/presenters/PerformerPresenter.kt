@@ -17,10 +17,13 @@ class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
             item.name + (if (!item.disambiguation.isNullOrBlank()) " (${item.disambiguation})" else "")
         cardView.titleText = title
 
-        if (item.birthdate != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val yearsOldStr = cardView.context.getString(R.string.stashapp_years_old)
-            cardView.contentText = "${item.ageInYears} $yearsOldStr"
-        }
+        cardView.contentText =
+            if (item.birthdate != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val yearsOldStr = cardView.context.getString(R.string.stashapp_years_old)
+                "${item.ageInYears} $yearsOldStr"
+            } else {
+                null
+            }
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.SCENE] = item.scene_count
