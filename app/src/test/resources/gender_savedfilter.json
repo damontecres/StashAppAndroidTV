@@ -1,0 +1,19 @@
+{
+  "data": {
+    "findSavedFilter": {
+      "id": "50",
+      "mode": "PERFORMERS",
+      "name": "Male-Female",
+      "object_filter": {
+        "gender": {
+          "modifier": "INCLUDES",
+          "value": [
+            "Male",
+            "Female"
+          ]
+        }
+      },
+      "__typename": "SavedFilter"
+    }
+  }
+}

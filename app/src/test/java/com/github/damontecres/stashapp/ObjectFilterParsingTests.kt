@@ -5,6 +5,7 @@ import com.apollographql.apollo3.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FilterMode
+import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.Version
 import okio.FileSystem
@@ -81,5 +82,37 @@ class ObjectFilterParsingTests {
             "94",
             performerFilter.studios.getOrThrow()!!.excludes.getOrThrow()!!.first(),
         )
+        Assert.assertNull(performerFilter.gender.getOrThrow()!!.value_list.getOrNull())
+    }
+
+    @Test
+    fun testGenderFilter() {
+        val savedFilterData = getSavedFilterData("gender_savedfilter.json")
+        val performerFilter =
+            FilterParser(Version.V0_25_0).convertPerformerObjectFilter(savedFilterData.object_filter)
+        Assert.assertNotNull(performerFilter!!)
+        Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
+
+        Assert.assertNull(performerFilter.gender.getOrThrow()!!.value.getOrNull())
+        Assert.assertEquals(2, performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!.size)
+        Assert.assertTrue(
+            performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!
+                .contains(GenderEnum.MALE),
+        )
+        Assert.assertTrue(
+            performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!
+                .contains(GenderEnum.FEMALE),
+        )
+    }
+
+    @Test
+    fun testStudioChildrenFilter() {
+        val savedFilterData = getSavedFilterData("studio_children_savedfilter.json")
+        val studioFilter =
+            FilterParser(Version.V0_25_0).convertStudioObjectFilter(savedFilterData.object_filter)
+        Assert.assertNotNull(studioFilter!!)
+        Assert.assertEquals(FilterMode.STUDIOS, savedFilterData.mode)
+
+        Assert.assertEquals(3, studioFilter.child_count.getOrThrow()!!.value)
     }
 }
