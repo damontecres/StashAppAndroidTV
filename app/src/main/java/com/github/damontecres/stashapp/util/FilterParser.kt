@@ -159,7 +159,7 @@ class FilterParser(private val serverVersion: Version) {
         return if (it != null) {
             if (serverVersion.isGreaterThan(Version.V0_24_3)) {
                 val value = it["value"]
-                val values =
+                var values =
                     if (value is List<*>) {
                         val v = value.filterNotNull().map { it.toString() }
                         v
@@ -169,7 +169,8 @@ class FilterParser(private val serverVersion: Version) {
                     } else {
                         val v = emptyList<String>()
                         v
-                    }.map { it.uppercase().replace(" ", "_") }
+                    }
+                values = values.map { it.uppercase().replace(" ", "_") }
 
                 GenderCriterionInput(
                     Optional.absent(),
