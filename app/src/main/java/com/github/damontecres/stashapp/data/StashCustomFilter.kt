@@ -11,4 +11,7 @@ data class StashCustomFilter(
     val sortBy: String?,
     val description: String,
     val query: String? = null,
-) : Parcelable
+) : Parcelable, StashFilter {
+    override val filterType: FilterType
+        get() = FilterType.CUSTOM_FILTER
+}

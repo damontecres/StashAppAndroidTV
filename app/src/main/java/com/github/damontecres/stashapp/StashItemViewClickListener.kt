@@ -25,7 +25,7 @@ import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
-import com.github.damontecres.stashapp.util.maxFileSize
+import com.github.damontecres.stashapp.util.addToIntent
 import com.github.damontecres.stashapp.util.name
 
 /**
@@ -77,9 +77,7 @@ class StashItemViewClickListener(
             context.startActivity(intent)
         } else if (item is ImageData) {
             val intent = Intent(context, ImageActivity::class.java)
-            intent.putExtra(ImageActivity.INTENT_IMAGE_ID, item.id)
-            intent.putExtra(ImageActivity.INTENT_IMAGE_URL, item.paths.image)
-            intent.putExtra(ImageActivity.INTENT_IMAGE_SIZE, item.maxFileSize)
+            item.addToIntent(intent)
             context.startActivity(intent)
         } else if (item is GalleryData) {
             val intent = Intent(context, GalleryActivity::class.java)

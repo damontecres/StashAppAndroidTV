@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.util
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
@@ -26,6 +27,7 @@ import com.apollographql.apollo3.network.http.HttpInterceptor
 import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -525,3 +527,10 @@ val ImageData.maxFileSize: Int
         visual_files.maxOfOrNull {
             it.onBaseFile?.size?.toString()?.toInt() ?: -1
         } ?: -1
+
+fun ImageData.addToIntent(intent: Intent): Intent {
+    intent.putExtra(ImageActivity.INTENT_IMAGE_ID, id)
+    intent.putExtra(ImageActivity.INTENT_IMAGE_URL, paths.image)
+    intent.putExtra(ImageActivity.INTENT_IMAGE_SIZE, maxFileSize)
+    return intent
+}
