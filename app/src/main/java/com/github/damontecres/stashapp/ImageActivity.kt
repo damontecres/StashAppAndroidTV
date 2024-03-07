@@ -91,7 +91,8 @@ class ImageActivity : FragmentActivity() {
                     )
                 pagingSource = StashPagingSource(this, pageSize, dataSupplier)
                 lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val currentPage = currentPosition / pageSize
+                    val currentPage = currentPosition / pageSize + 1
+                    Log.v(TAG, "Initial data load for position=$currentPosition, page $currentPage")
                     currentPageData = pagingSource.fetchPage(currentPage, pageSize)
                     canScrollImages = true
                 }
@@ -121,7 +122,11 @@ class ImageActivity : FragmentActivity() {
                             pagingSource =
                                 StashPagingSource(this@ImageActivity, pageSize, dataSupplier)
                             lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                                val currentPage = currentPosition / pageSize
+                                val currentPage = currentPosition / pageSize + 1
+                                Log.v(
+                                    TAG,
+                                    "Initial data load for position=$currentPosition, page $currentPage",
+                                )
                                 currentPageData = pagingSource.fetchPage(currentPage, pageSize)
                                 canScrollImages = true
                             }
@@ -141,7 +146,11 @@ class ImageActivity : FragmentActivity() {
                     pagingSource =
                         StashPagingSource(this@ImageActivity, pageSize, dataSupplier)
                     lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        val currentPage = currentPosition / pageSize
+                        val currentPage = currentPosition / pageSize + 1
+                        Log.v(
+                            TAG,
+                            "Initial data load for position=$currentPosition, page $currentPage",
+                        )
                         currentPageData = pagingSource.fetchPage(currentPage, pageSize)
                         canScrollImages = true
                     }
@@ -204,7 +213,7 @@ class ImageActivity : FragmentActivity() {
     }
 
     private fun switchImage(newPosition: Int) {
-        Log.v(TAG, "switchImage to $newPosition")
+        Log.v(TAG, "switchImage $currentPosition => $newPosition")
         if (canScrollImages) {
             if (newPosition >= 0) {
                 lifecycleScope.launch(StashCoroutineExceptionHandler()) {
@@ -231,28 +240,36 @@ class ImageActivity : FragmentActivity() {
     private suspend fun fetchImageData(newPosition: Int): ImageData? {
         val pageSize =
             PreferenceManager.getDefaultSharedPreferences(this).getInt("maxSearchResults", 25)
-        val currentPage = newPosition / pageSize
-        val listPos = newPosition - currentPage * pageSize
-        Log.v(TAG, "fetchImageData currentPage=$currentPage, listPos=$listPos")
-        if (listPos < 0) {
+        val currentPage = currentPosition / pageSize + 1
+        val pageStart = (currentPosition / pageSize) * pageSize
+        val pageEnd = pageStart + pageSize - 1
+        val listPos = newPosition - pageStart
+        Log.v(
+            TAG,
+            "fetchImageData currentPage=$currentPage, pageStart=$pageStart, pageEnd=$pageEnd, listPos=$listPos",
+        )
+        if (newPosition < pageStart) {
             Log.v(TAG, "Fetching previous page")
             // fetch previous page
             currentPageData = pagingSource.fetchPage(currentPage - 1, pageSize)
-            val newListPos = newPosition - (currentPage - 1) * pageSize
+            val newListPos = newPosition - (pageStart - pageSize)
             return currentPageData.list[newListPos]
-        } else if (listPos >= currentPageData.count) {
+        } else if (newPosition > pageEnd) {
             // fetch next page
             Log.v(TAG, "Fetching next page")
             currentPageData = pagingSource.fetchPage(currentPage + 1, pageSize)
-            val newListPos = newPosition - (currentPage + 1) * pageSize
+            val newListPos = newPosition - (pageStart + pageSize)
             if (currentPageData.list.isEmpty() || newListPos < 0) {
                 Log.v(TAG, "End of images")
                 return null
             }
             return currentPageData.list[newListPos]
-        } else {
+        } else if (listPos < currentPageData.count) {
             Log.v(TAG, "Image already available")
             return currentPageData.list[listPos]
+        } else {
+            // End of images
+            return null
         }
     }
 
