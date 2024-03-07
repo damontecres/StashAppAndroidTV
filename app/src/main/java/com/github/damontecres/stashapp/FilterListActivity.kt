@@ -30,6 +30,11 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.FilterType
+import com.github.damontecres.stashapp.data.StashCustomFilter
+import com.github.damontecres.stashapp.data.StashFilter
+import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.itemclick.ImageGridClickedListener
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
@@ -63,10 +68,11 @@ import kotlinx.coroutines.launch
 class FilterListActivity : FragmentActivity() {
     private lateinit var titleTextView: TextView
     private lateinit var queryEngine: QueryEngine
+    private var filter: StashFilter? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        filter = intent.getParcelableExtra<StashFilter>("filter")
         queryEngine = QueryEngine(this, true)
 
         setContentView(R.layout.filter_list)
@@ -104,10 +110,31 @@ class FilterListActivity : FragmentActivity() {
             }
 
         lifecycleScope.launch(exHandler) {
-            val filter = getStartingFilter()
             if (savedInstanceState == null) {
-                if (filter != null) {
-                    setupFragment(filter, true)
+                val startingFilter = getStartingFilter()
+                if (startingFilter.second != null) {
+                    val filterData = startingFilter.second!!
+                    filter =
+                        when (startingFilter.first) {
+                            FilterType.CUSTOM_FILTER -> {
+                                StashCustomFilter(
+                                    mode = filterData.mode,
+                                    direction = filterData.find_filter?.direction?.toString(),
+                                    sortBy = filterData.find_filter?.sort,
+                                    description = "",
+                                    query = filterData.find_filter?.q,
+                                )
+                            }
+
+                            FilterType.SAVED_FILTER -> {
+                                StashSavedFilter(
+                                    savedFilterId = filterData.id,
+                                    mode = filterData.mode,
+                                    sortBy = filterData.find_filter?.sort,
+                                )
+                            }
+                        }
+                    setupFragment(startingFilter.second!!, true)
                 } else {
                     Log.e(TAG, "No starting filter found for $dataType was null")
                     finish()
@@ -148,9 +175,15 @@ class FilterListActivity : FragmentActivity() {
                 listPopUp.setAdapter(adapter)
 
                 listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
-                    val filter = savedFilters[position]
+                    val savedFilter = savedFilters[position]
                     listPopUp.dismiss()
-                    setupFragment(filter, false)
+                    setupFragment(savedFilter, false)
+                    filter =
+                        StashSavedFilter(
+                            savedFilter.id,
+                            savedFilter.mode,
+                            savedFilter.find_filter?.sort,
+                        )
                 }
 
                 filterButton.setOnClickListener {
@@ -161,7 +194,7 @@ class FilterListActivity : FragmentActivity() {
         }
     }
 
-    private suspend fun getStartingFilter(): SavedFilterData? {
+    private suspend fun getStartingFilter(): Pair<FilterType, SavedFilterData?> {
         val savedFilterId = intent.getStringExtra("savedFilterId")
         val direction = intent.getStringExtra("direction")
         val sortBy = intent.getStringExtra("sortBy")
@@ -175,49 +208,58 @@ class FilterListActivity : FragmentActivity() {
         val query = intent.getStringExtra("query")
         if (savedFilterId != null) {
             // Load a saved filter
-            return queryEngine.getSavedFilter(savedFilterId.toString())
+            return Pair(
+                FilterType.SAVED_FILTER,
+                queryEngine.getSavedFilter(savedFilterId.toString()),
+            )
         } else if (direction != null || sortBy != null || query != null) {
             // Generic filter
-            return SavedFilterData(
-                id = "-1",
-                mode = dataType.filterMode,
-                name = getString(dataType.pluralStringId),
-                find_filter =
-                    SavedFilterData.Find_filter(
-                        q = query,
-                        page = null,
-                        per_page = null,
-                        sort = sortBy,
-                        direction = if (direction != null) SortDirectionEnum.valueOf(direction) else null,
-                        __typename = "",
-                    ),
-                object_filter = null,
-                ui_options = null,
-                __typename = "",
-            )
-        } else {
-            // Default filter
-            val filter = queryEngine.getDefaultFilter(dataType)
-            if (filter == null) {
-                return SavedFilterData(
+            return Pair(
+                FilterType.CUSTOM_FILTER,
+                SavedFilterData(
                     id = "-1",
                     mode = dataType.filterMode,
                     name = getString(dataType.pluralStringId),
                     find_filter =
                         SavedFilterData.Find_filter(
-                            q = null,
+                            q = query,
                             page = null,
                             per_page = null,
-                            sort = null,
-                            direction = null,
+                            sort = sortBy,
+                            direction = if (direction != null) SortDirectionEnum.valueOf(direction) else null,
                             __typename = "",
                         ),
                     object_filter = null,
                     ui_options = null,
                     __typename = "",
+                ),
+            )
+        } else {
+            // Default filter
+            val filter = queryEngine.getDefaultFilter(dataType)
+            if (filter == null) {
+                return Pair(
+                    FilterType.CUSTOM_FILTER,
+                    SavedFilterData(
+                        id = "-1",
+                        mode = dataType.filterMode,
+                        name = getString(dataType.pluralStringId),
+                        find_filter =
+                            SavedFilterData.Find_filter(
+                                q = null,
+                                page = null,
+                                per_page = null,
+                                sort = null,
+                                direction = null,
+                                __typename = "",
+                            ),
+                        object_filter = null,
+                        ui_options = null,
+                        __typename = "",
+                    ),
                 )
             } else {
-                return filter
+                return Pair(FilterType.SAVED_FILTER, filter)
             }
         }
     }
@@ -372,12 +414,20 @@ class FilterListActivity : FragmentActivity() {
                     } else {
                         filterParser.convertImageObjectFilter(objectFilter)
                     }
-                StashGridFragment(
-                    ImageComparator,
-                    ImageDataSupplier(findFilter, imageFilter),
-                    null,
-                    name,
-                )
+                val fragment =
+                    StashGridFragment(
+                        ImageComparator,
+                        ImageDataSupplier(findFilter, imageFilter),
+                        null,
+                        name,
+                    )
+                fragment.onItemViewClickedListener =
+                    ImageGridClickedListener(this, fragment) {
+                        it.putExtra(ImageActivity.INTENT_FILTER, filter)
+                        it.putExtra(ImageActivity.INTENT_FILTER_TYPE, filter?.filterType?.name)
+                    }
+
+                fragment
             }
 
             DataType.GALLERY -> {

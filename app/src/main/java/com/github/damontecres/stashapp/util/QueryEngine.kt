@@ -260,7 +260,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun findGalleries(
         findFilter: FindFilterType? = null,
         galleryFilter: GalleryFilterType? = null,
-        useRandom: Boolean,
+        useRandom: Boolean = true,
     ): List<GalleryData> {
         val query =
             client.query(FindGalleriesQuery(updateFilter(findFilter, useRandom), galleryFilter))

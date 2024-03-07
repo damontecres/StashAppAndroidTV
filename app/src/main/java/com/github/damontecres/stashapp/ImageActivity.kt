@@ -31,12 +31,18 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.FilterType
+import com.github.damontecres.stashapp.data.StashCustomFilter
+import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
+import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.maxFileSize
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
@@ -67,6 +73,7 @@ class ImageActivity : FragmentActivity() {
                 PreferenceManager.getDefaultSharedPreferences(this).getInt("maxSearchResults", 25)
 
             val galleryId = intent.getStringExtra(INTENT_GALLERY_ID)
+            val filterType = FilterType.safeValueOf(intent.getStringExtra(INTENT_FILTER_TYPE))
             currentPosition = intent.getIntExtra(INTENT_POSITION, -1)
             if (galleryId != null && currentPosition >= 0) {
                 dataSupplier =
@@ -87,6 +94,57 @@ class ImageActivity : FragmentActivity() {
                     val currentPage = currentPosition / pageSize
                     currentPageData = pagingSource.fetchPage(currentPage, pageSize)
                     canScrollImages = true
+                }
+            } else if (filterType != null && currentPosition >= 0) {
+                Log.v(TAG, "Got a $filterType")
+                val queryEngine = QueryEngine(this)
+                if (filterType == FilterType.SAVED_FILTER) {
+                    val filter = intent.getParcelableExtra<StashSavedFilter>(INTENT_FILTER)!!
+                    lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        val savedFilter = queryEngine.getSavedFilter(filter.savedFilterId)
+                        if (savedFilter != null) {
+                            val findFilter =
+                                queryEngine.updateFilter(
+                                    convertFilter(savedFilter.find_filter),
+                                    useRandom = true,
+                                )?.copy(per_page = Optional.present(pageSize))
+                                    ?: DataType.IMAGE.asDefaultFindFilterType
+                            val filterParser =
+                                FilterParser(ServerPreferences(this@ImageActivity).serverVersion)
+                            val imageFilter =
+                                filterParser.convertImageObjectFilter(savedFilter.object_filter)
+                            dataSupplier =
+                                ImageDataSupplier(
+                                    findFilter,
+                                    imageFilter,
+                                )
+                            pagingSource =
+                                StashPagingSource(this@ImageActivity, pageSize, dataSupplier)
+                            lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                                val currentPage = currentPosition / pageSize
+                                currentPageData = pagingSource.fetchPage(currentPage, pageSize)
+                                canScrollImages = true
+                            }
+                        } else {
+                            Log.w(TAG, "Unknown filter id=${filter.savedFilterId}")
+                        }
+                    }
+                } else {
+                    // CustomFilter
+                    val filter = intent.getParcelableExtra<StashCustomFilter>(INTENT_FILTER)!!
+                    val findFilter =
+                        queryEngine.updateFilter(
+                            filter.asFindFilterType().copy(per_page = Optional.present(pageSize)),
+                        )
+                    dataSupplier =
+                        ImageDataSupplier(findFilter, null)
+                    pagingSource =
+                        StashPagingSource(this@ImageActivity, pageSize, dataSupplier)
+                    lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        val currentPage = currentPosition / pageSize
+                        currentPageData = pagingSource.fetchPage(currentPage, pageSize)
+                        canScrollImages = true
+                    }
                 }
             }
         }
@@ -206,6 +264,8 @@ class ImageActivity : FragmentActivity() {
 
         const val INTENT_POSITION = "position"
         const val INTENT_GALLERY_ID = "gallery.id"
+        const val INTENT_FILTER = "filter"
+        const val INTENT_FILTER_TYPE = "filter.type"
     }
 
     class ImageFragment(val imageId: String, val imageUrl: String, val imageSize: Int = -1) :
