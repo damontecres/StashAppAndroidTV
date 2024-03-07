@@ -134,7 +134,7 @@ class ImageActivity : FragmentActivity() {
                     val filter = intent.getParcelableExtra<StashCustomFilter>(INTENT_FILTER)!!
                     val findFilter =
                         queryEngine.updateFilter(
-                            filter.asFindFilterType.copy(per_page = Optional.present(pageSize)),
+                            filter.asFindFilterType().copy(per_page = Optional.present(pageSize)),
                         )
                     dataSupplier =
                         ImageDataSupplier(findFilter, null)

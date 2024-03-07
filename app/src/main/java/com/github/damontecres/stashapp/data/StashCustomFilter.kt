@@ -18,18 +18,24 @@ data class StashCustomFilter(
     override val filterType: FilterType
         get() = FilterType.CUSTOM_FILTER
 
-    val asFindFilterType: FindFilterType
-        get() =
-            FindFilterType(
-                q = Optional.presentIfNotNull(query),
-                page = Optional.absent(),
-                per_page = Optional.absent(),
-                sort = Optional.presentIfNotNull(sortBy),
-                direction =
-                    Optional.presentIfNotNull(
-                        SortDirectionEnum.safeValueOf(
-                            direction ?: SortDirectionEnum.UNKNOWN__.name,
-                        ),
-                    ),
-            )
+    fun asFindFilterType(): FindFilterType {
+        val direction =
+            if (direction != null) {
+                SortDirectionEnum.valueOf(direction)
+            } else {
+                val d = DataType.fromFilterMode(mode)?.defaultSort?.direction?.name
+                if (d != null) {
+                    SortDirectionEnum.valueOf(d)
+                } else {
+                    null
+                }
+            }
+        return FindFilterType(
+            q = Optional.presentIfNotNull(query),
+            page = Optional.absent(),
+            per_page = Optional.absent(),
+            sort = Optional.presentIfNotNull(sortBy),
+            direction = Optional.presentIfNotNull(direction),
+        )
+    }
 }

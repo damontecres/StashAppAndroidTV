@@ -1,15 +1,14 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
 import com.apollographql.apollo3.api.Optional
-import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.itemclick.ImageGridClickedListener
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.util.ImageComparator
 
@@ -39,21 +38,8 @@ class GalleryActivity : FragmentActivity() {
                     ),
                 )
             fragment.onItemViewClickedListener =
-                ClassOnItemViewClickedListener.SimpleOnItemViewClickedListener<ImageData> { image ->
-                    val snapshot = fragment.pagingAdapter.snapshot()
-                    val position = snapshot.indexOf(image)
-                    val intent = Intent(this@GalleryActivity, ImageActivity::class.java)
-                    intent.putExtra(ImageActivity.INTENT_IMAGE_ID, image.id)
-                    intent.putExtra(ImageActivity.INTENT_IMAGE_URL, image.paths.image)
-                    intent.putExtra(
-                        ImageActivity.INTENT_IMAGE_SIZE,
-                        image.visual_files.maxOfOrNull {
-                            it.onBaseFile?.size?.toString()?.toInt() ?: -1
-                        } ?: -1,
-                    )
-                    intent.putExtra(ImageActivity.INTENT_POSITION, position)
-                    intent.putExtra(ImageActivity.INTENT_GALLERY_ID, galleryId)
-                    startActivity(intent)
+                ImageGridClickedListener(this, fragment) {
+                    it.putExtra(ImageActivity.INTENT_GALLERY_ID, galleryId)
                 }
 
             supportFragmentManager.beginTransaction().replace(R.id.grid_fragment, fragment)

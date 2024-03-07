@@ -90,6 +90,7 @@ class StashItemViewClickListener(
             intent.putExtra("dataType", DataType.fromFilterMode(item.mode)!!.name)
             intent.putExtra("useRandom", false)
             intent.putExtra("sortBy", item.sortBy)
+            intent.putExtra("filter", item)
             intent.putExtra("moveOnePage", true)
             context.startActivity(intent)
         } else if (item is StashCustomFilter) {
@@ -101,6 +102,7 @@ class StashItemViewClickListener(
             intent.putExtra("useRandom", false)
             intent.putExtra("moveOnePage", true)
             intent.putExtra("query", item.query)
+            intent.putExtra("filter", item)
             context.startActivity(intent)
         } else if (item is StashAction) {
             if (actionListener != null) {
