@@ -95,6 +95,7 @@ class ImageActivity : FragmentActivity() {
                     canScrollImages = true
                 }
             } else if (filterType != null && currentPosition >= 0) {
+                Log.v(TAG, "Got a $filterType")
                 if (filterType == FilterType.SAVED_FILTER) {
                     val filter = intent.getParcelableExtra<StashSavedFilter>(INTENT_FILTER)!!
                     val queryEngine = QueryEngine(this)
