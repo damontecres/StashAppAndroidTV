@@ -101,14 +101,12 @@ class ImageActivity : FragmentActivity() {
                     return true
                 }
             } else if (isDpadKey(event.keyCode) && !imageFragment.isOverlayVisible()) {
-                lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    if (isLeft(event.keyCode)) {
-                        switchImage(currentPosition - 1)
-                    } else if (isRight(event.keyCode)) {
-                        switchImage(currentPosition + 1)
-                    } else {
-                        imageFragment.showOverlay()
-                    }
+                if (isLeft(event.keyCode)) {
+                    switchImage(currentPosition - 1)
+                } else if (isRight(event.keyCode)) {
+                    switchImage(currentPosition + 1)
+                } else {
+                    imageFragment.showOverlay()
                 }
                 return true
             }
@@ -147,17 +145,27 @@ class ImageActivity : FragmentActivity() {
             )
     }
 
-    private suspend fun switchImage(newPosition: Int) {
+    private fun switchImage(newPosition: Int) {
         Log.v(TAG, "switchImage to $newPosition")
-        if (canScrollImages && newPosition >= 0) {
-            val image = fetchImageData(newPosition)
-            if (image != null && image.paths.image != null) {
-                currentPosition = newPosition
-                imageFragment = ImageFragment(image.id, image.paths.image, image.maxFileSize)
-                imageFragment.image = image
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.image_fragment, imageFragment)
-                    .commitNow()
+        if (canScrollImages) {
+            if (newPosition >= 0) {
+                lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val image = fetchImageData(newPosition)
+                    if (image != null && image.paths.image != null) {
+                        currentPosition = newPosition
+                        imageFragment =
+                            ImageFragment(image.id, image.paths.image, image.maxFileSize)
+                        imageFragment.image = image
+                        supportFragmentManager.beginTransaction()
+                            .replace(R.id.image_fragment, imageFragment)
+                            .commitNow()
+                    } else if (image == null) {
+                        Toast.makeText(this@ImageActivity, "No more images", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+            } else {
+                Toast.makeText(this, "Already at beginning", Toast.LENGTH_SHORT).show()
             }
         }
     }
