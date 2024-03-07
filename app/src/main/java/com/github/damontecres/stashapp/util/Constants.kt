@@ -29,6 +29,7 @@ import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -518,3 +519,9 @@ fun SharedPreferences.getInt(
 fun ArrayObjectAdapter.isEmpty(): Boolean = size() == 0
 
 fun ArrayObjectAdapter.isNotEmpty(): Boolean = !isEmpty()
+
+val ImageData.maxFileSize: Int
+    get() =
+        visual_files.maxOfOrNull {
+            it.onBaseFile?.size?.toString()?.toInt() ?: -1
+        } ?: -1

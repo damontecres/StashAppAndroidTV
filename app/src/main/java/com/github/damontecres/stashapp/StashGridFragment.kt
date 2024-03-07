@@ -63,7 +63,9 @@ class StashGridFragment<T : Query.Data, D : Any>(
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        onItemViewClickedListener = StashItemViewClickListener(requireActivity())
+        if (onItemViewClickedListener == null) {
+            onItemViewClickedListener = StashItemViewClickListener(requireActivity())
+        }
 
         val pageSize =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
