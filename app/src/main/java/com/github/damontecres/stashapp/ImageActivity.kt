@@ -18,28 +18,77 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
+import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.github.damontecres.stashapp.api.FindImagesQuery
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.ImageFilterType
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.data.CountAndList
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
+import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
+import com.github.damontecres.stashapp.util.maxFileSize
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
 class ImageActivity : FragmentActivity() {
-    private val imageFragment = ImageFragment()
+    private lateinit var imageFragment: ImageFragment
+    private lateinit var dataSupplier: ImageDataSupplier
+    private lateinit var pagingSource: StashPagingSource<FindImagesQuery.Data, ImageData>
+    private lateinit var currentPageData: CountAndList<ImageData>
+
+    private var currentPosition = -1
+
+    private var canScrollImages = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_image)
         if (savedInstanceState == null) {
+            val imageUrl = intent.getStringExtra(INTENT_IMAGE_URL)!!
+            val imageId = intent.getStringExtra(INTENT_IMAGE_ID)!!
+            val imageSize = intent.getIntExtra(INTENT_IMAGE_SIZE, -1)
+            imageFragment = ImageFragment(imageId, imageUrl, imageSize)
             supportFragmentManager.beginTransaction()
-                .replace(R.id.image_fragment, imageFragment)
+                .replace(R.id.image_fragment, imageFragment!!)
                 .commitNow()
+
+            val pageSize =
+                PreferenceManager.getDefaultSharedPreferences(this).getInt("maxSearchResults", 25)
+
+            val galleryId = intent.getStringExtra(INTENT_GALLERY_ID)
+            currentPosition = intent.getIntExtra(INTENT_POSITION, -1)
+            if (galleryId != null && currentPosition >= 0) {
+                dataSupplier =
+                    ImageDataSupplier(
+                        DataType.IMAGE.asDefaultFindFilterType,
+                        ImageFilterType(
+                            galleries =
+                                Optional.present(
+                                    MultiCriterionInput(
+                                        value = Optional.present(listOf(galleryId)),
+                                        modifier = CriterionModifier.INCLUDES,
+                                    ),
+                                ),
+                        ),
+                    )
+                pagingSource = StashPagingSource(this, pageSize, dataSupplier)
+                lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val currentPage = currentPosition / pageSize
+                    currentPageData = pagingSource.fetchPage(currentPage, pageSize)
+                    canScrollImages = true
+                }
+            }
         }
     }
 
@@ -52,7 +101,15 @@ class ImageActivity : FragmentActivity() {
                     return true
                 }
             } else if (isDpadKey(event.keyCode) && !imageFragment.isOverlayVisible()) {
-                imageFragment.showOverlay()
+                lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    if (isLeft(event.keyCode)) {
+                        switchImage(currentPosition - 1)
+                    } else if (isRight(event.keyCode)) {
+                        switchImage(currentPosition + 1)
+                    } else {
+                        imageFragment.showOverlay()
+                    }
+                }
                 return true
             }
         }
@@ -74,17 +131,80 @@ class ImageActivity : FragmentActivity() {
             )
     }
 
+    private fun isLeft(keyCode: Int): Boolean {
+        return keyCode == KeyEvent.KEYCODE_DPAD_LEFT || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+            (
+                keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
+                    keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+            )
+    }
+
+    private fun isRight(keyCode: Int): Boolean {
+        return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+            (
+                keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
+                    keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT
+            )
+    }
+
+    private suspend fun switchImage(newPosition: Int) {
+        Log.v(TAG, "switchImage to $newPosition")
+        if (canScrollImages && newPosition >= 0) {
+            val image = fetchImageData(newPosition)
+            if (image != null && image.paths.image != null) {
+                currentPosition = newPosition
+                imageFragment = ImageFragment(image.id, image.paths.image, image.maxFileSize)
+                imageFragment.image = image
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.image_fragment, imageFragment)
+                    .commitNow()
+            }
+        }
+    }
+
+    private suspend fun fetchImageData(newPosition: Int): ImageData? {
+        val pageSize =
+            PreferenceManager.getDefaultSharedPreferences(this).getInt("maxSearchResults", 25)
+        val currentPage = newPosition / pageSize
+        val listPos = newPosition - currentPage * pageSize
+        Log.v(TAG, "fetchImageData currentPage=$currentPage, listPos=$listPos")
+        if (listPos < 0) {
+            Log.v(TAG, "Fetching previous page")
+            // fetch previous page
+            currentPageData = pagingSource.fetchPage(currentPage - 1, pageSize)
+            val newListPos = newPosition - (currentPage - 1) * pageSize
+            return currentPageData.list[newListPos]
+        } else if (listPos >= currentPageData.count) {
+            // fetch next page
+            Log.v(TAG, "Fetching next page")
+            currentPageData = pagingSource.fetchPage(currentPage + 1, pageSize)
+            val newListPos = newPosition - (currentPage + 1) * pageSize
+            if (currentPageData.list.isEmpty() || newListPos < 0) {
+                Log.v(TAG, "End of images")
+                return null
+            }
+            return currentPageData.list[newListPos]
+        } else {
+            Log.v(TAG, "Image already available")
+            return currentPageData.list[listPos]
+        }
+    }
+
     companion object {
         const val TAG = "ImageActivity"
         const val INTENT_IMAGE_ID = "image.id"
         const val INTENT_IMAGE_URL = "image.url"
         const val INTENT_IMAGE_SIZE = "image.size"
+
+        const val INTENT_POSITION = "position"
+        const val INTENT_GALLERY_ID = "gallery.id"
     }
 
-    class ImageFragment : Fragment(R.layout.image_layout) {
+    class ImageFragment(val imageId: String, val imageUrl: String, val imageSize: Int = -1) :
+        Fragment(R.layout.image_layout) {
         lateinit var titleText: TextView
         lateinit var table: TableLayout
-        lateinit var image: ImageData
+        var image: ImageData? = null
 
         private var animationDuration by Delegates.notNull<Long>()
 
@@ -97,28 +217,15 @@ class ImageActivity : FragmentActivity() {
             titleText = view.findViewById(R.id.image_view_title)
             val mainImage = view.findViewById<ImageView>(R.id.image_view_image)
             table = view.findViewById(R.id.image_view_table)
-            val imageUrl = requireActivity().intent.getStringExtra(INTENT_IMAGE_URL)!!
-            val imageId = requireActivity().intent.getStringExtra(INTENT_IMAGE_ID)!!
-            val imageSize = requireActivity().intent.getIntExtra(INTENT_IMAGE_SIZE, -1)
             Log.v(TAG, "imageId=$imageId")
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val queryEngine = QueryEngine(requireContext())
-                image = queryEngine.getImage(imageId)!!
-                Log.v(TAG, "image.id=${image.id}")
-                titleText.text = image.title
-
-                addRow(R.string.stashapp_studio, image.studio?.studioData?.name)
-                addRow(R.string.stashapp_date, image.date)
-                addRow(R.string.stashapp_photographer, image.photographer)
-                addRow(R.string.stashapp_details, image.details)
-                addRow(
-                    R.string.stashapp_tags,
-                    concatIfNotBlank(", ", image.tags.map { it.tagData.name }),
-                )
-                addRow(
-                    R.string.stashapp_performers,
-                    concatIfNotBlank(", ", image.performers.map { it.performerData.name }),
-                )
+            if (image != null) {
+                configureUI()
+            } else {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val queryEngine = QueryEngine(requireContext())
+                    image = queryEngine.getImage(imageId)!!
+                    configureUI()
+                }
             }
 
             StashGlide.with(requireContext(), imageUrl, imageSize)
@@ -151,6 +258,24 @@ class ImageActivity : FragmentActivity() {
                     },
                 )
                 .into(mainImage)
+        }
+
+        fun configureUI() {
+            val image = image!!
+            titleText.text = image.title
+
+            addRow(R.string.stashapp_studio, image.studio?.studioData?.name)
+            addRow(R.string.stashapp_date, image.date)
+            addRow(R.string.stashapp_photographer, image.photographer)
+            addRow(R.string.stashapp_details, image.details)
+            addRow(
+                R.string.stashapp_tags,
+                concatIfNotBlank(", ", image.tags.map { it.tagData.name }),
+            )
+            addRow(
+                R.string.stashapp_performers,
+                concatIfNotBlank(", ", image.performers.map { it.performerData.name }),
+            )
         }
 
         fun isOverlayVisible(): Boolean {

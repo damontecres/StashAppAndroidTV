@@ -54,7 +54,7 @@ class StashPagingSource<T : Query.Data, D : Any>(
         fun getDefaultFilter(): FindFilterType
     }
 
-    private suspend fun fetchPage(
+    suspend fun fetchPage(
         page: Int,
         loadSize: Int,
     ): CountAndList<D> {
