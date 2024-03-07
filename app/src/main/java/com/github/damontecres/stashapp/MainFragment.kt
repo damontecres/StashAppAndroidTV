@@ -408,6 +408,14 @@ class MainFragment : BrowseSupportFragment() {
                                 adapter.addAll(0, queryEngine.findMovies(filter))
                             }
 
+                            FilterMode.IMAGES -> {
+                                adapter.addAll(0, queryEngine.findImages(filter))
+                            }
+
+                            FilterMode.GALLERIES -> {
+                                adapter.addAll(0, queryEngine.findGalleries(filter))
+                            }
+
                             else -> {
                                 Log.w(TAG, "Unsupported mode in frontpage: $mode")
                             }

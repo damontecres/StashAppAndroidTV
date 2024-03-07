@@ -32,6 +32,7 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.FilterType
+import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -96,9 +97,9 @@ class ImageActivity : FragmentActivity() {
                 }
             } else if (filterType != null && currentPosition >= 0) {
                 Log.v(TAG, "Got a $filterType")
+                val queryEngine = QueryEngine(this)
                 if (filterType == FilterType.SAVED_FILTER) {
                     val filter = intent.getParcelableExtra<StashSavedFilter>(INTENT_FILTER)!!
-                    val queryEngine = QueryEngine(this)
                     lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                         val savedFilter = queryEngine.getSavedFilter(filter.savedFilterId)
                         if (savedFilter != null) {
@@ -127,6 +128,22 @@ class ImageActivity : FragmentActivity() {
                         } else {
                             Log.w(TAG, "Unknown filter id=${filter.savedFilterId}")
                         }
+                    }
+                } else {
+                    // CustomFilter
+                    val filter = intent.getParcelableExtra<StashCustomFilter>(INTENT_FILTER)!!
+                    val findFilter =
+                        queryEngine.updateFilter(
+                            filter.asFindFilterType.copy(per_page = Optional.present(pageSize)),
+                        )
+                    dataSupplier =
+                        ImageDataSupplier(findFilter, null)
+                    pagingSource =
+                        StashPagingSource(this@ImageActivity, pageSize, dataSupplier)
+                    lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        val currentPage = currentPosition / pageSize
+                        currentPageData = pagingSource.fetchPage(currentPage, pageSize)
+                        canScrollImages = true
                     }
                 }
             }
