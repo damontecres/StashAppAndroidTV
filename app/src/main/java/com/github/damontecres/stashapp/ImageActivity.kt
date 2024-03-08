@@ -424,9 +424,11 @@ class ImageActivity : FragmentActivity() {
 
             val keyView = row.findViewById<TextView>(R.id.table_row_key)
             keyView.text = keyString
+            keyView.textSize = 16f
 
             val valueView = row.findViewById<TextView>(R.id.table_row_value)
             valueView.text = value
+            valueView.textSize = 16f
 
             table.addView(row)
         }
