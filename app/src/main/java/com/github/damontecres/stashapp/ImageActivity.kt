@@ -282,16 +282,37 @@ class ImageActivity : FragmentActivity() {
                     val rotated = mainImage.rotation == 90f || mainImage.rotation == 270f
 
                     val scale = if (rotated) 1f else calculateRotationScale(mainImage)
+                    val flipY = if (mainImage.scaleY < 0) -1f else 1f
+                    val flipX = if (mainImage.scaleX < 0) -1f else 1f
 
+                    mainImage.animate()
+                        .rotationBy(90f)
+                        .setDuration(200L)
+                        .scaleX(scale * flipX)
+                        .scaleY(scale * flipY)
+                        .withEndAction {
+                            duringAnimation = false
+                        }
+                        .start()
+                }
+            }
+
+            val flipButton = view.findViewById<Button>(R.id.flip_button)
+            flipButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            flipButton.setOnClickListener {
+                if (!duringAnimation) {
+                    duringAnimation = true
+                    val rotated = mainImage.rotation == 90f || mainImage.rotation == 270f
                     val animator =
                         mainImage.animate()
-                            .rotationBy(90f)
-                            .setDuration(200L)
-                            .scaleX(scale)
-                            .scaleY(scale)
                             .withEndAction {
                                 duringAnimation = false
                             }
+                    if (rotated) {
+                        animator.scaleY(mainImage.scaleY * -1)
+                    } else {
+                        animator.scaleX(mainImage.scaleX * -1)
+                    }
                     animator.start()
                 }
             }
