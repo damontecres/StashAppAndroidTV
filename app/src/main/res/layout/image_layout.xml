@@ -46,29 +46,19 @@
 
             <Button
                 android:id="@+id/rotate_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:padding="5dp"
-                android:minHeight="0dp"
-                android:minWidth="0dp"
                 android:text="@string/fa_rotate"
-                android:textSize="40sp"
-                android:fontFamily="@font/fa_solid_900"
-                android:background="@color/default_card_background" />
+                style="@style/ImageActivityButton" />
 
             <Button
                 android:id="@+id/flip_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="5dp"
-                android:padding="5dp"
-                android:minHeight="0dp"
-                android:minWidth="0dp"
                 android:text="@string/fa_arrow_right_arrow_left"
-                android:textSize="40sp"
-                android:fontFamily="@font/fa_solid_900"
-                android:background="@color/default_card_background" />
+                style="@style/ImageActivityButton" />
+
+            <Button
+                android:id="@+id/reset_button"
+                android:text="@string/stashapp_effect_filters_reset_transforms"
+                android:fontFamily="@null"
+                style="@style/ImageActivityButton" />
         </LinearLayout>
 
     </LinearLayout>

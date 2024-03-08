@@ -273,6 +273,7 @@ class ImageActivity : FragmentActivity() {
                 }
             }
 
+            val duration = 200L
             var duringAnimation = false
             val rotateButton = view.findViewById<Button>(R.id.rotate_button)
             rotateButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
@@ -287,7 +288,7 @@ class ImageActivity : FragmentActivity() {
 
                     mainImage.animate()
                         .rotationBy(90f)
-                        .setDuration(200L)
+                        .setDuration(duration)
                         .scaleX(scale * flipX)
                         .scaleY(scale * flipY)
                         .withEndAction {
@@ -305,6 +306,7 @@ class ImageActivity : FragmentActivity() {
                     val rotated = mainImage.rotation == 90f || mainImage.rotation == 270f
                     val animator =
                         mainImage.animate()
+                            .setDuration(duration)
                             .withEndAction {
                                 duringAnimation = false
                             }
@@ -314,6 +316,23 @@ class ImageActivity : FragmentActivity() {
                         animator.scaleX(mainImage.scaleX * -1)
                     }
                     animator.start()
+                }
+            }
+
+            val resetButton = view.findViewById<Button>(R.id.reset_button)
+            resetButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            resetButton.setOnClickListener {
+                if (!duringAnimation) {
+                    duringAnimation = true
+                    mainImage.animate()
+                        .rotation(0f)
+                        .setDuration(duration)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .withEndAction {
+                            duringAnimation = false
+                        }
+                        .start()
                 }
             }
 
