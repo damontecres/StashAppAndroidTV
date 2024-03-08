@@ -22,15 +22,23 @@
         android:visibility="gone"
         android:textSize="32sp" />
 
-    <TableLayout
-        android:id="@+id/image_view_table"
+    <LinearLayout
+        android:id="@+id/image_bottom_overlay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="3dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
-        android:background="@color/transparent_black"
-        android:visibility="gone" />
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TableLayout
+            android:id="@+id/image_view_table"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp"
+            android:background="@color/transparent_black" />
+
+    </LinearLayout>
 
 </RelativeLayout>
