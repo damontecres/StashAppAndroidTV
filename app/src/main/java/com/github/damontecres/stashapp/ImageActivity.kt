@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TableLayout
 import android.widget.TableRow
@@ -272,6 +273,29 @@ class ImageActivity : FragmentActivity() {
                 }
             }
 
+            var duringAnimation = false
+            val rotateButton = view.findViewById<Button>(R.id.rotate_button)
+            rotateButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            rotateButton.setOnClickListener {
+                if (!duringAnimation) {
+                    duringAnimation = true
+                    val rotated = mainImage.rotation == 90f || mainImage.rotation == 270f
+
+                    val scale = if (rotated) 1f else calculateRotationScale(mainImage)
+
+                    val animator =
+                        mainImage.animate()
+                            .rotationBy(90f)
+                            .setDuration(200L)
+                            .scaleX(scale)
+                            .scaleY(scale)
+                            .withEndAction {
+                                duringAnimation = false
+                            }
+                    animator.start()
+                }
+            }
+
             StashGlide.with(requireContext(), imageUrl, imageSize)
                 .listener(
                     object : RequestListener<Drawable?> {
@@ -308,7 +332,9 @@ class ImageActivity : FragmentActivity() {
         fun configureUI() {
             val image = image!!
             titleText.text = image.title
-
+            val imageHeight = image.visual_files.first().onImageFile!!.height
+            val imageWidth = image.visual_files.first().onImageFile!!.width
+            addRow(R.string.stashapp_dimensions, "${imageWidth}x$imageHeight")
             addRow(R.string.stashapp_studio, image.studio?.studioData?.name)
             addRow(R.string.stashapp_date, image.date)
             addRow(R.string.stashapp_photographer, image.photographer)
@@ -378,6 +404,43 @@ class ImageActivity : FragmentActivity() {
             valueView.text = value
 
             table.addView(row)
+        }
+
+        private fun calculateRotationScale(mainImage: ImageView): Float {
+            val viewHeight = mainImage.height.toFloat()
+            val viewWidth = mainImage.width.toFloat()
+            val imageHeight = image!!.visual_files.first().onImageFile!!.height.toFloat()
+            val imageWidth = image!!.visual_files.first().onImageFile!!.width.toFloat()
+            val imageHeightPx = mainImage.drawable.intrinsicHeight
+            val imageWidthPx = mainImage.drawable.intrinsicWidth
+
+            Log.v(
+                TAG,
+                "viewWidth=$viewWidth, viewHeight=$viewHeight\n" +
+                    "imageWidth=$imageWidth, imageHeight=$imageHeight\n" +
+                    "imageWidthPx=$imageWidthPx, imageHeightPx=$imageHeightPx\n",
+            )
+
+            return if (imageWidthPx >= viewHeight) {
+                // Need to scale the image width down
+                Log.v(TAG, "Scaling image width down to view height")
+                viewHeight / imageWidthPx
+            } else if (imageHeightPx >= viewWidth) {
+                // Need to scale the image height down
+                Log.v(TAG, "Scaling image height down to view width")
+                viewWidth / imageHeightPx
+            } else {
+                // Need to scale the image up
+                val ratio = viewHeight / imageWidthPx
+                val ratio2 = viewWidth / imageHeightPx
+                if (ratio > ratio2) {
+                    Log.v(TAG, "Scaling image width up to view height")
+                    ratio2
+                } else {
+                    Log.v(TAG, "Scaling image height up to view width")
+                    ratio
+                }
+            }
         }
     }
 }

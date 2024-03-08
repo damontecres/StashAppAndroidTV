@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
 
     <ImageView
         android:id="@+id/image_view_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/black"
         android:adjustViewBounds="true"
         android:contentDescription="@string/stashapp_image" />
 
@@ -29,6 +29,7 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
+        android:background="@color/transparent_black"
         android:orientation="vertical"
         android:visibility="gone">
 
@@ -36,8 +37,20 @@
             android:id="@+id/image_view_table"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="3dp"
-            android:background="@color/transparent_black" />
+            android:layout_margin="3dp" />
+
+        <Button
+            android:id="@+id/rotate_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:padding="5dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:text="@string/fa_rotate"
+            android:textSize="40sp"
+            android:fontFamily="@font/fa_solid_900"
+            android:background="@color/default_card_background" />
 
     </LinearLayout>
 
