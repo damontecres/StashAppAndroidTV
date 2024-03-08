@@ -242,6 +242,7 @@ class ImageActivity : FragmentActivity() {
         val imageSize: Int = -1,
     ) :
         Fragment(R.layout.image_layout) {
+        lateinit var mainImage: ImageView
         lateinit var bottomOverlay: View
         lateinit var titleText: TextView
         lateinit var table: TableLayout
@@ -250,6 +251,8 @@ class ImageActivity : FragmentActivity() {
         private var animationDuration by Delegates.notNull<Long>()
 
         var viewCreated = false
+        private val duration = 200L
+        private var duringAnimation = false
 
         override fun onViewCreated(
             view: View,
@@ -260,7 +263,7 @@ class ImageActivity : FragmentActivity() {
             animationDuration =
                 resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
             titleText = view.findViewById(R.id.image_view_title)
-            val mainImage = view.findViewById<ImageView>(R.id.image_view_image)
+            mainImage = view.findViewById(R.id.image_view_image)
             table = view.findViewById(R.id.image_view_table)
             Log.v(TAG, "imageId=$imageId")
             if (image != null) {
@@ -273,44 +276,26 @@ class ImageActivity : FragmentActivity() {
                 }
             }
 
-            val duration = 200L
-            var duringAnimation = false
-            val rotateButton = view.findViewById<Button>(R.id.rotate_button)
-            rotateButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
-            rotateButton.setOnClickListener {
-                if (!duringAnimation) {
-                    duringAnimation = true
-                    val rotated = mainImage.rotation == 90f || mainImage.rotation == 270f
+            val rotateRightButton = view.findViewById<Button>(R.id.rotate_right_button)
+            rotateRightButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            rotateRightButton.setOnClickListener(RotateImageListener(90f))
 
-                    val scale = if (rotated) 1f else calculateRotationScale(mainImage)
-                    val flipY = if (mainImage.scaleY < 0) -1f else 1f
-                    val flipX = if (mainImage.scaleX < 0) -1f else 1f
-
-                    mainImage.animate()
-                        .rotationBy(90f)
-                        .setDuration(duration)
-                        .scaleX(scale * flipX)
-                        .scaleY(scale * flipY)
-                        .withEndAction {
-                            duringAnimation = false
-                        }
-                        .start()
-                }
-            }
+            val rotateLeftButton = view.findViewById<Button>(R.id.rotate_left_button)
+            rotateLeftButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            rotateLeftButton.setOnClickListener(RotateImageListener(-90f))
 
             val flipButton = view.findViewById<Button>(R.id.flip_button)
             flipButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
             flipButton.setOnClickListener {
                 if (!duringAnimation) {
                     duringAnimation = true
-                    val rotated = mainImage.rotation == 90f || mainImage.rotation == 270f
                     val animator =
                         mainImage.animate()
                             .setDuration(duration)
                             .withEndAction {
                                 duringAnimation = false
                             }
-                    if (rotated) {
+                    if (isImageRotated()) {
                         animator.scaleY(mainImage.scaleY * -1)
                     } else {
                         animator.scaleX(mainImage.scaleX * -1)
@@ -444,6 +429,33 @@ class ImageActivity : FragmentActivity() {
             valueView.text = value
 
             table.addView(row)
+        }
+
+        private inner class RotateImageListener(val rotation: Float) : View.OnClickListener {
+            override fun onClick(v: View?) {
+                if (!duringAnimation) {
+                    duringAnimation = true
+
+                    val scale = if (isImageRotated()) 1f else calculateRotationScale(mainImage)
+                    val flipY = if (mainImage.scaleY < 0) -1f else 1f
+                    val flipX = if (mainImage.scaleX < 0) -1f else 1f
+
+                    mainImage.animate()
+                        .rotationBy(rotation)
+                        .setDuration(duration)
+                        .scaleX(scale * flipX)
+                        .scaleY(scale * flipY)
+                        .withEndAction {
+                            duringAnimation = false
+                        }
+                        .start()
+                }
+            }
+        }
+
+        private fun isImageRotated(): Boolean {
+            val rotation = Math.abs(mainImage.rotation)
+            return rotation == 90f || rotation == 270f
         }
 
         private fun calculateRotationScale(mainImage: ImageView): Float {

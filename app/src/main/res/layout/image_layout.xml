@@ -45,8 +45,13 @@
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/rotate_button"
-                android:text="@string/fa_rotate"
+                android:id="@+id/rotate_right_button"
+                android:text="@string/fa_rotate_right"
+                style="@style/ImageActivityButton" />
+
+            <Button
+                android:id="@+id/rotate_left_button"
+                android:text="@string/fa_rotate_left"
                 style="@style/ImageActivityButton" />
 
             <Button
