@@ -29,13 +29,13 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
-import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.suppliers.StashSparseFilterFetcher
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
@@ -49,11 +49,10 @@ import kotlin.properties.Delegates
 
 class ImageActivity : FragmentActivity() {
     private lateinit var imageFragment: ImageFragment
-    private lateinit var dataSupplier: ImageDataSupplier
-    private lateinit var pagingSource: StashPagingSource<FindImagesQuery.Data, ImageData>
-    private lateinit var currentPageData: CountAndList<ImageData>
+    private lateinit var pager: StashSparseFilterFetcher<FindImagesQuery.Data, ImageData>
 
     private var currentPosition = -1
+    private var totalCount: Int? = null
 
     private var canScrollImages = false
 
@@ -72,90 +71,74 @@ class ImageActivity : FragmentActivity() {
             val pageSize =
                 PreferenceManager.getDefaultSharedPreferences(this).getInt("maxSearchResults", 25)
 
-            val galleryId = intent.getStringExtra(INTENT_GALLERY_ID)
-            val filterType = FilterType.safeValueOf(intent.getStringExtra(INTENT_FILTER_TYPE))
             currentPosition = intent.getIntExtra(INTENT_POSITION, -1)
-            if (galleryId != null && currentPosition >= 0) {
-                dataSupplier =
-                    ImageDataSupplier(
-                        DataType.IMAGE.asDefaultFindFilterType,
-                        ImageFilterType(
-                            galleries =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(galleryId)),
-                                        modifier = CriterionModifier.INCLUDES,
-                                    ),
-                                ),
-                        ),
-                    )
-                pagingSource = StashPagingSource(this, pageSize, dataSupplier)
-                lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val currentPage = currentPosition / pageSize + 1
-                    Log.v(TAG, "Initial data load for position=$currentPosition, page $currentPage")
-                    currentPageData = pagingSource.fetchPage(currentPage, pageSize)
+            lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val dataSupplier = createDataSupplier()
+                if (dataSupplier != null) {
+                    val pagingSource = StashPagingSource(this@ImageActivity, pageSize, dataSupplier)
+                    pager = StashSparseFilterFetcher(pagingSource, pageSize)
+                    pager.addListener { firstPage, pageNum, pageData ->
+                        totalCount = pageData.count
+                        Log.v(TAG, "Got $totalCount total images")
+                    }
                     canScrollImages = true
                 }
-            } else if (filterType != null && currentPosition >= 0) {
-                Log.v(TAG, "Got a $filterType")
-                val queryEngine = QueryEngine(this)
-                if (filterType == FilterType.SAVED_FILTER) {
-                    val filter = intent.getParcelableExtra<StashSavedFilter>(INTENT_FILTER)!!
-                    lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        val savedFilter = queryEngine.getSavedFilter(filter.savedFilterId)
-                        if (savedFilter != null) {
-                            val findFilter =
-                                queryEngine.updateFilter(
-                                    convertFilter(savedFilter.find_filter),
-                                    useRandom = true,
-                                )?.copy(per_page = Optional.present(pageSize))
-                                    ?: DataType.IMAGE.asDefaultFindFilterType
-                            val filterParser =
-                                FilterParser(ServerPreferences(this@ImageActivity).serverVersion)
-                            val imageFilter =
-                                filterParser.convertImageObjectFilter(savedFilter.object_filter)
-                            dataSupplier =
-                                ImageDataSupplier(
-                                    findFilter,
-                                    imageFilter,
-                                )
-                            pagingSource =
-                                StashPagingSource(this@ImageActivity, pageSize, dataSupplier)
-                            lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                                val currentPage = currentPosition / pageSize + 1
-                                Log.v(
-                                    TAG,
-                                    "Initial data load for position=$currentPosition, page $currentPage",
-                                )
-                                currentPageData = pagingSource.fetchPage(currentPage, pageSize)
-                                canScrollImages = true
-                            }
-                        } else {
-                            Log.w(TAG, "Unknown filter id=${filter.savedFilterId}")
-                        }
-                    }
-                } else {
-                    // CustomFilter
-                    val filter = intent.getParcelableExtra<StashCustomFilter>(INTENT_FILTER)!!
+            }
+        }
+    }
+
+    private suspend fun createDataSupplier(): ImageDataSupplier? {
+        val pageSize =
+            PreferenceManager.getDefaultSharedPreferences(this).getInt("maxSearchResults", 25)
+        val galleryId = intent.getStringExtra(INTENT_GALLERY_ID)
+        val filterType = FilterType.safeValueOf(intent.getStringExtra(INTENT_FILTER_TYPE))
+        if (galleryId != null && currentPosition >= 0) {
+            return ImageDataSupplier(
+                DataType.IMAGE.asDefaultFindFilterType,
+                ImageFilterType(
+                    galleries =
+                        Optional.present(
+                            MultiCriterionInput(
+                                value = Optional.present(listOf(galleryId)),
+                                modifier = CriterionModifier.INCLUDES,
+                            ),
+                        ),
+                ),
+            )
+        } else if (filterType != null) {
+            Log.v(TAG, "Got a $filterType")
+            val queryEngine = QueryEngine(this)
+            if (filterType == FilterType.SAVED_FILTER) {
+                val filter = intent.getParcelableExtra<StashSavedFilter>(INTENT_FILTER)!!
+                val savedFilter = queryEngine.getSavedFilter(filter.savedFilterId)
+                if (savedFilter != null) {
                     val findFilter =
                         queryEngine.updateFilter(
-                            filter.asFindFilterType().copy(per_page = Optional.present(pageSize)),
-                        )
-                    dataSupplier =
-                        ImageDataSupplier(findFilter, null)
-                    pagingSource =
-                        StashPagingSource(this@ImageActivity, pageSize, dataSupplier)
-                    lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        val currentPage = currentPosition / pageSize + 1
-                        Log.v(
-                            TAG,
-                            "Initial data load for position=$currentPosition, page $currentPage",
-                        )
-                        currentPageData = pagingSource.fetchPage(currentPage, pageSize)
-                        canScrollImages = true
-                    }
+                            convertFilter(savedFilter.find_filter),
+                            useRandom = true,
+                        )?.copy(per_page = Optional.present(pageSize))
+                            ?: DataType.IMAGE.asDefaultFindFilterType
+                    val filterParser =
+                        FilterParser(ServerPreferences(this@ImageActivity).serverVersion)
+                    val imageFilter =
+                        filterParser.convertImageObjectFilter(savedFilter.object_filter)
+                    return ImageDataSupplier(findFilter, imageFilter)
+                } else {
+                    Log.w(TAG, "Unknown filter id=${filter.savedFilterId}")
+                    return null
                 }
+            } else {
+                // CustomFilter
+                val filter = intent.getParcelableExtra<StashCustomFilter>(INTENT_FILTER)!!
+                val findFilter =
+                    queryEngine.updateFilter(
+                        filter.asFindFilterType()
+                            .copy(per_page = Optional.present(pageSize)),
+                    )
+                return ImageDataSupplier(findFilter, null)
             }
+        } else {
+            return null
         }
     }
 
@@ -163,11 +146,11 @@ class ImageActivity : FragmentActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
             if (event.keyCode == KeyEvent.KEYCODE_BACK) {
-                if (imageFragment.isOverlayVisible()) {
+                if (imageFragment.viewCreated && imageFragment.isOverlayVisible()) {
                     imageFragment.hideOverlay()
                     return true
                 }
-            } else if (isDpadKey(event.keyCode) && !imageFragment.isOverlayVisible()) {
+            } else if (isDpadKey(event.keyCode) && imageFragment.viewCreated && !imageFragment.isOverlayVisible()) {
                 if (isLeft(event.keyCode)) {
                     switchImage(currentPosition - 1)
                 } else if (isRight(event.keyCode)) {
@@ -215,9 +198,12 @@ class ImageActivity : FragmentActivity() {
     private fun switchImage(newPosition: Int) {
         Log.v(TAG, "switchImage $currentPosition => $newPosition")
         if (canScrollImages) {
-            if (newPosition >= 0) {
+            if (totalCount != null && newPosition > totalCount!!) {
+                Toast.makeText(this@ImageActivity, "No more images", Toast.LENGTH_SHORT)
+                    .show()
+            } else if (newPosition >= 0) {
                 lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val image = fetchImageData(newPosition)
+                    val image = pager.get(newPosition)
                     if (image != null && image.paths.image != null) {
                         currentPosition = newPosition
                         imageFragment =
@@ -237,42 +223,6 @@ class ImageActivity : FragmentActivity() {
         }
     }
 
-    private suspend fun fetchImageData(newPosition: Int): ImageData? {
-        val pageSize =
-            PreferenceManager.getDefaultSharedPreferences(this).getInt("maxSearchResults", 25)
-        val currentPage = currentPosition / pageSize + 1
-        val pageStart = (currentPosition / pageSize) * pageSize
-        val pageEnd = pageStart + pageSize - 1
-        val listPos = newPosition - pageStart
-        Log.v(
-            TAG,
-            "fetchImageData currentPage=$currentPage, pageStart=$pageStart, pageEnd=$pageEnd, listPos=$listPos",
-        )
-        if (newPosition < pageStart) {
-            Log.v(TAG, "Fetching previous page")
-            // fetch previous page
-            currentPageData = pagingSource.fetchPage(currentPage - 1, pageSize)
-            val newListPos = newPosition - (pageStart - pageSize)
-            return currentPageData.list[newListPos]
-        } else if (newPosition > pageEnd) {
-            // fetch next page
-            Log.v(TAG, "Fetching next page")
-            currentPageData = pagingSource.fetchPage(currentPage + 1, pageSize)
-            val newListPos = newPosition - (pageStart + pageSize)
-            if (currentPageData.list.isEmpty() || newListPos < 0) {
-                Log.v(TAG, "End of images")
-                return null
-            }
-            return currentPageData.list[newListPos]
-        } else if (listPos < currentPageData.count) {
-            Log.v(TAG, "Image already available")
-            return currentPageData.list[listPos]
-        } else {
-            // End of images
-            return null
-        }
-    }
-
     companion object {
         const val TAG = "ImageActivity"
         const val INTENT_IMAGE_ID = "image.id"
@@ -285,18 +235,27 @@ class ImageActivity : FragmentActivity() {
         const val INTENT_FILTER_TYPE = "filter.type"
     }
 
-    class ImageFragment(val imageId: String, val imageUrl: String, val imageSize: Int = -1) :
+    class ImageFragment(
+        val imageId: String,
+        val imageUrl: String,
+        val imageSize: Int = -1,
+    ) :
         Fragment(R.layout.image_layout) {
+        lateinit var bottomOverlay: View
         lateinit var titleText: TextView
         lateinit var table: TableLayout
         var image: ImageData? = null
 
         private var animationDuration by Delegates.notNull<Long>()
 
+        var viewCreated = false
+
         override fun onViewCreated(
             view: View,
             savedInstanceState: Bundle?,
         ) {
+            super.onViewCreated(view, savedInstanceState)
+            bottomOverlay = view.findViewById(R.id.image_bottom_overlay)
             animationDuration =
                 resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
             titleText = view.findViewById(R.id.image_view_title)
@@ -343,6 +302,7 @@ class ImageActivity : FragmentActivity() {
                     },
                 )
                 .into(mainImage)
+            viewCreated = true
         }
 
         fun configureUI() {
@@ -368,7 +328,7 @@ class ImageActivity : FragmentActivity() {
         }
 
         fun showOverlay() {
-            listOf(titleText, table).forEach {
+            listOf(titleText, bottomOverlay).forEach {
                 it.alpha = 0.0f
                 it.visibility = View.VISIBLE
                 it.animate()
@@ -379,7 +339,7 @@ class ImageActivity : FragmentActivity() {
         }
 
         fun hideOverlay() {
-            listOf(titleText, table).forEach {
+            listOf(titleText, bottomOverlay).forEach {
                 it.alpha = 1.0f
                 it.visibility = View.VISIBLE
                 it.animate()
