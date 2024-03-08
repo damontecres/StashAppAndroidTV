@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.suppliers
 
-import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -29,7 +28,7 @@ class GalleryDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType(sort = Optional.present("path"))
+        return findFilter ?: DataType.GALLERY.asDefaultFindFilterType
     }
 
     override fun parseQuery(data: FindGalleriesQuery.Data?): CountAndList<GalleryData> {

@@ -35,6 +35,6 @@ class SceneDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType()
+        return findFilter ?: DataType.SCENE.asDefaultFindFilterType
     }
 }

@@ -34,6 +34,6 @@ class MarkerDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType()
+        return findFilter ?: DataType.MARKER.asDefaultFindFilterType
     }
 }

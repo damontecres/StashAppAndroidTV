@@ -28,7 +28,7 @@ class TagDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType()
+        return findFilter ?: DataType.TAG.asDefaultFindFilterType
     }
 
     override fun parseQuery(data: FindTagsQuery.Data?): CountAndList<TagData> {
