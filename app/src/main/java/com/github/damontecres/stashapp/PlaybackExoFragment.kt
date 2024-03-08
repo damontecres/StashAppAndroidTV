@@ -293,7 +293,7 @@ class PlaybackExoFragment :
                 ),
             ) {
                 val newCounter =
-                    MutationEngine(requireContext()).incrementOCounter(scene.id.toInt())
+                    MutationEngine(requireContext()).incrementOCounter(scene.id)
                 oCounterText.text = newCounter.count.toString()
             }
         }
@@ -317,7 +317,7 @@ class PlaybackExoFragment :
                     when (popUpItemPosition) {
                         0 -> {
                             // Decrement
-                            val newCount = mutationEngine.decrementOCounter(scene.id.toInt())
+                            val newCount = mutationEngine.decrementOCounter(scene.id)
                             if (newCount.count > 0) {
                                 oCounterText.text = newCount.count.toString()
                             } else {
@@ -327,7 +327,7 @@ class PlaybackExoFragment :
 
                         1 -> {
                             // Reset
-                            mutationEngine.resetOCounter(scene.id.toInt())
+                            mutationEngine.resetOCounter(scene.id)
                             oCounterText.text = "0"
                         }
 

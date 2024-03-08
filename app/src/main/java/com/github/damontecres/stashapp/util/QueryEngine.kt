@@ -120,7 +120,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun findScenes(
         findFilter: FindFilterType? = null,
         sceneFilter: SceneFilterType? = null,
-        sceneIds: List<Int>? = null,
+        sceneIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<SlimSceneData> {
         val query =
@@ -128,7 +128,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 FindScenesQuery(
                     filter = updateFilter(findFilter, useRandom),
                     scene_filter = sceneFilter,
-                    scene_ids = sceneIds,
+                    scene_ids = sceneIds?.map { it.toInt() },
                 ),
             )
         val scenes =
@@ -138,14 +138,14 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         return scenes.orEmpty()
     }
 
-    suspend fun getScene(sceneId: Int): SlimSceneData? {
+    suspend fun getScene(sceneId: String): SlimSceneData? {
         return findScenes(sceneIds = listOf(sceneId)).firstOrNull()
     }
 
     suspend fun findPerformers(
         findFilter: FindFilterType? = null,
         performerFilter: PerformerFilterType? = null,
-        performerIds: List<Int>? = null,
+        performerIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<PerformerData> {
         val query =
@@ -153,7 +153,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 FindPerformersQuery(
                     filter = updateFilter(findFilter, useRandom),
                     performer_filter = performerFilter,
-                    performer_ids = performerIds,
+                    performer_ids = performerIds?.map { it.toInt() },
                 ),
             )
         val performers =
@@ -161,6 +161,10 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 it.performerData
             }
         return performers.orEmpty()
+    }
+
+    suspend fun getPerformer(performerId: String): PerformerData? {
+        return findPerformers(performerIds = listOf(performerId)).firstOrNull()
     }
 
     // TODO Add studioIds?
@@ -287,7 +291,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
             DataType.MOVIE -> findMovies(findFilter)
             DataType.MARKER -> findMarkers(findFilter)
             DataType.IMAGE -> findImages(findFilter)
-            DataType.GALLERY -> TODO()
+            DataType.GALLERY -> findGalleries(findFilter)
         }
     }
 

@@ -99,11 +99,11 @@ class DetailsDescriptionPresenter(val ratingCallback: RatingCallback) :
 
         ratingBar.setOnClickListener {
             currentRating = (ratingBar.rating * 20).toInt()
-            ratingCallback.setRating(scene.id.toInt(), currentRating)
+            ratingCallback.setRating(scene.id, currentRating)
         }
         ratingBarDecimal.setOnClickListener {
             currentRating = ratingBarDecimal.progress
-            ratingCallback.setRating(scene.id.toInt(), currentRating)
+            ratingCallback.setRating(scene.id, currentRating)
         }
 
         val focusChangeListener =
@@ -125,7 +125,7 @@ class DetailsDescriptionPresenter(val ratingCallback: RatingCallback) :
 
     fun interface RatingCallback {
         fun setRating(
-            sceneId: Int,
+            sceneId: String,
             rating100: Int,
         )
     }

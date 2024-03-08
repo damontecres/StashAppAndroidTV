@@ -102,7 +102,7 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
      * @param position the video playback position in milliseconds
      */
     suspend fun saveSceneActivity(
-        sceneId: Long,
+        sceneId: String,
         position: Long,
         duration: Long? = null,
     ): Boolean {
@@ -114,7 +114,7 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         val playDuration = if (duration != null && duration >= 1000.0) duration / 1000.0 else null
         val mutation =
             SceneSaveActivityMutation(
-                scene_id = sceneId.toString(),
+                scene_id = sceneId,
                 resume_time = resumeTime,
                 play_duration = playDuration,
             )
@@ -122,14 +122,14 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         return result.data!!.sceneSaveActivity
     }
 
-    suspend fun incrementPlayCount(sceneId: Long): Int {
+    suspend fun incrementPlayCount(sceneId: String): Int {
         Log.v(TAG, "incrementPlayCount on $sceneId")
         return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
-            val mutation = SceneAddPlayCountMutation(sceneId.toString(), emptyList())
+            val mutation = SceneAddPlayCountMutation(sceneId, emptyList())
             val result = executeMutation(mutation)
             result.data!!.sceneAddPlay.count
         } else {
-            val mutation = SceneIncrementPlayCountMutation(sceneId.toString())
+            val mutation = SceneIncrementPlayCountMutation(sceneId)
             val result = executeMutation(mutation)
             result.data!!.sceneIncrementPlayCount
         }
@@ -181,16 +181,16 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
     }
 
     suspend fun setTagsOnScene(
-        sceneId: Long,
-        tagIds: List<Int>,
+        sceneId: String,
+        tagIds: List<String>,
     ): SceneUpdateMutation.SceneUpdate? {
         Log.v(TAG, "setTagsOnScene sceneId=$sceneId, tagIds=$tagIds")
         val mutation =
             SceneUpdateMutation(
                 input =
                     SceneUpdateInput(
-                        id = sceneId.toString(),
-                        tag_ids = Optional.present(tagIds.map { it.toString() }),
+                        id = sceneId,
+                        tag_ids = Optional.present(tagIds),
                     ),
             )
         val result = executeMutation(mutation)
@@ -198,48 +198,48 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
     }
 
     suspend fun setPerformersOnScene(
-        sceneId: Long,
-        performerIds: List<Int>,
+        sceneId: String,
+        performerIds: List<String>,
     ): SceneUpdateMutation.SceneUpdate? {
         Log.v(TAG, "setTagsOnScene sceneId=$sceneId, performerIds=$performerIds")
         val mutation =
             SceneUpdateMutation(
                 input =
                     SceneUpdateInput(
-                        id = sceneId.toString(),
-                        performer_ids = Optional.present(performerIds.map { it.toString() }),
+                        id = sceneId,
+                        performer_ids = Optional.present(performerIds),
                     ),
             )
         val result = executeMutation(mutation)
         return result.data?.sceneUpdate
     }
 
-    suspend fun incrementOCounter(sceneId: Int): OCounter {
+    suspend fun incrementOCounter(sceneId: String): OCounter {
         return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
-            val mutation = SceneAddOMutation(sceneId.toString(), emptyList())
+            val mutation = SceneAddOMutation(sceneId, emptyList())
             val result = executeMutation(mutation)
             OCounter(sceneId, result.data!!.sceneAddO.count)
         } else {
-            val mutation = SceneIncrementOMutation(sceneId.toString())
+            val mutation = SceneIncrementOMutation(sceneId)
             val result = executeMutation(mutation)
             OCounter(sceneId, result.data!!.sceneIncrementO)
         }
     }
 
-    suspend fun decrementOCounter(sceneId: Int): OCounter {
+    suspend fun decrementOCounter(sceneId: String): OCounter {
         return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
-            val mutation = SceneDeleteOMutation(sceneId.toString(), emptyList())
+            val mutation = SceneDeleteOMutation(sceneId, emptyList())
             val result = executeMutation(mutation)
             OCounter(sceneId, result.data!!.sceneDeleteO.count)
         } else {
-            val mutation = SceneDecrementOMutation(sceneId.toString())
+            val mutation = SceneDecrementOMutation(sceneId)
             val result = executeMutation(mutation)
             OCounter(sceneId, result.data!!.sceneDecrementO)
         }
     }
 
-    suspend fun resetOCounter(sceneId: Int): OCounter {
-        val mutation = SceneResetOMutation(sceneId.toString())
+    suspend fun resetOCounter(sceneId: String): OCounter {
+        val mutation = SceneResetOMutation(sceneId)
         val result = executeMutation(mutation)
         return OCounter(sceneId, result.data!!.sceneResetO)
     }
@@ -269,7 +269,7 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
     }
 
     suspend fun setRating(
-        sceneId: Int,
+        sceneId: String,
         rating100: Int,
     ) {
         Log.v(TAG, "setRating sceneId=$sceneId, rating=$rating100")
@@ -277,7 +277,7 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
             SceneUpdateMutation(
                 input =
                     SceneUpdateInput(
-                        id = sceneId.toString(),
+                        id = sceneId,
                         rating100 = Optional.present(rating100),
                     ),
             )
