@@ -11,6 +11,9 @@ import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.CreateMarkerMutation
 import com.github.damontecres.stashapp.api.DeleteMarkerMutation
+import com.github.damontecres.stashapp.api.ImageDecrementOMutation
+import com.github.damontecres.stashapp.api.ImageIncrementOMutation
+import com.github.damontecres.stashapp.api.ImageResetOMutation
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
 import com.github.damontecres.stashapp.api.SceneAddOMutation
@@ -218,11 +221,11 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
             val mutation = SceneAddOMutation(sceneId.toString(), emptyList())
             val result = executeMutation(mutation)
-            OCounter(sceneId, result.data!!.sceneAddO.count)
+            OCounter(sceneId.toString(), result.data!!.sceneAddO.count)
         } else {
             val mutation = SceneIncrementOMutation(sceneId.toString())
             val result = executeMutation(mutation)
-            OCounter(sceneId, result.data!!.sceneIncrementO)
+            OCounter(sceneId.toString(), result.data!!.sceneIncrementO)
         }
     }
 
@@ -230,18 +233,18 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         return if (ServerPreferences(context).serverVersion.isGreaterThan(Version.V0_24_3)) {
             val mutation = SceneDeleteOMutation(sceneId.toString(), emptyList())
             val result = executeMutation(mutation)
-            OCounter(sceneId, result.data!!.sceneDeleteO.count)
+            OCounter(sceneId.toString(), result.data!!.sceneDeleteO.count)
         } else {
             val mutation = SceneDecrementOMutation(sceneId.toString())
             val result = executeMutation(mutation)
-            OCounter(sceneId, result.data!!.sceneDecrementO)
+            OCounter(sceneId.toString(), result.data!!.sceneDecrementO)
         }
     }
 
     suspend fun resetOCounter(sceneId: Int): OCounter {
         val mutation = SceneResetOMutation(sceneId.toString())
         val result = executeMutation(mutation)
-        return OCounter(sceneId, result.data!!.sceneResetO)
+        return OCounter(sceneId.toString(), result.data!!.sceneResetO)
     }
 
     suspend fun createMarker(
@@ -282,6 +285,24 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
                     ),
             )
         executeMutation(mutation)
+    }
+
+    suspend fun incrementImageOCounter(imageId: String): OCounter {
+        val mutation = ImageIncrementOMutation(imageId)
+        val result = executeMutation(mutation)
+        return OCounter(imageId, result.data!!.imageIncrementO)
+    }
+
+    suspend fun decrementImageOCounter(imageId: String): OCounter {
+        val mutation = ImageDecrementOMutation(imageId)
+        val result = executeMutation(mutation)
+        return OCounter(imageId, result.data!!.imageDecrementO)
+    }
+
+    suspend fun resetImageOCounter(imageId: String): OCounter {
+        val mutation = ImageResetOMutation(imageId)
+        val result = executeMutation(mutation)
+        return OCounter(imageId, result.data!!.imageResetO)
     }
 
     companion object {
