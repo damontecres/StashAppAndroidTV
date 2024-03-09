@@ -190,7 +190,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 sceneActionsAdapter.set(
                     O_COUNTER_POS,
                     OCounter(
-                        mSelectedMovie!!.id.toInt(),
+                        mSelectedMovie!!.id,
                         mSelectedMovie?.o_counter ?: 0,
                     ),
                 )
@@ -426,7 +426,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 // Refresh the o-counter which could have changed
                 sceneActionsAdapter.set(
                     O_COUNTER_POS,
-                    OCounter(mSelectedMovie!!.id.toInt(), mSelectedMovie!!.o_counter ?: 0),
+                    OCounter(mSelectedMovie!!.id, mSelectedMovie!!.o_counter ?: 0),
                 )
             }
         }
@@ -590,7 +590,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 ),
             ) {
                 val mutationEngine = MutationEngine(requireContext())
-                val newCounter = mutationEngine.incrementOCounter(counter.sceneId)
+                val newCounter = mutationEngine.incrementOCounter(counter.id.toInt())
                 mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCounter.count)
                 sceneActionsAdapter.set(O_COUNTER_POS, newCounter)
             }

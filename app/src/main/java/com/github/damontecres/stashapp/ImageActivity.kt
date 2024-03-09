@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TableLayout
 import android.widget.TableRow
@@ -34,10 +35,12 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.StashSparseFilterFetcher
 import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -245,6 +248,7 @@ class ImageActivity : FragmentActivity() {
         lateinit var mainImage: ImageView
         lateinit var bottomOverlay: View
         lateinit var titleText: TextView
+        lateinit var oCounterTextView: TextView
         lateinit var table: TableLayout
         var image: ImageData? = null
 
@@ -265,6 +269,8 @@ class ImageActivity : FragmentActivity() {
             titleText = view.findViewById(R.id.image_view_title)
             mainImage = view.findViewById(R.id.image_view_image)
             table = view.findViewById(R.id.image_view_table)
+            oCounterTextView = view.findViewById(R.id.o_counter_text)
+
             Log.v(TAG, "imageId=$imageId")
             if (image != null) {
                 configureUI()
@@ -321,6 +327,37 @@ class ImageActivity : FragmentActivity() {
                 }
             }
 
+            val mutationEngine = MutationEngine(requireContext())
+            val oCounterButton = view.findViewById<ImageButton>(R.id.o_counter_button)
+            oCounterButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            oCounterButton.setOnClickListener {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val newOCounter = mutationEngine.incrementImageOCounter(imageId)
+                    oCounterTextView.text = newOCounter.count.toString()
+                }
+            }
+            oCounterButton.setOnLongClickListener(
+                PopupOnLongClickListener(
+                    listOf(
+                        "Increment",
+                        "Decrement",
+                        "Reset",
+                    ),
+                    225,
+                ) { parent, view, position, id ->
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        val newOCounter =
+                            when (position) {
+                                0 -> mutationEngine.incrementImageOCounter(imageId)
+                                1 -> mutationEngine.decrementImageOCounter(imageId)
+                                2 -> mutationEngine.resetImageOCounter(imageId)
+                                else -> null
+                            }
+                        oCounterTextView.text = newOCounter?.count?.toString()
+                    }
+                },
+            )
+
             StashGlide.with(requireContext(), imageUrl, imageSize)
                 .listener(
                     object : RequestListener<Drawable?> {
@@ -357,6 +394,9 @@ class ImageActivity : FragmentActivity() {
         fun configureUI() {
             val image = image!!
             titleText.text = image.title
+
+            oCounterTextView.text = image.o_counter.toString()
+
             val imageHeight = image.visual_files.first().onImageFile!!.height
             val imageWidth = image.visual_files.first().onImageFile!!.width
             addRow(R.string.stashapp_dimensions, "${imageWidth}x$imageHeight")
