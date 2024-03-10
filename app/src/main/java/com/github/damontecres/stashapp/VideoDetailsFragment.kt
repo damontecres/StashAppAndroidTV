@@ -96,7 +96,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private var position = -1L // The position in the video
     private val detailsPresenter =
         FullWidthDetailsOverviewRowPresenter(
-            DetailsDescriptionPresenter { sceneId: Int, rating100: Int ->
+            DetailsDescriptionPresenter { rating100: Int ->
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(
                         Toast.makeText(
@@ -106,7 +106,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         ),
                     ),
                 ) {
-                    MutationEngine(requireContext()).setRating(sceneId, rating100)
+                    MutationEngine(requireContext()).setRating(
+                        mSelectedMovie!!.id.toInt(),
+                        rating100,
+                    )
                     val ratingsAsStars = ServerPreferences(requireContext()).ratingsAsStars
                     val ratingStr =
                         if (ratingsAsStars) {
