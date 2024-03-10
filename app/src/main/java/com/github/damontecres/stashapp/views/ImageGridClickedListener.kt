@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.itemclick
+package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.content.Intent

@@ -34,7 +34,6 @@ import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
-import com.github.damontecres.stashapp.itemclick.ImageGridClickedListener
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
@@ -62,6 +61,7 @@ import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.toPx
+import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import kotlinx.coroutines.CoroutineExceptionHandler
