@@ -12,6 +12,7 @@ import com.github.damontecres.stashapp.R
  */
 class PopupOnLongClickListener(
     private val popupOptions: List<String>,
+    private val popUpWidth: Int = ListPopupWindow.WRAP_CONTENT,
     private val popupItemClickListener: AdapterView.OnItemClickListener,
 ) : OnLongClickListener {
     override fun onLongClick(view: View): Boolean {
@@ -23,7 +24,7 @@ class PopupOnLongClickListener(
             )
         listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
         listPopUp.anchorView = view
-        listPopUp.width = ListPopupWindow.WRAP_CONTENT
+        listPopUp.width = popUpWidth
         listPopUp.isModal = true
 
         val adapter =

@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.content.Intent
@@ -7,6 +7,15 @@ import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
+import com.github.damontecres.stashapp.FilterListActivity
+import com.github.damontecres.stashapp.GalleryActivity
+import com.github.damontecres.stashapp.ImageActivity
+import com.github.damontecres.stashapp.MovieActivity
+import com.github.damontecres.stashapp.PerformerActivity
+import com.github.damontecres.stashapp.PlaybackActivity
+import com.github.damontecres.stashapp.StudioActivity
+import com.github.damontecres.stashapp.TagActivity
+import com.github.damontecres.stashapp.VideoDetailsActivity
 import com.github.damontecres.stashapp.VideoDetailsFragment.Companion.POSITION_ARG
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener

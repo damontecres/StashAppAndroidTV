@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TableLayout
 import android.widget.TableRow
@@ -33,10 +35,12 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.StashSparseFilterFetcher
 import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -44,6 +48,9 @@ import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.maxFileSize
+import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
+import com.github.damontecres.stashapp.views.StashRatingBar
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
@@ -241,14 +248,19 @@ class ImageActivity : FragmentActivity() {
         val imageSize: Int = -1,
     ) :
         Fragment(R.layout.image_layout) {
+        lateinit var mainImage: ImageView
         lateinit var bottomOverlay: View
         lateinit var titleText: TextView
+        lateinit var oCounterTextView: TextView
         lateinit var table: TableLayout
+        lateinit var ratingBar: StashRatingBar
         var image: ImageData? = null
 
         private var animationDuration by Delegates.notNull<Long>()
 
         var viewCreated = false
+        private val duration = 200L
+        private var duringAnimation = false
 
         override fun onViewCreated(
             view: View,
@@ -259,8 +271,11 @@ class ImageActivity : FragmentActivity() {
             animationDuration =
                 resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
             titleText = view.findViewById(R.id.image_view_title)
-            val mainImage = view.findViewById<ImageView>(R.id.image_view_image)
+            mainImage = view.findViewById(R.id.image_view_image)
             table = view.findViewById(R.id.image_view_table)
+            oCounterTextView = view.findViewById(R.id.o_counter_text)
+            ratingBar = view.findViewById(R.id.rating_bar)
+
             Log.v(TAG, "imageId=$imageId")
             if (image != null) {
                 configureUI()
@@ -271,6 +286,82 @@ class ImageActivity : FragmentActivity() {
                     configureUI()
                 }
             }
+
+            val rotateRightButton = view.findViewById<Button>(R.id.rotate_right_button)
+            rotateRightButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            rotateRightButton.setOnClickListener(RotateImageListener(90f))
+
+            val rotateLeftButton = view.findViewById<Button>(R.id.rotate_left_button)
+            rotateLeftButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            rotateLeftButton.setOnClickListener(RotateImageListener(-90f))
+
+            val flipButton = view.findViewById<Button>(R.id.flip_button)
+            flipButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            flipButton.setOnClickListener {
+                if (!duringAnimation) {
+                    duringAnimation = true
+                    val animator =
+                        mainImage.animate()
+                            .setDuration(duration)
+                            .withEndAction {
+                                duringAnimation = false
+                            }
+                    if (isImageRotated()) {
+                        animator.scaleY(mainImage.scaleY * -1)
+                    } else {
+                        animator.scaleX(mainImage.scaleX * -1)
+                    }
+                    animator.start()
+                }
+            }
+
+            val resetButton = view.findViewById<Button>(R.id.reset_button)
+            resetButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            resetButton.setOnClickListener {
+                if (!duringAnimation) {
+                    duringAnimation = true
+                    mainImage.animate()
+                        .rotation(0f)
+                        .setDuration(duration)
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .withEndAction {
+                            duringAnimation = false
+                        }
+                        .start()
+                }
+            }
+
+            val mutationEngine = MutationEngine(requireContext())
+            val oCounterButton = view.findViewById<ImageButton>(R.id.o_counter_button)
+            oCounterButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            oCounterButton.setOnClickListener {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val newOCounter = mutationEngine.incrementImageOCounter(imageId)
+                    oCounterTextView.text = newOCounter.count.toString()
+                }
+            }
+            oCounterButton.setOnLongClickListener(
+                PopupOnLongClickListener(
+                    listOf(
+                        "Increment",
+                        "Decrement",
+                        "Reset",
+                    ),
+                    225,
+                ) { parent, view, position, id ->
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        val newOCounter =
+                            when (position) {
+                                0 -> mutationEngine.incrementImageOCounter(imageId)
+                                1 -> mutationEngine.decrementImageOCounter(imageId)
+                                2 -> mutationEngine.resetImageOCounter(imageId)
+                                else -> null
+                            }
+                        oCounterTextView.text = newOCounter?.count?.toString()
+                    }
+                },
+            )
 
             StashGlide.with(requireContext(), imageUrl, imageSize)
                 .listener(
@@ -309,6 +400,21 @@ class ImageActivity : FragmentActivity() {
             val image = image!!
             titleText.text = image.title
 
+            ratingBar.rating100 = image.rating100 ?: 0
+            ratingBar.setRatingCallback {
+                val mutationEngine = MutationEngine(requireContext(), true)
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val result = mutationEngine.updateImage(image.id, rating100 = it)
+                    ratingBar.rating100 = result?.rating100 ?: 0
+                    showSetRatingToast(requireContext(), it, ratingBar.ratingAsStars)
+                }
+            }
+
+            oCounterTextView.text = image.o_counter.toString()
+
+            val imageHeight = image.visual_files.first().onImageFile!!.height
+            val imageWidth = image.visual_files.first().onImageFile!!.width
+            addRow(R.string.stashapp_dimensions, "${imageWidth}x$imageHeight")
             addRow(R.string.stashapp_studio, image.studio?.studioData?.name)
             addRow(R.string.stashapp_date, image.date)
             addRow(R.string.stashapp_photographer, image.photographer)
@@ -373,11 +479,77 @@ class ImageActivity : FragmentActivity() {
 
             val keyView = row.findViewById<TextView>(R.id.table_row_key)
             keyView.text = keyString
+            keyView.textSize = 16f
 
             val valueView = row.findViewById<TextView>(R.id.table_row_value)
             valueView.text = value
+            valueView.textSize = 16f
 
             table.addView(row)
+        }
+
+        private inner class RotateImageListener(val rotation: Float) : View.OnClickListener {
+            override fun onClick(v: View?) {
+                if (!duringAnimation) {
+                    duringAnimation = true
+
+                    val scale = if (isImageRotated()) 1f else calculateRotationScale(mainImage)
+                    val flipY = if (mainImage.scaleY < 0) -1f else 1f
+                    val flipX = if (mainImage.scaleX < 0) -1f else 1f
+
+                    mainImage.animate()
+                        .rotationBy(rotation)
+                        .setDuration(duration)
+                        .scaleX(scale * flipX)
+                        .scaleY(scale * flipY)
+                        .withEndAction {
+                            duringAnimation = false
+                        }
+                        .start()
+                }
+            }
+        }
+
+        private fun isImageRotated(): Boolean {
+            val rotation = Math.abs(mainImage.rotation)
+            return rotation == 90f || rotation == 270f
+        }
+
+        private fun calculateRotationScale(mainImage: ImageView): Float {
+            val viewHeight = mainImage.height.toFloat()
+            val viewWidth = mainImage.width.toFloat()
+            val imageHeight = image!!.visual_files.first().onImageFile!!.height.toFloat()
+            val imageWidth = image!!.visual_files.first().onImageFile!!.width.toFloat()
+            val imageHeightPx = mainImage.drawable.intrinsicHeight
+            val imageWidthPx = mainImage.drawable.intrinsicWidth
+
+            Log.v(
+                TAG,
+                "viewWidth=$viewWidth, viewHeight=$viewHeight\n" +
+                    "imageWidth=$imageWidth, imageHeight=$imageHeight\n" +
+                    "imageWidthPx=$imageWidthPx, imageHeightPx=$imageHeightPx\n",
+            )
+
+            return if (imageWidthPx >= viewHeight) {
+                // Need to scale the image width down
+                Log.v(TAG, "Scaling image width down to view height")
+                viewHeight / imageWidthPx
+            } else if (imageHeightPx >= viewWidth) {
+                // Need to scale the image height down
+                Log.v(TAG, "Scaling image height down to view width")
+                viewWidth / imageHeightPx
+            } else {
+                // Need to scale the image up
+                val ratio = viewHeight / imageWidthPx
+                val ratio2 = viewWidth / imageHeightPx
+                if (ratio > ratio2) {
+                    Log.v(TAG, "Scaling image width up to view height")
+                    ratio2
+                } else {
+                    Log.v(TAG, "Scaling image height up to view width")
+                    ratio
+                }
+            }
         }
     }
 }

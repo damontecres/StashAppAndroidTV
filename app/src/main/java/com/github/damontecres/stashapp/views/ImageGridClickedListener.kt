@@ -1,13 +1,13 @@
-package com.github.damontecres.stashapp.itemclick
+package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.content.Intent
-import com.github.damontecres.stashapp.ClassOnItemViewClickedListener.SimpleOnItemViewClickedListener
 import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.StashGridFragment
 import com.github.damontecres.stashapp.api.FindImagesQuery
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.util.maxFileSize
+import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener.SimpleOnItemViewClickedListener
 
 class ImageGridClickedListener(
     val context: Context,

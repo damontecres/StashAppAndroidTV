@@ -58,6 +58,9 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
+import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -96,7 +99,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private var position = -1L // The position in the video
     private val detailsPresenter =
         FullWidthDetailsOverviewRowPresenter(
-            DetailsDescriptionPresenter { sceneId: String, rating100: Int ->
+            DetailsDescriptionPresenter { rating100: Int ->
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(
                         Toast.makeText(
@@ -106,19 +109,11 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         ),
                     ),
                 ) {
-                    MutationEngine(requireContext()).setRating(sceneId, rating100)
-                    val ratingsAsStars = ServerPreferences(requireContext()).ratingsAsStars
-                    val ratingStr =
-                        if (ratingsAsStars) {
-                            (rating100 / 20.0).toString() + " stars"
-                        } else {
-                            (rating100 / 10.0).toString()
-                        }
-                    Toast.makeText(
-                        requireContext(),
-                        "Set rating to $ratingStr!",
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                    MutationEngine(requireContext()).setRating(
+                        mSelectedMovie!!.id,
+                        rating100,
+                    )
+                    showSetRatingToast(requireContext(), rating100)
                 }
             },
         )
@@ -590,7 +585,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 ),
             ) {
                 val mutationEngine = MutationEngine(requireContext())
-                val newCounter = mutationEngine.incrementOCounter(counter.sceneId)
+                val newCounter = mutationEngine.incrementOCounter(counter.id)
                 mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCounter.count)
                 sceneActionsAdapter.set(O_COUNTER_POS, newCounter)
             }

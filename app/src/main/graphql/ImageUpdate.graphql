@@ -1,0 +1,24 @@
+mutation UpdateImage($input: ImageUpdateInput!) {
+  imageUpdate(input: $input) {
+    id
+    tags {
+      ...TagData
+    }
+    performers {
+      ...PerformerData
+    }
+    rating100
+  }
+}
+
+mutation ImageIncrementO($id: ID!) {
+  imageIncrementO(id: $id)
+}
+
+mutation ImageDecrementO($id: ID!) {
+  imageDecrementO(id: $id)
+}
+
+mutation ImageResetO($id: ID!) {
+  imageResetO(id: $id)
+}

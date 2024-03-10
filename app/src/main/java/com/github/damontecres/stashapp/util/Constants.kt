@@ -534,3 +534,22 @@ fun ImageData.addToIntent(intent: Intent): Intent {
     intent.putExtra(ImageActivity.INTENT_IMAGE_SIZE, maxFileSize)
     return intent
 }
+
+fun showSetRatingToast(
+    context: Context,
+    rating100: Int,
+    ratingsAsStars: Boolean? = null,
+) {
+    val asStars = ratingsAsStars ?: ServerPreferences(context).ratingsAsStars
+    val ratingStr =
+        if (asStars) {
+            (rating100 / 20.0).toString() + " stars"
+        } else {
+            (rating100 / 10.0).toString()
+        }
+    Toast.makeText(
+        context,
+        "Set rating to $ratingStr!",
+        Toast.LENGTH_SHORT,
+    ).show()
+}

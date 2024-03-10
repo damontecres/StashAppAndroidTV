@@ -11,6 +11,10 @@
     <string name="fa_film" translatable="false">&#xf008;</string>
     <string name="fa_circle_play" translatable="false">&#xf144;</string>
     <string name="fa_images" translatable="false">&#xf302;</string>
+    <string name="fa_rotate_right" translatable="false">&#xf2f9;</string>
+    <string name="fa_rotate_left" translatable="false">&#xf2ea;</string>
+    <string name="fa_arrow_right_arrow_left" translatable="false">&#xf0ec;</string>
+
 
     <string name="go_to_scene">Go to scene</string>
     <string name="view_scenes">View scenes</string>

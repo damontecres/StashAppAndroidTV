@@ -8,9 +8,9 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.itemclick.ImageGridClickedListener
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.util.ImageComparator
+import com.github.damontecres.stashapp.views.ImageGridClickedListener
 
 class GalleryActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
