@@ -58,6 +58,7 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -112,18 +113,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         mSelectedMovie!!.id.toInt(),
                         rating100,
                     )
-                    val ratingsAsStars = ServerPreferences(requireContext()).ratingsAsStars
-                    val ratingStr =
-                        if (ratingsAsStars) {
-                            (rating100 / 20.0).toString() + " stars"
-                        } else {
-                            (rating100 / 10.0).toString()
-                        }
-                    Toast.makeText(
-                        requireContext(),
-                        "Set rating to $ratingStr!",
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                    showSetRatingToast(requireContext(), rating100)
                 }
             },
         )

@@ -48,7 +48,9 @@ import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.maxFileSize
+import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
+import com.github.damontecres.stashapp.views.StashRatingBar
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
@@ -251,6 +253,7 @@ class ImageActivity : FragmentActivity() {
         lateinit var titleText: TextView
         lateinit var oCounterTextView: TextView
         lateinit var table: TableLayout
+        lateinit var ratingBar: StashRatingBar
         var image: ImageData? = null
 
         private var animationDuration by Delegates.notNull<Long>()
@@ -271,6 +274,7 @@ class ImageActivity : FragmentActivity() {
             mainImage = view.findViewById(R.id.image_view_image)
             table = view.findViewById(R.id.image_view_table)
             oCounterTextView = view.findViewById(R.id.o_counter_text)
+            ratingBar = view.findViewById(R.id.rating_bar)
 
             Log.v(TAG, "imageId=$imageId")
             if (image != null) {
@@ -395,6 +399,16 @@ class ImageActivity : FragmentActivity() {
         fun configureUI() {
             val image = image!!
             titleText.text = image.title
+
+            ratingBar.rating100 = image.rating100 ?: 0
+            ratingBar.setRatingCallback {
+                val mutationEngine = MutationEngine(requireContext(), true)
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val result = mutationEngine.updateImage(image.id, rating100 = it)
+                    ratingBar.rating100 = result?.rating100 ?: 0
+                    showSetRatingToast(requireContext(), it, ratingBar.ratingAsStars)
+                }
+            }
 
             oCounterTextView.text = image.o_counter.toString()
 

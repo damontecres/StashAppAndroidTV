@@ -25,8 +25,10 @@ import com.github.damontecres.stashapp.api.SceneIncrementPlayCountMutation
 import com.github.damontecres.stashapp.api.SceneResetOMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
+import com.github.damontecres.stashapp.api.UpdateImageMutation
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
+import com.github.damontecres.stashapp.api.type.ImageUpdateInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
@@ -303,6 +305,25 @@ class MutationEngine(private val context: Context, private val showToasts: Boole
         val mutation = ImageResetOMutation(imageId)
         val result = executeMutation(mutation)
         return OCounter(imageId, result.data!!.imageResetO)
+    }
+
+    suspend fun updateImage(
+        imageId: String,
+        performerIds: List<String>? = null,
+        tagIds: List<String>? = null,
+        rating100: Int? = null,
+    ): UpdateImageMutation.ImageUpdate? {
+        val mutation =
+            UpdateImageMutation(
+                ImageUpdateInput(
+                    id = imageId,
+                    performer_ids = Optional.presentIfNotNull(performerIds),
+                    tag_ids = Optional.presentIfNotNull(tagIds),
+                    rating100 = Optional.presentIfNotNull(rating100),
+                ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.imageUpdate
     }
 
     companion object {

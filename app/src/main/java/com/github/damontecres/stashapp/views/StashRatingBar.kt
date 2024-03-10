@@ -54,6 +54,9 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
         } else {
             starRatingBar.visibility = View.GONE
         }
+
+        var unFocusedBackgroundColor: Int
+
         context.theme.obtainStyledAttributes(
             attrs,
             R.styleable.StashRatingBar,
@@ -62,11 +65,24 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
         ).apply {
             try {
                 rating100 = getInteger(R.styleable.StashRatingBar_defaultRating100, 0)
-
-                decimalRatingText.setTextSize(TypedValue.COMPLEX_UNIT_PX, getDimension(R.styleable.StashRatingBar_android_textSize, 16f))
-                decimalRatingText.setTextColor(
-                    getColor(R.styleable.StashRatingBar_android_textColor, resources.getColor(android.R.color.white, null)),
+                decimalRatingText.setTextSize(
+                    TypedValue.COMPLEX_UNIT_PX,
+                    getDimension(R.styleable.StashRatingBar_android_textSize, 16f),
                 )
+                decimalRatingText.setTextColor(
+                    getColor(
+                        R.styleable.StashRatingBar_android_textColor,
+                        resources.getColor(android.R.color.white, null),
+                    ),
+                )
+                unFocusedBackgroundColor =
+                    getColor(
+                        R.styleable.StashRatingBar_unFocusedBackgroundColor,
+                        ContextCompat.getColor(
+                            context,
+                            R.color.default_card_background,
+                        ),
+                    )
             } finally {
                 recycle()
             }
@@ -113,12 +129,7 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
                             ),
                         )
                     } else {
-                        v.setBackgroundColor(
-                            ContextCompat.getColor(
-                                context,
-                                R.color.default_card_background,
-                            ),
-                        )
+                        v.setBackgroundColor(unFocusedBackgroundColor)
                         starRatingBar.rating = rating100 / 20.0f
                         decimalRatingBar.progress = rating100
                         decimalRatingText.text = context.getString(R.string.stashapp_rating) + " (${rating100 / 10.0}):"
