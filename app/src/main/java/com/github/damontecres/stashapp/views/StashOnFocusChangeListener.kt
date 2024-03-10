@@ -1,8 +1,9 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.view.View
 import androidx.core.content.ContextCompat
+import com.github.damontecres.stashapp.R
 
 open class StashOnFocusChangeListener(val context: Context) : View.OnFocusChangeListener {
     private val mFocusedZoom =

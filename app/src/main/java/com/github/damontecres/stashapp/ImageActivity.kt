@@ -48,6 +48,7 @@ import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.maxFileSize
+import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 

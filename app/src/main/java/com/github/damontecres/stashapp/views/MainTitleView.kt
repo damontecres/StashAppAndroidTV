@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.content.Intent
@@ -10,6 +10,9 @@ import android.widget.ImageButton
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat.startActivity
 import androidx.leanback.widget.TitleViewAdapter
+import com.github.damontecres.stashapp.FilterListActivity
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.ServerPreferences
 
