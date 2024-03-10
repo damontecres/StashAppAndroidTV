@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.util.AttributeSet
@@ -8,6 +8,7 @@ import androidx.fragment.app.findFragment
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.PlaybackExoFragment
 
 class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     PlayerView(context, attrs, defStyleAttr) {

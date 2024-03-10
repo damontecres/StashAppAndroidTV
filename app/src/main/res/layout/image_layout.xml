@@ -2,6 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@android:color/black">
 
     <ImageView
@@ -32,6 +33,15 @@
         android:background="@color/transparent_black"
         android:orientation="vertical"
         android:visibility="gone">
+
+        <com.github.damontecres.stashapp.views.StashRatingBar
+            android:id="@+id/rating_bar"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            app:defaultRating100="0"
+            android:textSize="16sp"
+            android:textColor="@android:color/darker_gray"
+            app:unFocusedBackgroundColor="@color/transparent_black" />
 
         <TableLayout
             android:id="@+id/image_view_table"

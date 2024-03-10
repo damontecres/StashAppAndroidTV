@@ -1,45 +1,22 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    >
+    android:layout_height="wrap_content">
 
     <TextView
         android:id="@+id/lb_details_description_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        style="?attr/detailsDescriptionTitleStyle"
-        />
+        style="?attr/detailsDescriptionTitleStyle" />
 
-    <RatingBar
-        android:id="@+id/rating"
-        android:layout_width="wrap_content"
+    <com.github.damontecres.stashapp.views.StashRatingBar
+        android:id="@+id/rating_bar"
+        android:layout_width="300dp"
         android:layout_height="wrap_content"
-        android:numStars="5"
-        android:stepSize=".5"
-        android:isIndicator="false"
-        android:theme="@style/RatingBar"
-        />
-
-    <LinearLayout
-        android:id="@+id/rating_decimal_holder"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <TextView
-            android:id="@+id/rating_decimal_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/stashapp_rating"
-            style="?attr/detailsDescriptionSubtitleStyle"/>
-        <SeekBar
-            android:id="@+id/rating_decimal"
-            android:layout_width="250dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="45dp"
-            android:max="100" />
-    </LinearLayout>
+        app:defaultRating100="0"
+        android:textSize="16sp"
+        android:textColor="@android:color/darker_gray" />
 
     <TextView
         android:id="@+id/lb_details_description_subtitle"

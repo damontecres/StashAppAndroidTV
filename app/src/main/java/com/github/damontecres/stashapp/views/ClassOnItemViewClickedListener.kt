@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.views
 
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.Presenter
