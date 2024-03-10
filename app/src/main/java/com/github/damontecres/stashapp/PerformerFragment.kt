@@ -67,8 +67,15 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                     ).show()
                 }
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                val perf =
-                    queryEngine.findPerformers(performerIds = listOf(performer.id.toInt())).first()
+                val perf = queryEngine.getPerformer(performer.id)
+                if (perf == null) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Performer not found: ${performer.id}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    return@launch
+                }
 
                 if (perf.image_path != null) {
                     StashGlide.with(requireContext(), perf.image_path)

@@ -28,7 +28,7 @@ class ImageDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType()
+        return findFilter ?: DataType.IMAGE.asDefaultFindFilterType
     }
 
     override fun parseQuery(data: FindImagesQuery.Data?): CountAndList<ImageData> {

@@ -147,7 +147,7 @@ class MainFragment : BrowseSupportFragment() {
                         val item = adapter.get(position.column)
                         if (item is SlimSceneData) {
                             val queryEngine = QueryEngine(requireContext())
-                            queryEngine.getScene(item.id.toInt())?.let {
+                            queryEngine.getScene(item.id)?.let {
                                 adapter.replace(position.column, it)
                             }
                         }

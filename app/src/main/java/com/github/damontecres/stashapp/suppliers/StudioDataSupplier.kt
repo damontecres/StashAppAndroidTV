@@ -28,7 +28,7 @@ class StudioDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType()
+        return findFilter ?: DataType.STUDIO.asDefaultFindFilterType
     }
 
     override fun parseQuery(data: FindStudiosQuery.Data?): CountAndList<StudioData> {

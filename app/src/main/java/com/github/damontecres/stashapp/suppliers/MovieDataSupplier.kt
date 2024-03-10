@@ -28,7 +28,7 @@ class MovieDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType()
+        return findFilter ?: DataType.MOVIE.asDefaultFindFilterType
     }
 
     override fun parseQuery(data: FindMoviesQuery.Data?): CountAndList<MovieData> {
