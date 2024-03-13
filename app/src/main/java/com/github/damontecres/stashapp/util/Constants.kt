@@ -553,3 +553,9 @@ fun showSetRatingToast(
         Toast.LENGTH_SHORT,
     ).show()
 }
+
+val ImageData.Visual_file.width: Int?
+    get() = onImageFile?.width ?: onVideoFile?.width
+
+val ImageData.Visual_file.height: Int?
+    get() = onImageFile?.height ?: onVideoFile?.height

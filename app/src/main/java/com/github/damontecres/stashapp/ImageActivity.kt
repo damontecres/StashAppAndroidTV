@@ -49,8 +49,10 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.convertFilter
+import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import kotlinx.coroutines.launch
@@ -527,8 +529,8 @@ class ImageActivity : FragmentActivity() {
         private fun calculateRotationScale(mainImage: ImageView): Float {
             val viewHeight = mainImage.height.toFloat()
             val viewWidth = mainImage.width.toFloat()
-            val imageHeight = image!!.visual_files.first().onImageFile!!.height.toFloat()
-            val imageWidth = image!!.visual_files.first().onImageFile!!.width.toFloat()
+            val imageHeight = image!!.visual_files.first().height!!.toFloat()
+            val imageWidth = image!!.visual_files.first().width!!.toFloat()
             val imageHeightPx = mainImage.drawable.intrinsicHeight
             val imageWidthPx = mainImage.drawable.intrinsicWidth
 
