@@ -21,9 +21,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.github.damontecres.stashapp.api.FindImagesQuery
@@ -363,7 +365,14 @@ class ImageActivity : FragmentActivity() {
                 },
             )
 
+            val placeholder = CircularProgressDrawable(requireContext())
+            placeholder.setStyle(CircularProgressDrawable.LARGE)
+            placeholder.setColorSchemeColors(requireContext().getColor(R.color.selected_background))
+            placeholder.start()
+
             StashGlide.with(requireContext(), imageUrl, imageSize)
+                .placeholder(placeholder)
+                .transition(withCrossFade())
                 .listener(
                     object : RequestListener<Drawable?> {
                         override fun onLoadFailed(
