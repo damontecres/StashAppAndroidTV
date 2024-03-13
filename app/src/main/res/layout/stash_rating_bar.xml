@@ -16,7 +16,7 @@
 
     <LinearLayout
         android:id="@+id/rating_decimal_holder"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="horizontal">
         <TextView
@@ -26,6 +26,7 @@
             android:gravity="center"
             android:textAlignment="center"
             tools:text="@string/stashapp_rating" />
+
         <SeekBar
             android:id="@+id/rating_decimal"
             android:layout_width="match_parent"

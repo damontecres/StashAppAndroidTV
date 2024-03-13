@@ -4,6 +4,6 @@
         <attr name="android:textColor"/>
         <attr name="android:textSize"/>
         <attr name="defaultRating100" format="integer" />
-        <attr name="unFocusedBackgroundColor" format="color" />
+        <attr name="android:background" />
     </declare-styleable>
 </resources>

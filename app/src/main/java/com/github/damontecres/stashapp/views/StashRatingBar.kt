@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.views
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
@@ -9,7 +10,6 @@ import android.widget.FrameLayout
 import android.widget.RatingBar
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.ServerPreferences
 
@@ -55,7 +55,7 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
             starRatingBar.visibility = View.GONE
         }
 
-        var unFocusedBackgroundColor: Int
+        var background: Drawable?
 
         context.theme.obtainStyledAttributes(
             attrs,
@@ -75,18 +75,15 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
                         resources.getColor(android.R.color.white, null),
                     ),
                 )
-                unFocusedBackgroundColor =
-                    getColor(
-                        R.styleable.StashRatingBar_unFocusedBackgroundColor,
-                        ContextCompat.getColor(
-                            context,
-                            R.color.default_card_background,
-                        ),
-                    )
+                background = getDrawable(R.styleable.StashRatingBar_android_background)
             } finally {
                 recycle()
             }
         }
+
+        starRatingBar.background = background
+        decimalLayout.background = background
+        decimalRatingBar.background = background
 
         val precision =
             serverPreferences.preferences.getFloat(ServerPreferences.PREF_RATING_PRECISION, 1.0f)
@@ -121,18 +118,11 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
                     v: View,
                     hasFocus: Boolean,
                 ) {
-                    if (hasFocus) {
-                        v.setBackgroundColor(
-                            ContextCompat.getColor(
-                                context,
-                                R.color.selected_background,
-                            ),
-                        )
-                    } else {
-                        v.setBackgroundColor(unFocusedBackgroundColor)
+                    if (!hasFocus) {
                         starRatingBar.rating = rating100 / 20.0f
                         decimalRatingBar.progress = rating100
-                        decimalRatingText.text = context.getString(R.string.stashapp_rating) + " (${rating100 / 10.0}):"
+                        decimalRatingText.text =
+                            context.getString(R.string.stashapp_rating) + " (${rating100 / 10.0}):"
                     }
                 }
             }
