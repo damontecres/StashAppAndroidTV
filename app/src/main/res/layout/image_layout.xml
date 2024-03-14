@@ -41,7 +41,7 @@
             app:defaultRating100="0"
             android:textSize="16sp"
             android:textColor="@android:color/darker_gray"
-            app:unFocusedBackgroundColor="@color/transparent_black" />
+            android:background="@drawable/image_button_selector" />
 
         <TableLayout
             android:id="@+id/image_view_table"
@@ -63,7 +63,7 @@
                 android:layout_gravity="center_vertical"
                 android:scaleType="fitXY"
                 android:contentDescription="@string/stashapp_o_counter"
-                android:background="@color/default_card_background" />
+                android:background="@drawable/image_button_selector" />
 
             <TextView
                 android:id="@+id/o_counter_text"

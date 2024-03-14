@@ -16,7 +16,8 @@
         android:layout_height="wrap_content"
         app:defaultRating100="0"
         android:textSize="16sp"
-        android:textColor="@android:color/darker_gray" />
+        android:textColor="@android:color/darker_gray"
+        android:background="@drawable/button_selector" />
 
     <TextView
         android:id="@+id/lb_details_description_subtitle"

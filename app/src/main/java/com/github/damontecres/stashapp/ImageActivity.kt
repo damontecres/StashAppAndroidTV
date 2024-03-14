@@ -21,9 +21,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.github.damontecres.stashapp.api.FindImagesQuery
@@ -47,8 +49,10 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.convertFilter
+import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import kotlinx.coroutines.launch
@@ -363,7 +367,14 @@ class ImageActivity : FragmentActivity() {
                 },
             )
 
+            val placeholder = CircularProgressDrawable(requireContext())
+            placeholder.setStyle(CircularProgressDrawable.LARGE)
+            placeholder.setColorSchemeColors(requireContext().getColor(R.color.selected_background))
+            placeholder.start()
+
             StashGlide.with(requireContext(), imageUrl, imageSize)
+                .placeholder(placeholder)
+                .transition(withCrossFade())
                 .listener(
                     object : RequestListener<Drawable?> {
                         override fun onLoadFailed(
@@ -518,8 +529,8 @@ class ImageActivity : FragmentActivity() {
         private fun calculateRotationScale(mainImage: ImageView): Float {
             val viewHeight = mainImage.height.toFloat()
             val viewWidth = mainImage.width.toFloat()
-            val imageHeight = image!!.visual_files.first().onImageFile!!.height.toFloat()
-            val imageWidth = image!!.visual_files.first().onImageFile!!.width.toFloat()
+            val imageHeight = image!!.visual_files.first().height!!.toFloat()
+            val imageWidth = image!!.visual_files.first().width!!.toFloat()
             val imageHeightPx = mainImage.drawable.intrinsicHeight
             val imageWidthPx = mainImage.drawable.intrinsicWidth
 
