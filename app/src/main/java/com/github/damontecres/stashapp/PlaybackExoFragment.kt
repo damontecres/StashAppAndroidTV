@@ -37,7 +37,6 @@ import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
@@ -439,7 +438,6 @@ class PlaybackExoFragment :
     }
 
     private inner class PlaybackListener : Player.Listener {
-        private val job: Job
         private val mutationEngine = MutationEngine(requireContext())
         private val minimumPlayPercent = ServerPreferences(requireContext()).minimumPlayPercent
 
@@ -449,16 +447,15 @@ class PlaybackExoFragment :
         private var incrementedPlayCount = AtomicBoolean(false)
 
         init {
-            job =
-                launch {
-                    while (true) {
-                        if (!isEnded.get()) {
-                            delay(10.toDuration(DurationUnit.SECONDS))
-                            Log.v(TAG, "Timer saveSceneActivity")
-                            saveSceneActivity(currentVideoPosition)
-                        }
+            val delay = 10.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
+            kotlin.concurrent.timer(initialDelay = delay, period = delay) {
+                if (!isEnded.get()) {
+                    Log.v(TAG, "Timer saveSceneActivity")
+                    launch {
+                        saveSceneActivity(currentVideoPosition)
                     }
                 }
+            }
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
