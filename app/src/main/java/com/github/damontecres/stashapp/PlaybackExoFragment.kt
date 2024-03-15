@@ -40,6 +40,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import java.util.Timer
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -49,6 +50,7 @@ class PlaybackExoFragment :
     Fragment(R.layout.video_playback),
     PlaybackActivity.StashVideoPlayer {
     private var player: ExoPlayer? = null
+    private var trackActivityListener: PlaybackListener? = null
     private lateinit var scene: Scene
     lateinit var videoView: PlayerView
     private lateinit var previewTimeBar: PreviewTimeBar
@@ -71,10 +73,12 @@ class PlaybackExoFragment :
     }
 
     private fun releasePlayer() {
+        trackActivityListener?.timer?.cancel()
         player?.let { exoPlayer ->
             playbackPosition = exoPlayer.currentPosition
             exoPlayer.release()
         }
+        trackActivityListener = null
         player = null
     }
 
@@ -89,7 +93,8 @@ class PlaybackExoFragment :
                     videoView.player = exoPlayer
                     StashExoPlayer.addListener(AmbientPlaybackListener())
                     if (ServerPreferences(requireContext()).trackActivity) {
-                        StashExoPlayer.addListener(PlaybackListener())
+                        trackActivityListener = PlaybackListener()
+                        StashExoPlayer.addListener(trackActivityListener!!)
                     }
                 }.also { exoPlayer ->
                     val finishedBehavior =
@@ -438,6 +443,7 @@ class PlaybackExoFragment :
     }
 
     private inner class PlaybackListener : Player.Listener {
+        val timer: Timer
         private val mutationEngine = MutationEngine(requireContext())
         private val minimumPlayPercent = ServerPreferences(requireContext()).minimumPlayPercent
 
@@ -448,14 +454,19 @@ class PlaybackExoFragment :
 
         init {
             val delay = 10.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
-            kotlin.concurrent.timer(initialDelay = delay, period = delay) {
-                if (!isEnded.get()) {
-                    Log.v(TAG, "Timer saveSceneActivity")
-                    launch {
-                        saveSceneActivity(currentVideoPosition)
+            timer =
+                kotlin.concurrent.timer(initialDelay = delay, period = delay) {
+                    try {
+                        if (!isEnded.get()) {
+                            Log.v(TAG, "Timer saveSceneActivity")
+                            launch {
+                                saveSceneActivity(currentVideoPosition)
+                            }
+                        }
+                    } catch (ex: Exception) {
+                        Log.w(TAG, "Exception during track activity timer", ex)
                     }
                 }
-            }
         }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
