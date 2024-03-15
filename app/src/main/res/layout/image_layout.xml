@@ -5,12 +5,37 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@android:color/black">
 
-    <ImageView
+    <!--    <ImageView-->
+    <!--        android:id="@+id/image_view_image"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:adjustViewBounds="true"-->
+    <!--        android:contentDescription="@string/stashapp_image" />-->
+
+    <com.otaliastudios.zoom.ZoomImageView
         android:id="@+id/image_view_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:adjustViewBounds="true"
-        android:contentDescription="@string/stashapp_image" />
+        android:scrollbars="vertical|horizontal"
+        app:transformation="centerInside"
+        app:transformationGravity="auto"
+        app:alignment="center"
+        app:overScrollHorizontal="true"
+        app:overScrollVertical="true"
+        app:overPinchable="true"
+        app:horizontalPanEnabled="true"
+        app:verticalPanEnabled="true"
+        app:zoomEnabled="true"
+        app:flingEnabled="true"
+        app:scrollEnabled="true"
+        app:oneFingerScrollEnabled="true"
+        app:twoFingersScrollEnabled="true"
+        app:threeFingersScrollEnabled="true"
+        app:minZoom="1.0"
+        app:minZoomType="zoom"
+        app:maxZoom="5.0"
+        app:maxZoomType="zoom"
+        app:animationDuration="250" />
 
     <TextView
         android:id="@+id/image_view_title"
@@ -92,6 +117,18 @@
             <Button
                 android:id="@+id/reset_button"
                 android:text="@string/stashapp_effect_filters_reset_transforms"
+                android:fontFamily="@null"
+                style="@style/ImageActivityButton" />
+
+            <Button
+                android:id="@+id/zoom_in_button"
+                android:text="Zoom In"
+                android:fontFamily="@null"
+                style="@style/ImageActivityButton" />
+
+            <Button
+                android:id="@+id/zoom_out_button"
+                android:text="Zoom Out"
                 android:fontFamily="@null"
                 style="@style/ImageActivityButton" />
         </LinearLayout>

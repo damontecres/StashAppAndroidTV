@@ -55,6 +55,7 @@ import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
+import com.otaliastudios.zoom.ZoomImageView
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
@@ -160,50 +161,26 @@ class ImageActivity : FragmentActivity() {
                 if (imageFragment.viewCreated && imageFragment.isOverlayVisible()) {
                     imageFragment.hideOverlay()
                     return true
+                } else if (imageFragment.viewCreated && imageFragment.isImageZoomedIn()) {
+                    imageFragment.resetImageZoom()
+                    return true
                 }
-            } else if (isDpadKey(event.keyCode) && imageFragment.viewCreated && !imageFragment.isOverlayVisible()) {
-                if (isLeft(event.keyCode)) {
-                    switchImage(currentPosition - 1)
-                } else if (isRight(event.keyCode)) {
-                    switchImage(currentPosition + 1)
-                } else {
-                    imageFragment.showOverlay()
+            } else if (isDpadKey(event.keyCode) && imageFragment.viewCreated) {
+                if (!imageFragment.isOverlayVisible() && !imageFragment.isImageZoomedIn()) {
+                    // Overlay is not showing and the image is not zoomed in
+                    // So maybe move to another image if left or right
+                    if (isLeft(event.keyCode)) {
+                        switchImage(currentPosition - 1)
+                        return true
+                    } else if (isRight(event.keyCode)) {
+                        switchImage(currentPosition + 1)
+                        return true
+                    }
                 }
-                return true
+                return imageFragment.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
             }
         }
         return super.dispatchKeyEvent(event)
-    }
-
-    private fun isDpadKey(keyCode: Int): Boolean {
-        return keyCode == KeyEvent.KEYCODE_DPAD_UP ||
-            keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
-            keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
-            keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
-            keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-            (
-                keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT ||
-                    keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
-                    keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
-                    keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
-            )
-    }
-
-    private fun isLeft(keyCode: Int): Boolean {
-        return keyCode == KeyEvent.KEYCODE_DPAD_LEFT || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-            (
-                keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
-                    keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
-            )
-    }
-
-    private fun isRight(keyCode: Int): Boolean {
-        return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-            (
-                keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
-                    keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT
-            )
     }
 
     private fun switchImage(newPosition: Int) {
@@ -244,6 +221,57 @@ class ImageActivity : FragmentActivity() {
         const val INTENT_GALLERY_ID = "gallery.id"
         const val INTENT_FILTER = "filter"
         const val INTENT_FILTER_TYPE = "filter.type"
+
+        fun isDpadKey(keyCode: Int): Boolean {
+            return isDirectionalDpadKey(keyCode) ||
+                keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+        }
+
+        fun isDirectionalDpadKey(keyCode: Int): Boolean {
+            return keyCode == KeyEvent.KEYCODE_DPAD_UP ||
+                keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
+                keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
+                keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                (
+                    keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT ||
+                        keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
+                        keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
+                        keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+                )
+        }
+
+        fun isLeft(keyCode: Int): Boolean {
+            return keyCode == KeyEvent.KEYCODE_DPAD_LEFT || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                (
+                    keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
+                        keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+                )
+        }
+
+        fun isRight(keyCode: Int): Boolean {
+            return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                (
+                    keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
+                        keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT
+                )
+        }
+
+        fun isUp(keyCode: Int): Boolean {
+            return keyCode == KeyEvent.KEYCODE_DPAD_UP || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                (
+                    keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT ||
+                        keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
+                )
+        }
+
+        fun isDown(keyCode: Int): Boolean {
+            return keyCode == KeyEvent.KEYCODE_DPAD_DOWN || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+                (
+                    keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
+                        keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT
+                )
+        }
     }
 
     class ImageFragment(
@@ -252,7 +280,7 @@ class ImageActivity : FragmentActivity() {
         val imageSize: Int = -1,
     ) :
         Fragment(R.layout.image_layout) {
-        lateinit var mainImage: ImageView
+        lateinit var mainImage: ZoomImageView
         lateinit var bottomOverlay: View
         lateinit var titleText: TextView
         lateinit var oCounterTextView: TextView
@@ -322,6 +350,7 @@ class ImageActivity : FragmentActivity() {
             val resetButton = view.findViewById<Button>(R.id.reset_button)
             resetButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
             resetButton.setOnClickListener {
+                resetImageZoom()
                 if (!duringAnimation) {
                     duringAnimation = true
                     mainImage.animate()
@@ -367,13 +396,23 @@ class ImageActivity : FragmentActivity() {
                 },
             )
 
+            val zoomInButton = view.findViewById<Button>(R.id.zoom_in_button)
+            zoomInButton.setOnClickListener {
+                mainImage.zoomIn()
+            }
+
+            val zoomOutButton = view.findViewById<Button>(R.id.zoom_out_button)
+            zoomOutButton.setOnClickListener {
+                mainImage.zoomOut()
+            }
+
             val placeholder = CircularProgressDrawable(requireContext())
             placeholder.setStyle(CircularProgressDrawable.LARGE)
             placeholder.setColorSchemeColors(requireContext().getColor(R.color.selected_background))
             placeholder.start()
 
             StashGlide.with(requireContext(), imageUrl, imageSize)
-                .placeholder(placeholder)
+//                .placeholder(placeholder)
                 .transition(withCrossFade())
                 .listener(
                     object : RequestListener<Drawable?> {
@@ -561,6 +600,47 @@ class ImageActivity : FragmentActivity() {
                     ratio
                 }
             }
+        }
+
+        fun isImageZoomedIn(): Boolean {
+            return mainImage.zoom > 1.0f
+        }
+
+        fun resetImageZoom() {
+            mainImage.zoomTo(1.0f, true)
+        }
+
+        fun dispatchKeyEvent(event: KeyEvent): Boolean {
+            if (isOverlayVisible()) {
+                return false
+            }
+            if (isImageZoomedIn()) {
+                // Image is zoomed in
+                val panDistance =
+                    Math.min(
+                        mainImage.drawable.intrinsicWidth,
+                        mainImage.drawable.intrinsicHeight,
+                    ) * .05f
+                if (isDirectionalDpadKey(event.keyCode)) {
+                    if (isLeft(event.keyCode)) {
+                        mainImage.panBy(panDistance, 0f, true)
+                    } else if (isRight(event.keyCode)) {
+                        mainImage.panBy(-panDistance, 0f, true)
+                    } else if (isUp(event.keyCode)) {
+                        mainImage.panBy(0f, panDistance, true)
+                    } else if (isDown(event.keyCode)) {
+                        mainImage.panBy(0f, -panDistance, true)
+                    } else {
+                        // Should never occur
+                        throw IllegalStateException()
+                    }
+                } else {
+                    showOverlay()
+                }
+            } else {
+                showOverlay()
+            }
+            return true
         }
     }
 }
