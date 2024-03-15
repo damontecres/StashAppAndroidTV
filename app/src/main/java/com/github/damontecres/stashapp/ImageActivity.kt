@@ -462,9 +462,14 @@ class ImageActivity : FragmentActivity() {
 
             oCounterTextView.text = image.o_counter.toString()
 
-            val imageHeight = image.visual_files.first().onImageFile!!.height
-            val imageWidth = image.visual_files.first().onImageFile!!.width
-            addRow(R.string.stashapp_dimensions, "${imageWidth}x$imageHeight")
+            if (image.visual_files.isNotEmpty()) {
+                val imageFile = image.visual_files.first()
+                val imageHeight = imageFile.height
+                val imageWidth = imageFile.width
+                if (imageHeight != null && imageWidth != null) {
+                    addRow(R.string.stashapp_dimensions, "${imageWidth}x$imageHeight")
+                }
+            }
             addRow(R.string.stashapp_studio, image.studio?.studioData?.name)
             addRow(R.string.stashapp_date, image.date)
             addRow(R.string.stashapp_photographer, image.photographer)
