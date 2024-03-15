@@ -406,13 +406,24 @@ class ImageActivity : FragmentActivity() {
                 mainImage.zoomOut()
             }
 
-            val placeholder = CircularProgressDrawable(requireContext())
+            val placeholder =
+                object : CircularProgressDrawable(requireContext()) {
+                    // ZoomImageView requires that drawables have an intrinsic height/width
+                    // So override it here to be the size of the view since the default implementation is -1
+                    override fun getIntrinsicHeight(): Int {
+                        return mainImage.height
+                    }
+
+                    override fun getIntrinsicWidth(): Int {
+                        return mainImage.width
+                    }
+                }
             placeholder.setStyle(CircularProgressDrawable.LARGE)
             placeholder.setColorSchemeColors(requireContext().getColor(R.color.selected_background))
             placeholder.start()
 
             StashGlide.with(requireContext(), imageUrl, imageSize)
-//                .placeholder(placeholder)
+                .placeholder(placeholder)
                 .transition(withCrossFade())
                 .listener(
                     object : RequestListener<Drawable?> {
