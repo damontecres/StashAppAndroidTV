@@ -5,12 +5,37 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@android:color/black">
 
-    <ImageView
+    <!--    <ImageView-->
+    <!--        android:id="@+id/image_view_image"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:adjustViewBounds="true"-->
+    <!--        android:contentDescription="@string/stashapp_image" />-->
+
+    <com.otaliastudios.zoom.ZoomImageView
         android:id="@+id/image_view_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:adjustViewBounds="true"
-        android:contentDescription="@string/stashapp_image" />
+        android:scrollbars="vertical|horizontal"
+        app:transformation="centerInside"
+        app:transformationGravity="auto"
+        app:alignment="center"
+        app:overScrollHorizontal="true"
+        app:overScrollVertical="true"
+        app:overPinchable="true"
+        app:horizontalPanEnabled="true"
+        app:verticalPanEnabled="true"
+        app:zoomEnabled="true"
+        app:flingEnabled="true"
+        app:scrollEnabled="true"
+        app:oneFingerScrollEnabled="true"
+        app:twoFingersScrollEnabled="true"
+        app:threeFingersScrollEnabled="true"
+        app:minZoom="1.0"
+        app:minZoomType="zoom"
+        app:maxZoom="5.0"
+        app:maxZoomType="zoom"
+        app:animationDuration="250" />
 
     <TextView
         android:id="@+id/image_view_title"
@@ -73,6 +98,16 @@
                 android:textAlignment="center"
                 android:textSize="24sp"
                 android:layout_margin="5dp" />
+
+            <Button
+                android:id="@+id/zoom_in_button"
+                android:text="@string/fa_magnifying_glass_plus"
+                style="@style/ImageActivityButton" />
+
+            <Button
+                android:id="@+id/zoom_out_button"
+                android:text="@string/fa_magnifying_glass_minus"
+                style="@style/ImageActivityButton" />
 
             <Button
                 android:id="@+id/rotate_right_button"

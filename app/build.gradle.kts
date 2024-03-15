@@ -153,6 +153,7 @@ dependencies {
     implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-process:2.7.0")
+    implementation("com.otaliastudios:zoomlayout:1.9.0")
 
     testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("junit:junit:4.13.2")
