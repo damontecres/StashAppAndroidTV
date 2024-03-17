@@ -19,9 +19,11 @@ import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.Dispatchers
@@ -94,20 +96,38 @@ class StashGridFragment<T : Query.Data, D : Any>(
                 useRandom = useRandom,
                 sortByOverride = sortBy,
             )
-        pagingSource.addListener { page, data ->
-            totalCountTextView.text = data.count.toString()
-            view.findViewById<View>(R.id.footer_layout).visibility = View.VISIBLE
-        }
 
-        setOnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val position =
-                    withContext(Dispatchers.IO) {
-                        val snapshot = pagingAdapter.snapshot()
-                        snapshot.indexOf(item) + 1
+        val showFooter =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_show_grid_footer), true)
+        val footerLayout = view.findViewById<View>(R.id.footer_layout)
+        if (showFooter) {
+            val listener =
+                object :
+                    StashPagingSource.Listener<D> {
+                    override fun onPageLoad(
+                        pageNum: Int,
+                        page: CountAndList<D>,
+                    ) {
+                        pagingSource.removeListener(this)
+                        totalCountTextView.text = page.count.toString()
+                        footerLayout.animateToVisible()
                     }
-                positionTextView.text = position.toString()
+                }
+            pagingSource.addListener(listener)
+
+            setOnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val position =
+                        withContext(Dispatchers.IO) {
+                            val snapshot = pagingAdapter.snapshot()
+                            snapshot.indexOf(item) + 1
+                        }
+                    positionTextView.text = position.toString()
+                }
             }
+        } else {
+            footerLayout.visibility = View.GONE
         }
 
         val flow =

@@ -2,4 +2,5 @@
 <resources>
     <string name="pref_key_pin_code">pinCode</string>
     <string name="pref_key_pin_code_auto">pinCodeAuto</string>
+    <string name="pref_key_show_grid_footer">interface.showGridFooter</string>
 </resources>

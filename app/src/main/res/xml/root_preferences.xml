@@ -100,6 +100,12 @@
             app:summaryOn="Play audio"
             app:summaryOff="Don't play audio"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_show_grid_footer"
+            app:title="Show position footer on grids"
+            app:summaryOn="Show footer"
+            app:summaryOff="Hide footer"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">
