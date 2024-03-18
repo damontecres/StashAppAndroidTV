@@ -5,9 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Typeface
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
@@ -40,9 +40,28 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         cardView.setUpExtraRow(dataTypeMap, item.o_counter)
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
+
+        val videoFile = item.files.firstOrNull()?.videoFileData
+        if (videoFile != null) {
+            val duration = Constants.durationToString(videoFile.duration)
+            cardView.setTextOverlayText(StashImageCardView.OverlayPosition.BOTTOM_RIGHT, duration)
+
+            // TODO: 2160P => 4k, etc
+            val resolution = "${videoFile.height}P"
+            val resText = cardView.getTextOverlay(StashImageCardView.OverlayPosition.BOTTOM_LEFT)
+            resText.setTypeface(null, Typeface.BOLD)
+            resText.text = resolution
+
+            if (item.resume_time != null) {
+                val percentWatched = item.resume_time / videoFile.duration
+                cardView.setProgress(percentWatched)
+            }
+        }
+
         if (!item.paths.screenshot.isNullOrBlank()) {
             StashGlide.with(cardView.context, item.paths.screenshot)
-                .transform(CenterCrop(), TextOverlay(cardView.context, item))
+                .centerCrop()
+                // .transform(CenterCrop(), TextOverlay(cardView.context, item))
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
         }

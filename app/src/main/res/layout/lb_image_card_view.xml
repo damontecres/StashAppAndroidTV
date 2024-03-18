@@ -17,7 +17,8 @@
 
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:lb="http://schemas.android.com/apk/res-auto"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <ViewSwitcher
         android:id="@+id/main_view"
@@ -26,15 +27,69 @@
         android:layout_height="wrap_content"
         android:inAnimation="@android:anim/fade_in"
         android:outAnimation="@android:anim/fade_out"
-        android:animateFirstView="true">
+        android:animateFirstView="true"
+        tools:layout_width="351dp"
+        tools:layout_height="198dp">
 
-        <ImageView
-            android:id="@+id/main_image"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:adjustViewBounds="true"
-            android:contentDescription="@null" />
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/main_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:adjustViewBounds="true"
+                android:contentDescription="@null" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/card_overlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent">
+
+                <TextView
+                    android:id="@+id/card_overlay_bottom_left"
+                    style="@style/CardTextOverlay"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    tools:text="480P" />
+
+                <TextView
+                    android:id="@+id/card_overlay_bottom_right"
+                    style="@style/CardTextOverlay"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    tools:text="21m 30s" />
+
+                <TextView
+                    android:id="@+id/card_overlay_top_left"
+                    style="@style/CardTextOverlay"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    tools:text="Rating: 5.0" />
+
+                <TextView
+                    android:id="@+id/card_overlay_top_right"
+                    style="@style/CardTextOverlay"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    tools:text="Sample" />
+
+                <ImageView
+                    android:id="@+id/card_overlay_progress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="2dp"
+                    android:src="@drawable/rectangle"
+                    android:contentDescription="@null"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    tools:layout_width="150dp" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </FrameLayout>
 
         <androidx.media3.ui.PlayerView
             android:id="@+id/main_video"
