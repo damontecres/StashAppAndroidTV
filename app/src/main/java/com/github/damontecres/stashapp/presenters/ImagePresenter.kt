@@ -37,6 +37,8 @@ class ImagePresenter(callback: LongClickCallBack<ImageData>? = null) : StashPres
         if (item.paths.preview.isNotNullOrBlank()) {
             cardView.videoUrl = item.paths.preview
         }
+
+        cardView.setRating100(item.rating100)
     }
 
     companion object {
