@@ -4,5 +4,5 @@
         <ripple android:color="@color/selected_background"/>
     </item>
     <item android:state_focused="true" android:drawable="@color/selected_background" />
-    <item android:drawable="@color/transparent_black"/>
+    <item android:drawable="@color/transparent_black_50" />
 </selector>

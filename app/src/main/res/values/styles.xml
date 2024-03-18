@@ -46,4 +46,13 @@
         <item name="android:background">@drawable/image_button_selector</item>
     </style>
 
+    <style name="GridFooterText">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_margin">5dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
 </resources>
