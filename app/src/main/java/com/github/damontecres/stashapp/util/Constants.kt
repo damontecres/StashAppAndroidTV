@@ -92,6 +92,19 @@ object Constants {
                 .getLong("networkCache", 100) * 1024 * 1024
         return Cache(File(context.cacheDir, OK_HTTP_CACHE_DIR), cacheSize)
     }
+
+    fun getRatingAsDecimalString(
+        context: Context,
+        rating100: Int,
+        ratingsAsStars: Boolean? = null,
+    ): String {
+        val asStars = ratingsAsStars ?: ServerPreferences(context).ratingsAsStars
+        return if (asStars) {
+            (rating100 / 20.0).toString()
+        } else {
+            (rating100 / 10.0).toString()
+        }
+    }
 }
 
 val TRUST_ALL_CERTS: TrustManager =

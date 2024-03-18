@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
+import android.graphics.Color
+import android.graphics.Typeface
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
@@ -20,6 +22,7 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.enableMarquee
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -263,6 +266,20 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         val lp = progressOverlay.layoutParams
         lp.width = (width * progress).toInt()
         progressOverlay.layoutParams = lp
+    }
+
+    fun setRating100(rating100: Int?) {
+        if (rating100 != null && rating100 > 0) {
+            val ratingText = Constants.getRatingAsDecimalString(context, rating100)
+            val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
+            val overlay = getTextOverlay(OverlayPosition.TOP_LEFT)
+
+            val ratingColors = context.resources.obtainTypedArray(R.array.rating_colors)
+            overlay.setTypeface(null, Typeface.BOLD)
+            overlay.setBackgroundColor(ratingColors.getColor(rating100 / 5, Color.WHITE))
+            overlay.text = text
+            ratingColors.recycle()
+        }
     }
 
     enum class OverlayPosition {

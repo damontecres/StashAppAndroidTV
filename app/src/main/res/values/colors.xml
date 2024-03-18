@@ -12,4 +12,28 @@
     <color name="transparent_black_25">#40000000</color>
     <color name="transparent_black_50">#80000000</color>
     <color name="transparent_black_75">#BF000000</color>
+
+    <array name="rating_colors">
+        <item>#939393</item>
+        <item>#9b8c7d</item>
+        <item>#9e8974</item>
+        <item>#a48363</item>
+        <item>#a7805b</item>
+        <item>#af7944</item>
+        <item>#b47435</item>
+        <item>#bd8e2f</item>
+        <item>#c39f2b</item>
+        <item>#cbb526</item>
+        <item>#d2ca20</item>
+        <item>#dfb617</item>
+        <item>#e7a811</item>
+        <item>#eca00e</item>
+        <item>#f39409</item>
+        <item>#fa8804</item>
+        <item>#ff8000</item>
+        <item>#ff6a07</item>
+        <item>#ff4812</item>
+        <item>#ff2409</item>
+        <item>#f00000</item>
+    </array>
 </resources>

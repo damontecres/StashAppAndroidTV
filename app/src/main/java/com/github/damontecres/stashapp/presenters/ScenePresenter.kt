@@ -58,6 +58,8 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
             }
         }
 
+        cardView.setRating100(item.rating100)
+
         if (!item.paths.screenshot.isNullOrBlank()) {
             StashGlide.with(cardView.context, item.paths.screenshot)
                 .centerCrop()
