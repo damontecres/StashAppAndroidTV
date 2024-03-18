@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="StashRatingBar">
+        <attr name="android:textColor"/>
+        <attr name="android:textSize"/>
+        <attr name="defaultRating100" format="integer" />
+        <attr name="android:background" />
+    </declare-styleable>
+</resources>

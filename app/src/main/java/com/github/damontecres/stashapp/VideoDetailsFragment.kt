@@ -30,10 +30,8 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
-import com.github.damontecres.stashapp.PlaybackVideoFragment.Companion.coroutineExceptionHandler
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
@@ -58,8 +56,11 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
+import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -98,7 +99,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private var position = -1L // The position in the video
     private val detailsPresenter =
         FullWidthDetailsOverviewRowPresenter(
-            DetailsDescriptionPresenter { sceneId: Int, rating100: Int ->
+            DetailsDescriptionPresenter { rating100: Int ->
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(
                         Toast.makeText(
@@ -108,19 +109,11 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         ),
                     ),
                 ) {
-                    MutationEngine(requireContext()).setRating(sceneId, rating100)
-                    val ratingsAsStars = ServerPreferences(requireContext()).ratingsAsStars
-                    val ratingStr =
-                        if (ratingsAsStars) {
-                            (rating100 / 20.0).toString() + " stars"
-                        } else {
-                            (rating100 / 10.0).toString()
-                        }
-                    Toast.makeText(
-                        requireContext(),
-                        "Set rating to $ratingStr!",
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                    MutationEngine(requireContext()).setRating(
+                        mSelectedMovie!!.id,
+                        rating100,
+                    )
+                    showSetRatingToast(requireContext(), rating100)
                 }
             },
         )
@@ -180,7 +173,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     ),
                 ),
             ) {
-                mSelectedMovie = queryEngine.getScene(sceneId.toInt())
+                mSelectedMovie = queryEngine.getScene(sceneId)
                 if (mSelectedMovie!!.resume_time != null) {
                     position = (mSelectedMovie!!.resume_time!! * 1000).toLong()
                 }
@@ -192,7 +185,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 sceneActionsAdapter.set(
                     O_COUNTER_POS,
                     OCounter(
-                        mSelectedMovie!!.id.toInt(),
+                        mSelectedMovie!!.id,
                         mSelectedMovie?.o_counter ?: 0,
                     ),
                 )
@@ -226,12 +219,12 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                                         ) {
                                             val tagIds =
                                                 tagsAdapter.unmodifiableList<TagData>()
-                                                    .map { it.id.toInt() }
+                                                    .map { it.id }
                                                     .toMutableList()
-                                            tagIds.remove(item.id.toInt())
+                                            tagIds.remove(item.id)
                                             val mutResult =
                                                 MutationEngine(requireContext()).setTagsOnScene(
-                                                    mSelectedMovie!!.id.toLong(),
+                                                    mSelectedMovie!!.id,
                                                     tagIds,
                                                 )
                                             val newTags = mutResult?.tags?.map { it.tagData }
@@ -356,8 +349,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                                             performerIds.remove(performerId)
                                             val mutResult =
                                                 MutationEngine(requireContext()).setPerformersOnScene(
-                                                    mSelectedMovie!!.id.toLong(),
-                                                    performerIds.map { it.toInt() },
+                                                    mSelectedMovie!!.id,
+                                                    performerIds,
                                                 )
                                             val resultPerformers =
                                                 mutResult?.performers?.map { it.performerData }
@@ -387,7 +380,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         ),
                     )
 
-                val performerIds = mSelectedMovie!!.performers.map { it.id.toInt() }
+                val performerIds = mSelectedMovie!!.performers.map { it.id }
                 if (performerIds.isNotEmpty()) {
                     val perfs = queryEngine.findPerformers(performerIds = performerIds)
                     if (perfs.isNotEmpty()) {
@@ -424,11 +417,11 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
             if (mSelectedMovie != null) {
                 val queryEngine = QueryEngine(requireContext())
-                mSelectedMovie = queryEngine.getScene(mSelectedMovie!!.id.toInt())
+                mSelectedMovie = queryEngine.getScene(mSelectedMovie!!.id)
                 // Refresh the o-counter which could have changed
                 sceneActionsAdapter.set(
                     O_COUNTER_POS,
-                    OCounter(mSelectedMovie!!.id.toInt(), mSelectedMovie!!.o_counter ?: 0),
+                    OCounter(mSelectedMovie!!.id, mSelectedMovie!!.o_counter ?: 0),
                 )
             }
         }
@@ -440,11 +433,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val screenshotUrl = mSelectedMovie!!.paths.screenshot
 
         if (screenshotUrl.isNotNullOrBlank()) {
-            val url = createGlideUrl(screenshotUrl, requireContext())
-            Glide.with(requireActivity())
-                .asBitmap()
+            StashGlide.withBitmap(requireActivity(), screenshotUrl)
                 .centerCrop()
-                .load(url)
                 .error(R.drawable.baseline_camera_indoor_48)
                 .into<CustomTarget<Bitmap>>(
                     object : CustomTarget<Bitmap>() {
@@ -471,9 +461,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
         val screenshotUrl = mSelectedMovie?.paths?.screenshot
         if (!screenshotUrl.isNullOrBlank()) {
-            val url = createGlideUrl(screenshotUrl, requireContext())
-            Glide.with(requireActivity())
-                .load(url)
+            StashGlide.with(requireActivity(), screenshotUrl)
                 .centerCrop()
                 .error(StashPresenter.glideError(requireContext()))
                 .into<CustomTarget<Drawable>>(
@@ -597,7 +585,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 ),
             ) {
                 val mutationEngine = MutationEngine(requireContext())
-                val newCounter = mutationEngine.incrementOCounter(counter.sceneId)
+                val newCounter = mutationEngine.incrementOCounter(counter.id)
                 mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCounter.count)
                 sceneActionsAdapter.set(O_COUNTER_POS, newCounter)
             }
@@ -638,12 +626,12 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         },
                     ) {
                         val tagIds =
-                            tagsAdapter.unmodifiableList<TagData>().map { it.id.toInt() }
+                            tagsAdapter.unmodifiableList<TagData>().map { it.id }
                                 .toMutableList()
-                        tagIds.add(tagId!!.toInt())
+                        tagIds.add(tagId!!)
                         val mutResult =
                             MutationEngine(requireContext()).setTagsOnScene(
-                                mSelectedMovie!!.id.toLong(),
+                                mSelectedMovie!!.id,
                                 tagIds,
                             )
                         val newTags = mutResult?.tags?.map { it.tagData }
@@ -681,8 +669,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         performerIds.add(performerId.toString())
                         val mutResult =
                             MutationEngine(requireContext()).setPerformersOnScene(
-                                mSelectedMovie!!.id.toLong(),
-                                performerIds.map { it.toInt() },
+                                mSelectedMovie!!.id,
+                                performerIds,
                             )
                         val resultPerformers = mutResult?.performers?.map { it.performerData }
                         val newPerformer =
@@ -750,10 +738,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     setupPlayActionsAdapter()
                     val serverPreferences = ServerPreferences(requireContext())
                     if (serverPreferences.trackActivity) {
-                        viewLifecycleOwner.lifecycleScope.launch(coroutineExceptionHandler) {
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                             Log.v(TAG, "ResultCallback saveSceneActivity start")
                             MutationEngine(requireContext(), false).saveSceneActivity(
-                                mSelectedMovie!!.id.toLong(),
+                                mSelectedMovie!!.id,
                                 position,
                             )
                         }
@@ -801,14 +789,14 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 when (popUpItemPosition) {
                     0 -> {
                         // Decrement
-                        val newCount = mutationEngine.decrementOCounter(mSelectedMovie!!.id.toInt())
+                        val newCount = mutationEngine.decrementOCounter(mSelectedMovie!!.id)
                         sceneActionsAdapter.set(O_COUNTER_POS, newCount)
                         mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCount.count)
                     }
 
                     1 -> {
                         // Reset
-                        val newCount = mutationEngine.resetOCounter(mSelectedMovie!!.id.toInt())
+                        val newCount = mutationEngine.resetOCounter(mSelectedMovie!!.id)
                         mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCount.count)
                         sceneActionsAdapter.set(O_COUNTER_POS, newCount)
                     }

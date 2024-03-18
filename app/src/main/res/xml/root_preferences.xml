@@ -100,6 +100,12 @@
             app:summaryOn="Play audio"
             app:summaryOff="Don't play audio"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_show_grid_footer"
+            app:title="Show position footer on grids"
+            app:summaryOn="Show footer"
+            app:summaryOff="Hide footer"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">
@@ -120,8 +126,8 @@
         <SwitchPreference
             app:key="skipWithDpad"
             app:title="D-Pad skipping"
-            app:summaryOn="Skip back/forward with D-Pad left/right on ExoPlayer"
-            app:summaryOff="Don't skip back/forward with D-Pad left/right on ExoPlayer"
+            app:summaryOn="Skip back/forward with D-Pad left/right"
+            app:summaryOff="Don't skip back/forward with D-Pad left/right"
             app:defaultValue="true"
             />
         <ListPreference
@@ -131,10 +137,6 @@
             app:defaultValue="HLS"
             app:entries="@array/stream_options"
             app:entryValues="@array/stream_options" />
-        <SwitchPreference
-            app:key="playerChoice"
-            app:title="Which player to use for playback"
-            app:defaultValue="true" />
         <SeekBarPreference
             app:key="controllerShowTimeoutMs"
             app:title="Hide controls after (milliseconds)"
@@ -151,7 +153,7 @@
             app:entryValues="@array/playback_finished_behavior_options" />
         <SwitchPreference
             app:key="exoShowTitle"
-            app:title="Scene title on ExoPlayer"
+            app:title="Scene title"
             app:summaryOn="Show title"
             app:summaryOff="Hide title"
             app:defaultValue="true" />
@@ -167,6 +169,33 @@
             app:key="triggerGenerate"
             app:title="Trigger Default Generate"
             app:summary="@string/stashapp_config_tasks_generate_desc" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Cache">
+        <SeekBarPreference
+            app:key="networkCacheSize"
+            app:title="Max network cache size (MB)"
+            app:seekBarIncrement="25"
+            app:showSeekBarValue="true"
+            android:max="500"
+            app:defaultValue="100" />
+        <SeekBarPreference
+            app:key="networkCacheDuration"
+            app:title="Invalidate cache after"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="false"
+            android:max="10"
+            app:defaultValue="3" />
+        <SwitchPreference
+            app:key="networkCacheLogging"
+            app:title="Cache logging"
+            app:summaryOn="Log cache hits/misses"
+            app:summaryOff="Don't log cache hits/misses"
+            app:defaultValue="false"/>
+        <Preference
+            app:key="clearCache"
+            app:title="Clear cache"
+            app:summary="Clear the network caches" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="About">

@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import android.widget.ImageView
-import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.bumptech.glide.request.target.Target
@@ -23,8 +22,7 @@ class StashPreviewLoader(
         max: Long,
     ) {
         Log.d(TAG, "loadPreview: currentPosition=$currentPosition")
-        Glide.with(context)
-            .load(createGlideUrl(scene.spriteUrl!!, context))
+        StashGlide.with(context, scene.spriteUrl!!)
             .override(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
 //            .override(
 //                GlideThumbnailTransformation.IMAGE_WIDTH * GlideThumbnailTransformation.MAX_COLUMNS,

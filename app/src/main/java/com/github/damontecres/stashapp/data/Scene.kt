@@ -7,7 +7,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class Scene(
-    val id: Long,
+    val id: String,
     val title: String?,
     val date: String?,
     val details: String?,
@@ -32,7 +32,7 @@ data class Scene(
                     }
             val fileData = data.files.firstOrNull()?.videoFileData
             return Scene(
-                id = data.id.toLong(),
+                id = data.id,
                 title = data.titleOrFilename,
                 date = data.date,
                 details = data.details,

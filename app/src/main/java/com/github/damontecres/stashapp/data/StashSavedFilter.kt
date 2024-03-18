@@ -9,4 +9,7 @@ data class StashSavedFilter(
     val savedFilterId: String,
     val mode: FilterMode,
     val sortBy: String? = null,
-) : Parcelable
+) : Parcelable, StashFilter {
+    override val filterType: FilterType
+        get() = FilterType.SAVED_FILTER
+}

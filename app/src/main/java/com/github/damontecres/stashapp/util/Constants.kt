@@ -2,16 +2,19 @@ package com.github.damontecres.stashapp.util
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.text.TextUtils
 import android.util.Log
 import android.util.TypedValue
+import android.view.View
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.preference.PreferenceManager
@@ -26,29 +29,41 @@ import com.apollographql.apollo3.network.http.HttpInterceptor
 import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.Constants.OK_HTTP_TAG
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
+import com.github.damontecres.stashapp.util.Constants.getNetworkCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.Cache
+import okhttp3.CacheControl
+import okhttp3.Call
+import okhttp3.EventListener
 import okhttp3.OkHttpClient
+import okhttp3.Response
 import java.io.File
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -58,6 +73,8 @@ object Constants {
      */
     const val STASH_API_HEADER = "ApiKey"
     const val TAG = "Constants"
+    const val OK_HTTP_TAG = "$TAG.OkHttpClient"
+    const val OK_HTTP_CACHE_DIR = "okhttpcache"
 
     /**
      * Converts seconds into a Duration string where fractional seconds are removed
@@ -67,6 +84,13 @@ object Constants {
             .times(100L).toLong()
             .div(100L).toDuration(DurationUnit.SECONDS)
             .toString()
+    }
+
+    fun getNetworkCache(context: Context): Cache {
+        val cacheSize =
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .getLong("networkCache", 100) * 1024 * 1024
+        return Cache(File(context.cacheDir, OK_HTTP_CACHE_DIR), cacheSize)
     }
 }
 
@@ -93,31 +117,77 @@ val TRUST_ALL_CERTS: TrustManager =
     }
 
 fun createOkHttpClient(context: Context): OkHttpClient {
-    val trustAll =
-        PreferenceManager.getDefaultSharedPreferences(context)
-            .getBoolean("trustAllCerts", false)
-    val apiKey =
-        PreferenceManager.getDefaultSharedPreferences(context)
-            .getString("stashApiKey", null)
-    val builder = OkHttpClient.Builder()
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val trustAll = manager.getBoolean("trustAllCerts", false)
+    val apiKey = manager.getString("stashApiKey", null)
+    val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
+    val cacheLogging = manager.getBoolean("networkCacheLogging", false)
+
+    var builder = OkHttpClient.Builder()
     if (trustAll) {
         val sslContext = SSLContext.getInstance("SSL")
         sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-        builder.sslSocketFactory(
-            sslContext.socketFactory,
-            TRUST_ALL_CERTS as X509TrustManager,
-        )
-            .hostnameVerifier { _, _ ->
+        builder =
+            builder.sslSocketFactory(
+                sslContext.socketFactory,
+                TRUST_ALL_CERTS as X509TrustManager,
+            ).hostnameVerifier { _, _ ->
                 true
             }
     }
     if (apiKey.isNotNullOrBlank()) {
-        builder.addInterceptor {
-            val request =
-                it.request().newBuilder().addHeader(STASH_API_HEADER, apiKey.trim()).build()
-            it.proceed(request)
-        }
+        builder =
+            builder.addInterceptor {
+                val request =
+                    it.request().newBuilder()
+                        .addHeader(STASH_API_HEADER, apiKey.trim())
+                        .build()
+                it.proceed(request)
+            }
     }
+    if (cacheLogging) {
+        Log.d(OK_HTTP_TAG, "cacheDuration in hours: ${cacheDuration?.toInt(DurationUnit.HOURS)}")
+        builder =
+            builder.eventListener(
+                object : EventListener() {
+                    override fun cacheHit(
+                        call: Call,
+                        response: Response,
+                    ) {
+                        Log.v(OK_HTTP_TAG, "cacheHit: ${call.request().url} => ${response.code}")
+                    }
+
+                    override fun cacheMiss(call: Call) {
+                        Log.v(OK_HTTP_TAG, "cacheMiss: ${call.request().url}")
+                    }
+
+                    override fun cacheConditionalHit(
+                        call: Call,
+                        cachedResponse: Response,
+                    ) {
+                        Log.v(
+                            OK_HTTP_TAG,
+                            "cacheConditionalHit: ${call.request().url} => ${cachedResponse.code}",
+                        )
+                    }
+                },
+            )
+    }
+    if (cacheDuration != null) {
+        builder =
+            builder.addInterceptor {
+                val request =
+                    it.request().newBuilder()
+                        .cacheControl(
+                            CacheControl.Builder()
+                                .maxAge(cacheDuration.toInt(DurationUnit.HOURS), TimeUnit.HOURS)
+                                .build(),
+                        )
+                        .build()
+                it.proceed(request)
+            }
+    }
+    builder = builder.cache(getNetworkCache(context))
     return builder.build()
 }
 
@@ -212,15 +282,7 @@ fun createApolloClient(context: Context): ApolloClient? {
                 .build()
         Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
 
-        val trustAll =
-            PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean("trustAllCerts", false)
-        val httpEngine =
-            if (trustAll) {
-                DefaultHttpEngine(createOkHttpClient(context))
-            } else {
-                DefaultHttpEngine()
-            }
+        val httpEngine = DefaultHttpEngine(createOkHttpClient(context))
         ApolloClient.Builder()
             .serverUrl(url.toString())
             .httpEngine(httpEngine)
@@ -361,6 +423,16 @@ fun concatIfNotBlank(
     return strings.filter { !it.isNullOrBlank() }.joinToString(sep)
 }
 
+fun cacheDurationPrefToDuration(value: Int): Duration? {
+    return when (value) {
+        0 -> null
+        1 -> 1.toDuration(DurationUnit.HOURS)
+        2 -> 4.toDuration(DurationUnit.HOURS)
+        3 -> 12.toDuration(DurationUnit.HOURS)
+        else -> (value - 3).toDuration(DurationUnit.DAYS)
+    }
+}
+
 fun Context.toPx(dp: Int): Float =
     TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP,
@@ -404,6 +476,18 @@ val PerformerData.ageInYears: Int?
             null
         }
 
+val GalleryData.name: String?
+    get() =
+        if (title.isNotNullOrBlank()) {
+            title
+        } else if (folder != null && folder.path.isNotNullOrBlank()) {
+            Uri.parse(folder.path).pathSegments.last()
+        } else if (files.firstOrNull()?.path.isNotNullOrBlank()) {
+            Uri.parse(files.firstOrNull()?.path).pathSegments.last()
+        } else {
+            null
+        }
+
 fun ScrollView.onlyScrollIfNeeded() {
     viewTreeObserver.addOnGlobalLayoutListener {
         val childHeight = getChildAt(0).height
@@ -439,3 +523,54 @@ fun SharedPreferences.getInt(
 fun ArrayObjectAdapter.isEmpty(): Boolean = size() == 0
 
 fun ArrayObjectAdapter.isNotEmpty(): Boolean = !isEmpty()
+
+val ImageData.maxFileSize: Int
+    get() =
+        visual_files.maxOfOrNull {
+            it.onBaseFile?.size?.toString()?.toInt() ?: -1
+        } ?: -1
+
+fun ImageData.addToIntent(intent: Intent): Intent {
+    intent.putExtra(ImageActivity.INTENT_IMAGE_ID, id)
+    intent.putExtra(ImageActivity.INTENT_IMAGE_URL, paths.image)
+    intent.putExtra(ImageActivity.INTENT_IMAGE_SIZE, maxFileSize)
+    return intent
+}
+
+fun showSetRatingToast(
+    context: Context,
+    rating100: Int,
+    ratingsAsStars: Boolean? = null,
+) {
+    val asStars = ratingsAsStars ?: ServerPreferences(context).ratingsAsStars
+    val ratingStr =
+        if (asStars) {
+            (rating100 / 20.0).toString() + " stars"
+        } else {
+            (rating100 / 10.0).toString()
+        }
+    Toast.makeText(
+        context,
+        "Set rating to $ratingStr!",
+        Toast.LENGTH_SHORT,
+    ).show()
+}
+
+val ImageData.Visual_file.width: Int?
+    get() = onImageFile?.width ?: onVideoFile?.width
+
+val ImageData.Visual_file.height: Int?
+    get() = onImageFile?.height ?: onVideoFile?.height
+
+fun View.animateToVisible(durationMs: Long? = null) {
+    if (!isVisible) {
+        val duration =
+            durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
+        alpha = 0f
+        visibility = View.VISIBLE
+        animate()
+            .alpha(1f)
+            .setDuration(duration)
+            .setListener(null)
+    }
+}

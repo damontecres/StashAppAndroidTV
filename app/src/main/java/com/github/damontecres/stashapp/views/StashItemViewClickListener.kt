@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.content.Intent
@@ -7,9 +7,20 @@ import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
+import com.github.damontecres.stashapp.FilterListActivity
+import com.github.damontecres.stashapp.GalleryActivity
+import com.github.damontecres.stashapp.ImageActivity
+import com.github.damontecres.stashapp.MovieActivity
+import com.github.damontecres.stashapp.PerformerActivity
+import com.github.damontecres.stashapp.PlaybackActivity
+import com.github.damontecres.stashapp.StudioActivity
+import com.github.damontecres.stashapp.TagActivity
+import com.github.damontecres.stashapp.VideoDetailsActivity
 import com.github.damontecres.stashapp.VideoDetailsFragment.Companion.POSITION_ARG
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
+import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -23,6 +34,8 @@ import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.util.addToIntent
+import com.github.damontecres.stashapp.util.name
 
 /**
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc
@@ -71,12 +84,22 @@ class StashItemViewClickListener(
             )
             intent.putExtra(POSITION_ARG, (item.seconds * 1000).toLong())
             context.startActivity(intent)
+        } else if (item is ImageData) {
+            val intent = Intent(context, ImageActivity::class.java)
+            item.addToIntent(intent)
+            context.startActivity(intent)
+        } else if (item is GalleryData) {
+            val intent = Intent(context, GalleryActivity::class.java)
+            intent.putExtra(GalleryActivity.INTENT_GALLERY_ID, item.id)
+            intent.putExtra(GalleryActivity.INTENT_GALLERY_NAME, item.name)
+            context.startActivity(intent)
         } else if (item is StashSavedFilter) {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("savedFilterId", item.savedFilterId)
             intent.putExtra("dataType", DataType.fromFilterMode(item.mode)!!.name)
             intent.putExtra("useRandom", false)
             intent.putExtra("sortBy", item.sortBy)
+            intent.putExtra("filter", item)
             intent.putExtra("moveOnePage", true)
             context.startActivity(intent)
         } else if (item is StashCustomFilter) {
@@ -88,6 +111,7 @@ class StashItemViewClickListener(
             intent.putExtra("useRandom", false)
             intent.putExtra("moveOnePage", true)
             intent.putExtra("query", item.query)
+            intent.putExtra("filter", item)
             context.startActivity(intent)
         } else if (item is StashAction) {
             if (actionListener != null) {

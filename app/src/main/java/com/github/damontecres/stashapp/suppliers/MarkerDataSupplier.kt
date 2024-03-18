@@ -13,6 +13,11 @@ class MarkerDataSupplier(
     private val markerFilter: SceneMarkerFilterType? = null,
 ) :
     StashPagingSource.DataSupplier<FindMarkersQuery.Data, MarkerData> {
+    constructor(markerFilter: SceneMarkerFilterType? = null) : this(
+        DataType.MARKER.asDefaultFindFilterType,
+        markerFilter,
+    )
+
     override val dataType: DataType get() = DataType.MARKER
 
     override fun createQuery(filter: FindFilterType?): Query<FindMarkersQuery.Data> {
@@ -29,6 +34,6 @@ class MarkerDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType()
+        return findFilter ?: DataType.MARKER.asDefaultFindFilterType
     }
 }

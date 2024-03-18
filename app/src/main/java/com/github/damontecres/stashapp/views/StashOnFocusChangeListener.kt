@@ -1,8 +1,7 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.view.View
-import androidx.core.content.ContextCompat
 
 open class StashOnFocusChangeListener(val context: Context) : View.OnFocusChangeListener {
     private val mFocusedZoom =
@@ -23,21 +22,5 @@ open class StashOnFocusChangeListener(val context: Context) : View.OnFocusChange
     ) {
         val zoom = if (hasFocus) mFocusedZoom else 1f
         v.animate().scaleX(zoom).scaleY(zoom).setDuration(mScaleDurationMs.toLong()).start()
-
-        if (hasFocus) {
-            v.setBackgroundColor(
-                ContextCompat.getColor(
-                    context,
-                    R.color.selected_background,
-                ),
-            )
-        } else {
-            v.setBackgroundColor(
-                ContextCompat.getColor(
-                    context,
-                    R.color.default_card_background,
-                ),
-            )
-        }
     }
 }

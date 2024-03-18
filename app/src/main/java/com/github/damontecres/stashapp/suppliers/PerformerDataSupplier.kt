@@ -13,6 +13,11 @@ class PerformerDataSupplier(
     private val performerFilter: PerformerFilterType?,
 ) :
     StashPagingSource.DataSupplier<FindPerformersQuery.Data, PerformerData> {
+    constructor(performerFilter: PerformerFilterType? = null) : this(
+        DataType.PERFORMER.asDefaultFindFilterType,
+        performerFilter,
+    )
+
     override val dataType: DataType get() = DataType.PERFORMER
 
     override fun createQuery(filter: FindFilterType?): Query<FindPerformersQuery.Data> {
@@ -24,7 +29,7 @@ class PerformerDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType()
+        return findFilter ?: DataType.PERFORMER.asDefaultFindFilterType
     }
 
     override fun parseQuery(data: FindPerformersQuery.Data?): CountAndList<PerformerData> {

@@ -28,6 +28,8 @@ class StashPagingSource<T : Query.Data, D : Any>(
     PagingSource<Int, D>() {
     private val queryEngine = QueryEngine(context, showToasts)
 
+    private var listeners = mutableListOf<Listener<D>>()
+
     interface DataSupplier<T : Query.Data, D : Any> {
         val dataType: DataType
 
@@ -54,7 +56,7 @@ class StashPagingSource<T : Query.Data, D : Any>(
         fun getDefaultFilter(): FindFilterType
     }
 
-    private suspend fun fetchPage(
+    suspend fun fetchPage(
         page: Int,
         loadSize: Int,
     ): CountAndList<D> {
@@ -67,8 +69,10 @@ class StashPagingSource<T : Query.Data, D : Any>(
             filter = filter.copy(sort = Optional.present(sortByOverride))
         }
         val query = dataSupplier.createQuery(queryEngine.updateFilter(filter, useRandom))
-        val results = queryEngine.executeQuery(query)
-        return dataSupplier.parseQuery(results.data)
+        val queryResult = queryEngine.executeQuery(query)
+        val data = dataSupplier.parseQuery(queryResult.data)
+        listeners.forEach { it.onPageLoad(page, data) }
+        return data
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, D> {
@@ -109,5 +113,20 @@ class StashPagingSource<T : Query.Data, D : Any>(
             val anchorPage = state.closestPageToPosition(anchorPosition)
             anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
         }
+    }
+
+    fun addListener(listener: Listener<D>) {
+        listeners.add(listener)
+    }
+
+    fun removeListener(listener: Listener<D>) {
+        listeners.remove(listener)
+    }
+
+    fun interface Listener<D : Any> {
+        fun onPageLoad(
+            pageNum: Int,
+            page: CountAndList<D>,
+        )
     }
 }

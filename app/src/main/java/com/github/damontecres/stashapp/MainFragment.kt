@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.util.Log
+import android.util.SparseArray
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -24,11 +25,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.ConfigurationQuery
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.StashCustomFilter
+import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.FilterParser
@@ -42,6 +45,10 @@ import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotEmpty
 import com.github.damontecres.stashapp.util.supportedFilterModes
 import com.github.damontecres.stashapp.util.testStashConnection
+import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
+import com.github.damontecres.stashapp.views.MainTitleView
+import com.github.damontecres.stashapp.views.OnImageFilterClickedListener
+import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -54,6 +61,7 @@ import java.util.Objects
 class MainFragment : BrowseSupportFragment() {
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()
+    private val filterList = SparseArray<StashFilter>()
     private lateinit var mBackgroundManager: BackgroundManager
     private lateinit var mMetrics: DisplayMetrics
     private var serverHash: Int? = null
@@ -139,7 +147,7 @@ class MainFragment : BrowseSupportFragment() {
                         val item = adapter.get(position.column)
                         if (item is SlimSceneData) {
                             val queryEngine = QueryEngine(requireContext())
-                            queryEngine.getScene(item.id.toInt())?.let {
+                            queryEngine.getScene(item.id)?.let {
                                 adapter.replace(position.column, it)
                             }
                         }
@@ -177,7 +185,24 @@ class MainFragment : BrowseSupportFragment() {
             requireActivity().startActivity(Intent(requireContext(), SearchActivity::class.java))
         }
 
-        onItemViewClickedListener = StashItemViewClickListener(requireActivity())
+        onItemViewClickedListener =
+            ClassOnItemViewClickedListener(StashItemViewClickListener(requireActivity()))
+                .addListenerForClass(
+                    ImageData::class.java,
+                    OnImageFilterClickedListener(requireContext()) { image: ImageData ->
+                        val position = getCurrentPosition()
+                        if (position != null) {
+                            val filter = filterList.get(position.row)
+                            if (filter != null) {
+                                return@OnImageFilterClickedListener OnImageFilterClickedListener.FilterPosition(
+                                    filter,
+                                    position.column,
+                                )
+                            }
+                        }
+                        OnImageFilterClickedListener.FilterPosition(null, null)
+                    },
+                )
         onItemViewSelectedListener = ItemViewSelectedListener()
     }
 
@@ -260,7 +285,7 @@ class MainFragment : BrowseSupportFragment() {
                             val frontPageContent =
                                 (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>
                             val jobs =
-                                frontPageContent.map { frontPageFilter ->
+                                frontPageContent.mapIndexed { index, frontPageFilter ->
                                     val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
                                     adapters.add(adapter)
                                     when (
@@ -272,6 +297,7 @@ class MainFragment : BrowseSupportFragment() {
                                                 frontPageFilter,
                                                 adapter,
                                                 queryEngine,
+                                                index,
                                             )
                                         }
 
@@ -281,6 +307,7 @@ class MainFragment : BrowseSupportFragment() {
                                                 adapter,
                                                 queryEngine,
                                                 filterParser,
+                                                index,
                                             )
                                         }
 
@@ -317,6 +344,7 @@ class MainFragment : BrowseSupportFragment() {
         frontPageFilter: Map<String, *>,
         adapter: ArrayObjectAdapter,
         queryEngine: QueryEngine,
+        index: Int,
     ): Deferred<ListRow?>? {
         try {
             val msg = frontPageFilter["message"] as Map<String, *>
@@ -383,12 +411,23 @@ class MainFragment : BrowseSupportFragment() {
                                 adapter.addAll(0, queryEngine.findMovies(filter))
                             }
 
+                            FilterMode.IMAGES -> {
+                                adapter.addAll(0, queryEngine.findImages(filter))
+                            }
+
+                            FilterMode.GALLERIES -> {
+                                adapter.addAll(0, queryEngine.findGalleries(filter))
+                            }
+
                             else -> {
                                 Log.w(TAG, "Unsupported mode in frontpage: $mode")
                             }
                         }
                         if (adapter.isNotEmpty()) {
-                            adapter.add(StashCustomFilter(mode, direction, sortBy, description))
+                            val customFilter =
+                                StashCustomFilter(mode, direction, sortBy, description)
+                            adapter.add(customFilter)
+                            filterList.set(index, customFilter)
                             ListRow(
                                 HeaderItem(description),
                                 adapter,
@@ -420,6 +459,7 @@ class MainFragment : BrowseSupportFragment() {
         adapter: ArrayObjectAdapter,
         queryEngine: QueryEngine,
         filterParser: FilterParser,
+        index: Int,
     ): Deferred<ListRow?> {
         return viewLifecycleOwner.lifecycleScope.async {
             val filterId = frontPageFilter.getCaseInsensitive("savedFilterId")
@@ -483,6 +523,24 @@ class MainFragment : BrowseSupportFragment() {
                             )
                         }
 
+                        FilterMode.IMAGES -> {
+                            val imageFilter =
+                                filterParser.convertImageObjectFilter(objectFilter)
+                            adapter.addAll(
+                                0,
+                                queryEngine.findImages(filter, imageFilter, useRandom = false),
+                            )
+                        }
+
+                        FilterMode.GALLERIES -> {
+                            val galleryFilter =
+                                filterParser.convertGalleryObjectFilter(objectFilter)
+                            adapter.addAll(
+                                0,
+                                queryEngine.findGalleries(filter, galleryFilter, useRandom = false),
+                            )
+                        }
+
                         else -> {
                             Log.w(
                                 TAG,
@@ -491,13 +549,14 @@ class MainFragment : BrowseSupportFragment() {
                         }
                     }
                     if (adapter.isNotEmpty()) {
-                        adapter.add(
+                        val savedFilter =
                             StashSavedFilter(
                                 filterId.toString(),
                                 result!!.mode,
                                 filter?.sort?.getOrNull(),
-                            ),
-                        )
+                            )
+                        adapter.add(savedFilter)
+                        filterList.set(index, savedFilter)
                         ListRow(HeaderItem(result?.name ?: ""), adapter)
                     } else {
                         null

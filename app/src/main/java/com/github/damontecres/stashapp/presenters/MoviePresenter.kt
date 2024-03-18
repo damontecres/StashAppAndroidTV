@@ -2,12 +2,11 @@ package com.github.damontecres.stashapp.presenters
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.createGlideUrl
+import com.github.damontecres.stashapp.util.StashGlide
 import java.security.MessageDigest
 import java.util.EnumMap
 
@@ -28,9 +27,7 @@ class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
 
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 
-            val glideUrl = createGlideUrl(item.front_image_path, cardView.context)
-            Glide.with(cardView.context)
-                .load(glideUrl)
+            StashGlide.with(cardView.context, item.front_image_path)
                 .transform(MoviePosterScale())
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)

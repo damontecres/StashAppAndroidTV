@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools">
+    <RatingBar
+        android:id="@+id/rating_star"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:numStars="5"
+        android:stepSize=".5"
+        android:isIndicator="false"
+        android:gravity="center"
+        android:theme="@style/RatingBar"
+        />
+
+    <LinearLayout
+        android:id="@+id/rating_decimal_holder"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/rating_decimal_text"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textAlignment="center"
+            tools:text="@string/stashapp_rating" />
+
+        <SeekBar
+            android:id="@+id/rating_decimal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="10dp"
+            android:gravity="center"
+            android:max="100" />
+    </LinearLayout>
+
+</FrameLayout>

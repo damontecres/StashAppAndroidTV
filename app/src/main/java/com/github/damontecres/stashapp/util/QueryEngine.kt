@@ -12,6 +12,10 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
+import com.github.damontecres.stashapp.api.FindGalleriesQuery
+import com.github.damontecres.stashapp.api.FindGalleryQuery
+import com.github.damontecres.stashapp.api.FindImageQuery
+import com.github.damontecres.stashapp.api.FindImagesQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.FindMovieQuery
 import com.github.damontecres.stashapp.api.FindMoviesQuery
@@ -21,6 +25,8 @@ import com.github.damontecres.stashapp.api.FindSavedFiltersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
+import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -29,6 +35,8 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
@@ -112,7 +120,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
     suspend fun findScenes(
         findFilter: FindFilterType? = null,
         sceneFilter: SceneFilterType? = null,
-        sceneIds: List<Int>? = null,
+        sceneIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<SlimSceneData> {
         val query =
@@ -120,7 +128,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 FindScenesQuery(
                     filter = updateFilter(findFilter, useRandom),
                     scene_filter = sceneFilter,
-                    scene_ids = sceneIds,
+                    scene_ids = sceneIds?.map { it.toInt() },
                 ),
             )
         val scenes =
@@ -130,14 +138,14 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         return scenes.orEmpty()
     }
 
-    suspend fun getScene(sceneId: Int): SlimSceneData? {
+    suspend fun getScene(sceneId: String): SlimSceneData? {
         return findScenes(sceneIds = listOf(sceneId)).firstOrNull()
     }
 
     suspend fun findPerformers(
         findFilter: FindFilterType? = null,
         performerFilter: PerformerFilterType? = null,
-        performerIds: List<Int>? = null,
+        performerIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<PerformerData> {
         val query =
@@ -145,7 +153,7 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 FindPerformersQuery(
                     filter = updateFilter(findFilter, useRandom),
                     performer_filter = performerFilter,
-                    performer_ids = performerIds,
+                    performer_ids = performerIds?.map { it.toInt() },
                 ),
             )
         val performers =
@@ -153,6 +161,10 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
                 it.performerData
             }
         return performers.orEmpty()
+    }
+
+    suspend fun getPerformer(performerId: String): PerformerData? {
+        return findPerformers(performerIds = listOf(performerId)).firstOrNull()
     }
 
     // TODO Add studioIds?
@@ -229,6 +241,41 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
             .orEmpty()
     }
 
+    suspend fun findImages(
+        findFilter: FindFilterType? = null,
+        imageFilter: ImageFilterType? = null,
+        useRandom: Boolean = true,
+    ): List<ImageData> {
+        val query =
+            client.query(
+                FindImagesQuery(
+                    updateFilter(findFilter, useRandom),
+                    imageFilter,
+                ),
+            )
+        return executeQuery(query).data?.findImages?.images?.map { it.imageData }.orEmpty()
+    }
+
+    suspend fun getImage(imageId: String): ImageData? {
+        val query = client.query(FindImageQuery(imageId))
+        return executeQuery(query).data?.findImage?.imageData
+    }
+
+    suspend fun findGalleries(
+        findFilter: FindFilterType? = null,
+        galleryFilter: GalleryFilterType? = null,
+        useRandom: Boolean = true,
+    ): List<GalleryData> {
+        val query =
+            client.query(FindGalleriesQuery(updateFilter(findFilter, useRandom), galleryFilter))
+        return executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
+    }
+
+    suspend fun getGallery(galleryId: String): GalleryData? {
+        val query = client.query(FindGalleryQuery(galleryId))
+        return executeQuery(query).data?.findGallery?.galleryData
+    }
+
     /**
      * Search for a type of data with the given query. Users will need to cast the returned List.
      */
@@ -243,6 +290,8 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
             DataType.STUDIO -> findStudios(findFilter)
             DataType.MOVIE -> findMovies(findFilter)
             DataType.MARKER -> findMarkers(findFilter)
+            DataType.IMAGE -> findImages(findFilter)
+            DataType.GALLERY -> findGalleries(findFilter)
         }
     }
 

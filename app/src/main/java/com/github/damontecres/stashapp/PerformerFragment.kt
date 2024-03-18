@@ -13,14 +13,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.ageInYears
-import com.github.damontecres.stashapp.util.createGlideUrl
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
@@ -68,13 +67,18 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                     ).show()
                 }
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                val perf =
-                    queryEngine.findPerformers(performerIds = listOf(performer.id.toInt())).first()
+                val perf = queryEngine.getPerformer(performer.id)
+                if (perf == null) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Performer not found: ${performer.id}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    return@launch
+                }
 
                 if (perf.image_path != null) {
-                    val url = createGlideUrl(perf.image_path, requireContext())
-                    Glide.with(requireContext())
-                        .load(url)
+                    StashGlide.with(requireContext(), perf.image_path)
                         .centerCrop()
                         .error(StashPresenter.glideError(requireContext()))
                         .into(mPerformerImage)

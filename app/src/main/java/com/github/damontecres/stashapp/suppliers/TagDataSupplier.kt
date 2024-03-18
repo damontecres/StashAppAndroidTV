@@ -13,6 +13,11 @@ class TagDataSupplier(
     private val tagFilter: TagFilterType?,
 ) :
     StashPagingSource.DataSupplier<FindTagsQuery.Data, TagData> {
+    constructor(tagFilter: TagFilterType? = null) : this(
+        DataType.TAG.asDefaultFindFilterType,
+        tagFilter,
+    )
+
     override val dataType: DataType get() = DataType.TAG
 
     override fun createQuery(filter: FindFilterType?): Query<FindTagsQuery.Data> {
@@ -23,13 +28,13 @@ class TagDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType()
+        return findFilter ?: DataType.TAG.asDefaultFindFilterType
     }
 
     override fun parseQuery(data: FindTagsQuery.Data?): CountAndList<TagData> {
         val count = data?.findTags?.count ?: -1
-        val studios =
+        val tags =
             data?.findTags?.tags?.map { it.tagData }.orEmpty()
-        return CountAndList(count, studios)
+        return CountAndList(count, tags)
     }
 }

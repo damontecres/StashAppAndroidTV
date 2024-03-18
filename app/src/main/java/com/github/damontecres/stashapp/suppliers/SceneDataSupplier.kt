@@ -13,6 +13,11 @@ class SceneDataSupplier(
     private val sceneFilter: SceneFilterType? = null,
 ) :
     StashPagingSource.DataSupplier<FindScenesQuery.Data, SlimSceneData> {
+    constructor(sceneFilter: SceneFilterType? = null) : this(
+        DataType.SCENE.asDefaultFindFilterType,
+        sceneFilter,
+    )
+
     override val dataType: DataType get() = DataType.SCENE
 
     override fun createQuery(filter: FindFilterType?): Query<FindScenesQuery.Data> {
@@ -30,6 +35,6 @@ class SceneDataSupplier(
     }
 
     override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: FindFilterType()
+        return findFilter ?: DataType.SCENE.asDefaultFindFilterType
     }
 }

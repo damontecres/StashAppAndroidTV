@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/black">
+
+    <!--    <ImageView-->
+    <!--        android:id="@+id/image_view_image"-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:adjustViewBounds="true"-->
+    <!--        android:contentDescription="@string/stashapp_image" />-->
+
+    <com.otaliastudios.zoom.ZoomImageView
+        android:id="@+id/image_view_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="vertical|horizontal"
+        app:transformation="centerInside"
+        app:transformationGravity="auto"
+        app:alignment="center"
+        app:overScrollHorizontal="true"
+        app:overScrollVertical="true"
+        app:overPinchable="true"
+        app:horizontalPanEnabled="true"
+        app:verticalPanEnabled="true"
+        app:zoomEnabled="true"
+        app:flingEnabled="true"
+        app:scrollEnabled="true"
+        app:oneFingerScrollEnabled="true"
+        app:twoFingersScrollEnabled="true"
+        app:threeFingersScrollEnabled="true"
+        app:minZoom="1.0"
+        app:minZoomType="zoom"
+        app:maxZoom="5.0"
+        app:maxZoomType="zoom"
+        app:animationDuration="250" />
+
+    <TextView
+        android:id="@+id/image_view_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:background="@color/transparent_black_50"
+        android:visibility="gone"
+        android:textSize="32sp" />
+
+    <LinearLayout
+        android:id="@+id/image_bottom_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:background="@color/transparent_black_50"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <com.github.damontecres.stashapp.views.StashRatingBar
+            android:id="@+id/rating_bar"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            app:defaultRating100="0"
+            android:textSize="16sp"
+            android:textColor="@android:color/darker_gray"
+            android:background="@drawable/image_button_selector" />
+
+        <TableLayout
+            android:id="@+id/image_view_table"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/o_counter_button"
+                android:src="@drawable/sweat_drops"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:padding="5dp"
+                android:layout_gravity="center_vertical"
+                android:scaleType="fitXY"
+                android:contentDescription="@string/stashapp_o_counter"
+                android:background="@drawable/image_button_selector" />
+
+            <TextView
+                android:id="@+id/o_counter_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textAlignment="center"
+                android:textSize="24sp"
+                android:layout_margin="5dp" />
+
+            <Button
+                android:id="@+id/zoom_in_button"
+                android:text="@string/fa_magnifying_glass_plus"
+                style="@style/ImageActivityButton" />
+
+            <Button
+                android:id="@+id/zoom_out_button"
+                android:text="@string/fa_magnifying_glass_minus"
+                style="@style/ImageActivityButton" />
+
+            <Button
+                android:id="@+id/rotate_right_button"
+                android:text="@string/fa_rotate_right"
+                style="@style/ImageActivityButton" />
+
+            <Button
+                android:id="@+id/rotate_left_button"
+                android:text="@string/fa_rotate_left"
+                style="@style/ImageActivityButton" />
+
+            <Button
+                android:id="@+id/flip_button"
+                android:text="@string/fa_arrow_right_arrow_left"
+                style="@style/ImageActivityButton" />
+
+            <Button
+                android:id="@+id/reset_button"
+                android:text="@string/stashapp_effect_filters_reset_transforms"
+                android:fontFamily="@null"
+                style="@style/ImageActivityButton" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>
