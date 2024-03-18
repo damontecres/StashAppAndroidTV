@@ -33,6 +33,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         ContextCompat.getColor(context, R.color.selected_background)
     private val sDefaultBackgroundColor: Int =
         ContextCompat.getColor(context, R.color.default_card_background)
+    private val transparentColor = ContextCompat.getColor(context, android.R.color.transparent)
 
     var videoUrl: String? = null
     var videoPosition = -1L
@@ -269,7 +270,10 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     }
 
     fun setRating100(rating100: Int?) {
-        if (rating100 != null && rating100 > 0) {
+        val showRatings =
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .getBoolean(context.getString(R.string.pref_key_show_rating), true)
+        if (rating100 != null && rating100 > 0 && showRatings) {
             val ratingText = Constants.getRatingAsDecimalString(context, rating100)
             val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
             val overlay = getTextOverlay(OverlayPosition.TOP_LEFT)
@@ -280,6 +284,23 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             overlay.text = text
             ratingColors.recycle()
         }
+    }
+
+    fun onUnbindViewHolder() {
+        // Remove references to images so that the garbage collector can free up memory
+        badgeImage = null
+        mainImage = null
+        videoUrl = null
+        videoView.player?.release()
+        videoView.player = null
+
+        textOverlays.values.forEach {
+            it.text = null
+            it.setBackgroundColor(transparentColor)
+        }
+        val lp = progressOverlay.layoutParams
+        lp.width = 0
+        progressOverlay.layoutParams = lp
     }
 
     enum class OverlayPosition {
