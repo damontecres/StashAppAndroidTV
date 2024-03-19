@@ -76,7 +76,8 @@ class MainFragment : BrowseSupportFragment() {
         val maxSearchResults = manager.getInt("maxSearchResults", 0)
         val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
         val columns = manager.getInt("cardSize", getString(R.string.card_size_default))
-        return Objects.hash(url, apiKey, maxSearchResults, playVideoPreviews, columns)
+        val showRatings = manager.getBoolean(getString(R.string.pref_key_show_rating), true)
+        return Objects.hash(url, apiKey, maxSearchResults, playVideoPreviews, columns, showRatings)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

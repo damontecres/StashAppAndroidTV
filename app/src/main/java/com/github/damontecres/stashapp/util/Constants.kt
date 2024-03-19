@@ -14,9 +14,9 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.ArrayObjectAdapter
+import androidx.leanback.widget.Visibility
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
@@ -91,6 +91,19 @@ object Constants {
             PreferenceManager.getDefaultSharedPreferences(context)
                 .getLong("networkCache", 100) * 1024 * 1024
         return Cache(File(context.cacheDir, OK_HTTP_CACHE_DIR), cacheSize)
+    }
+
+    fun getRatingAsDecimalString(
+        context: Context,
+        rating100: Int,
+        ratingsAsStars: Boolean? = null,
+    ): String {
+        val asStars = ratingsAsStars ?: ServerPreferences(context).ratingsAsStars
+        return if (asStars) {
+            (rating100 / 20.0).toString()
+        } else {
+            (rating100 / 10.0).toString()
+        }
     }
 }
 
@@ -563,14 +576,30 @@ val ImageData.Visual_file.height: Int?
     get() = onImageFile?.height ?: onVideoFile?.height
 
 fun View.animateToVisible(durationMs: Long? = null) {
-    if (!isVisible) {
-        val duration =
-            durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
-        alpha = 0f
-        visibility = View.VISIBLE
-        animate()
-            .alpha(1f)
-            .setDuration(duration)
-            .setListener(null)
-    }
+    val duration =
+        durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
+    animate()
+        .alpha(1f)
+        .setDuration(duration)
+        .setListener(null)
+        .withStartAction {
+            alpha = 0f
+            visibility = View.VISIBLE
+        }
+}
+
+fun View.animateToInvisible(
+    @Visibility targetVisibility: Int = View.INVISIBLE,
+    durationMs: Long? = null,
+) {
+    val duration =
+        durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
+    animate()
+        .alpha(0f)
+        .setDuration(duration)
+        .setListener(null)
+        .withEndAction {
+            alpha = 1f
+            visibility = targetVisibility
+        }
 }

@@ -40,6 +40,8 @@ class GalleryPresenter(callback: LongClickCallBack<GalleryData>? = null) : Stash
         if (coverPaths?.preview.isNotNullOrBlank()) {
             cardView.videoUrl = coverPaths?.preview
         }
+
+        cardView.setRating100(item.rating100)
     }
 
     companion object {

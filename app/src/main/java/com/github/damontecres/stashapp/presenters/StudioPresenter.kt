@@ -32,6 +32,8 @@ class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
         if (item.image_path.isNotNullOrBlank()) {
             loadImage(cardView, item.image_path)
         }
+
+        cardView.setRating100(item.rating100)
     }
 
     companion object {

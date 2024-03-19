@@ -34,6 +34,8 @@ class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
         if (item.image_path != null) {
             loadImage(cardView, item.image_path)
         }
+
+        cardView.setRating100(item.rating100)
     }
 
     companion object {

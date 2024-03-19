@@ -26,6 +26,7 @@ query Configuration {
     }
     interface {
       menuItems
+      showStudioAsText
     }
     ui
   }

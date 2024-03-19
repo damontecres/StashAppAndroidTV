@@ -32,6 +32,8 @@ class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
         }
+
+        cardView.setRating100(item.rating100)
     }
 
     /**

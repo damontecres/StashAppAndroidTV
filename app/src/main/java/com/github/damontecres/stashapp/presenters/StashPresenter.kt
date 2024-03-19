@@ -87,12 +87,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
 
     open override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         val cardView = viewHolder.view as StashImageCardView
-        // Remove references to images so that the garbage collector can free up memory
-        cardView.badgeImage = null
-        cardView.mainImage = null
-        cardView.videoUrl = null
-        cardView.videoView.player?.release()
-        cardView.videoView.player = null
+        cardView.onUnbindViewHolder()
     }
 
     interface LongClickCallBack<T> {

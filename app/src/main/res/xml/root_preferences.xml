@@ -106,6 +106,12 @@
             app:summaryOn="Show footer"
             app:summaryOff="Hide footer"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_show_rating"
+            app:title="Show rating on cards"
+            app:summaryOn="Show rating"
+            app:summaryOff="Hide rating"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">
