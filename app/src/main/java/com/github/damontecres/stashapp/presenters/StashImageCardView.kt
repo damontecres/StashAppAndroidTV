@@ -23,6 +23,8 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.animateToInvisible
+import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.enableMarquee
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -34,6 +36,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     private val sDefaultBackgroundColor: Int =
         ContextCompat.getColor(context, R.color.default_card_background)
     private val transparentColor = ContextCompat.getColor(context, android.R.color.transparent)
+    private val animateTime = resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
 
     var videoUrl: String? = null
     var videoPosition = -1L
@@ -44,6 +47,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         EnumMap<DataType, Pair<TextView, View>>(DataType::class.java)
     private val oCounterTextView: TextView
     private val oCounterIconView: View
+    private val cardOverlay = findViewById<View>(R.id.card_overlay)
     private val textOverlays = EnumMap<OverlayPosition, TextView>(OverlayPosition::class.java)
     private val progressOverlay = findViewById<ImageView>(R.id.card_overlay_progress)
 
@@ -133,6 +137,11 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                 videoView.player?.stop()
                 videoView.player = null
             }
+        }
+        if (selected) {
+            cardOverlay.animateToInvisible(durationMs = animateTime)
+        } else {
+            cardOverlay.animateToVisible(animateTime)
         }
         updateCardBackgroundColor(this, selected)
         super.setSelected(selected)
