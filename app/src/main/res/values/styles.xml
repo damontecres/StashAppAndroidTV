@@ -61,6 +61,10 @@
         <item name="android:layout_margin">4dp</item>
         <item name="android:textSize">12sp</item>
         <item name="android:color">@android:color/white</item>
+        <item name="android:shadowColor">@android:color/black</item>
+        <item name="android:shadowDx">1</item>
+        <item name="android:shadowDy">1</item>
+        <item name="android:shadowRadius">2</item>
     </style>
 
 </resources>

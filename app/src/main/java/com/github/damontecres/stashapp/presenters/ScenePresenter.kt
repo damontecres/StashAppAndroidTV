@@ -20,7 +20,6 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         cardView.titleText = item.titleOrFilename
 
         val details = mutableListOf<String?>()
-        details.add(item.studio?.name)
         details.add(item.date)
         cardView.contentText = concatIfNotBlank(" - ", details)
 
