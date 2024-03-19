@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.presenters
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
@@ -19,10 +20,15 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.enableMarquee
@@ -50,6 +56,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     private val cardOverlay = findViewById<View>(R.id.card_overlay)
     private val textOverlays = EnumMap<OverlayPosition, TextView>(OverlayPosition::class.java)
     private val progressOverlay = findViewById<ImageView>(R.id.card_overlay_progress)
+    private val topRightImageOverlay = findViewById<ImageView>(R.id.card_overlay_top_right_image)
 
     private var imageDimensionsSet = false
 
@@ -139,8 +146,10 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             }
         }
         if (selected) {
+            cardOverlay.clearAnimation()
             cardOverlay.animateToInvisible(durationMs = animateTime)
         } else {
+            cardOverlay.clearAnimation()
             cardOverlay.animateToVisible(animateTime)
         }
         updateCardBackgroundColor(this, selected)
@@ -310,6 +319,57 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         val lp = progressOverlay.layoutParams
         lp.width = 0
         progressOverlay.layoutParams = lp
+
+        topRightImageOverlay.visibility = View.INVISIBLE
+    }
+
+    fun setTopRightImage(
+        imageUrl: String?,
+        fallbackText: CharSequence?,
+    ) {
+        if (imageUrl != null && !imageUrl.contains("default=true")) {
+            val lp = topRightImageOverlay.layoutParams
+            lp.width = 128
+            lp.height = 50
+            topRightImageOverlay.layoutParams = lp
+
+            StashGlide.with(context, imageUrl)
+                .listener(
+                    object : RequestListener<Drawable> {
+                        override fun onLoadFailed(
+                            e: GlideException?,
+                            model: Any?,
+                            target: Target<Drawable>,
+                            isFirstResource: Boolean,
+                        ): Boolean {
+                            if (fallbackText != null) {
+                                setTextOverlayText(
+                                    OverlayPosition.TOP_RIGHT,
+                                    fallbackText,
+                                )
+                            }
+                            return true
+                        }
+
+                        override fun onResourceReady(
+                            resource: Drawable,
+                            model: Any,
+                            target: Target<Drawable>?,
+                            dataSource: DataSource,
+                            isFirstResource: Boolean,
+                        ): Boolean {
+                            topRightImageOverlay.visibility = View.VISIBLE
+                            return false
+                        }
+                    },
+                )
+                .into(topRightImageOverlay)
+        } else if (fallbackText != null) {
+            setTextOverlayText(
+                OverlayPosition.TOP_RIGHT,
+                fallbackText,
+            )
+        }
     }
 
     enum class OverlayPosition {

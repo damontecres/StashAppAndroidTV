@@ -14,7 +14,6 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.Visibility
@@ -577,32 +576,30 @@ val ImageData.Visual_file.height: Int?
     get() = onImageFile?.height ?: onVideoFile?.height
 
 fun View.animateToVisible(durationMs: Long? = null) {
-    if (!isVisible) {
-        val duration =
-            durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
-        alpha = 0f
-        visibility = View.VISIBLE
-        animate()
-            .alpha(1f)
-            .setDuration(duration)
-            .setListener(null)
-    }
+    val duration =
+        durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
+    animate()
+        .alpha(1f)
+        .setDuration(duration)
+        .setListener(null)
+        .withStartAction {
+            alpha = 0f
+            visibility = View.VISIBLE
+        }
 }
 
 fun View.animateToInvisible(
     @Visibility targetVisibility: Int = View.INVISIBLE,
     durationMs: Long? = null,
 ) {
-    if (isVisible) {
-        val duration =
-            durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
-        alpha = 1f
-        animate()
-            .alpha(0f)
-            .setDuration(duration)
-            .setListener(null)
-            .withEndAction {
-                visibility = targetVisibility
-            }
-    }
+    val duration =
+        durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
+    animate()
+        .alpha(0f)
+        .setDuration(duration)
+        .setListener(null)
+        .withEndAction {
+            alpha = 1f
+            visibility = targetVisibility
+        }
 }

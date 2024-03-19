@@ -4,6 +4,7 @@ import android.graphics.Typeface
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -51,6 +52,16 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         }
 
         cardView.setRating100(item.rating100)
+        if (item.studio != null) {
+            if (ServerPreferences(cardView.context).showStudioAsText) {
+                cardView.setTextOverlayText(
+                    StashImageCardView.OverlayPosition.TOP_RIGHT,
+                    item.studio.name,
+                )
+            } else {
+                cardView.setTopRightImage(item.studio.image_path, item.studio.name)
+            }
+        }
 
         if (!item.paths.screenshot.isNullOrBlank()) {
             StashGlide.with(cardView.context, item.paths.screenshot)

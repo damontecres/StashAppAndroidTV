@@ -76,9 +76,19 @@
                 <TextView
                     android:id="@+id/card_overlay_top_right"
                     style="@style/CardTextOverlay"
+                    android:textStyle="bold"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     tools:text="Sample" />
+
+                <ImageView
+                    android:id="@+id/card_overlay_top_right_image"
+                    android:layout_width="128dp"
+                    android:layout_height="50dp"
+                    android:layout_margin="3dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:contentDescription="@string/stashapp_studio" />
 
                 <ImageView
                     android:id="@+id/card_overlay_progress"

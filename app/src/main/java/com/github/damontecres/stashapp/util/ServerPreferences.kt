@@ -30,6 +30,8 @@ class ServerPreferences(private val context: Context) {
 
     val trackActivity get() = preferences.getBoolean(PREF_TRACK_ACTIVITY, false)
 
+    val showStudioAsText get() = preferences.getBoolean(PREF_INTERFACE_STUDIOS_AS_TEXT, false)
+
     val minimumPlayPercent get() = preferences.getInt(PREF_MINIMUM_PLAY_PERCENT, 20)
 
     val ratingsAsStars get() = preferences.getString(PREF_RATING_TYPE, "stars") == "stars"
@@ -126,6 +128,11 @@ class ServerPreferences(private val context: Context) {
 
                 val menuItems = config.`interface`.menuItems?.map(String::lowercase)?.toSet()
                 putStringSet(PREF_INTERFACE_MENU_ITEMS, menuItems)
+
+                putBoolean(
+                    PREF_INTERFACE_STUDIOS_AS_TEXT,
+                    config.`interface`.showStudioAsText ?: false,
+                )
             }
         }
 
@@ -180,5 +187,6 @@ class ServerPreferences(private val context: Context) {
         const val PREF_GEN_TRANSCODES = "transcodes"
 
         const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
+        const val PREF_INTERFACE_STUDIOS_AS_TEXT = "interface.showStudioAsText"
     }
 }
