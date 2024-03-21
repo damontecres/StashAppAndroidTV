@@ -44,6 +44,7 @@
         <item name="android:textSize">32sp</item>
         <item name="android:fontFamily">@font/fa_solid_900</item>
         <item name="android:background">@drawable/image_button_selector</item>
+        <item name="android:nextFocusUp">@id/rating_bar</item>
     </style>
 
     <style name="GridFooterText">

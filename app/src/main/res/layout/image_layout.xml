@@ -75,6 +75,7 @@
             android:layout_margin="3dp" />
 
         <LinearLayout
+            android:id="@+id/button_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -88,7 +89,8 @@
                 android:layout_gravity="center_vertical"
                 android:scaleType="fitXY"
                 android:contentDescription="@string/stashapp_o_counter"
-                android:background="@drawable/image_button_selector" />
+                android:background="@drawable/image_button_selector"
+                android:nextFocusUp="@id/rating_bar" />
 
             <TextView
                 android:id="@+id/o_counter_text"

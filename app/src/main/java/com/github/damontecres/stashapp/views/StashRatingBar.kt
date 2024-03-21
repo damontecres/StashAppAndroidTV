@@ -26,13 +26,22 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
 
     private var ratingCallback: RatingCallback? = null
 
+    val focusableViewId
+        get() =
+            if (ratingAsStars) {
+                starRatingBar.id
+            } else {
+                decimalRatingBar.id
+            }
+
     var rating100: Int = 0
         @SuppressLint("RestrictedApi", "SetTextI18n")
         set(rating100) {
             field = rating100
             starRatingBar.rating = (field.div(20.0)).toFloat()
             decimalRatingBar.progress = field
-            decimalRatingText.text = context.getString(R.string.stashapp_rating) + " (${field / 10.0}):"
+            decimalRatingText.text =
+                context.getString(R.string.stashapp_rating) + " (${field / 10.0}):"
         }
 
     init {
@@ -132,6 +141,18 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
 
     fun setRatingCallback(ratingCallback: RatingCallback) {
         this.ratingCallback = ratingCallback
+    }
+
+    override fun setNextFocusDownId(nextFocusDownId: Int) {
+        super.setNextFocusDownId(nextFocusDownId)
+        starRatingBar.nextFocusDownId = nextFocusDownId
+        decimalRatingBar.nextFocusDownId = nextFocusDownId
+    }
+
+    override fun setNextFocusUpId(nextFocusUpId: Int) {
+        super.setNextFocusUpId(nextFocusUpId)
+        starRatingBar.nextFocusUpId = nextFocusUpId
+        decimalRatingBar.nextFocusUpId = nextFocusUpId
     }
 
     private inner class RatingOnClickListener : OnClickListener {

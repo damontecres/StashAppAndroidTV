@@ -319,16 +319,21 @@ class ImageActivity : FragmentActivity() {
                 }
             }
 
+            ratingBar.nextFocusDownId = R.id.o_counter_button
+            val focusListener = ImageButtonFocusListener(ratingBar)
+
             val rotateRightButton = view.findViewById<Button>(R.id.rotate_right_button)
-            rotateRightButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            rotateRightButton.onFocusChangeListener = focusListener
             rotateRightButton.setOnClickListener(RotateImageListener(90f))
+            rotateRightButton.nextFocusUpId = ratingBar.focusableViewId
 
             val rotateLeftButton = view.findViewById<Button>(R.id.rotate_left_button)
-            rotateLeftButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            rotateLeftButton.onFocusChangeListener = focusListener
             rotateLeftButton.setOnClickListener(RotateImageListener(-90f))
+            rotateLeftButton.nextFocusUpId = ratingBar.focusableViewId
 
             val flipButton = view.findViewById<Button>(R.id.flip_button)
-            flipButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            flipButton.onFocusChangeListener = focusListener
             flipButton.setOnClickListener {
                 if (!duringAnimation) {
                     duringAnimation = true
@@ -346,9 +351,10 @@ class ImageActivity : FragmentActivity() {
                     animator.start()
                 }
             }
+            flipButton.nextFocusUpId = ratingBar.focusableViewId
 
             val resetButton = view.findViewById<Button>(R.id.reset_button)
-            resetButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            resetButton.onFocusChangeListener = focusListener
             resetButton.setOnClickListener {
                 resetImageZoom()
                 if (!duringAnimation) {
@@ -364,10 +370,11 @@ class ImageActivity : FragmentActivity() {
                         .start()
                 }
             }
+            resetButton.nextFocusUpId = ratingBar.focusableViewId
 
             val mutationEngine = MutationEngine(requireContext())
             val oCounterButton = view.findViewById<ImageButton>(R.id.o_counter_button)
-            oCounterButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            oCounterButton.onFocusChangeListener = focusListener
             oCounterButton.setOnClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val newOCounter = mutationEngine.incrementImageOCounter(imageId)
@@ -395,16 +402,21 @@ class ImageActivity : FragmentActivity() {
                     }
                 },
             )
+            oCounterButton.nextFocusUpId = ratingBar.focusableViewId
 
             val zoomInButton = view.findViewById<Button>(R.id.zoom_in_button)
+            zoomInButton.onFocusChangeListener = focusListener
             zoomInButton.setOnClickListener {
                 mainImage.zoomIn()
             }
+            zoomInButton.nextFocusUpId = ratingBar.focusableViewId
 
             val zoomOutButton = view.findViewById<Button>(R.id.zoom_out_button)
+            zoomOutButton.onFocusChangeListener = focusListener
             zoomOutButton.setOnClickListener {
                 mainImage.zoomOut()
             }
+            zoomOutButton.nextFocusUpId = ratingBar.focusableViewId
 
             val placeholder =
                 object : CircularProgressDrawable(requireContext()) {
@@ -500,6 +512,7 @@ class ImageActivity : FragmentActivity() {
         }
 
         fun showOverlay() {
+            bottomOverlay.requestFocus()
             listOf(titleText, bottomOverlay).forEach {
                 it.alpha = 0.0f
                 it.visibility = View.VISIBLE
@@ -552,6 +565,19 @@ class ImageActivity : FragmentActivity() {
             valueView.textSize = 16f
 
             table.addView(row)
+        }
+
+        private class ImageButtonFocusListener(val ratingBar: StashRatingBar) :
+            StashOnFocusChangeListener(ratingBar.context) {
+            override fun onFocusChange(
+                v: View,
+                hasFocus: Boolean,
+            ) {
+                super.onFocusChange(v, hasFocus)
+                if (hasFocus) {
+                    ratingBar.nextFocusDownId = v.id
+                }
+            }
         }
 
         private inner class RotateImageListener(val rotation: Float) : View.OnClickListener {

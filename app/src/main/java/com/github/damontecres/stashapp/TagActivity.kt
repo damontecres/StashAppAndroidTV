@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
@@ -28,12 +27,11 @@ import com.github.damontecres.stashapp.util.MarkerComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
 
-class TagActivity : FragmentActivity() {
+class TagActivity : TabbedGridFragmentActivity() {
     private lateinit var tagId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.tabbed_grid_view)
         if (savedInstanceState == null) {
             tagId = intent.getStringExtra("tagId")!!
             val tagName = intent.getStringExtra("tagName")
