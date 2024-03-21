@@ -500,6 +500,7 @@ class ImageActivity : FragmentActivity() {
         }
 
         fun showOverlay() {
+            bottomOverlay.requestFocus()
             listOf(titleText, bottomOverlay).forEach {
                 it.alpha = 0.0f
                 it.visibility = View.VISIBLE
