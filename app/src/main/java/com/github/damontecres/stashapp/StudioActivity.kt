@@ -1,9 +1,9 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
@@ -32,10 +32,9 @@ import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.StudioComparator
 
-class StudioActivity : FragmentActivity() {
+class StudioActivity : TabbedGridFragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.tabbed_grid_view)
         if (savedInstanceState == null) {
             val studioId = this.intent.getIntExtra("studioId", -1)
             val studioName = this.intent.getStringExtra("studioName")
@@ -58,6 +57,17 @@ class StudioActivity : FragmentActivity() {
             viewPager.adapter = tagAdapter
             tabLayout.setupWithViewPager(viewPager)
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val layout = findViewById<LeanbackTabLayout>(R.id.tab_layout)
+
+        Log.v("StudioActivity", "currentFocus=$currentFocus, ${currentFocus?.id}")
+        layout.getChildAt(0).requestFocus()
+//        val tab = layout.getTabAt(0)
+//        tab?.view
+        Log.v("StudioActivity", "currentFocus=$currentFocus, ${currentFocus?.id}")
     }
 
     class PagerAdapter(tabTitles: List<String>, private val studioId: String, fm: FragmentManager) :
