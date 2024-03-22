@@ -8,4 +8,5 @@
     <dimen name="table_text_size">13sp</dimen>
     <dimen name="scene_extra_spacing">4dp</dimen>
     <dimen tools:override="true" name="lb_browse_rows_margin_top">120dp</dimen>
+    <dimen tools:override="true" name="lb_browse_padding_start">35dp</dimen>
 </resources>
