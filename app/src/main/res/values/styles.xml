@@ -8,10 +8,17 @@
 
     <style name="TitleBarButton" parent="Widget.Theme.StashAppAndroidTV.MyView">
         <item name="android:background">@drawable/button_selector</item>
-        <item name="android:layout_margin">3dp</item>
-        <item name="android:layout_height">80dp</item>
+        <item name="android:layout_marginTop">@dimen/title_bar_margin</item>
+        <item name="android:layout_marginBottom">@dimen/title_bar_margin</item>
+        <item name="android:layout_marginStart">@dimen/title_bar_start_end_margin</item>
+        <item name="android:layout_marginEnd">@dimen/title_bar_start_end_margin</item>
+        <item name="android:layout_height">@dimen/title_bar_icon_size</item>
         <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
         <item name="android:textSize">14sp</item>
+        <item name="android:minWidth">0dp</item>
     </style>
 
     <style name="Widget.Theme.StashAppAndroidTV.ExtraWrapper" parent="">
