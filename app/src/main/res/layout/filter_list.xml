@@ -5,34 +5,38 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/title_bar_height"
-        android:layout_margin="@dimen/title_bar_margin">
+        android:layout_margin="0dp"
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/icon"
-            android:layout_width="80dp"
-            android:layout_height="match_parent"
+            android:layout_width="@dimen/title_bar_icon_size"
+            android:layout_height="@dimen/title_bar_icon_size"
+            android:layout_margin="@dimen/title_bar_margin"
             android:src="@mipmap/stash_logo"
             android:contentDescription="@string/stashapp_image"
-            android:layout_alignParentStart="true" />
+            android:layout_weight="0" />
 
         <TextView
             android:id="@+id/list_title"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_margin="@dimen/title_bar_margin"
+            android:layout_weight="1"
             style="@style/GridTitleText"
             tools:text="Test Title" />
 
         <Button
             android:id="@+id/filter_button"
-            android:layout_width="80dp"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:layout_weight="0"
             android:text="@string/stashapp_filters"
-            android:layout_alignParentEnd="true"
             style="@style/TitleBarButton" />
-    </RelativeLayout>
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/list_fragment"

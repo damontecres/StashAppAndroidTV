@@ -1,8 +1,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <integer tools:override="true" name="lb_details_description_body_max_lines">1000</integer>
     <dimen tools:override="true" name="lb_basic_card_info_padding">6dp</dimen>
-    <dimen name="title_bar_height">60dp</dimen>
-    <dimen name="title_bar_margin">8dp</dimen>
+    <dimen name="title_bar_height">74dp</dimen>
+    <dimen name="title_bar_icon_size">54dp</dimen>
+    <dimen name="title_bar_margin">10dp</dimen>
+    <dimen name="title_bar_start_end_margin">5dp</dimen>
     <dimen name="table_text_size">13sp</dimen>
     <dimen name="scene_extra_spacing">4dp</dimen>
+    <dimen tools:override="true" name="lb_browse_rows_margin_top">120dp</dimen>
+    <dimen tools:override="true" name="lb_browse_padding_start">35dp</dimen>
 </resources>
