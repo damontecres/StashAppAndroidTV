@@ -17,10 +17,23 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
         viewHolder: ViewHolder,
         item: Any,
     ) {
+        val context = viewHolder.view.context
         val scene = item as SlimSceneData
 
         viewHolder.title.text = scene.titleOrFilename
-        viewHolder.body.text = scene.details
+
+        val createdAt =
+            context.getString(R.string.stashapp_created_at) + ": " +
+                Constants.parseTimeToString(
+                    scene.created_at,
+                )
+        val updatedAt =
+            context.getString(R.string.stashapp_updated_at) + ": " +
+                Constants.parseTimeToString(
+                    scene.updated_at,
+                )
+
+        viewHolder.body.text = listOf(scene.details, "", createdAt, updatedAt).joinToString("\n")
 
         val scrollView = viewHolder.view.findViewById<NestedScrollView>(R.id.description_scrollview)
         val useScrollbar =
