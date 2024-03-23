@@ -22,14 +22,23 @@ class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
     @OptIn(UnstableApi::class)
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val keyCode = event.keyCode
-        if (dPadSkipEnabled && player != null && !findFragment<PlaybackExoFragment>().isControllerVisible &&
+        val fragment = findFragment<PlaybackExoFragment>()
+        if (player != null && !fragment.isControllerVisible &&
             (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_DPAD_LEFT)
         ) {
             if (event.action == KeyEvent.ACTION_DOWN) {
                 if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                    player!!.seekForward()
+                    if (dPadSkipEnabled) {
+                        player!!.seekForward()
+                    } else {
+                        fragment.showAndFocusSeekBar()
+                    }
                 } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
-                    player!!.seekBack()
+                    if (dPadSkipEnabled) {
+                        player!!.seekBack()
+                    } else {
+                        fragment.showAndFocusSeekBar()
+                    }
                 }
             }
             return true

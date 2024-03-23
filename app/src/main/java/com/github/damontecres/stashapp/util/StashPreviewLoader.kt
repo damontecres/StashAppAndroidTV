@@ -23,11 +23,8 @@ class StashPreviewLoader(
     ) {
         Log.d(TAG, "loadPreview: currentPosition=$currentPosition")
         StashGlide.with(context, scene.spriteUrl!!)
+            .skipMemoryCache(false)
             .override(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
-//            .override(
-//                GlideThumbnailTransformation.IMAGE_WIDTH * GlideThumbnailTransformation.MAX_COLUMNS,
-//                GlideThumbnailTransformation.IMAGE_HEIGHT * GlideThumbnailTransformation.MAX_LINES
-//            )
             .transform(
                 GlideThumbnailTransformation(
                     (scene.duration!! * 1000).toLong(),
@@ -63,6 +60,7 @@ class StashPreviewLoader(
         }
 
         override fun updateDiskCacheKey(messageDigest: MessageDigest) {
+            messageDigest.update(KEY)
             val data = ByteBuffer.allocate(8).putInt(x).putInt(y).array()
             messageDigest.update(data)
         }
@@ -81,6 +79,8 @@ class StashPreviewLoader(
         }
 
         companion object {
+            private val KEY =
+                "com.github.damontecres.stashapp.util.StashPreviewLoader.GlideThumbnailTransformation".encodeToByteArray()
             const val MAX_LINES = 9
             const val MAX_COLUMNS = 9
         }
