@@ -33,6 +33,7 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
 import com.github.damontecres.stashapp.util.createOkHttpClient
+import com.github.damontecres.stashapp.views.StashPlayerView
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
 import kotlinx.coroutines.Dispatchers
@@ -52,8 +53,8 @@ class PlaybackExoFragment :
     private var player: ExoPlayer? = null
     private var trackActivityListener: PlaybackListener? = null
     private lateinit var scene: Scene
-    lateinit var videoView: PlayerView
-    private lateinit var previewTimeBar: PreviewTimeBar
+    lateinit var videoView: StashPlayerView
+    lateinit var previewTimeBar: PreviewTimeBar
     private lateinit var exoCenterControls: View
 
     private var playbackPosition = -1L
@@ -353,6 +354,7 @@ class PlaybackExoFragment :
             object : PreviewBar.OnScrubListener {
                 override fun onScrubStart(previewBar: PreviewBar) {
                     player!!.playWhenReady = false
+                    previewTimeBar.showPreview()
                 }
 
                 override fun onScrubMove(
@@ -527,6 +529,12 @@ class PlaybackExoFragment :
                 requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
         }
+    }
+
+    fun showAndFocusSeekBar() {
+        videoView.showController()
+        previewTimeBar.showPreview()
+        previewTimeBar.requestFocus()
     }
 
     companion object {
