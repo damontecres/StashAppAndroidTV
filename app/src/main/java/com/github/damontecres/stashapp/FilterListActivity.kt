@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.data.AppFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.StashCustomFilter
@@ -135,6 +136,10 @@ class FilterListActivity : FragmentActivity() {
                                     sortBy = filterData.find_filter?.sort,
                                 )
                             }
+
+                            FilterType.APP_FILTER -> {
+                                filter
+                            }
                         }
                     setupFragment(startingFilter.second!!, true)
                 } else {
@@ -197,6 +202,12 @@ class FilterListActivity : FragmentActivity() {
     }
 
     private suspend fun getStartingFilter(): Pair<FilterType, SavedFilterData?> {
+        if (filter is AppFilter) {
+            return Pair(
+                FilterType.APP_FILTER,
+                (filter as AppFilter).toSavedFilterData(this),
+            )
+        }
         val savedFilterId = intent.getStringExtra("savedFilterId")
         val direction = intent.getStringExtra("direction")
         val sortBy = intent.getStringExtra("sortBy")

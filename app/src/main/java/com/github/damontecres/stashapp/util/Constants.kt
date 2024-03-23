@@ -627,3 +627,15 @@ fun View.animateToInvisible(
             visibility = targetVisibility
         }
 }
+
+@Suppress("ktlint:standard:function-naming")
+fun FindFilterType.toFind_filter(): SavedFilterData.Find_filter {
+    return SavedFilterData.Find_filter(
+        q = q.getOrNull(),
+        page = page.getOrNull(),
+        per_page = per_page.getOrNull(),
+        sort = sort.getOrNull(),
+        direction = direction.getOrNull(),
+        __typename = "FindFilterType",
+    )
+}
