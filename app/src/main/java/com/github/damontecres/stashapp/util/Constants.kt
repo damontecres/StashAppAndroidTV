@@ -55,7 +55,9 @@ import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.LocalDate
 import java.time.Period
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
@@ -75,6 +77,9 @@ object Constants {
     const val TAG = "Constants"
     const val OK_HTTP_TAG = "$TAG.OkHttpClient"
     const val OK_HTTP_CACHE_DIR = "okhttpcache"
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    val dateTimeFormatter = DateTimeFormatter.ofPattern("eee, MMMM d, yyyy h:mm a")
 
     /**
      * Converts seconds into a Duration string where fractional seconds are removed
@@ -103,6 +108,25 @@ object Constants {
             (rating100 / 20.0).toString()
         } else {
             (rating100 / 10.0).toString()
+        }
+    }
+
+    fun parseTimeToString(ts: Any?): String? {
+        return if (ts == null) {
+            null
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                val dateTime =
+                    ZonedDateTime.parse(
+                        ts.toString(),
+                        DateTimeFormatter.ISO_DATE_TIME,
+                    )
+                dateTime.format(dateTimeFormatter)
+            } catch (ex: DateTimeParseException) {
+                ts.toString()
+            }
+        } else {
+            ts.toString()
         }
     }
 }

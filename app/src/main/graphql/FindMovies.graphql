@@ -30,4 +30,6 @@ fragment MovieData on Movie {
   scene_count
   front_image_path
   back_image_path
+  created_at
+  updated_at
 }
