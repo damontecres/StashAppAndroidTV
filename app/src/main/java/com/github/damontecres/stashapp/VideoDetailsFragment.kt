@@ -164,303 +164,300 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             val intent = Intent(requireActivity(), MainActivity::class.java)
             startActivity(intent)
         } else {
-            val queryEngine = QueryEngine(requireContext())
-            viewLifecycleOwner.lifecycleScope.launch(
-                StashCoroutineExceptionHandler(
-                    Toast.makeText(
-                        requireContext(),
-                        "Failed to load scene",
-                        Toast.LENGTH_LONG,
-                    ),
-                ),
-            ) {
-                mSelectedMovie = queryEngine.getScene(sceneId)
-                if (mSelectedMovie!!.resume_time != null) {
-                    position = (mSelectedMovie!!.resume_time!! * 1000).toLong()
-                }
-                setupDetailsOverviewRow()
-
-                adapter = mAdapter
-                initializeBackground()
-
-                sceneActionsAdapter.set(
-                    O_COUNTER_POS,
-                    OCounter(
-                        mSelectedMovie!!.id,
-                        mSelectedMovie?.o_counter ?: 0,
-                    ),
-                )
-                sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
-                sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
-                sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
-                sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
-
-                if (mSelectedMovie!!.studio?.studioData != null) {
-                    val studioAdapter = ArrayObjectAdapter(StudioPresenter())
-                    studioAdapter.add(mSelectedMovie!!.studio!!.studioData)
-                    mAdapter.set(
-                        STUDIO_POS,
-                        ListRow(HeaderItem(getString(R.string.stashapp_studio)), studioAdapter),
-                    )
-                }
-
-                tagsAdapter =
-                    ArrayObjectAdapter(
-                        TagPresenter(
-                            object :
-                                StashPresenter.LongClickCallBack<TagData> {
-                                override val popUpItems: List<String>
-                                    get() = listOf("Remove")
-
-                                override fun onItemLongClick(
-                                    item: TagData,
-                                    popUpItemPosition: Int,
-                                ) {
-                                    if (popUpItemPosition == 0) {
-                                        viewLifecycleOwner.lifecycleScope.launch(
-                                            CoroutineExceptionHandler { _, ex ->
-                                                Log.e(TAG, "Exception setting tags", ex)
-                                                Toast.makeText(
-                                                    requireContext(),
-                                                    "Failed to remove tag: ${ex.message}",
-                                                    Toast.LENGTH_LONG,
-                                                ).show()
-                                            },
-                                        ) {
-                                            val tagIds =
-                                                tagsAdapter.unmodifiableList<TagData>()
-                                                    .map { it.id }
-                                                    .toMutableList()
-                                            tagIds.remove(item.id)
-                                            val mutResult =
-                                                MutationEngine(requireContext()).setTagsOnScene(
-                                                    mSelectedMovie!!.id,
-                                                    tagIds,
-                                                )
-                                            val newTags = mutResult?.tags?.map { it.tagData }
-                                            tagsAdapter.clear()
-                                            tagsAdapter.addAll(0, newTags)
-                                            if (tagsAdapter.size() == 0) {
-                                                mAdapter.clear(TAG_POS)
-                                            } else {
-                                                mAdapter.set(
-                                                    TAG_POS,
-                                                    ListRow(
-                                                        HeaderItem(getString(R.string.stashapp_tags)),
-                                                        tagsAdapter,
-                                                    ),
-                                                )
-                                            }
-                                            Toast.makeText(
-                                                requireContext(),
-                                                "Removed tag '${item.name}' from scene",
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                        }
-                                    }
-                                }
-                            },
-                        ),
-                    )
-
-                if (mSelectedMovie!!.tags.isNotEmpty()) {
-                    mAdapter.set(
-                        TAG_POS,
-                        ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
-                    )
-                    tagsAdapter.addAll(0, mSelectedMovie!!.tags.map { it.tagData })
-                }
-
-                markersAdapter =
-                    ArrayObjectAdapter(
-                        MarkerPresenter(
-                            object :
-                                StashPresenter.LongClickCallBack<MarkerData> {
-                                override val popUpItems: List<String>
-                                    get() = listOf("Remove")
-
-                                override fun onItemLongClick(
-                                    item: MarkerData,
-                                    popUpItemPosition: Int,
-                                ) {
-                                    if (popUpItemPosition == 0) {
-                                        viewLifecycleOwner.lifecycleScope.launch(
-                                            CoroutineExceptionHandler { _, ex ->
-                                                Log.e(TAG, "Exception setting tags", ex)
-                                                Toast.makeText(
-                                                    requireContext(),
-                                                    "Failed to remove tag: ${ex.message}",
-                                                    Toast.LENGTH_LONG,
-                                                ).show()
-                                            },
-                                        ) {
-                                            val mutResult =
-                                                MutationEngine(requireContext()).deleteMarker(item.id)
-                                            if (mutResult) {
-                                                markersAdapter.remove(item)
-                                                if (markersAdapter.size() == 0) {
-                                                    mAdapter.clear(MARKER_POS)
-                                                }
-                                                Toast.makeText(
-                                                    requireContext(),
-                                                    "Removed marker from scene",
-                                                    Toast.LENGTH_SHORT,
-                                                ).show()
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                        ),
-                    )
-                if (mSelectedMovie!!.scene_markers.isNotEmpty()) {
-                    mAdapter.set(
-                        MARKER_POS,
-                        ListRow(HeaderItem(getString(R.string.stashapp_markers)), markersAdapter),
-                    )
-                    markersAdapter.addAll(
-                        0,
-                        mSelectedMovie!!.scene_markers.map(::convertMarker),
-                    )
-                }
-
-                performersAdapter =
-                    ArrayObjectAdapter(
-                        PerformerPresenter(
-                            object :
-                                StashPresenter.LongClickCallBack<PerformerData> {
-                                override val popUpItems: List<String>
-                                    get() = listOf("Remove")
-
-                                override fun onItemLongClick(
-                                    item: PerformerData,
-                                    popUpItemPosition: Int,
-                                ) {
-                                    if (popUpItemPosition == 0) {
-                                        val performerId = item.id
-                                        Log.d(
-                                            TAG,
-                                            "Removing performer $performerId to scene ${mSelectedMovie?.id}",
-                                        )
-                                        viewLifecycleOwner.lifecycleScope.launch(
-                                            CoroutineExceptionHandler { _, ex ->
-                                                Log.e(TAG, "Exception setting performers", ex)
-                                                Toast.makeText(
-                                                    requireContext(),
-                                                    "Failed to remove performer: ${ex.message}",
-                                                    Toast.LENGTH_LONG,
-                                                ).show()
-                                            },
-                                        ) {
-                                            val performerIds =
-                                                performersAdapter.unmodifiableList<PerformerData>()
-                                                    .map { it.id }
-                                                    .toMutableList()
-                                            performerIds.remove(performerId)
-                                            val mutResult =
-                                                MutationEngine(requireContext()).setPerformersOnScene(
-                                                    mSelectedMovie!!.id,
-                                                    performerIds,
-                                                )
-                                            val resultPerformers =
-                                                mutResult?.performers?.map { it.performerData }
-                                            performersAdapter.clear()
-                                            performersAdapter.addAll(0, resultPerformers)
-                                            if (performersAdapter.size() == 0) {
-                                                mAdapter.clear(PERFORMER_POS)
-                                            } else {
-                                                mAdapter.set(
-                                                    PERFORMER_POS,
-                                                    ListRow(
-                                                        HeaderItem(getString(R.string.stashapp_performers)),
-                                                        performersAdapter,
-                                                    ),
-                                                )
-                                            }
-
-                                            Toast.makeText(
-                                                requireContext(),
-                                                "Removed performer '${item.name}' from scene",
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                        }
-                                    }
-                                }
-                            },
-                        ),
-                    )
-
-                val performerIds = mSelectedMovie!!.performers.map { it.id }
-                if (performerIds.isNotEmpty()) {
-                    val perfs = queryEngine.findPerformers(performerIds = performerIds)
-                    if (perfs.isNotEmpty()) {
-                        mAdapter.set(
-                            PERFORMER_POS,
-                            ListRow(
-                                HeaderItem(getString(R.string.stashapp_performers)),
-                                performersAdapter,
-                            ),
-                        )
-                        performersAdapter.addAll(0, perfs)
-                    }
-                }
-
-                moviesAdapter = ArrayObjectAdapter(MoviePresenter())
-                if (mSelectedMovie!!.movies.isNotEmpty()) {
-                    val movies = mSelectedMovie!!.movies.map { it.movie.movieData }
-                    moviesAdapter.addAll(0, movies)
-                    mAdapter.set(
-                        MOVIE_POS,
-                        ListRow(
-                            HeaderItem(getString(R.string.stashapp_movies)),
-                            moviesAdapter,
-                        ),
-                    )
-                }
-            }
+            fetchData(sceneId)
         }
     }
 
     override fun onResume() {
         super.onResume()
+        if (mSelectedMovie != null) {
+            fetchData(mSelectedMovie!!.id)
+        }
+    }
 
-        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            if (mSelectedMovie != null) {
-                val queryEngine = QueryEngine(requireContext())
-                mSelectedMovie = queryEngine.getScene(mSelectedMovie!!.id)
-                // Refresh the o-counter which could have changed
-                sceneActionsAdapter.set(
-                    O_COUNTER_POS,
-                    OCounter(mSelectedMovie!!.id, mSelectedMovie!!.o_counter ?: 0),
+    private fun fetchData(sceneId: String) {
+        val queryEngine = QueryEngine(requireContext())
+        viewLifecycleOwner.lifecycleScope.launch(
+            StashCoroutineExceptionHandler(
+                Toast.makeText(
+                    requireContext(),
+                    "Failed to load scene",
+                    Toast.LENGTH_LONG,
+                ),
+            ),
+        ) {
+            mSelectedMovie = queryEngine.getScene(sceneId)
+            if (mSelectedMovie!!.resume_time != null) {
+                position = (mSelectedMovie!!.resume_time!! * 1000).toLong()
+            }
+            setupDetailsOverviewRow()
+
+            adapter = mAdapter
+            initializeBackground()
+
+            sceneActionsAdapter.set(
+                O_COUNTER_POS,
+                OCounter(
+                    mSelectedMovie!!.id,
+                    mSelectedMovie?.o_counter ?: 0,
+                ),
+            )
+            sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
+            sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
+            sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
+            sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
+
+            if (mSelectedMovie!!.studio?.studioData != null) {
+                val studioAdapter = ArrayObjectAdapter(StudioPresenter())
+                studioAdapter.add(mSelectedMovie!!.studio!!.studioData)
+                mAdapter.set(
+                    STUDIO_POS,
+                    ListRow(HeaderItem(getString(R.string.stashapp_studio)), studioAdapter),
+                )
+            }
+
+            tagsAdapter =
+                ArrayObjectAdapter(
+                    TagPresenter(
+                        object :
+                            StashPresenter.LongClickCallBack<TagData> {
+                            override val popUpItems: List<String>
+                                get() = listOf("Remove")
+
+                            override fun onItemLongClick(
+                                item: TagData,
+                                popUpItemPosition: Int,
+                            ) {
+                                if (popUpItemPosition == 0) {
+                                    viewLifecycleOwner.lifecycleScope.launch(
+                                        CoroutineExceptionHandler { _, ex ->
+                                            Log.e(TAG, "Exception setting tags", ex)
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Failed to remove tag: ${ex.message}",
+                                                Toast.LENGTH_LONG,
+                                            ).show()
+                                        },
+                                    ) {
+                                        val tagIds =
+                                            tagsAdapter.unmodifiableList<TagData>()
+                                                .map { it.id }
+                                                .toMutableList()
+                                        tagIds.remove(item.id)
+                                        val mutResult =
+                                            MutationEngine(requireContext()).setTagsOnScene(
+                                                mSelectedMovie!!.id,
+                                                tagIds,
+                                            )
+                                        val newTags = mutResult?.tags?.map { it.tagData }
+                                        tagsAdapter.clear()
+                                        tagsAdapter.addAll(0, newTags)
+                                        if (tagsAdapter.size() == 0) {
+                                            mAdapter.clear(TAG_POS)
+                                        } else {
+                                            mAdapter.set(
+                                                TAG_POS,
+                                                ListRow(
+                                                    HeaderItem(getString(R.string.stashapp_tags)),
+                                                    tagsAdapter,
+                                                ),
+                                            )
+                                        }
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Removed tag '${item.name}' from scene",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                }
+                            }
+                        },
+                    ),
+                )
+
+            if (mSelectedMovie!!.tags.isNotEmpty()) {
+                mAdapter.set(
+                    TAG_POS,
+                    ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
+                )
+                tagsAdapter.addAll(0, mSelectedMovie!!.tags.map { it.tagData })
+            }
+
+            markersAdapter =
+                ArrayObjectAdapter(
+                    MarkerPresenter(
+                        object :
+                            StashPresenter.LongClickCallBack<MarkerData> {
+                            override val popUpItems: List<String>
+                                get() = listOf("Remove")
+
+                            override fun onItemLongClick(
+                                item: MarkerData,
+                                popUpItemPosition: Int,
+                            ) {
+                                if (popUpItemPosition == 0) {
+                                    viewLifecycleOwner.lifecycleScope.launch(
+                                        CoroutineExceptionHandler { _, ex ->
+                                            Log.e(TAG, "Exception setting tags", ex)
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Failed to remove tag: ${ex.message}",
+                                                Toast.LENGTH_LONG,
+                                            ).show()
+                                        },
+                                    ) {
+                                        val mutResult =
+                                            MutationEngine(requireContext()).deleteMarker(item.id)
+                                        if (mutResult) {
+                                            markersAdapter.remove(item)
+                                            if (markersAdapter.size() == 0) {
+                                                mAdapter.clear(MARKER_POS)
+                                            }
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Removed marker from scene",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    ),
+                )
+            if (mSelectedMovie!!.scene_markers.isNotEmpty()) {
+                mAdapter.set(
+                    MARKER_POS,
+                    ListRow(HeaderItem(getString(R.string.stashapp_markers)), markersAdapter),
+                )
+                markersAdapter.addAll(
+                    0,
+                    mSelectedMovie!!.scene_markers.map(::convertMarker),
+                )
+            }
+
+            performersAdapter =
+                ArrayObjectAdapter(
+                    PerformerPresenter(
+                        object :
+                            StashPresenter.LongClickCallBack<PerformerData> {
+                            override val popUpItems: List<String>
+                                get() = listOf("Remove")
+
+                            override fun onItemLongClick(
+                                item: PerformerData,
+                                popUpItemPosition: Int,
+                            ) {
+                                if (popUpItemPosition == 0) {
+                                    val performerId = item.id
+                                    Log.d(
+                                        TAG,
+                                        "Removing performer $performerId to scene ${mSelectedMovie?.id}",
+                                    )
+                                    viewLifecycleOwner.lifecycleScope.launch(
+                                        CoroutineExceptionHandler { _, ex ->
+                                            Log.e(TAG, "Exception setting performers", ex)
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Failed to remove performer: ${ex.message}",
+                                                Toast.LENGTH_LONG,
+                                            ).show()
+                                        },
+                                    ) {
+                                        val performerIds =
+                                            performersAdapter.unmodifiableList<PerformerData>()
+                                                .map { it.id }
+                                                .toMutableList()
+                                        performerIds.remove(performerId)
+                                        val mutResult =
+                                            MutationEngine(requireContext()).setPerformersOnScene(
+                                                mSelectedMovie!!.id,
+                                                performerIds,
+                                            )
+                                        val resultPerformers =
+                                            mutResult?.performers?.map { it.performerData }
+                                        performersAdapter.clear()
+                                        performersAdapter.addAll(0, resultPerformers)
+                                        if (performersAdapter.size() == 0) {
+                                            mAdapter.clear(PERFORMER_POS)
+                                        } else {
+                                            mAdapter.set(
+                                                PERFORMER_POS,
+                                                ListRow(
+                                                    HeaderItem(getString(R.string.stashapp_performers)),
+                                                    performersAdapter,
+                                                ),
+                                            )
+                                        }
+
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Removed performer '${item.name}' from scene",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                }
+                            }
+                        },
+                    ),
+                )
+
+            val performerIds = mSelectedMovie!!.performers.map { it.id }
+            if (performerIds.isNotEmpty()) {
+                val perfs = queryEngine.findPerformers(performerIds = performerIds)
+                if (perfs.isNotEmpty()) {
+                    mAdapter.set(
+                        PERFORMER_POS,
+                        ListRow(
+                            HeaderItem(getString(R.string.stashapp_performers)),
+                            performersAdapter,
+                        ),
+                    )
+                    performersAdapter.addAll(0, perfs)
+                }
+            }
+
+            moviesAdapter = ArrayObjectAdapter(MoviePresenter())
+            if (mSelectedMovie!!.movies.isNotEmpty()) {
+                val movies = mSelectedMovie!!.movies.map { it.movie.movieData }
+                moviesAdapter.addAll(0, movies)
+                mAdapter.set(
+                    MOVIE_POS,
+                    ListRow(
+                        HeaderItem(getString(R.string.stashapp_movies)),
+                        moviesAdapter,
+                    ),
                 )
             }
         }
     }
 
     private fun initializeBackground() {
-        mDetailsBackground.enableParallax()
+        if (mDetailsBackground.coverBitmap == null) {
+            mDetailsBackground.enableParallax()
 
-        val screenshotUrl = mSelectedMovie!!.paths.screenshot
+            val screenshotUrl = mSelectedMovie!!.paths.screenshot
 
-        if (screenshotUrl.isNotNullOrBlank()) {
-            StashGlide.withBitmap(requireActivity(), screenshotUrl)
-                .centerCrop()
-                .error(R.drawable.baseline_camera_indoor_48)
-                .into<CustomTarget<Bitmap>>(
-                    object : CustomTarget<Bitmap>() {
-                        override fun onResourceReady(
-                            bitmap: Bitmap,
-                            transition: Transition<in Bitmap>?,
-                        ) {
-                            mDetailsBackground.coverBitmap = bitmap
-                            mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
-                        }
+            if (screenshotUrl.isNotNullOrBlank()) {
+                StashGlide.withBitmap(requireActivity(), screenshotUrl)
+                    .centerCrop()
+                    .error(R.drawable.baseline_camera_indoor_48)
+                    .into<CustomTarget<Bitmap>>(
+                        object : CustomTarget<Bitmap>() {
+                            override fun onResourceReady(
+                                bitmap: Bitmap,
+                                transition: Transition<in Bitmap>?,
+                            ) {
+                                mDetailsBackground.coverBitmap = bitmap
+                                mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                            }
 
-                        override fun onLoadCleared(placeholder: Drawable?) {
-                            mDetailsBackground.coverBitmap = null
-                        }
-                    },
-                )
+                            override fun onLoadCleared(placeholder: Drawable?) {
+                                mDetailsBackground.coverBitmap = null
+                            }
+                        },
+                    )
+            }
         }
     }
 

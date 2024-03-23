@@ -120,10 +120,22 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="@dimen/exo_styled_controls_padding"
+        android:paddingTop="@dimen/exo_styled_controls_padding"
+        android:paddingBottom="@dimen/exo_styled_controls_padding"
         app:layout_constraintTop_toTopOf="@id/exo_center_controls"
         app:layout_constraintBottom_toBottomOf="@id/exo_center_controls"
         app:layout_constraintStart_toStartOf="parent">
+
+        <ImageButton
+            android:id="@+id/more_options_button"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="8dp"
+            android:layout_gravity="center_vertical"
+            android:scaleType="fitXY"
+            android:src="@drawable/baseline_more_vert_96"
+            android:contentDescription="@null"
+            android:background="@android:color/transparent" />
 
         <ImageButton
             android:id="@+id/controls_o_counter_button"
