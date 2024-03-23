@@ -51,6 +51,7 @@ import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -193,6 +194,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
                 sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
                 sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
+
+                if (mSelectedMovie!!.studio?.studioData != null) {
+                    val studioAdapter = ArrayObjectAdapter(StudioPresenter())
+                    studioAdapter.add(mSelectedMovie!!.studio!!.studioData)
+                    mAdapter.set(
+                        STUDIO_POS,
+                        ListRow(HeaderItem(getString(R.string.stashapp_studio)), studioAdapter),
+                    )
+                }
 
                 tagsAdapter =
                     ArrayObjectAdapter(
@@ -828,7 +838,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private const val DETAILS_POS = 1
         private const val MARKER_POS = DETAILS_POS + 1
         private const val MOVIE_POS = MARKER_POS + 1
-        private const val PERFORMER_POS = MOVIE_POS + 1
+        private const val STUDIO_POS = MOVIE_POS + 1
+        private const val PERFORMER_POS = STUDIO_POS + 1
         private const val TAG_POS = PERFORMER_POS + 1
         private const val ACTIONS_POS = TAG_POS + 1
 

@@ -40,7 +40,7 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
             viewHolder.subtitle.text =
                 concatIfNotBlank(
                     " - ",
-                    scene.studio?.name,
+                    scene.studio?.studioData?.name,
                     scene.date,
                     duration,
                     resolution,

@@ -74,9 +74,7 @@ fragment SlimSceneData on Scene {
     __typename
   }
   studio {
-    id
-    name
-    image_path
+    ...StudioData
     __typename
   }
   movies {
