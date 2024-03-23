@@ -43,6 +43,8 @@ fragment PerformerData on Performer {
   movie_count
   performer_count
   o_counter
+  created_at
+  updated_at
   tags {
     ...TagData
     __typename

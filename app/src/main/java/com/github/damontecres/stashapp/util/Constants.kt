@@ -111,8 +111,10 @@ object Constants {
         }
     }
 
-    fun parseTimeToString(ts: Any): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    fun parseTimeToString(ts: Any?): String? {
+        return if (ts == null) {
+            null
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
                 val dateTime =
                     ZonedDateTime.parse(
