@@ -60,7 +60,7 @@ import com.github.damontecres.stashapp.util.StudioComparator
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getInt
-import com.github.damontecres.stashapp.util.toPx
+import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -162,12 +162,6 @@ class FilterListActivity : FragmentActivity() {
                         null,
                         android.R.attr.listPopupWindowStyle,
                     )
-                listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
-                listPopUp.anchorView = filterButton
-                // TODO: Better width calculation
-                listPopUp.width = this@FilterListActivity.toPx(250).toInt()
-                listPopUp.isModal = true
-
                 val adapter =
                     ArrayAdapter(
                         this@FilterListActivity,
@@ -175,6 +169,11 @@ class FilterListActivity : FragmentActivity() {
                         savedFilters.map { it.name },
                     )
                 listPopUp.setAdapter(adapter)
+                listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
+                listPopUp.anchorView = filterButton
+
+                listPopUp.width = getMaxMeasuredWidth(this@FilterListActivity, adapter)
+                listPopUp.isModal = true
 
                 listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                     val savedFilter = savedFilters[position]
