@@ -91,6 +91,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             ),
         )
 
+    private var detailsOverviewRow: DetailsOverviewRow? = null
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
     private val mPresenterSelector = ClassPresenterSelector()
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
@@ -187,9 +188,18 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             ),
         ) {
             mSelectedMovie = queryEngine.getScene(sceneId)
-            if (mSelectedMovie!!.resume_time != null) {
-                position = (mSelectedMovie!!.resume_time!! * 1000).toLong()
+
+            val serverPreferences = ServerPreferences(requireContext())
+            // Need to check position because the activity result callback happens before onResume
+            if (position <= 0 &&
+                serverPreferences.trackActivity &&
+                mSelectedMovie?.resume_time != null &&
+                mSelectedMovie?.resume_time!! > 0
+            ) {
+                position = (mSelectedMovie?.resume_time!! * 1000).toLong()
             }
+            setupPlayActionsAdapter()
+
             setupDetailsOverviewRow()
 
             adapter = mAdapter
@@ -214,6 +224,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     STUDIO_POS,
                     ListRow(HeaderItem(getString(R.string.stashapp_studio)), studioAdapter),
                 )
+            } else {
+                mAdapter.clear(STUDIO_POS)
             }
 
             tagsAdapter =
@@ -281,6 +293,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
                 )
                 tagsAdapter.addAll(0, mSelectedMovie!!.tags.map { it.tagData })
+            } else {
+                mAdapter.clear(TAG_POS)
             }
 
             markersAdapter =
@@ -334,6 +348,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     0,
                     mSelectedMovie!!.scene_markers.map(::convertMarker),
                 )
+            } else {
+                mAdapter.clear(MARKER_POS)
             }
 
             performersAdapter =
@@ -415,6 +431,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     )
                     performersAdapter.addAll(0, perfs)
                 }
+            } else {
+                mAdapter.clear(PERFORMER_POS)
             }
 
             moviesAdapter = ArrayObjectAdapter(MoviePresenter())
@@ -428,6 +446,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         moviesAdapter,
                     ),
                 )
+            } else {
+                mAdapter.clear(MOVIE_POS)
             }
         }
     }
@@ -462,12 +482,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupDetailsOverviewRow() {
-        val row = DetailsOverviewRow(mSelectedMovie!!)
-        val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
-        val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
+        val row = detailsOverviewRow ?: DetailsOverviewRow(mSelectedMovie)
 
         val screenshotUrl = mSelectedMovie?.paths?.screenshot
-        if (!screenshotUrl.isNullOrBlank()) {
+        if ((detailsOverviewRow == null || mSelectedMovie != row.item) && !screenshotUrl.isNullOrBlank()) {
+            row.item = mSelectedMovie
+            val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
+            val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
             StashGlide.with(requireActivity(), screenshotUrl)
                 .centerCrop()
                 .error(StashPresenter.glideError(requireContext()))
@@ -488,15 +509,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 )
         }
 
-        val serverPreferences = ServerPreferences(requireContext())
-        if (serverPreferences.trackActivity && mSelectedMovie?.resume_time != null && mSelectedMovie?.resume_time!! > 0) {
-            position = (mSelectedMovie?.resume_time!! * 1000).toLong()
-        }
-        setupPlayActionsAdapter()
-
         row.actionsAdapter = playActionsAdapter
 
         mAdapter.set(DETAILS_POS, row)
+        detailsOverviewRow = row
     }
 
     private fun setupDetailsOverviewRowPresenter() {
@@ -738,9 +754,12 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         ).show()
                     }
                 } else {
-                    position = data.getLongExtra(POSITION_ARG, -1)
-                    if (position >= 0) {
-                        sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
+                    val localPosition = data.getLongExtra(POSITION_ARG, -1)
+                    if (localPosition >= 0) {
+                        sceneActionsAdapter.set(
+                            CREATE_MARKER_POS,
+                            CreateMarkerAction(localPosition),
+                        )
                     }
                     setupPlayActionsAdapter()
                     val serverPreferences = ServerPreferences(requireContext())
@@ -749,10 +768,12 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             Log.v(TAG, "ResultCallback saveSceneActivity start")
                             MutationEngine(requireContext(), false).saveSceneActivity(
                                 mSelectedMovie!!.id,
-                                position,
+                                localPosition,
                             )
                         }
                     }
+
+                    position = localPosition
                 }
             }
         }
