@@ -7,6 +7,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
+import androidx.leanback.widget.ClassPresenterSelector
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -150,7 +151,7 @@ class PerformerActivity : FragmentActivity() {
                 )
             } else if (position == 5) {
                 val presenter =
-                    StashPresenter.SELECTOR
+                    ClassPresenterSelector()
                         .addClassPresenter(
                             PerformerData::class.java,
                             PerformerPresenter(
@@ -178,6 +179,7 @@ class PerformerActivity : FragmentActivity() {
                             ),
                         )
                 StashGridFragment(
+                    presenter,
                     PerformerComparator,
                     PerformerDataSupplier(
                         PerformerFilterType(

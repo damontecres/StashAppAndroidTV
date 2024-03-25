@@ -383,7 +383,6 @@ class FilterListActivity : FragmentActivity() {
                     TagComparator,
                     TagDataSupplier(findFilter, tagFilter),
                     null,
-                    null,
                     name,
                 )
             }
@@ -414,7 +413,6 @@ class FilterListActivity : FragmentActivity() {
                     selectorPresenter,
                     MarkerComparator,
                     MarkerDataSupplier(findFilter, markerFilter),
-                    null,
                     null,
                     name,
                 )
