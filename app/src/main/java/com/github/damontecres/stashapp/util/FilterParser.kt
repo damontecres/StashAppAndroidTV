@@ -269,7 +269,9 @@ class FilterParser(private val serverVersion: Version) {
     }
 
     fun convertPerformerObjectFilter(f: Any?): PerformerFilterType? {
-        return if (f != null) {
+        return if (f != null && f is PerformerFilterType) {
+            f
+        } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             PerformerFilterType(
                 AND = Optional.presentIfNotNull(convertPerformerObjectFilter(filter["AND"] as Map<String, Map<String, *>>?)),
@@ -336,7 +338,9 @@ class FilterParser(private val serverVersion: Version) {
     }
 
     fun convertSceneObjectFilter(f: Any?): SceneFilterType? {
-        return if (f != null) {
+        return if (f != null && f is SceneFilterType) {
+            f
+        } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             SceneFilterType(
                 AND = Optional.presentIfNotNull(convertSceneObjectFilter(filter["AND"] as Map<String, Map<String, *>>?)),
@@ -416,7 +420,9 @@ class FilterParser(private val serverVersion: Version) {
     }
 
     fun convertStudioObjectFilter(f: Any?): StudioFilterType? {
-        return if (f != null) {
+        return if (f != null && f is StudioFilterType) {
+            f
+        } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             var studioFilter =
                 StudioFilterType(
@@ -456,7 +462,9 @@ class FilterParser(private val serverVersion: Version) {
     }
 
     fun convertTagObjectFilter(f: Any?): TagFilterType? {
-        return if (f != null) {
+        return if (f != null && f is TagFilterType) {
+            f
+        } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             TagFilterType(
                 AND = Optional.presentIfNotNull(convertTagObjectFilter(filter["AND"] as Map<String, Map<String, *>>?)),
@@ -495,7 +503,9 @@ class FilterParser(private val serverVersion: Version) {
     }
 
     fun convertMovieObjectFilter(f: Any?): MovieFilterType? {
-        return if (f != null) {
+        return if (f != null && f is MovieFilterType) {
+            f
+        } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             MovieFilterType(
                 name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
@@ -522,7 +532,9 @@ class FilterParser(private val serverVersion: Version) {
     }
 
     fun convertMarkerObjectFilter(f: Any?): SceneMarkerFilterType? {
-        return if (f != null) {
+        return if (f != null && f is SceneMarkerFilterType) {
+            f
+        } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             SceneMarkerFilterType(
                 tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
@@ -540,7 +552,9 @@ class FilterParser(private val serverVersion: Version) {
     }
 
     fun convertImageObjectFilter(f: Any?): ImageFilterType? {
-        return if (f != null) {
+        return if (f != null && f is ImageFilterType) {
+            f
+        } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             ImageFilterType(
                 AND = Optional.presentIfNotNull(convertImageObjectFilter(filter["AND"])),
@@ -583,7 +597,9 @@ class FilterParser(private val serverVersion: Version) {
     }
 
     fun convertGalleryObjectFilter(f: Any?): GalleryFilterType? {
-        return if (f != null) {
+        return if (f != null && f is GalleryFilterType) {
+            f
+        } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             GalleryFilterType(
                 AND = Optional.presentIfNotNull(convertGalleryObjectFilter(filter["AND"])),

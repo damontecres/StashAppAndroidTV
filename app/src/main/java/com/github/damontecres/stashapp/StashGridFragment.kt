@@ -18,7 +18,6 @@ import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
-import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -35,16 +34,15 @@ class StashGridFragment<T : Query.Data, D : Any>(
     presenter: PresenterSelector,
     comparator: DiffUtil.ItemCallback<D>,
     private val dataSupplier: StashPagingSource.DataSupplier<T, D>,
-    val filter: SavedFilterData?,
     private val cardSize: Int? = null,
-    val name: String?,
+    val name: String? = null,
 ) : VerticalGridSupportFragment() {
     constructor(
         comparator: DiffUtil.ItemCallback<D>,
         dataSupplier: StashPagingSource.DataSupplier<T, D>,
         cardSize: Int? = null,
         name: String? = null,
-    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, null, cardSize, name)
+    ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, cardSize, name)
 
     private lateinit var positionTextView: TextView
     private lateinit var totalCountTextView: TextView
