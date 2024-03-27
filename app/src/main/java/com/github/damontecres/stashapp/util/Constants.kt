@@ -1,15 +1,20 @@
 package com.github.damontecres.stashapp.util
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.text.TextUtils
+import android.util.DisplayMetrics
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
+import android.widget.Adapter
+import android.widget.ArrayAdapter
+import android.widget.FrameLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -626,4 +631,57 @@ fun View.animateToInvisible(
             alpha = 1f
             visibility = targetVisibility
         }
+}
+
+@Suppress("ktlint:standard:function-naming")
+fun FindFilterType.toFind_filter(): SavedFilterData.Find_filter {
+    return SavedFilterData.Find_filter(
+        q = q.getOrNull(),
+        page = page.getOrNull(),
+        per_page = per_page.getOrNull(),
+        sort = sort.getOrNull(),
+        direction = direction.getOrNull(),
+        __typename = "FindFilterType",
+    )
+}
+
+/**
+ * Gets the max measured width size for the views produced by an ArrayAdapter
+ */
+fun getMaxMeasuredWidth(
+    context: Context,
+    adapter: ArrayAdapter<String>,
+    maxWidth: Int? = null,
+    maxWidthFraction: Double? = 0.4,
+): Int {
+    val widest =
+        if (maxWidth != null) {
+            maxWidth
+        } else if (maxWidthFraction != null && context is Activity) {
+            val displayMetrics = DisplayMetrics()
+            context.windowManager.defaultDisplay.getMetrics(displayMetrics)
+            displayMetrics.widthPixels
+        } else {
+            Log.w(Constants.TAG, "maxWidthFraction is not null, but couldn't get window size")
+            Int.MAX_VALUE
+        }
+    if (adapter.viewTypeCount != 1) {
+        throw IllegalStateException("Adapter creates more than 1 type of view")
+    }
+
+    val tempParent = FrameLayout(context)
+    var maxMeasuredWidth = 0
+    var itemView: View? = null
+    val measureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+
+    for (i in 0 until adapter.count) {
+        if (adapter.getItemViewType(i) != Adapter.IGNORE_ITEM_VIEW_TYPE) {
+            itemView = adapter.getView(i, itemView, tempParent)
+            itemView.measure(measureSpec, measureSpec)
+            if (itemView.measuredWidth > maxMeasuredWidth) {
+                maxMeasuredWidth = itemView.measuredWidth
+            }
+        }
+    }
+    return Math.min(widest, maxMeasuredWidth)
 }

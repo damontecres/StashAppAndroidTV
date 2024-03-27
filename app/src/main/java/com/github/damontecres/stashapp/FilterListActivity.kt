@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.data.AppFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.StashCustomFilter
@@ -60,7 +61,7 @@ import com.github.damontecres.stashapp.util.StudioComparator
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getInt
-import com.github.damontecres.stashapp.util.toPx
+import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -135,6 +136,10 @@ class FilterListActivity : FragmentActivity() {
                                     sortBy = filterData.find_filter?.sort,
                                 )
                             }
+
+                            FilterType.APP_FILTER -> {
+                                filter
+                            }
                         }
                     setupFragment(startingFilter.second!!, true)
                 } else {
@@ -162,12 +167,6 @@ class FilterListActivity : FragmentActivity() {
                         null,
                         android.R.attr.listPopupWindowStyle,
                     )
-                listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
-                listPopUp.anchorView = filterButton
-                // TODO: Better width calculation
-                listPopUp.width = this@FilterListActivity.toPx(250).toInt()
-                listPopUp.isModal = true
-
                 val adapter =
                     ArrayAdapter(
                         this@FilterListActivity,
@@ -175,6 +174,11 @@ class FilterListActivity : FragmentActivity() {
                         savedFilters.map { it.name },
                     )
                 listPopUp.setAdapter(adapter)
+                listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
+                listPopUp.anchorView = filterButton
+
+                listPopUp.width = getMaxMeasuredWidth(this@FilterListActivity, adapter)
+                listPopUp.isModal = true
 
                 listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                     val savedFilter = savedFilters[position]
@@ -197,6 +201,12 @@ class FilterListActivity : FragmentActivity() {
     }
 
     private suspend fun getStartingFilter(): Pair<FilterType, SavedFilterData?> {
+        if (filter is AppFilter) {
+            return Pair(
+                FilterType.APP_FILTER,
+                (filter as AppFilter).toSavedFilterData(this),
+            )
+        }
         val savedFilterId = intent.getStringExtra("savedFilterId")
         val direction = intent.getStringExtra("direction")
         val sortBy = intent.getStringExtra("sortBy")
@@ -372,7 +382,6 @@ class FilterListActivity : FragmentActivity() {
                     TagComparator,
                     TagDataSupplier(findFilter, tagFilter),
                     null,
-                    null,
                     name,
                 )
             }
@@ -403,7 +412,6 @@ class FilterListActivity : FragmentActivity() {
                     selectorPresenter,
                     MarkerComparator,
                     MarkerDataSupplier(findFilter, markerFilter),
-                    null,
                     null,
                     name,
                 )

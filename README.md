@@ -1,14 +1,13 @@
 # Stash App for Android TV
 
-This is an Android TV app for browsing and playing videos from a [Stash](https://github.com/stashapp/stash) server.
+This is an Android TV app for browsing images and playing scenes from a [Stash](https://github.com/stashapp/stash) server.
 
 Not all features of Stash are supported, but the basics for browsing, searching, and playing scenes work well.
 
 The app is not intended to perform administrative functions such as scraping or editing details. Some curation tasks are available such as adding tags or performers to scenes.
 
-### Dashboard
-![ss_main_page](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/220f81a1-6877-4ac0-97db-f685d0345dea)
-
+### Main page
+![main Large](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/79f374cd-ae97-4a8f-bbbe-07a8a25b7148)
 
 ## Setup
 
@@ -67,12 +66,8 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 
 ## Additional screenshots
 
-### Default filtered scenes
-![ss_scenes](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/efa994e1-b77b-4b33-93b4-d9ad0c08c3b4)
+### Scene list & filters
+![scenes_filter Large](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/0f91b362-c2d4-414c-b813-59435c5951be)
 
-### Performer
-![ss_performer](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/3451be85-8492-4364-b89e-f88ab512da64)
-
-### Demo (v0.1.0)
-
-https://github.com/damontecres/StashAppAndroidTV/assets/154766448/aff09ae7-afef-4df4-9ea7-4ef8fdabeb01
+### Performer page
+![performer Large](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/3b55a090-bf83-4f20-b591-8a4f85aad941)
