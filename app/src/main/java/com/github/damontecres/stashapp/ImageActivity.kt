@@ -645,7 +645,7 @@ class ImageActivity : FragmentActivity() {
         }
 
         fun isImageZoomedIn(): Boolean {
-            return mainImage.zoom > 1.0f
+            return (mainImage.zoom * 100).toInt() > 100
         }
 
         fun resetImageZoom() {
