@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.presenters
 
+import android.util.Log
 import androidx.appcompat.content.res.AppCompatResources
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.FilterMode
@@ -75,10 +76,16 @@ class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
                 )
             }
 
-            else -> {}
-//            FilterMode.GALLERIES -> TODO()
-//            FilterMode.IMAGES -> TODO()
-//            FilterMode.UNKNOWN__ -> TODO()
+            FilterMode.GALLERIES -> {
+                cardView.setMainImageDimensions(
+                    GalleryPresenter.CARD_WIDTH,
+                    GalleryPresenter.CARD_HEIGHT,
+                )
+            }
+
+            else -> {
+                Log.w(TAG, "Unsupported FilterMode=$mode")
+            }
         }
 
         cardView.mainImageView.setImageDrawable(
@@ -87,5 +94,9 @@ class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
                 R.drawable.baseline_camera_indoor_48,
             ),
         )
+    }
+
+    companion object {
+        const val TAG = "StashFilterPresenter"
     }
 }

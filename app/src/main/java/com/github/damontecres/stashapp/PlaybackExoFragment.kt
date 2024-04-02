@@ -560,14 +560,17 @@ class PlaybackExoFragment :
         }
 
         private suspend fun saveSceneActivity(position: Long) {
-            mutationEngine.saveSceneActivity(scene.id, position, getDuration())
-            if (scene.duration != null &&
-                totalPlayDuration >= minimumPlayPercent / 100.0 * scene.duration!! &&
-                !incrementedPlayCount.get()
-            ) {
-                mutationEngine.incrementPlayCount(scene.id)
-                incrementedPlayCount.set(true)
-            }
+            // TODO: fix saving playback duration
+//            mutationEngine.saveSceneActivity(scene.id, position, getDuration())
+            mutationEngine.saveSceneActivity(scene.id, position)
+            // TODO: fix calculating total duration
+//            if (scene.duration != null &&
+//                totalPlayDuration >= minimumPlayPercent / 100.0 * scene.duration!! &&
+//                !incrementedPlayCount.get()
+//            ) {
+//                mutationEngine.incrementPlayCount(scene.id)
+//                incrementedPlayCount.set(true)
+//            }
         }
 
         private fun getDuration(): Long {
