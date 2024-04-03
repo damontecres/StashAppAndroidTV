@@ -213,6 +213,12 @@
             app:key="checkForUpdate"
             app:title="Check for updates"
             app:summary="" />
+        <SwitchPreference
+            app:key="autoCheckForUpdates"
+            app:title="Automatically check for updates"
+            app:summaryOn="Enabled, on startup"
+            app:summaryOff="Disabled, manual only"
+            app:defaultValue="true"/>
         <Preference
             app:key="license"
             app:title="OSS License Information"
