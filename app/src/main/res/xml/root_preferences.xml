@@ -210,8 +210,8 @@
             app:title="Version"
             app:summary="" />
         <Preference
-            app:key="versionCode"
-            app:title="Version Code"
+            app:key="checkForUpdate"
+            app:title="Check for updates"
             app:summary="" />
         <Preference
             app:key="license"

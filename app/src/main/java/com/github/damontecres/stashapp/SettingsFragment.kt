@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
@@ -31,6 +30,7 @@ import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.configureHttpsTrust
 import com.github.damontecres.stashapp.util.testStashConnection
@@ -120,12 +120,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 requireActivity().packageManager.getPackageInfo(requireContext().packageName, 0)
             val versionPref = findPreference<Preference>("versionName")
             versionPref?.summary = pkgInfo.versionName
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                findPreference<Preference>("versionCode")?.summary =
-                    pkgInfo.longVersionCode.toString()
-            } else {
-                findPreference<Preference>("versionCode")?.summary = pkgInfo.versionCode.toString()
-            }
             var clickCount = 0
             versionPref?.setOnPreferenceClickListener {
                 if (clickCount > 2) {
@@ -133,6 +127,14 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     startActivity(Intent(requireContext(), DebugActivity::class.java))
                 } else {
                     clickCount++
+                }
+                true
+            }
+
+            val checkForUpdatePref = findPreference<Preference>("checkForUpdate")
+            checkForUpdatePref?.setOnPreferenceClickListener {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    UpdateChecker.checkForUpdate(requireActivity(), true)
                 }
                 true
             }
