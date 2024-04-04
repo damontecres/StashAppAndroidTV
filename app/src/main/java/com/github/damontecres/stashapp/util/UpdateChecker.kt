@@ -1,7 +1,13 @@
 package com.github.damontecres.stashapp.util
 
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.Environment
+import android.util.Log
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -11,11 +17,16 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.File
 
 class UpdateChecker {
     companion object {
         private const val LATEST_RELEASE_URL = "https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest"
         private const val ASSET_NAME = "StashAppAndroidTV.apk"
+
+        const val PACKAGE_INSTALLED_ACTION = "package.install.StashAppAndroidTV"
+
+        const val TAG = "UpdateChecker"
 
         suspend fun checkForUpdate(
             activity: Activity,
@@ -57,6 +68,90 @@ class UpdateChecker {
                     return@use null
                 }
             }
+        }
+
+        suspend fun installRelease(
+            activity: Activity,
+            release: Release,
+        ) {
+            withContext(Dispatchers.IO) {
+                val client = OkHttpClient.Builder().build()
+                val request = Request.Builder().url(release.downloadUrl!!).get().build()
+                client.newCall(request).execute().use {
+                    if (it.isSuccessful && it.body != null) {
+                        Log.v(TAG, "Request successful for ${release.downloadUrl}")
+                        val downloadDir =
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                        downloadDir.mkdirs()
+                        val targetFile = File(downloadDir, ASSET_NAME)
+                        targetFile.outputStream().use { output ->
+                            it.body!!.byteStream().copyTo(output)
+                        }
+                        val intent =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                intent.data =
+                                    FileProvider.getUriForFile(
+                                        activity,
+                                        activity.packageName + ".provider",
+                                        targetFile,
+                                    )
+                                intent
+                            } else {
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.setDataAndType(
+                                    Uri.fromFile(targetFile),
+                                    "application/vnd.android.package-archive",
+                                )
+                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                intent
+                            }
+                        activity.startActivity(intent)
+//                        val packageInstaller = activity.packageManager.packageInstaller
+//                        val params =
+//                            PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+//                        params.setAppPackageName(activity.packageName)
+//                        val sessionId = packageInstaller.createSession(params)
+//                        val session = packageInstaller.openSession(sessionId)
+//
+//                        session.openWrite(activity.packageName, 0, -1).use { packageInSession ->
+//                            it.body!!.byteStream().use { input ->
+//                                input.copyTo(packageInSession)
+//                            }
+//                        }
+//                        val intent = Intent(activity, MainActivity::class.java)
+//                        intent.action = PACKAGE_INSTALLED_ACTION
+//                        val pendingIntent =
+//                            PendingIntent.getActivity(
+//                                activity,
+//                                0,
+//                                intent,
+//                                PendingIntent.FLAG_IMMUTABLE,
+//                            )
+//                        val statusReceiver = pendingIntent.intentSender
+//                        session.commit(statusReceiver)
+//                        session.commit(
+//                            PendingIntent.getBroadcast(
+//                                activity,
+//                                sessionId,
+//                                Intent("android.intent.action.MAIN"),
+//                                PendingIntent.FLAG_IMMUTABLE,
+//                            ).intentSender,
+//                        )
+                    } else {
+                        Log.v(TAG, "Request failed for ${release.downloadUrl}: ${it.code}")
+                    }
+                }
+            }
+
+//            val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+//            intent.setDataAndType(
+//                Uri.parse(release.downloadUrl),
+//                "application/vnd.android.package-archive",
+//            )
+//            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//            activity.startActivity(intent)
         }
     }
 

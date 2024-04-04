@@ -134,7 +134,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             val checkForUpdatePref = findPreference<Preference>("checkForUpdate")
             checkForUpdatePref?.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    UpdateChecker.checkForUpdate(requireActivity(), true)
+//                    UpdateChecker.checkForUpdate(requireActivity(), true)
+                    val release = UpdateChecker.getLatestRelease()
+                    UpdateChecker.installRelease(requireActivity(), release!!)
                 }
                 true
             }
