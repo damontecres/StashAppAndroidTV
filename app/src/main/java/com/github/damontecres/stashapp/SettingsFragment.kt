@@ -28,6 +28,7 @@ import androidx.preference.SwitchPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -131,7 +132,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 true
             }
 
-            val checkForUpdatePref = findPreference<Preference>("checkForUpdate")
+            val checkForUpdatePref = findPreference<LongClickPreference>("checkForUpdate")
             checkForUpdatePref?.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val release = UpdateChecker.getLatestRelease()
@@ -148,6 +149,18 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                                 Toast.LENGTH_SHORT,
                             ).show()
                         }
+                    }
+                }
+                true
+            }
+            checkForUpdatePref?.setOnLongClickListener {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val release = UpdateChecker.getLatestRelease()
+                    if (release != null) {
+                        GuidedStepSupportFragment.add(
+                            requireActivity().supportFragmentManager,
+                            UpdatedFragment(release),
+                        )
                     }
                 }
                 true

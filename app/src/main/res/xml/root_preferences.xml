@@ -209,7 +209,7 @@
             app:key="versionName"
             app:title="@string/stashapp_package_manager_installed_version"
             app:summary="" />
-        <Preference
+        <com.github.damontecres.stashapp.util.LongClickPreference
             app:key="checkForUpdate"
             app:title="@string/stashapp_package_manager_check_for_updates"
             app:summary="" />

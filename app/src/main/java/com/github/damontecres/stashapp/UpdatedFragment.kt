@@ -16,7 +16,7 @@ class UpdatedFragment(private val release: UpdateChecker.Release) : GuidedStepSu
         val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
         return GuidanceStylist.Guidance(
             "${release.version} available!",
-            "Installed: $installedVersion",
+            "Installed: $installedVersion\n\nUpdating in app is experimental!",
             null,
             AppCompatResources.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
