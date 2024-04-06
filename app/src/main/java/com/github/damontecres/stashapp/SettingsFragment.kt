@@ -349,6 +349,32 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
         }
 
+        override fun onViewCreated(
+            view: View,
+            savedInstanceState: Bundle?,
+        ) {
+            super.onViewCreated(view, savedInstanceState)
+
+            if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getBoolean("autoCheckForUpdates", true)
+            ) {
+                val checkForUpdatePref = findPreference<Preference>("checkForUpdate")
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val release = UpdateChecker.getLatestRelease()
+                    val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
+                    if (release != null) {
+                        if (release.version.isGreaterThan(installedVersion)) {
+                            checkForUpdatePref?.title = "Install update"
+                            checkForUpdatePref?.summary = "${release.version} available"
+                        } else {
+                            checkForUpdatePref?.title = "No update available"
+                            checkForUpdatePref?.summary = null
+                        }
+                    }
+                }
+            }
+        }
+
         private fun setCacheDurationSummary(
             pref: SeekBarPreference,
             value: Any,
