@@ -149,6 +149,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                                 Toast.LENGTH_SHORT,
                             ).show()
                         }
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to check for updates",
+                            Toast.LENGTH_LONG,
+                        ).show()
                     }
                 }
                 true
@@ -161,6 +167,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                             requireActivity().supportFragmentManager,
                             UpdatedFragment(release),
                         )
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to check for updates",
+                            Toast.LENGTH_LONG,
+                        ).show()
                     }
                 }
                 true

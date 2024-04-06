@@ -65,7 +65,11 @@ class UpdateChecker {
                             }?.jsonObject?.get("browser_download_url")?.jsonPrimitive?.contentOrNull
                         if (version != null) {
                             return@use Release(version, downloadUrl, publishedAt, body)
+                        } else {
+                            Log.w(TAG, "Update version parsing failed. name=$name")
                         }
+                    } else {
+                        Log.w(TAG, "Update check failed: ${it.message}")
                     }
                     return@use null
                 }
