@@ -14,9 +14,15 @@ import kotlinx.coroutines.launch
 class UpdatedFragment(private val release: UpdateChecker.Release) : GuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
+        val description =
+            """
+            ${getString(R.string.stashapp_package_manager_installed_version)}: $installedVersion
+
+            Note: Upgrading in-app is experimental!
+            """.trimIndent()
         return GuidanceStylist.Guidance(
             "${release.version} available!",
-            "Installed: $installedVersion\n\nUpdating in app is experimental!",
+            description,
             null,
             AppCompatResources.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
