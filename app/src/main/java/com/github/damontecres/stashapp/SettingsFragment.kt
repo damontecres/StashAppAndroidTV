@@ -11,6 +11,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.fragment.app.Fragment
+import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
 import androidx.leanback.preference.LeanbackSettingsFragmentCompat
@@ -134,9 +135,14 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             val checkForUpdatePref = findPreference<Preference>("checkForUpdate")
             checkForUpdatePref?.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-//                    UpdateChecker.checkForUpdate(requireActivity(), true)
                     val release = UpdateChecker.getLatestRelease()
-                    UpdateChecker.installRelease(requireActivity(), release!!)
+                    val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
+//                    if (release != null && release.version.isGreaterThan(installedVersion)) {
+                    GuidedStepSupportFragment.add(
+                        requireActivity().supportFragmentManager,
+                        UpdatedFragment(release!!),
+                    )
+//                    }
                 }
                 true
             }

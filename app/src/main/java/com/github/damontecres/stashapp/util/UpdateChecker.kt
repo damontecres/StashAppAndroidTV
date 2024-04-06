@@ -26,10 +26,9 @@ class UpdateChecker {
         private const val LATEST_RELEASE_URL = "https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest"
         private const val ASSET_NAME = "StashAppAndroidTV.apk"
 
-        const val PACKAGE_INSTALLED_ACTION = "package.install.StashAppAndroidTV"
-        const val APK_MIME_TYPE = "application/vnd.android.package-archive"
+        private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
 
-        const val TAG = "UpdateChecker"
+        private const val TAG = "UpdateChecker"
 
         suspend fun checkForUpdate(
             activity: Activity,
@@ -112,6 +111,11 @@ class UpdateChecker {
                                 activity.startActivity(intent)
                             } else {
                                 Log.e(TAG, "Resolver URI is null")
+                                Toast.makeText(
+                                    activity,
+                                    "There was an error downloading the release",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             }
                         } else {
                             val downloadDir =
@@ -140,17 +144,14 @@ class UpdateChecker {
                         }
                     } else {
                         Log.v(TAG, "Request failed for ${release.downloadUrl}: ${it.code}")
+                        Toast.makeText(
+                            activity,
+                            "Error downloading release: ${it.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
                     }
                 }
             }
-
-//            val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
-//            intent.setDataAndType(
-//                Uri.parse(release.downloadUrl),
-//                "application/vnd.android.package-archive",
-//            )
-//            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//            activity.startActivity(intent)
         }
     }
 
