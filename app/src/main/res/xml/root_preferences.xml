@@ -207,17 +207,17 @@
     <PreferenceCategory app:title="About">
         <Preference
             app:key="versionName"
-            app:title="Version"
+            app:title="@string/stashapp_package_manager_installed_version"
             app:summary="" />
         <Preference
             app:key="checkForUpdate"
-            app:title="Check for updates"
+            app:title="@string/stashapp_package_manager_check_for_updates"
             app:summary="" />
         <SwitchPreference
             app:key="autoCheckForUpdates"
             app:title="Automatically check for updates"
             app:summaryOn="Enabled, on startup"
-            app:summaryOff="Disabled, manual only"
+            app:summaryOff="Disabled, manual"
             app:defaultValue="true"/>
         <Preference
             app:key="license"

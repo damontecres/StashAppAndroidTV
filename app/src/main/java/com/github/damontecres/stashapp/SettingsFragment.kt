@@ -117,10 +117,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     }
                 }
 
-            val pkgInfo =
-                requireActivity().packageManager.getPackageInfo(requireContext().packageName, 0)
+            val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
             val versionPref = findPreference<Preference>("versionName")
-            versionPref?.summary = pkgInfo.versionName
+            versionPref?.summary = installedVersion.toString()
             var clickCount = 0
             versionPref?.setOnPreferenceClickListener {
                 if (clickCount > 2) {
@@ -136,13 +135,20 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             checkForUpdatePref?.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val release = UpdateChecker.getLatestRelease()
-                    val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
-//                    if (release != null && release.version.isGreaterThan(installedVersion)) {
-                    GuidedStepSupportFragment.add(
-                        requireActivity().supportFragmentManager,
-                        UpdatedFragment(release!!),
-                    )
-//                    }
+                    if (release != null) {
+                        if (release.version.isGreaterThan(installedVersion)) {
+                            GuidedStepSupportFragment.add(
+                                requireActivity().supportFragmentManager,
+                                UpdatedFragment(release),
+                            )
+                        } else {
+                            Toast.makeText(
+                                requireContext(),
+                                "No update available!",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    }
                 }
                 true
             }
@@ -365,7 +371,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     if (release != null) {
                         if (release.version.isGreaterThan(installedVersion)) {
                             checkForUpdatePref?.title = "Install update"
-                            checkForUpdatePref?.summary = "${release.version} available"
+                            checkForUpdatePref?.summary =
+                                getString(R.string.stashapp_package_manager_latest_version) + ": ${release.version}"
                         } else {
                             checkForUpdatePref?.title = "No update available"
                             checkForUpdatePref?.summary = null
