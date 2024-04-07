@@ -135,7 +135,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             val checkForUpdatePref = findPreference<LongClickPreference>("checkForUpdate")
             checkForUpdatePref?.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val release = UpdateChecker.getLatestRelease()
+                    val release = UpdateChecker.getLatestRelease(requireContext())
                     if (release != null) {
                         if (release.version.isGreaterThan(installedVersion)) {
                             GuidedStepSupportFragment.add(
@@ -161,7 +161,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
             checkForUpdatePref?.setOnLongClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val release = UpdateChecker.getLatestRelease()
+                    val release = UpdateChecker.getLatestRelease(requireContext())
                     if (release != null) {
                         GuidedStepSupportFragment.add(
                             requireActivity().supportFragmentManager,
@@ -391,7 +391,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             ) {
                 val checkForUpdatePref = findPreference<Preference>("checkForUpdate")
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val release = UpdateChecker.getLatestRelease()
+                    val release = UpdateChecker.getLatestRelease(requireContext())
                     val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
                     if (release != null) {
                         if (release.version.isGreaterThan(installedVersion)) {

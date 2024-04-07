@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.util
 
 import android.app.Activity
 import android.content.ContentValues
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -10,6 +11,8 @@ import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -23,8 +26,8 @@ import java.io.File
 
 class UpdateChecker {
     companion object {
-        private const val LATEST_RELEASE_URL = "https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest"
         private const val ASSET_NAME = "StashAppAndroidTV.apk"
+        private const val DEBUG_ASSET_NAME = "StashAppAndroidTV-debug.apk"
 
         private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
 
@@ -35,7 +38,7 @@ class UpdateChecker {
             showNegativeToast: Boolean = false,
         ) {
             val installedVersion = getInstalledVersion(activity)
-            val latestRelease = getLatestRelease()
+            val latestRelease = getLatestRelease(activity)
             if (latestRelease != null && latestRelease.version.isGreaterThan(installedVersion)) {
                 Toast.makeText(activity, "Update available: $installedVersion => ${latestRelease.version}!", Toast.LENGTH_LONG).show()
             } else if (showNegativeToast) {
@@ -48,10 +51,18 @@ class UpdateChecker {
             return Version.fromString(pkgInfo.versionName)
         }
 
-        suspend fun getLatestRelease(): Release? {
+        suspend fun getLatestRelease(context: Context): Release? {
             return withContext(Dispatchers.IO) {
+                val updateUrl =
+                    PreferenceManager.getDefaultSharedPreferences(context).getStringNotNull(
+                        "updateCheckUrl",
+                        context.getString(
+                            R.string.app_update_url,
+                        ),
+                    )
+
                 val client = OkHttpClient.Builder().build()
-                val request = Request.Builder().url(LATEST_RELEASE_URL).get().build()
+                val request = Request.Builder().url(updateUrl).get().build()
                 client.newCall(request).execute().use {
                     if (it.isSuccessful && it.body != null) {
                         val result = Json.parseToJsonElement(it.body!!.string())
@@ -61,7 +72,9 @@ class UpdateChecker {
                         val body = result.jsonObject["body"]?.jsonPrimitive?.contentOrNull
                         val downloadUrl =
                             result.jsonObject["assets"]?.jsonArray?.firstOrNull { asset ->
-                                asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull == ASSET_NAME
+                                val assetName =
+                                    asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull
+                                assetName == ASSET_NAME || assetName == DEBUG_ASSET_NAME
                             }?.jsonObject?.get("browser_download_url")?.jsonPrimitive?.contentOrNull
                         if (version != null) {
                             return@use Release(version, downloadUrl, publishedAt, body)
