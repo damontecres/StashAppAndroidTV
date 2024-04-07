@@ -11,7 +11,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.UpdateChecker
 import kotlinx.coroutines.launch
 
-class UpdatedFragment(private val release: UpdateChecker.Release) : GuidedStepSupportFragment() {
+class UpdateAppFragment(private val release: UpdateChecker.Release) : GuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
         val description =
@@ -36,7 +36,7 @@ class UpdatedFragment(private val release: UpdateChecker.Release) : GuidedStepSu
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_YES)
-                .title("Install")
+                .title("Download & Install")
                 .description("${release.version}")
                 .hasNext(false)
                 .build(),

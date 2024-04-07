@@ -140,7 +140,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         if (release.version.isGreaterThan(installedVersion)) {
                             GuidedStepSupportFragment.add(
                                 requireActivity().supportFragmentManager,
-                                UpdatedFragment(release),
+                                UpdateAppFragment(release),
                             )
                         } else {
                             Toast.makeText(
@@ -165,7 +165,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     if (release != null) {
                         GuidedStepSupportFragment.add(
                             requireActivity().supportFragmentManager,
-                            UpdatedFragment(release),
+                            UpdateAppFragment(release),
                         )
                     } else {
                         Toast.makeText(
