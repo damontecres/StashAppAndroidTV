@@ -23,4 +23,6 @@
     <string name="view_markers">View markers</string>
     <string name="failed_o_counter">Failed to update o-counter</string>
 
+    <string name="app_update_url" translatable="false">https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest</string>
+
 </resources>

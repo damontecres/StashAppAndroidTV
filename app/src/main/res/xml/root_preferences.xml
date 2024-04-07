@@ -207,12 +207,24 @@
     <PreferenceCategory app:title="About">
         <Preference
             app:key="versionName"
-            app:title="Version"
+            app:title="@string/stashapp_package_manager_installed_version"
             app:summary="" />
-        <Preference
-            app:key="versionCode"
-            app:title="Version Code"
+        <com.github.damontecres.stashapp.util.LongClickPreference
+            app:key="checkForUpdate"
+            app:title="@string/stashapp_package_manager_check_for_updates"
             app:summary="" />
+        <SwitchPreference
+            app:key="autoCheckForUpdates"
+            app:title="Automatically check for updates"
+            app:summaryOn="Enabled, on startup"
+            app:summaryOff="Disabled, manual"
+            app:defaultValue="true"/>
+        <EditTextPreference
+            app:key="updateCheckUrl"
+            app:title="Update URL"
+            app:summary="Override URL used for update checks"
+            app:defaultValue="@string/app_update_url"
+            />
         <Preference
             app:key="license"
             app:title="OSS License Information"

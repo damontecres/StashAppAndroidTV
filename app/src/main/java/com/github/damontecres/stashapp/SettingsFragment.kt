@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp
 
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
@@ -12,6 +11,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.fragment.app.Fragment
+import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
 import androidx.leanback.preference.LeanbackSettingsFragmentCompat
@@ -28,9 +28,11 @@ import androidx.preference.SwitchPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.configureHttpsTrust
 import com.github.damontecres.stashapp.util.testStashConnection
@@ -116,16 +118,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     }
                 }
 
-            val pkgInfo =
-                requireActivity().packageManager.getPackageInfo(requireContext().packageName, 0)
+            val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
             val versionPref = findPreference<Preference>("versionName")
-            versionPref?.summary = pkgInfo.versionName
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                findPreference<Preference>("versionCode")?.summary =
-                    pkgInfo.longVersionCode.toString()
-            } else {
-                findPreference<Preference>("versionCode")?.summary = pkgInfo.versionCode.toString()
-            }
+            versionPref?.summary = installedVersion.toString()
             var clickCount = 0
             versionPref?.setOnPreferenceClickListener {
                 if (clickCount > 2) {
@@ -133,6 +128,52 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     startActivity(Intent(requireContext(), DebugActivity::class.java))
                 } else {
                     clickCount++
+                }
+                true
+            }
+
+            val checkForUpdatePref = findPreference<LongClickPreference>("checkForUpdate")
+            checkForUpdatePref?.setOnPreferenceClickListener {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val release = UpdateChecker.getLatestRelease(requireContext())
+                    if (release != null) {
+                        if (release.version.isGreaterThan(installedVersion)) {
+                            GuidedStepSupportFragment.add(
+                                requireActivity().supportFragmentManager,
+                                UpdateAppFragment(release),
+                            )
+                        } else {
+                            Toast.makeText(
+                                requireContext(),
+                                "No update available!",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to check for updates",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                }
+                true
+            }
+            checkForUpdatePref?.setOnLongClickListener {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val release = UpdateChecker.getLatestRelease(requireContext())
+                    if (release != null) {
+                        GuidedStepSupportFragment.add(
+                            requireActivity().supportFragmentManager,
+                            UpdateAppFragment(release),
+                        )
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to check for updates",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
                 }
                 true
             }
@@ -336,6 +377,33 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             cacheDurationPref.setOnPreferenceChangeListener { _, newValue ->
                 setCacheDurationSummary(cacheDurationPref, newValue)
                 true
+            }
+        }
+
+        override fun onViewCreated(
+            view: View,
+            savedInstanceState: Bundle?,
+        ) {
+            super.onViewCreated(view, savedInstanceState)
+
+            if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getBoolean("autoCheckForUpdates", true)
+            ) {
+                val checkForUpdatePref = findPreference<Preference>("checkForUpdate")
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val release = UpdateChecker.getLatestRelease(requireContext())
+                    val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
+                    if (release != null) {
+                        if (release.version.isGreaterThan(installedVersion)) {
+                            checkForUpdatePref?.title = "Install update"
+                            checkForUpdatePref?.summary =
+                                getString(R.string.stashapp_package_manager_latest_version) + ": ${release.version}"
+                        } else {
+                            checkForUpdatePref?.title = "No update available"
+                            checkForUpdatePref?.summary = null
+                        }
+                    }
+                }
             }
         }
 
