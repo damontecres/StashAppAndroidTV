@@ -29,7 +29,9 @@ Check the [Tips & Tricks](https://github.com/damontecres/StashAppAndroidTV/wiki/
         - Use `Send files to TV` from the Google Play Store on your phone & TV
         - (Expert) Use [ADB](https://developer.android.com/studio/command-line/adb) to install the APK from your computer ([guide](https://fossbytes.com/side-load-apps-android-tv/#h-how-to-sideload-apps-on-your-android-tv-using-adb))
 
-The app does not auto-update, so you will need to repeat this process for each new release.
+### Upgrading the app
+
+Starting with `v0.2.2`, the app will automatically check for updates and, as an experimental feature, the update can be installed in settings.
 
 #### Develop build
 
