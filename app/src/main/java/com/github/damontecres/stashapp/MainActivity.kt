@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
@@ -29,6 +30,10 @@ class MainActivity : FragmentActivity() {
                 lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     UpdateChecker.checkForUpdate(this@MainActivity, false)
                 }
+            }
+            if (intent.getBooleanExtra(UpdateBroadcastReceiver.INTENT_APP_UPDATED, false)) {
+                val installedVersion = UpdateChecker.getInstalledVersion(this)
+                Toast.makeText(this, "App updated to $installedVersion!", Toast.LENGTH_SHORT).show()
             }
         }
     }
