@@ -1,15 +1,19 @@
 package com.github.damontecres.stashapp.util
 
+import android.Manifest
 import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
@@ -30,6 +34,8 @@ class UpdateChecker {
         private const val DEBUG_ASSET_NAME = "StashAppAndroidTV-debug.apk"
 
         private const val APK_MIME_TYPE = "application/vnd.android.package-archive"
+
+        private const val PERMISSION_REQUEST_CODE = 12345
 
         private const val TAG = "UpdateChecker"
 
@@ -135,28 +141,47 @@ class UpdateChecker {
                                 ).show()
                             }
                         } else {
-                            val downloadDir =
-                                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                            downloadDir.mkdirs()
-                            val targetFile = File(downloadDir, ASSET_NAME)
-                            targetFile.outputStream().use { output ->
-                                it.body!!.byteStream().copyTo(output)
-                            }
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                                val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
-                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                intent.data =
-                                    FileProvider.getUriForFile(
-                                        activity,
-                                        activity.packageName + ".provider",
-                                        targetFile,
-                                    )
-                                activity.startActivity(intent)
+                            if (ContextCompat.checkSelfPermission(
+                                    activity,
+                                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                ) != PackageManager.PERMISSION_GRANTED ||
+                                ContextCompat.checkSelfPermission(
+                                    activity,
+                                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                                ) != PackageManager.PERMISSION_GRANTED
+                            ) {
+                                ActivityCompat.requestPermissions(
+                                    activity,
+                                    arrayOf(
+                                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                                    ),
+                                    PERMISSION_REQUEST_CODE,
+                                )
                             } else {
-                                val intent = Intent(Intent.ACTION_VIEW)
-                                intent.setDataAndType(Uri.fromFile(targetFile), APK_MIME_TYPE)
-                                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                activity.startActivity(intent)
+                                val downloadDir =
+                                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                                downloadDir.mkdirs()
+                                val targetFile = File(downloadDir, ASSET_NAME)
+                                targetFile.outputStream().use { output ->
+                                    it.body!!.byteStream().copyTo(output)
+                                }
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                    val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
+                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    intent.data =
+                                        FileProvider.getUriForFile(
+                                            activity,
+                                            activity.packageName + ".provider",
+                                            targetFile,
+                                        )
+                                    activity.startActivity(intent)
+                                } else {
+                                    val intent = Intent(Intent.ACTION_VIEW)
+                                    intent.setDataAndType(Uri.fromFile(targetFile), APK_MIME_TYPE)
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    activity.startActivity(intent)
+                                }
                             }
                         }
                     } else {
