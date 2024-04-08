@@ -10,11 +10,13 @@ import android.widget.ImageButton
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat.startActivity
 import androidx.leanback.widget.TitleViewAdapter
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 class MainTitleView(context: Context, attrs: AttributeSet) :
     RelativeLayout(context, attrs),
@@ -121,12 +123,21 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         return mTitleViewAdapter
     }
 
-    fun refreshMenuItems() {
-        val menuItems =
-            ServerPreferences(context).preferences.getStringSet(
+    private fun getMenuItems(): Set<String> {
+        val serverConfigured =
+            PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
+                .isNotNullOrBlank()
+        if (serverConfigured) {
+            return ServerPreferences(context).preferences.getStringSet(
                 ServerPreferences.PREF_INTERFACE_MENU_ITEMS,
                 ServerPreferences.DEFAULT_MENU_ITEMS,
             )!!
+        }
+        return setOf()
+    }
+
+    fun refreshMenuItems() {
+        val menuItems = getMenuItems()
 
         fun getVis(key: String): Int {
             return if (key in menuItems) {
