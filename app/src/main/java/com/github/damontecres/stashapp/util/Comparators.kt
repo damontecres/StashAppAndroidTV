@@ -158,3 +158,9 @@ open class StashDiffCallback<T>(private val getId: (T) -> String) : DiffCallback
 }
 
 object TagDiffCallback : StashDiffCallback<TagData>(getId = { it.id })
+
+object MarkerDiffCallback : StashDiffCallback<MarkerData>(getId = { it.id })
+
+object PerformerDiffCallback : StashDiffCallback<PerformerData>(getId = { it.id })
+
+object MovieDiffCallback : StashDiffCallback<MovieData>(getId = { it.id })
