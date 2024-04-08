@@ -57,7 +57,9 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.TagDiffCallback
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
@@ -74,7 +76,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private var mSelectedMovie: SlimSceneData? = null
 
     private lateinit var performersAdapter: ArrayObjectAdapter
-    private lateinit var tagsAdapter: ArrayObjectAdapter
+    private val tagsAdapter = ArrayObjectAdapter(TagPresenter(TagLongClickCallBack()))
     private lateinit var markersAdapter: ArrayObjectAdapter
     private lateinit var moviesAdapter: ArrayObjectAdapter
     private val sceneActionsAdapter =
@@ -228,71 +230,19 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 mAdapter.clear(STUDIO_POS)
             }
 
-            tagsAdapter =
-                ArrayObjectAdapter(
-                    TagPresenter(
-                        object :
-                            StashPresenter.LongClickCallBack<TagData> {
-                            override val popUpItems: List<String>
-                                get() = listOf("Remove")
-
-                            override fun onItemLongClick(
-                                item: TagData,
-                                popUpItemPosition: Int,
-                            ) {
-                                if (popUpItemPosition == 0) {
-                                    viewLifecycleOwner.lifecycleScope.launch(
-                                        CoroutineExceptionHandler { _, ex ->
-                                            Log.e(TAG, "Exception setting tags", ex)
-                                            Toast.makeText(
-                                                requireContext(),
-                                                "Failed to remove tag: ${ex.message}",
-                                                Toast.LENGTH_LONG,
-                                            ).show()
-                                        },
-                                    ) {
-                                        val tagIds =
-                                            tagsAdapter.unmodifiableList<TagData>()
-                                                .map { it.id }
-                                                .toMutableList()
-                                        tagIds.remove(item.id)
-                                        val mutResult =
-                                            MutationEngine(requireContext()).setTagsOnScene(
-                                                mSelectedMovie!!.id,
-                                                tagIds,
-                                            )
-                                        val newTags = mutResult?.tags?.map { it.tagData }
-                                        tagsAdapter.clear()
-                                        tagsAdapter.addAll(0, newTags)
-                                        if (tagsAdapter.size() == 0) {
-                                            mAdapter.clear(TAG_POS)
-                                        } else {
-                                            mAdapter.set(
-                                                TAG_POS,
-                                                ListRow(
-                                                    HeaderItem(getString(R.string.stashapp_tags)),
-                                                    tagsAdapter,
-                                                ),
-                                            )
-                                        }
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Removed tag '${item.name}' from scene",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                    }
-                                }
-                            }
-                        },
-                    ),
-                )
-
             if (mSelectedMovie!!.tags.isNotEmpty()) {
-                mAdapter.set(
-                    TAG_POS,
-                    ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
+                if (mAdapter.lookup(TAG_POS) == null) {
+                    mAdapter.set(
+                        TAG_POS,
+                        ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
+                    )
+                }
+                tagsAdapter.setItems(
+                    mSelectedMovie!!.tags.map { it.tagData },
+                    StashDiffCallback<TagData> {
+                        it.id
+                    },
                 )
-                tagsAdapter.addAll(0, mSelectedMovie!!.tags.map { it.tagData })
             } else {
                 mAdapter.clear(TAG_POS)
             }
@@ -834,6 +784,51 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             TAG,
                             "Unknown position for OCounterLongClickCallBack: $popUpItemPosition",
                         )
+                }
+            }
+        }
+    }
+
+    private inner class TagLongClickCallBack : StashPresenter.LongClickCallBack<TagData> {
+        override val popUpItems: List<String>
+            get() = listOf("Remove")
+
+        override fun onItemLongClick(
+            item: TagData,
+            popUpItemPosition: Int,
+        ) {
+            if (popUpItemPosition == 0) {
+                viewLifecycleOwner.lifecycleScope.launch(
+                    CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception setting tags", ex)
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to remove tag: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    },
+                ) {
+                    val tagIds =
+                        tagsAdapter.unmodifiableList<TagData>()
+                            .map { it.id }
+                            .toMutableList()
+                    tagIds.remove(item.id)
+                    val mutResult =
+                        MutationEngine(requireContext()).setTagsOnScene(
+                            mSelectedMovie!!.id,
+                            tagIds,
+                        )
+                    val newTags = mutResult?.tags?.map { it.tagData }.orEmpty()
+                    if (newTags.isEmpty()) {
+                        mAdapter.clear(TAG_POS)
+                    } else {
+                        tagsAdapter.setItems(newTags, TagDiffCallback)
+                    }
+                    Toast.makeText(
+                        requireContext(),
+                        "Removed tag '${item.name}' from scene",
+                        Toast.LENGTH_SHORT,
+                    ).show()
                 }
             }
         }

@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp.util
 
+import android.annotation.SuppressLint
+import androidx.leanback.widget.DiffCallback
 import androidx.recyclerview.widget.DiffUtil
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -137,3 +139,22 @@ object GalleryComparator : DiffUtil.ItemCallback<GalleryData>() {
         return oldItem == newItem
     }
 }
+
+open class StashDiffCallback<T>(private val getId: (T) -> String) : DiffCallback<T>() {
+    override fun areItemsTheSame(
+        oldItem: T & Any,
+        newItem: T & Any,
+    ): Boolean {
+        return getId(oldItem) == getId(newItem)
+    }
+
+    @SuppressLint("DiffUtilEquals")
+    override fun areContentsTheSame(
+        oldItem: T & Any,
+        newItem: T & Any,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}
+
+object TagDiffCallback : StashDiffCallback<TagData>(getId = { it.id })
