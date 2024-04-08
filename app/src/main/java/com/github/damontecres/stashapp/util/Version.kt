@@ -49,6 +49,14 @@ data class Version(
         return (this.numCommits ?: 0) - (version.numCommits ?: 0)
     }
 
+    override fun toString(): String {
+        return if (numCommits != null && hash != null) {
+            "v$major.$minor.$patch-$numCommits-g$hash"
+        } else {
+            "v$major.$minor.$patch"
+        }
+    }
+
     companion object {
         private val VERSION_REGEX = Regex("v?(\\d+)\\.(\\d+)\\.(\\d+)(-(\\d+)-g([a-zA-Z0-9]+))?")
         val MINIMUM_STASH_VERSION = fromString("0.23.0")

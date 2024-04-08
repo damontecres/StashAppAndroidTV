@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -11,6 +12,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.util.UpdateChecker
 
 class PinActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,6 +26,10 @@ class PinActivity : FragmentActivity() {
         onBackPressedDispatcher.addCallback(this) {
             // Finish this activity and everything above (typically another Activity if the the app was resumed)
             finishAffinity()
+        }
+        if (intent.getBooleanExtra(UpdateBroadcastReceiver.INTENT_APP_UPDATED, false)) {
+            val installedVersion = UpdateChecker.getInstalledVersion(this)
+            Toast.makeText(this, "App updated to $installedVersion!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -80,6 +86,10 @@ class PinActivity : FragmentActivity() {
             (requireActivity().application as StashApplication).hasAskedForPin = true
 
             val mainDestroyed = requireActivity().intent.getBooleanExtra("mainDestroyed", false)
+            Log.v(
+                TAG,
+                "startMainActivity: isTaskRoot=${requireActivity().isTaskRoot}, mainDestroyed=$mainDestroyed",
+            )
             if (requireActivity().isTaskRoot || mainDestroyed) {
                 // This is the task root when invoked from the start
                 // mainDestroyed is true when the MainActivity was destroyed, but not the entire app
@@ -89,5 +99,9 @@ class PinActivity : FragmentActivity() {
             }
             requireActivity().finish()
         }
+    }
+
+    companion object {
+        private const val TAG = "PinActivity"
     }
 }
