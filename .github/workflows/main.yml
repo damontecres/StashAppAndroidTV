@@ -46,7 +46,7 @@ jobs:
       - name: Get version name
         run: |
           VERSION_NAME=$(git describe --tags)
-          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
       - name: Build app
         id: buildapp
         env:
