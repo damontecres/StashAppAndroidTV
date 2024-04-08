@@ -43,6 +43,10 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: "tools platform-tools build-tools;${{ env.BUILD_TOOLS_VERSION }}"
+      - name: Get version name
+        run: |
+          VERSION_NAME=$(git describe --tags)
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
       - name: Build app
         id: buildapp
         env:
@@ -88,7 +92,7 @@ jobs:
           draft: false
           generateReleaseNotes: false
           makeLatest: false
-          name: "Develop build"
+          name: "${{ env.VERSION_NAME }}"
           prerelease: true
           removeArtifacts: true
           replacesArtifacts: true
