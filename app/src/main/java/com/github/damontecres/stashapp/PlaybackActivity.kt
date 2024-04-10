@@ -40,11 +40,6 @@ class PlaybackActivity : FragmentActivity() {
         return fragment.videoView.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
     }
 
-    override fun onStop() {
-        returnPosition() // Not sure if it's actually needed here, but doesn't hurt
-        super.onStop()
-    }
-
     /**
      * Return the video's current position to the previous Activity
      */

@@ -7,11 +7,17 @@ import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
+import androidx.appcompat.widget.ListPopupWindow
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -26,8 +32,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.actions.StashAction
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -36,6 +45,7 @@ import com.github.damontecres.stashapp.util.createOkHttpClient
 import com.github.damontecres.stashapp.views.StashPlayerView
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -50,6 +60,7 @@ import kotlin.time.toDuration
 class PlaybackExoFragment :
     Fragment(R.layout.video_playback),
     PlaybackActivity.StashVideoPlayer {
+    private lateinit var resultLauncher: ActivityResultLauncher<Intent>
     private var player: ExoPlayer? = null
     private var trackActivityListener: PlaybackListener? = null
     private lateinit var scene: Scene
@@ -192,6 +203,15 @@ class PlaybackExoFragment :
                         videoView.hideController()
                     }
                 }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        resultLauncher =
+            registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult(),
+                ResultCallback(),
+            )
     }
 
     @OptIn(UnstableApi::class)
@@ -395,6 +415,43 @@ class PlaybackExoFragment :
                 }
             }
         }
+
+        val moreOptionsButton = view.findViewById<ImageButton>(R.id.more_options_button)
+        moreOptionsButton.onFocusChangeListener = onFocusChangeListener
+        moreOptionsButton.setOnClickListener {
+            val listPopUp =
+                ListPopupWindow(
+                    view.context,
+                    null,
+                    android.R.attr.listPopupWindowStyle,
+                )
+            listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
+            listPopUp.anchorView = moreOptionsButton
+            listPopUp.width = 300
+            listPopUp.isModal = true
+
+            val adapter =
+                ArrayAdapter(
+                    view.context,
+                    R.layout.popup_item,
+                    listOf("Create Marker"),
+                )
+            listPopUp.setAdapter(adapter)
+
+            listPopUp.setOnItemClickListener { _: AdapterView<*>, _: View, position: Int, _: Long ->
+                if (position == 0) {
+                    player?.pause()
+                    val intent = Intent(requireActivity(), SearchForActivity::class.java)
+                    intent.putExtra(SearchForFragment.TITLE_KEY, "for primary tag for scene marker")
+                    intent.putExtra("dataType", DataType.TAG.name)
+                    intent.putExtra(SearchForFragment.ID_KEY, StashAction.CREATE_MARKER.id)
+                    resultLauncher.launch(intent)
+                    listPopUp.dismiss()
+                }
+            }
+
+            listPopUp.show()
+        }
     }
 
     @OptIn(UnstableApi::class)
@@ -402,7 +459,11 @@ class PlaybackExoFragment :
         super.onStart()
         if (Util.SDK_INT > 23) {
             val position =
-                requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
+                if (playbackPosition >= 0) {
+                    playbackPosition
+                } else {
+                    requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
+                }
             val forceTranscode =
                 requireActivity().intent.getBooleanExtra(
                     VideoDetailsFragment.FORCE_TRANSCODE,
@@ -418,7 +479,11 @@ class PlaybackExoFragment :
 //        hideSystemUi()
         if ((Util.SDK_INT <= 23 || player == null)) {
             val position =
-                requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
+                if (playbackPosition >= 0) {
+                    playbackPosition
+                } else {
+                    requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
+                }
             val forceTranscode =
                 requireActivity().intent.getBooleanExtra(
                     VideoDetailsFragment.FORCE_TRANSCODE,
@@ -530,6 +595,48 @@ class PlaybackExoFragment :
                 requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             } else {
                 requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+    }
+
+    private inner class ResultCallback : ActivityResultCallback<ActivityResult> {
+        override fun onActivityResult(result: ActivityResult) {
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data: Intent? = result.data
+                val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
+                if (id == StashAction.CREATE_MARKER.id) {
+                    val videoPos = currentVideoPosition
+                    playbackPosition = videoPos
+                    viewLifecycleOwner.lifecycleScope.launch(
+                        CoroutineExceptionHandler { _, ex ->
+                            Log.e(TAG, "Exception creating marker", ex)
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to create marker: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        },
+                    ) {
+                        val tagId =
+                            data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
+                        Log.d(
+                            TAG,
+                            "Adding marker at $videoPos with tagId=$tagId to scene ${scene.id}",
+                        )
+                        val newMarker =
+                            MutationEngine(requireContext()).createMarker(
+                                scene.id,
+                                videoPos,
+                                tagId,
+                            )!!
+                        val dur = Constants.durationToString(newMarker.seconds)
+                        Toast.makeText(
+                            requireContext(),
+                            "Created a new marker at $dur with primary tag '${newMarker.primary_tag.tagData.name}'",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
             }
         }
     }
