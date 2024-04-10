@@ -45,7 +45,7 @@ jobs:
           packages: "tools platform-tools build-tools;${{ env.BUILD_TOOLS_VERSION }}"
       - name: Get version name
         run: |
-          VERSION_NAME=$(git describe --tags)
+          VERSION_NAME=$(git describe --tags --match 'v*')
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
       - name: Build app
         id: buildapp
