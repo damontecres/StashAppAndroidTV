@@ -2,60 +2,30 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory app:title="@string/pref_stash_server_header">
-
         <EditTextPreference
             app:key="stashUrl"
             app:title="@string/pref_stash_server_url"
             app:useSimpleSummaryProvider="true" />
-
         <EditTextPreference
             app:key="stashApiKey"
             app:title="@string/stashapp_config_general_auth_api_key"
             app:useSimpleSummaryProvider="false" />
-
         <Preference
             app:key="testStashServer"
             app:title="Test Connection"
             app:summary="Test connecting to Stash using the above settings" />
-
         <ListPreference
             app:key="chooseStashServer"
             app:title="Switch servers"
             app:summary="Switch to another Stash server" />
-
         <Preference
             app:key="newStashServer"
             app:title="Add a Stash Server"
             app:summary="" />
-
         <ListPreference
             app:key="deleteStashServer"
             app:title="Remove a Stash Server"
             app:summary="" />
-
-        <SwitchPreference
-            app:key="trustAllCerts"
-            app:title="Trust self-signed certificates"
-            app:summary="Restart may be required after changing this"
-            app:defaultValue="false" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory app:title="Search">
-        <SeekBarPreference
-            app:key="maxSearchResults"
-            app:title="Maximum number of search results"
-            app:seekBarIncrement="1"
-            app:showSeekBarValue="true"
-            android:max="100"
-            app:defaultValue="25" />
-        <SeekBarPreference
-            app:key="searchDelay"
-            app:title="Wait for searching (ms)"
-            app:seekBarIncrement="50"
-            app:showSeekBarValue="true"
-            android:max="2000"
-            app:defaultValue="500" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Interface">
@@ -78,39 +48,10 @@
             app:entryValues="@array/card_size_cols" />
 
         <SwitchPreference
-            app:key="scrollToNextResult"
-            app:title="Scroll to next on View All"
-            app:summary="Automatically scroll down to the 'next' results when clicking View All on main page"
-            app:defaultValue="true" />
-        <SwitchPreference
-            app:key="scrollSceneDetails"
-            app:title="Long scene details behavior"
-            app:summaryOn="Scroll if needed"
-            app:summaryOff="Truncate details"
-            app:defaultValue="true" />
-        <SwitchPreference
             app:key="playVideoPreviews"
             app:title="Play video previews"
             app:summaryOn="Video preview will play when item is selected"
             app:summaryOff="Video previews will not play"
-            app:defaultValue="true" />
-        <SwitchPreference
-            app:key="videoPreviewAudio"
-            app:title="Play audio for video previews"
-            app:summaryOn="Play audio"
-            app:summaryOff="Don't play audio"
-            app:defaultValue="true" />
-        <SwitchPreference
-            app:key="@string/pref_key_show_grid_footer"
-            app:title="Show position footer on grids"
-            app:summaryOn="Show footer"
-            app:summaryOff="Hide footer"
-            app:defaultValue="true" />
-        <SwitchPreference
-            app:key="@string/pref_key_show_rating"
-            app:title="Show rating on cards"
-            app:summaryOn="Show rating"
-            app:summaryOff="Hide rating"
             app:defaultValue="true" />
     </PreferenceCategory>
 
@@ -129,27 +70,6 @@
             app:showSeekBarValue="true"
             android:max="300"
             app:defaultValue="10" />
-        <SwitchPreference
-            app:key="skipWithDpad"
-            app:title="D-Pad skipping"
-            app:summaryOn="Skip back/forward with D-Pad left/right"
-            app:summaryOff="Don't skip back/forward with D-Pad left/right"
-            app:defaultValue="true"
-            />
-        <ListPreference
-            app:key="stream_choice"
-            app:title="Stream Choice"
-            app:summary="Which stream type to use when direct is unavailable"
-            app:defaultValue="HLS"
-            app:entries="@array/stream_options"
-            app:entryValues="@array/stream_options" />
-        <SeekBarPreference
-            app:key="controllerShowTimeoutMs"
-            app:title="Hide controls after (milliseconds)"
-            app:seekBarIncrement="100"
-            app:showSeekBarValue="true"
-            android:max="15000"
-            app:defaultValue="5000" />
         <ListPreference
             app:key="playbackFinishedBehavior"
             app:title="Playback finished behavior"
@@ -157,12 +77,6 @@
             app:useSimpleSummaryProvider="true"
             app:entries="@array/playback_finished_behavior_options"
             app:entryValues="@array/playback_finished_behavior_options" />
-        <SwitchPreference
-            app:key="exoShowTitle"
-            app:title="Scene title"
-            app:summaryOn="Show title"
-            app:summaryOff="Hide title"
-            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/stashapp_config_tasks_job_queue">
@@ -177,33 +91,6 @@
             app:summary="@string/stashapp_config_tasks_generate_desc" />
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="Cache">
-        <SeekBarPreference
-            app:key="networkCacheSize"
-            app:title="Max network cache size (MB)"
-            app:seekBarIncrement="25"
-            app:showSeekBarValue="true"
-            android:max="500"
-            app:defaultValue="100" />
-        <SeekBarPreference
-            app:key="networkCacheDuration"
-            app:title="Invalidate cache after"
-            app:seekBarIncrement="1"
-            app:showSeekBarValue="false"
-            android:max="10"
-            app:defaultValue="3" />
-        <SwitchPreference
-            app:key="networkCacheLogging"
-            app:title="Cache logging"
-            app:summaryOn="Log cache hits/misses"
-            app:summaryOff="Don't log cache hits/misses"
-            app:defaultValue="false"/>
-        <Preference
-            app:key="clearCache"
-            app:title="Clear cache"
-            app:summary="Clear the network caches" />
-    </PreferenceCategory>
-
     <PreferenceCategory app:title="About">
         <Preference
             app:key="versionName"
@@ -213,22 +100,13 @@
             app:key="checkForUpdate"
             app:title="@string/stashapp_package_manager_check_for_updates"
             app:summary="" />
-        <SwitchPreference
-            app:key="autoCheckForUpdates"
-            app:title="Automatically check for updates"
-            app:summaryOn="Enabled, on startup"
-            app:summaryOff="Disabled, manual"
-            app:defaultValue="true"/>
-        <EditTextPreference
-            app:key="updateCheckUrl"
-            app:title="Update URL"
-            app:summary="Override URL used for update checks"
-            app:defaultValue="@string/app_update_url"
-            />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Advanced">
         <Preference
-            app:key="license"
-            app:title="OSS License Information"
-            app:summary="" />
+            app:key="advancedPreferences"
+            app:title="Advanced"
+            app:summary="Go to advanced settings" />
     </PreferenceCategory>
 
 </PreferenceScreen>

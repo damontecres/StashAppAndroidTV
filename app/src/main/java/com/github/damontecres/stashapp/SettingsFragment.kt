@@ -24,7 +24,6 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
-import androidx.preference.SwitchPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
 import com.github.damontecres.stashapp.util.Constants
@@ -45,7 +44,7 @@ import java.io.File
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
-        startPreferenceFragment(PreferencesFragment())
+        startPreferenceFragment(PreferencesFragment(::startPreferenceFragment))
     }
 
     override fun onPreferenceStartFragment(
@@ -74,7 +73,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         caller: PreferenceFragmentCompat,
         pref: PreferenceScreen,
     ): Boolean {
-        val fragment: Fragment = PreferencesFragment()
+        val fragment: Fragment = PreferencesFragment(::startPreferenceFragment)
         val args = Bundle(1)
         args.putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, pref.key)
         fragment.arguments = args
@@ -96,7 +95,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         }
     }
 
-    class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
+    class PreferencesFragment(val startPreferenceFragmentFunc: (fragment: LeanbackPreferenceFragmentCompat) -> Unit) :
+        LeanbackPreferenceFragmentCompat() {
         private var serverKeys = listOf<String>()
         private var serverValues = listOf<String>()
 
@@ -234,16 +234,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     true
                 }
 
-            val playerChoice = findPreference<SwitchPreference>("playerChoice")
-            playerChoice?.summaryProvider =
-                Preference.SummaryProvider<SwitchPreference> { preference ->
-                    if (preference.isChecked) {
-                        "Using ExoPlayer (recommended)"
-                    } else {
-                        "Using default player"
-                    }
-                }
-
             setServers()
             val chooseServer = findPreference<ListPreference>("chooseStashServer")
             chooseServer?.entries = serverKeys.toTypedArray()
@@ -340,42 +330,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 false
             }
 
-            findPreference<Preference>("license")?.setOnPreferenceClickListener {
-                startActivity(Intent(requireContext(), LicenseActivity::class.java))
-                true
-            }
-
-            findPreference<Preference>("trustAllCerts")?.setOnPreferenceChangeListener { _, newValue ->
-                val app = requireActivity().application as StashApplication
-                configureHttpsTrust(app, newValue as Boolean)
-                true
-            }
-
-            findPreference<SeekBarPreference>("maxSearchResults")?.min = 5
             findPreference<SeekBarPreference>("skip_back_time")?.min = 5
             findPreference<SeekBarPreference>("skip_forward_time")?.min = 5
-            findPreference<SeekBarPreference>("searchDelay")?.min = 50
 
-            val cacheSizePref = findPreference<SeekBarPreference>("networkCacheSize")!!
-            cacheSizePref.min = 25
-            val cache = Constants.getNetworkCache(requireContext())
-            setUsedCachedSummary(cacheSizePref, cache)
-
-            findPreference<Preference>("clearCache")?.setOnPreferenceClickListener {
-                cache.evictAll()
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    withContext(Dispatchers.IO) {
-                        Glide.get(requireContext()).clearDiskCache()
-                    }
-                    setUsedCachedSummary(cacheSizePref, cache)
-                }
-                true
-            }
-
-            val cacheDurationPref = findPreference<SeekBarPreference>("networkCacheDuration")
-            setCacheDurationSummary(cacheDurationPref!!, cacheDurationPref.value)
-            cacheDurationPref.setOnPreferenceChangeListener { _, newValue ->
-                setCacheDurationSummary(cacheDurationPref, newValue)
+            val advancedPreferences = findPreference<Preference>("advancedPreferences")
+            advancedPreferences?.setOnPreferenceClickListener {
+                startPreferenceFragmentFunc(AdvancedPreferencesFragment())
                 true
             }
         }
@@ -405,37 +365,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     }
                 }
             }
-        }
-
-        private fun setCacheDurationSummary(
-            pref: SeekBarPreference,
-            value: Any,
-        ) {
-            val duration = cacheDurationPrefToDuration(value.toString().toInt())
-            pref.summary =
-                if (duration != null) {
-                    duration.toString()
-                } else {
-                    "Always request from server"
-                }
-        }
-
-        private fun setUsedCachedSummary(
-            cacheSizePref: Preference,
-            cache: Cache,
-        ) {
-            val cacheSize = cache.size() / 1024.0 / 1024
-            val glideCacheSize =
-                File(
-                    requireContext().cacheDir,
-                    DiskCache.Factory.DEFAULT_DISK_CACHE_DIR,
-                ).walkTopDown()
-                    .filter { it.isFile }.map { it.length() }.sum() / 1024.0 / 1024.0
-            val cacheSizeFormatted = String.format("%.2f", cacheSize)
-            val glideCacheSizeFormatted = String.format("%.2f", glideCacheSize)
-
-            cacheSizePref.summary =
-                "Using $cacheSizeFormatted MB (Images $glideCacheSizeFormatted MB)"
         }
 
         override fun onResume() {
@@ -472,6 +401,83 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             private const val SERVER_PREF_PREFIX = "server_"
             private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
+        }
+    }
+
+    class AdvancedPreferencesFragment : LeanbackPreferenceFragmentCompat() {
+        override fun onCreatePreferences(
+            savedInstanceState: Bundle?,
+            rootKey: String?,
+        ) {
+            setPreferencesFromResource(R.xml.advanced_preferences, rootKey)
+
+            findPreference<SeekBarPreference>("maxSearchResults")?.min = 5
+            findPreference<SeekBarPreference>("searchDelay")?.min = 50
+
+            val cacheSizePref = findPreference<SeekBarPreference>("networkCacheSize")!!
+            cacheSizePref.min = 25
+            val cache = Constants.getNetworkCache(requireContext())
+            setUsedCachedSummary(cacheSizePref, cache)
+
+            findPreference<Preference>("clearCache")?.setOnPreferenceClickListener {
+                cache.evictAll()
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    withContext(Dispatchers.IO) {
+                        Glide.get(requireContext()).clearDiskCache()
+                    }
+                    setUsedCachedSummary(cacheSizePref, cache)
+                }
+                true
+            }
+
+            val cacheDurationPref = findPreference<SeekBarPreference>("networkCacheDuration")
+            setCacheDurationSummary(cacheDurationPref!!, cacheDurationPref.value)
+            cacheDurationPref.setOnPreferenceChangeListener { _, newValue ->
+                setCacheDurationSummary(cacheDurationPref, newValue)
+                true
+            }
+
+            findPreference<Preference>("license")?.setOnPreferenceClickListener {
+                startActivity(Intent(requireContext(), LicenseActivity::class.java))
+                true
+            }
+
+            findPreference<Preference>("trustAllCerts")?.setOnPreferenceChangeListener { _, newValue ->
+                val app = requireActivity().application as StashApplication
+                configureHttpsTrust(app, newValue as Boolean)
+                true
+            }
+        }
+
+        private fun setCacheDurationSummary(
+            pref: SeekBarPreference,
+            value: Any,
+        ) {
+            val duration = cacheDurationPrefToDuration(value.toString().toInt())
+            pref.summary =
+                if (duration != null) {
+                    duration.toString()
+                } else {
+                    "Always request from server"
+                }
+        }
+
+        private fun setUsedCachedSummary(
+            cacheSizePref: Preference,
+            cache: Cache,
+        ) {
+            val cacheSize = cache.size() / 1024.0 / 1024
+            val glideCacheSize =
+                File(
+                    requireContext().cacheDir,
+                    DiskCache.Factory.DEFAULT_DISK_CACHE_DIR,
+                ).walkTopDown()
+                    .filter { it.isFile }.map { it.length() }.sum() / 1024.0 / 1024.0
+            val cacheSizeFormatted = String.format("%.2f", cacheSize)
+            val glideCacheSizeFormatted = String.format("%.2f", glideCacheSize)
+
+            cacheSizePref.summary =
+                "Using $cacheSizeFormatted MB (Images $glideCacheSizeFormatted MB)"
         }
     }
 
