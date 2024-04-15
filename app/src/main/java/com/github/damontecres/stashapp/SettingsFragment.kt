@@ -24,7 +24,6 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
-import androidx.preference.SwitchPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
 import com.github.damontecres.stashapp.util.Constants
@@ -45,7 +44,7 @@ import java.io.File
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
-        startPreferenceFragment(PreferencesFragment())
+        startPreferenceFragment(PreferencesFragment(::startPreferenceFragment))
     }
 
     override fun onPreferenceStartFragment(
@@ -74,7 +73,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         caller: PreferenceFragmentCompat,
         pref: PreferenceScreen,
     ): Boolean {
-        val fragment: Fragment = PreferencesFragment()
+        val fragment: Fragment = PreferencesFragment(::startPreferenceFragment)
         val args = Bundle(1)
         args.putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, pref.key)
         fragment.arguments = args
@@ -96,7 +95,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         }
     }
 
-    class PreferencesFragment : LeanbackPreferenceFragmentCompat() {
+    class PreferencesFragment(val startPreferenceFragmentFunc: (fragment: LeanbackPreferenceFragmentCompat) -> Unit) :
+        LeanbackPreferenceFragmentCompat() {
         private var serverKeys = listOf<String>()
         private var serverValues = listOf<String>()
 
@@ -108,8 +108,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
-            val pinCodePref = findPreference<EditTextPreference>("pinCode")
-            pinCodePref?.summaryProvider =
+            val pinCodePref = findPreference<EditTextPreference>("pinCode")!!
+            pinCodePref.summaryProvider =
                 Preference.SummaryProvider<EditTextPreference> { preference ->
                     if (preference.text.isNullOrBlank()) {
                         "No PIN is set"
@@ -119,10 +119,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
 
             val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
-            val versionPref = findPreference<Preference>("versionName")
-            versionPref?.summary = installedVersion.toString()
+            val versionPref = findPreference<Preference>("versionName")!!
+            versionPref.summary = installedVersion.toString()
             var clickCount = 0
-            versionPref?.setOnPreferenceClickListener {
+            versionPref.setOnPreferenceClickListener {
                 if (clickCount > 2) {
                     clickCount = 0
                     startActivity(Intent(requireContext(), DebugActivity::class.java))
@@ -132,8 +132,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 true
             }
 
-            val checkForUpdatePref = findPreference<LongClickPreference>("checkForUpdate")
-            checkForUpdatePref?.setOnPreferenceClickListener {
+            val checkForUpdatePref = findPreference<LongClickPreference>("checkForUpdate")!!
+            checkForUpdatePref.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val release = UpdateChecker.getLatestRelease(requireContext())
                     if (release != null) {
@@ -159,7 +159,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
                 true
             }
-            checkForUpdatePref?.setOnLongClickListener {
+            checkForUpdatePref.setOnLongClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val release = UpdateChecker.getLatestRelease(requireContext())
                     if (release != null) {
@@ -178,18 +178,18 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 true
             }
 
-            findPreference<Preference>("testStashServer")
-                ?.setOnPreferenceClickListener {
+            findPreference<Preference>("testStashServer")!!
+                .setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                         testStashConnection(requireContext(), true)
                     }
                     true
                 }
 
-            val urlPref = findPreference<EditTextPreference>("stashUrl")
+            val urlPref = findPreference<EditTextPreference>("stashUrl")!!
 
-            val apiKayPref = findPreference<EditTextPreference>("stashApiKey")
-            apiKayPref?.summaryProvider =
+            val apiKayPref = findPreference<EditTextPreference>("stashApiKey")!!
+            apiKayPref.summaryProvider =
                 Preference.SummaryProvider<EditTextPreference> { preference ->
                     if (preference.text.isNullOrBlank()) {
                         "No API key configured"
@@ -208,8 +208,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     ).show()
                 }
 
-            findPreference<Preference>("triggerScan")
-                ?.setOnPreferenceClickListener {
+            findPreference<Preference>("triggerScan")!!
+                .setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
                         MutationEngine(requireContext()).triggerScan()
                         Toast.makeText(
@@ -221,8 +221,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     true
                 }
 
-            findPreference<Preference>("triggerGenerate")
-                ?.setOnPreferenceClickListener {
+            findPreference<Preference>("triggerGenerate")!!
+                .setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
                         MutationEngine(requireContext()).triggerGenerate()
                         Toast.makeText(
@@ -234,21 +234,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     true
                 }
 
-            val playerChoice = findPreference<SwitchPreference>("playerChoice")
-            playerChoice?.summaryProvider =
-                Preference.SummaryProvider<SwitchPreference> { preference ->
-                    if (preference.isChecked) {
-                        "Using ExoPlayer (recommended)"
-                    } else {
-                        "Using default player"
-                    }
-                }
-
             setServers()
-            val chooseServer = findPreference<ListPreference>("chooseStashServer")
-            chooseServer?.entries = serverKeys.toTypedArray()
-            chooseServer?.entryValues = serverValues.toTypedArray()
-            chooseServer?.setOnPreferenceClickListener {
+            val chooseServer = findPreference<ListPreference>("chooseStashServer")!!
+            chooseServer.entries = serverKeys.toTypedArray()
+            chooseServer.entryValues = serverValues.toTypedArray()
+            chooseServer.setOnPreferenceClickListener {
                 setServers()
                 chooseServer.entries = serverKeys.toTypedArray()
                 chooseServer.entryValues = serverValues.toTypedArray()
@@ -260,7 +250,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     false
                 }
             }
-            chooseServer?.setOnPreferenceChangeListener { preference: Preference, newValue: Any ->
+            chooseServer.setOnPreferenceChangeListener { preference: Preference, newValue: Any ->
                 val currentUrl = urlPref?.text
                 val currentApiKey = apiKayPref?.text
                 if (!currentUrl.isNullOrBlank()) {
@@ -275,16 +265,16 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
                 val server = manager.getString(serverKey, null)
                 val apiKey = manager.getString(apiKeyKey, null)
-                urlPref?.text = server
-                apiKayPref?.text = apiKey
+                urlPref.text = server
+                apiKayPref.text = apiKey
 
                 false
             }
 
-            val newServer = findPreference<Preference>("newStashServer")
-            newServer?.setOnPreferenceClickListener {
-                val url = urlPref?.text
-                val apiKey = apiKayPref?.text
+            val newServer = findPreference<Preference>("newStashServer")!!
+            newServer.setOnPreferenceClickListener {
+                val url = urlPref.text
+                val apiKey = apiKayPref.text
                 if (url.isNullOrBlank()) {
                     Toast.makeText(
                         requireContext(),
@@ -298,7 +288,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     }
 
                     urlPref.text = null
-                    apiKayPref?.text = null
+                    apiKayPref.text = null
                     setServers()
                     Toast.makeText(
                         requireContext(),
@@ -309,10 +299,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 true
             }
 
-            val removeServer = findPreference<ListPreference>("deleteStashServer")
-            removeServer?.entries = serverKeys.toTypedArray()
-            removeServer?.entryValues = serverValues.toTypedArray()
-            removeServer?.setOnPreferenceClickListener {
+            val removeServer = findPreference<ListPreference>("deleteStashServer")!!
+            removeServer.entries = serverKeys.toTypedArray()
+            removeServer.entryValues = serverValues.toTypedArray()
+            removeServer.setOnPreferenceClickListener {
                 setServers()
                 removeServer.entries = serverKeys.toTypedArray()
                 removeServer.entryValues = serverValues.toTypedArray()
@@ -324,7 +314,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     false
                 }
             }
-            removeServer?.setOnPreferenceChangeListener { preference, newValue ->
+            removeServer.setOnPreferenceChangeListener { preference, newValue ->
                 val key = newValue.toString()
                 manager.edit(true) {
                     val apiKeyKey = key.replace(SERVER_PREF_PREFIX, SERVER_APIKEY_PREF_PREFIX)
@@ -332,50 +322,20 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     remove(apiKeyKey)
                 }
                 val url = key.replace(SERVER_PREF_PREFIX, "")
-                if (url == urlPref?.text) {
+                if (url == urlPref.text) {
                     urlPref.text = null
-                    apiKayPref?.text = null
+                    apiKayPref.text = null
                 }
                 setServers()
                 false
             }
 
-            findPreference<Preference>("license")?.setOnPreferenceClickListener {
-                startActivity(Intent(requireContext(), LicenseActivity::class.java))
-                true
-            }
+            findPreference<SeekBarPreference>("skip_back_time")!!.min = 5
+            findPreference<SeekBarPreference>("skip_forward_time")!!.min = 5
 
-            findPreference<Preference>("trustAllCerts")?.setOnPreferenceChangeListener { _, newValue ->
-                val app = requireActivity().application as StashApplication
-                configureHttpsTrust(app, newValue as Boolean)
-                true
-            }
-
-            findPreference<SeekBarPreference>("maxSearchResults")?.min = 5
-            findPreference<SeekBarPreference>("skip_back_time")?.min = 5
-            findPreference<SeekBarPreference>("skip_forward_time")?.min = 5
-            findPreference<SeekBarPreference>("searchDelay")?.min = 50
-
-            val cacheSizePref = findPreference<SeekBarPreference>("networkCacheSize")!!
-            cacheSizePref.min = 25
-            val cache = Constants.getNetworkCache(requireContext())
-            setUsedCachedSummary(cacheSizePref, cache)
-
-            findPreference<Preference>("clearCache")?.setOnPreferenceClickListener {
-                cache.evictAll()
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    withContext(Dispatchers.IO) {
-                        Glide.get(requireContext()).clearDiskCache()
-                    }
-                    setUsedCachedSummary(cacheSizePref, cache)
-                }
-                true
-            }
-
-            val cacheDurationPref = findPreference<SeekBarPreference>("networkCacheDuration")
-            setCacheDurationSummary(cacheDurationPref!!, cacheDurationPref.value)
-            cacheDurationPref.setOnPreferenceChangeListener { _, newValue ->
-                setCacheDurationSummary(cacheDurationPref, newValue)
+            val advancedPreferences = findPreference<Preference>("advancedPreferences")!!
+            advancedPreferences.setOnPreferenceClickListener {
+                startPreferenceFragmentFunc(AdvancedPreferencesFragment())
                 true
             }
         }
@@ -404,6 +364,88 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         }
                     }
                 }
+            }
+        }
+
+        override fun onResume() {
+            super.onResume()
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                ServerPreferences(requireContext()).updatePreferences()
+            }
+        }
+
+        override fun onStop() {
+            super.onStop()
+            val url = findPreference<EditTextPreference>("stashUrl")!!.text
+            val apiKey = findPreference<EditTextPreference>("stashApiKey")!!.text
+            if (!url.isNullOrBlank()) {
+                PreferenceManager.getDefaultSharedPreferences(requireContext()).edit(true) {
+                    putString(SERVER_PREF_PREFIX + url, url)
+                    putString(SERVER_APIKEY_PREF_PREFIX + url, apiKey)
+                }
+            }
+        }
+
+        private fun setServers() {
+            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+            val keys =
+                manager.all.keys.filter { it.startsWith(SERVER_PREF_PREFIX) }.sorted().toList()
+            val values = keys.map { manager.all[it].toString() }.toList()
+
+            serverKeys = values
+            serverValues = keys
+        }
+
+        companion object {
+            const val TAG = "SettingsFragment"
+
+            private const val SERVER_PREF_PREFIX = "server_"
+            private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
+        }
+    }
+
+    class AdvancedPreferencesFragment : LeanbackPreferenceFragmentCompat() {
+        override fun onCreatePreferences(
+            savedInstanceState: Bundle?,
+            rootKey: String?,
+        ) {
+            setPreferencesFromResource(R.xml.advanced_preferences, rootKey)
+
+            findPreference<SeekBarPreference>("maxSearchResults")!!.min = 5
+            findPreference<SeekBarPreference>("searchDelay")!!.min = 50
+
+            val cacheSizePref = findPreference<SeekBarPreference>("networkCacheSize")!!
+            cacheSizePref.min = 25
+            val cache = Constants.getNetworkCache(requireContext())
+            setUsedCachedSummary(cacheSizePref, cache)
+
+            findPreference<Preference>("clearCache")!!.setOnPreferenceClickListener {
+                cache.evictAll()
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    withContext(Dispatchers.IO) {
+                        Glide.get(requireContext()).clearDiskCache()
+                    }
+                    setUsedCachedSummary(cacheSizePref, cache)
+                }
+                true
+            }
+
+            val cacheDurationPref = findPreference<SeekBarPreference>("networkCacheDuration")!!
+            setCacheDurationSummary(cacheDurationPref, cacheDurationPref.value)
+            cacheDurationPref.setOnPreferenceChangeListener { _, newValue ->
+                setCacheDurationSummary(cacheDurationPref, newValue)
+                true
+            }
+
+            findPreference<Preference>("license")!!.setOnPreferenceClickListener {
+                startActivity(Intent(requireContext(), LicenseActivity::class.java))
+                true
+            }
+
+            findPreference<Preference>("trustAllCerts")!!.setOnPreferenceChangeListener { _, newValue ->
+                val app = requireActivity().application as StashApplication
+                configureHttpsTrust(app, newValue as Boolean)
+                true
             }
         }
 
@@ -436,42 +478,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             cacheSizePref.summary =
                 "Using $cacheSizeFormatted MB (Images $glideCacheSizeFormatted MB)"
-        }
-
-        override fun onResume() {
-            super.onResume()
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                ServerPreferences(requireContext()).updatePreferences()
-            }
-        }
-
-        override fun onStop() {
-            super.onStop()
-            val url = findPreference<EditTextPreference>("stashUrl")?.text
-            val apiKey = findPreference<EditTextPreference>("stashApiKey")?.text
-            if (!url.isNullOrBlank()) {
-                PreferenceManager.getDefaultSharedPreferences(requireContext()).edit(true) {
-                    putString(SERVER_PREF_PREFIX + url, url)
-                    putString(SERVER_APIKEY_PREF_PREFIX + url, apiKey)
-                }
-            }
-        }
-
-        private fun setServers() {
-            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            val keys =
-                manager.all.keys.filter { it.startsWith(SERVER_PREF_PREFIX) }.sorted().toList()
-            val values = keys.map { manager.all[it].toString() }.toList()
-
-            serverKeys = values
-            serverValues = keys
-        }
-
-        companion object {
-            const val TAG = "SettingsFragment"
-
-            private const val SERVER_PREF_PREFIX = "server_"
-            private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
         }
     }
 
