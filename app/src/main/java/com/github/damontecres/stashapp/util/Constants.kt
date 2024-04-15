@@ -660,7 +660,7 @@ fun getMaxMeasuredWidth(
         } else if (maxWidthFraction != null && context is Activity) {
             val displayMetrics = DisplayMetrics()
             context.windowManager.defaultDisplay.getMetrics(displayMetrics)
-            displayMetrics.widthPixels
+            (displayMetrics.widthPixels * maxWidthFraction).toInt()
         } else {
             Log.w(Constants.TAG, "maxWidthFraction is not null, but couldn't get window size")
             Int.MAX_VALUE
