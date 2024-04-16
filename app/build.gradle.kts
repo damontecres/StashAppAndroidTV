@@ -124,7 +124,7 @@ tasks.create("generateStrings", Exec::class.java) {
 
 tasks.preBuild.dependsOn("generateStrings")
 
-val mediaVersion = "1.2.1"
+val mediaVersion = "1.3.1"
 val glideVersion = "4.16.0"
 
 dependencies {
@@ -149,6 +149,7 @@ dependencies {
     implementation("androidx.media3:media3-ui:$mediaVersion")
     implementation("androidx.media3:media3-exoplayer-dash:$mediaVersion")
     implementation("androidx.media3:media3-exoplayer-hls:$mediaVersion")
+    implementation("androidx.media3:media3-datasource-okhttp:$mediaVersion")
     implementation("com.github.rubensousa:previewseekbar:3.1.1")
     implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")

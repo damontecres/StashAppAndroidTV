@@ -4,12 +4,11 @@ import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.createOkHttpClient
 
 class StashExoPlayer private constructor() {
     companion object {
@@ -31,23 +30,7 @@ class StashExoPlayer private constructor() {
                 synchronized(this) { // synchronized to avoid concurrency problem
                     if (instance == null) {
                         val dataSourceFactory =
-                            DataSource.Factory {
-                                val apiKey =
-                                    PreferenceManager.getDefaultSharedPreferences(context)
-                                        .getString("stashApiKey", null)
-                                val dataSource = DefaultHttpDataSource.Factory().createDataSource()
-                                if (!apiKey.isNullOrBlank()) {
-                                    dataSource.setRequestProperty(
-                                        Constants.STASH_API_HEADER,
-                                        apiKey,
-                                    )
-                                    dataSource.setRequestProperty(
-                                        Constants.STASH_API_HEADER.lowercase(),
-                                        apiKey,
-                                    )
-                                }
-                                dataSource
-                            }
+                            OkHttpDataSource.Factory(createOkHttpClient(context))
 
                         instance =
                             ExoPlayer.Builder(context)
