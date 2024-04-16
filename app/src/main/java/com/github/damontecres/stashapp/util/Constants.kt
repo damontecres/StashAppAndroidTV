@@ -35,7 +35,6 @@ import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.ImageActivity
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -64,9 +63,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.concurrent.TimeUnit
-import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -136,7 +133,7 @@ object Constants {
     }
 }
 
-val TRUST_ALL_CERTS: TrustManager =
+val TRUST_ALL_CERTS: X509TrustManager =
     @SuppressLint("CustomX509TrustManager")
     object : X509TrustManager {
         @SuppressLint("TrustAllX509TrustManager")
@@ -172,7 +169,7 @@ fun createOkHttpClient(context: Context): OkHttpClient {
         builder =
             builder.sslSocketFactory(
                 sslContext.socketFactory,
-                TRUST_ALL_CERTS as X509TrustManager,
+                TRUST_ALL_CERTS,
             ).hostnameVerifier { _, _ ->
                 true
             }
@@ -231,24 +228,6 @@ fun createOkHttpClient(context: Context): OkHttpClient {
     }
     builder = builder.cache(getNetworkCache(context))
     return builder.build()
-}
-
-fun configureHttpsTrust(
-    app: StashApplication,
-    trustAll: Boolean? = null,
-) {
-    val trust =
-        trustAll ?: PreferenceManager.getDefaultSharedPreferences(app.baseContext)
-            .getBoolean("trustAllCerts", false)
-    if (trust) {
-        val sslContext = SSLContext.getInstance("SSL")
-        sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-        HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.socketFactory)
-        HttpsURLConnection.setDefaultHostnameVerifier { _, _ -> true }
-    } else {
-        HttpsURLConnection.setDefaultSSLSocketFactory(app.defaultSSLSocketFactory)
-        HttpsURLConnection.setDefaultHostnameVerifier(app.defaultHostnameVerifier)
-    }
 }
 
 /**
