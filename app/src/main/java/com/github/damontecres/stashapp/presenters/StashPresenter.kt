@@ -67,7 +67,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 PopupOnLongClickListener(
                     listOf("Go to"),
                 ) { _, _, _, _ ->
-                    cardView.callOnClick()
+                    cardView.performClick()
                 },
             )
         }
