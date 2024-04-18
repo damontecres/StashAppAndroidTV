@@ -62,6 +62,14 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                     callback.onItemLongClick(item as T, pos)
                 },
             )
+        } else {
+            cardView.setOnLongClickListener(
+                PopupOnLongClickListener(
+                    listOf("Go to"),
+                ) { _, _, _, _ ->
+                    cardView.callOnClick()
+                },
+            )
         }
         cardView.mainImageView.visibility = View.VISIBLE
         doOnBindViewHolder(viewHolder.view as StashImageCardView, item as T)
