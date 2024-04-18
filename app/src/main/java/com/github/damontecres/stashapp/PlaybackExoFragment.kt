@@ -163,7 +163,7 @@ class PlaybackExoFragment :
                 }.also { exoPlayer ->
                     var mediaItem: MediaItem? = null
                     var streamUrl = scene.streams["Direct stream"]
-                    if (streamUrl != null && scene.videoCodec != "av1" && !forceTranscode) {
+                    if (streamUrl != null && !forceTranscode) {
                         mediaItem = MediaItem.fromUri(streamUrl)
                     } else {
                         val streamChoice =
