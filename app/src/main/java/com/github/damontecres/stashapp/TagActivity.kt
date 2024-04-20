@@ -1,11 +1,8 @@
 package com.github.damontecres.stashapp
 
-import android.os.Bundle
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.leanback.tab.LeanbackTabLayout
-import androidx.leanback.tab.LeanbackViewPager
+import androidx.viewpager.widget.PagerAdapter
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -28,31 +25,22 @@ import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
 
 class TagActivity : TabbedGridFragmentActivity() {
-    private lateinit var tagId: String
+    override fun getTitleText(): CharSequence? {
+        return intent.getStringExtra("tagName")
+    }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        if (savedInstanceState == null) {
-            tagId = intent.getStringExtra("tagId")!!
-            val tagName = intent.getStringExtra("tagName")
-            findViewById<TextView>(R.id.grid_title).text = tagName
+    override fun getPagerAdapter(): PagerAdapter {
+        val tagId = intent.getStringExtra("tagId")!!
+        val tabs =
+            listOf(
+                getString(DataType.SCENE.pluralStringId),
+                getString(DataType.GALLERY.pluralStringId),
+                getString(DataType.IMAGE.pluralStringId),
+                getString(DataType.MARKER.pluralStringId),
+                getString(DataType.PERFORMER.pluralStringId),
+            )
 
-            val viewPager = findViewById<LeanbackViewPager>(R.id.view_pager)
-            val tabLayout = findViewById<LeanbackTabLayout>(R.id.tab_layout)
-
-            val tabs =
-                listOf(
-                    getString(DataType.SCENE.pluralStringId),
-                    getString(DataType.GALLERY.pluralStringId),
-                    getString(DataType.IMAGE.pluralStringId),
-                    getString(DataType.MARKER.pluralStringId),
-                    getString(DataType.PERFORMER.pluralStringId),
-                )
-
-            val tagAdapter = TabPageAdapter(tabs, tagId, supportFragmentManager)
-            viewPager.adapter = tagAdapter
-            tabLayout.setupWithViewPager(viewPager)
-        }
+        return TabPageAdapter(tabs, tagId, supportFragmentManager)
     }
 
     class TabPageAdapter(tabs: List<String>, private val tagId: String, fm: FragmentManager) :
