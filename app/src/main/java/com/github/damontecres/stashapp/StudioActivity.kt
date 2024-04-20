@@ -1,12 +1,8 @@
 package com.github.damontecres.stashapp
 
-import android.os.Bundle
-import android.util.Log
-import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.leanback.tab.LeanbackTabLayout
-import androidx.leanback.tab.LeanbackViewPager
+import androidx.viewpager.widget.PagerAdapter
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -33,44 +29,29 @@ import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.StudioComparator
 
 class StudioActivity : TabbedGridFragmentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        if (savedInstanceState == null) {
-            val studioId = this.intent.getIntExtra("studioId", -1)
-            val studioName = this.intent.getStringExtra("studioName")
-            findViewById<TextView>(R.id.grid_title).text = "$studioName"
-
-            val viewPager = findViewById<LeanbackViewPager>(R.id.view_pager)
-            val tabLayout = findViewById<LeanbackTabLayout>(R.id.tab_layout)
-
-            val tabTitles =
-                listOf(
-                    getString(DataType.SCENE.pluralStringId),
-                    getString(DataType.GALLERY.pluralStringId),
-                    getString(DataType.IMAGE.pluralStringId),
-                    getString(DataType.PERFORMER.pluralStringId),
-                    getString(DataType.MOVIE.pluralStringId),
-                    getString(R.string.stashapp_subsidiary_studios),
-                )
-
-            val tagAdapter = PagerAdapter(tabTitles, studioId.toString(), supportFragmentManager)
-            viewPager.adapter = tagAdapter
-            tabLayout.setupWithViewPager(viewPager)
-        }
+    override fun getTitleText(): CharSequence? {
+        return intent.getStringExtra("studioName")
     }
 
-    override fun onStart() {
-        super.onStart()
-        val layout = findViewById<LeanbackTabLayout>(R.id.tab_layout)
-
-        Log.v("StudioActivity", "currentFocus=$currentFocus, ${currentFocus?.id}")
-        layout.getChildAt(0).requestFocus()
-//        val tab = layout.getTabAt(0)
-//        tab?.view
-        Log.v("StudioActivity", "currentFocus=$currentFocus, ${currentFocus?.id}")
+    override fun getPagerAdapter(): PagerAdapter {
+        val studioId = this.intent.getIntExtra("studioId", -1)
+        val tabTitles =
+            listOf(
+                getString(DataType.SCENE.pluralStringId),
+                getString(DataType.GALLERY.pluralStringId),
+                getString(DataType.IMAGE.pluralStringId),
+                getString(DataType.PERFORMER.pluralStringId),
+                getString(DataType.MOVIE.pluralStringId),
+                getString(R.string.stashapp_subsidiary_studios),
+            )
+        return StudioPagerAdapter(tabTitles, studioId.toString(), supportFragmentManager)
     }
 
-    class PagerAdapter(tabTitles: List<String>, private val studioId: String, fm: FragmentManager) :
+    class StudioPagerAdapter(
+        tabTitles: List<String>,
+        private val studioId: String,
+        fm: FragmentManager,
+    ) :
         ListFragmentPagerAdapter(tabTitles, fm) {
         override fun getItem(position: Int): Fragment {
             return if (position == 0) {
