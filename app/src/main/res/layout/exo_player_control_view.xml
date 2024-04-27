@@ -133,6 +133,7 @@
         android:orientation="horizontal"
         android:paddingTop="@dimen/exo_styled_controls_padding"
         android:paddingBottom="@dimen/exo_styled_controls_padding"
+        android:clipToPadding="false"
         app:layout_constraintTop_toTopOf="@id/exo_center_controls"
         app:layout_constraintBottom_toBottomOf="@id/exo_center_controls"
         app:layout_constraintStart_toStartOf="parent">
