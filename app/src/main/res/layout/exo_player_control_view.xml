@@ -142,6 +142,7 @@
             android:id="@+id/more_options_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_margin="4dp"
             android:padding="8dp"
             android:layout_gravity="center_vertical"
             android:scaleType="fitXY"
