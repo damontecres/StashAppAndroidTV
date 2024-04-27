@@ -61,6 +61,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StudioDiffCallback
 import com.github.damontecres.stashapp.util.TagDiffCallback
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -77,6 +78,7 @@ import kotlin.math.roundToInt
 class VideoDetailsFragment : DetailsSupportFragment() {
     private var mSelectedMovie: SlimSceneData? = null
 
+    private val studioAdapter = ArrayObjectAdapter(StudioPresenter())
     private val performersAdapter =
         ArrayObjectAdapter(PerformerPresenter(PerformerLongClickCallBack()))
     private val tagsAdapter = ArrayObjectAdapter(TagPresenter(TagLongClickCallBack()))
@@ -223,12 +225,16 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
 
             if (mSelectedMovie!!.studio?.studioData != null) {
-                val studioAdapter = ArrayObjectAdapter(StudioPresenter())
-                studioAdapter.add(mSelectedMovie!!.studio!!.studioData)
-                mAdapter.set(
-                    STUDIO_POS,
-                    ListRow(HeaderItem(getString(R.string.stashapp_studio)), studioAdapter),
+                studioAdapter.setItems(
+                    listOf(mSelectedMovie!!.studio!!.studioData),
+                    StudioDiffCallback,
                 )
+                if (mAdapter.lookup(STUDIO_POS) == null) {
+                    mAdapter.set(
+                        STUDIO_POS,
+                        ListRow(HeaderItem(getString(R.string.stashapp_studio)), studioAdapter),
+                    )
+                }
             } else {
                 mAdapter.clear(STUDIO_POS)
             }
@@ -262,19 +268,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
             val performerIds = mSelectedMovie!!.performers.map { it.id }
             if (performerIds.isNotEmpty()) {
-                val perfs = queryEngine.findPerformers(performerIds = performerIds)
-                if (perfs.isNotEmpty()) {
-                    if (mAdapter.lookup(PERFORMER_POS) == null) {
-                        mAdapter.set(
-                            PERFORMER_POS,
-                            ListRow(
-                                HeaderItem(getString(R.string.stashapp_performers)),
-                                performersAdapter,
-                            ),
-                        )
-                    }
-                    performersAdapter.setItems(perfs, PerformerDiffCallback)
+                if (mAdapter.lookup(PERFORMER_POS) == null) {
+                    mAdapter.set(
+                        PERFORMER_POS,
+                        ListRow(
+                            HeaderItem(getString(R.string.stashapp_performers)),
+                            performersAdapter,
+                        ),
+                    )
                 }
+                val perfs = queryEngine.findPerformers(performerIds = performerIds)
+                performersAdapter.setItems(perfs, PerformerDiffCallback)
             } else {
                 mAdapter.clear(PERFORMER_POS)
             }

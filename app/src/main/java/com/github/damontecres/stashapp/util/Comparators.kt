@@ -164,3 +164,5 @@ object MarkerDiffCallback : StashDiffCallback<MarkerData>(getId = { it.id })
 object PerformerDiffCallback : StashDiffCallback<PerformerData>(getId = { it.id })
 
 object MovieDiffCallback : StashDiffCallback<MovieData>(getId = { it.id })
+
+object StudioDiffCallback : StashDiffCallback<StudioData>(getId = { it.id })
