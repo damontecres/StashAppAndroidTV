@@ -132,11 +132,38 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
 
             val checkForUpdatePref = findPreference<LongClickPreference>("checkForUpdate")!!
-            checkForUpdatePref.setOnPreferenceClickListener {
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val release = UpdateChecker.getLatestRelease(requireContext())
-                    if (release != null) {
-                        if (release.version.isGreaterThan(installedVersion)) {
+            val installUpdate = findPreference<LongClickPreference>("installUpdate")!!
+            listOf(checkForUpdatePref, installUpdate).forEach { pref ->
+                pref.setOnPreferenceClickListener {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        val release = UpdateChecker.getLatestRelease(requireContext())
+                        if (release != null) {
+                            if (release.version.isGreaterThan(installedVersion)) {
+                                GuidedStepSupportFragment.add(
+                                    requireActivity().supportFragmentManager,
+                                    UpdateAppFragment(release),
+                                )
+                            } else {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "No update available!",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        } else {
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to check for updates",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+                    }
+                    true
+                }
+                pref.setOnLongClickListener {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        val release = UpdateChecker.getLatestRelease(requireContext())
+                        if (release != null) {
                             GuidedStepSupportFragment.add(
                                 requireActivity().supportFragmentManager,
                                 UpdateAppFragment(release),
@@ -144,37 +171,13 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         } else {
                             Toast.makeText(
                                 requireContext(),
-                                "No update available!",
-                                Toast.LENGTH_SHORT,
+                                "Failed to check for updates",
+                                Toast.LENGTH_LONG,
                             ).show()
                         }
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to check for updates",
-                            Toast.LENGTH_LONG,
-                        ).show()
                     }
+                    true
                 }
-                true
-            }
-            checkForUpdatePref.setOnLongClickListener {
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val release = UpdateChecker.getLatestRelease(requireContext())
-                    if (release != null) {
-                        GuidedStepSupportFragment.add(
-                            requireActivity().supportFragmentManager,
-                            UpdateAppFragment(release),
-                        )
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to check for updates",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                }
-                true
             }
 
             findPreference<Preference>("testStashServer")!!
@@ -349,17 +352,28 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     .getBoolean("autoCheckForUpdates", true)
             ) {
                 val checkForUpdatePref = findPreference<Preference>("checkForUpdate")
+                val installUpdate = findPreference<Preference>("installUpdate")
+                val updateCategory = findPreference<Preference>("updateCategory")
+
+                val updatePrefs = listOf(checkForUpdatePref, installUpdate)
+
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val release = UpdateChecker.getLatestRelease(requireContext())
                     val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
                     if (release != null) {
                         if (release.version.isGreaterThan(installedVersion)) {
-                            checkForUpdatePref?.title = "Install update"
-                            checkForUpdatePref?.summary =
-                                getString(R.string.stashapp_package_manager_latest_version) + ": ${release.version}"
+                            updatePrefs.forEach {
+                                it?.title = "Install update"
+                                it?.summary =
+                                    getString(R.string.stashapp_package_manager_latest_version) + ": ${release.version}"
+                            }
+                            updateCategory?.isVisible = true
                         } else {
-                            checkForUpdatePref?.title = "No update available"
-                            checkForUpdatePref?.summary = null
+                            updatePrefs.forEach {
+                                it?.title = "No update available"
+                                it?.summary = null
+                            }
+                            updateCategory?.isVisible = false
                         }
                     }
                 }
