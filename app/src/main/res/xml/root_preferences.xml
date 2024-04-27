@@ -1,6 +1,16 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <PreferenceCategory
+        app:key="updateCategory"
+        app:title="Update"
+        app:isPreferenceVisible="false">
+        <com.github.damontecres.stashapp.util.LongClickPreference
+            app:key="installUpdate"
+            app:title=""
+            app:summary="" />
+    </PreferenceCategory>
+
     <PreferenceCategory app:title="@string/pref_stash_server_header">
         <EditTextPreference
             app:key="stashUrl"
