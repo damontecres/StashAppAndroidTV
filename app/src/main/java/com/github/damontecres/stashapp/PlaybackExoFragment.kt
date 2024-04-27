@@ -18,7 +18,6 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.widget.ListPopupWindow
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -265,22 +264,6 @@ class PlaybackExoFragment :
             View.OnFocusChangeListener { v, hasFocus ->
                 val zoom = if (hasFocus) mFocusedZoom else 1f
                 v.animate().scaleX(zoom).scaleY(zoom).setDuration(150.toLong()).start()
-
-                if (hasFocus) {
-                    v.setBackgroundColor(
-                        ContextCompat.getColor(
-                            requireContext(),
-                            R.color.selected_background,
-                        ),
-                    )
-                } else {
-                    v.setBackgroundColor(
-                        ContextCompat.getColor(
-                            requireContext(),
-                            android.R.color.transparent,
-                        ),
-                    )
-                }
             }
 
         val buttons =

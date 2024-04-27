@@ -55,7 +55,8 @@
             android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".PlaybackActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/PlaybackTheme" />
         <activity
             android:name=".SettingsActivity"
             android:exported="false" />

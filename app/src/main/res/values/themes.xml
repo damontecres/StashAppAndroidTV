@@ -12,6 +12,12 @@
         <item name="android:colorBackground">@color/default_background</item>
     </style>
 
+    <style name="PlaybackTheme" parent="@style/Theme.AppCompat.Leanback">
+        <!-- This is the background attr for exo_styled_settings_list_item -->
+        <item name="android:selectableItemBackground">@drawable/playback_popup_item_background
+        </item>
+    </style>
+
     <style name="RatingBar" parent="Theme.AppCompat">
         <item name="colorControlNormal">@android:color/darker_gray</item>
         <item name="colorControlActivated">@color/gold</item>

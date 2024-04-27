@@ -35,18 +35,29 @@
 
         <ImageButton
             android:id="@id/exo_prev"
+            android:background="@drawable/playback_button_selector"
             style="@style/ExoStyledControls.Button.Center.Previous" />
 
-        <include layout="@layout/exo_player_control_rewind_button" />
+        <Button
+            android:id="@id/exo_rew_with_amount"
+            android:singleLine="false"
+            android:background="@drawable/playback_button_selector"
+            style="@style/ExoStyledControls.Button.Center.RewWithAmount" />
 
         <ImageButton
             android:id="@id/exo_play_pause"
+            android:background="@drawable/playback_button_selector"
             style="@style/ExoStyledControls.Button.Center.PlayPause" />
 
-        <include layout="@layout/exo_player_control_ffwd_button" />
+        <Button
+            android:id="@id/exo_ffwd_with_amount"
+            android:singleLine="false"
+            android:background="@drawable/playback_button_selector"
+            style="@style/ExoStyledControls.Button.Center.FfwdWithAmount" />
 
         <ImageButton
             android:id="@id/exo_next"
+            android:background="@drawable/playback_button_selector"
             style="@style/ExoStyledControls.Button.Center.Next" />
 
     </LinearLayout>
@@ -58,8 +69,12 @@
         android:layout_margin="8dp"
         android:includeFontPadding="false"
         android:textColor="#FFBEBEBE"
-        android:textSize="12sp"
+        android:textSize="16sp"
         android:textStyle="bold"
+        android:shadowColor="@android:color/black"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
         app:layout_constraintBottom_toTopOf="@id/exo_center_controls"
         app:layout_constraintStart_toStartOf="parent"
         tools:text="18:20" />
@@ -70,10 +85,14 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
         android:layout_marginBottom="3dp"
-        android:textColor="#FFBEBEBE"
+        android:textColor="@android:color/white"
         android:textSize="22sp"
         android:padding="3dp"
         android:textAlignment="viewStart"
+        android:shadowColor="@android:color/black"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
         app:layout_constraintBottom_toTopOf="@id/exo_position"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="@id/exo_center_controls"
@@ -110,8 +129,12 @@
         android:layout_margin="8dp"
         android:includeFontPadding="false"
         android:textColor="#FFBEBEBE"
-        android:textSize="12sp"
+        android:textSize="16sp"
         android:textStyle="bold"
+        android:shadowColor="@android:color/black"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
         app:layout_constraintBaseline_toBaselineOf="@id/exo_position"
         app:layout_constraintEnd_toEndOf="parent"
         tools:text="25:23" />
@@ -122,6 +145,7 @@
         android:orientation="horizontal"
         android:paddingTop="@dimen/exo_styled_controls_padding"
         android:paddingBottom="@dimen/exo_styled_controls_padding"
+        android:clipToPadding="false"
         app:layout_constraintTop_toTopOf="@id/exo_center_controls"
         app:layout_constraintBottom_toBottomOf="@id/exo_center_controls"
         app:layout_constraintStart_toStartOf="parent">
@@ -130,12 +154,13 @@
             android:id="@+id/more_options_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_margin="4dp"
             android:padding="8dp"
             android:layout_gravity="center_vertical"
             android:scaleType="fitXY"
             android:src="@drawable/baseline_more_vert_96"
             android:contentDescription="@null"
-            android:background="@android:color/transparent" />
+            android:background="@drawable/playback_button_selector" />
 
         <ImageButton
             android:id="@+id/controls_o_counter_button"
@@ -146,7 +171,7 @@
             android:layout_gravity="center_vertical"
             android:scaleType="fitXY"
             android:src="@drawable/sweat_drops"
-            android:background="@android:color/transparent" />
+            android:background="@drawable/playback_button_selector" />
 
         <TextView
             android:id="@+id/controls_o_counter_text"
@@ -154,9 +179,16 @@
             android:layout_height="match_parent"
             android:padding="@dimen/exo_icon_padding"
             android:gravity="center"
-            android:textSize="18sp"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
             android:textAlignment="center"
-            android:text="12" />
+            android:shadowColor="@android:color/black"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="2"
+            android:text=""
+            tools:text="12" />
 
     </LinearLayout>
 
@@ -165,6 +197,7 @@
         app:layout_constraintTop_toTopOf="@id/exo_center_controls"
         app:layout_constraintBottom_toBottomOf="@id/exo_center_controls"
         app:layout_constraintEnd_toEndOf="parent"
+        android:background="@drawable/playback_button_selector"
         style="@style/ExoStyledControls.Button.Bottom.Settings" />
 
     <FrameLayout
