@@ -166,9 +166,16 @@
             android:layout_height="match_parent"
             android:padding="@dimen/exo_icon_padding"
             android:gravity="center"
-            android:textSize="18sp"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
             android:textAlignment="center"
-            android:text="12" />
+            android:shadowColor="@android:color/black"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="2"
+            android:text=""
+            tools:text="12" />
 
     </LinearLayout>
 
