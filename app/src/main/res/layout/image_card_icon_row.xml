@@ -7,17 +7,55 @@
     android:layout_height="18dp"
     android:layout_alignParentStart="true"
     android:layout_below="@+id/content_text"
+    android:layout_marginStart="0dp"
+    android:layout_marginEnd="0dp"
     android:gravity="center">
 
     <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
 
         <TextView
+            android:id="@+id/extra_scene_icon"
+            android:text="@string/fa_circle_play"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
+
+        <TextView
+            android:id="@+id/extra_scene_count"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
+    </LinearLayout>
+
+    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+
+        <TextView
+            android:id="@+id/extra_movie_icon"
+            android:text="@string/fa_film"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
+
+        <TextView
+            android:id="@+id/extra_movie_count"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
+    </LinearLayout>
+
+    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+
+        <TextView
             android:id="@+id/extra_image_icon"
-            android:text="@string/fa_images"
+            android:text="@string/fa_image"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
 
         <TextView
             android:id="@+id/extra_image_count"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
+    </LinearLayout>
+
+    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+
+        <TextView
+            android:id="@+id/extra_gallery_icon"
+            android:text="@string/fa_images"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
+
+        <TextView
+            android:id="@+id/extra_gallery_count"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
     </LinearLayout>
 
@@ -48,36 +86,12 @@
     <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
 
         <TextView
-            android:id="@+id/extra_movie_icon"
-            android:text="@string/fa_film"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
-
-        <TextView
-            android:id="@+id/extra_movie_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
-
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
-
-        <TextView
             android:id="@+id/extra_marker_icon"
             android:text="@string/fa_location_dot"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
 
         <TextView
             android:id="@+id/extra_marker_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
-
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
-
-        <TextView
-            android:id="@+id/extra_scene_icon"
-            android:text="@string/fa_circle_play"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
-
-        <TextView
-            android:id="@+id/extra_scene_count"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
     </LinearLayout>
 
@@ -95,18 +109,6 @@
 
         <TextView
             android:id="@+id/extra_ocounter_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
-
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
-
-        <TextView
-            android:id="@+id/extra_gallery_icon"
-            android:text="@string/fa_images"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
-
-        <TextView
-            android:id="@+id/extra_gallery_count"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
     </LinearLayout>
 
