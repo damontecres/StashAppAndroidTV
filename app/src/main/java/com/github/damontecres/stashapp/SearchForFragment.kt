@@ -185,7 +185,7 @@ class SearchForFragment(
     class GoToLongClick<T : Any>(private val context: Context) :
         StashPresenter.LongClickCallBack<T> {
         override val popUpItems: List<String>
-            get() = listOf("Go to")
+            get() = listOf(context.getString(R.string.go_to))
 
         override fun onItemLongClick(
             item: T,

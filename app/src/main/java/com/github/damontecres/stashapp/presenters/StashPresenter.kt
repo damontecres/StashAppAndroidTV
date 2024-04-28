@@ -63,11 +63,12 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 },
             )
         } else {
+            val callback = getDefaultLongClickCallBack(cardView)
             cardView.setOnLongClickListener(
                 PopupOnLongClickListener(
-                    listOf("Go to"),
-                ) { _, _, _, _ ->
-                    cardView.performClick()
+                    callback.popUpItems,
+                ) { _, _, pos, _ ->
+                    callback.onItemLongClick(item as T, pos)
                 },
             )
         }
@@ -96,6 +97,20 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
     open override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         val cardView = viewHolder.view as StashImageCardView
         cardView.onUnbindViewHolder()
+    }
+
+    open fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<T> {
+        return object : LongClickCallBack<T> {
+            override val popUpItems: List<String>
+                get() = listOf(cardView.context.getString(R.string.go_to))
+
+            override fun onItemLongClick(
+                item: T,
+                popUpItemPosition: Int,
+            ) {
+                cardView.performClick()
+            }
+        }
     }
 
     interface LongClickCallBack<T> {
