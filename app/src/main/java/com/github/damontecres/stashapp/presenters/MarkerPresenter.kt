@@ -1,5 +1,8 @@
 package com.github.damontecres.stashapp.presenters
 
+import android.content.Intent
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.VideoDetailsActivity
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -21,6 +24,32 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         loadImage(cardView, item.screenshot)
         cardView.videoUrl = item.stream
+    }
+
+    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<MarkerData> {
+        return object : LongClickCallBack<MarkerData> {
+            override val popUpItems: List<String>
+                get() =
+                    listOf(
+                        cardView.context.getString(R.string.go_to),
+                        cardView.context.getString(R.string.go_to_scene),
+                    )
+
+            override fun onItemLongClick(
+                item: MarkerData,
+                popUpItemPosition: Int,
+            ) {
+                if (popUpItemPosition == 0) {
+                    cardView.performClick()
+                } else if (popUpItemPosition == 1) {
+                    val intent = Intent(cardView.context, VideoDetailsActivity::class.java)
+                    intent.putExtra(VideoDetailsActivity.MOVIE, item.scene.slimSceneData.id)
+                    cardView.context.startActivity(intent)
+                } else {
+                    throw IllegalStateException()
+                }
+            }
+        }
     }
 
     companion object {

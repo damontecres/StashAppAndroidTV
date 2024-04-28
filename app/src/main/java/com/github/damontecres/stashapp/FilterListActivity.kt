@@ -1,7 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -18,7 +16,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
-import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -35,7 +32,6 @@ import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
-import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -403,13 +399,7 @@ class FilterListActivity : FragmentActivity() {
                     } else {
                         filterParser.convertMarkerObjectFilter(objectFilter)
                     }
-                val selectorPresenter =
-                    ClassPresenterSelector().addClassPresenter(
-                        MarkerData::class.java,
-                        MarkerPresenter(MarkerLongClickCallBack(this)),
-                    )
                 StashGridFragment(
-                    selectorPresenter,
                     MarkerComparator,
                     MarkerDataSupplier(findFilter, markerFilter),
                     null,
@@ -454,21 +444,6 @@ class FilterListActivity : FragmentActivity() {
                     name,
                 )
             }
-        }
-    }
-
-    class MarkerLongClickCallBack(private val context: Context) :
-        StashPresenter.LongClickCallBack<MarkerData> {
-        override val popUpItems: List<String>
-            get() = listOf(context.getString(R.string.go_to_scene))
-
-        override fun onItemLongClick(
-            item: MarkerData,
-            popUpItemPosition: Int,
-        ) {
-            val intent = Intent(context, VideoDetailsActivity::class.java)
-            intent.putExtra(VideoDetailsActivity.MOVIE, item.scene.slimSceneData.id)
-            context.startActivity(intent)
         }
     }
 

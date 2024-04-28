@@ -19,6 +19,7 @@
     <string name="fa_magnifying_glass_minus" translatable="false">&#xf010;</string>
 
 
+    <string name="go_to">Go to</string>
     <string name="go_to_scene">Go to scene</string>
     <string name="view_scenes">View scenes</string>
     <string name="view_markers">View markers</string>
