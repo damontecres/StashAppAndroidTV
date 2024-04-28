@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dev/workflows
 
 defaults:
   run:
@@ -29,6 +30,7 @@ jobs:
         with:
           fetch-depth: 0 # Need the tags to build
           submodules: true # Need the submodules to build
+      # Setup the SDKs
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -43,9 +45,12 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: "tools platform-tools build-tools;${{ env.BUILD_TOOLS_VERSION }}"
-      - name: Get version name
+
+      - name: Get version names
         run: |
-          VERSION_NAME=$(git describe --tags --long --match 'v*')
+          LATEST_TAG=$(git describe --tags --match 'v*' --abbrev=0)
+          VERSION_NAME=$(git describe --tags --match 'v*' --long)
+          echo "LATEST_TAG=$LATEST_TAG" >> "$GITHUB_ENV"
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
       - name: Build app
         id: buildapp
@@ -63,12 +68,14 @@ jobs:
       - name: Copy APK to ${{ env.APK_SHORT_NAME }}
         run: |
           cp "${{ steps.buildapp.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
+
       - name: Delete ${{ env.TAG_NAME }} tag and release
         uses: dev-drprasad/delete-tag-and-release@v1.1
         with:
           tag_name: "${{ env.TAG_NAME }}"
           delete_release: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Advance ${{ env.TAG_NAME }} tag
         uses: actions/github-script@v7
         with:
@@ -80,6 +87,7 @@ jobs:
               ref: "refs/tags/${{ env.TAG_NAME }}",
               sha: context.sha
             })
+
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
         with:
@@ -97,6 +105,8 @@ jobs:
           tag: "${{ env.TAG_NAME }}"
 
           body: |
-            This pre-release tracks the latest development debug build of StashAppAndroidTV from the `main` branch
+            This pre-release tracks the latest development debug build of StashAppAndroidTV from the `main` branch.
 
-            See https://github.com/damontecres/StashAppAndroidTV/releases/latest for the latest stable release
+            See https://github.com/damontecres/StashAppAndroidTV/releases/latest for the latest stable release.
+
+            [See changes since `${{ env.LATEST_TAG }}`](https://github.com/damontecres/StashAppAndroidTV/compare/${{ env.LATEST_TAG }}...develop)
