@@ -508,7 +508,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             )
                         val newTags = mutResult?.tags?.map { it.tagData }
                         val newTagName =
-                            newTags?.first { it.id == tagId }?.name
+                            newTags?.firstOrNull { it.id == tagId }?.name
                         tagsAdapter.setItems(newTags, TagDiffCallback)
                         if (mAdapter.lookup(TAG_POS) == null) {
                             mAdapter.set(
@@ -547,7 +547,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             )
                         val resultPerformers = mutResult?.performers?.map { it.performerData }
                         val newPerformer =
-                            resultPerformers?.first { it.id == performerId }
+                            resultPerformers?.firstOrNull { it.id == performerId }
                         performersAdapter.setItems(resultPerformers, PerformerDiffCallback)
                         if (mAdapter.lookup(PERFORMER_POS) == null) {
                             mAdapter.set(

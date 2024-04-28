@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.util
 
-import android.annotation.SuppressLint
 import androidx.leanback.widget.DiffCallback
 import androidx.recyclerview.widget.DiffUtil
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -140,29 +139,82 @@ object GalleryComparator : DiffUtil.ItemCallback<GalleryData>() {
     }
 }
 
-open class StashDiffCallback<T>(private val getId: (T) -> String) : DiffCallback<T>() {
+object TagDiffCallback : DiffCallback<TagData>() {
     override fun areItemsTheSame(
-        oldItem: T & Any,
-        newItem: T & Any,
+        oldItem: TagData,
+        newItem: TagData,
     ): Boolean {
-        return getId(oldItem) == getId(newItem)
+        return oldItem.id == newItem.id
     }
 
-    @SuppressLint("DiffUtilEquals")
     override fun areContentsTheSame(
-        oldItem: T & Any,
-        newItem: T & Any,
+        oldItem: TagData,
+        newItem: TagData,
     ): Boolean {
         return oldItem == newItem
     }
 }
 
-object TagDiffCallback : StashDiffCallback<TagData>(getId = { it.id })
+object MarkerDiffCallback : DiffCallback<MarkerData>() {
+    override fun areItemsTheSame(
+        oldItem: MarkerData,
+        newItem: MarkerData,
+    ): Boolean {
+        return oldItem.id == newItem.id
+    }
 
-object MarkerDiffCallback : StashDiffCallback<MarkerData>(getId = { it.id })
+    override fun areContentsTheSame(
+        oldItem: MarkerData,
+        newItem: MarkerData,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}
 
-object PerformerDiffCallback : StashDiffCallback<PerformerData>(getId = { it.id })
+object PerformerDiffCallback : DiffCallback<PerformerData>() {
+    override fun areItemsTheSame(
+        oldItem: PerformerData,
+        newItem: PerformerData,
+    ): Boolean {
+        return oldItem.id == newItem.id
+    }
 
-object MovieDiffCallback : StashDiffCallback<MovieData>(getId = { it.id })
+    override fun areContentsTheSame(
+        oldItem: PerformerData,
+        newItem: PerformerData,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}
 
-object StudioDiffCallback : StashDiffCallback<StudioData>(getId = { it.id })
+object MovieDiffCallback : DiffCallback<MovieData>() {
+    override fun areItemsTheSame(
+        oldItem: MovieData,
+        newItem: MovieData,
+    ): Boolean {
+        return oldItem.id == newItem.id
+    }
+
+    override fun areContentsTheSame(
+        oldItem: MovieData,
+        newItem: MovieData,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}
+
+object StudioDiffCallback : DiffCallback<StudioData>() {
+    override fun areItemsTheSame(
+        oldItem: StudioData,
+        newItem: StudioData,
+    ): Boolean {
+        return oldItem.id == newItem.id
+    }
+
+    override fun areContentsTheSame(
+        oldItem: StudioData,
+        newItem: StudioData,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}
