@@ -1,10 +1,10 @@
 # Stash App for Android TV
 
-This is an Android TV app for browsing images and playing scenes from a [Stash](https://github.com/stashapp/stash) server.
+This is an Android TV app for browsing images and playing scenes from a [Stash](https://github.com/stashapp/stash) server. Many devices running Android TV are supported, including Amazon Fire TV devices. See [device compatibility](https://github.com/damontecres/StashAppAndroidTV/wiki/Device-Compatibility) for more information.
 
 Not all features of Stash are supported, but the basics for browsing, searching, and playing scenes work well.
 
-The app is not intended to perform administrative functions such as scraping or editing details. Some curation tasks are available such as adding tags or performers to scenes.
+The app is not intended to perform administrative functions such as scraping or editing details. Some curation tasks are available though such as adding tags or performers to scenes.
 
 ### Main page
 ![main Large](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/79f374cd-ae97-4a8f-bbbe-07a8a25b7148)
@@ -54,9 +54,17 @@ This build has the latest features, but may be unstable or have bugs.
 
 ### Compatibility
 
+#### Server
+
 The app strives to be compatible with the latest released version of Stash.
 
 Currently, the minimum supported server version is Stash `0.23.0`.
+
+#### Devices
+
+The app supports many devices running Android TV OS, such as the NVIDIA Shield, Amazon Fire TV devices (Fire OS 6 or greater), or Chromecast with Google TV.
+
+See [Device Compatibility](https://github.com/damontecres/StashAppAndroidTV/wiki/Device-Compatibility) for more information.
 
 ## Contributions
 
