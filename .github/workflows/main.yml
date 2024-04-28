@@ -45,7 +45,7 @@ jobs:
           packages: "tools platform-tools build-tools;${{ env.BUILD_TOOLS_VERSION }}"
       - name: Get version name
         run: |
-          VERSION_NAME=$(git describe --tags --match 'v*')
+          VERSION_NAME=$(git describe --tags --long --match 'v*')
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
       - name: Build app
         id: buildapp
@@ -63,20 +63,17 @@ jobs:
       - name: Copy APK to ${{ env.APK_SHORT_NAME }}
         run: |
           cp "${{ steps.buildapp.outputs.apk }}" "${{ env.APK_SHORT_NAME }}"
+      - name: Delete ${{ env.TAG_NAME }} tag and release
+        uses: dev-drprasad/delete-tag-and-release@v1.1
+        with:
+          tag_name: "${{ env.TAG_NAME }}"
+          delete_release: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Advance ${{ env.TAG_NAME }} tag
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            try {
-                await github.rest.git.deleteRef({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: "tags/${{ env.TAG_NAME }}"
-                })
-            } catch (e) {
-              console.log("The ${{ env.TAG_NAME }} tag doesn't exist yet: " + e)
-            }
             await github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -96,6 +93,7 @@ jobs:
           prerelease: true
           removeArtifacts: true
           replacesArtifacts: true
+          updateOnlyUnreleased: true
           tag: "${{ env.TAG_NAME }}"
 
           body: |
