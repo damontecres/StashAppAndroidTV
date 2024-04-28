@@ -80,9 +80,6 @@ object Constants {
     const val OK_HTTP_TAG = "$TAG.OkHttpClient"
     const val OK_HTTP_CACHE_DIR = "okhttpcache"
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    val dateTimeFormatter = DateTimeFormatter.ofPattern("eee, MMMM d, yyyy h:mm a")
-
     /**
      * Converts seconds into a Duration string where fractional seconds are removed
      */
@@ -118,6 +115,7 @@ object Constants {
             null
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             try {
+                val dateTimeFormatter = DateTimeFormatter.ofPattern("eee, MMMM d, yyyy h:mm a")
                 val dateTime =
                     ZonedDateTime.parse(
                         ts.toString(),
