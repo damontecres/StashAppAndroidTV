@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -36,6 +37,7 @@ import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
 class PerformerActivity : FragmentActivity() {
     private lateinit var performer: Performer
@@ -154,29 +156,7 @@ class PerformerActivity : FragmentActivity() {
                     ClassPresenterSelector()
                         .addClassPresenter(
                             PerformerData::class.java,
-                            PerformerPresenter(
-                                object :
-                                    StashPresenter.LongClickCallBack<PerformerData> {
-                                    override val popUpItems: List<String>
-                                        get() = listOf("View scenes together")
-
-                                    override fun onItemLongClick(
-                                        item: PerformerData,
-                                        popUpItemPosition: Int,
-                                    ) {
-                                        val performerIds = listOf(performer.id, item.id)
-                                        val name = "${performer.name} & ${item.name}"
-                                        val appFilter = PerformTogetherAppFilter(name, performerIds)
-                                        val intent =
-                                            Intent(
-                                                this@PerformerActivity,
-                                                FilterListActivity::class.java,
-                                            )
-                                        intent.putExtra("filter", appFilter)
-                                        this@PerformerActivity.startActivity(intent)
-                                    }
-                                },
-                            ),
+                            PerformerPresenter(PerformTogetherLongClickCallback(performer)),
                         )
                 StashGridFragment(
                     presenter,
@@ -196,6 +176,40 @@ class PerformerActivity : FragmentActivity() {
                 )
             } else {
                 throw IllegalStateException()
+            }
+        }
+    }
+
+    private class PerformTogetherLongClickCallback(val performer: Performer) :
+        StashPresenter.LongClickCallBack<PerformerData> {
+        override fun getPopUpItems(
+            context: Context,
+            item: PerformerData,
+        ): List<StashPresenter.PopUpItem> {
+            return listOf(
+                StashPresenter.PopUpItem.getDefault(context),
+                StashPresenter.PopUpItem(1, "View scenes together"),
+            )
+        }
+
+        override fun onItemLongClick(
+            context: Context,
+            item: PerformerData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            when (popUpItem.id) {
+                0L -> {
+                    StashItemViewClickListener(context).onItemClicked(item)
+                }
+
+                1L -> {
+                    val performerIds = listOf(performer.id, item.id)
+                    val name = "${performer.name} & ${item.name}"
+                    val appFilter = PerformTogetherAppFilter(name, performerIds)
+                    val intent = Intent(context, FilterListActivity::class.java)
+                    intent.putExtra("filter", appFilter)
+                    context.startActivity(intent)
+                }
             }
         }
     }

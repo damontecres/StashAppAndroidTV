@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.presenters
 
+import android.content.Context
 import android.content.Intent
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.VideoDetailsActivity
@@ -28,25 +29,35 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
 
     override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<MarkerData> {
         return object : LongClickCallBack<MarkerData> {
-            override val popUpItems: List<String>
-                get() =
-                    listOf(
-                        cardView.context.getString(R.string.go_to),
-                        cardView.context.getString(R.string.go_to_scene),
-                    )
+            override fun getPopUpItems(
+                context: Context,
+                item: MarkerData,
+            ): List<PopUpItem> {
+                return listOf(
+                    PopUpItem(0L, context.getString(R.string.go_to)),
+                    PopUpItem(1L, context.getString(R.string.go_to_scene)),
+                )
+            }
 
             override fun onItemLongClick(
+                context: Context,
                 item: MarkerData,
-                popUpItemPosition: Int,
+                popUpItem: PopUpItem,
             ) {
-                if (popUpItemPosition == 0) {
-                    cardView.performClick()
-                } else if (popUpItemPosition == 1) {
-                    val intent = Intent(cardView.context, VideoDetailsActivity::class.java)
-                    intent.putExtra(VideoDetailsActivity.MOVIE, item.scene.slimSceneData.id)
-                    cardView.context.startActivity(intent)
-                } else {
-                    throw IllegalStateException()
+                when (popUpItem.id) {
+                    0L -> {
+                        cardView.performClick()
+                    }
+
+                    1L -> {
+                        val intent = Intent(cardView.context, VideoDetailsActivity::class.java)
+                        intent.putExtra(VideoDetailsActivity.MOVIE, item.scene.slimSceneData.id)
+                        cardView.context.startActivity(intent)
+                    }
+
+                    else -> {
+                        throw IllegalStateException()
+                    }
                 }
             }
         }

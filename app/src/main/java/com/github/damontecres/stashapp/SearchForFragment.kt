@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
@@ -35,7 +34,6 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -73,10 +71,10 @@ class SearchForFragment(
         searchResultsAdapter.presenterSelector =
             StashPresenter.SELECTOR.addClassPresenter(
                 PerformerData::class.java,
-                PerformerPresenter(GoToLongClick(requireContext())),
+                PerformerPresenter(),
             ).addClassPresenter(
                 TagData::class.java,
-                TagPresenter(GoToLongClick(requireContext())),
+                TagPresenter(),
             )
 
         setSearchResultProvider(this)
@@ -121,10 +119,10 @@ class SearchForFragment(
                     ArrayObjectAdapter(
                         StashPresenter.SELECTOR.addClassPresenter(
                             PerformerData::class.java,
-                            PerformerPresenter(GoToLongClick(requireContext())),
+                            PerformerPresenter(),
                         ).addClassPresenter(
                             TagData::class.java,
-                            TagPresenter(GoToLongClick(requireContext())),
+                            TagPresenter(),
                         ),
                     )
                 val queryEngine = QueryEngine(requireContext(), false)
@@ -179,19 +177,6 @@ class SearchForFragment(
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 searchResultsAdapter.addAll(0, queryEngine.find(dataType, filter))
             }
-        }
-    }
-
-    class GoToLongClick<T : Any>(private val context: Context) :
-        StashPresenter.LongClickCallBack<T> {
-        override val popUpItems: List<String>
-            get() = listOf(context.getString(R.string.go_to))
-
-        override fun onItemLongClick(
-            item: T,
-            popUpItemPosition: Int,
-        ) {
-            StashItemViewClickListener(context).onItemClicked(null, item, null, null)
         }
     }
 

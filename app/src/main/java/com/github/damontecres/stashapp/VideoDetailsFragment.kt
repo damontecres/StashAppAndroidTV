@@ -649,12 +649,21 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     }
 
     private inner class OCounterLongClickCallBack : StashPresenter.LongClickCallBack<OCounter> {
-        override val popUpItems: List<String>
-            get() = listOf("Decrement", "Reset")
+        override fun getPopUpItems(
+            context: Context,
+            item: OCounter,
+        ): List<StashPresenter.PopUpItem> {
+            return listOf(
+                StashPresenter.PopUpItem(0L, "Increment"),
+                StashPresenter.PopUpItem(1L, "Decrement"),
+                StashPresenter.PopUpItem(2L, "Reset"),
+            )
+        }
 
         override fun onItemLongClick(
+            context: Context,
             item: OCounter,
-            popUpItemPosition: Int,
+            popUpItem: StashPresenter.PopUpItem,
         ) {
             val mutationEngine = MutationEngine(requireContext())
             viewLifecycleOwner.lifecycleScope.launch(
@@ -666,15 +675,22 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     ),
                 ),
             ) {
-                when (popUpItemPosition) {
-                    0 -> {
+                when (popUpItem.id) {
+                    0L -> {
+                        // Increment
+                        val newCount = mutationEngine.incrementOCounter(mSelectedMovie!!.id)
+                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
+                        mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCount.count)
+                    }
+
+                    1L -> {
                         // Decrement
                         val newCount = mutationEngine.decrementOCounter(mSelectedMovie!!.id)
                         sceneActionsAdapter.set(O_COUNTER_POS, newCount)
                         mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCount.count)
                     }
 
-                    1 -> {
+                    2L -> {
                         // Reset
                         val newCount = mutationEngine.resetOCounter(mSelectedMovie!!.id)
                         mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCount.count)
@@ -684,22 +700,32 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     else ->
                         Log.w(
                             TAG,
-                            "Unknown position for OCounterLongClickCallBack: $popUpItemPosition",
+                            "Unknown position for OCounterLongClickCallBack: $popUpItem",
                         )
                 }
             }
         }
     }
 
-    private inner class TagLongClickCallBack : StashPresenter.LongClickCallBack<TagData> {
-        override val popUpItems: List<String>
-            get() = listOf("Remove")
+    /**
+     * Just a convenience interface for tags, performers, & markers since they all use the same popup items
+     */
+    private interface DetailsLongClickCallBack<T> : StashPresenter.LongClickCallBack<T> {
+        override fun getPopUpItems(
+            context: Context,
+            item: T,
+        ): List<StashPresenter.PopUpItem> {
+            return listOf(REMOVE_POPUP_ITEM)
+        }
+    }
 
+    private inner class TagLongClickCallBack : DetailsLongClickCallBack<TagData> {
         override fun onItemLongClick(
+            context: Context,
             item: TagData,
-            popUpItemPosition: Int,
+            popUpItem: StashPresenter.PopUpItem,
         ) {
-            if (popUpItemPosition == 0) {
+            if (popUpItem == REMOVE_POPUP_ITEM) {
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception setting tags", ex)
@@ -736,15 +762,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private inner class MarkerLongClickCallBack : StashPresenter.LongClickCallBack<MarkerData> {
-        override val popUpItems: List<String>
-            get() = listOf("Remove")
-
+    private inner class MarkerLongClickCallBack : DetailsLongClickCallBack<MarkerData> {
         override fun onItemLongClick(
+            context: Context,
             item: MarkerData,
-            popUpItemPosition: Int,
+            popUpItem: StashPresenter.PopUpItem,
         ) {
-            if (popUpItemPosition == 0) {
+            if (popUpItem == REMOVE_POPUP_ITEM) {
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception setting tags", ex)
@@ -773,16 +797,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private inner class PerformerLongClickCallBack :
-        StashPresenter.LongClickCallBack<PerformerData> {
-        override val popUpItems: List<String>
-            get() = listOf("Remove")
-
+    private inner class PerformerLongClickCallBack : DetailsLongClickCallBack<PerformerData> {
         override fun onItemLongClick(
+            context: Context,
             item: PerformerData,
-            popUpItemPosition: Int,
+            popUpItem: StashPresenter.PopUpItem,
         ) {
-            if (popUpItemPosition == 0) {
+            if (popUpItem == REMOVE_POPUP_ITEM) {
                 val performerId = item.id
                 Log.d(
                     TAG,
@@ -854,5 +875,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private const val ADD_PERFORMER_POS = ADD_TAG_POS + 1
         private const val CREATE_MARKER_POS = ADD_PERFORMER_POS + 1
         private const val FORCE_TRANSCODE_POS = CREATE_MARKER_POS + 1
+
+        private val REMOVE_POPUP_ITEM = StashPresenter.PopUpItem(0L, "Remove")
     }
 }

@@ -662,3 +662,8 @@ fun getMaxMeasuredWidth(
     }
     return Math.min(widest, maxMeasuredWidth)
 }
+
+/**
+ * Gets the [SlimSceneData.resume_time] in milliseconds
+ */
+val SlimSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()

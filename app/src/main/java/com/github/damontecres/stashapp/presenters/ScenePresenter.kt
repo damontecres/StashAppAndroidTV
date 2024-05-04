@@ -1,13 +1,20 @@
 package com.github.damontecres.stashapp.presenters
 
+import android.content.Context
+import android.content.Intent
 import android.graphics.Typeface
+import com.github.damontecres.stashapp.PlaybackActivity
+import com.github.damontecres.stashapp.VideoDetailsActivity
+import com.github.damontecres.stashapp.VideoDetailsFragment
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
 
@@ -74,6 +81,71 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         }
         if (item.paths.preview.isNotNullOrBlank()) {
             cardView.videoUrl = item.paths.preview
+        }
+    }
+
+    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<SlimSceneData> {
+        return object : LongClickCallBack<SlimSceneData> {
+            override fun getPopUpItems(
+                context: Context,
+                item: SlimSceneData,
+            ): List<PopUpItem> {
+                if (item.resume_time != null && item.resume_time > 0) {
+                    // Has resume
+                    return listOf(
+                        PopUpItem.getDefault(context),
+                        PopUpItem(1, "Resume Scene"),
+                        PopUpItem(2, "Restart Scene"),
+                    )
+                } else {
+                    return listOf(
+                        PopUpItem.getDefault(context),
+                        PopUpItem(2, "Play Scene"),
+                    )
+                }
+            }
+
+            override fun onItemLongClick(
+                context: Context,
+                item: SlimSceneData,
+                popUpItem: PopUpItem,
+            ) {
+                when (popUpItem.id) {
+                    0L -> {
+                        cardView.performClick()
+                    }
+
+                    1L -> {
+                        // Resume
+                        val intent = Intent(context, PlaybackActivity::class.java)
+                        intent.putExtra(
+                            VideoDetailsActivity.MOVIE,
+                            Scene.fromSlimSceneData(item),
+                        )
+                        if (item.resume_time != null) {
+                            intent.putExtra(
+                                VideoDetailsFragment.POSITION_ARG,
+                                item.resume_position!!,
+                            )
+                        }
+                        context.startActivity(intent)
+                    }
+
+                    2L -> {
+                        // Restart/Play
+                        val intent = Intent(context, PlaybackActivity::class.java)
+                        intent.putExtra(
+                            VideoDetailsActivity.MOVIE,
+                            Scene.fromSlimSceneData(item),
+                        )
+                        context.startActivity(intent)
+                    }
+
+                    else -> {
+                        throw IllegalStateException()
+                    }
+                }
+            }
         }
     }
 
