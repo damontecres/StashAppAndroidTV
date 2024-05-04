@@ -3,6 +3,14 @@ package com.github.damontecres.stashapp.data
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.presenters.GalleryPresenter
+import com.github.damontecres.stashapp.presenters.ImagePresenter
+import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.presenters.MoviePresenter
+import com.github.damontecres.stashapp.presenters.PerformerPresenter
+import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.presenters.StudioPresenter
+import com.github.damontecres.stashapp.presenters.TagPresenter
 
 enum class DataType(
     val filterMode: FilterMode,
@@ -56,6 +64,19 @@ enum class DataType(
     ;
 
     val asDefaultFindFilterType get() = defaultSort.asFindFilterType
+
+    val defaultCardWidth
+        get() =
+            when (this) {
+                SCENE -> ScenePresenter.CARD_WIDTH
+                MOVIE -> MoviePresenter.CARD_WIDTH
+                MARKER -> MarkerPresenter.CARD_WIDTH
+                PERFORMER -> PerformerPresenter.CARD_WIDTH
+                STUDIO -> StudioPresenter.CARD_WIDTH
+                TAG -> TagPresenter.CARD_WIDTH
+                IMAGE -> ImagePresenter.CARD_WIDTH
+                GALLERY -> GalleryPresenter.CARD_WIDTH
+            }
 
     companion object {
         fun fromFilterMode(mode: FilterMode): DataType? {
