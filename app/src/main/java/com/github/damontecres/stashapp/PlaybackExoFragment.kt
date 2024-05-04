@@ -69,6 +69,9 @@ class PlaybackExoFragment :
 
     private var playbackPosition = -1L
 
+    // Track whether the video is playing before calling the resultLauncher
+    private var wasPlayingBeforeResultLauncher: Boolean? = null
+
     override val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
 
     val isControllerVisible get() = videoView.isControllerFullyVisible || previewTimeBar.isShown
@@ -196,7 +199,8 @@ class PlaybackExoFragment :
                     }
                     exoPlayer.setMediaItem(mediaItem, if (position > 0) position else C.TIME_UNSET)
                     exoPlayer.prepare()
-                    exoPlayer.playWhenReady = true
+                    // Unless the video was paused before called the result launcher, play immediately
+                    exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
                     exoPlayer.volume = 1f
                     if (videoView.controllerShowTimeoutMs > 0) {
                         videoView.hideController()
@@ -423,7 +427,11 @@ class PlaybackExoFragment :
 
             listPopUp.setOnItemClickListener { _: AdapterView<*>, _: View, position: Int, _: Long ->
                 if (position == 0) {
-                    player?.pause()
+                    // Save current playback state
+                    player?.let { exoPlayer ->
+                        playbackPosition = exoPlayer.currentPosition
+                        wasPlayingBeforeResultLauncher = exoPlayer.isPlaying
+                    }
                     val intent = Intent(requireActivity(), SearchForActivity::class.java)
                     intent.putExtra(SearchForFragment.TITLE_KEY, "for primary tag for scene marker")
                     intent.putExtra("dataType", DataType.TAG.name)
