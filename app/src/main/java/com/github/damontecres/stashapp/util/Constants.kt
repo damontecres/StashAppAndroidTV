@@ -159,8 +159,13 @@ fun createOkHttpClient(context: Context): OkHttpClient {
     val apiKey = manager.getString("stashApiKey", null)
     val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
     val cacheLogging = manager.getBoolean("networkCacheLogging", false)
+    val networkTimeout = manager.getInt("networkTimeout", 15).toLong()
 
-    var builder = OkHttpClient.Builder()
+    var builder =
+        OkHttpClient.Builder()
+            .readTimeout(networkTimeout, TimeUnit.SECONDS)
+            .writeTimeout(networkTimeout, TimeUnit.SECONDS)
+
     if (trustAll) {
         val sslContext = SSLContext.getInstance("SSL")
         sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())

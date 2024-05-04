@@ -127,6 +127,13 @@
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Advanced">
+        <SeekBarPreference
+            app:key="networkTimeout"
+            app:title="Network timeout in seconds"
+            app:seekBarIncrement="5"
+            app:showSeekBarValue="true"
+            android:max="120"
+            app:defaultValue="15" />
         <SwitchPreference
             app:key="trustAllCerts"
             app:title="Trust self-signed certificates"
