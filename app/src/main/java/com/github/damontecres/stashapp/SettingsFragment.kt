@@ -454,6 +454,24 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 startActivity(Intent(requireContext(), LicenseActivity::class.java))
                 true
             }
+
+            val networkTimeoutPref = findPreference<Preference>("networkTimeout")!!
+            networkTimeoutPref.setOnPreferenceClickListener {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    testStashConnection(requireContext(), true)
+                }
+                true
+            }
+            networkTimeoutPref.setOnPreferenceChangeListener { _, newValue ->
+                if (newValue == 0) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Warning! A zero network timeout will wait forever!",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+                true
+            }
         }
 
         private fun setCacheDurationSummary(
