@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.PerformTogetherAppFilter
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
@@ -50,7 +51,7 @@ class PerformerActivity : FragmentActivity() {
                 PreferenceManager.getDefaultSharedPreferences(this)
                     .getInt("cardSize", getString(R.string.card_size_default))
             // At medium size, 3 scenes fit in the space vs 5 normally
-            val columns = cardSize * 3 / 5
+            val columns = cardSize * 3.0 / 5
 
             val tabLayout = findViewById<LeanbackTabLayout>(R.id.performer_tab_layout)
             val viewPager = findViewById<LeanbackViewPager>(R.id.performer_view_pager)
@@ -64,7 +65,7 @@ class PerformerActivity : FragmentActivity() {
     }
 
     inner class PagerAdapter(
-        private val columns: Int,
+        private val columns: Double,
         fm: FragmentManager,
     ) :
         ListFragmentPagerAdapter(
@@ -78,6 +79,10 @@ class PerformerActivity : FragmentActivity() {
                 ),
                 fm,
             ) {
+        private fun getColumns(dataType: DataType): Int {
+            return (columns * dataType.defaultCardRatio).toInt()
+        }
+
         override fun getItem(position: Int): Fragment {
             return if (position == 0) {
                 StashGridFragment(
@@ -93,7 +98,7 @@ class PerformerActivity : FragmentActivity() {
                                 ),
                         ),
                     ),
-                    columns,
+                    getColumns(DataType.SCENE),
                 )
             } else if (position == 1) {
                 StashGridFragment(
@@ -109,7 +114,7 @@ class PerformerActivity : FragmentActivity() {
                                 ),
                         ),
                     ),
-                    columns,
+                    getColumns(DataType.GALLERY),
                 )
             } else if (position == 2) {
                 StashGridFragment(
@@ -125,7 +130,7 @@ class PerformerActivity : FragmentActivity() {
                                 ),
                         ),
                     ),
-                    columns,
+                    getColumns(DataType.IMAGE),
                 )
             } else if (position == 3) {
                 StashGridFragment(
@@ -141,13 +146,13 @@ class PerformerActivity : FragmentActivity() {
                                 ),
                         ),
                     ),
-                    columns,
+                    getColumns(DataType.MOVIE),
                 )
             } else if (position == 4) {
                 StashGridFragment(
                     TagComparator,
                     PerformerTagDataSupplier(performer.id),
-                    columns,
+                    getColumns(DataType.TAG),
                 )
             } else if (position == 5) {
                 val presenter =
@@ -192,7 +197,7 @@ class PerformerActivity : FragmentActivity() {
                                 ),
                         ),
                     ),
-                    columns,
+                    getColumns(DataType.PERFORMER),
                 )
             } else {
                 throw IllegalStateException()

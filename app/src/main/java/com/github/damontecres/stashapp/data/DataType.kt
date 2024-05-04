@@ -78,6 +78,10 @@ enum class DataType(
                 GALLERY -> GalleryPresenter.CARD_WIDTH
             }
 
+    val defaultCardRatio
+        get() =
+            ScenePresenter.CARD_WIDTH.toDouble() / defaultCardWidth
+
     companion object {
         fun fromFilterMode(mode: FilterMode): DataType? {
             return DataType.entries.firstOrNull {
