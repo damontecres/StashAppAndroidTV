@@ -54,24 +54,16 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
     ) {
         val cardView = viewHolder.view as StashImageCardView
 
-        if (callback != null) {
-            cardView.setOnLongClickListener(
-                PopupOnLongClickListener(
-                    callback.popUpItems,
-                ) { _, _, pos, _ ->
-                    callback.onItemLongClick(item as T, pos)
-                },
-            )
-        } else {
-            val callback = getDefaultLongClickCallBack(cardView)
-            cardView.setOnLongClickListener(
-                PopupOnLongClickListener(
-                    callback.popUpItems,
-                ) { _, _, pos, _ ->
-                    callback.onItemLongClick(item as T, pos)
-                },
-            )
-        }
+        val localCallBack = callback ?: getDefaultLongClickCallBack(cardView)
+        val popUpItems = localCallBack.getPopUpItems(cardView.context, item as T)
+        cardView.setOnLongClickListener(
+            PopupOnLongClickListener(
+                popUpItems.map { it.text },
+            ) { _, _, pos, _ ->
+                localCallBack.onItemLongClick(cardView.context, item as T, popUpItems[pos])
+            },
+        )
+
         cardView.mainImageView.visibility = View.VISIBLE
         doOnBindViewHolder(viewHolder.view as StashImageCardView, item as T)
         if (cardView.isSelected) {
@@ -101,12 +93,17 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
 
     open fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<T> {
         return object : LongClickCallBack<T> {
-            override val popUpItems: List<String>
-                get() = listOf(cardView.context.getString(R.string.go_to))
+            override fun getPopUpItems(
+                context: Context,
+                item: T,
+            ): List<PopUpItem> {
+                return listOf(PopUpItem.getDefault(context))
+            }
 
             override fun onItemLongClick(
+                context: Context,
                 item: T,
-                popUpItemPosition: Int,
+                popUpItem: PopUpItem,
             ) {
                 cardView.performClick()
             }
@@ -114,12 +111,26 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
     }
 
     interface LongClickCallBack<T> {
-        val popUpItems: List<String>
+        fun getPopUpItems(
+            context: Context,
+            item: T,
+        ): List<PopUpItem>
 
         fun onItemLongClick(
+            context: Context,
             item: T,
-            popUpItemPosition: Int,
+            popUpItem: PopUpItem,
         )
+    }
+
+    data class PopUpItem(val id: Long, val text: String) {
+        companion object {
+            fun getDefault(context: Context): PopUpItem {
+                return PopUpItem(DEFAULT_ID, context.getString(R.string.go_to))
+            }
+
+            const val DEFAULT_ID = 0L
+        }
     }
 
     companion object {

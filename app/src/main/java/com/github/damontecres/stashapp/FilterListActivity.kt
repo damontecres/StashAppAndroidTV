@@ -14,15 +14,11 @@ import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.TagData
-import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
-import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -34,7 +30,6 @@ import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
@@ -59,7 +54,6 @@ import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
@@ -371,7 +365,7 @@ class FilterListActivity : FragmentActivity() {
                 val selectorPresenter =
                     ClassPresenterSelector().addClassPresenter(
                         TagData::class.java,
-                        TagPresenter(TagLongClickCallBack()),
+                        TagPresenter(),
                     )
                 StashGridFragment(
                     selectorPresenter,
@@ -443,58 +437,6 @@ class FilterListActivity : FragmentActivity() {
                     null,
                     name,
                 )
-            }
-        }
-    }
-
-    inner class TagLongClickCallBack : StashPresenter.LongClickCallBack<TagData> {
-        override val popUpItems: List<String>
-            get() =
-                listOf(
-                    this@FilterListActivity.getString(R.string.view_scenes),
-                    this@FilterListActivity.getString(R.string.view_markers),
-                )
-
-        override fun onItemLongClick(
-            item: TagData,
-            popUpItemPosition: Int,
-        ) {
-            if (popUpItemPosition == 0) {
-                // scenes
-                StashItemViewClickListener(this@FilterListActivity).onItemClicked(item)
-            } else {
-                // markers
-                val filter =
-                    SavedFilterData(
-                        id = "-1",
-                        mode = FilterMode.SCENE_MARKERS,
-                        name = item.name,
-                        find_filter =
-                            SavedFilterData.Find_filter(
-                                q = null,
-                                page = null,
-                                per_page = null,
-                                sort = null,
-                                direction = null,
-                                __typename = "",
-                            ),
-                        object_filter =
-                            SceneMarkerFilterType(
-                                tags =
-                                    Optional.present(
-                                        HierarchicalMultiCriterionInput(
-                                            value =
-                                                Optional.present(
-                                                    listOf(item.id),
-                                                ),
-                                            modifier = CriterionModifier.INCLUDES,
-                                        ),
-                                    ),
-                            ),
-                        ui_options = null,
-                        __typename = "",
-                    )
-                setupFragment(filter, false)
             }
         }
     }
