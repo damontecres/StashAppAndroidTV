@@ -32,7 +32,6 @@ import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
-import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
@@ -330,8 +329,8 @@ class FilterListActivity : FragmentActivity() {
         val cardSize =
             PreferenceManager.getDefaultSharedPreferences(this)
                 .getInt("cardSize", getString(R.string.card_size_default))
-        val performerCardSize =
-            (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / PerformerPresenter.CARD_WIDTH)).toInt()
+        val calculatedCardSize =
+            (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
         // TODO other sizes
         val filterParser = FilterParser(ServerPreferences(this).serverVersion)
         return when (dataType) {
@@ -340,7 +339,7 @@ class FilterListActivity : FragmentActivity() {
                 StashGridFragment(
                     SceneComparator,
                     SceneDataSupplier(findFilter, sceneFilter),
-                    null,
+                    calculatedCardSize,
                     name,
                 )
             }
@@ -350,7 +349,7 @@ class FilterListActivity : FragmentActivity() {
                 StashGridFragment(
                     StudioComparator,
                     StudioDataSupplier(findFilter, studioFilter),
-                    null,
+                    calculatedCardSize,
                     name,
                 )
             }
@@ -361,7 +360,7 @@ class FilterListActivity : FragmentActivity() {
                 StashGridFragment(
                     PerformerComparator,
                     PerformerDataSupplier(findFilter, performerFilter),
-                    performerCardSize,
+                    calculatedCardSize,
                     name,
                 )
             }
@@ -377,7 +376,7 @@ class FilterListActivity : FragmentActivity() {
                     selectorPresenter,
                     TagComparator,
                     TagDataSupplier(findFilter, tagFilter),
-                    null,
+                    calculatedCardSize,
                     name,
                 )
             }
@@ -387,7 +386,7 @@ class FilterListActivity : FragmentActivity() {
                 StashGridFragment(
                     MovieComparator,
                     MovieDataSupplier(findFilter, movieFilter),
-                    null,
+                    calculatedCardSize,
                     name,
                 )
             }
@@ -402,7 +401,7 @@ class FilterListActivity : FragmentActivity() {
                 StashGridFragment(
                     MarkerComparator,
                     MarkerDataSupplier(findFilter, markerFilter),
-                    null,
+                    calculatedCardSize,
                     name,
                 )
             }
@@ -418,7 +417,7 @@ class FilterListActivity : FragmentActivity() {
                     StashGridFragment(
                         ImageComparator,
                         ImageDataSupplier(findFilter, imageFilter),
-                        null,
+                        calculatedCardSize,
                         name,
                     )
                 fragment.onItemViewClickedListener =
@@ -440,7 +439,7 @@ class FilterListActivity : FragmentActivity() {
                 StashGridFragment(
                     GalleryComparator,
                     GalleryDataSupplier(findFilter, galleryFilter),
-                    null,
+                    calculatedCardSize,
                     name,
                 )
             }
