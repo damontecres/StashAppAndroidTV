@@ -124,6 +124,8 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
     }
 
     data class PopUpItem(val id: Long, val text: String) {
+        constructor(id: Int, text: String) : this(id.toLong(), text)
+
         companion object {
             fun getDefault(context: Context): PopUpItem {
                 return PopUpItem(DEFAULT_ID, context.getString(R.string.go_to))
