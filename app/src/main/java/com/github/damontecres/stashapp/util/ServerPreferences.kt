@@ -48,7 +48,7 @@ class ServerPreferences(private val context: Context) {
     /**
      * Update the local preferences from the server configuration
      */
-    private fun updatePreferences(
+    fun updatePreferences(
         config: ConfigurationQuery.Configuration?,
         serverInfo: ServerInfoQuery.Data?,
     ) {

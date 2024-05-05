@@ -51,8 +51,10 @@ import com.github.damontecres.stashapp.views.OnImageFilterClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Objects
 
 /**
@@ -230,23 +232,26 @@ class MainFragment : BrowseSupportFragment() {
     private fun fetchData() {
         clearData()
         viewLifecycleOwner.lifecycleScope.launch(
-            CoroutineExceptionHandler { _, ex ->
-                Log.e(TAG, "Exception in fetchData coroutine", ex)
-                Toast.makeText(
-                    requireContext(),
-                    "Error fetching data: ${ex.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            },
+            Dispatchers.IO +
+                CoroutineExceptionHandler { _, ex ->
+                    Log.e(TAG, "Exception in fetchData coroutine", ex)
+                    Toast.makeText(
+                        requireContext(),
+                        "Error fetching data: ${ex.message}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                },
         ) {
             val serverInfo = testStashConnection(requireContext(), false)
             if (serverInfo?.version?.version == null) {
                 Log.w(TAG, "Version returned by server is null")
-                Toast.makeText(
-                    requireContext(),
-                    "Could not determine the server version. Things may not work!",
-                    Toast.LENGTH_LONG,
-                ).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Could not determine the server version. Things may not work!",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
             }
 
             if (serverInfo?.version?.version != null &&
@@ -259,9 +264,11 @@ class MainFragment : BrowseSupportFragment() {
                 val msg =
                     "Stash server version ${serverInfo.version.version} is not supported!"
                 Log.e(TAG, msg)
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
-                clearData()
-                requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
+                    clearData()
+                    requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                }
             } else if (serverInfo != null) {
                 try {
                     val queryEngine = QueryEngine(requireContext(), showToasts = true)
@@ -271,72 +278,78 @@ class MainFragment : BrowseSupportFragment() {
                                 ?: Version.MINIMUM_STASH_VERSION,
                         )
 
-                    val exHandler =
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception in coroutine", ex)
-                        }
+                    val query = ConfigurationQuery()
+                    val config = queryEngine.executeQuery(query).data?.configuration
+                    ServerPreferences(requireContext()).updatePreferences(config, serverInfo)
 
-                    viewLifecycleOwner.lifecycleScope.launch(exHandler) {
-                        val query = ConfigurationQuery()
-                        val config = queryEngine.executeQuery(query).data?.configuration
-                        ServerPreferences(requireContext()).updatePreferences()
+                    if (config?.ui != null) {
+                        val ui = config.ui
+                        val frontPageContent =
+                            (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>
+                        val jobs =
+                            frontPageContent.mapIndexed { index, frontPageFilter ->
+                                val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                                adapters.add(adapter)
+                                when (
+                                    val filterType =
+                                        frontPageFilter["__typename"] as String
+                                ) {
+                                    "CustomFilter" -> {
+                                        addCustomFilterRow(
+                                            frontPageFilter,
+                                            adapter,
+                                            queryEngine,
+                                            index,
+                                        )
+                                    }
 
-                        if (config?.ui != null) {
-                            val ui = config.ui
-                            val frontPageContent =
-                                (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>
-                            val jobs =
-                                frontPageContent.mapIndexed { index, frontPageFilter ->
-                                    val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
-                                    adapters.add(adapter)
-                                    when (
-                                        val filterType =
-                                            frontPageFilter["__typename"] as String
-                                    ) {
-                                        "CustomFilter" -> {
-                                            addCustomFilterRow(
-                                                frontPageFilter,
-                                                adapter,
-                                                queryEngine,
-                                                index,
-                                            )
-                                        }
+                                    "SavedFilter" -> {
+                                        addSavedFilterRow(
+                                            frontPageFilter,
+                                            adapter,
+                                            queryEngine,
+                                            filterParser,
+                                            index,
+                                        )
+                                    }
 
-                                        "SavedFilter" -> {
-                                            addSavedFilterRow(
-                                                frontPageFilter,
-                                                adapter,
-                                                queryEngine,
-                                                filterParser,
-                                                index,
-                                            )
-                                        }
-
-                                        else -> {
-                                            Log.w(
-                                                TAG,
-                                                "Unknown frontPageFilter typename: $filterType",
-                                            )
-                                            null
-                                        }
+                                    else -> {
+                                        Log.w(
+                                            TAG,
+                                            "Unknown frontPageFilter typename: $filterType",
+                                        )
+                                        null
                                     }
                                 }
-                            jobs.forEachIndexed { index, job ->
-                                job?.await()?.let { row -> rowsAdapter.set(index, row) }
                             }
+                        jobs.forEachIndexed { index, job ->
+                            job?.await()?.let { row -> rowsAdapter.set(index, row) }
                         }
                     }
                 } catch (ex: QueryEngine.StashNotConfiguredException) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Stash not configured. Please enter the URL in settings!",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                    requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Stash not configured. Please enter the URL in settings!",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                        requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                    }
+                } catch (ex: QueryEngine.QueryException) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Query error: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                        requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                    }
                 }
             } else {
-                clearData()
-                requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                withContext(Dispatchers.Main) {
+                    clearData()
+                    requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                }
             }
         }
     }
