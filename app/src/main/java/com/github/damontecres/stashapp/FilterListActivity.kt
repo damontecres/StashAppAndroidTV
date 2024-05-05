@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -55,15 +56,20 @@ import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class FilterListActivity : FragmentActivity() {
     private lateinit var titleTextView: TextView
     private lateinit var queryEngine: QueryEngine
     private var filter: StashFilter? = null
 
+    private lateinit var manager: SharedPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        manager = PreferenceManager.getDefaultSharedPreferences(this)
         filter = intent.getParcelableExtra<StashFilter>("filter")
         queryEngine = QueryEngine(this, true)
 
@@ -189,58 +195,35 @@ class FilterListActivity : FragmentActivity() {
         }
     }
 
-    private suspend fun getStartingFilter(): Pair<FilterType, SavedFilterData?> {
-        if (filter is AppFilter) {
-            return Pair(
-                FilterType.APP_FILTER,
-                (filter as AppFilter).toSavedFilterData(this),
-            )
-        }
-        val savedFilterId = intent.getStringExtra("savedFilterId")
-        val direction = intent.getStringExtra("direction")
-        val sortBy = intent.getStringExtra("sortBy")
-        val dataTypeStr = intent.getStringExtra("dataType")
-        val description = intent.getStringExtra("description")
-        val dataType =
-            if (dataTypeStr != null) {
-                DataType.valueOf(dataTypeStr)
-            } else {
-                throw RuntimeException("dataType is required")
+    private suspend fun getStartingFilter(): Pair<FilterType, SavedFilterData?> =
+        withContext(Dispatchers.IO) {
+            if (filter is AppFilter) {
+                return@withContext Pair(
+                    FilterType.APP_FILTER,
+                    (filter as AppFilter).toSavedFilterData(this@FilterListActivity),
+                )
             }
-        val query = intent.getStringExtra("query")
-        if (savedFilterId != null) {
-            // Load a saved filter
-            return Pair(
-                FilterType.SAVED_FILTER,
-                queryEngine.getSavedFilter(savedFilterId.toString()),
-            )
-        } else if (direction != null || sortBy != null || query != null) {
-            // Generic filter
-            return Pair(
-                FilterType.CUSTOM_FILTER,
-                SavedFilterData(
-                    id = "-1",
-                    mode = dataType.filterMode,
-                    name = description ?: getString(dataType.pluralStringId),
-                    find_filter =
-                        SavedFilterData.Find_filter(
-                            q = query,
-                            page = null,
-                            per_page = null,
-                            sort = sortBy,
-                            direction = if (direction != null) SortDirectionEnum.valueOf(direction) else null,
-                            __typename = "",
-                        ),
-                    object_filter = null,
-                    ui_options = null,
-                    __typename = "",
-                ),
-            )
-        } else {
-            // Default filter
-            val filter = queryEngine.getDefaultFilter(dataType)
-            if (filter == null) {
-                return Pair(
+            val savedFilterId = intent.getStringExtra("savedFilterId")
+            val direction = intent.getStringExtra("direction")
+            val sortBy = intent.getStringExtra("sortBy")
+            val dataTypeStr = intent.getStringExtra("dataType")
+            val description = intent.getStringExtra("description")
+            val dataType =
+                if (dataTypeStr != null) {
+                    DataType.valueOf(dataTypeStr)
+                } else {
+                    throw RuntimeException("dataType is required")
+                }
+            val query = intent.getStringExtra("query")
+            if (savedFilterId != null) {
+                // Load a saved filter
+                return@withContext Pair(
+                    FilterType.SAVED_FILTER,
+                    queryEngine.getSavedFilter(savedFilterId.toString()),
+                )
+            } else if (direction != null || sortBy != null || query != null) {
+                // Generic filter
+                return@withContext Pair(
                     FilterType.CUSTOM_FILTER,
                     SavedFilterData(
                         id = "-1",
@@ -248,11 +231,11 @@ class FilterListActivity : FragmentActivity() {
                         name = description ?: getString(dataType.pluralStringId),
                         find_filter =
                             SavedFilterData.Find_filter(
-                                q = null,
+                                q = query,
                                 page = null,
                                 per_page = null,
-                                sort = dataType.defaultSort.sort,
-                                direction = dataType.defaultSort.direction,
+                                sort = sortBy,
+                                direction = if (direction != null) SortDirectionEnum.valueOf(direction) else null,
                                 __typename = "",
                             ),
                         object_filter = null,
@@ -261,10 +244,34 @@ class FilterListActivity : FragmentActivity() {
                     ),
                 )
             } else {
-                return Pair(FilterType.SAVED_FILTER, filter)
+                // Default filter
+                val filter = queryEngine.getDefaultFilter(dataType)
+                if (filter == null) {
+                    return@withContext Pair(
+                        FilterType.CUSTOM_FILTER,
+                        SavedFilterData(
+                            id = "-1",
+                            mode = dataType.filterMode,
+                            name = description ?: getString(dataType.pluralStringId),
+                            find_filter =
+                                SavedFilterData.Find_filter(
+                                    q = null,
+                                    page = null,
+                                    per_page = null,
+                                    sort = dataType.defaultSort.sort,
+                                    direction = dataType.defaultSort.direction,
+                                    __typename = "",
+                                ),
+                            object_filter = null,
+                            ui_options = null,
+                            __typename = "",
+                        ),
+                    )
+                } else {
+                    return@withContext Pair(FilterType.SAVED_FILTER, filter)
+                }
             }
         }
-    }
 
     private fun setupFragment(
         filter: SavedFilterData,
@@ -283,12 +290,8 @@ class FilterListActivity : FragmentActivity() {
 
         if (first) {
             // If the first page, maybe scroll
-            val pageSize =
-                PreferenceManager.getDefaultSharedPreferences(this)
-                    .getInt("maxSearchResults", 50)
-            val scrollToNextResult =
-                PreferenceManager.getDefaultSharedPreferences(this)
-                    .getBoolean("scrollToNextResult", true)
+            val pageSize = manager.getInt("maxSearchResults", 50)
+            val scrollToNextResult = manager.getBoolean("scrollToNextResult", true)
             val moveOnePage = intent.getBooleanExtra("moveOnePage", false)
             if (moveOnePage && scrollToNextResult) {
                 // Caller wants to scroll and user has it enabled
@@ -321,12 +324,9 @@ class FilterListActivity : FragmentActivity() {
         findFilter: FindFilterType?,
         objectFilter: Any?,
     ): StashGridFragment<out Query.Data, out Any> {
-        val cardSize =
-            PreferenceManager.getDefaultSharedPreferences(this)
-                .getInt("cardSize", getString(R.string.card_size_default))
+        val cardSize = manager.getInt("cardSize", getString(R.string.card_size_default))
         val calculatedCardSize =
             (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
-        // TODO other sizes
         val filterParser = FilterParser(ServerPreferences(this).serverVersion)
         return when (dataType) {
             DataType.SCENE -> {
