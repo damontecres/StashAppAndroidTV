@@ -672,3 +672,11 @@ fun getMaxMeasuredWidth(
  * Gets the [SlimSceneData.resume_time] in milliseconds
  */
 val SlimSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
+
+suspend fun showToastOnMain(
+    context: Context,
+    message: CharSequence,
+    length: Int,
+) = withContext(Dispatchers.Main) {
+    Toast.makeText(context, message, length).show()
+}
