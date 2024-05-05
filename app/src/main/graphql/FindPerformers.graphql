@@ -4,12 +4,21 @@ query FindPerformers($filter: FindFilterType, $performer_filter: PerformerFilter
     performer_filter: $performer_filter
     performer_ids: $performer_ids
   ) {
-    count
     performers {
       ...PerformerData
       __typename
     }
     __typename
+  }
+}
+
+query CountPerformers($filter: FindFilterType, $performer_filter: PerformerFilterType, $performer_ids: [Int!]) {
+  findPerformers(
+    filter: $filter
+    performer_filter: $performer_filter
+    performer_ids: $performer_ids
+  ) {
+    count
   }
 }
 

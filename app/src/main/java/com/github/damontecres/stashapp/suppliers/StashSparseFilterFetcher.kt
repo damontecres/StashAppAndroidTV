@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.suppliers
 
 import android.util.Log
 import com.apollographql.apollo3.api.Query
-import com.github.damontecres.stashapp.data.CountAndList
 
 /**
  * Wraps a StashPagingSource to allow for accessing any item position in the backing filter
@@ -10,11 +9,11 @@ import com.github.damontecres.stashapp.data.CountAndList
  * This class keeps one page of data available in memory and then only fetches a different page if required
  */
 class StashSparseFilterFetcher<T : Query.Data, D : Any>(
-    val source: StashPagingSource<T, D>,
+    val source: StashPagingSource<T, D, *>,
     val pageSize: Int = 25,
 ) {
     private var firstPage = true
-    private var currentPageData: CountAndList<D>? = null
+    private var currentPageData: List<D>? = null
     private var currentPage = 0
     private var currentPageStart = 0
 
@@ -45,8 +44,8 @@ class StashSparseFilterFetcher<T : Query.Data, D : Any>(
         }
         val listPos = position - currentPageStart
         if (listPos in 0..<pageSize) {
-            return if (currentPageData != null && listPos < currentPageData!!.list.size) {
-                currentPageData!!.list[listPos]
+            return if (currentPageData != null && listPos < currentPageData!!.size) {
+                currentPageData!![listPos]
             } else {
                 null
             }
@@ -72,7 +71,7 @@ class StashSparseFilterFetcher<T : Query.Data, D : Any>(
         fun onPageLoad(
             firstPageLoaded: Boolean,
             pageNum: Int,
-            page: CountAndList<D>,
+            page: List<D>,
         )
     }
 }

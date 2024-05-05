@@ -11,7 +11,7 @@ import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener.Simp
 
 class ImageGridClickedListener(
     val context: Context,
-    val fragment: StashGridFragment<FindImagesQuery.Data, ImageData>,
+    val fragment: StashGridFragment<FindImagesQuery.Data, ImageData, *>,
     val intentCallBack: (Intent) -> Unit,
 ) :
     SimpleOnItemViewClickedListener<ImageData> {

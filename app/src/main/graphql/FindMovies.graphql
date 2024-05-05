@@ -1,9 +1,14 @@
 query FindMovies($filter: FindFilterType, $movie_filter: MovieFilterType){
   findMovies(filter: $filter, movie_filter: $movie_filter){
-    count
     movies{
       ...MovieData
     }
+  }
+}
+
+query CountMovies($filter: FindFilterType, $movie_filter: MovieFilterType){
+  findMovies(filter: $filter, movie_filter: $movie_filter){
+    count
   }
 }
 

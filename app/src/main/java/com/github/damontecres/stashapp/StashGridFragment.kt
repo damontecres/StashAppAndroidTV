@@ -18,7 +18,6 @@ import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
-import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -30,16 +29,16 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class StashGridFragment<T : Query.Data, D : Any>(
+class StashGridFragment<T : Query.Data, D : Any, C : Query.Data>(
     presenter: PresenterSelector,
     comparator: DiffUtil.ItemCallback<D>,
-    private val dataSupplier: StashPagingSource.DataSupplier<T, D>,
+    private val dataSupplier: StashPagingSource.DataSupplier<T, D, C>,
     private val cardSize: Int? = null,
     val name: String? = null,
 ) : VerticalGridSupportFragment() {
     constructor(
         comparator: DiffUtil.ItemCallback<D>,
-        dataSupplier: StashPagingSource.DataSupplier<T, D>,
+        dataSupplier: StashPagingSource.DataSupplier<T, D, C>,
         cardSize: Int? = null,
         name: String? = null,
     ) : this(StashPresenter.SELECTOR, comparator, dataSupplier, cardSize, name)
@@ -100,29 +99,13 @@ class StashGridFragment<T : Query.Data, D : Any>(
                 .getBoolean(getString(R.string.pref_key_show_grid_footer), true)
         val footerLayout = view.findViewById<View>(R.id.footer_layout)
         if (showFooter) {
-            val listener =
-                object :
-                    StashPagingSource.Listener<D> {
-                    override fun onPageFetch(
-                        pageNum: Int,
-                        page: CountAndList<D>,
-                    ) {
-                        pagingSource.removeListener(this)
-                        if (page.count == StashPagingSource.UNSUPPORTED_COUNT) {
-                            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                                val count = pagingSource.getCount<Query.Data>()
-                                if (count > 0) {
-                                    totalCountTextView.text = count.toString()
-                                    footerLayout.animateToVisible()
-                                }
-                            }
-                        } else {
-                            totalCountTextView.text = page.count.toString()
-                            footerLayout.animateToVisible()
-                        }
-                    }
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val count = pagingSource.getCount()
+                if (count > 0) {
+                    totalCountTextView.text = count.toString()
+                    footerLayout.animateToVisible()
                 }
-            pagingSource.addListener(listener)
+            }
 
             setOnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
@@ -131,7 +114,9 @@ class StashGridFragment<T : Query.Data, D : Any>(
                             val snapshot = pagingAdapter.snapshot()
                             snapshot.indexOf(item) + 1
                         }
-                    positionTextView.text = position.toString()
+                    if (position > 0) {
+                        positionTextView.text = position.toString()
+                    }
                 }
             }
         } else {

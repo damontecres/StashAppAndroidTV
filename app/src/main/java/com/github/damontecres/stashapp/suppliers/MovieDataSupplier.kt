@@ -1,18 +1,18 @@
 package com.github.damontecres.stashapp.suppliers
 
 import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.CountMoviesQuery
 import com.github.damontecres.stashapp.api.FindMoviesQuery
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
-import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 
 class MovieDataSupplier(
     private val findFilter: FindFilterType?,
     private val movieFilter: MovieFilterType?,
 ) :
-    StashPagingSource.DataSupplier<FindMoviesQuery.Data, MovieData> {
+    StashPagingSource.DataSupplier<FindMoviesQuery.Data, MovieData, CountMoviesQuery.Data> {
     constructor(movieFilter: MovieFilterType? = null) : this(
         DataType.MOVIE.asDefaultFindFilterType,
         movieFilter,
@@ -31,12 +31,15 @@ class MovieDataSupplier(
         return findFilter ?: DataType.MOVIE.asDefaultFindFilterType
     }
 
-    override fun parseQuery(data: FindMoviesQuery.Data?): CountAndList<MovieData> {
-        val count = data?.findMovies?.count ?: -1
-        val performers =
-            data?.findMovies?.movies?.map {
-                it.movieData
-            }.orEmpty()
-        return CountAndList(count, performers)
+    override fun createCountQuery(filter: FindFilterType?): Query<CountMoviesQuery.Data> {
+        return CountMoviesQuery(filter, movieFilter)
+    }
+
+    override fun parseCountQuery(data: CountMoviesQuery.Data): Int {
+        return data.findMovies.count
+    }
+
+    override fun parseQuery(data: FindMoviesQuery.Data): List<MovieData> {
+        return data.findMovies.movies.map { it.movieData }
     }
 }
