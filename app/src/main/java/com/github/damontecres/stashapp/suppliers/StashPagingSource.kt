@@ -9,6 +9,8 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.QueryEngine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * A PagingSource for Stash
@@ -59,47 +61,49 @@ class StashPagingSource<T : Query.Data, D : Any>(
     suspend fun fetchPage(
         page: Int,
         loadSize: Int,
-    ): CountAndList<D> {
-        var filter =
-            dataSupplier.getDefaultFilter().copy(
-                per_page = Optional.present(loadSize),
-                page = Optional.present(page),
-            )
-        if (!sortByOverride.isNullOrBlank()) {
-            filter = filter.copy(sort = Optional.present(sortByOverride))
-        }
-        val query = dataSupplier.createQuery(queryEngine.updateFilter(filter, useRandom))
-        val queryResult = queryEngine.executeQuery(query)
-        val data = dataSupplier.parseQuery(queryResult.data)
-        listeners.forEach { it.onPageLoad(page, data) }
-        return data
-    }
-
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, D> {
-        try {
-            // Start refresh at page 1 if undefined.
-            val pageNum = (params.key ?: 1).toInt()
-            // Round requested loadSize down to a multiple of pageSize
-            val loadSize = params.loadSize / pageSize * pageSize
-            val results = fetchPage(pageNum, loadSize)
-            if (results.count < 0) {
-                return LoadResult.Error(RuntimeException("Invalid count"))
+    ): CountAndList<D> =
+        withContext(Dispatchers.IO) {
+            var filter =
+                dataSupplier.getDefaultFilter().copy(
+                    per_page = Optional.present(loadSize),
+                    page = Optional.present(page),
+                )
+            if (!sortByOverride.isNullOrBlank()) {
+                filter = filter.copy(sort = Optional.present(sortByOverride))
             }
-            // If the total fetched results is less than the total number of items, then there is a next page
-            // Advance the page by the number of requested items
-            val nextPageNum =
-                if (pageSize * pageNum < results.count) pageNum + (params.loadSize / pageSize) else null
-
-            return LoadResult.Page(
-                data = results.list,
-                // Only a previous page if current page is 2+
-                prevKey = if (pageNum > 1) pageNum - 1 else null,
-                nextKey = nextPageNum,
-            )
-        } catch (e: QueryEngine.QueryException) {
-            return LoadResult.Error(e)
+            val query = dataSupplier.createQuery(queryEngine.updateFilter(filter, useRandom))
+            val queryResult = queryEngine.executeQuery(query)
+            val data = dataSupplier.parseQuery(queryResult.data)
+            listeners.forEach { it.onPageLoad(page, data) }
+            return@withContext data
         }
-    }
+
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, D> =
+        withContext(Dispatchers.IO) {
+            try {
+                // Start refresh at page 1 if undefined.
+                val pageNum = (params.key ?: 1).toInt()
+                // Round requested loadSize down to a multiple of pageSize
+                val loadSize = params.loadSize / pageSize * pageSize
+                val results = fetchPage(pageNum, loadSize)
+                if (results.count < 0) {
+                    return@withContext LoadResult.Error(RuntimeException("Invalid count"))
+                }
+                // If the total fetched results is less than the total number of items, then there is a next page
+                // Advance the page by the number of requested items
+                val nextPageNum =
+                    if (pageSize * pageNum < results.count) pageNum + (params.loadSize / pageSize) else null
+
+                return@withContext LoadResult.Page(
+                    data = results.list,
+                    // Only a previous page if current page is 2+
+                    prevKey = if (pageNum > 1) pageNum - 1 else null,
+                    nextKey = nextPageNum,
+                )
+            } catch (e: QueryEngine.QueryException) {
+                return@withContext LoadResult.Error(e)
+            }
+        }
 
     override fun getRefreshKey(state: PagingState<Int, D>): Int? {
         // Try to find the page key of the closest page to anchorPosition from
