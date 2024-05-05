@@ -543,7 +543,7 @@ class MainFragment : BrowseSupportFragment() {
                                 filter?.sort?.getOrNull(),
                             )
                         filterList.set(index, savedFilter)
-                        ListRowData(result.name ?: "", data)
+                        ListRowData(result.name, data)
                     } else {
                         null
                     }

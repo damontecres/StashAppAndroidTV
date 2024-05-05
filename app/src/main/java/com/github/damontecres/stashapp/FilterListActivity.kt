@@ -130,7 +130,7 @@ class FilterListActivity : FragmentActivity() {
                                 filter
                             }
                         }
-                    setupFragment(startingFilter.second!!, true)
+                    setupFragment(filterData, true)
                 } else {
                     Log.e(TAG, "No starting filter found for $dataType was null")
                     finish()
@@ -200,6 +200,7 @@ class FilterListActivity : FragmentActivity() {
         val direction = intent.getStringExtra("direction")
         val sortBy = intent.getStringExtra("sortBy")
         val dataTypeStr = intent.getStringExtra("dataType")
+        val description = intent.getStringExtra("description")
         val dataType =
             if (dataTypeStr != null) {
                 DataType.valueOf(dataTypeStr)
@@ -220,7 +221,7 @@ class FilterListActivity : FragmentActivity() {
                 SavedFilterData(
                     id = "-1",
                     mode = dataType.filterMode,
-                    name = getString(dataType.pluralStringId),
+                    name = description ?: getString(dataType.pluralStringId),
                     find_filter =
                         SavedFilterData.Find_filter(
                             q = query,
@@ -244,7 +245,7 @@ class FilterListActivity : FragmentActivity() {
                     SavedFilterData(
                         id = "-1",
                         mode = dataType.filterMode,
-                        name = getString(dataType.pluralStringId),
+                        name = description ?: getString(dataType.pluralStringId),
                         find_filter =
                             SavedFilterData.Find_filter(
                                 q = null,
