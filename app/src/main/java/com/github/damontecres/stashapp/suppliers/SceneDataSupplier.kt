@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.suppliers
 
 import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.CountScenesQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
@@ -12,7 +13,7 @@ class SceneDataSupplier(
     private val findFilter: FindFilterType?,
     private val sceneFilter: SceneFilterType? = null,
 ) :
-    StashPagingSource.DataSupplier<FindScenesQuery.Data, SlimSceneData> {
+    StashPagingSource.DataCountSupplier<FindScenesQuery.Data, SlimSceneData, CountScenesQuery.Data> {
     constructor(sceneFilter: SceneFilterType? = null) : this(
         DataType.SCENE.asDefaultFindFilterType,
         sceneFilter,
@@ -30,11 +31,19 @@ class SceneDataSupplier(
 
     override fun parseQuery(data: FindScenesQuery.Data?): CountAndList<SlimSceneData> {
         val scenes = data?.findScenes?.scenes?.map { it.slimSceneData }.orEmpty()
-        val count = data?.findScenes?.count ?: -1
+        val count = StashPagingSource.UNSUPPORTED_COUNT
         return CountAndList(count, scenes)
     }
 
     override fun getDefaultFilter(): FindFilterType {
         return findFilter ?: DataType.SCENE.asDefaultFindFilterType
+    }
+
+    override fun createCountQuery(filter: FindFilterType?): Query<CountScenesQuery.Data> {
+        return CountScenesQuery(filter, sceneFilter, null)
+    }
+
+    override fun parseCountQuery(data: CountScenesQuery.Data?): Int {
+        return data?.findScenes?.count ?: StashPagingSource.INVALID_COUNT
     }
 }

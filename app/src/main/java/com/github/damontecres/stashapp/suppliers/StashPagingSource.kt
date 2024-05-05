@@ -9,6 +9,8 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.QueryEngine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * A PagingSource for Stash
@@ -56,50 +58,76 @@ class StashPagingSource<T : Query.Data, D : Any>(
         fun getDefaultFilter(): FindFilterType
     }
 
-    suspend fun fetchPage(
-        page: Int,
-        loadSize: Int,
-    ): CountAndList<D> {
+    interface DataCountSupplier<T : Query.Data, D : Any, C : Query.Data> : DataSupplier<T, D> {
+        fun createCountQuery(filter: FindFilterType?): Query<C>
+
+        fun parseCountQuery(data: C?): Int
+    }
+
+    private fun createFindFilter(): FindFilterType {
         var filter =
-            dataSupplier.getDefaultFilter().copy(
-                per_page = Optional.present(loadSize),
-                page = Optional.present(page),
-            )
+            dataSupplier.getDefaultFilter()
         if (!sortByOverride.isNullOrBlank()) {
             filter = filter.copy(sort = Optional.present(sortByOverride))
         }
-        val query = dataSupplier.createQuery(queryEngine.updateFilter(filter, useRandom))
-        val queryResult = queryEngine.executeQuery(query)
-        val data = dataSupplier.parseQuery(queryResult.data)
-        listeners.forEach { it.onPageLoad(page, data) }
-        return data
+        return queryEngine.updateFilter(filter, useRandom)!!
     }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, D> {
-        try {
-            // Start refresh at page 1 if undefined.
-            val pageNum = (params.key ?: 1).toInt()
-            // Round requested loadSize down to a multiple of pageSize
-            val loadSize = params.loadSize / pageSize * pageSize
-            val results = fetchPage(pageNum, loadSize)
-            if (results.count < 0) {
-                return LoadResult.Error(RuntimeException("Invalid count"))
+    suspend fun fetchPage(
+        page: Int,
+        loadSize: Int,
+    ): CountAndList<D> =
+        withContext(Dispatchers.IO) {
+            val filter =
+                createFindFilter().copy(
+                    per_page = Optional.present(loadSize),
+                    page = Optional.present(page),
+                )
+            val query = dataSupplier.createQuery(filter)
+            val queryResult = queryEngine.executeQuery(query)
+            val data = dataSupplier.parseQuery(queryResult.data)
+            withContext(Dispatchers.Main) {
+                listeners.forEach { it.onPageFetch(page, data) }
             }
-            // If the total fetched results is less than the total number of items, then there is a next page
-            // Advance the page by the number of requested items
-            val nextPageNum =
-                if (pageSize * pageNum < results.count) pageNum + (params.loadSize / pageSize) else null
-
-            return LoadResult.Page(
-                data = results.list,
-                // Only a previous page if current page is 2+
-                prevKey = if (pageNum > 1) pageNum - 1 else null,
-                nextKey = nextPageNum,
-            )
-        } catch (e: QueryEngine.QueryException) {
-            return LoadResult.Error(e)
+            return@withContext data
         }
-    }
+
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, D> =
+        withContext(Dispatchers.IO) {
+            try {
+                // Start refresh at page 1 if undefined.
+                val pageNum = (params.key ?: 1).toInt()
+                // Round requested loadSize down to a multiple of pageSize
+                val loadSize = params.loadSize / pageSize * pageSize
+                val results = fetchPage(pageNum, loadSize)
+                if (results.count == INVALID_COUNT) {
+                    return@withContext LoadResult.Error(RuntimeException("Invalid count"))
+                }
+                // If the total fetched results is less than the total number of items, then there is a next page
+                // Advance the page by the number of requested items
+                val nextPageNum =
+                    if (results.count != UNSUPPORTED_COUNT &&
+                        pageSize * pageNum < results.count
+                    ) {
+                        pageNum + (params.loadSize / pageSize)
+                    } else if (results.count == UNSUPPORTED_COUNT &&
+                        results.list.isNotEmpty()
+                    ) {
+                        pageNum + (params.loadSize / pageSize)
+                    } else {
+                        null
+                    }
+
+                return@withContext LoadResult.Page(
+                    data = results.list,
+                    // Only a previous page if current page is 2+
+                    prevKey = if (pageNum > 1) pageNum - 1 else null,
+                    nextKey = nextPageNum,
+                )
+            } catch (e: QueryEngine.QueryException) {
+                return@withContext LoadResult.Error(e)
+            }
+        }
 
     override fun getRefreshKey(state: PagingState<Int, D>): Int? {
         // Try to find the page key of the closest page to anchorPosition from
@@ -115,6 +143,18 @@ class StashPagingSource<T : Query.Data, D : Any>(
         }
     }
 
+    suspend fun <Z : Query.Data> getCount(): Int =
+        withContext(Dispatchers.IO) {
+            if (dataSupplier is DataCountSupplier<*, *, *>) {
+                dataSupplier as DataCountSupplier<*, *, Z>
+                val query = dataSupplier.createCountQuery(createFindFilter())
+                val queryResult = queryEngine.executeQuery(query).data
+                return@withContext dataSupplier.parseCountQuery(queryResult)
+            } else {
+                return@withContext INVALID_COUNT
+            }
+        }
+
     fun addListener(listener: Listener<D>) {
         listeners.add(listener)
     }
@@ -124,9 +164,17 @@ class StashPagingSource<T : Query.Data, D : Any>(
     }
 
     fun interface Listener<D : Any> {
-        fun onPageLoad(
+        /**
+         * Called on the Main thread whenever a page of data is fetched, but before it is loaded
+         */
+        fun onPageFetch(
             pageNum: Int,
             page: CountAndList<D>,
         )
+    }
+
+    companion object {
+        const val INVALID_COUNT = -1
+        const val UNSUPPORTED_COUNT = -2
     }
 }

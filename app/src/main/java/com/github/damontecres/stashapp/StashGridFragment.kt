@@ -103,13 +103,23 @@ class StashGridFragment<T : Query.Data, D : Any>(
             val listener =
                 object :
                     StashPagingSource.Listener<D> {
-                    override fun onPageLoad(
+                    override fun onPageFetch(
                         pageNum: Int,
                         page: CountAndList<D>,
                     ) {
                         pagingSource.removeListener(this)
-                        totalCountTextView.text = page.count.toString()
-                        footerLayout.animateToVisible()
+                        if (page.count == StashPagingSource.UNSUPPORTED_COUNT) {
+                            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                                val count = pagingSource.getCount<Query.Data>()
+                                if (count > 0) {
+                                    totalCountTextView.text = count.toString()
+                                    footerLayout.animateToVisible()
+                                }
+                            }
+                        } else {
+                            totalCountTextView.text = page.count.toString()
+                            footerLayout.animateToVisible()
+                        }
                     }
                 }
             pagingSource.addListener(listener)
