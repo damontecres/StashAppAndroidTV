@@ -16,10 +16,6 @@ import androidx.leanback.widget.BrowseFrameLayout.OnFocusSearchListener
 import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
-import androidx.leanback.widget.OnItemViewSelectedListener
-import androidx.leanback.widget.Presenter
-import androidx.leanback.widget.Row
-import androidx.leanback.widget.RowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
@@ -104,7 +100,6 @@ class MainFragment : BrowseSupportFragment() {
         // Override the focus search so that pressing up from the rows will move to search first
         val browseFrameLayout =
             requireView().findViewById<BrowseFrameLayout>(androidx.leanback.R.id.browse_frame)
-        val originalOnFocusSearchListener = browseFrameLayout.onFocusSearchListener
         browseFrameLayout.onFocusSearchListener =
             OnFocusSearchListener { focused: View?, direction: Int ->
                 if (direction == View.FOCUS_UP) {
@@ -208,22 +203,6 @@ class MainFragment : BrowseSupportFragment() {
                         OnImageFilterClickedListener.FilterPosition(null, null)
                     },
                 )
-        onItemViewSelectedListener = ItemViewSelectedListener()
-    }
-
-    private inner class ItemViewSelectedListener : OnItemViewSelectedListener {
-        override fun onItemSelected(
-            itemViewHolder: Presenter.ViewHolder?,
-            item: Any?,
-            rowViewHolder: RowPresenter.ViewHolder,
-            row: Row,
-        ) {
-            // TODO background
-//            if (item is SlimSceneData) {
-//                mBackgroundUri = item.backgroundImageUrl
-//                startBackgroundTimer()
-//            }
-        }
     }
 
     private fun clearData() {
