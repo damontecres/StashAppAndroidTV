@@ -28,6 +28,7 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
+import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.request.target.CustomTarget
@@ -48,6 +49,7 @@ import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
+import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -195,6 +197,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             ),
         ) {
             mSelectedMovie = queryEngine.getScene(sceneId)
+            if (mSelectedMovie != null) {
+                performersAdapter.presenterSelector =
+                    SinglePresenterSelector(
+                        PerformerInScenePresenter(
+                            mSelectedMovie!!,
+                            PerformerLongClickCallBack(),
+                        ),
+                    )
+            }
 
             val serverPreferences = ServerPreferences(requireContext())
             // Need to check position because the activity result callback happens before onResume
