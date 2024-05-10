@@ -7,7 +7,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.ageInYears
 import java.util.EnumMap
 
-class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
+open class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
     StashPresenter<PerformerData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
@@ -17,13 +17,7 @@ class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
             item.name + (if (!item.disambiguation.isNullOrBlank()) " (${item.disambiguation})" else "")
         cardView.titleText = title
 
-        cardView.contentText =
-            if (item.birthdate != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val yearsOldStr = cardView.context.getString(R.string.stashapp_years_old)
-                "${item.ageInYears} $yearsOldStr"
-            } else {
-                null
-            }
+        cardView.contentText = getContentText(cardView, item)
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.SCENE] = item.scene_count
@@ -38,6 +32,18 @@ class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
         }
 
         cardView.setRating100(item.rating100)
+    }
+
+    open fun getContentText(
+        cardView: StashImageCardView,
+        item: PerformerData,
+    ): CharSequence? {
+        return if (item.birthdate != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val yearsOldStr = cardView.context.getString(R.string.stashapp_years_old)
+            "${item.ageInYears} $yearsOldStr"
+        } else {
+            null
+        }
     }
 
     companion object {
