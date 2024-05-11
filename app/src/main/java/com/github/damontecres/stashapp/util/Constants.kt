@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants.OK_HTTP_TAG
@@ -679,4 +680,39 @@ suspend fun showToastOnMain(
     length: Int,
 ) = withContext(Dispatchers.Main) {
     Toast.makeText(context, message, length).show()
+}
+
+fun VideoFileData.resolutionName(): CharSequence {
+    val number = if (width > height) height else width
+    return if (number >= 6144) {
+        "HUGE"
+    } else if (number >= 3840) {
+        "8K"
+    } else if (number >= 3584) {
+        "7K"
+    } else if (number >= 3000) {
+        "6K"
+    } else if (number >= 2560) {
+        "5K"
+    } else if (number >= 1920) {
+        "4K"
+    } else if (number >= 1440) {
+        "1440p"
+    } else if (number >= 1080) {
+        "1080p"
+    } else if (number >= 720) {
+        "720p"
+    } else if (number >= 540) {
+        "540p"
+    } else if (number >= 480) {
+        "480p"
+    } else if (number >= 360) {
+        "360p"
+    } else if (number >= 240) {
+        "240p"
+    } else if (number >= 144) {
+        "144p"
+    } else {
+        "${number}p"
+    }
 }

@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
@@ -45,11 +46,9 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
             val duration = Constants.durationToString(videoFile.duration)
             cardView.setTextOverlayText(StashImageCardView.OverlayPosition.BOTTOM_RIGHT, duration)
 
-            // TODO: 2160P => 4k, etc
-            val resolution = "${videoFile.height}P"
             val resText = cardView.getTextOverlay(StashImageCardView.OverlayPosition.BOTTOM_LEFT)
             resText.setTypeface(null, Typeface.BOLD)
-            resText.text = resolution
+            resText.text = videoFile.resolutionName()
 
             if (item.resume_time != null) {
                 val percentWatched = item.resume_time / videoFile.duration

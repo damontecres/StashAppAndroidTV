@@ -19,6 +19,7 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
@@ -94,7 +95,7 @@ class SearchForFragment(
                     DataType.PERFORMER -> (item as PerformerData).id
                     DataType.MARKER -> (item as MarkerData).id
                     DataType.IMAGE -> (item as ImageData).id
-                    DataType.GALLERY -> TODO()
+                    DataType.GALLERY -> (item as GalleryData).id
                 }
             result.putExtra(RESULT_ID_KEY, resultId)
             result.putExtra(ID_KEY, requireActivity().intent.getLongExtra("id", -1))
