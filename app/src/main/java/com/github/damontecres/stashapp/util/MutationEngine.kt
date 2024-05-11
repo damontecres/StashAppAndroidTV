@@ -35,22 +35,38 @@ import com.github.damontecres.stashapp.api.type.SceneUpdateInput
 import com.github.damontecres.stashapp.data.OCounter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.locks.ReadWriteLock
 
 /**
  * Class for sending graphql mutations
+ *
+ * @param context
+ * @param showToasts show a toast when errors occur
+ * @param lock an optional lock, when if shared with [QueryEngine], can prevent race conditions
  */
-class MutationEngine(private val context: Context, private val showToasts: Boolean = false) {
+class MutationEngine(
+    private val context: Context,
+    private val showToasts: Boolean = false,
+    lock: ReadWriteLock? = null,
+) {
     private val client =
         createApolloClient(context) ?: throw QueryEngine.StashNotConfiguredException()
 
     private val serverPreferences = ServerPreferences(context)
+
+    private val writeLock = lock?.writeLock()
 
     private suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> {
         val mutationName = mutation.name()
         try {
             val response =
                 withContext(Dispatchers.IO) {
-                    client.mutation(mutation).execute()
+                    try {
+                        writeLock?.lock()
+                        client.mutation(mutation).execute()
+                    } finally {
+                        writeLock?.unlock()
+                    }
                 }
             if (response.errors.isNullOrEmpty()) {
                 Log.d(TAG, "executeMutation $mutationName successful")

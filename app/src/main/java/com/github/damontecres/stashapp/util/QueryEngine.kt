@@ -46,13 +46,24 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.locks.ReadWriteLock
 import kotlin.random.Random
 
 /**
  * Handles making graphql queries to the server
+ *
+ * @param context
+ * @param showToasts show a toast when errors occur
+ * @param lock an optional lock, when if shared with [MutationEngine], can prevent race conditions
  */
-class QueryEngine(private val context: Context, private val showToasts: Boolean = false) {
+class QueryEngine(
+    private val context: Context,
+    private val showToasts: Boolean = false,
+    lock: ReadWriteLock? = null,
+) {
     private val client = createApolloClient(context) ?: throw StashNotConfiguredException()
+
+    private val readLock = lock?.readLock()
 
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> {
         val queryName = query.operation.name()
@@ -63,7 +74,12 @@ class QueryEngine(private val context: Context, private val showToasts: Boolean 
         try {
             val response =
                 withContext(Dispatchers.IO) {
-                    query.execute()
+                    try {
+                        readLock?.lock()
+                        query.execute()
+                    } finally {
+                        readLock?.unlock()
+                    }
                 }
             if (response.errors.isNullOrEmpty()) {
                 Log.v(TAG, "executeQuery $queryName successful")
