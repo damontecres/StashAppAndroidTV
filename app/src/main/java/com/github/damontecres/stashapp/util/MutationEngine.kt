@@ -125,14 +125,14 @@ class MutationEngine(
     suspend fun saveSceneActivity(
         sceneId: String,
         position: Long,
-        duration: Long? = null,
+        duration: Int? = null,
     ): Boolean {
         Log.v(
             TAG,
             "SceneSaveActivity sceneId=$sceneId, position=$position, playDuration=$duration",
         )
         val resumeTime = position / 1000.0
-        val playDuration = if (duration != null && duration >= 1000.0) duration / 1000.0 else null
+        val playDuration = if (duration != null && duration >= 1) duration.toDouble() else null
         val mutation =
             SceneSaveActivityMutation(
                 scene_id = sceneId,
