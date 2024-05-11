@@ -16,15 +16,12 @@ import androidx.leanback.widget.BrowseFrameLayout.OnFocusSearchListener
 import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
-import androidx.leanback.widget.OnItemViewSelectedListener
-import androidx.leanback.widget.Presenter
-import androidx.leanback.widget.Row
-import androidx.leanback.widget.RowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.ConfigurationQuery
+import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FilterMode
@@ -42,7 +39,7 @@ import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.getInt
-import com.github.damontecres.stashapp.util.isNotEmpty
+import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.supportedFilterModes
 import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
@@ -51,8 +48,10 @@ import com.github.damontecres.stashapp.views.OnImageFilterClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Objects
 
 /**
@@ -101,7 +100,6 @@ class MainFragment : BrowseSupportFragment() {
         // Override the focus search so that pressing up from the rows will move to search first
         val browseFrameLayout =
             requireView().findViewById<BrowseFrameLayout>(androidx.leanback.R.id.browse_frame)
-        val originalOnFocusSearchListener = browseFrameLayout.onFocusSearchListener
         browseFrameLayout.onFocusSearchListener =
             OnFocusSearchListener { focused: View?, direction: Int ->
                 if (direction == View.FOCUS_UP) {
@@ -133,13 +131,14 @@ class MainFragment : BrowseSupportFragment() {
                 )
             },
         ) {
-            if (testStashConnection(requireContext(), false) != null) {
+            val serverInfo = testStashConnection(requireContext(), false)
+            if (serverInfo != null) {
                 ServerPreferences(requireContext()).updatePreferences()
                 val mainTitleView =
                     requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                 mainTitleView.refreshMenuItems()
                 if (rowsAdapter.size() == 0) {
-                    fetchData()
+                    fetchData(serverInfo)
                 }
                 try {
                     val position = getCurrentPosition()
@@ -204,22 +203,6 @@ class MainFragment : BrowseSupportFragment() {
                         OnImageFilterClickedListener.FilterPosition(null, null)
                     },
                 )
-        onItemViewSelectedListener = ItemViewSelectedListener()
-    }
-
-    private inner class ItemViewSelectedListener : OnItemViewSelectedListener {
-        override fun onItemSelected(
-            itemViewHolder: Presenter.ViewHolder?,
-            item: Any?,
-            rowViewHolder: RowPresenter.ViewHolder,
-            row: Row,
-        ) {
-            // TODO background
-//            if (item is SlimSceneData) {
-//                mBackgroundUri = item.backgroundImageUrl
-//                startBackgroundTimer()
-//            }
-        }
     }
 
     private fun clearData() {
@@ -227,59 +210,58 @@ class MainFragment : BrowseSupportFragment() {
         adapters.forEach { it.clear() }
     }
 
-    private fun fetchData() {
+    private fun fetchData(serverInfo: ServerInfoQuery.Data) {
         clearData()
         viewLifecycleOwner.lifecycleScope.launch(
-            CoroutineExceptionHandler { _, ex ->
-                Log.e(TAG, "Exception in fetchData coroutine", ex)
-                Toast.makeText(
-                    requireContext(),
-                    "Error fetching data: ${ex.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            },
+            Dispatchers.IO +
+                CoroutineExceptionHandler { _, ex ->
+                    Log.e(TAG, "Exception in fetchData coroutine", ex)
+                    Toast.makeText(
+                        requireContext(),
+                        "Error fetching data: ${ex.message}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                },
         ) {
-            val serverInfo = testStashConnection(requireContext(), false)
-            if (serverInfo?.version?.version == null) {
-                Log.w(TAG, "Version returned by server is null")
-                Toast.makeText(
-                    requireContext(),
-                    "Could not determine the server version. Things may not work!",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
+            try {
+                if (serverInfo.version.version == null) {
+                    Log.w(TAG, "Version returned by server is null")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Could not determine the server version. Things may not work!",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                }
 
-            if (serverInfo?.version?.version != null &&
-                !Version.isStashVersionSupported(
-                    Version.fromString(
-                        serverInfo.version.version,
-                    ),
-                )
-            ) {
-                val msg =
-                    "Stash server version ${serverInfo.version.version} is not supported!"
-                Log.e(TAG, msg)
-                Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
-                clearData()
-                requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
-            } else if (serverInfo != null) {
-                try {
-                    val queryEngine = QueryEngine(requireContext(), showToasts = true)
-                    val filterParser =
-                        FilterParser(
-                            Version.tryFromString(serverInfo.version.version)
-                                ?: Version.MINIMUM_STASH_VERSION,
-                        )
+                if (serverInfo.version.version != null &&
+                    !Version.isStashVersionSupported(
+                        Version.fromString(
+                            serverInfo.version.version,
+                        ),
+                    )
+                ) {
+                    val msg =
+                        "Stash server version ${serverInfo.version.version} is not supported!"
+                    Log.e(TAG, msg)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
+                        clearData()
+                        requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                    }
+                } else {
+                    try {
+                        val queryEngine = QueryEngine(requireContext(), showToasts = true)
+                        val filterParser =
+                            FilterParser(
+                                Version.tryFromString(serverInfo.version.version)
+                                    ?: Version.MINIMUM_STASH_VERSION,
+                            )
 
-                    val exHandler =
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception in coroutine", ex)
-                        }
-
-                    viewLifecycleOwner.lifecycleScope.launch(exHandler) {
                         val query = ConfigurationQuery()
                         val config = queryEngine.executeQuery(query).data?.configuration
-                        ServerPreferences(requireContext()).updatePreferences()
+                        ServerPreferences(requireContext()).updatePreferences(config, serverInfo)
 
                         if (config?.ui != null) {
                             val ui = config.ui
@@ -287,8 +269,6 @@ class MainFragment : BrowseSupportFragment() {
                                 (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>
                             val jobs =
                                 frontPageContent.mapIndexed { index, frontPageFilter ->
-                                    val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
-                                    adapters.add(adapter)
                                     when (
                                         val filterType =
                                             frontPageFilter["__typename"] as String
@@ -296,7 +276,6 @@ class MainFragment : BrowseSupportFragment() {
                                         "CustomFilter" -> {
                                             addCustomFilterRow(
                                                 frontPageFilter,
-                                                adapter,
                                                 queryEngine,
                                                 index,
                                             )
@@ -305,7 +284,6 @@ class MainFragment : BrowseSupportFragment() {
                                         "SavedFilter" -> {
                                             addSavedFilterRow(
                                                 frontPageFilter,
-                                                adapter,
                                                 queryEngine,
                                                 filterParser,
                                                 index,
@@ -322,31 +300,57 @@ class MainFragment : BrowseSupportFragment() {
                                     }
                                 }
                             jobs.forEachIndexed { index, job ->
-                                job?.await()?.let { row -> rowsAdapter.set(index, row) }
+                                job?.await()?.let { rowData ->
+                                    val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                                    adapters.add(adapter)
+                                    adapter.addAll(0, rowData.data)
+                                    adapter.add(filterList[index])
+
+                                    withContext(Dispatchers.Main) {
+                                        val row = ListRow(HeaderItem(rowData.name), adapter)
+                                        rowsAdapter.set(index, row)
+                                    }
+                                }
                             }
                         }
+                    } catch (ex: QueryEngine.StashNotConfiguredException) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Stash not configured. Please enter the URL in settings!",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                        }
+                    } catch (ex: QueryEngine.QueryException) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Query error: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                        }
                     }
-                } catch (ex: QueryEngine.StashNotConfiguredException) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Stash not configured. Please enter the URL in settings!",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                    requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                 }
-            } else {
-                clearData()
-                requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+            } catch (ex: Exception) {
+                Log.e(TAG, "Exception in fetchData", ex)
+                showToastOnMain(
+                    requireContext(),
+                    "Error fetching data: ${ex.message}",
+                    Toast.LENGTH_LONG,
+                )
             }
         }
     }
 
-    private fun addCustomFilterRow(
+    data class ListRowData(val name: String, val data: Collection<Any>)
+
+    private suspend fun addCustomFilterRow(
         frontPageFilter: Map<String, *>,
-        adapter: ArrayObjectAdapter,
         queryEngine: QueryEngine,
         index: Int,
-    ): Deferred<ListRow?>? {
+    ): Deferred<ListRowData?>? {
         try {
             val msg = frontPageFilter["message"] as Map<String, *>
             val objType =
@@ -395,73 +399,69 @@ class MainFragment : BrowseSupportFragment() {
                                 sort = Optional.presentIfNotNull(sortBy),
                                 per_page = Optional.present(pageSize),
                             )
-                        when (mode) {
-                            FilterMode.SCENES -> {
-                                adapter.addAll(0, queryEngine.findScenes(filter))
-                            }
+                        val data =
+                            when (mode) {
+                                FilterMode.SCENES -> {
+                                    queryEngine.findScenes(filter)
+                                }
 
-                            FilterMode.STUDIOS -> {
-                                adapter.addAll(0, queryEngine.findStudios(filter))
-                            }
+                                FilterMode.STUDIOS -> {
+                                    queryEngine.findStudios(filter)
+                                }
 
-                            FilterMode.PERFORMERS -> {
-                                adapter.addAll(0, queryEngine.findPerformers(filter))
-                            }
+                                FilterMode.PERFORMERS -> {
+                                    queryEngine.findPerformers(filter)
+                                }
 
-                            FilterMode.MOVIES -> {
-                                adapter.addAll(0, queryEngine.findMovies(filter))
-                            }
+                                FilterMode.MOVIES -> {
+                                    queryEngine.findMovies(filter)
+                                }
 
-                            FilterMode.IMAGES -> {
-                                adapter.addAll(0, queryEngine.findImages(filter))
-                            }
+                                FilterMode.IMAGES -> {
+                                    queryEngine.findImages(filter)
+                                }
 
-                            FilterMode.GALLERIES -> {
-                                adapter.addAll(0, queryEngine.findGalleries(filter))
-                            }
+                                FilterMode.GALLERIES -> {
+                                    queryEngine.findGalleries(filter)
+                                }
 
-                            else -> {
-                                Log.w(TAG, "Unsupported mode in frontpage: $mode")
+                                else -> {
+                                    Log.w(TAG, "Unsupported mode in frontpage: $mode")
+                                    listOf()
+                                }
                             }
-                        }
-                        if (adapter.isNotEmpty()) {
+                        if (data.isNotEmpty()) {
                             val customFilter =
                                 StashCustomFilter(mode, direction, sortBy, description)
-                            adapter.add(customFilter)
                             filterList.set(index, customFilter)
-                            ListRow(
-                                HeaderItem(description),
-                                adapter,
-                            )
+                            ListRowData(description, data)
                         } else {
                             null
                         }
                     } catch (ex: Exception) {
                         Log.e(TAG, "Exception in addCustomFilterRow", ex)
-                        Toast.makeText(requireContext(), "Error parsing filter", Toast.LENGTH_LONG)
-                            .show()
+                        showToastOnMain(requireContext(), "Error parsing filter", Toast.LENGTH_LONG)
                         null
                     }
                 }
             return job
         } catch (ex: Exception) {
             Log.e(TAG, "Exception during addCustomFilterRow", ex)
-            Toast.makeText(
+            showToastOnMain(
                 requireContext(),
                 "CustomFilter parse error: ${ex.message}",
                 Toast.LENGTH_LONG,
-            ).show()
+            )
             return null
         }
     }
 
     private fun addSavedFilterRow(
         frontPageFilter: Map<String, *>,
-        adapter: ArrayObjectAdapter,
         queryEngine: QueryEngine,
         filterParser: FilterParser,
         index: Int,
-    ): Deferred<ListRow?> {
+    ): Deferred<ListRowData?> {
         return viewLifecycleOwner.lifecycleScope.async {
             val filterId = frontPageFilter.getCaseInsensitive("savedFilterId")
             try {
@@ -479,86 +479,71 @@ class MainFragment : BrowseSupportFragment() {
                     val objectFilter =
                         result?.object_filter as Map<String, Map<String, *>>?
 
-                    when (result?.mode) {
-                        FilterMode.SCENES -> {
-                            val sceneFilter =
-                                filterParser.convertSceneObjectFilter(objectFilter)
-                            adapter.addAll(
-                                0,
-                                queryEngine.findScenes(filter, sceneFilter, useRandom = false),
-                            )
-                        }
+                    val data =
+                        when (result?.mode) {
+                            FilterMode.SCENES -> {
+                                val sceneFilter =
+                                    filterParser.convertSceneObjectFilter(objectFilter)
+                                queryEngine.findScenes(filter, sceneFilter, useRandom = false)
+                            }
 
-                        FilterMode.STUDIOS -> {
-                            val studioFilter =
-                                filterParser.convertStudioObjectFilter(objectFilter)
-                            adapter.addAll(
-                                0,
+                            FilterMode.STUDIOS -> {
+                                val studioFilter =
+                                    filterParser.convertStudioObjectFilter(objectFilter)
                                 queryEngine.findStudios(
                                     filter,
                                     studioFilter,
                                     useRandom = false,
-                                ),
-                            )
-                        }
+                                )
+                            }
 
-                        FilterMode.PERFORMERS -> {
-                            val performerFilter =
-                                filterParser.convertPerformerObjectFilter(objectFilter)
-                            adapter.addAll(
-                                0,
+                            FilterMode.PERFORMERS -> {
+                                val performerFilter =
+                                    filterParser.convertPerformerObjectFilter(objectFilter)
+
                                 queryEngine.findPerformers(
                                     filter,
                                     performerFilter,
                                     useRandom = false,
-                                ),
-                            )
-                        }
+                                )
+                            }
 
-                        FilterMode.TAGS -> {
-                            val tagFilter =
-                                filterParser.convertTagObjectFilter(objectFilter)
-                            adapter.addAll(
-                                0,
-                                queryEngine.findTags(filter, tagFilter, useRandom = false),
-                            )
-                        }
+                            FilterMode.TAGS -> {
+                                val tagFilter =
+                                    filterParser.convertTagObjectFilter(objectFilter)
 
-                        FilterMode.IMAGES -> {
-                            val imageFilter =
-                                filterParser.convertImageObjectFilter(objectFilter)
-                            adapter.addAll(
-                                0,
-                                queryEngine.findImages(filter, imageFilter, useRandom = false),
-                            )
-                        }
+                                queryEngine.findTags(filter, tagFilter, useRandom = false)
+                            }
 
-                        FilterMode.GALLERIES -> {
-                            val galleryFilter =
-                                filterParser.convertGalleryObjectFilter(objectFilter)
-                            adapter.addAll(
-                                0,
-                                queryEngine.findGalleries(filter, galleryFilter, useRandom = false),
-                            )
-                        }
+                            FilterMode.IMAGES -> {
+                                val imageFilter =
+                                    filterParser.convertImageObjectFilter(objectFilter)
+                                queryEngine.findImages(filter, imageFilter, useRandom = false)
+                            }
 
-                        else -> {
-                            Log.w(
-                                TAG,
-                                "Unsupported mode in frontpage: ${result?.mode}",
-                            )
+                            FilterMode.GALLERIES -> {
+                                val galleryFilter =
+                                    filterParser.convertGalleryObjectFilter(objectFilter)
+                                queryEngine.findGalleries(filter, galleryFilter, useRandom = false)
+                            }
+
+                            else -> {
+                                Log.w(
+                                    TAG,
+                                    "Unsupported mode in frontpage: ${result?.mode}",
+                                )
+                                listOf()
+                            }
                         }
-                    }
-                    if (adapter.isNotEmpty()) {
+                    if (data.isNotEmpty()) {
                         val savedFilter =
                             StashSavedFilter(
                                 filterId.toString(),
                                 result!!.mode,
                                 filter?.sort?.getOrNull(),
                             )
-                        adapter.add(savedFilter)
                         filterList.set(index, savedFilter)
-                        ListRow(HeaderItem(result?.name ?: ""), adapter)
+                        ListRowData(result.name, data)
                     } else {
                         null
                     }
@@ -568,11 +553,11 @@ class MainFragment : BrowseSupportFragment() {
                 }
             } catch (ex: Exception) {
                 Log.e(TAG, "Exception in addSavedFilterRow filterId=$filterId", ex)
-                Toast.makeText(
+                showToastOnMain(
                     requireContext(),
                     "Error parsing filter $filterId. This is likely a bug! ${ex.message}",
                     Toast.LENGTH_LONG,
-                ).show()
+                )
                 null
             }
         }
