@@ -26,6 +26,7 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
+import com.github.damontecres.stashapp.setup.SetupActivity
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -275,29 +276,33 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val newServer = findPreference<Preference>("newStashServer")!!
             newServer.setOnPreferenceClickListener {
-                val url = urlPref.text
-                val apiKey = apiKayPref.text
-                if (url.isNullOrBlank()) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Enter URL before adding a new one",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                } else {
-                    manager.edit(true) {
-                        putString(SERVER_PREF_PREFIX + url, url)
-                        putString(SERVER_APIKEY_PREF_PREFIX + url, apiKey)
-                    }
+                val intent = Intent(requireContext(), SetupActivity::class.java)
+                intent.putExtra(SetupActivity.INTENT_SETUP_FIRST_TIME, false)
+                requireContext().startActivity(intent)
 
-                    urlPref.text = null
-                    apiKayPref.text = null
-                    setServers()
-                    Toast.makeText(
-                        requireContext(),
-                        "Enter details above",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
+//                val url = urlPref.text
+//                val apiKey = apiKayPref.text
+//                if (url.isNullOrBlank()) {
+//                    Toast.makeText(
+//                        requireContext(),
+//                        "Enter URL before adding a new one",
+//                        Toast.LENGTH_LONG,
+//                    ).show()
+//                } else {
+//                    manager.edit(true) {
+//                        putString(SERVER_PREF_PREFIX + url, url)
+//                        putString(SERVER_APIKEY_PREF_PREFIX + url, apiKey)
+//                    }
+//
+//                    urlPref.text = null
+//                    apiKayPref.text = null
+//                    setServers()
+//                    Toast.makeText(
+//                        requireContext(),
+//                        "Enter details above",
+//                        Toast.LENGTH_LONG,
+//                    ).show()
+//                }
                 true
             }
 
@@ -412,8 +417,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         companion object {
             const val TAG = "SettingsFragment"
 
-            private const val SERVER_PREF_PREFIX = "server_"
-            private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
+            const val SERVER_PREF_PREFIX = "server_"
+            const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
         }
     }
 

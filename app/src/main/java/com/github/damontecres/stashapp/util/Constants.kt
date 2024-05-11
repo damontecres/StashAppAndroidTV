@@ -156,8 +156,16 @@ val TRUST_ALL_CERTS: X509TrustManager =
 
 fun createOkHttpClient(context: Context): OkHttpClient {
     val manager = PreferenceManager.getDefaultSharedPreferences(context)
-    val trustAll = manager.getBoolean("trustAllCerts", false)
     val apiKey = manager.getString("stashApiKey", null)
+    return createOkHttpClient(context, apiKey)
+}
+
+fun createOkHttpClient(
+    context: Context,
+    apiKey: String?,
+): OkHttpClient {
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val trustAll = manager.getBoolean("trustAllCerts", false)
     val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
     val cacheLogging = manager.getBoolean("networkCacheLogging", false)
     val networkTimeout = manager.getInt("networkTimeout", 15).toLong()
@@ -290,6 +298,14 @@ class AuthorizationInterceptor(private val apiKey: String?) : HttpInterceptor {
 fun createApolloClient(context: Context): ApolloClient? {
     val stashUrl = PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
     val apiKey = PreferenceManager.getDefaultSharedPreferences(context).getString("stashApiKey", "")
+    return createApolloClient(context, stashUrl, apiKey)
+}
+
+fun createApolloClient(
+    context: Context,
+    stashUrl: String?,
+    apiKey: String?,
+): ApolloClient? {
     return if (!stashUrl.isNullOrBlank()) {
         var cleanedStashUrl = stashUrl.trim()
         if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
@@ -307,7 +323,7 @@ fun createApolloClient(context: Context): ApolloClient? {
                 .build()
         Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
 
-        val httpEngine = DefaultHttpEngine(createOkHttpClient(context))
+        val httpEngine = DefaultHttpEngine(createOkHttpClient(context, apiKey))
         ApolloClient.Builder()
             .serverUrl(url.toString())
             .httpEngine(httpEngine)
@@ -333,6 +349,24 @@ suspend fun testStashConnection(
     showToast: Boolean,
 ): ServerInfoQuery.Data? {
     val client = createApolloClient(context)
+    return testStashConnection(context, showToast, client)
+}
+
+suspend fun testStashConnection(
+    context: Context,
+    showToast: Boolean,
+    serverUrl: String?,
+    apiKey: String?,
+): ServerInfoQuery.Data? {
+    val client = createApolloClient(context, serverUrl, apiKey)
+    return testStashConnection(context, showToast, client)
+}
+
+suspend fun testStashConnection(
+    context: Context,
+    showToast: Boolean,
+    client: ApolloClient?,
+): ServerInfoQuery.Data? {
     if (client == null) {
         if (showToast) {
             Toast.makeText(

@@ -104,6 +104,10 @@
             android:name=".LicenseActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
+        <activity
+            android:name=".setup.SetupActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

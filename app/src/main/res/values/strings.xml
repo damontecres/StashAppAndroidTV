@@ -27,4 +27,7 @@
 
     <string name="app_update_url" translatable="false">https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest</string>
 
+    <string name="setup_1_title">Setup the server</string>
+    <string name="setup_1_description">Configure the Stash server details</string>
+
 </resources>
