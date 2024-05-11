@@ -1,18 +1,18 @@
 package com.github.damontecres.stashapp.suppliers
 
 import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.CountGalleriesQuery
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
-import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 
 class GalleryDataSupplier(
     private val findFilter: FindFilterType?,
     private val galleryFilter: GalleryFilterType?,
 ) :
-    StashPagingSource.DataSupplier<FindGalleriesQuery.Data, GalleryData> {
+    StashPagingSource.DataSupplier<FindGalleriesQuery.Data, GalleryData, CountGalleriesQuery.Data> {
     constructor(galleryFilter: GalleryFilterType? = null) : this(
         DataType.GALLERY.asDefaultFindFilterType,
         galleryFilter,
@@ -31,10 +31,15 @@ class GalleryDataSupplier(
         return findFilter ?: DataType.GALLERY.asDefaultFindFilterType
     }
 
-    override fun parseQuery(data: FindGalleriesQuery.Data?): CountAndList<GalleryData> {
-        val count = data?.findGalleries?.count ?: -1
-        val images =
-            data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
-        return CountAndList(count, images)
+    override fun createCountQuery(filter: FindFilterType?): Query<CountGalleriesQuery.Data> {
+        return CountGalleriesQuery(filter, galleryFilter)
+    }
+
+    override fun parseCountQuery(data: CountGalleriesQuery.Data): Int {
+        return data.findGalleries.count
+    }
+
+    override fun parseQuery(data: FindGalleriesQuery.Data): List<GalleryData> {
+        return data.findGalleries.galleries.map { it.galleryData }
     }
 }

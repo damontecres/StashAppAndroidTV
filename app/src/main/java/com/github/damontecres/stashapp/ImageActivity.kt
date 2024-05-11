@@ -89,10 +89,7 @@ class ImageActivity : FragmentActivity() {
                 if (dataSupplier != null) {
                     val pagingSource = StashPagingSource(this@ImageActivity, pageSize, dataSupplier)
                     pager = StashSparseFilterFetcher(pagingSource, pageSize)
-                    pager.addListener { firstPage, pageNum, pageData ->
-                        totalCount = pageData.count
-                        Log.v(TAG, "Got $totalCount total images")
-                    }
+                    totalCount = pagingSource.getCount()
                     canScrollImages = true
                 }
             }

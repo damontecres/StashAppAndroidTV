@@ -9,7 +9,7 @@
     <TextView
         android:id="@+id/position_text"
         style="@style/GridFooterText"
-        android:text="1"
+        android:text="\?"
         tools:text="11" />
 
     <TextView

@@ -1,18 +1,18 @@
 package com.github.damontecres.stashapp.suppliers
 
 import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.CountStudiosQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
-import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 
 class StudioDataSupplier(
     private val findFilter: FindFilterType?,
     private val studioFilter: StudioFilterType?,
 ) :
-    StashPagingSource.DataSupplier<FindStudiosQuery.Data, StudioData> {
+    StashPagingSource.DataSupplier<FindStudiosQuery.Data, StudioData, CountStudiosQuery.Data> {
     constructor(studioFilter: StudioFilterType? = null) : this(
         DataType.STUDIO.asDefaultFindFilterType,
         studioFilter,
@@ -31,12 +31,15 @@ class StudioDataSupplier(
         return findFilter ?: DataType.STUDIO.asDefaultFindFilterType
     }
 
-    override fun parseQuery(data: FindStudiosQuery.Data?): CountAndList<StudioData> {
-        val count = data?.findStudios?.count ?: -1
-        val studios =
-            data?.findStudios?.studios?.map {
-                it.studioData
-            }.orEmpty()
-        return CountAndList(count, studios)
+    override fun createCountQuery(filter: FindFilterType?): Query<CountStudiosQuery.Data> {
+        return CountStudiosQuery(filter, studioFilter)
+    }
+
+    override fun parseCountQuery(data: CountStudiosQuery.Data): Int {
+        return data.findStudios.count
+    }
+
+    override fun parseQuery(data: FindStudiosQuery.Data): List<StudioData> {
+        return data.findStudios.studios.map { it.studioData }
     }
 }
