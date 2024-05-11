@@ -23,6 +23,8 @@ data class Scene(
     val videoResolution: Int?,
     val oCounter: Int?,
 ) : Parcelable {
+    val durationPosition get() = duration?.times(1000L)?.toLong()
+
     companion object {
         fun fromSlimSceneData(data: SlimSceneData): Scene {
             val streams =

@@ -10,14 +10,24 @@ import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.fragment.app.FragmentActivity
 import androidx.media3.common.util.UnstableApi
+import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.util.toMilliseconds
 
 /** Loads [PlaybackVideoFragment]. */
 class PlaybackActivity : FragmentActivity() {
     private val fragment = PlaybackExoFragment()
+    private var maxPlayPercent = 98
+
+    private lateinit var scene: Scene
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        scene = intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
+            ?: throw RuntimeException()
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        maxPlayPercent =
+            PreferenceManager.getDefaultSharedPreferences(this).getInt("maxPlayPercent", 98)
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
                 .replace(android.R.id.content, fragment)
@@ -44,10 +54,27 @@ class PlaybackActivity : FragmentActivity() {
      * Return the video's current position to the previous Activity
      */
     private fun returnPosition() {
-        val intent = Intent()
+        val sceneDuration = scene.duration ?: Double.MIN_VALUE
         val position = fragment.currentVideoPosition
-        Log.d(TAG, "Video playback ending, currentVideoPosition=$position")
-        intent.putExtra("position", position)
+
+        val playedPercent = (position.toMilliseconds / sceneDuration) * 100
+        val positionToSave =
+            if (playedPercent >= maxPlayPercent) {
+                Log.v(
+                    PlaybackExoFragment.TAG,
+                    "Setting position to 0 since $playedPercent >= $maxPlayPercent",
+                )
+                0L
+            } else {
+                position
+            }
+        Log.d(
+            TAG,
+            "Video playback ending, currentVideoPosition=$position, positionToSave=$positionToSave",
+        )
+
+        val intent = Intent()
+        intent.putExtra(VideoDetailsFragment.POSITION_RESULT_ARG, positionToSave)
         setResult(Activity.RESULT_OK, intent)
         finish()
     }

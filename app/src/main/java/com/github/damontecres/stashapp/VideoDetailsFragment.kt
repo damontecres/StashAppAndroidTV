@@ -70,6 +70,7 @@ import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.math.roundToInt
@@ -625,17 +626,17 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         ).show()
                     }
                 } else {
-                    val localPosition = data.getLongExtra(POSITION_ARG, -1)
+                    val localPosition = data.getLongExtra(POSITION_RESULT_ARG, -1)
                     if (localPosition >= 0) {
                         sceneActionsAdapter.set(
                             CREATE_MARKER_POS,
                             CreateMarkerAction(localPosition),
                         )
                     }
-                    setupPlayActionsAdapter()
-                    val serverPreferences = ServerPreferences(requireContext())
-                    if (serverPreferences.trackActivity) {
-                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+
+                    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                        val serverPreferences = ServerPreferences(requireContext())
+                        if (serverPreferences.trackActivity) {
                             Log.v(TAG, "ResultCallback saveSceneActivity start")
                             MutationEngine(requireContext(), false).saveSceneActivity(
                                 mSelectedMovie!!.id,
@@ -645,6 +646,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     }
 
                     position = localPosition
+                    setupPlayActionsAdapter()
                 }
             }
         }
@@ -876,6 +878,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private const val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
 
         const val POSITION_ARG = "position"
+        const val POSITION_RESULT_ARG = "position.result"
         const val FORCE_TRANSCODE = "forceTranscode"
 
         // Row order
