@@ -25,7 +25,6 @@ class StashExoPlayer private constructor() {
             val skipBack =
                 PreferenceManager.getDefaultSharedPreferences(context)
                     .getInt("skip_back_time", 10)
-            // TODO invalidate
             if (instance == null) {
                 synchronized(this) { // synchronized to avoid concurrency problem
                     if (instance == null) {

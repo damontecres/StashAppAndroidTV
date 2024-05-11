@@ -146,8 +146,6 @@ class FilterListActivity : FragmentActivity() {
         lifecycleScope.launch(exHandler) {
             val savedFilters = queryEngine.getSavedFilters(dataType)
             if (savedFilters.isEmpty()) {
-                // TODO: Hide the filter button?
-//                filterButton.visibility = View.INVISIBLE
                 filterButton.setOnClickListener {
                     Toast.makeText(
                         this@FilterListActivity,
