@@ -28,6 +28,7 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
+import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.request.target.CustomTarget
@@ -48,6 +49,7 @@ import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
+import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -69,6 +71,7 @@ import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.math.roundToInt
 
 /**
@@ -77,6 +80,9 @@ import kotlin.math.roundToInt
  */
 class VideoDetailsFragment : DetailsSupportFragment() {
     private var mSelectedMovie: SlimSceneData? = null
+
+    private lateinit var queryEngine: QueryEngine
+    private lateinit var mutationEngine: MutationEngine
 
     private val studioAdapter = ArrayObjectAdapter(StudioPresenter())
     private val performersAdapter =
@@ -130,6 +136,11 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
+
+        val lock = ReentrantReadWriteLock()
+        queryEngine = QueryEngine(requireContext(), lock = lock)
+        mutationEngine = MutationEngine(requireContext(), lock = lock)
+
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         resultLauncher =
             registerForActivityResult(
@@ -184,7 +195,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun fetchData(sceneId: String) {
-        val queryEngine = QueryEngine(requireContext())
         viewLifecycleOwner.lifecycleScope.launch(
             StashCoroutineExceptionHandler(
                 Toast.makeText(
@@ -195,6 +205,15 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             ),
         ) {
             mSelectedMovie = queryEngine.getScene(sceneId)
+            if (mSelectedMovie != null) {
+                performersAdapter.presenterSelector =
+                    SinglePresenterSelector(
+                        PerformerInScenePresenter(
+                            mSelectedMovie!!,
+                            PerformerLongClickCallBack(),
+                        ),
+                    )
+            }
 
             val serverPreferences = ServerPreferences(requireContext())
             // Need to check position because the activity result callback happens before onResume
@@ -267,6 +286,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             }
 
             val performerIds = mSelectedMovie!!.performers.map { it.id }
+            Log.v(TAG, "fetchData performerIds=$performerIds")
             if (performerIds.isNotEmpty()) {
                 if (mAdapter.lookup(PERFORMER_POS) == null) {
                     mAdapter.set(
@@ -456,7 +476,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     ),
                 ),
             ) {
-                val mutationEngine = MutationEngine(requireContext())
                 val newCounter = mutationEngine.incrementOCounter(counter.id)
                 mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCounter.count)
                 sceneActionsAdapter.set(O_COUNTER_POS, newCounter)
@@ -665,7 +684,6 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             item: OCounter,
             popUpItem: StashPresenter.PopUpItem,
         ) {
-            val mutationEngine = MutationEngine(requireContext())
             viewLifecycleOwner.lifecycleScope.launch(
                 StashCoroutineExceptionHandler(
                     Toast.makeText(

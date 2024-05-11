@@ -4,6 +4,11 @@ query FindTags($filter: FindFilterType, $tag_filter: TagFilterType)  {
       ...TagData
       __typename
     }
+  }
+}
+
+query CountTags($filter: FindFilterType, $tag_filter: TagFilterType)  {
+  findTags(filter: $filter, tag_filter: $tag_filter){
     count
   }
 }

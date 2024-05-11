@@ -1,18 +1,18 @@
 package com.github.damontecres.stashapp.suppliers
 
 import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.CountMarkersQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
-import com.github.damontecres.stashapp.data.CountAndList
 import com.github.damontecres.stashapp.data.DataType
 
 class MarkerDataSupplier(
     private val findFilter: FindFilterType?,
     private val markerFilter: SceneMarkerFilterType? = null,
 ) :
-    StashPagingSource.DataSupplier<FindMarkersQuery.Data, MarkerData> {
+    StashPagingSource.DataSupplier<FindMarkersQuery.Data, MarkerData, CountMarkersQuery.Data> {
     constructor(markerFilter: SceneMarkerFilterType? = null) : this(
         DataType.MARKER.asDefaultFindFilterType,
         markerFilter,
@@ -27,13 +27,19 @@ class MarkerDataSupplier(
         )
     }
 
-    override fun parseQuery(data: FindMarkersQuery.Data?): CountAndList<MarkerData> {
-        val markers = data?.findSceneMarkers?.scene_markers?.map { it.markerData }.orEmpty()
-        val count = data?.findSceneMarkers?.count ?: -1
-        return CountAndList(count, markers)
+    override fun parseQuery(data: FindMarkersQuery.Data): List<MarkerData> {
+        return data.findSceneMarkers.scene_markers.map { it.markerData }
     }
 
     override fun getDefaultFilter(): FindFilterType {
         return findFilter ?: DataType.MARKER.asDefaultFindFilterType
+    }
+
+    override fun createCountQuery(filter: FindFilterType?): Query<CountMarkersQuery.Data> {
+        return CountMarkersQuery(filter, markerFilter)
+    }
+
+    override fun parseCountQuery(data: CountMarkersQuery.Data): Int {
+        return data.findSceneMarkers.count
     }
 }
