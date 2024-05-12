@@ -43,15 +43,15 @@ class StashSparseFilterFetcher<T : Query.Data, D : Any>(
             loadDataFor(position)
         }
         val listPos = position - currentPageStart
-        if (listPos in 0..<pageSize) {
-            return if (currentPageData != null && listPos < currentPageData!!.size) {
+        return if (listPos in 0..<pageSize) {
+            if (currentPageData != null && listPos < currentPageData!!.size) {
                 currentPageData!![listPos]
             } else {
                 null
             }
         } else {
             loadDataFor(position)
-            return get(position)
+            get(position)
         }
     }
 

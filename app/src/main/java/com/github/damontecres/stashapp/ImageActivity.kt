@@ -57,6 +57,7 @@ import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.otaliastudios.zoom.ZoomImageView
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 import kotlin.properties.Delegates
 
 class ImageActivity : FragmentActivity() {
@@ -77,7 +78,7 @@ class ImageActivity : FragmentActivity() {
             val imageSize = intent.getIntExtra(INTENT_IMAGE_SIZE, -1)
             imageFragment = ImageFragment(imageId, imageUrl, imageSize)
             supportFragmentManager.beginTransaction()
-                .replace(R.id.image_fragment, imageFragment!!)
+                .replace(R.id.image_fragment, imageFragment)
                 .commitNow()
 
             val pageSize =
@@ -600,7 +601,7 @@ class ImageActivity : FragmentActivity() {
         }
 
         private fun isImageRotated(): Boolean {
-            val rotation = Math.abs(mainImage.rotation)
+            val rotation = abs(mainImage.rotation)
             return rotation == 90f || rotation == 270f
         }
 
@@ -656,10 +657,7 @@ class ImageActivity : FragmentActivity() {
             if (isImageZoomedIn()) {
                 // Image is zoomed in
                 val panDistance =
-                    Math.min(
-                        mainImage.drawable.intrinsicWidth,
-                        mainImage.drawable.intrinsicHeight,
-                    ) * .05f
+                    mainImage.drawable.intrinsicWidth.coerceAtMost(mainImage.drawable.intrinsicHeight) * .05f
                 if (isDirectionalDpadKey(event.keyCode)) {
                     if (isLeft(event.keyCode)) {
                         mainImage.panBy(panDistance, 0f, true)

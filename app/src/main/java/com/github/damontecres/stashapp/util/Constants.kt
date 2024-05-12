@@ -247,7 +247,7 @@ fun createGlideUrl(
         GlideUrl(
             url,
             LazyHeaders.Builder()
-                .addHeader(Constants.STASH_API_HEADER, apiKey.trim())
+                .addHeader(STASH_API_HEADER, apiKey.trim())
                 .build(),
         )
     }
@@ -278,7 +278,7 @@ class AuthorizationInterceptor(private val apiKey: String?) : HttpInterceptor {
             chain.proceed(request)
         } else {
             chain.proceed(
-                request.newBuilder().addHeader(Constants.STASH_API_HEADER, apiKey.trim()).build(),
+                request.newBuilder().addHeader(STASH_API_HEADER, apiKey.trim()).build(),
             )
         }
     }
@@ -666,7 +666,7 @@ fun getMaxMeasuredWidth(
             }
         }
     }
-    return Math.min(widest, maxMeasuredWidth)
+    return widest.coerceAtMost(maxMeasuredWidth)
 }
 
 /**

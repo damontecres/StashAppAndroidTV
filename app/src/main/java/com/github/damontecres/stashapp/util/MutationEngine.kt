@@ -35,6 +35,7 @@ import com.github.damontecres.stashapp.api.type.SceneUpdateInput
 import com.github.damontecres.stashapp.data.OCounter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReadWriteLock
 
 /**
@@ -58,7 +59,9 @@ class MutationEngine(
 
     private suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> {
         val mutationName = mutation.name()
+        val id = MUTATION_ID.getAndIncrement()
         try {
+            Log.v(TAG, "executeMutation $id $mutationName start")
             val response =
                 withContext(Dispatchers.IO) {
                     try {
@@ -69,7 +72,7 @@ class MutationEngine(
                     }
                 }
             if (response.errors.isNullOrEmpty()) {
-                Log.d(TAG, "executeMutation $mutationName successful")
+                Log.v(TAG, "executeMutation $id $mutationName successful")
                 return response
             } else {
                 val errorMsgs = response.errors!!.joinToString("\n") { it.message }
@@ -80,19 +83,22 @@ class MutationEngine(
                         Toast.LENGTH_LONG,
                     ).show()
                 }
-                Log.e(TAG, "Errors in $mutationName: ${response.errors}")
-                throw MutationException("($mutationName), ${response.errors!!.size} errors in graphql response")
+                Log.e(TAG, "Errors in $id $mutationName: ${response.errors}")
+                throw MutationException(
+                    id,
+                    "($mutationName), ${response.errors!!.size} errors in graphql response",
+                )
             }
         } catch (ex: ApolloNetworkException) {
             if (showToasts) {
                 Toast.makeText(
                     context,
-                    "Network error ($mutationName). Message: ${ex.message}, ${ex.cause?.message}",
+                    "Network error ($id $mutationName). Message: ${ex.message}, ${ex.cause?.message}",
                     Toast.LENGTH_LONG,
                 ).show()
             }
-            Log.e(TAG, "Network error in $mutationName", ex)
-            throw MutationException("Network error ($mutationName)", ex)
+            Log.e(TAG, "Network error in $id $mutationName", ex)
+            throw MutationException(id, "Network error ($mutationName)", ex)
         } catch (ex: ApolloHttpException) {
             if (showToasts) {
                 Toast.makeText(
@@ -101,18 +107,18 @@ class MutationEngine(
                     Toast.LENGTH_LONG,
                 ).show()
             }
-            Log.e(TAG, "HTTP ${ex.statusCode} error in $mutationName", ex)
-            throw MutationException("HTTP ${ex.statusCode} ($mutationName)", ex)
+            Log.e(TAG, "HTTP ${ex.statusCode} error in $id $mutationName", ex)
+            throw MutationException(id, "HTTP ${ex.statusCode} ($mutationName)", ex)
         } catch (ex: ApolloException) {
             if (showToasts) {
                 Toast.makeText(
                     context,
-                    "Server query error ($mutationName). Msg=${ex.message}, ${ex.cause?.message}",
+                    "Server query error ($id $mutationName). Msg=${ex.message}, ${ex.cause?.message}",
                     Toast.LENGTH_LONG,
                 ).show()
             }
-            Log.e(TAG, "ApolloException in $mutationName", ex)
-            throw MutationException("Apollo exception ($mutationName)", ex)
+            Log.e(TAG, "ApolloException in $id $mutationName", ex)
+            throw MutationException(id, "Apollo exception ($mutationName)", ex)
         }
     }
 
@@ -222,7 +228,7 @@ class MutationEngine(
         sceneId: String,
         performerIds: List<String>,
     ): SceneUpdateMutation.SceneUpdate? {
-        Log.v(TAG, "setTagsOnScene sceneId=$sceneId, performerIds=$performerIds")
+        Log.v(TAG, "setPerformersOnScene sceneId=$sceneId, performerIds=$performerIds")
         val mutation =
             SceneUpdateMutation(
                 input =
@@ -273,7 +279,7 @@ class MutationEngine(
         val input =
             SceneMarkerCreateInput(
                 title = "",
-                seconds = position / 1000.0,
+                seconds = position.toMilliseconds,
                 scene_id = sceneId,
                 primary_tag_id = primaryTagId,
                 tag_ids = Optional.absent(),
@@ -292,7 +298,7 @@ class MutationEngine(
     suspend fun setRating(
         sceneId: String,
         rating100: Int,
-    ) {
+    ): SceneUpdateMutation.SceneUpdate? {
         Log.v(TAG, "setRating sceneId=$sceneId, rating=$rating100")
         val mutation =
             SceneUpdateMutation(
@@ -302,7 +308,7 @@ class MutationEngine(
                         rating100 = Optional.present(rating100),
                     ),
             )
-        executeMutation(mutation)
+        return executeMutation(mutation).data?.sceneUpdate
     }
 
     suspend fun incrementImageOCounter(imageId: String): OCounter {
@@ -344,8 +350,10 @@ class MutationEngine(
 
     companion object {
         const val TAG = "MutationEngine"
+
+        private val MUTATION_ID = AtomicInteger(0)
     }
 
-    open class MutationException(msg: String? = null, cause: ApolloException? = null) :
+    open class MutationException(val id: Int, msg: String? = null, cause: ApolloException? = null) :
         RuntimeException(msg, cause)
 }

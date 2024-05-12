@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
+import android.view.View.OnFocusChangeListener
 import android.widget.FrameLayout
 import android.widget.RatingBar
 import android.widget.SeekBar
@@ -121,18 +122,12 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
         )
 
         val focusChangeListener =
-            object : OnFocusChangeListener {
-                @SuppressLint("SetTextI18n")
-                override fun onFocusChange(
-                    v: View,
-                    hasFocus: Boolean,
-                ) {
-                    if (!hasFocus) {
-                        starRatingBar.rating = rating100 / 20.0f
-                        decimalRatingBar.progress = rating100
-                        decimalRatingText.text =
-                            context.getString(R.string.stashapp_rating) + " (${rating100 / 10.0}):"
-                    }
+            OnFocusChangeListener { v, hasFocus ->
+                if (!hasFocus) {
+                    starRatingBar.rating = rating100 / 20.0f
+                    decimalRatingBar.progress = rating100
+                    decimalRatingText.text =
+                        context.getString(R.string.stashapp_rating) + " (${rating100 / 10.0}):"
                 }
             }
         starRatingBar.onFocusChangeListener = focusChangeListener

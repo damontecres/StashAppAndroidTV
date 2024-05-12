@@ -1,6 +1,4 @@
 <resources>
-    <color name="background_gradient_start">#000000</color>
-    <color name="background_gradient_end">#DDDDDD</color>
     <color name="fastlane_background">#0096a6</color>
     <color name="selected_background">#4785b5</color>
     <color name="default_background">#202b33</color>

@@ -62,8 +62,4 @@ class UpdateAppFragment(private val release: UpdateChecker.Release) : GuidedStep
             finishGuidedStepSupportFragments()
         }
     }
-
-    companion object {
-        private const val INSTALL_ACTION = 1L
-    }
 }
