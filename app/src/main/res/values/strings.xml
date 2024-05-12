@@ -3,7 +3,7 @@
     <string name="browse_title" translatable="false">Stash</string>
     <string name="play_scene" translatable="false">Play</string>
     <string name="pref_stash_server_header" translatable="false">Stash</string>
-    <string name="pref_stash_server_url" translatable="false">Stash URL</string>
+    <string name="pref_stash_server_url" translatable="false">Current server</string>
 
     <string name="fa_tag" translatable="false">&#xf02b;</string>
     <string name="fa_user" translatable="false">&#xf007;</string>

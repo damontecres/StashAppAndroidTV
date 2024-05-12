@@ -3,19 +3,17 @@ package com.github.damontecres.stashapp.setup
 import android.os.Bundle
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
+import androidx.leanback.widget.GuidedActionsStylist
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SettingsFragment.PreferencesFragment.Companion.SERVER_APIKEY_PREF_PREFIX
-import com.github.damontecres.stashapp.SettingsFragment.PreferencesFragment.Companion.SERVER_PREF_PREFIX
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.addAndSwitchServer
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
@@ -80,6 +78,14 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
             super.onCreate(savedInstanceState)
         }
 
+        override fun onCreateActionsStylist(): GuidedActionsStylist {
+            return StashGuidedActionsStylist(requireContext())
+        }
+
+        override fun onCreateButtonActionsStylist(): GuidedActionsStylist {
+            return super.onCreateButtonActionsStylist()
+        }
+
         override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
             return GuidanceStylist.Guidance(
                 getString(R.string.setup_1_title),
@@ -131,32 +137,22 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
                 } else {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                         val result = testStashConnection(requireContext(), false, serverUrl?.toString(), serverApiKey?.toString())
-                        if (result != null) {
+                        if (result.status == TestResultStatus.SUCCESS) {
                             // Persist values
-                            saveServer()
+                            addAndSwitchServer(
+                                requireContext(),
+                                StashServer(serverUrl.toString(), serverApiKey?.toString()),
+                            )
                             finishGuidedStepSupportFragments()
                         } else {
-                            Toast.makeText(requireContext(), "Cannot connection to server.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                requireContext(),
+                                "Cannot connect to server.",
+                                Toast.LENGTH_LONG,
+                            ).show()
                         }
                     }
                 }
-            }
-        }
-
-        fun saveServer() {
-            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            val currentServerUrl = manager.getString("stashUrl", null)
-            val currentServerApiKey = manager.getString("stashApiKey", null)
-            if (currentServerUrl.isNotNullOrBlank()) {
-                // Save current values
-                manager.edit(true) {
-                    putString(SERVER_PREF_PREFIX + currentServerUrl, currentServerUrl)
-                    putString(SERVER_APIKEY_PREF_PREFIX + currentServerUrl, currentServerApiKey)
-                }
-            }
-            manager.edit(true) {
-                putString("stashUrl", serverUrl?.toString())
-                putString("stashApiKey", serverApiKey?.toString())
             }
         }
     }

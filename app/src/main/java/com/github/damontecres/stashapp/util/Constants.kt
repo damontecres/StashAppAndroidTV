@@ -19,6 +19,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.content.edit
 import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.Visibility
@@ -35,6 +36,7 @@ import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.ImageActivity
+import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -761,5 +763,66 @@ fun VideoFileData.resolutionName(): CharSequence {
         "144p"
     } else {
         "${number}p"
+    }
+}
+
+data class StashServer(val url: String, val apiKey: String?)
+
+fun getCurrentStashServer(context: Context): StashServer? {
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val url = manager.getString(SettingsFragment.PREF_STASH_URL, null)
+    val apiKey = manager.getString(SettingsFragment.PREF_STASH_API_KEY, null)
+    return if (url.isNotNullOrBlank()) {
+        StashServer(url, apiKey)
+    } else {
+        null
+    }
+}
+
+fun setCurrentStashServer(
+    context: Context,
+    server: StashServer,
+) {
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    manager.edit {
+        putString(SettingsFragment.PREF_STASH_URL, server.url)
+        putString(SettingsFragment.PREF_STASH_API_KEY, server.apiKey)
+    }
+}
+
+fun removeStashServer(
+    context: Context,
+    server: StashServer,
+) {
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val serverKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + server.url
+    val apiKeyKey = SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + server.url
+    manager.edit {
+        remove(serverKey)
+        remove(apiKeyKey)
+    }
+}
+
+fun addAndSwitchServer(
+    context: Context,
+    newServer: StashServer,
+) {
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val current = getCurrentStashServer(context)
+    val currentServerKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + current?.url
+    val currentApiKeyKey =
+        SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + current?.url
+    val newServerKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + newServer.url
+    val newApiKeyKey =
+        SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + newServer.url
+    manager.edit {
+        if (current != null) {
+            putString(currentServerKey, current.url)
+            putString(currentApiKeyKey, current.apiKey)
+        }
+        putString(newServerKey, newServer.url)
+        putString(newApiKeyKey, newServer.apiKey)
+        putString(SettingsFragment.PREF_STASH_URL, newServer.url)
+        putString(SettingsFragment.PREF_STASH_API_KEY, newServer.apiKey)
     }
 }

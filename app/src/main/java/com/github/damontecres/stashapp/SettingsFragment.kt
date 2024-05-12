@@ -9,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
-import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
@@ -17,7 +16,6 @@ import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
 import androidx.leanback.preference.LeanbackSettingsFragmentCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
-import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceDialogFragmentCompat
 import androidx.preference.PreferenceFragmentCompat
@@ -26,7 +24,7 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
-import com.github.damontecres.stashapp.setup.SetupActivity
+import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -34,6 +32,7 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
+import com.github.damontecres.stashapp.util.getCurrentStashServer
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -106,7 +105,14 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         ) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
 
-            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+            val manageServers = findPreference<Preference>("manageServers")
+            manageServers!!.setOnPreferenceClickListener {
+                GuidedStepSupportFragment.add(
+                    requireActivity().supportFragmentManager,
+                    ManageServersFragment(),
+                )
+                true
+            }
 
             val pinCodePref = findPreference<EditTextPreference>("pinCode")!!
             pinCodePref.summaryProvider =
@@ -217,73 +223,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     true
                 }
 
-            setServers()
-            val chooseServer = findPreference<ListPreference>("chooseStashServer")!!
-            chooseServer.entries = serverKeys.toTypedArray()
-            chooseServer.entryValues = serverValues.toTypedArray()
-            chooseServer.setOnPreferenceClickListener {
-                setServers()
-                chooseServer.entries = serverKeys.toTypedArray()
-                chooseServer.entryValues = serverValues.toTypedArray()
-                if (serverKeys.isEmpty()) {
-                    Toast.makeText(requireContext(), "No other servers defined", Toast.LENGTH_SHORT)
-                        .show()
-                    true
-                } else {
-                    false
-                }
-            }
-            chooseServer.setOnPreferenceChangeListener { preference: Preference, newValue: Any ->
-                val serverKey = newValue.toString()
-                val apiKeyKey = serverKey.replace(SERVER_PREF_PREFIX, SERVER_APIKEY_PREF_PREFIX)
-
-                val server = manager.getString(serverKey, null)
-                val apiKey = manager.getString(apiKeyKey, null)
-
-                manager.edit(true) {
-                    putString("stashUrl", server)
-                    putString("stashApiKey", apiKey)
-                }
-
-                false
-            }
-
-            val newServer = findPreference<Preference>("newStashServer")!!
-            newServer.setOnPreferenceClickListener {
-                GuidedStepSupportFragment.add(
-                    requireActivity().supportFragmentManager,
-                    SetupActivity.ConfigureServerStep(false),
-                )
-                true
-            }
-
-            val removeServer = findPreference<ListPreference>("deleteStashServer")!!
-            removeServer.entries = serverKeys.toTypedArray()
-            removeServer.entryValues = serverValues.toTypedArray()
-            removeServer.setOnPreferenceClickListener {
-                setServers()
-                removeServer.entries = serverKeys.toTypedArray()
-                removeServer.entryValues = serverValues.toTypedArray()
-                if (serverKeys.isEmpty()) {
-                    Toast.makeText(requireContext(), "No servers defined", Toast.LENGTH_SHORT)
-                        .show()
-                    true
-                } else {
-                    false
-                }
-            }
-            removeServer.setOnPreferenceChangeListener { preference, newValue ->
-                val key = newValue.toString()
-                manager.edit(true) {
-                    val apiKeyKey = key.replace(SERVER_PREF_PREFIX, SERVER_APIKEY_PREF_PREFIX)
-                    remove(key)
-                    remove(apiKeyKey)
-                }
-                // TODO pick a new server?
-                setServers()
-                false
-            }
-
             findPreference<SeekBarPreference>("skip_back_time")!!.min = 5
             findPreference<SeekBarPreference>("skip_forward_time")!!.min = 5
 
@@ -334,6 +273,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
         override fun onResume() {
             super.onResume()
+
+            val currentServer = getCurrentStashServer(requireContext())
+            findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer?.url
+
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 ServerPreferences(requireContext()).updatePreferences()
             }
@@ -463,5 +406,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             editTextView?.inputType = InputType.TYPE_CLASS_NUMBER
             return root
         }
+    }
+
+    companion object {
+        const val PREF_STASH_URL = "stashUrl"
+        const val PREF_STASH_API_KEY = "stashApiKey"
     }
 }
