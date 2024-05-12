@@ -338,6 +338,16 @@ fun createApolloClient(
     }
 }
 
+enum class TestResultStatus {
+    SUCCESS,
+    AUTH_REQUIRED,
+    ERROR,
+}
+
+data class TestResult(val status: TestResultStatus, val serverInfo: ServerInfoQuery.Data?) {
+    constructor(status: TestResultStatus) : this(status, null)
+}
+
 /**
  * Test whether the app can connect to Stash
  *
@@ -349,7 +359,7 @@ suspend fun testStashConnection(
     showToast: Boolean,
 ): ServerInfoQuery.Data? {
     val client = createApolloClient(context)
-    return testStashConnection(context, showToast, client)
+    return testStashConnection(context, showToast, client).serverInfo
 }
 
 suspend fun testStashConnection(
@@ -357,7 +367,7 @@ suspend fun testStashConnection(
     showToast: Boolean,
     serverUrl: String?,
     apiKey: String?,
-): ServerInfoQuery.Data? {
+): TestResult {
     val client = createApolloClient(context, serverUrl, apiKey)
     return testStashConnection(context, showToast, client)
 }
@@ -366,7 +376,7 @@ suspend fun testStashConnection(
     context: Context,
     showToast: Boolean,
     client: ApolloClient?,
-): ServerInfoQuery.Data? {
+): TestResult {
     if (client == null) {
         if (showToast) {
             Toast.makeText(
@@ -400,7 +410,7 @@ suspend fun testStashConnection(
                         Toast.LENGTH_SHORT,
                     ).show()
                 }
-                return info.data
+                return TestResult(TestResultStatus.SUCCESS, info.data)
             }
         } catch (ex: ApolloHttpException) {
             Log.e(Constants.TAG, "ApolloHttpException", ex)
@@ -412,6 +422,7 @@ suspend fun testStashConnection(
                         Toast.LENGTH_LONG,
                     ).show()
                 }
+                return TestResult(TestResultStatus.AUTH_REQUIRED)
             } else {
                 if (showToast) {
                     Toast.makeText(
@@ -432,7 +443,7 @@ suspend fun testStashConnection(
             }
         }
     }
-    return null
+    return TestResult(TestResultStatus.ERROR)
 }
 
 fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {

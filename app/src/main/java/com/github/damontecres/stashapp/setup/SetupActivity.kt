@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsFragment.PreferencesFragment.Companion.SERVER_APIKEY_PREF_PREFIX
 import com.github.damontecres.stashapp.SettingsFragment.PreferencesFragment.Companion.SERVER_PREF_PREFIX
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
@@ -41,6 +42,44 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
         private var serverUrl: CharSequence? = null
         private var serverApiKey: CharSequence? = null
 
+        private lateinit var guidedActionsServerUrl: GuidedAction
+        private lateinit var guidedActionsServerApiKey: GuidedAction
+        private lateinit var guidedActionSubmit: GuidedAction
+
+        override fun onCreate(savedInstanceState: Bundle?) {
+            if (savedInstanceState == null) {
+                guidedActionsServerUrl =
+                    GuidedAction.Builder(requireContext())
+                        .id(ACTION_SERVER_URL)
+                        .title("Stash Server URL")
+//                    .description("The stash's server URL")
+//                    .editDescription("")
+                        .descriptionEditable(true)
+                        .build()
+
+                guidedActionsServerApiKey =
+                    GuidedAction.Builder(requireContext())
+                        .id(ACTION_SERVER_API_KEY)
+                        .title("Stash Server API Key")
+//                    .description("Enter the server API key is needed")
+//                    .editDescription("")
+                        .descriptionEditable(true)
+                        .enabled(false)
+                        .build()
+
+                guidedActionSubmit =
+                    GuidedAction.Builder(requireContext())
+                        .id(GuidedAction.ACTION_ID_OK)
+                        .title("Submit")
+                        .description("")
+                        .enabled(false)
+                        .hasNext(true)
+                        .build()
+            }
+            // Call super.onCreate last because it calls other setup steps
+            super.onCreate(savedInstanceState)
+        }
+
         override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
             return GuidanceStylist.Guidance(
                 getString(R.string.setup_1_title),
@@ -56,32 +95,9 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
         ) {
             super.onCreateActions(actions, savedInstanceState)
 
-            actions.add(
-                GuidedAction.Builder(requireContext())
-                    .id(ACTION_SERVER_URL)
-                    .title("Stash Server URL")
-//                    .description("The stash's server URL")
-//                    .editDescription("")
-                    .descriptionEditable(true)
-                    .build(),
-            )
-            actions.add(
-                GuidedAction.Builder(requireContext())
-                    .id(ACTION_SERVER_API_KEY)
-                    .title("Stash Server API Key")
-//                    .description("Enter the server API key is needed")
-//                    .editDescription("")
-                    .descriptionEditable(true)
-                    .build(),
-            )
-            actions.add(
-                GuidedAction.Builder(requireContext())
-                    .id(GuidedAction.ACTION_ID_OK)
-                    .title("Continue")
-                    .description("")
-                    .hasNext(true)
-                    .build(),
-            )
+            actions.add(guidedActionsServerUrl)
+            actions.add(guidedActionsServerApiKey)
+            actions.add(guidedActionSubmit)
         }
 
         override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
@@ -91,11 +107,21 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
                 serverApiKey = action.description
             }
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                testStashConnection(requireContext(), true, serverUrl?.toString(), serverApiKey?.toString())
+                val result =
+                    testStashConnection(
+                        requireContext(),
+                        true,
+                        serverUrl?.toString(),
+                        serverApiKey?.toString(),
+                    )
+                when (result.status) {
+                    TestResultStatus.SUCCESS -> guidedActionSubmit.isEnabled = true
+                    TestResultStatus.AUTH_REQUIRED -> guidedActionsServerApiKey.isEnabled = true
+                    TestResultStatus.ERROR -> {}
+                }
             }
 
-            // TODO test server
-            return GuidedAction.ACTION_ID_NEXT
+            return GuidedAction.ACTION_ID_CURRENT
         }
 
         override fun onGuidedActionClicked(action: GuidedAction) {

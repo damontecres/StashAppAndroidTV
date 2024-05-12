@@ -181,26 +181,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
             }
 
-            findPreference<Preference>("testStashServer")!!
-                .setOnPreferenceClickListener {
-                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        testStashConnection(requireContext(), true)
-                    }
-                    true
-                }
-
-            val urlPref = findPreference<EditTextPreference>("stashUrl")!!
-
-            val apiKayPref = findPreference<EditTextPreference>("stashApiKey")!!
-            apiKayPref.summaryProvider =
-                Preference.SummaryProvider<EditTextPreference> { preference ->
-                    if (preference.text.isNullOrBlank()) {
-                        "No API key configured"
-                    } else {
-                        "API Key is configured"
-                    }
-                }
-
             val triggerExceptionHandler =
                 CoroutineExceptionHandler { _, ex ->
                     Log.e(TAG, "Error during trigger", ex)
@@ -254,55 +234,26 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
             }
             chooseServer.setOnPreferenceChangeListener { preference: Preference, newValue: Any ->
-                val currentUrl = urlPref?.text
-                val currentApiKey = apiKayPref?.text
-                if (!currentUrl.isNullOrBlank()) {
-                    manager.edit(true) {
-                        putString(SERVER_PREF_PREFIX + currentUrl, currentUrl)
-                        putString(SERVER_APIKEY_PREF_PREFIX + currentUrl, currentApiKey)
-                    }
-                }
-
                 val serverKey = newValue.toString()
                 val apiKeyKey = serverKey.replace(SERVER_PREF_PREFIX, SERVER_APIKEY_PREF_PREFIX)
 
                 val server = manager.getString(serverKey, null)
                 val apiKey = manager.getString(apiKeyKey, null)
-                urlPref.text = server
-                apiKayPref.text = apiKey
+
+                manager.edit(true) {
+                    putString("stashUrl", server)
+                    putString("stashApiKey", apiKey)
+                }
 
                 false
             }
 
             val newServer = findPreference<Preference>("newStashServer")!!
             newServer.setOnPreferenceClickListener {
-                val intent = Intent(requireContext(), SetupActivity::class.java)
-                intent.putExtra(SetupActivity.INTENT_SETUP_FIRST_TIME, false)
-                requireContext().startActivity(intent)
-
-//                val url = urlPref.text
-//                val apiKey = apiKayPref.text
-//                if (url.isNullOrBlank()) {
-//                    Toast.makeText(
-//                        requireContext(),
-//                        "Enter URL before adding a new one",
-//                        Toast.LENGTH_LONG,
-//                    ).show()
-//                } else {
-//                    manager.edit(true) {
-//                        putString(SERVER_PREF_PREFIX + url, url)
-//                        putString(SERVER_APIKEY_PREF_PREFIX + url, apiKey)
-//                    }
-//
-//                    urlPref.text = null
-//                    apiKayPref.text = null
-//                    setServers()
-//                    Toast.makeText(
-//                        requireContext(),
-//                        "Enter details above",
-//                        Toast.LENGTH_LONG,
-//                    ).show()
-//                }
+                GuidedStepSupportFragment.add(
+                    requireActivity().supportFragmentManager,
+                    SetupActivity.ConfigureServerStep(false),
+                )
                 true
             }
 
@@ -328,11 +279,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     remove(key)
                     remove(apiKeyKey)
                 }
-                val url = key.replace(SERVER_PREF_PREFIX, "")
-                if (url == urlPref.text) {
-                    urlPref.text = null
-                    apiKayPref.text = null
-                }
+                // TODO pick a new server?
                 setServers()
                 false
             }
@@ -394,14 +341,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
         override fun onStop() {
             super.onStop()
-            val url = findPreference<EditTextPreference>("stashUrl")!!.text
-            val apiKey = findPreference<EditTextPreference>("stashApiKey")!!.text
-            if (!url.isNullOrBlank()) {
-                PreferenceManager.getDefaultSharedPreferences(requireContext()).edit(true) {
-                    putString(SERVER_PREF_PREFIX + url, url)
-                    putString(SERVER_APIKEY_PREF_PREFIX + url, apiKey)
-                }
-            }
         }
 
         private fun setServers() {
