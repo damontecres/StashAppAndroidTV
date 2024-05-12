@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.addAndSwitchServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
@@ -59,8 +60,8 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
                     GuidedAction.Builder(requireContext())
                         .id(ACTION_SERVER_API_KEY)
                         .title("Stash Server API Key")
-//                    .description("Enter the server API key is needed")
-//                    .editDescription("")
+                        .description("API key not set")
+                        .editDescription("")
                         .descriptionEditable(true)
                         .enabled(false)
                         .build()
@@ -110,7 +111,12 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
             if (action.id == ACTION_SERVER_URL) {
                 serverUrl = action.description
             } else if (action.id == ACTION_SERVER_API_KEY) {
-                serverApiKey = action.description
+                serverApiKey = action.editDescription
+                if (serverApiKey.isNotNullOrBlank()) {
+                    action.description = "API key set"
+                } else {
+                    action.description = "API key not set"
+                }
             }
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val result =
@@ -121,8 +127,17 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
                         serverApiKey?.toString(),
                     )
                 when (result.status) {
-                    TestResultStatus.SUCCESS -> guidedActionSubmit.isEnabled = true
-                    TestResultStatus.AUTH_REQUIRED -> guidedActionsServerApiKey.isEnabled = true
+                    TestResultStatus.SUCCESS -> {
+                        guidedActionSubmit.isEnabled = true
+                        val index = findActionPositionById(guidedActionSubmit.id)
+                        notifyActionChanged(index)
+                    }
+
+                    TestResultStatus.AUTH_REQUIRED -> {
+                        guidedActionsServerApiKey.isEnabled = true
+                        val index = findActionPositionById(guidedActionsServerApiKey.id)
+                        notifyActionChanged(index)
+                    }
                     TestResultStatus.ERROR -> {}
                 }
             }
