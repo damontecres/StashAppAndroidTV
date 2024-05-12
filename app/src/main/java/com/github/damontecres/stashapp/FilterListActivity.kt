@@ -70,7 +70,7 @@ class FilterListActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         manager = PreferenceManager.getDefaultSharedPreferences(this)
-        filter = intent.getParcelableExtra<StashFilter>("filter")
+        filter = intent.getParcelableExtra("filter")
         queryEngine = QueryEngine(this, true)
 
         setContentView(R.layout.filter_list)
@@ -277,10 +277,8 @@ class FilterListActivity : FragmentActivity() {
     ) {
         val dataType = DataType.fromFilterMode(filter.mode)!!
         val name =
-            if (filter.name.isBlank()) {
+            filter.name.ifBlank {
                 getString(dataType.pluralStringId)
-            } else {
-                filter.name
             }
         val fragment =
             getFragment(name, dataType, convertFilter(filter.find_filter), filter.object_filter)

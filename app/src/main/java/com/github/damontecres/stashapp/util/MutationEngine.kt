@@ -308,7 +308,7 @@ class MutationEngine(
                         rating100 = Optional.present(rating100),
                     ),
             )
-        return executeMutation(mutation)?.data?.sceneUpdate
+        return executeMutation(mutation).data?.sceneUpdate
     }
 
     suspend fun incrementImageOCounter(imageId: String): OCounter {

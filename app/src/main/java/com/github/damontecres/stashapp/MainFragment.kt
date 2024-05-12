@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.util.Log
 import android.util.SparseArray
 import android.view.View
@@ -62,7 +61,6 @@ class MainFragment : BrowseSupportFragment() {
     private val adapters = ArrayList<ArrayObjectAdapter>()
     private val filterList = SparseArray<StashFilter>()
     private lateinit var mBackgroundManager: BackgroundManager
-    private lateinit var mMetrics: DisplayMetrics
     private var serverHash: Int? = null
 
     /**

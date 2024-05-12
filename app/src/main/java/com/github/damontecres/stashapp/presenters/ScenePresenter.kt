@@ -89,15 +89,15 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                 context: Context,
                 item: SlimSceneData,
             ): List<PopUpItem> {
-                if (item.resume_time != null && item.resume_time > 0) {
+                return if (item.resume_time != null && item.resume_time > 0) {
                     // Has resume
-                    return listOf(
+                    listOf(
                         PopUpItem.getDefault(context),
                         PopUpItem(1, "Resume Scene"),
                         PopUpItem(2, "Restart Scene"),
                     )
                 } else {
-                    return listOf(
+                    listOf(
                         PopUpItem.getDefault(context),
                         PopUpItem(2, "Play Scene"),
                     )
@@ -153,8 +153,5 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
 
         const val CARD_WIDTH = 351
         const val CARD_HEIGHT = 198
-
-        const val TEXT_PADDING = 5F
-        const val WATCHED_HEIGHT = 3F
     }
 }

@@ -37,8 +37,4 @@
         <item>3</item>
     </string-array>
 
-    <fraction name="card_zoom_extra_large">100%</fraction>
-    <fraction name="card_zoom_large">110%</fraction>
-    <fraction name="card_zoom">120%</fraction>
-
 </resources>

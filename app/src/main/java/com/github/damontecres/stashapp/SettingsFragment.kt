@@ -253,8 +253,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
             }
             chooseServer.setOnPreferenceChangeListener { preference: Preference, newValue: Any ->
-                val currentUrl = urlPref?.text
-                val currentApiKey = apiKayPref?.text
+                val currentUrl = urlPref.text
+                val currentApiKey = apiKayPref.text
                 if (!currentUrl.isNullOrBlank()) {
                     manager.edit(true) {
                         putString(SERVER_PREF_PREFIX + currentUrl, currentUrl)
@@ -479,12 +479,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             value: Any,
         ) {
             val duration = cacheDurationPrefToDuration(value.toString().toInt())
-            pref.summary =
-                if (duration != null) {
-                    duration.toString()
-                } else {
-                    "Always request from server"
-                }
+            pref.summary = duration?.toString() ?: "Always request from server"
         }
 
         private fun setUsedCachedSummary(

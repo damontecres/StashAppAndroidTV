@@ -47,7 +47,7 @@ class PerformerActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_performer)
         if (savedInstanceState == null) {
-            performer = this.intent.getParcelableExtra<Performer>("performer")!!
+            performer = this.intent.getParcelableExtra("performer")!!
 
             val cardSize =
                 PreferenceManager.getDefaultSharedPreferences(this)

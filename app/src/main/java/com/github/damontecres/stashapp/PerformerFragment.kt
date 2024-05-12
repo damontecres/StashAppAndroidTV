@@ -165,6 +165,5 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
 
     companion object {
         private const val TAG = "PerformerFragment"
-        private const val TABLE_TEXT_SIZE = 13F
     }
 }

@@ -14,7 +14,6 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.toMilliseconds
 
-/** Loads [PlaybackVideoFragment]. */
 class PlaybackActivity : FragmentActivity() {
     private val fragment = PlaybackExoFragment()
     private var maxPlayPercent = 98

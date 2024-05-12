@@ -52,7 +52,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         searchButton.onFocusChangeListener = onFocusChangeListener
         mPreferencesView.onFocusChangeListener = onFocusChangeListener
 
-        scenesButton = root.findViewById<Button>(R.id.scenes_button)
+        scenesButton = root.findViewById(R.id.scenes_button)
         scenesButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.SCENE.name)
@@ -60,7 +60,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         }
         scenesButton.onFocusChangeListener = onFocusChangeListener
 
-        imagesButton = root.findViewById<Button>(R.id.images_button)
+        imagesButton = root.findViewById(R.id.images_button)
         imagesButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.IMAGE.name)
@@ -68,7 +68,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         }
         imagesButton.onFocusChangeListener = onFocusChangeListener
 
-        performersButton = root.findViewById<Button>(R.id.performers_button)
+        performersButton = root.findViewById(R.id.performers_button)
         performersButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.PERFORMER.name)
@@ -76,7 +76,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         }
         performersButton.onFocusChangeListener = onFocusChangeListener
 
-        studiosButton = root.findViewById<Button>(R.id.studios_button)
+        studiosButton = root.findViewById(R.id.studios_button)
         studiosButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.STUDIO.name)
@@ -84,7 +84,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         }
         studiosButton.onFocusChangeListener = onFocusChangeListener
 
-        tagsButton = root.findViewById<Button>(R.id.tags_button)
+        tagsButton = root.findViewById(R.id.tags_button)
         tagsButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.TAG.name)
@@ -92,7 +92,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         }
         tagsButton.onFocusChangeListener = onFocusChangeListener
 
-        moviesButton = root.findViewById<Button>(R.id.movies_button)
+        moviesButton = root.findViewById(R.id.movies_button)
         moviesButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.MOVIE.name)
@@ -100,7 +100,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         }
         moviesButton.onFocusChangeListener = onFocusChangeListener
 
-        markersButton = root.findViewById<Button>(R.id.markers_button)
+        markersButton = root.findViewById(R.id.markers_button)
         markersButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.MARKER.name)
@@ -108,7 +108,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         }
         markersButton.onFocusChangeListener = onFocusChangeListener
 
-        galleriesButton = root.findViewById<Button>(R.id.galleries_button)
+        galleriesButton = root.findViewById(R.id.galleries_button)
         galleriesButton.setOnClickListener {
             val intent = Intent(context, FilterListActivity::class.java)
             intent.putExtra("dataType", DataType.GALLERY.name)

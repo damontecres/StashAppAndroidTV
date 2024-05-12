@@ -86,7 +86,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         item: T,
     )
 
-    open override fun onUnbindViewHolder(viewHolder: ViewHolder) {
+    override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         val cardView = viewHolder.view as StashImageCardView
         cardView.onUnbindViewHolder()
     }
