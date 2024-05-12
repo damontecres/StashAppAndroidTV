@@ -46,6 +46,7 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReadWriteLock
 import kotlin.random.Random
 
@@ -68,34 +69,35 @@ class QueryEngine(
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val queryName = query.operation.name()
-            Log.v(
-                TAG,
-                "executeQuery $queryName",
-            )
+            val id = QUERY_ID.getAndIncrement()
+            Log.v(TAG, "executeQuery $id $queryName")
             try {
                 readLock?.lock()
                 val response = query.execute()
                 if (response.errors.isNullOrEmpty()) {
-                    Log.v(TAG, "executeQuery $queryName successful")
+                    Log.v(TAG, "executeQuery $id $queryName successful")
                     return@withContext response
                 } else {
                     val errorMsgs = response.errors!!.joinToString("\n") { it.message }
                     showToast("${response.errors!!.size} errors in response ($queryName)\n$errorMsgs")
-                    Log.e(TAG, "Errors in $queryName: ${response.errors}")
-                    throw QueryException("($queryName), ${response.errors!!.size} errors in graphql response")
+                    Log.e(TAG, "Errors in $id $queryName: ${response.errors}")
+                    throw QueryException(
+                        id,
+                        "($queryName), ${response.errors!!.size} errors in graphql response",
+                    )
                 }
             } catch (ex: ApolloNetworkException) {
                 showToast("Network error ($queryName). Message: ${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "Network error in $queryName", ex)
-                throw QueryException("Network error ($queryName)", ex)
+                Log.e(TAG, "Network error in $id $queryName", ex)
+                throw QueryException(id, "Network error ($queryName)", ex)
             } catch (ex: ApolloHttpException) {
                 showToast("HTTP error ($queryName). Status=${ex.statusCode}, Msg=${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "HTTP ${ex.statusCode} error in $queryName", ex)
-                throw QueryException("HTTP ${ex.statusCode} ($queryName)", ex)
+                Log.e(TAG, "HTTP ${ex.statusCode} error in $id $queryName", ex)
+                throw QueryException(id, "HTTP ${ex.statusCode} ($queryName)", ex)
             } catch (ex: ApolloException) {
                 showToast("Server query error ($queryName). Msg=${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "ApolloException in $queryName", ex)
-                throw QueryException("Apollo exception ($queryName)", ex)
+                Log.e(TAG, "ApolloException in $id $queryName", ex)
+                throw QueryException(id, "Apollo exception ($queryName)", ex)
             } finally {
                 readLock?.unlock()
             }
@@ -329,10 +331,12 @@ class QueryEngine(
 
     companion object {
         const val TAG = "QueryEngine"
+
+        private val QUERY_ID = AtomicInteger(0)
     }
 
-    open class QueryException(msg: String? = null, cause: ApolloException? = null) :
+    open class QueryException(val id: Int, msg: String? = null, cause: ApolloException? = null) :
         RuntimeException(msg, cause)
 
-    class StashNotConfiguredException : QueryException()
+    class StashNotConfiguredException : RuntimeException()
 }
