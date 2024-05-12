@@ -1,0 +1,107 @@
+package com.github.damontecres.stashapp.setup
+
+import android.os.Bundle
+import android.text.InputType
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.core.content.edit
+import androidx.leanback.app.GuidedStepSupportFragment
+import androidx.leanback.widget.GuidanceStylist
+import androidx.leanback.widget.GuidedAction
+import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
+
+class ConfigurePinStep : GuidedStepSupportFragment() {
+    private var pinCode = -1
+
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
+        return GuidanceStylist.Guidance(
+            "Protect app with PIN code?",
+            "Require entering a PIN whenever the app is opened",
+            null,
+            ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
+        )
+    }
+
+    override fun onCreateActions(
+        actions: MutableList<GuidedAction>,
+        savedInstanceState: Bundle?,
+    ) {
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(ACTION_PIN)
+                .title("PIN")
+                .description("")
+                .editDescription("")
+                .descriptionEditable(true)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER)
+                .build(),
+        )
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(ACTION_CONFIRM_PIN)
+                .title("Confirm PIN")
+                .description("")
+                .editDescription("")
+                .descriptionEditable(true)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER)
+                .focusable(false)
+                .enabled(false)
+                .build(),
+        )
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(GuidedAction.ACTION_ID_OK)
+                .title("Skip")
+                .description("Do not set a PIN")
+                .build(),
+        )
+    }
+
+    override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
+        val okAction = findActionById(GuidedAction.ACTION_ID_OK)
+        if (action.id == ACTION_PIN) {
+            if (action.editDescription.isNotNullOrBlank()) {
+                pinCode = action.editDescription.toString().toInt()
+                val confirmAction = findActionById(ACTION_CONFIRM_PIN)
+                confirmAction.isEnabled = true
+                confirmAction.isFocusable = true
+                notifyActionChanged(findActionPositionById(ACTION_CONFIRM_PIN))
+
+                okAction.title = "Skip"
+                okAction.description = null
+                okAction.isEnabled = false
+            } else {
+                okAction.title = "Save PIN"
+                okAction.description = "Do not set a PIN"
+                okAction.isEnabled = true
+            }
+            notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_OK))
+        } else if (action.id == ACTION_CONFIRM_PIN) {
+            if (action.editDescription.isNotNullOrBlank()) {
+                val confirmPin = action.editDescription.toString().toInt()
+                if (pinCode != confirmPin) {
+                    Toast.makeText(requireContext(), "PINs do not match!", Toast.LENGTH_LONG).show()
+                    return GuidedAction.ACTION_ID_CURRENT
+                } else {
+                    okAction.isEnabled = true
+                    notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_OK))
+                }
+            }
+        } else if (action.id == GuidedAction.ACTION_ID_OK) {
+            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+            manager.edit {
+                putString("pinCode", pinCode.toString())
+            }
+            finishGuidedStepSupportFragments()
+        }
+        return GuidedAction.ACTION_ID_NEXT
+    }
+
+    companion object {
+        private const val ACTION_PIN = 1L
+        private const val ACTION_CONFIRM_PIN = 2L
+        private const val ACTION_NO = 3L
+    }
+}
