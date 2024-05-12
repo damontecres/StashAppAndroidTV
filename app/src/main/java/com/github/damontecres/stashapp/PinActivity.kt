@@ -12,16 +12,15 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.setup.SetupActivity
 import com.github.damontecres.stashapp.util.UpdateChecker
+import com.github.damontecres.stashapp.util.getCurrentStashServer
 
 class PinActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.main_browse_fragment, PinFragment())
-                .commitNow()
         }
         onBackPressedDispatcher.addCallback(this) {
             // Finish this activity and everything above (typically another Activity if the the app was resumed)
@@ -30,6 +29,19 @@ class PinActivity : FragmentActivity() {
         if (intent.getBooleanExtra(UpdateBroadcastReceiver.INTENT_APP_UPDATED, false)) {
             val installedVersion = UpdateChecker.getInstalledVersion(this)
             Toast.makeText(this, "App updated to $installedVersion!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val currentServer = getCurrentStashServer(this)
+        if (currentServer == null) {
+            val intent = Intent(this, SetupActivity::class.java)
+            startActivity(intent)
+        } else {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.main_browse_fragment, PinFragment())
+                .commitNow()
         }
     }
 

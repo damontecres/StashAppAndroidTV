@@ -13,7 +13,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 class ConfigurePinStep : GuidedStepSupportFragment() {
-    private var pinCode = -1
+    private var pinCode: Int? = null
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
@@ -55,6 +55,7 @@ class ConfigurePinStep : GuidedStepSupportFragment() {
                 .id(GuidedAction.ACTION_ID_OK)
                 .title("Skip")
                 .description("Do not set a PIN")
+                .hasNext(true)
                 .build(),
         )
     }
@@ -69,13 +70,13 @@ class ConfigurePinStep : GuidedStepSupportFragment() {
                 confirmAction.isFocusable = true
                 notifyActionChanged(findActionPositionById(ACTION_CONFIRM_PIN))
 
-                okAction.title = "Skip"
-                okAction.description = null
-                okAction.isEnabled = false
-            } else {
                 okAction.title = "Save PIN"
-                okAction.description = "Do not set a PIN"
+                okAction.description = null
                 okAction.isEnabled = true
+            } else {
+                okAction.title = "Skip"
+                okAction.description = "Do not set a PIN"
+                okAction.isEnabled = false
             }
             notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_OK))
         } else if (action.id == ACTION_CONFIRM_PIN) {
@@ -85,18 +86,26 @@ class ConfigurePinStep : GuidedStepSupportFragment() {
                     Toast.makeText(requireContext(), "PINs do not match!", Toast.LENGTH_LONG).show()
                     return GuidedAction.ACTION_ID_CURRENT
                 } else {
+                    okAction.title = "Save PIN"
+                    okAction.description = null
                     okAction.isEnabled = true
                     notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_OK))
                 }
             }
-        } else if (action.id == GuidedAction.ACTION_ID_OK) {
-            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            manager.edit {
-                putString("pinCode", pinCode.toString())
+        }
+        return GuidedAction.ACTION_ID_CURRENT
+    }
+
+    override fun onGuidedActionClicked(action: GuidedAction) {
+        if (action.id == GuidedAction.ACTION_ID_OK) {
+            if (pinCode != null) {
+                val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
+                manager.edit {
+                    putString("pinCode", pinCode.toString())
+                }
             }
             finishGuidedStepSupportFragments()
         }
-        return GuidedAction.ACTION_ID_NEXT
     }
 
     companion object {

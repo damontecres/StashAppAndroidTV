@@ -44,6 +44,7 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
                     .editDescription("")
                     .descriptionEditable(true)
                     .enabled(false)
+                    .focusable(false)
                     .build()
 
             guidedActionSubmit =
@@ -115,6 +116,7 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
 
                 TestResultStatus.AUTH_REQUIRED -> {
                     guidedActionsServerApiKey.isEnabled = true
+                    guidedActionsServerApiKey.isFocusable = true
                     val index = findActionPositionById(guidedActionsServerApiKey.id)
                     notifyActionChanged(index)
                 }
@@ -128,7 +130,14 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
             if (firstTimeSetup) {
-                // TODO ask if user wants a PIN
+                addAndSwitchServer(
+                    requireContext(),
+                    StashServer(serverUrl.toString(), serverApiKey?.toString()),
+                )
+                add(
+                    requireActivity().supportFragmentManager,
+                    ConfigurePinStep(),
+                )
             } else {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val result =
