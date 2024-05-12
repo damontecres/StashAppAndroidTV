@@ -107,7 +107,7 @@ class ManageServersFragment : GuidedStepSupportFragment() {
         if (action.id == ACTION_ADD_SERVER) {
             add(
                 requireActivity().supportFragmentManager,
-                SetupActivity.ConfigureServerStep(false),
+                ConfigureServerStep(false),
             )
         }
     }

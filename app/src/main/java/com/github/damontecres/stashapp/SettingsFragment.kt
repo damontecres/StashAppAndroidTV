@@ -105,6 +105,13 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         ) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
 
+            findPreference<Preference>(PREF_STASH_URL)!!.setOnPreferenceClickListener {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    testStashConnection(requireContext(), true)
+                }
+                true
+            }
+
             val manageServers = findPreference<Preference>("manageServers")
             manageServers!!.setOnPreferenceClickListener {
                 GuidedStepSupportFragment.add(
@@ -267,6 +274,17 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                             updateCategory?.isVisible = false
                         }
                     }
+                }
+            }
+        }
+
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+            if (savedInstanceState == null) {
+                val serverPref = findPreference<Preference>(PREF_STASH_URL)!!
+                requireActivity().supportFragmentManager.addOnBackStackChangedListener {
+                    val currentServer = getCurrentStashServer(requireContext())
+                    serverPref.summary = currentServer?.url
                 }
             }
         }

@@ -405,7 +405,7 @@ suspend fun testStashConnection(
             } else {
                 if (showToast) {
                     val version = info.data?.version?.version
-                    val sceneCount = info.data?.stats?.scene_count
+                    val sceneCount = info.data?.findScenes?.count
                     Toast.makeText(
                         context,
                         "Connected to Stash ($version) with $sceneCount scenes!",
