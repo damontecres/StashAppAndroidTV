@@ -423,12 +423,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             value: Any,
         ) {
             val duration = cacheDurationPrefToDuration(value.toString().toInt())
-            pref.summary =
-                if (duration != null) {
-                    duration.toString()
-                } else {
-                    "Always request from server"
-                }
+            pref.summary = duration?.toString() ?: "Always request from server"
         }
 
         private fun setUsedCachedSummary(

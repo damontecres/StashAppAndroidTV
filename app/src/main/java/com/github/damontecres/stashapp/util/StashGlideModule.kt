@@ -26,7 +26,7 @@ class StashGlideModule : AppGlideModule() {
         glide: Glide,
         registry: Registry,
     ) {
-        registry.replace<GlideUrl, InputStream>(
+        registry.replace(
             GlideUrl::class.java,
             InputStream::class.java,
             OkHttpUrlLoader.Factory(createOkHttpClient(context)),
