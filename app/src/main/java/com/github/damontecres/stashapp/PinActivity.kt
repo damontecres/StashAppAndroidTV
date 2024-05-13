@@ -21,24 +21,28 @@ class PinActivity() : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
-        }
-        onBackPressedDispatcher.addCallback(this) {
-            // Finish this activity and everything above (typically another Activity if the the app was resumed)
-            finishAffinity()
-        }
-        if (intent.getBooleanExtra(UpdateBroadcastReceiver.INTENT_APP_UPDATED, false)) {
-            val installedVersion = UpdateChecker.getInstalledVersion(this)
-            Toast.makeText(this, "App updated to $installedVersion!", Toast.LENGTH_SHORT).show()
+            val currentServer = getCurrentStashServer(this)
+            if (currentServer == null) {
+                val intent = Intent(this, SetupActivity::class.java)
+                startActivity(intent)
+            } else {
+                onBackPressedDispatcher.addCallback(this) {
+                    // Finish this activity and everything above (typically another Activity if the the app was resumed)
+                    finishAffinity()
+                }
+                if (intent.getBooleanExtra(UpdateBroadcastReceiver.INTENT_APP_UPDATED, false)) {
+                    val installedVersion = UpdateChecker.getInstalledVersion(this)
+                    Toast.makeText(this, "App updated to $installedVersion!", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
         val currentServer = getCurrentStashServer(this)
-        if (currentServer == null) {
-            val intent = Intent(this, SetupActivity::class.java)
-            startActivity(intent)
-        } else {
+        if (currentServer != null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.main_browse_fragment, PinFragment())
                 .commitNow()

@@ -31,8 +31,6 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
                 GuidedAction.Builder(requireContext())
                     .id(SetupActivity.ACTION_SERVER_URL)
                     .title("Stash Server URL")
-//                    .description("The stash's server URL")
-//                    .editDescription("")
                     .descriptionEditable(true)
                     .build()
 
