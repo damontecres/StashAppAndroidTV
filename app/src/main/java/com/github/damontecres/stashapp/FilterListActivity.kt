@@ -205,8 +205,15 @@ class FilterListActivity : FragmentActivity() {
                 null,
                 android.R.attr.listPopupWindowStyle,
             )
-        val sortOptions = dataType.sortOptions
-        val resolvedNames = sortOptions.map { this@FilterListActivity.getString(it.nameStringId) }
+        // Resolve the strings, then sort
+        val sortOptions =
+            dataType.sortOptions.map {
+                Pair(
+                    it.key,
+                    this@FilterListActivity.getString(it.nameStringId),
+                )
+            }.sortedBy { it.second }
+        val resolvedNames = sortOptions.map { it.second }
         val adapter =
             ArrayAdapter(
                 this@FilterListActivity,
@@ -221,7 +228,7 @@ class FilterListActivity : FragmentActivity() {
         listPopUp.isModal = true
 
         listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
-            val newSortBy = sortOptions[position]
+            val newSortBy = sortOptions[position].first
             listPopUp.dismiss()
             if (filterData == null) {
                 return@setOnItemClickListener
@@ -230,7 +237,7 @@ class FilterListActivity : FragmentActivity() {
             val currentDirection = filterData?.find_filter?.direction
             val currentKey = filterData?.find_filter?.sort
             val newDirection =
-                if (newSortBy.key == currentKey && currentDirection != null) {
+                if (newSortBy == currentKey && currentDirection != null) {
                     if (currentDirection == SortDirectionEnum.ASC) SortDirectionEnum.DESC else SortDirectionEnum.ASC
                 } else {
                     currentDirection ?: SortDirectionEnum.DESC
@@ -243,7 +250,7 @@ class FilterListActivity : FragmentActivity() {
                             q = null,
                             page = null,
                             per_page = null,
-                            sort = newSortBy.key,
+                            sort = newSortBy,
                             direction = newDirection,
                             __typename = "",
                         ),
