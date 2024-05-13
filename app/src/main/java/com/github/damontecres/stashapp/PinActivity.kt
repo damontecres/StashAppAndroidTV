@@ -16,7 +16,7 @@ import com.github.damontecres.stashapp.setup.SetupActivity
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getCurrentStashServer
 
-class PinActivity : FragmentActivity() {
+class PinActivity() : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)

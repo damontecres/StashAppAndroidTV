@@ -784,7 +784,7 @@ fun setCurrentStashServer(
     server: StashServer,
 ) {
     val manager = PreferenceManager.getDefaultSharedPreferences(context)
-    manager.edit {
+    manager.edit(true) {
         putString(SettingsFragment.PREF_STASH_URL, server.url)
         putString(SettingsFragment.PREF_STASH_API_KEY, server.apiKey)
     }
@@ -797,7 +797,7 @@ fun removeStashServer(
     val manager = PreferenceManager.getDefaultSharedPreferences(context)
     val serverKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + server.url
     val apiKeyKey = SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + server.url
-    manager.edit {
+    manager.edit(true) {
         remove(serverKey)
         remove(apiKeyKey)
     }
@@ -815,7 +815,7 @@ fun addAndSwitchServer(
     val newServerKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + newServer.url
     val newApiKeyKey =
         SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + newServer.url
-    manager.edit {
+    manager.edit(true) {
         if (current != null) {
             putString(currentServerKey, current.url)
             putString(currentApiKeyKey, current.apiKey)

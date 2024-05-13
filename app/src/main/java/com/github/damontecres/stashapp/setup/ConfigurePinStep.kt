@@ -10,9 +10,11 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.addAndSwitchServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
-class ConfigurePinStep : GuidedStepSupportFragment() {
+class ConfigurePinStep(private val server: StashServer) : GuidedStepSupportFragment() {
     private var pinCode: Int? = null
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
@@ -31,7 +33,7 @@ class ConfigurePinStep : GuidedStepSupportFragment() {
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(ACTION_PIN)
-                .title("PIN")
+                .title("Enter PIN")
                 .description("")
                 .editDescription("")
                 .descriptionEditable(true)
@@ -72,13 +74,16 @@ class ConfigurePinStep : GuidedStepSupportFragment() {
 
                 okAction.title = "Save PIN"
                 okAction.description = null
-                okAction.isEnabled = true
+                okAction.isEnabled = false
+                notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_OK))
+                return ACTION_CONFIRM_PIN
             } else {
                 okAction.title = "Skip"
                 okAction.description = "Do not set a PIN"
-                okAction.isEnabled = false
+                okAction.isEnabled = true
+                notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_OK))
+                return GuidedAction.ACTION_ID_CURRENT
             }
-            notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_OK))
         } else if (action.id == ACTION_CONFIRM_PIN) {
             if (action.editDescription.isNotNullOrBlank()) {
                 val confirmPin = action.editDescription.toString().toInt()
@@ -90,6 +95,7 @@ class ConfigurePinStep : GuidedStepSupportFragment() {
                     okAction.description = null
                     okAction.isEnabled = true
                     notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_OK))
+                    return GuidedAction.ACTION_ID_OK
                 }
             }
         }
@@ -98,9 +104,10 @@ class ConfigurePinStep : GuidedStepSupportFragment() {
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
+            addAndSwitchServer(requireContext(), server)
             if (pinCode != null) {
                 val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                manager.edit {
+                manager.edit(true) {
                     putString("pinCode", pinCode.toString())
                 }
             }
