@@ -265,7 +265,7 @@ class FilterListActivity : FragmentActivity() {
                             __typename = "",
                         ),
                 )
-            setupFragment(newFilter, false)
+            setupFragment(newFilter, false, false)
             filter =
                 StashSavedFilter(
                     newFilter.id,
@@ -368,6 +368,7 @@ class FilterListActivity : FragmentActivity() {
     private fun setupFragment(
         filter: SavedFilterData,
         first: Boolean,
+        addToBackStack: Boolean = true,
     ) {
         val dataType = DataType.fromFilterMode(filter.mode)!!
         val name =
@@ -402,7 +403,7 @@ class FilterListActivity : FragmentActivity() {
                     R.id.list_fragment,
                     fragment,
                 )
-        if (!first && transaction.isAddToBackStackAllowed) {
+        if (!first && addToBackStack && transaction.isAddToBackStackAllowed) {
             transaction = transaction.addToBackStack(null)
         }
         transaction.commit()
