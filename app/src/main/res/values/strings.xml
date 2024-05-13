@@ -17,6 +17,8 @@
     <string name="fa_arrow_right_arrow_left" translatable="false">&#xf0ec;</string>
     <string name="fa_magnifying_glass_plus" translatable="false">&#xf00e;</string>
     <string name="fa_magnifying_glass_minus" translatable="false">&#xf010;</string>
+    <string name="fa_caret_up" translatable="false">&#xf0d8;</string>
+    <string name="fa_caret_down" translatable="false">&#xf0d7;</string>
 
 
     <string name="go_to">Go to</string>

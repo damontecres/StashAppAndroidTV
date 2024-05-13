@@ -26,6 +26,8 @@ enum class FilterType {
 
 interface StashFilter : Parcelable {
     val filterType: FilterType
+
+    val dataType: DataType
 }
 
 /**
@@ -34,11 +36,6 @@ interface StashFilter : Parcelable {
 interface AppFilter : StashFilter {
     override val filterType: FilterType
         get() = FilterType.APP_FILTER
-
-    /**
-     * What type of data
-     */
-    val dataType: DataType
 
     /**
      * An optional name for the filter

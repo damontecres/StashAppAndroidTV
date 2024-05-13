@@ -12,4 +12,6 @@ data class StashSavedFilter(
 ) : Parcelable, StashFilter {
     override val filterType: FilterType
         get() = FilterType.SAVED_FILTER
+    override val dataType: DataType
+        get() = DataType.fromFilterMode(mode)!!
 }

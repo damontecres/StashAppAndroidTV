@@ -17,6 +17,8 @@ data class StashCustomFilter(
 ) : Parcelable, StashFilter {
     override val filterType: FilterType
         get() = FilterType.CUSTOM_FILTER
+    override val dataType: DataType
+        get() = DataType.fromFilterMode(mode)!!
 
     fun asFindFilterType(): FindFilterType {
         val direction =

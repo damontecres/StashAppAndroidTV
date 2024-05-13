@@ -1,15 +1,19 @@
 package com.github.damontecres.stashapp
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
+import androidx.core.view.get
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ObjectAdapter
@@ -63,7 +67,9 @@ import kotlinx.coroutines.withContext
 class FilterListActivity : FragmentActivity() {
     private lateinit var titleTextView: TextView
     private lateinit var queryEngine: QueryEngine
+    private lateinit var dataType: DataType
     private var filter: StashFilter? = null
+    private var filterData: SavedFilterData? = null
 
     private lateinit var manager: SharedPreferences
 
@@ -76,7 +82,7 @@ class FilterListActivity : FragmentActivity() {
         setContentView(R.layout.filter_list)
 
         val dataTypeStr = intent.getStringExtra("dataType")
-        val dataType =
+        dataType =
             if (dataTypeStr != null) {
                 DataType.valueOf(dataTypeStr)
             } else {
@@ -112,6 +118,7 @@ class FilterListActivity : FragmentActivity() {
                 val startingFilter = getStartingFilter()
                 if (startingFilter.second != null) {
                     val filterData = startingFilter.second!!
+                    this@FilterListActivity.filterData = filterData
                     filter =
                         when (startingFilter.first) {
                             FilterType.CUSTOM_FILTER -> {
@@ -137,6 +144,7 @@ class FilterListActivity : FragmentActivity() {
                             }
                         }
                     setupFragment(filterData, true)
+                    setUpSortButton()
                 } else {
                     Log.e(TAG, "No starting filter found for $dataType was null")
                     finish()
@@ -190,6 +198,92 @@ class FilterListActivity : FragmentActivity() {
                     listPopUp.listView?.requestFocus()
                 }
             }
+        }
+    }
+
+    private fun setUpSortButton() {
+        val sortButton = findViewById<Button>(R.id.sort_button)
+        val listPopUp =
+            ListPopupWindow(
+                this@FilterListActivity,
+                null,
+                android.R.attr.listPopupWindowStyle,
+            )
+        // Resolve the strings, then sort
+        val sortOptions =
+            dataType.sortOptions.map {
+                Pair(
+                    it.key,
+                    this@FilterListActivity.getString(it.nameStringId),
+                )
+            }.sortedBy { it.second }
+        val resolvedNames = sortOptions.map { it.second }
+
+        val currentDirection = filterData?.find_filter?.direction
+        val currentKey = filterData?.find_filter?.sort
+        val index = sortOptions.map { it.first }.indexOf(currentKey)
+
+        val adapter =
+            SortByArrayAdapter(
+                this@FilterListActivity,
+                resolvedNames,
+                index,
+                currentDirection,
+            )
+        listPopUp.setAdapter(adapter)
+        listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
+        listPopUp.anchorView = sortButton
+
+        listPopUp.width = getMaxMeasuredWidth(this@FilterListActivity, adapter)
+        listPopUp.isModal = true
+
+        listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
+            val newSortBy = sortOptions[position].first
+            listPopUp.dismiss()
+            if (filterData == null) {
+                return@setOnItemClickListener
+            }
+
+            val currentDirection = filterData?.find_filter?.direction
+            val currentKey = filterData?.find_filter?.sort
+            val newDirection =
+                if (newSortBy == currentKey && currentDirection != null) {
+                    if (currentDirection == SortDirectionEnum.ASC) SortDirectionEnum.DESC else SortDirectionEnum.ASC
+                } else {
+                    currentDirection ?: SortDirectionEnum.DESC
+                }
+
+            val newFilter =
+                filterData!!.copy(
+                    find_filter =
+                        SavedFilterData.Find_filter(
+                            q = null,
+                            page = null,
+                            per_page = null,
+                            sort = newSortBy,
+                            direction = newDirection,
+                            __typename = "",
+                        ),
+                )
+            setupFragment(newFilter, false, false)
+            filter =
+                StashSavedFilter(
+                    newFilter.id,
+                    newFilter.mode,
+                    newFilter.find_filter?.sort,
+                )
+            filterData = newFilter
+        }
+
+        sortButton.setOnClickListener {
+            val currentDirection = filterData?.find_filter?.direction
+            val currentKey = filterData?.find_filter?.sort
+            val index = sortOptions.map { it.first }.indexOf(currentKey)
+            adapter.currentIndex = index
+            adapter.currentDirection = currentDirection
+
+            listPopUp.show()
+            listPopUp.listView?.requestFocus()
         }
     }
 
@@ -274,6 +368,7 @@ class FilterListActivity : FragmentActivity() {
     private fun setupFragment(
         filter: SavedFilterData,
         first: Boolean,
+        addToBackStack: Boolean = true,
     ) {
         val dataType = DataType.fromFilterMode(filter.mode)!!
         val name =
@@ -308,7 +403,7 @@ class FilterListActivity : FragmentActivity() {
                     R.id.list_fragment,
                     fragment,
                 )
-        if (!first && transaction.isAddToBackStackAllowed) {
+        if (!first && addToBackStack && transaction.isAddToBackStackAllowed) {
             transaction = transaction.addToBackStack(null)
         }
         transaction.commit()
@@ -441,5 +536,34 @@ class FilterListActivity : FragmentActivity() {
 
     companion object {
         const val TAG = "FilterListActivity"
+    }
+
+    class SortByArrayAdapter(
+        context: Context,
+        items: List<String>,
+        var currentIndex: Int,
+        var currentDirection: SortDirectionEnum?,
+    ) :
+        ArrayAdapter<String>(context, R.layout.sort_popup_item, R.id.popup_item_text, items) {
+        override fun getView(
+            position: Int,
+            convertView: View?,
+            parent: ViewGroup,
+        ): View {
+            val view = super.getView(position, convertView, parent)
+            view as LinearLayout
+            (view.get(0) as TextView).text =
+                if (position == currentIndex) {
+                    when (currentDirection) {
+                        SortDirectionEnum.ASC -> context.getString(R.string.fa_caret_up)
+                        SortDirectionEnum.DESC -> context.getString(R.string.fa_caret_down)
+                        SortDirectionEnum.UNKNOWN__ -> null
+                        null -> null
+                    }
+                } else {
+                    null
+                }
+            return view
+        }
     }
 }
