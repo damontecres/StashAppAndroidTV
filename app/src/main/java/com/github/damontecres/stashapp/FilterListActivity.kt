@@ -1,15 +1,19 @@
 package com.github.damontecres.stashapp
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
+import androidx.core.view.get
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ObjectAdapter
@@ -214,11 +218,17 @@ class FilterListActivity : FragmentActivity() {
                 )
             }.sortedBy { it.second }
         val resolvedNames = sortOptions.map { it.second }
+
+        val currentDirection = filterData?.find_filter?.direction
+        val currentKey = filterData?.find_filter?.sort
+        val index = sortOptions.map { it.first }.indexOf(currentKey)
+
         val adapter =
-            ArrayAdapter(
+            SortByArrayAdapter(
                 this@FilterListActivity,
-                R.layout.popup_item,
                 resolvedNames,
+                index,
+                currentDirection,
             )
         listPopUp.setAdapter(adapter)
         listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
@@ -266,6 +276,12 @@ class FilterListActivity : FragmentActivity() {
         }
 
         sortButton.setOnClickListener {
+            val currentDirection = filterData?.find_filter?.direction
+            val currentKey = filterData?.find_filter?.sort
+            val index = sortOptions.map { it.first }.indexOf(currentKey)
+            adapter.currentIndex = index
+            adapter.currentDirection = currentDirection
+
             listPopUp.show()
             listPopUp.listView?.requestFocus()
         }
@@ -519,5 +535,34 @@ class FilterListActivity : FragmentActivity() {
 
     companion object {
         const val TAG = "FilterListActivity"
+    }
+
+    class SortByArrayAdapter(
+        context: Context,
+        items: List<String>,
+        var currentIndex: Int,
+        var currentDirection: SortDirectionEnum?,
+    ) :
+        ArrayAdapter<String>(context, R.layout.sort_popup_item, R.id.popup_item_text, items) {
+        override fun getView(
+            position: Int,
+            convertView: View?,
+            parent: ViewGroup,
+        ): View {
+            val view = super.getView(position, convertView, parent)
+            view as LinearLayout
+            (view.get(0) as TextView).text =
+                if (position == currentIndex) {
+                    when (currentDirection) {
+                        SortDirectionEnum.ASC -> context.getString(R.string.fa_caret_up)
+                        SortDirectionEnum.DESC -> context.getString(R.string.fa_caret_down)
+                        SortDirectionEnum.UNKNOWN__ -> null
+                        null -> null
+                    }
+                } else {
+                    null
+                }
+            return view
+        }
     }
 }
