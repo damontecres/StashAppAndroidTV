@@ -63,7 +63,9 @@ import kotlinx.coroutines.withContext
 class FilterListActivity : FragmentActivity() {
     private lateinit var titleTextView: TextView
     private lateinit var queryEngine: QueryEngine
+    private lateinit var dataType: DataType
     private var filter: StashFilter? = null
+    private var filterData: SavedFilterData? = null
 
     private lateinit var manager: SharedPreferences
 
@@ -76,7 +78,7 @@ class FilterListActivity : FragmentActivity() {
         setContentView(R.layout.filter_list)
 
         val dataTypeStr = intent.getStringExtra("dataType")
-        val dataType =
+        dataType =
             if (dataTypeStr != null) {
                 DataType.valueOf(dataTypeStr)
             } else {
@@ -112,6 +114,7 @@ class FilterListActivity : FragmentActivity() {
                 val startingFilter = getStartingFilter()
                 if (startingFilter.second != null) {
                     val filterData = startingFilter.second!!
+                    this@FilterListActivity.filterData = filterData
                     filter =
                         when (startingFilter.first) {
                             FilterType.CUSTOM_FILTER -> {
@@ -137,6 +140,7 @@ class FilterListActivity : FragmentActivity() {
                             }
                         }
                     setupFragment(filterData, true)
+                    setUpSortButton()
                 } else {
                     Log.e(TAG, "No starting filter found for $dataType was null")
                     finish()
@@ -190,6 +194,73 @@ class FilterListActivity : FragmentActivity() {
                     listPopUp.listView?.requestFocus()
                 }
             }
+        }
+    }
+
+    private fun setUpSortButton() {
+        val sortButton = findViewById<Button>(R.id.sort_button)
+        val listPopUp =
+            ListPopupWindow(
+                this@FilterListActivity,
+                null,
+                android.R.attr.listPopupWindowStyle,
+            )
+        val sortOptions = dataType.sortOptions
+        val resolvedNames = sortOptions.map { this@FilterListActivity.getString(it.nameStringId) }
+        val adapter =
+            ArrayAdapter(
+                this@FilterListActivity,
+                R.layout.popup_item,
+                resolvedNames,
+            )
+        listPopUp.setAdapter(adapter)
+        listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
+        listPopUp.anchorView = sortButton
+
+        listPopUp.width = getMaxMeasuredWidth(this@FilterListActivity, adapter)
+        listPopUp.isModal = true
+
+        listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
+            val newSortBy = sortOptions[position]
+            listPopUp.dismiss()
+            if (filterData == null) {
+                return@setOnItemClickListener
+            }
+
+            val currentDirection = filterData?.find_filter?.direction
+            val currentKey = filterData?.find_filter?.sort
+            val newDirection =
+                if (newSortBy.key == currentKey && currentDirection != null) {
+                    if (currentDirection == SortDirectionEnum.ASC) SortDirectionEnum.DESC else SortDirectionEnum.ASC
+                } else {
+                    currentDirection ?: SortDirectionEnum.DESC
+                }
+
+            val newFilter =
+                filterData!!.copy(
+                    find_filter =
+                        SavedFilterData.Find_filter(
+                            q = null,
+                            page = null,
+                            per_page = null,
+                            sort = newSortBy.key,
+                            direction = newDirection,
+                            __typename = "",
+                        ),
+                )
+            setupFragment(newFilter, false)
+            filter =
+                StashSavedFilter(
+                    newFilter.id,
+                    newFilter.mode,
+                    newFilter.find_filter?.sort,
+                )
+            filterData = newFilter
+        }
+
+        sortButton.setOnClickListener {
+            listPopUp.show()
+            listPopUp.listView?.requestFocus()
         }
     }
 

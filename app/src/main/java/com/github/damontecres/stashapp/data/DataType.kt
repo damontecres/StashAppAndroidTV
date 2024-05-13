@@ -17,12 +17,14 @@ enum class DataType(
     val stringId: Int,
     val pluralStringId: Int,
     val defaultSort: SortAndDirection,
+    val sortOptions: List<SortOption> = listOf(),
 ) {
     SCENE(
         FilterMode.SCENES,
         R.string.stashapp_scene,
         R.string.stashapp_scenes,
         SortAndDirection("date", SortDirectionEnum.DESC),
+        SCENE_SORT_OPTIONS,
     ),
     MOVIE(
         FilterMode.MOVIES,
