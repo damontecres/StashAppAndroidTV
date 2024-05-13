@@ -85,7 +85,7 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
         if (action.id == SetupActivity.ACTION_SERVER_URL) {
             serverUrl = action.description
-            guidedActionsServerApiKey.editDescription = null
+            guidedActionsServerApiKey.editDescription = ""
             guidedActionsServerApiKey.description = "API key not set"
             val index = findActionPositionById(guidedActionsServerApiKey.id)
             notifyActionChanged(index)
