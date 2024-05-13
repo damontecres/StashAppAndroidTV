@@ -30,6 +30,14 @@
             tools:text="Test Title" />
 
         <Button
+            android:id="@+id/sort_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="0"
+            android:text="Sort By"
+            style="@style/TitleBarButton" />
+
+        <Button
             android:id="@+id/filter_button"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
