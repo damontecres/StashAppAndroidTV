@@ -19,8 +19,8 @@ class ConfigurePinStep(private val server: StashServer) : GuidedStepSupportFragm
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
-            "Protect app with PIN code?",
-            "Require entering a PIN whenever the app is opened",
+            "Set a PIN code?",
+            "Optionally, require entering a PIN whenever the app is opened",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )

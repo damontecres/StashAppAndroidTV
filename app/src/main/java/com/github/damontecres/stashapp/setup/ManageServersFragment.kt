@@ -18,6 +18,10 @@ class ManageServersFragment : GuidedStepSupportFragment() {
     private lateinit var allServers: List<StashServer>
     private lateinit var otherServers: List<StashServer>
 
+    override fun onProvideTheme(): Int {
+        return R.style.Theme_StashAppAndroidTV_GuidedStep
+    }
+
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
             "Manage servers",

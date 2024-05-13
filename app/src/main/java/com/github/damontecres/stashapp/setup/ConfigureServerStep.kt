@@ -6,7 +6,6 @@ import androidx.core.content.ContextCompat
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
-import androidx.leanback.widget.GuidedActionsStylist
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -51,6 +50,7 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
                     .title("Submit")
                     .description("")
                     .enabled(false)
+                    .focusable(false)
                     .hasNext(true)
                     .build()
         }
@@ -58,12 +58,8 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
         super.onCreate(savedInstanceState)
     }
 
-    override fun onCreateActionsStylist(): GuidedActionsStylist {
-        return StashGuidedActionsStylist(requireContext())
-    }
-
-    override fun onCreateButtonActionsStylist(): GuidedActionsStylist {
-        return super.onCreateButtonActionsStylist()
+    override fun onProvideTheme(): Int {
+        return R.style.Theme_StashAppAndroidTV_GuidedStep
     }
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
@@ -89,6 +85,10 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
         if (action.id == SetupActivity.ACTION_SERVER_URL) {
             serverUrl = action.description
+            guidedActionsServerApiKey.editDescription = null
+            guidedActionsServerApiKey.description = "API key not set"
+            val index = findActionPositionById(guidedActionsServerApiKey.id)
+            notifyActionChanged(index)
         } else if (action.id == SetupActivity.ACTION_SERVER_API_KEY) {
             serverApiKey = action.editDescription
             if (serverApiKey.isNotNullOrBlank()) {
@@ -108,6 +108,7 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
             when (result.status) {
                 TestResultStatus.SUCCESS -> {
                     guidedActionSubmit.isEnabled = true
+                    guidedActionSubmit.isFocusable = true
                     val index = findActionPositionById(guidedActionSubmit.id)
                     notifyActionChanged(index)
                 }
@@ -118,7 +119,13 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
                     val index = findActionPositionById(guidedActionsServerApiKey.id)
                     notifyActionChanged(index)
                 }
-                TestResultStatus.ERROR -> {}
+
+                TestResultStatus.ERROR -> {
+                    guidedActionSubmit.isEnabled = false
+                    guidedActionSubmit.isFocusable = false
+                    val submitIndex = findActionPositionById(guidedActionSubmit.id)
+                    notifyActionChanged(submitIndex)
+                }
             }
         }
 
