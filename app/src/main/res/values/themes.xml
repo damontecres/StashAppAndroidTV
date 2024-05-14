@@ -36,6 +36,7 @@
         <item name="android:colorBackground">@color/default_background</item>
         <item name="background">@color/default_background</item>
         <item name="guidedActionsBackground">@color/popup_background</item>
+        <item name="guidedActionsSelectorDrawable">@drawable/guided_actions_selector</item>
     </style>
 
 </resources>
