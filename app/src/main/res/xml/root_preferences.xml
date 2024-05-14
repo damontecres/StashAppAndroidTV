@@ -12,30 +12,14 @@
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/pref_stash_server_header">
-        <EditTextPreference
+        <Preference
             app:key="stashUrl"
             app:title="@string/pref_stash_server_url"
             app:useSimpleSummaryProvider="true" />
-        <EditTextPreference
-            app:key="stashApiKey"
-            app:title="@string/stashapp_config_general_auth_api_key"
-            app:useSimpleSummaryProvider="false" />
         <Preference
-            app:key="testStashServer"
-            app:title="Test Connection"
-            app:summary="Test connecting to Stash using the above settings" />
-        <ListPreference
-            app:key="chooseStashServer"
-            app:title="Switch servers"
-            app:summary="Switch to another Stash server" />
-        <Preference
-            app:key="newStashServer"
-            app:title="Add a Stash Server"
-            app:summary="" />
-        <ListPreference
-            app:key="deleteStashServer"
-            app:title="Remove a Stash Server"
-            app:summary="" />
+            app:key="manageServers"
+            app:title="Manage Servers"
+            app:summary="Add, remove, or change servers" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Interface">

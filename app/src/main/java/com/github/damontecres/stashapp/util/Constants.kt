@@ -19,6 +19,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.content.edit
 import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.Visibility
@@ -35,6 +36,7 @@ import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.ImageActivity
+import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -156,8 +158,16 @@ val TRUST_ALL_CERTS: X509TrustManager =
 
 fun createOkHttpClient(context: Context): OkHttpClient {
     val manager = PreferenceManager.getDefaultSharedPreferences(context)
-    val trustAll = manager.getBoolean("trustAllCerts", false)
     val apiKey = manager.getString("stashApiKey", null)
+    return createOkHttpClient(context, apiKey)
+}
+
+fun createOkHttpClient(
+    context: Context,
+    apiKey: String?,
+): OkHttpClient {
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val trustAll = manager.getBoolean("trustAllCerts", false)
     val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
     val cacheLogging = manager.getBoolean("networkCacheLogging", false)
     val networkTimeout = manager.getInt("networkTimeout", 15).toLong()
@@ -290,6 +300,14 @@ class AuthorizationInterceptor(private val apiKey: String?) : HttpInterceptor {
 fun createApolloClient(context: Context): ApolloClient? {
     val stashUrl = PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
     val apiKey = PreferenceManager.getDefaultSharedPreferences(context).getString("stashApiKey", "")
+    return createApolloClient(context, stashUrl, apiKey)
+}
+
+fun createApolloClient(
+    context: Context,
+    stashUrl: String?,
+    apiKey: String?,
+): ApolloClient? {
     return if (!stashUrl.isNullOrBlank()) {
         var cleanedStashUrl = stashUrl.trim()
         if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
@@ -307,7 +325,7 @@ fun createApolloClient(context: Context): ApolloClient? {
                 .build()
         Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
 
-        val httpEngine = DefaultHttpEngine(createOkHttpClient(context))
+        val httpEngine = DefaultHttpEngine(createOkHttpClient(context, apiKey))
         ApolloClient.Builder()
             .serverUrl(url.toString())
             .httpEngine(httpEngine)
@@ -322,6 +340,16 @@ fun createApolloClient(context: Context): ApolloClient? {
     }
 }
 
+enum class TestResultStatus {
+    SUCCESS,
+    AUTH_REQUIRED,
+    ERROR,
+}
+
+data class TestResult(val status: TestResultStatus, val serverInfo: ServerInfoQuery.Data?) {
+    constructor(status: TestResultStatus) : this(status, null)
+}
+
 /**
  * Test whether the app can connect to Stash
  *
@@ -333,6 +361,24 @@ suspend fun testStashConnection(
     showToast: Boolean,
 ): ServerInfoQuery.Data? {
     val client = createApolloClient(context)
+    return testStashConnection(context, showToast, client).serverInfo
+}
+
+suspend fun testStashConnection(
+    context: Context,
+    showToast: Boolean,
+    serverUrl: String?,
+    apiKey: String?,
+): TestResult {
+    val client = createApolloClient(context, serverUrl, apiKey)
+    return testStashConnection(context, showToast, client)
+}
+
+suspend fun testStashConnection(
+    context: Context,
+    showToast: Boolean,
+    client: ApolloClient?,
+): TestResult {
     if (client == null) {
         if (showToast) {
             Toast.makeText(
@@ -359,14 +405,14 @@ suspend fun testStashConnection(
             } else {
                 if (showToast) {
                     val version = info.data?.version?.version
-                    val sceneCount = info.data?.stats?.scene_count
+                    val sceneCount = info.data?.findScenes?.count
                     Toast.makeText(
                         context,
                         "Connected to Stash ($version) with $sceneCount scenes!",
                         Toast.LENGTH_SHORT,
                     ).show()
                 }
-                return info.data
+                return TestResult(TestResultStatus.SUCCESS, info.data)
             }
         } catch (ex: ApolloHttpException) {
             Log.e(Constants.TAG, "ApolloHttpException", ex)
@@ -378,6 +424,7 @@ suspend fun testStashConnection(
                         Toast.LENGTH_LONG,
                     ).show()
                 }
+                return TestResult(TestResultStatus.AUTH_REQUIRED)
             } else {
                 if (showToast) {
                     Toast.makeText(
@@ -398,7 +445,7 @@ suspend fun testStashConnection(
             }
         }
     }
-    return null
+    return TestResult(TestResultStatus.ERROR)
 }
 
 fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
@@ -716,5 +763,66 @@ fun VideoFileData.resolutionName(): CharSequence {
         "144p"
     } else {
         "${number}p"
+    }
+}
+
+data class StashServer(val url: String, val apiKey: String?)
+
+fun getCurrentStashServer(context: Context): StashServer? {
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val url = manager.getString(SettingsFragment.PREF_STASH_URL, null)
+    val apiKey = manager.getString(SettingsFragment.PREF_STASH_API_KEY, null)
+    return if (url.isNotNullOrBlank()) {
+        StashServer(url, apiKey)
+    } else {
+        null
+    }
+}
+
+fun setCurrentStashServer(
+    context: Context,
+    server: StashServer,
+) {
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    manager.edit(true) {
+        putString(SettingsFragment.PREF_STASH_URL, server.url)
+        putString(SettingsFragment.PREF_STASH_API_KEY, server.apiKey)
+    }
+}
+
+fun removeStashServer(
+    context: Context,
+    server: StashServer,
+) {
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val serverKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + server.url
+    val apiKeyKey = SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + server.url
+    manager.edit(true) {
+        remove(serverKey)
+        remove(apiKeyKey)
+    }
+}
+
+fun addAndSwitchServer(
+    context: Context,
+    newServer: StashServer,
+) {
+    val manager = PreferenceManager.getDefaultSharedPreferences(context)
+    val current = getCurrentStashServer(context)
+    val currentServerKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + current?.url
+    val currentApiKeyKey =
+        SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + current?.url
+    val newServerKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + newServer.url
+    val newApiKeyKey =
+        SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + newServer.url
+    manager.edit(true) {
+        if (current != null) {
+            putString(currentServerKey, current.url)
+            putString(currentApiKeyKey, current.apiKey)
+        }
+        putString(newServerKey, newServer.url)
+        putString(newApiKeyKey, newServer.apiKey)
+        putString(SettingsFragment.PREF_STASH_URL, newServer.url)
+        putString(SettingsFragment.PREF_STASH_API_KEY, newServer.apiKey)
     }
 }

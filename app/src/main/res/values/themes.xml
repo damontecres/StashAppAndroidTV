@@ -31,4 +31,11 @@
         <item name="android:textSize">40sp</item>
     </style>
 
+    <style name="Theme.StashAppAndroidTV.GuidedStep" parent="@style/Theme.Leanback.GuidedStep">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Leanback</item>
+        <item name="android:colorBackground">@color/default_background</item>
+        <item name="background">@color/default_background</item>
+        <item name="guidedActionsBackground">@color/popup_background</item>
+    </style>
+
 </resources>

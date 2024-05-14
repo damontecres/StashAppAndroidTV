@@ -11,6 +11,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.setup.SetupActivity
 
 class StashApplication : Application() {
     private var wasEnterBackground = false
@@ -89,7 +90,7 @@ class StashApplication : Application() {
             if (wasEnterBackground) {
                 wasEnterBackground = false
                 showPinActivity()
-            } else if (activity !is PinActivity) {
+            } else if (activity !is PinActivity && activity !is SetupActivity) {
                 showPinActivityIfNeeded()
             }
             activity.window.setFlags(
