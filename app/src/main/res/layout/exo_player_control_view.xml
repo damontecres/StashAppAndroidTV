@@ -87,7 +87,32 @@
         android:layout_marginBottom="3dp"
         android:textColor="@android:color/white"
         android:textSize="22sp"
-        android:padding="3dp"
+        android:paddingStart="4dp"
+        android:paddingEnd="2dp"
+        android:textAlignment="viewStart"
+        android:shadowColor="@android:color/black"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
+        app:layout_constraintBottom_toTopOf="@id/playback_date"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/exo_center_controls"
+        tools:text="This is a sample title"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/playback_date"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="3dp"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:paddingStart="4dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="3dp"
         android:textAlignment="viewStart"
         android:shadowColor="@android:color/black"
         android:shadowDx="1"
@@ -96,10 +121,8 @@
         app:layout_constraintBottom_toTopOf="@id/exo_position"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="@id/exo_center_controls"
-        tools:text="This is a sample title"
-        android:maxLines="1"
-        android:singleLine="true"
-        android:ellipsize="end" />
+        tools:text="January 20, 2024"
+        android:maxLines="1" />
 
     <com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
         android:id="@+id/exo_progress"
