@@ -120,7 +120,7 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
                     notifyActionChanged(index)
                 }
 
-                TestResultStatus.ERROR -> {
+                TestResultStatus.UNSUPPORTED_VERSION, TestResultStatus.ERROR -> {
                     guidedActionSubmit.isEnabled = false
                     guidedActionSubmit.isFocusable = false
                     val submitIndex = findActionPositionById(guidedActionSubmit.id)
