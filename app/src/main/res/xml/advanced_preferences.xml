@@ -57,9 +57,9 @@
             app:defaultValue="5000" />
         <SwitchPreference
             app:key="exoShowTitle"
-            app:title="Scene title"
-            app:summaryOn="Show title"
-            app:summaryOff="Hide title"
+            app:title="Scene title/date"
+            app:summaryOn="Show title &amp; date"
+            app:summaryOff="Hide title &amp; date"
             app:defaultValue="true" />
     </PreferenceCategory>
 

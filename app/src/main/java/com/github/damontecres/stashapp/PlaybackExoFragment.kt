@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -50,6 +51,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.Timer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -246,10 +250,24 @@ class PlaybackExoFragment :
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getBoolean("exoShowTitle", true)
         val titleText = view.findViewById<TextView>(R.id.playback_title)
+        val dateText = view.findViewById<TextView>(R.id.playback_date)
         if (showTitle) {
             titleText.text = scene.title
+            dateText.text =
+                if (scene.date != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    try {
+                        val dateFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
+                        val date = LocalDate.parse(scene.date, DateTimeFormatter.ISO_DATE)
+                        date.format(dateFormatter)
+                    } catch (ex: DateTimeParseException) {
+                        scene.date
+                    }
+                } else {
+                    scene.date
+                }
         } else {
             titleText.visibility = View.GONE
+            dateText.visibility = View.GONE
         }
 
         val position = requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
