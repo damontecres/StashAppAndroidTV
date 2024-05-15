@@ -161,7 +161,16 @@ class PlaybackExoFragment :
                             )
 
                         getString(R.string.playback_finished_do_nothing) -> {
-                            // no-op
+                            StashExoPlayer.addListener(
+                                object :
+                                    Player.Listener {
+                                    override fun onPlaybackStateChanged(playbackState: Int) {
+                                        if (playbackState == Player.STATE_ENDED) {
+                                            videoView.showController()
+                                        }
+                                    }
+                                },
+                            )
                         }
 
                         else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
