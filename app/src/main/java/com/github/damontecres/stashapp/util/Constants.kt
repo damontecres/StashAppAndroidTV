@@ -405,7 +405,7 @@ suspend fun testStashConnection(
                 Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
             } else {
                 val serverVersion = Version.tryFromString(info.data?.version?.version)
-                if (serverVersion == null || !serverVersion.isAtLeast(Version.MINIMUM_STASH_VERSION)) {
+                if (serverVersion == null || !Version.isStashVersionSupported(serverVersion)) {
                     if (showToast) {
                         val version = info.data?.version?.version
                         Toast.makeText(
