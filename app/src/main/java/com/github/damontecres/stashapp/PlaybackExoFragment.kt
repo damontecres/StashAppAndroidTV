@@ -265,6 +265,9 @@ class PlaybackExoFragment :
                 } else {
                     scene.date
                 }
+            if (dateText.text.isNullOrBlank()) {
+                dateText.visibility = View.GONE
+            }
         } else {
             titleText.visibility = View.GONE
             dateText.visibility = View.GONE
