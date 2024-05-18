@@ -58,6 +58,8 @@ import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import java.io.File
+import java.net.ConnectException
+import java.net.UnknownHostException
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.LocalDate
@@ -67,6 +69,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.X509TrustManager
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -159,15 +162,16 @@ val TRUST_ALL_CERTS: X509TrustManager =
 fun createOkHttpClient(context: Context): OkHttpClient {
     val manager = PreferenceManager.getDefaultSharedPreferences(context)
     val apiKey = manager.getString("stashApiKey", null)
-    return createOkHttpClient(context, apiKey)
+    return createOkHttpClient(context, apiKey, null)
 }
 
 fun createOkHttpClient(
     context: Context,
     apiKey: String?,
+    trustCerts: Boolean?,
 ): OkHttpClient {
     val manager = PreferenceManager.getDefaultSharedPreferences(context)
-    val trustAll = manager.getBoolean("trustAllCerts", false)
+    val trustAll = trustCerts ?: manager.getBoolean("trustAllCerts", false)
     val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
     val cacheLogging = manager.getBoolean("networkCacheLogging", false)
     val networkTimeout = manager.getInt("networkTimeout", 15).toLong()
@@ -307,6 +311,7 @@ fun createApolloClient(
     context: Context,
     stashUrl: String?,
     apiKey: String?,
+    trustCerts: Boolean? = null,
 ): ApolloClient? {
     return if (!stashUrl.isNullOrBlank()) {
         var cleanedStashUrl = stashUrl.trim()
@@ -325,7 +330,7 @@ fun createApolloClient(
                 .build()
         Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
 
-        val httpEngine = DefaultHttpEngine(createOkHttpClient(context, apiKey))
+        val httpEngine = DefaultHttpEngine(createOkHttpClient(context, apiKey, trustCerts))
         ApolloClient.Builder()
             .serverUrl(url.toString())
             .httpEngine(httpEngine)
@@ -344,6 +349,8 @@ enum class TestResultStatus {
     SUCCESS,
     AUTH_REQUIRED,
     ERROR,
+    SSL_REQUIRED,
+    SELF_SIGNED_REQUIRED,
 }
 
 data class TestResult(val status: TestResultStatus, val serverInfo: ServerInfoQuery.Data?) {
@@ -369,8 +376,9 @@ suspend fun testStashConnection(
     showToast: Boolean,
     serverUrl: String?,
     apiKey: String?,
+    trustCerts: Boolean? = null,
 ): TestResult {
-    val client = createApolloClient(context, serverUrl, apiKey)
+    val client = createApolloClient(context, serverUrl, apiKey, trustCerts)
     return testStashConnection(context, showToast, client)
 }
 
@@ -397,7 +405,7 @@ suspend fun testStashConnection(
                 if (showToast) {
                     Toast.makeText(
                         context,
-                        "Failed to connect to Stash. Check URL or API Key.",
+                        "Connected to Stash, but server returned an error: ${info.errors}",
                         Toast.LENGTH_LONG,
                     ).show()
                 }
@@ -416,11 +424,31 @@ suspend fun testStashConnection(
             }
         } catch (ex: ApolloHttpException) {
             Log.e(Constants.TAG, "ApolloHttpException", ex)
-            if (ex.statusCode == 401 || ex.statusCode == 403) {
+            if (ex.statusCode == 400) {
+                // Server returns 400 with body "Client sent an HTTP request to an HTTPS server.", but apollo doesn't record the body
                 if (showToast) {
                     Toast.makeText(
                         context,
-                        "Failed to connect to Stash. API Key was not valid.",
+                        "Connected to server, but server may require using HTTPS.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+                return TestResult(TestResultStatus.SSL_REQUIRED)
+            } else if (ex.statusCode == 401 || ex.statusCode == 403) {
+                if (showToast) {
+                    Toast.makeText(
+                        context,
+                        "Connected to server, but an API key is required.",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+                return TestResult(TestResultStatus.AUTH_REQUIRED)
+            } else if (ex.statusCode == 500) {
+                // In server <0.26.0, the server may return a 500 for incorrect API keys
+                if (showToast) {
+                    Toast.makeText(
+                        context,
+                        "Connected to server, but the API key may be incorrect.",
                         Toast.LENGTH_LONG,
                     ).show()
                 }
@@ -429,19 +457,29 @@ suspend fun testStashConnection(
                 if (showToast) {
                     Toast.makeText(
                         context,
-                        "Failed to connect to Stash. Error was '${ex.message}'",
+                        "Connected to Stash, but got HTTP ${ex.statusCode}: '${ex.message}'",
                         Toast.LENGTH_LONG,
                     ).show()
                 }
+                return TestResult(TestResultStatus.ERROR)
             }
         } catch (ex: ApolloException) {
             Log.e(Constants.TAG, "ApolloException", ex)
             if (showToast) {
+                val message =
+                    when (val cause = ex.cause) {
+                        is UnknownHostException, is ConnectException -> cause.localizedMessage
+                        is SSLHandshakeException -> "server may be using a self-signed certificate"
+                        else -> ex.localizedMessage
+                    }
                 Toast.makeText(
                     context,
-                    "Failed to connect to Stash. Error was '${ex.message}'",
+                    "Failed to connect to Stash: $message",
                     Toast.LENGTH_LONG,
                 ).show()
+            }
+            if (ex.cause is SSLHandshakeException) {
+                return TestResult(TestResultStatus.SELF_SIGNED_REQUIRED)
             }
         }
     }
@@ -806,6 +844,7 @@ fun removeStashServer(
 fun addAndSwitchServer(
     context: Context,
     newServer: StashServer,
+    otherSettings: ((SharedPreferences.Editor) -> Unit)? = null,
 ) {
     val manager = PreferenceManager.getDefaultSharedPreferences(context)
     val current = getCurrentStashServer(context)
@@ -824,5 +863,8 @@ fun addAndSwitchServer(
         putString(newApiKeyKey, newServer.apiKey)
         putString(SettingsFragment.PREF_STASH_URL, newServer.url)
         putString(SettingsFragment.PREF_STASH_API_KEY, newServer.apiKey)
+        if (otherSettings != null) {
+            otherSettings(this)
+        }
     }
 }
