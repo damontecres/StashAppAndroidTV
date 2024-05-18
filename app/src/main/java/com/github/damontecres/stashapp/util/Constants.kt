@@ -58,6 +58,7 @@ import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import java.io.File
+import java.io.IOException
 import java.net.ConnectException
 import java.net.UnknownHostException
 import java.security.SecureRandom
@@ -470,6 +471,7 @@ suspend fun testStashConnection(
                     when (val cause = ex.cause) {
                         is UnknownHostException, is ConnectException -> cause.localizedMessage
                         is SSLHandshakeException -> "server may be using a self-signed certificate"
+                        is IOException -> cause.localizedMessage
                         else -> ex.localizedMessage
                     }
                 Toast.makeText(
