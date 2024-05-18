@@ -197,7 +197,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         videoView.player = player
         player.setMediaItem(mediaItem)
         if (PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean("videoPreviewAudio", true)
+                .getBoolean("videoPreviewAudio", false)
         ) {
             player.volume = 1f
         } else {
