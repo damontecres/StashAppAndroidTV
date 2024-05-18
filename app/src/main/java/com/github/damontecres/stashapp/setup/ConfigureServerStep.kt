@@ -16,7 +16,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 
-class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSupportFragment() {
+class ConfigureServerStep : GuidedStepSupportFragment() {
     private var serverUrl: CharSequence? = null
     private var serverApiKey: CharSequence? = null
 
@@ -120,11 +120,15 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
                     notifyActionChanged(index)
                 }
 
-                TestResultStatus.ERROR -> {
+                TestResultStatus.ERROR, TestResultStatus.SSL_REQUIRED -> {
                     guidedActionSubmit.isEnabled = false
                     guidedActionSubmit.isFocusable = false
                     val submitIndex = findActionPositionById(guidedActionSubmit.id)
                     notifyActionChanged(submitIndex)
+                }
+
+                TestResultStatus.SELF_SIGNED_REQUIRED -> {
+                    // no-op
                 }
             }
         }
@@ -134,34 +138,27 @@ class ConfigureServerStep(private val firstTimeSetup: Boolean) : GuidedStepSuppo
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
-            if (firstTimeSetup) {
-                add(
-                    requireActivity().supportFragmentManager,
-                    ConfigurePinStep(StashServer(serverUrl.toString(), serverApiKey?.toString())),
-                )
-            } else {
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val result =
-                        testStashConnection(
-                            requireContext(),
-                            false,
-                            serverUrl?.toString(),
-                            serverApiKey?.toString(),
-                        )
-                    if (result.status == TestResultStatus.SUCCESS) {
-                        // Persist values
-                        addAndSwitchServer(
-                            requireContext(),
-                            StashServer(serverUrl.toString(), serverApiKey?.toString()),
-                        )
-                        finishGuidedStepSupportFragments()
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Cannot connect to server.",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val result =
+                    testStashConnection(
+                        requireContext(),
+                        false,
+                        serverUrl?.toString(),
+                        serverApiKey?.toString(),
+                    )
+                if (result.status == TestResultStatus.SUCCESS) {
+                    // Persist values
+                    addAndSwitchServer(
+                        requireContext(),
+                        StashServer(serverUrl.toString(), serverApiKey?.toString()),
+                    )
+                    finishGuidedStepSupportFragments()
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "Cannot connect to server.",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 }
             }
         }

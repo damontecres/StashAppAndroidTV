@@ -31,7 +31,7 @@
             app:key="@string/pref_key_pin_code_auto"
             app:title="Auto submit PIN"
             app:summary="Submit PIN automatically when typed"
-            app:defaultValue="false" />
+            app:defaultValue="true" />
 
         <ListPreference
             app:key="cardSize"
