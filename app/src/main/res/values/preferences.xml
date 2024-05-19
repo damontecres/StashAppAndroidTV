@@ -5,4 +5,6 @@
     <string name="pref_key_trust_certs">trustAllCerts</string>
     <string name="pref_key_show_grid_footer">interface.showGridFooter</string>
     <string name="pref_key_show_rating">interface.showRating</string>
+    <string name="pref_key_max_search_results">maxSearchResults</string>
+    <string name="pref_key_page_size">@string/pref_key_max_search_results</string>
 </resources>
