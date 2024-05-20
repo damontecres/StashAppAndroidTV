@@ -70,7 +70,6 @@ class MainFragment : BrowseSupportFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         serverHash = computeServerHash()
 
         headersState = HEADERS_DISABLED

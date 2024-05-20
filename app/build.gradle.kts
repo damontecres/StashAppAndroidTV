@@ -35,6 +35,12 @@ android {
     namespace = "com.github.damontecres.stashapp"
     compileSdk = 34
 
+    sourceSets {
+        getByName("main") {
+            res.srcDirs("src/main/res", "$buildDir/generated/res/server")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.github.damontecres.stashapp"
         minSdk = 23
@@ -114,14 +120,12 @@ apollo {
     }
 }
 
-tasks.create("generateStrings", Exec::class.java) {
-    if (gradle.startParameter.logLevel == LogLevel.DEBUG || gradle.startParameter.logLevel == LogLevel.INFO) {
-        commandLine("python", "convert_strings.py", "--debug")
-    } else {
-        commandLine("python", "convert_strings.py")
-    }
+tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrings") {
+    sourceDirectory = File("$projectDir/../stash-server/ui/v2.5/src/locales")
+    outputDirectory = File("$buildDir/generated/res/server")
 }
 
+// tasks.preBuild.dependsOn("generateStrings")
 tasks.preBuild.dependsOn("generateStrings")
 
 val mediaVersion = "1.3.1"
