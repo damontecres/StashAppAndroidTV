@@ -36,6 +36,7 @@ import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.ImageActivity
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -160,6 +161,36 @@ val TRUST_ALL_CERTS: X509TrustManager =
         }
     }
 
+fun join(
+    prefix: String,
+    value: String?,
+): String? {
+    return if (value.isNotNullOrBlank()) {
+        "$prefix/$value"
+    } else {
+        null
+    }
+}
+
+fun createUserAgent(context: Context): String {
+    val appName = context.getString(R.string.app_name)
+    val versionStr = context.packageManager.getPackageInfo(context.packageName, 0).versionName
+    val comments =
+        listOf(
+            join("os", Build.VERSION.BASE_OS),
+            join("release", Build.VERSION.RELEASE),
+            "sdk/${Build.VERSION.SDK_INT}",
+        ).joinNotNullOrBlank("; ")
+    val device =
+        listOf(
+            Build.MANUFACTURER,
+            Build.MODEL,
+            if (Build.MODEL != Build.PRODUCT) Build.PRODUCT else null,
+            Build.DEVICE,
+        ).joinNotNullOrBlank("; ")
+    return "$appName/$versionStr ($comments) ($device)"
+}
+
 fun createOkHttpClient(context: Context): OkHttpClient {
     val manager = PreferenceManager.getDefaultSharedPreferences(context)
     val apiKey = manager.getString("stashApiKey", null)
@@ -177,10 +208,19 @@ fun createOkHttpClient(
     val cacheLogging = manager.getBoolean("networkCacheLogging", false)
     val networkTimeout = manager.getInt("networkTimeout", 15).toLong()
 
+    val userAgent = createUserAgent(context)
+
+    Log.v(Constants.TAG, "User-Agent=$userAgent")
     var builder =
         OkHttpClient.Builder()
             .readTimeout(networkTimeout, TimeUnit.SECONDS)
             .writeTimeout(networkTimeout, TimeUnit.SECONDS)
+            .addNetworkInterceptor {
+                it.proceed(
+                    it.request().newBuilder().header("User-Agent", userAgent)
+                        .build(),
+                )
+            }
 
     if (trustAll) {
         val sslContext = SSLContext.getInstance("SSL")
@@ -525,14 +565,18 @@ fun concatIfNotBlank(
     sep: CharSequence,
     vararg strings: CharSequence?,
 ): String {
-    return strings.filter { !it.isNullOrBlank() }.joinToString(sep)
+    return strings.filter { it.isNotNullOrBlank() }.joinToString(sep)
 }
 
 fun concatIfNotBlank(
     sep: CharSequence,
     strings: List<CharSequence?>,
 ): String {
-    return strings.filter { !it.isNullOrBlank() }.joinToString(sep)
+    return strings.joinNotNullOrBlank(sep)
+}
+
+fun List<CharSequence?>.joinNotNullOrBlank(sep: CharSequence): String {
+    return this.filter { it.isNotNullOrBlank() }.joinToString(sep)
 }
 
 fun cacheDurationPrefToDuration(value: Int): Duration? {
