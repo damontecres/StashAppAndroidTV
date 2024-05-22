@@ -7,4 +7,6 @@
     <string name="pref_key_show_rating">interface.showRating</string>
     <string name="pref_key_max_search_results">maxSearchResults</string>
     <string name="pref_key_page_size">@string/pref_key_max_search_results</string>
+    <string name="pref_key_current_server">stashUrl</string>
+    <string name="pref_key_current_api_key">stashApiKey</string>
 </resources>

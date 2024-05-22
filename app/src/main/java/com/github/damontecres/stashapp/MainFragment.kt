@@ -28,7 +28,9 @@ import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.getInt
@@ -119,35 +121,53 @@ class MainFragment : BrowseSupportFragment() {
                 )
             },
         ) {
-            val serverInfo = testStashConnection(requireContext(), false)
-            if (serverInfo != null) {
-                ServerPreferences(requireContext()).updatePreferences()
-                val mainTitleView =
-                    requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-                mainTitleView.refreshMenuItems()
-                if (rowsAdapter.size() == 0) {
-                    fetchData(serverInfo)
-                }
-                try {
-                    val position = getCurrentPosition()
-                    if (position != null) {
-                        val adapter = adapters[position.row]
-                        val item = adapter.get(position.column)
-                        if (item is SlimSceneData) {
-                            val queryEngine = QueryEngine(requireContext())
-                            queryEngine.getScene(item.id)?.let {
-                                adapter.replace(position.column, it)
+            try {
+                val result =
+                    testStashConnection(
+                        requireContext(),
+                        false,
+                        StashClient.getApolloClient(requireContext()),
+                    )
+                if (result.status == TestResultStatus.SUCCESS) {
+                    val serverInfo = result.serverInfo!!
+                    ServerPreferences(requireContext()).updatePreferences()
+                    val mainTitleView =
+                        requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
+                    mainTitleView.refreshMenuItems()
+                    if (rowsAdapter.size() == 0) {
+                        fetchData(serverInfo)
+                    }
+                    try {
+                        val position = getCurrentPosition()
+                        if (position != null) {
+                            val adapter = adapters[position.row]
+                            val item = adapter.get(position.column)
+                            if (item is SlimSceneData) {
+                                val queryEngine = QueryEngine(requireContext())
+                                queryEngine.getScene(item.id)?.let {
+                                    adapter.replace(position.column, it)
+                                }
                             }
                         }
+                    } catch (ex: Exception) {
+                        Log.e(TAG, "Exception", ex)
                     }
-                } catch (ex: Exception) {
-                    Log.e(TAG, "Exception", ex)
+                } else {
+                    clearData()
+                    requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                    Toast.makeText(
+                        requireContext(),
+                        "Connection to Stash failed.",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 }
-            } else {
+            } catch (ex: QueryEngine.StashNotConfiguredException) {
                 clearData()
-                requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
-                Toast.makeText(requireContext(), "Connection to Stash failed.", Toast.LENGTH_LONG)
-                    .show()
+                Toast.makeText(
+                    requireContext(),
+                    "Stash server not configured!",
+                    Toast.LENGTH_LONG,
+                ).show()
             }
         }
     }

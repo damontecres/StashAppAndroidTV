@@ -39,9 +39,9 @@ import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
-import com.github.damontecres.stashapp.util.createOkHttpClient
 import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.StashPlayerView
 import com.github.rubensousa.previewseekbar.PreviewBar
@@ -415,7 +415,7 @@ class PlaybackExoFragment :
             // Usually even if not null, there may not be sprites and the server will return a 404
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 withContext(Dispatchers.IO) {
-                    val client = createOkHttpClient(requireContext())
+                    val client = StashClient.getHttpClient(requireContext())
                     val request = Request.Builder().url(scene.spriteUrl!!).get().build()
                     client.newCall(request).execute().use {
                         Log.d(

@@ -3,20 +3,19 @@ package com.github.damontecres.stashapp.setup
 import android.os.Bundle
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.addAndSwitchServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 
-class ConfigureServerStep : GuidedStepSupportFragment() {
+class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
     private var serverUrl: CharSequence? = null
     private var serverApiKey: CharSequence? = null
 
@@ -97,38 +96,39 @@ class ConfigureServerStep : GuidedStepSupportFragment() {
                 action.description = "API key not set"
             }
         }
-        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            val result =
-                testStashConnection(
-                    requireContext(),
-                    true,
-                    serverUrl?.toString(),
-                    serverApiKey?.toString(),
-                )
-            when (result.status) {
-                TestResultStatus.SUCCESS -> {
-                    guidedActionSubmit.isEnabled = true
-                    guidedActionSubmit.isFocusable = true
-                    val index = findActionPositionById(guidedActionSubmit.id)
-                    notifyActionChanged(index)
-                }
+        if (serverUrl != null) {
+            val testServerUrl = serverUrl!!
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val trustCerts =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        .getBoolean(getString(R.string.pref_key_trust_certs), false)
+                val result =
+                    testConnection(testServerUrl.toString(), serverApiKey?.toString(), trustCerts)
+                when (result.status) {
+                    TestResultStatus.SUCCESS -> {
+                        guidedActionSubmit.isEnabled = true
+                        guidedActionSubmit.isFocusable = true
+                        val index = findActionPositionById(guidedActionSubmit.id)
+                        notifyActionChanged(index)
+                    }
 
-                TestResultStatus.AUTH_REQUIRED -> {
-                    guidedActionsServerApiKey.isEnabled = true
-                    guidedActionsServerApiKey.isFocusable = true
-                    val index = findActionPositionById(guidedActionsServerApiKey.id)
-                    notifyActionChanged(index)
-                }
+                    TestResultStatus.AUTH_REQUIRED -> {
+                        guidedActionsServerApiKey.isEnabled = true
+                        guidedActionsServerApiKey.isFocusable = true
+                        val index = findActionPositionById(guidedActionsServerApiKey.id)
+                        notifyActionChanged(index)
+                    }
 
-                TestResultStatus.ERROR, TestResultStatus.SSL_REQUIRED -> {
-                    guidedActionSubmit.isEnabled = false
-                    guidedActionSubmit.isFocusable = false
-                    val submitIndex = findActionPositionById(guidedActionSubmit.id)
-                    notifyActionChanged(submitIndex)
-                }
+                    TestResultStatus.ERROR, TestResultStatus.SSL_REQUIRED -> {
+                        guidedActionSubmit.isEnabled = false
+                        guidedActionSubmit.isFocusable = false
+                        val submitIndex = findActionPositionById(guidedActionSubmit.id)
+                        notifyActionChanged(submitIndex)
+                    }
 
-                TestResultStatus.SELF_SIGNED_REQUIRED -> {
-                    // no-op
+                    TestResultStatus.SELF_SIGNED_REQUIRED -> {
+                        // no-op
+                    }
                 }
             }
         }
@@ -137,15 +137,13 @@ class ConfigureServerStep : GuidedStepSupportFragment() {
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
-        if (action.id == GuidedAction.ACTION_ID_OK) {
+        if (action.id == GuidedAction.ACTION_ID_OK && serverUrl != null) {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val trustCerts =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        .getBoolean(getString(R.string.pref_key_trust_certs), false)
                 val result =
-                    testStashConnection(
-                        requireContext(),
-                        false,
-                        serverUrl?.toString(),
-                        serverApiKey?.toString(),
-                    )
+                    testConnection(serverUrl!!.toString(), serverApiKey?.toString(), trustCerts)
                 if (result.status == TestResultStatus.SUCCESS) {
                     // Persist values
                     addAndSwitchServer(

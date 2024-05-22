@@ -29,7 +29,7 @@ class StashGlideModule : AppGlideModule() {
         registry.replace(
             GlideUrl::class.java,
             InputStream::class.java,
-            OkHttpUrlLoader.Factory(createOkHttpClient(context)),
+            OkHttpUrlLoader.Factory(StashClient.getGlideHttpClient(context)),
         )
         registry
             .register(SVG::class.java, PictureDrawable::class.java, SvgDrawableTranscoder())

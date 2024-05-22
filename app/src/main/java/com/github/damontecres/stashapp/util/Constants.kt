@@ -26,17 +26,11 @@ import androidx.leanback.widget.Visibility
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.api.http.HttpRequest
-import com.apollographql.apollo3.api.http.HttpResponse
 import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
-import com.apollographql.apollo3.network.http.DefaultHttpEngine
-import com.apollographql.apollo3.network.http.HttpInterceptor
-import com.apollographql.apollo3.network.http.HttpInterceptorChain
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.ImageActivity
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -47,30 +41,20 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.Constants.OK_HTTP_TAG
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
-import com.github.damontecres.stashapp.util.Constants.getNetworkCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Cache
-import okhttp3.CacheControl
-import okhttp3.Call
-import okhttp3.EventListener
-import okhttp3.OkHttpClient
-import okhttp3.Response
 import java.io.File
 import java.io.IOException
 import java.net.ConnectException
 import java.net.UnknownHostException
-import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.time.LocalDate
 import java.time.Period
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.X509TrustManager
 import kotlin.contracts.ExperimentalContracts
@@ -85,7 +69,6 @@ object Constants {
      */
     const val STASH_API_HEADER = "ApiKey"
     const val TAG = "Constants"
-    const val OK_HTTP_TAG = "$TAG.OkHttpClient"
     const val OK_HTTP_CACHE_DIR = "okhttpcache"
 
     /**
@@ -172,123 +155,6 @@ fun join(
     }
 }
 
-fun createUserAgent(context: Context): String {
-    val appName = context.getString(R.string.app_name)
-    val versionStr = context.packageManager.getPackageInfo(context.packageName, 0).versionName
-    val comments =
-        listOf(
-            join("os", Build.VERSION.BASE_OS),
-            join("release", Build.VERSION.RELEASE),
-            "sdk/${Build.VERSION.SDK_INT}",
-        ).joinNotNullOrBlank("; ")
-    val device =
-        listOf(
-            Build.MANUFACTURER,
-            Build.MODEL,
-            if (Build.MODEL != Build.PRODUCT) Build.PRODUCT else null,
-            Build.DEVICE,
-        ).joinNotNullOrBlank("; ")
-    return "$appName/$versionStr ($comments) ($device)"
-}
-
-fun createOkHttpClient(context: Context): OkHttpClient {
-    val manager = PreferenceManager.getDefaultSharedPreferences(context)
-    val apiKey = manager.getString("stashApiKey", null)
-    return createOkHttpClient(context, apiKey, null)
-}
-
-fun createOkHttpClient(
-    context: Context,
-    apiKey: String?,
-    trustCerts: Boolean?,
-): OkHttpClient {
-    val manager = PreferenceManager.getDefaultSharedPreferences(context)
-    val trustAll = trustCerts ?: manager.getBoolean("trustAllCerts", false)
-    val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
-    val cacheLogging = manager.getBoolean("networkCacheLogging", false)
-    val networkTimeout = manager.getInt("networkTimeout", 15).toLong()
-
-    val userAgent = createUserAgent(context)
-
-    Log.v(Constants.TAG, "User-Agent=$userAgent")
-    var builder =
-        OkHttpClient.Builder()
-            .readTimeout(networkTimeout, TimeUnit.SECONDS)
-            .writeTimeout(networkTimeout, TimeUnit.SECONDS)
-            .addNetworkInterceptor {
-                it.proceed(
-                    it.request().newBuilder().header("User-Agent", userAgent)
-                        .build(),
-                )
-            }
-
-    if (trustAll) {
-        val sslContext = SSLContext.getInstance("SSL")
-        sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
-        builder =
-            builder.sslSocketFactory(
-                sslContext.socketFactory,
-                TRUST_ALL_CERTS,
-            ).hostnameVerifier { _, _ ->
-                true
-            }
-    }
-    if (apiKey.isNotNullOrBlank()) {
-        builder =
-            builder.addInterceptor {
-                val request =
-                    it.request().newBuilder()
-                        .addHeader(STASH_API_HEADER, apiKey.trim())
-                        .build()
-                it.proceed(request)
-            }
-    }
-    if (cacheLogging) {
-        Log.d(OK_HTTP_TAG, "cacheDuration in hours: ${cacheDuration?.toInt(DurationUnit.HOURS)}")
-        builder =
-            builder.eventListener(
-                object : EventListener() {
-                    override fun cacheHit(
-                        call: Call,
-                        response: Response,
-                    ) {
-                        Log.v(OK_HTTP_TAG, "cacheHit: ${call.request().url} => ${response.code}")
-                    }
-
-                    override fun cacheMiss(call: Call) {
-                        Log.v(OK_HTTP_TAG, "cacheMiss: ${call.request().url}")
-                    }
-
-                    override fun cacheConditionalHit(
-                        call: Call,
-                        cachedResponse: Response,
-                    ) {
-                        Log.v(
-                            OK_HTTP_TAG,
-                            "cacheConditionalHit: ${call.request().url} => ${cachedResponse.code}",
-                        )
-                    }
-                },
-            )
-    }
-    if (cacheDuration != null) {
-        builder =
-            builder.addInterceptor {
-                val request =
-                    it.request().newBuilder()
-                        .cacheControl(
-                            CacheControl.Builder()
-                                .maxAge(cacheDuration.toInt(DurationUnit.HOURS), TimeUnit.HOURS)
-                                .build(),
-                        )
-                        .build()
-                it.proceed(request)
-            }
-    }
-    builder = builder.cache(getNetworkCache(context))
-    return builder.build()
-}
-
 /**
  * Create a [GlideUrl], adding the API key to the headers if needed
  */
@@ -321,71 +187,6 @@ fun createGlideUrl(
     return createGlideUrl(url, apiKey)
 }
 
-/**
- * Add API key to headers for Apollo GraphQL requests
- */
-class AuthorizationInterceptor(private val apiKey: String?) : HttpInterceptor {
-    override suspend fun intercept(
-        request: HttpRequest,
-        chain: HttpInterceptorChain,
-    ): HttpResponse {
-        return if (apiKey.isNullOrBlank()) {
-            chain.proceed(request)
-        } else {
-            chain.proceed(
-                request.newBuilder().addHeader(STASH_API_HEADER, apiKey.trim()).build(),
-            )
-        }
-    }
-}
-
-/**
- * Create a client for accessing Stash's GraphQL API using the default shared preferences for the URL & API key
- */
-fun createApolloClient(context: Context): ApolloClient? {
-    val stashUrl = PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
-    val apiKey = PreferenceManager.getDefaultSharedPreferences(context).getString("stashApiKey", "")
-    return createApolloClient(context, stashUrl, apiKey)
-}
-
-fun createApolloClient(
-    context: Context,
-    stashUrl: String?,
-    apiKey: String?,
-    trustCerts: Boolean? = null,
-): ApolloClient? {
-    return if (!stashUrl.isNullOrBlank()) {
-        var cleanedStashUrl = stashUrl.trim()
-        if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
-            // Assume http
-            cleanedStashUrl = "http://$cleanedStashUrl"
-        }
-        var url = Uri.parse(cleanedStashUrl)
-        val pathSegments = url.pathSegments.toMutableList()
-        if (pathSegments.isEmpty() || pathSegments.last() != "graphql") {
-            pathSegments.add("graphql")
-        }
-        url =
-            url.buildUpon()
-                .path(pathSegments.joinToString("/")) // Ensure the URL is the graphql endpoint
-                .build()
-        Log.d(Constants.TAG, "StashUrl: $stashUrl => $url")
-
-        val httpEngine = DefaultHttpEngine(createOkHttpClient(context, apiKey, trustCerts))
-        ApolloClient.Builder()
-            .serverUrl(url.toString())
-            .httpEngine(httpEngine)
-            .addHttpInterceptor(AuthorizationInterceptor(apiKey))
-            .build()
-    } else {
-        Log.v(
-            Constants.TAG,
-            "Cannot create ApolloClient: stashUrl='$stashUrl', apiKey set: ${!apiKey.isNullOrBlank()}",
-        )
-        null
-    }
-}
-
 enum class TestResultStatus {
     SUCCESS,
     AUTH_REQUIRED,
@@ -396,31 +197,6 @@ enum class TestResultStatus {
 
 data class TestResult(val status: TestResultStatus, val serverInfo: ServerInfoQuery.Data?) {
     constructor(status: TestResultStatus) : this(status, null)
-}
-
-/**
- * Test whether the app can connect to Stash
- *
- * @param context the context to pull preferences from
- * @param showToast whether a Toast message should be displayed with error/success information
- */
-suspend fun testStashConnection(
-    context: Context,
-    showToast: Boolean,
-): ServerInfoQuery.Data? {
-    val client = createApolloClient(context)
-    return testStashConnection(context, showToast, client).serverInfo
-}
-
-suspend fun testStashConnection(
-    context: Context,
-    showToast: Boolean,
-    serverUrl: String?,
-    apiKey: String?,
-    trustCerts: Boolean? = null,
-): TestResult {
-    val client = createApolloClient(context, serverUrl, apiKey, trustCerts)
-    return testStashConnection(context, showToast, client)
 }
 
 suspend fun testStashConnection(
@@ -872,6 +648,7 @@ fun setCurrentStashServer(
         putString(SettingsFragment.PREF_STASH_URL, server.url)
         putString(SettingsFragment.PREF_STASH_API_KEY, server.apiKey)
     }
+    StashClient.invalidate()
 }
 
 fun removeStashServer(
@@ -913,4 +690,5 @@ fun addAndSwitchServer(
             otherSettings(this)
         }
     }
+    StashClient.invalidate()
 }

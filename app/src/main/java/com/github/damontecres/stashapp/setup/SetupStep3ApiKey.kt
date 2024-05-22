@@ -9,7 +9,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 
 class SetupStep3ApiKey(private val setupState: SetupState) :
@@ -50,9 +49,7 @@ class SetupStep3ApiKey(private val setupState: SetupState) :
             if (apiKey.isNotNullOrBlank()) {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val result =
-                        testStashConnection(
-                            requireContext(),
-                            true,
+                        testConnection(
                             setupState.serverUrl,
                             apiKey.toString(),
                             setupState.trustCerts,

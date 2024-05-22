@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
@@ -107,7 +108,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             findPreference<Preference>(PREF_STASH_URL)!!.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    testStashConnection(requireContext(), true)
+                    testStashConnection(
+                        requireContext(),
+                        true,
+                        StashClient.getApolloClient(requireContext()),
+                    )
                 }
                 true
             }
@@ -363,7 +368,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             val networkTimeoutPref = findPreference<Preference>("networkTimeout")!!
             networkTimeoutPref.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    testStashConnection(requireContext(), true)
+                    StashClient.invalidate()
+                    testStashConnection(
+                        requireContext(),
+                        true,
+                        StashClient.getApolloClient(requireContext()),
+                    )
                 }
                 true
             }

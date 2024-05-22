@@ -9,7 +9,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 
 class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
@@ -48,13 +47,7 @@ class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
         if (serverUrl.isNotNullOrBlank()) {
             val state = SetupState(serverUrl)
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val result =
-                    testStashConnection(
-                        requireContext(),
-                        true,
-                        serverUrl.toString(),
-                        null,
-                    )
+                val result = testConnection(serverUrl.toString(), null, false)
                 when (result.status) {
                     TestResultStatus.AUTH_REQUIRED -> {
                         nextStep(SetupStep3ApiKey(state))
