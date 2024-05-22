@@ -27,13 +27,13 @@ import com.bumptech.glide.request.target.Target
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.enableMarquee
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import java.util.EnumMap
 
 class StashImageCardView(context: Context) : ImageCardView(context) {
@@ -292,7 +292,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             PreferenceManager.getDefaultSharedPreferences(context)
                 .getBoolean(context.getString(R.string.pref_key_show_rating), true)
         if (rating100 != null && rating100 > 0 && showRatings) {
-            val ratingText = Constants.getRatingAsDecimalString(context, rating100)
+            val ratingText = getRatingAsDecimalString(context, rating100)
             val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
             val overlay = getTextOverlay(OverlayPosition.TOP_LEFT)
 

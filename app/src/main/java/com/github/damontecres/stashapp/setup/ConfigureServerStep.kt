@@ -11,7 +11,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
-import com.github.damontecres.stashapp.util.addAndSwitchServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
 
@@ -146,7 +145,7 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                     testConnection(serverUrl!!.toString(), serverApiKey?.toString(), trustCerts)
                 if (result.status == TestResultStatus.SUCCESS) {
                     // Persist values
-                    addAndSwitchServer(
+                    StashServer.addAndSwitchServer(
                         requireContext(),
                         StashServer(serverUrl.toString(), serverApiKey?.toString()),
                     )

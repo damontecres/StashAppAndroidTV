@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.util
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -19,7 +18,6 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.core.content.edit
 import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.Visibility
@@ -31,7 +29,6 @@ import com.apollographql.apollo3.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.ImageActivity
-import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -49,14 +46,10 @@ import java.io.File
 import java.io.IOException
 import java.net.ConnectException
 import java.net.UnknownHostException
-import java.security.cert.X509Certificate
 import java.time.LocalDate
 import java.time.Period
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import javax.net.ssl.SSLHandshakeException
-import javax.net.ssl.X509TrustManager
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.time.Duration
@@ -71,78 +64,13 @@ object Constants {
     const val TAG = "Constants"
     const val OK_HTTP_CACHE_DIR = "okhttpcache"
 
-    /**
-     * Converts seconds into a Duration string where fractional seconds are removed
-     */
-    fun durationToString(duration: Double): String {
-        return duration
-            .times(100L).toLong()
-            .div(100L).toDuration(DurationUnit.SECONDS)
-            .toString()
-    }
-
     fun getNetworkCache(context: Context): Cache {
         val cacheSize =
             PreferenceManager.getDefaultSharedPreferences(context)
                 .getLong("networkCache", 100) * 1024 * 1024
         return Cache(File(context.cacheDir, OK_HTTP_CACHE_DIR), cacheSize)
     }
-
-    fun getRatingAsDecimalString(
-        context: Context,
-        rating100: Int,
-        ratingsAsStars: Boolean? = null,
-    ): String {
-        val asStars = ratingsAsStars ?: ServerPreferences(context).ratingsAsStars
-        return if (asStars) {
-            (rating100 / 20.0).toString()
-        } else {
-            (rating100 / 10.0).toString()
-        }
-    }
-
-    fun parseTimeToString(ts: Any?): String? {
-        return if (ts == null) {
-            null
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                val dateTimeFormatter = DateTimeFormatter.ofPattern("eee, MMMM d, yyyy h:mm a")
-                val dateTime =
-                    ZonedDateTime.parse(
-                        ts.toString(),
-                        DateTimeFormatter.ISO_DATE_TIME,
-                    )
-                dateTime.format(dateTimeFormatter)
-            } catch (ex: DateTimeParseException) {
-                ts.toString()
-            }
-        } else {
-            ts.toString()
-        }
-    }
 }
-
-val TRUST_ALL_CERTS: X509TrustManager =
-    @SuppressLint("CustomX509TrustManager")
-    object : X509TrustManager {
-        @SuppressLint("TrustAllX509TrustManager")
-        override fun checkClientTrusted(
-            chain: Array<X509Certificate>,
-            authType: String,
-        ) {
-        }
-
-        @SuppressLint("TrustAllX509TrustManager")
-        override fun checkServerTrusted(
-            chain: Array<X509Certificate>,
-            authType: String,
-        ) {
-        }
-
-        override fun getAcceptedIssuers(): Array<X509Certificate> {
-            return arrayOf()
-        }
-    }
 
 fun join(
     prefix: String,
@@ -304,18 +232,26 @@ suspend fun testStashConnection(
     return TestResult(TestResultStatus.ERROR)
 }
 
-fun convertFilter(filter: SavedFilterData.Find_filter?): FindFilterType? {
-    return if (filter != null) {
-        FindFilterType(
-            q = Optional.presentIfNotNull(filter.q),
-            page = Optional.presentIfNotNull(filter.page),
-            per_page = Optional.presentIfNotNull(filter.per_page),
-            sort = Optional.presentIfNotNull(filter.sort),
-            direction = Optional.presentIfNotNull(filter.direction),
-        )
-    } else {
-        null
-    }
+fun SavedFilterData.Find_filter.toFindFilterType(): FindFilterType {
+    return FindFilterType(
+        q = Optional.presentIfNotNull(this.q),
+        page = Optional.presentIfNotNull(this.page),
+        per_page = Optional.presentIfNotNull(this.per_page),
+        sort = Optional.presentIfNotNull(this.sort),
+        direction = Optional.presentIfNotNull(this.direction),
+    )
+}
+
+@Suppress("ktlint:standard:function-naming")
+fun FindFilterType.toFind_filter(): SavedFilterData.Find_filter {
+    return SavedFilterData.Find_filter(
+        q = q.getOrNull(),
+        page = page.getOrNull(),
+        per_page = per_page.getOrNull(),
+        sort = sort.getOrNull(),
+        direction = direction.getOrNull(),
+        __typename = "FindFilterType",
+    )
 }
 
 val supportedFilterModes = DataType.entries.map { it.filterMode }.toSet()
@@ -523,18 +459,6 @@ fun View.animateToInvisible(
         }
 }
 
-@Suppress("ktlint:standard:function-naming")
-fun FindFilterType.toFind_filter(): SavedFilterData.Find_filter {
-    return SavedFilterData.Find_filter(
-        q = q.getOrNull(),
-        page = page.getOrNull(),
-        per_page = per_page.getOrNull(),
-        sort = sort.getOrNull(),
-        direction = direction.getOrNull(),
-        __typename = "FindFilterType",
-    )
-}
-
 /**
  * Gets the max measured width size for the views produced by an ArrayAdapter
  */
@@ -624,71 +548,4 @@ fun VideoFileData.resolutionName(): CharSequence {
     } else {
         "${number}p"
     }
-}
-
-data class StashServer(val url: String, val apiKey: String?)
-
-fun getCurrentStashServer(context: Context): StashServer? {
-    val manager = PreferenceManager.getDefaultSharedPreferences(context)
-    val url = manager.getString(SettingsFragment.PREF_STASH_URL, null)
-    val apiKey = manager.getString(SettingsFragment.PREF_STASH_API_KEY, null)
-    return if (url.isNotNullOrBlank()) {
-        StashServer(url, apiKey)
-    } else {
-        null
-    }
-}
-
-fun setCurrentStashServer(
-    context: Context,
-    server: StashServer,
-) {
-    val manager = PreferenceManager.getDefaultSharedPreferences(context)
-    manager.edit(true) {
-        putString(SettingsFragment.PREF_STASH_URL, server.url)
-        putString(SettingsFragment.PREF_STASH_API_KEY, server.apiKey)
-    }
-    StashClient.invalidate()
-}
-
-fun removeStashServer(
-    context: Context,
-    server: StashServer,
-) {
-    val manager = PreferenceManager.getDefaultSharedPreferences(context)
-    val serverKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + server.url
-    val apiKeyKey = SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + server.url
-    manager.edit(true) {
-        remove(serverKey)
-        remove(apiKeyKey)
-    }
-}
-
-fun addAndSwitchServer(
-    context: Context,
-    newServer: StashServer,
-    otherSettings: ((SharedPreferences.Editor) -> Unit)? = null,
-) {
-    val manager = PreferenceManager.getDefaultSharedPreferences(context)
-    val current = getCurrentStashServer(context)
-    val currentServerKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + current?.url
-    val currentApiKeyKey =
-        SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + current?.url
-    val newServerKey = SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX + newServer.url
-    val newApiKeyKey =
-        SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX + newServer.url
-    manager.edit(true) {
-        if (current != null) {
-            putString(currentServerKey, current.url)
-            putString(currentApiKeyKey, current.apiKey)
-        }
-        putString(newServerKey, newServer.url)
-        putString(newApiKeyKey, newServer.apiKey)
-        putString(SettingsFragment.PREF_STASH_URL, newServer.url)
-        putString(SettingsFragment.PREF_STASH_API_KEY, newServer.apiKey)
-        if (otherSettings != null) {
-            otherSettings(this)
-        }
-    }
-    StashClient.invalidate()
 }

@@ -192,7 +192,7 @@ class FrontPageParser(private val queryEngine: QueryEngine, private val filterPa
                     if (result?.mode in supportedFilterModes) {
                         val filter =
                             queryEngine.updateFilter(
-                                convertFilter(result?.find_filter),
+                                result?.find_filter?.toFindFilterType(),
                                 useRandom = true,
                             )?.copy(per_page = Optional.present(pageSize))
                         val objectFilter =

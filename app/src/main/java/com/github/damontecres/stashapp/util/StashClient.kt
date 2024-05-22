@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.util
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Build
@@ -14,8 +15,10 @@ import okhttp3.EventListener
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
+import javax.net.ssl.X509TrustManager
 import kotlin.time.DurationUnit
 
 class StashClient private constructor() {
@@ -282,5 +285,27 @@ class StashClient private constructor() {
                 .httpEngine(DefaultHttpEngine(httpClient))
                 .build()
         }
+
+        private val TRUST_ALL_CERTS: X509TrustManager =
+            @SuppressLint("CustomX509TrustManager")
+            object : X509TrustManager {
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkClientTrusted(
+                    chain: Array<X509Certificate>,
+                    authType: String,
+                ) {
+                }
+
+                @SuppressLint("TrustAllX509TrustManager")
+                override fun checkServerTrusted(
+                    chain: Array<X509Certificate>,
+                    authType: String,
+                ) {
+                }
+
+                override fun getAcceptedIssuers(): Array<X509Certificate> {
+                    return arrayOf()
+                }
+            }
     }
 }

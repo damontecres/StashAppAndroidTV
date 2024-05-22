@@ -36,7 +36,6 @@ import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
@@ -44,6 +43,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
 import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.StashPlayerView
+import com.github.damontecres.stashapp.views.durationToString
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -698,7 +698,7 @@ class PlaybackExoFragment :
                                 videoPos,
                                 tagId,
                             )!!
-                        val dur = Constants.durationToString(newMarker.seconds)
+                        val dur = durationToString(newMarker.seconds)
                         Toast.makeText(
                             requireContext(),
                             "Created a new marker at $dur with primary tag '${newMarker.primary_tag.tagData.name}'",

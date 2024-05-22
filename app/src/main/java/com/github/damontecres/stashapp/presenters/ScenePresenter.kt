@@ -9,7 +9,6 @@ import com.github.damontecres.stashapp.VideoDetailsFragment
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
@@ -17,6 +16,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
+import com.github.damontecres.stashapp.views.durationToString
 import java.util.EnumMap
 
 class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
@@ -43,7 +43,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
 
         val videoFile = item.files.firstOrNull()?.videoFileData
         if (videoFile != null) {
-            val duration = Constants.durationToString(videoFile.duration)
+            val duration = durationToString(videoFile.duration)
             cardView.setTextOverlayText(StashImageCardView.OverlayPosition.BOTTOM_RIGHT, duration)
 
             val resText = cardView.getTextOverlay(StashImageCardView.OverlayPosition.BOTTOM_LEFT)

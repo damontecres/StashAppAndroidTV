@@ -5,11 +5,12 @@ import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.StashRatingBar
+import com.github.damontecres.stashapp.views.durationToString
+import com.github.damontecres.stashapp.views.parseTimeToString
 
 class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallback) :
     AbstractDetailsDescriptionPresenter() {
@@ -24,12 +25,12 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
 
         val createdAt =
             context.getString(R.string.stashapp_created_at) + ": " +
-                Constants.parseTimeToString(
+                parseTimeToString(
                     scene.created_at,
                 )
         val updatedAt =
             context.getString(R.string.stashapp_updated_at) + ": " +
-                Constants.parseTimeToString(
+                parseTimeToString(
                     scene.updated_at,
                 )
 
@@ -49,7 +50,7 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
         val file = scene.files.firstOrNull()
         if (file != null) {
             val resolution = "${file.videoFileData.height}P"
-            val duration = Constants.durationToString(file.videoFileData.duration)
+            val duration = durationToString(file.videoFileData.duration)
             viewHolder.subtitle.text =
                 concatIfNotBlank(
                     " - ",

@@ -31,9 +31,9 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
-import com.github.damontecres.stashapp.util.getCurrentStashServer
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -288,7 +288,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             if (savedInstanceState == null) {
                 val serverPref = findPreference<Preference>(PREF_STASH_URL)!!
                 requireActivity().supportFragmentManager.addOnBackStackChangedListener {
-                    val currentServer = getCurrentStashServer(requireContext())
+                    val currentServer = StashServer.getCurrentStashServer(requireContext())
                     serverPref.summary = currentServer?.url
                 }
             }
@@ -297,7 +297,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         override fun onResume() {
             super.onResume()
 
-            val currentServer = getCurrentStashServer(requireContext())
+            val currentServer = StashServer.getCurrentStashServer(requireContext())
             findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer?.url
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {

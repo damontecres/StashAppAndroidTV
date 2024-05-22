@@ -48,10 +48,10 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
-import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.util.toFindFilterType
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
@@ -124,7 +124,7 @@ class ImageActivity : FragmentActivity() {
                 if (savedFilter != null) {
                     val findFilter =
                         queryEngine.updateFilter(
-                            convertFilter(savedFilter.find_filter),
+                            savedFilter.find_filter?.toFindFilterType(),
                             useRandom = true,
                         )?.copy(per_page = Optional.present(pageSize))
                             ?: DataType.IMAGE.asDefaultFindFilterType
