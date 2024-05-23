@@ -1,0 +1,42 @@
+{
+  "data": {
+    "configuration": {
+      "ui": {
+        "frontPageContent": [
+          {
+            "__typename": "SavedFilter",
+            "savedFilterId": 1
+          },
+          {
+            "__typename": "CustomFilter",
+            "direction": "DESC",
+            "message": {
+              "id": "recently_added_objects",
+              "values": {
+                "objects": "Scenes"
+              }
+            },
+            "mode": "SCENES",
+            "sortBy": "created_at"
+          },
+          {
+            "__typename": "CustomFilter",
+            "direction": "DESC",
+            "message": {
+              "id": "recently_added_objects",
+              "values": {
+                "objects": "Performers"
+              }
+            },
+            "mode": "PERFORMERS",
+            "sortBy": "created_at"
+          },
+          {
+            "__typename": "SavedFilter",
+            "savedFilterId": 2
+          }
+        ]
+      }
+    }
+  }
+}
