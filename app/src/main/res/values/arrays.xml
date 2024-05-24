@@ -61,6 +61,15 @@
         <item>opus</item>
         <item>truehd</item>
         <item>vorbis</item>
+
+        <item>pcm_s8</item>
+        <item>pcm_s16be</item>
+        <item>pcm_s16le</item>
+        <item>pcm_s24le</item>
+        <item>pcm_s32le</item>
+        <item>pcm_f32le</item>
+        <item>pcm_alaw</item>
+        <item>pcm_mulaw</item>
     </string-array>
 
     <string-array name="default_force_audio_codecs">
@@ -68,6 +77,15 @@
         <item>aac</item>
         <item>dts</item>
         <item>truehd</item>
+
+        <item>pcm_alaw</item>
+        <item>pcm_f32le</item>
+        <item>pcm_mulaw</item>
+        <item>pcm_s16be</item>
+        <item>pcm_s16le</item>
+        <item>pcm_s24le</item>
+        <item>pcm_s32le</item>
+        <item>pcm_s8</item>
     </string-array>
 
 </resources>
