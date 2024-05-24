@@ -25,7 +25,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Player.Listener
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
@@ -210,6 +212,28 @@ class PlaybackExoFragment :
 
                         else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
                     }
+                }.also { exoPlayer ->
+                    StashExoPlayer.addListener(
+                        object : Listener {
+                            override fun onPlayerError(error: PlaybackException) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Playback error: ${error.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+
+                            override fun onPlayerErrorChanged(error: PlaybackException?) {
+                                if (error != null) {
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Playback error: ${error.message}",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                }
+                            }
+                        },
+                    )
                 }.also { exoPlayer ->
                     exoPlayer.setMediaItem(
                         streamChoice.mediaItem,
