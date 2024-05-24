@@ -101,10 +101,25 @@ class PlaybackExoFragment :
         player = null
     }
 
+    private fun initializePlayer(position: Long) {
+        val forceTranscode =
+            requireActivity().intent.getBooleanExtra(
+                VideoDetailsFragment.FORCE_TRANSCODE,
+                false,
+            )
+        val forceDirectPlay =
+            requireActivity().intent.getBooleanExtra(
+                VideoDetailsFragment.FORCE_DIRECT_PLAY,
+                false,
+            )
+        val mediaItem = chooseStream(forceTranscode, forceDirectPlay)
+        initializePlayer(position, mediaItem)
+    }
+
     @OptIn(UnstableApi::class)
     private fun initializePlayer(
         position: Long,
-        forceTranscode: Boolean,
+        mediaItem: MediaItem,
     ) {
         player =
             StashExoPlayer.getInstance(requireContext())
@@ -180,40 +195,6 @@ class PlaybackExoFragment :
                         else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
                     }
                 }.also { exoPlayer ->
-                    var mediaItem: MediaItem? = null
-                    var streamUrl = scene.streams["Direct stream"]
-                    if (streamUrl != null && !forceTranscode) {
-                        mediaItem = MediaItem.fromUri(streamUrl)
-                    } else {
-                        val streamChoice =
-                            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                                .getString("stream_choice", "HLS")
-                        streamUrl = scene.streams[streamChoice]
-                        val mimeType =
-                            when (streamChoice) {
-                                "DASH" -> {
-                                    MimeTypes.APPLICATION_MPD
-                                }
-
-                                "HLS" -> {
-                                    MimeTypes.APPLICATION_M3U8
-                                }
-
-                                "MP4" -> {
-                                    MimeTypes.VIDEO_MP4
-                                }
-
-                                else -> {
-                                    MimeTypes.VIDEO_WEBM
-                                }
-                            }
-
-                        mediaItem =
-                            MediaItem.Builder()
-                                .setUri(streamUrl)
-                                .setMimeType(mimeType)
-                                .build()
-                    }
                     exoPlayer.setMediaItem(mediaItem, if (position > 0) position else C.TIME_UNSET)
                     exoPlayer.prepare()
                     // Unless the video was paused before called the result launcher, play immediately
@@ -494,7 +475,7 @@ class PlaybackExoFragment :
                     VideoDetailsFragment.FORCE_TRANSCODE,
                     false,
                 )
-            initializePlayer(position, forceTranscode)
+            initializePlayer(position)
         }
     }
 
@@ -509,12 +490,7 @@ class PlaybackExoFragment :
                 } else {
                     requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
                 }
-            val forceTranscode =
-                requireActivity().intent.getBooleanExtra(
-                    VideoDetailsFragment.FORCE_TRANSCODE,
-                    false,
-                )
-            initializePlayer(position, forceTranscode)
+            initializePlayer(position)
         }
     }
 
@@ -708,6 +684,57 @@ class PlaybackExoFragment :
                 }
             }
         }
+    }
+
+    private fun chooseStream(
+        forceTranscode: Boolean,
+        forceDirectPlay: Boolean,
+    ): MediaItem {
+        var streamUrl = scene.streams["Direct stream"]
+        if (streamUrl != null && !forceTranscode) {
+            return MediaItem.fromUri(streamUrl)
+        } else if (forceDirectPlay) {
+            if (streamUrl != null) {
+                return MediaItem.fromUri(streamUrl)
+            } else if (scene.streamUrl != null) {
+                return MediaItem.fromUri(scene.streamUrl!!)
+            } else {
+                Log.w(TAG, "Force direct play, but no option")
+                Toast.makeText(
+                    requireContext(),
+                    "No direct play stream option aavailable. Will transcode.",
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
+
+        val streamChoice =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getString("stream_choice", "HLS")
+        streamUrl = scene.streams[streamChoice]
+        val mimeType =
+            when (streamChoice) {
+                "DASH" -> {
+                    MimeTypes.APPLICATION_MPD
+                }
+
+                "HLS" -> {
+                    MimeTypes.APPLICATION_M3U8
+                }
+
+                "MP4" -> {
+                    MimeTypes.VIDEO_MP4
+                }
+
+                else -> {
+                    MimeTypes.VIDEO_WEBM
+                }
+            }
+
+        return MediaItem.Builder()
+            .setUri(streamUrl)
+            .setMimeType(mimeType)
+            .build()
     }
 
     fun showAndFocusSeekBar() {

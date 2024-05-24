@@ -243,6 +243,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
             sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
             sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
+            sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
 
             if (mSelectedMovie!!.studio?.studioData != null) {
                 studioAdapter.setItems(
@@ -407,6 +408,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             ACTION_PLAY_SCENE,
                             ACTION_RESUME_SCENE,
                             ACTION_TRANSCODE_RESUME_SCENE,
+                            ACTION_DIRECT_PLAY_RESUME_SCENE,
                         )
                     ) {
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
@@ -414,11 +416,16 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             VideoDetailsActivity.MOVIE,
                             Scene.fromSlimSceneData(mSelectedMovie!!),
                         )
-                        if (action.id == ACTION_RESUME_SCENE || action.id == ACTION_TRANSCODE_RESUME_SCENE) {
+                        if (action.id == ACTION_RESUME_SCENE ||
+                            action.id == ACTION_TRANSCODE_RESUME_SCENE ||
+                            action.id == ACTION_DIRECT_PLAY_RESUME_SCENE
+                        ) {
                             intent.putExtra(POSITION_ARG, position)
                         }
                         if (action.id == ACTION_TRANSCODE_RESUME_SCENE) {
                             intent.putExtra(FORCE_TRANSCODE, true)
+                        } else if (action.id == ACTION_DIRECT_PLAY_RESUME_SCENE) {
+                            intent.putExtra(FORCE_DIRECT_PLAY, true)
                         }
                         resultLauncher.launch(intent)
                     } else {
@@ -462,6 +469,12 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 detailsPresenter.onActionClickedListener.onActionClicked(
                     Action(
                         ACTION_TRANSCODE_RESUME_SCENE,
+                    ),
+                )
+            } else if (action == StashAction.FORCE_DIRECT_PLAY) {
+                detailsPresenter.onActionClickedListener.onActionClicked(
+                    Action(
+                        ACTION_DIRECT_PLAY_RESUME_SCENE,
                     ),
                 )
             }
@@ -873,6 +886,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private const val ACTION_PLAY_SCENE = 1L
         private const val ACTION_RESUME_SCENE = 2L
         private const val ACTION_TRANSCODE_RESUME_SCENE = 3L
+        private const val ACTION_DIRECT_PLAY_RESUME_SCENE = 4L
 
         private const val DETAIL_THUMB_WIDTH = ScenePresenter.CARD_WIDTH
         private const val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
@@ -880,6 +894,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         const val POSITION_ARG = "position"
         const val POSITION_RESULT_ARG = "position.result"
         const val FORCE_TRANSCODE = "forceTranscode"
+        const val FORCE_DIRECT_PLAY = "forceDirectPlay"
 
         // Row order
         private const val DETAILS_POS = 1
@@ -896,6 +911,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private const val ADD_PERFORMER_POS = ADD_TAG_POS + 1
         private const val CREATE_MARKER_POS = ADD_PERFORMER_POS + 1
         private const val FORCE_TRANSCODE_POS = CREATE_MARKER_POS + 1
+        private const val FORCE_DIRECT_PLAY_POS = FORCE_TRANSCODE_POS + 1
 
         private val REMOVE_POPUP_ITEM = StashPresenter.PopUpItem(0L, "Remove")
     }
