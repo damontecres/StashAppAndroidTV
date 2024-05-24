@@ -6,8 +6,10 @@ import androidx.fragment.app.FragmentActivity
 import androidx.leanback.app.GuidedStepSupportFragment
 import com.github.damontecres.stashapp.PinActivity
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.util.addAndSwitchServer
-import com.github.damontecres.stashapp.util.getCurrentStashServer
+import com.github.damontecres.stashapp.util.StashClient
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.TestResult
+import com.github.damontecres.stashapp.util.testStashConnection
 
 class SetupActivity : FragmentActivity(R.layout.frame_layout) {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,7 +25,7 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
 
     override fun onPause() {
         super.onPause()
-        if (isFinishing && getCurrentStashServer(this) != null) {
+        if (isFinishing && StashServer.getCurrentStashServer(this) != null) {
             val intent = Intent(this, PinActivity::class.java)
             startActivity(intent)
         }
@@ -40,7 +42,7 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
         }
 
         fun finishSetup(setupState: SetupState) {
-            addAndSwitchServer(requireContext(), setupState.stashServer) {
+            StashServer.addAndSwitchServer(requireContext(), setupState.stashServer) {
                 if (setupState.pinCode != null) {
                     it.putString(
                         getString(R.string.pref_key_pin_code),
@@ -55,6 +57,24 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
 
         override fun onProvideTheme(): Int {
             return R.style.Theme_StashAppAndroidTV_GuidedStep
+        }
+
+        protected suspend fun testConnection(
+            serverUrl: String,
+            apiKey: String?,
+            trustCerts: Boolean,
+        ): TestResult {
+            val apolloClient =
+                StashClient.createTestApolloClient(
+                    requireContext(),
+                    StashServer(serverUrl, apiKey),
+                    trustCerts,
+                )
+            return testStashConnection(
+                requireContext(),
+                true,
+                apolloClient,
+            )
         }
     }
 }

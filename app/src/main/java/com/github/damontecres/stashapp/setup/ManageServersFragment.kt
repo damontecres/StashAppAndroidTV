@@ -9,9 +9,6 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.getCurrentStashServer
-import com.github.damontecres.stashapp.util.removeStashServer
-import com.github.damontecres.stashapp.util.setCurrentStashServer
 
 class ManageServersFragment : GuidedStepSupportFragment() {
     private var currentServer: StashServer? = null
@@ -54,7 +51,7 @@ class ManageServersFragment : GuidedStepSupportFragment() {
         super.onCreateActions(actions, savedInstanceState)
 
         allServers = getStashServers()
-        currentServer = getCurrentStashServer(requireContext())
+        currentServer = StashServer.getCurrentStashServer(requireContext())
         otherServers =
             if (currentServer != null) {
                 val temp = allServers.toMutableList()
@@ -121,13 +118,13 @@ class ManageServersFragment : GuidedStepSupportFragment() {
             // Switching servers
             val index = action.id - ACTION_SWITCH_OFFSET
             val server = otherServers[index.toInt()]
-            setCurrentStashServer(requireContext(), server)
+            StashServer.setCurrentStashServer(requireContext(), server)
             finishGuidedStepSupportFragments()
         } else if (action.id >= ACTION_REMOVE_OFFSET) {
             // Remove a server
             val index = action.id - ACTION_REMOVE_OFFSET
             val server = otherServers[index.toInt()]
-            removeStashServer(requireContext(), server)
+            StashServer.removeStashServer(requireContext(), server)
             finishGuidedStepSupportFragments()
         }
         return true

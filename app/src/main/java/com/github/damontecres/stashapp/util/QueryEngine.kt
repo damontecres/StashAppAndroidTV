@@ -62,7 +62,7 @@ class QueryEngine(
     private val showToasts: Boolean = false,
     lock: ReadWriteLock? = null,
 ) {
-    private val client = createApolloClient(context) ?: throw StashNotConfiguredException()
+    private val client = StashClient.getApolloClient(context)
 
     private val readLock = lock?.readLock()
 

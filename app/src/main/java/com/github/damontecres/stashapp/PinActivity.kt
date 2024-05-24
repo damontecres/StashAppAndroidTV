@@ -13,15 +13,15 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.setup.SetupActivity
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
-import com.github.damontecres.stashapp.util.getCurrentStashServer
 
 class PinActivity() : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
-            val currentServer = getCurrentStashServer(this)
+            val currentServer = StashServer.getCurrentStashServer(this)
             if (currentServer == null) {
                 val intent = Intent(this, SetupActivity::class.java)
                 startActivity(intent)
@@ -41,7 +41,7 @@ class PinActivity() : FragmentActivity() {
 
     override fun onResume() {
         super.onResume()
-        val currentServer = getCurrentStashServer(this)
+        val currentServer = StashServer.getCurrentStashServer(this)
         if (currentServer != null) {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.main_browse_fragment, PinFragment())

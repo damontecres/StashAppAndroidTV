@@ -8,7 +8,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.util.createOkHttpClient
+import com.github.damontecres.stashapp.util.StashClient
 
 class StashExoPlayer private constructor() {
     companion object {
@@ -29,7 +29,7 @@ class StashExoPlayer private constructor() {
                 synchronized(this) { // synchronized to avoid concurrency problem
                     if (instance == null) {
                         val dataSourceFactory =
-                            OkHttpDataSource.Factory(createOkHttpClient(context))
+                            OkHttpDataSource.Factory(StashClient.getHttpClient(context))
 
                         instance =
                             ExoPlayer.Builder(context)

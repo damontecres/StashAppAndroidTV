@@ -1,0 +1,25 @@
+{
+  "data": {
+    "configuration": {
+      "ui": {
+        "frontPageContent": [
+          {
+            "__typename": "SomeNewFilterType"
+          },
+          {
+            "__typename": "CustomFilter",
+            "direction": "DESC",
+            "message": {
+              "id": "recently_added_objects",
+              "values": {
+                "objects": "NewType"
+              }
+            },
+            "mode": "NEW_MODE",
+            "sortBy": "created_at"
+          }
+        ]
+      }
+    }
+  }
+}

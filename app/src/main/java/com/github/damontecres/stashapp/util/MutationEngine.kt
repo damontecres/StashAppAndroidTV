@@ -50,8 +50,7 @@ class MutationEngine(
     private val showToasts: Boolean = false,
     lock: ReadWriteLock? = null,
 ) {
-    private val client =
-        createApolloClient(context) ?: throw QueryEngine.StashNotConfiguredException()
+    private val client = StashClient.getApolloClient(context)
 
     private val serverPreferences = ServerPreferences(context)
 

@@ -17,11 +17,11 @@ import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
+import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import kotlin.math.floor
@@ -126,8 +126,8 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                 addRow(R.string.stashapp_tattoos, perf.tattoos)
                 addRow(R.string.stashapp_piercings, perf.piercings)
                 addRow(R.string.stashapp_career_length, perf.career_length)
-                addRow(R.string.stashapp_created_at, Constants.parseTimeToString(perf.created_at))
-                addRow(R.string.stashapp_updated_at, Constants.parseTimeToString(perf.updated_at))
+                addRow(R.string.stashapp_created_at, parseTimeToString(perf.created_at))
+                addRow(R.string.stashapp_updated_at, parseTimeToString(perf.updated_at))
                 table.setColumnShrinkable(1, true)
             }
         } else {

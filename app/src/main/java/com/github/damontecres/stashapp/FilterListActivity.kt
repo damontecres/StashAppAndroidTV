@@ -54,9 +54,9 @@ import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StudioComparator
 import com.github.damontecres.stashapp.util.TagComparator
-import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
+import com.github.damontecres.stashapp.util.toFindFilterType
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -106,7 +106,6 @@ class FilterListActivity : FragmentActivity() {
                 supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment<*, *, *>?
             titleTextView.text = fragment?.name
         }
-
         val exHandler =
             CoroutineExceptionHandler { _, ex: Throwable ->
                 Log.e(TAG, "Error in filter coroutine", ex)
@@ -376,7 +375,12 @@ class FilterListActivity : FragmentActivity() {
                 getString(dataType.pluralStringId)
             }
         val fragment =
-            getFragment(name, dataType, convertFilter(filter.find_filter), filter.object_filter)
+            getFragment(
+                name,
+                dataType,
+                filter.find_filter?.toFindFilterType(),
+                filter.object_filter,
+            )
         fragment.requestFocus = true
 
         if (first) {

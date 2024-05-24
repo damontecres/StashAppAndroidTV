@@ -9,7 +9,6 @@ import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.TestResultStatus
-import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.launch
 
 class SetupStep2Ssl(private val setupState: SetupState) :
@@ -47,14 +46,7 @@ class SetupStep2Ssl(private val setupState: SetupState) :
         if (action.id == GuidedAction.ACTION_ID_YES) {
             val newState = setupState.copy(trustCerts = true)
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val result =
-                    testStashConnection(
-                        requireContext(),
-                        true,
-                        newState.serverUrl,
-                        null,
-                        newState.trustCerts,
-                    )
+                val result = testConnection(newState.serverUrl, null, true)
                 when (result.status) {
                     TestResultStatus.AUTH_REQUIRED -> {
                         nextStep(SetupStep3ApiKey(newState))

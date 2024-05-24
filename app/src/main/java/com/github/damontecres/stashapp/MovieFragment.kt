@@ -12,10 +12,10 @@ import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -66,8 +66,8 @@ class MovieFragment : Fragment(R.layout.movie_view) {
                 addRow(R.string.stashapp_studio, movie?.studio?.name)
                 addRow(R.string.stashapp_director, movie?.director)
                 addRow(R.string.stashapp_synopsis, movie?.synopsis)
-                addRow(R.string.stashapp_created_at, Constants.parseTimeToString(movie?.created_at))
-                addRow(R.string.stashapp_updated_at, Constants.parseTimeToString(movie?.updated_at))
+                addRow(R.string.stashapp_created_at, parseTimeToString(movie?.created_at))
+                addRow(R.string.stashapp_updated_at, parseTimeToString(movie?.updated_at))
                 table.setColumnShrinkable(1, true)
             }
         } else {

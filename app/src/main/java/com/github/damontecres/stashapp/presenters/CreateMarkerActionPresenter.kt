@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.presenters
 
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
-import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.views.durationToString
 
 class CreateMarkerActionPresenter(callback: LongClickCallBack<CreateMarkerAction>? = null) :
     StashPresenter<CreateMarkerAction>(callback) {
@@ -10,7 +10,7 @@ class CreateMarkerActionPresenter(callback: LongClickCallBack<CreateMarkerAction
         item: CreateMarkerAction,
     ) {
         cardView.titleText = "Create Marker"
-        cardView.contentText = Constants.durationToString(item.position / 1000.0)
+        cardView.contentText = durationToString(item.position / 1000.0)
         cardView.setMainImageDimensions(
             ActionPresenter.CARD_WIDTH,
             ActionPresenter.CARD_HEIGHT,
