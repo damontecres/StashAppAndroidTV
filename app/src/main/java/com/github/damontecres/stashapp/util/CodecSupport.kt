@@ -8,6 +8,9 @@ import android.util.Log
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 
+/**
+ * List the supported video and audio codecs
+ */
 data class CodecSupport(val videoCodecs: Set<String>, val audioCodecs: Set<String>) {
     fun isVideoSupported(videoCodec: String?): Boolean {
         return videoCodecs.contains(videoCodec)
@@ -19,8 +22,6 @@ data class CodecSupport(val videoCodecs: Set<String>, val audioCodecs: Set<Strin
 
     companion object {
         private const val TAG = "CodecSupport"
-
-        private var codecSupport: CodecSupport? = null
 
         private val videoCodecMapping =
             buildMap<String, String> {
@@ -50,25 +51,25 @@ data class CodecSupport(val videoCodecs: Set<String>, val audioCodecs: Set<Strin
                 }
             }.toMap()
 
-        private val defaultForcedDirectVideo = setOf("h264")
-        private val defaultForcedDirectAudio = setOf("aac", "ac3", "dts", "truehd")
-
         fun getSupportedCodecs(context: Context): CodecSupport {
-            if (codecSupport != null) {
-                return codecSupport!!
-            }
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
 
-            val videoCodecs =
+            // Some codecs aren't listed in MediaCodecList, but should be direct played anyway
+            // The user can override this in settings
+            val videoCodecs = mutableSetOf<String>()
+            videoCodecs.addAll(
                 manager.getStringSet(
                     context.getString(R.string.pref_key_default_forced_direct_video),
-                    defaultForcedDirectVideo,
-                )!!.toMutableSet()
-            val audioCodecs =
+                    setOf(*context.resources.getStringArray(R.array.default_force_video_codecs)),
+                )!!,
+            )
+            val audioCodecs = mutableSetOf<String>()
+            audioCodecs.addAll(
                 manager.getStringSet(
                     context.getString(R.string.pref_key_default_forced_direct_audio),
-                    defaultForcedDirectAudio,
-                )!!.toMutableSet()
+                    setOf(*context.resources.getStringArray(R.array.default_force_audio_codecs)),
+                )!!,
+            )
 
             Log.v(TAG, "Default forced direct codecs: video=$videoCodecs, audio=$audioCodecs")
 
@@ -89,8 +90,7 @@ data class CodecSupport(val videoCodecs: Set<String>, val audioCodecs: Set<Strin
                 }
             }
             Log.v(TAG, "Supported codecs: video=$videoCodecs, audio=$audioCodecs")
-            codecSupport = CodecSupport(videoCodecs, audioCodecs)
-            return codecSupport!!
+            return CodecSupport(videoCodecs, audioCodecs)
         }
     }
 }
