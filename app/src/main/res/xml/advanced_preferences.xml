@@ -64,6 +64,12 @@
             app:entries="@array/audio_codecs"
             app:entryValues="@array/audio_codecs"
             />
+        <SwitchPreference
+            app:key="@string/pref_key_show_playback_debug_info"
+            app:title="Playback debug info"
+            app:summaryOn="Show debug info"
+            app:summaryOff="Hide debug info"
+            app:defaultValue="false" />
         <SeekBarPreference
             app:key="controllerShowTimeoutMs"
             app:title="Hide controls after (milliseconds)"
