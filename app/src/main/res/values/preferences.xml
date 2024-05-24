@@ -9,4 +9,6 @@
     <string name="pref_key_page_size">@string/pref_key_max_search_results</string>
     <string name="pref_key_current_server">stashUrl</string>
     <string name="pref_key_current_api_key">stashApiKey</string>
+    <string name="pref_key_default_forced_direct_video">forcedDirectVideo</string>
+    <string name="pref_key_default_forced_direct_audio">forcedDirectAudio</string>
 </resources>

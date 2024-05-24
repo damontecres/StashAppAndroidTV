@@ -36,6 +36,7 @@ import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
+import com.github.damontecres.stashapp.util.CodecSupport
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
@@ -690,51 +691,53 @@ class PlaybackExoFragment :
         forceTranscode: Boolean,
         forceDirectPlay: Boolean,
     ): MediaItem {
-        var streamUrl = scene.streams["Direct stream"]
-        if (streamUrl != null && !forceTranscode) {
-            return MediaItem.fromUri(streamUrl)
+        val supportedCodecs = CodecSupport.getSupportedCodecs(requireContext())
+        if (
+            !forceTranscode &&
+            supportedCodecs.isVideoSupported(scene.videoCodec) &&
+            supportedCodecs.isAudioSupported(scene.audioCodec) &&
+            scene.streamUrl != null
+        ) {
+            Log.v(TAG, "Video (${scene.videoCodec}) & audio (${scene.audioCodec}) supported")
+            return MediaItem.fromUri(scene.streamUrl!!)
         } else if (forceDirectPlay) {
-            if (streamUrl != null) {
-                return MediaItem.fromUri(streamUrl)
-            } else if (scene.streamUrl != null) {
-                return MediaItem.fromUri(scene.streamUrl!!)
-            } else {
-                Log.w(TAG, "Force direct play, but no option")
-                Toast.makeText(
-                    requireContext(),
-                    "No direct play stream option aavailable. Will transcode.",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
+            Log.v(
+                TAG,
+                "Forcing direct play for video (${scene.videoCodec}) & audio (${scene.audioCodec})",
+            )
+            return MediaItem.fromUri(scene.streamUrl!!)
+        } else {
+            val streamChoice =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getString("stream_choice", "HLS")
+            val streamUrl = scene.streams[streamChoice]
+            val mimeType =
+                when (streamChoice) {
+                    "DASH" -> {
+                        MimeTypes.APPLICATION_MPD
+                    }
+
+                    "HLS" -> {
+                        MimeTypes.APPLICATION_M3U8
+                    }
+
+                    "MP4" -> {
+                        MimeTypes.VIDEO_MP4
+                    }
+
+                    else -> {
+                        MimeTypes.VIDEO_WEBM
+                    }
+                }
+            Log.v(
+                TAG,
+                "Transcoding for video (${scene.videoCodec}) & audio (${scene.audioCodec}) using $streamChoice",
+            )
+            return MediaItem.Builder()
+                .setUri(streamUrl)
+                .setMimeType(mimeType)
+                .build()
         }
-
-        val streamChoice =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getString("stream_choice", "HLS")
-        streamUrl = scene.streams[streamChoice]
-        val mimeType =
-            when (streamChoice) {
-                "DASH" -> {
-                    MimeTypes.APPLICATION_MPD
-                }
-
-                "HLS" -> {
-                    MimeTypes.APPLICATION_M3U8
-                }
-
-                "MP4" -> {
-                    MimeTypes.VIDEO_MP4
-                }
-
-                else -> {
-                    MimeTypes.VIDEO_WEBM
-                }
-            }
-
-        return MediaItem.Builder()
-            .setUri(streamUrl)
-            .setMimeType(mimeType)
-            .build()
     }
 
     fun showAndFocusSeekBar() {
