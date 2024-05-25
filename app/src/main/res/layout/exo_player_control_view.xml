@@ -66,6 +66,18 @@
                 tools:text="ac3" />
         </TableRow>
 
+        <TableRow>
+
+            <TextView
+                style="@style/DebugInfoOverlayText"
+                android:text="Format:" />
+
+            <TextView
+                android:id="@+id/debug_container_format"
+                style="@style/DebugInfoOverlayText"
+                tools:text="mp4" />
+        </TableRow>
+
     </TableLayout>
 
     <LinearLayout

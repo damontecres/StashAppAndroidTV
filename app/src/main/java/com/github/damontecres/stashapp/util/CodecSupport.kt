@@ -11,13 +11,21 @@ import com.github.damontecres.stashapp.R
 /**
  * List the supported video and audio codecs
  */
-data class CodecSupport(val videoCodecs: Set<String>, val audioCodecs: Set<String>) {
+data class CodecSupport(
+    val videoCodecs: Set<String>,
+    val audioCodecs: Set<String>,
+    val containers: Set<String>,
+) {
     fun isVideoSupported(videoCodec: String?): Boolean {
         return videoCodecs.contains(videoCodec)
     }
 
     fun isAudioSupported(audioCodec: String?): Boolean {
-        return audioCodecs.contains(audioCodec)
+        return audioCodec.isNullOrBlank() || audioCodecs.contains(audioCodec)
+    }
+
+    fun isContainerFormatSupported(format: String?): Boolean {
+        return containers.contains(format)
     }
 
     companion object {
@@ -70,8 +78,16 @@ data class CodecSupport(val videoCodecs: Set<String>, val audioCodecs: Set<Strin
                     setOf(*context.resources.getStringArray(R.array.default_force_audio_codecs)),
                 )!!,
             )
+            val containers =
+                manager.getStringSet(
+                    context.getString(R.string.pref_key_default_forced_direct_containers),
+                    setOf(*context.resources.getStringArray(R.array.default_force_container_formats)),
+                )!!
 
-            Log.v(TAG, "Default forced direct codecs: video=$videoCodecs, audio=$audioCodecs")
+            Log.v(
+                TAG,
+                "Default forced direct: video=$videoCodecs, audio=$audioCodecs, containers=$containers",
+            )
 
             val androidCodecs = MediaCodecList(MediaCodecList.REGULAR_CODECS)
             for (codecInfo in androidCodecs.codecInfos) {
@@ -89,8 +105,11 @@ data class CodecSupport(val videoCodecs: Set<String>, val audioCodecs: Set<Strin
                     }
                 }
             }
-            Log.v(TAG, "Supported codecs: video=$videoCodecs, audio=$audioCodecs")
-            return CodecSupport(videoCodecs, audioCodecs)
+            Log.v(
+                TAG,
+                "Supported codecs: video=$videoCodecs, audio=$audioCodecs, containers=$containers",
+            )
+            return CodecSupport(videoCodecs, audioCodecs, containers)
         }
     }
 }

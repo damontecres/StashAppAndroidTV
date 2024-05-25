@@ -102,11 +102,6 @@ fragment SlimSceneData on Scene {
     image_path
     __typename
   }
-  stash_ids {
-    endpoint
-    stash_id
-    __typename
-  }
   scene_markers {
     id
     title
@@ -128,6 +123,7 @@ fragment VideoFileData on VideoFile {
   duration
   video_codec
   audio_codec
+  format
   width
   height
   frame_rate

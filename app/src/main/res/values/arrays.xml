@@ -1,5 +1,5 @@
 <resources>
-    <string-array name="stream_options">
+    <string-array name="stream_options" translatable="false">
         <item>HLS</item>
         <item>DASH</item>
         <item>MP4</item>
@@ -20,7 +20,8 @@
     <string name="card_size_medium">Medium</string>
     <string name="card_size_large">Large</string>
     <string name="card_size_extra_large">Extra Large</string>
-    <string-array name="card_sizes">
+
+    <string-array name="card_sizes" translatable="false">
         <item>@string/card_size_extra_small</item>
         <item>@string/card_size_small</item>
         <item>@string/card_size_medium</item>
@@ -28,8 +29,8 @@
         <item>@string/card_size_extra_large</item>
     </string-array>
 
-    <string name="card_size_default">5</string>
-    <string-array name="card_size_cols">
+    <string name="card_size_default" translatable="false">5</string>
+    <string-array name="card_size_cols" translatable="false">
         <item>7</item>
         <item>6</item>
         <item>5</item>
@@ -37,20 +38,32 @@
         <item>3</item>
     </string-array>
 
-    <string-array name="video_codecs">
+    <string-array name="video_codecs" translatable="false">
         <item>av1</item>
         <item>h263</item>
         <item>h264</item>
         <item>hevc</item>
         <item>mpeg2video</item>
         <item>mpeg4</item>
+        <item>vc1</item>
         <item>vp8</item>
         <item>vp9</item>
+
+        <!-- Less common formats -->
+        <item>flv1</item>
+        <item>rv30</item>
+        <item>rv40</item>
+        <item>svq3</item>
+        <item>mpeg1video</item>
+        <item>wmv1</item>
+        <item>wmv2</item>
+        <item>wmv3</item>
+        <item>vp6f</item>
     </string-array>
 
-    <string-array name="default_force_video_codecs"></string-array>
+    <string-array name="default_force_video_codecs" translatable="false"></string-array>
 
-    <string-array name="audio_codecs">
+    <string-array name="audio_codecs" translatable="false">
         <item>aac</item>
         <item>ac3</item>
         <item>ac4</item>
@@ -62,6 +75,7 @@
         <item>truehd</item>
         <item>vorbis</item>
 
+        <!-- PCM formats -->
         <item>pcm_s8</item>
         <item>pcm_s16be</item>
         <item>pcm_s16le</item>
@@ -70,9 +84,15 @@
         <item>pcm_f32le</item>
         <item>pcm_alaw</item>
         <item>pcm_mulaw</item>
+
+        <!-- Less common formats -->
+        <item>nellymoser</item>
+        <item>sipr</item>
+        <item>wmav2</item>
+        <item>wmapro</item>
     </string-array>
 
-    <string-array name="default_force_audio_codecs">
+    <string-array name="default_force_audio_codecs" translatable="false">
         <item>ac3</item>
         <item>aac</item>
         <item>dts</item>
@@ -86,6 +106,29 @@
         <item>pcm_s24le</item>
         <item>pcm_s32le</item>
         <item>pcm_s8</item>
+    </string-array>
+
+    <string-array name="container_formats" translatable="false">
+        <item>asf</item>
+        <item>avi</item>
+        <item>flv</item>
+        <item>matroska</item>
+        <item>mov</item>
+        <item>mp4</item>
+        <item>mpeg</item>
+        <item>mpegvideo</item>
+        <item>rm</item>
+        <item>webm</item>
+        <item>wmv</item>
+    </string-array>
+
+    <string-array name="default_force_container_formats" translatable="false">
+        <item>flv</item>
+        <item>matroska</item>
+        <item>mov</item>
+        <item>mp4</item>
+        <item>mpeg</item>
+        <item>webm</item>
     </string-array>
 
 </resources>

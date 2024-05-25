@@ -20,6 +20,7 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
     ) {
         val context = viewHolder.view.context
         val scene = item as SlimSceneData
+        val manager = PreferenceManager.getDefaultSharedPreferences(context)
 
         viewHolder.title.text = scene.titleOrFilename
 
@@ -34,12 +35,8 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
                     scene.updated_at,
                 )
 
-        viewHolder.body.text = listOf(scene.details, "", createdAt, updatedAt).joinToString("\n")
-
         val scrollView = viewHolder.view.findViewById<NestedScrollView>(R.id.description_scrollview)
-        val useScrollbar =
-            PreferenceManager.getDefaultSharedPreferences(viewHolder.view.context)
-                .getBoolean("scrollSceneDetails", true)
+        val useScrollbar = manager.getBoolean("scrollSceneDetails", true)
         if (useScrollbar) {
             scrollView.onlyScrollIfNeeded()
         } else {
@@ -47,6 +44,7 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
             scrollView.isVerticalScrollBarEnabled = false
         }
 
+        var debugInfo: String? = null
         val file = scene.files.firstOrNull()
         if (file != null) {
             val resolution = "${file.videoFileData.height}P"
@@ -59,7 +57,26 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
                     duration,
                     resolution,
                 )
+
+            if (manager.getBoolean(
+                    context.getString(R.string.pref_key_show_playback_debug_info),
+                    false,
+                )
+            ) {
+                val videoFile = file.videoFileData
+                debugInfo =
+                    listOf(
+                        "Video: ${videoFile.video_codec}",
+                        "Audio: ${videoFile.audio_codec}",
+                        "Format: ${videoFile.format}",
+                    ).joinToString(", ")
+            }
         }
+
+        viewHolder.body.text =
+            listOfNotNull(scene.details, "", debugInfo, createdAt, updatedAt)
+                .joinToString("\n")
+
         val ratingBar = viewHolder.view.findViewById<StashRatingBar>(R.id.rating_bar)
         ratingBar.rating100 = scene.rating100 ?: 0
         ratingBar.setRatingCallback(ratingCallback)
