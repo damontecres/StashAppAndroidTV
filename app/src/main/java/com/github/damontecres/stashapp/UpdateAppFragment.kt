@@ -62,4 +62,8 @@ class UpdateAppFragment(private val release: UpdateChecker.Release) : GuidedStep
             finishGuidedStepSupportFragments()
         }
     }
+
+    override fun onProvideTheme(): Int {
+        return R.style.Theme_StashAppAndroidTV_GuidedStep
+    }
 }
