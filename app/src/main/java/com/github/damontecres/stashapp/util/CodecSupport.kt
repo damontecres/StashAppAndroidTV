@@ -21,7 +21,7 @@ data class CodecSupport(
     }
 
     fun isAudioSupported(audioCodec: String?): Boolean {
-        return audioCodecs.contains(audioCodec)
+        return audioCodec.isNullOrBlank() || audioCodecs.contains(audioCodec)
     }
 
     fun isContainerFormatSupported(format: String?): Boolean {
