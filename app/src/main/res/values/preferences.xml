@@ -11,5 +11,6 @@
     <string name="pref_key_current_api_key" translatable="false">stashApiKey</string>
     <string name="pref_key_default_forced_direct_video" translatable="false">forcedDirectVideo</string>
     <string name="pref_key_default_forced_direct_audio" translatable="false">forcedDirectAudio</string>
+    <string name="pref_key_default_forced_direct_containers" translatable="false">forcedDirectContainers</string>
     <string name="pref_key_show_playback_debug_info" translatable="false">playback.showDebugInfo</string>
 </resources>

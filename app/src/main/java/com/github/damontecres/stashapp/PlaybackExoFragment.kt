@@ -78,6 +78,7 @@ class PlaybackExoFragment :
     private lateinit var debugPlaybackTextView: TextView
     private lateinit var debugVideoTextView: TextView
     private lateinit var debugAudioTextView: TextView
+    private lateinit var debugContainerTextView: TextView
 
     private var playbackPosition = -1L
 
@@ -138,6 +139,8 @@ class PlaybackExoFragment :
             if (streamChoice.videoSupported) scene.videoCodec else "${scene.videoCodec} (unsupported)"
         debugAudioTextView.text =
             if (streamChoice.audioSupported) scene.audioCodec else "${scene.audioCodec} (unsupported)"
+        debugContainerTextView.text =
+            if (streamChoice.containerSupported) scene.format else "${scene.format} (unsupported)"
 
         player =
             StashExoPlayer.getInstance(requireContext())
@@ -272,6 +275,7 @@ class PlaybackExoFragment :
         debugPlaybackTextView = view.findViewById(R.id.debug_playback)
         debugVideoTextView = view.findViewById(R.id.debug_video)
         debugAudioTextView = view.findViewById(R.id.debug_audio)
+        debugContainerTextView = view.findViewById(R.id.debug_container_format)
 
         if (manager.getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)) {
             debugView.visibility = View.VISIBLE
@@ -743,6 +747,7 @@ class PlaybackExoFragment :
         val transcodeDecision: TranscodeDecision,
         val videoSupported: Boolean,
         val audioSupported: Boolean,
+        val containerSupported: Boolean,
         val mediaItem: MediaItem,
     )
 
@@ -753,28 +758,35 @@ class PlaybackExoFragment :
         val supportedCodecs = CodecSupport.getSupportedCodecs(requireContext())
         val videoSupported = supportedCodecs.isVideoSupported(scene.videoCodec)
         val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
+        val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
         if (
             !forceTranscode &&
             videoSupported &&
             audioSupported &&
+            containerSupported &&
             scene.streamUrl != null
         ) {
-            Log.v(TAG, "Video (${scene.videoCodec}) & audio (${scene.audioCodec}) supported")
+            Log.v(
+                TAG,
+                "Video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) supported",
+            )
             return StreamChoice(
                 TranscodeDecision.DIRECT_PLAY,
                 videoSupported,
                 audioSupported,
+                containerSupported,
                 MediaItem.fromUri(scene.streamUrl!!),
             )
         } else if (forceDirectPlay) {
             Log.v(
                 TAG,
-                "Forcing direct play for video (${scene.videoCodec}) & audio (${scene.audioCodec})",
+                "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
             )
             return StreamChoice(
                 TranscodeDecision.FORCED_DIRECT_PLAY,
                 videoSupported,
                 audioSupported,
+                containerSupported,
                 MediaItem.fromUri(scene.streamUrl!!),
             )
         } else {
@@ -802,12 +814,13 @@ class PlaybackExoFragment :
                 }
             Log.v(
                 TAG,
-                "Transcoding for video (${scene.videoCodec}) & audio (${scene.audioCodec}) using $streamChoice",
+                "Transcoding video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) using $streamChoice",
             )
             return StreamChoice(
                 if (forceTranscode) TranscodeDecision.FORCED_TRANSCODE else TranscodeDecision.TRANSCODE,
                 videoSupported,
                 audioSupported,
+                containerSupported,
                 MediaItem.Builder()
                     .setUri(streamUrl)
                     .setMimeType(mimeType)

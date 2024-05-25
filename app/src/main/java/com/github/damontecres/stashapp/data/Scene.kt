@@ -22,6 +22,7 @@ data class Scene(
     val videoCodec: String?,
     val videoResolution: Int?,
     val audioCodec: String?,
+    val format: String?,
     val oCounter: Int?,
 ) : Parcelable {
     val durationPosition get() = duration?.times(1000L)?.toLong()
@@ -50,6 +51,7 @@ data class Scene(
                 videoCodec = fileData?.video_codec,
                 videoResolution = fileData?.height,
                 audioCodec = fileData?.audio_codec,
+                format = fileData?.format,
                 oCounter = data.o_counter,
             )
         }

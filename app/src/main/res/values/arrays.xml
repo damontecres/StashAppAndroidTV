@@ -88,4 +88,22 @@
         <item>pcm_s8</item>
     </string-array>
 
+    <string-array name="container_formats">
+        <item>avi</item>
+        <item>flv</item>
+        <item>mkv</item>
+        <item>mp4</item>
+        <item>mpegts</item>
+        <item>webm</item>
+    </string-array>
+
+    <string-array name="default_force_container_formats">
+        <item>flv</item>
+        <item>mkv</item>
+        <item>mp4</item>
+        <item>mpegts</item>
+        <item>webm</item>
+    </string-array>
+
+
 </resources>
