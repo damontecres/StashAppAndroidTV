@@ -37,4 +37,55 @@
         <item>3</item>
     </string-array>
 
+    <string-array name="video_codecs">
+        <item>av1</item>
+        <item>h263</item>
+        <item>h264</item>
+        <item>hevc</item>
+        <item>mpeg2video</item>
+        <item>mpeg4</item>
+        <item>vp8</item>
+        <item>vp9</item>
+    </string-array>
+
+    <string-array name="default_force_video_codecs"></string-array>
+
+    <string-array name="audio_codecs">
+        <item>aac</item>
+        <item>ac3</item>
+        <item>ac4</item>
+        <item>dts</item>
+        <item>eac3</item>
+        <item>flac</item>
+        <item>mp3</item>
+        <item>opus</item>
+        <item>truehd</item>
+        <item>vorbis</item>
+
+        <item>pcm_s8</item>
+        <item>pcm_s16be</item>
+        <item>pcm_s16le</item>
+        <item>pcm_s24le</item>
+        <item>pcm_s32le</item>
+        <item>pcm_f32le</item>
+        <item>pcm_alaw</item>
+        <item>pcm_mulaw</item>
+    </string-array>
+
+    <string-array name="default_force_audio_codecs">
+        <item>ac3</item>
+        <item>aac</item>
+        <item>dts</item>
+        <item>truehd</item>
+
+        <item>pcm_alaw</item>
+        <item>pcm_f32le</item>
+        <item>pcm_mulaw</item>
+        <item>pcm_s16be</item>
+        <item>pcm_s16le</item>
+        <item>pcm_s24le</item>
+        <item>pcm_s32le</item>
+        <item>pcm_s8</item>
+    </string-array>
+
 </resources>
