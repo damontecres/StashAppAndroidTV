@@ -1,8 +1,13 @@
 package com.github.damontecres.stashapp.presenters
 
+import android.content.Context
+import android.content.Intent
+import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.GetParentTagsFilter
+import com.github.damontecres.stashapp.data.GetSubTagsFilter
 import java.util.EnumMap
 
 class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
@@ -20,19 +25,19 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
 
         cardView.titleText = item.name
         cardView.contentText = item.description
-        if (item.parent_count > 0) {
+        if (item.child_count > 0) {
             val parentText =
                 cardView.context.getString(
                     R.string.stashapp_parent_of,
-                    item.parent_count.toString(),
+                    item.child_count.toString(),
                 )
             cardView.setTextOverlayText(StashImageCardView.OverlayPosition.TOP_LEFT, parentText)
         }
-        if (item.child_count > 0) {
+        if (item.parent_count > 0) {
             val childText =
                 cardView.context.getString(
                     R.string.stashapp_sub_tag_of,
-                    item.child_count.toString(),
+                    item.parent_count.toString(),
                 )
             cardView.setTextOverlayText(StashImageCardView.OverlayPosition.BOTTOM_LEFT, childText)
         }
@@ -42,10 +47,62 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         }
     }
 
+    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<TagData> {
+        return object : LongClickCallBack<TagData> {
+            override fun getPopUpItems(
+                context: Context,
+                item: TagData,
+            ): List<PopUpItem> {
+                return buildList {
+                    add(PopUpItem.getDefault(context))
+                    if (item.parent_count > 0) {
+                        val str = context.getString(R.string.stashapp_parent_tags)
+                        add(PopUpItem(POPUP_PARENTS_ID, str))
+                    }
+                    if (item.child_count > 0) {
+                        val str = context.getString(R.string.stashapp_sub_tags)
+                        add(PopUpItem(POPUP_CHILDREN_ID, str))
+                    }
+                }
+            }
+
+            override fun onItemLongClick(
+                context: Context,
+                item: TagData,
+                popUpItem: PopUpItem,
+            ) {
+                when (popUpItem.id) {
+                    PopUpItem.DEFAULT_ID -> {
+                        cardView.performClick()
+                    }
+
+                    POPUP_PARENTS_ID -> {
+                        val name = context.getString(R.string.stashapp_parent_of, item.name)
+                        val appFilter = GetParentTagsFilter(name, item.id)
+                        val intent = Intent(context, FilterListActivity::class.java)
+                        intent.putExtra("filter", appFilter)
+                        context.startActivity(intent)
+                    }
+
+                    POPUP_CHILDREN_ID -> {
+                        val name = context.getString(R.string.stashapp_sub_tag_of, item.name)
+                        val appFilter = GetSubTagsFilter(name, item.id)
+                        val intent = Intent(context, FilterListActivity::class.java)
+                        intent.putExtra("filter", appFilter)
+                        context.startActivity(intent)
+                    }
+                }
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "TagPresenter"
 
         const val CARD_WIDTH = 250
         const val CARD_HEIGHT = 250
+
+        private val POPUP_PARENTS_ID = 100L
+        private val POPUP_CHILDREN_ID = 101L
     }
 }
