@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.presenters
 
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import java.util.EnumMap
@@ -15,11 +16,27 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         dataTypeMap[DataType.PERFORMER] = item.performer_count
         dataTypeMap[DataType.MARKER] = item.scene_marker_count
         cardView.setUpExtraRow(dataTypeMap, null)
+        cardView.hideOverlayOnSelection = false
 
         cardView.titleText = item.name
         cardView.contentText = item.description
+        if (item.parent_count > 0) {
+            val parentText =
+                cardView.context.getString(
+                    R.string.stashapp_parent_of,
+                    item.parent_count.toString(),
+                )
+            cardView.setTextOverlayText(StashImageCardView.OverlayPosition.TOP_LEFT, parentText)
+        }
+        if (item.child_count > 0) {
+            val childText =
+                cardView.context.getString(
+                    R.string.stashapp_sub_tag_of,
+                    item.child_count.toString(),
+                )
+            cardView.setTextOverlayText(StashImageCardView.OverlayPosition.BOTTOM_LEFT, childText)
+        }
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-
         if (item.image_path != null) {
             loadImage(cardView, item.image_path)
         }
