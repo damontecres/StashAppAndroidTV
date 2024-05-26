@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.TagActivity
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.GetParentTagsFilter
@@ -55,6 +56,12 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
             ): List<PopUpItem> {
                 return buildList {
                     add(PopUpItem.getDefault(context))
+                    if (item.child_count > 0) {
+                        // TODO, combining two i18n strings is rarely the correct thing
+                        val str =
+                            context.getString(R.string.go_to) + " " + context.getString(R.string.stashapp_sub_tags)
+                        add(PopUpItem(POPUP_GOTO_WITH_SUB_ID, str))
+                    }
                     if (item.parent_count > 0) {
                         val str = context.getString(R.string.stashapp_parent_tags)
                         add(PopUpItem(POPUP_PARENTS_ID, str))
@@ -74,6 +81,14 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
                 when (popUpItem.id) {
                     PopUpItem.DEFAULT_ID -> {
                         cardView.performClick()
+                    }
+
+                    POPUP_GOTO_WITH_SUB_ID -> {
+                        val intent = Intent(context, TagActivity::class.java)
+                        intent.putExtra("tagId", item.id)
+                        intent.putExtra("tagName", item.name)
+                        intent.putExtra("includeSubTags", true)
+                        context.startActivity(intent)
                     }
 
                     POPUP_PARENTS_ID -> {
@@ -104,5 +119,6 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
 
         private val POPUP_PARENTS_ID = 100L
         private val POPUP_CHILDREN_ID = 101L
+        private val POPUP_GOTO_WITH_SUB_ID = 102L
     }
 }

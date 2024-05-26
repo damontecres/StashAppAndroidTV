@@ -31,6 +31,7 @@ class TagActivity : TabbedGridFragmentActivity() {
 
     override fun getPagerAdapter(): PagerAdapter {
         val tagId = intent.getStringExtra("tagId")!!
+        val includeSubTags = intent.getBooleanExtra("includeSubTags", false)
         val tabs =
             listOf(
                 getString(DataType.SCENE.pluralStringId),
@@ -40,12 +41,18 @@ class TagActivity : TabbedGridFragmentActivity() {
                 getString(DataType.PERFORMER.pluralStringId),
             )
 
-        return TabPageAdapter(tabs, tagId, supportFragmentManager)
+        return TabPageAdapter(tabs, tagId, includeSubTags, supportFragmentManager)
     }
 
-    class TabPageAdapter(tabs: List<String>, private val tagId: String, fm: FragmentManager) :
+    class TabPageAdapter(
+        tabs: List<String>,
+        private val tagId: String,
+        private val includeSubTags: Boolean,
+        fm: FragmentManager,
+    ) :
         ListFragmentPagerAdapter(tabs, fm) {
         override fun getItem(position: Int): Fragment {
+            val depth = Optional.present(if (includeSubTags) -1 else 0)
             return if (position == 0) {
                 StashGridFragment(
                     SceneComparator,
@@ -56,6 +63,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     HierarchicalMultiCriterionInput(
                                         value = Optional.present(listOf(tagId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
                                     ),
                                 ),
                         ),
@@ -71,6 +79,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     HierarchicalMultiCriterionInput(
                                         value = Optional.present(listOf(tagId)),
                                         modifier = CriterionModifier.INCLUDES,
+                                        depth = depth,
                                     ),
                                 ),
                         ),
@@ -86,6 +95,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     HierarchicalMultiCriterionInput(
                                         value = Optional.present(listOf(tagId)),
                                         modifier = CriterionModifier.INCLUDES,
+                                        depth = depth,
                                     ),
                                 ),
                         ),
@@ -101,6 +111,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     HierarchicalMultiCriterionInput(
                                         value = Optional.present(listOf(tagId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
                                     ),
                                 ),
                         ),
@@ -116,6 +127,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     HierarchicalMultiCriterionInput(
                                         value = Optional.present(listOf(tagId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
                                     ),
                                 ),
                         ),
