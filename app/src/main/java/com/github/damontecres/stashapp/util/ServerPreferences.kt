@@ -28,7 +28,7 @@ class ServerPreferences(private val context: Context) {
                 ),
             )
 
-    val trackActivity get() = preferences.getBoolean(PREF_TRACK_ACTIVITY, false)
+    val trackActivity get() = preferences.getBoolean(PREF_TRACK_ACTIVITY, true)
 
     val showStudioAsText get() = preferences.getBoolean(PREF_INTERFACE_STUDIOS_AS_TEXT, false)
 
