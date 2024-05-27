@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.ActionPresenter
@@ -795,36 +796,58 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private inner class MarkerLongClickCallBack : DetailsLongClickCallBack<MarkerData> {
+    private inner class MarkerLongClickCallBack : StashPresenter.LongClickCallBack<MarkerData> {
+        override fun getPopUpItems(
+            context: Context,
+            item: MarkerData,
+        ): List<StashPresenter.PopUpItem> {
+            return listOf(
+                StashPresenter.PopUpItem(177L, getString(R.string.stashapp_details)),
+                REMOVE_POPUP_ITEM,
+            )
+        }
+
         override fun onItemLongClick(
             context: Context,
             item: MarkerData,
             popUpItem: StashPresenter.PopUpItem,
         ) {
-            if (popUpItem == REMOVE_POPUP_ITEM) {
-                viewLifecycleOwner.lifecycleScope.launch(
-                    CoroutineExceptionHandler { _, ex ->
-                        Log.e(TAG, "Exception setting tags", ex)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to remove tag: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    },
-                ) {
-                    val mutResult =
-                        MutationEngine(requireContext()).deleteMarker(item.id)
-                    if (mutResult) {
-                        markersAdapter.remove(item)
-                        if (markersAdapter.size() == 0) {
-                            mAdapter.clear(MARKER_POS)
+            when (popUpItem.id) {
+                177L -> {
+                    val intent = Intent(context, MarkerActivity::class.java)
+                    intent.putExtra("marker", Marker(item))
+                    context.startActivity(intent)
+                }
+
+                REMOVE_POPUP_ITEM.id -> {
+                    viewLifecycleOwner.lifecycleScope.launch(
+                        CoroutineExceptionHandler { _, ex ->
+                            Log.e(TAG, "Exception setting tags", ex)
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to remove tag: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        },
+                    ) {
+                        val mutResult =
+                            MutationEngine(requireContext()).deleteMarker(item.id)
+                        if (mutResult) {
+                            markersAdapter.remove(item)
+                            if (markersAdapter.size() == 0) {
+                                mAdapter.clear(MARKER_POS)
+                            }
+                            Toast.makeText(
+                                requireContext(),
+                                "Removed marker from scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                         }
-                        Toast.makeText(
-                            requireContext(),
-                            "Removed marker from scene",
-                            Toast.LENGTH_SHORT,
-                        ).show()
                     }
+                }
+
+                else -> {
+                    throw IllegalArgumentException("Unknown id ${popUpItem.id}")
                 }
             }
         }

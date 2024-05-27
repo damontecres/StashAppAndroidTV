@@ -59,9 +59,10 @@ fragment SlimSceneData on Scene {
     seconds
     stream
     primary_tag {
-      id
-      name
-      __typename
+      ...TagData
+    }
+    tags {
+      ...TagData
     }
     __typename
   }

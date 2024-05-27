@@ -24,7 +24,9 @@ import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.FindSavedFiltersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
+import com.github.damontecres.stashapp.api.FindTagQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
+import com.github.damontecres.stashapp.api.FindTagsV0250Query
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -192,6 +194,31 @@ class QueryEngine(
         val tags =
             executeQuery(query).data?.findTags?.tags?.map { it.tagData }
         return tags.orEmpty()
+    }
+
+    suspend fun getTags(tagIds: List<String>): List<TagData> {
+        if (tagIds.isEmpty()) {
+            return listOf()
+        }
+        val serverVersion = ServerPreferences(context).serverVersion
+        if (serverVersion.isAtLeast(Version.V0_25_0)) {
+            val query =
+                client.query(
+                    FindTagsV0250Query(
+                        filter = null,
+                        tag_filter = null,
+                        tagIds = tagIds,
+                    ),
+                )
+            val tags =
+                executeQuery(query).data?.findTags?.tags?.map { it.tagData }
+            return tags.orEmpty()
+        } else {
+            return tagIds.mapNotNull {
+                val query = client.query(FindTagQuery(it))
+                executeQuery(query).data?.findTag?.tagData
+            }
+        }
     }
 
     suspend fun findMovies(
