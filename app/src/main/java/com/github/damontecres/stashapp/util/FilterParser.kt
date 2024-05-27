@@ -472,6 +472,7 @@ class FilterParser(private val serverVersion: Version) {
                 NOT = Optional.presentIfNotNull(convertTagObjectFilter(filter["NOT"] as Map<String, Map<String, *>>?)),
                 name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
                 aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
+                favorite = Optional.presentIfNotNull(convertBoolean(filter["favorite"])),
                 description = Optional.presentIfNotNull(convertStringCriterionInput(filter["description"])),
                 is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
                 scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
