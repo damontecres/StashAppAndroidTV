@@ -411,6 +411,7 @@ class FilterParser(private val serverVersion: Version) {
                 resume_time = Optional.presentIfNotNull(convertIntCriterionInput(filter["resume_time"])),
                 play_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["play_count"])),
                 play_duration = Optional.presentIfNotNull(convertIntCriterionInput(filter["play_duration"])),
+                last_played_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["last_played_at"])),
                 date = Optional.presentIfNotNull(convertDateCriterionInput(filter["date"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
