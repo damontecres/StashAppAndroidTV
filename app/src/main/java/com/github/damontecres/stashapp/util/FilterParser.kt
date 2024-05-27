@@ -373,6 +373,7 @@ class FilterParser(private val serverVersion: Version) {
                     ),
                 resolution = Optional.presentIfNotNull(convertResolutionCriterionInput(filter["resolution"])),
                 framerate = Optional.presentIfNotNull(convertIntCriterionInput(filter["framerate"])),
+                bitrate = Optional.presentIfNotNull(convertIntCriterionInput(filter["bitrate"])),
                 video_codec = Optional.presentIfNotNull(convertStringCriterionInput(filter["video_codec"])),
                 audio_codec = Optional.presentIfNotNull(convertStringCriterionInput(filter["audio_codec"])),
                 duration = Optional.presentIfNotNull(convertIntCriterionInput(filter["duration"])),
