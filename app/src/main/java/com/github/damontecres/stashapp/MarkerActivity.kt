@@ -172,10 +172,11 @@ class MarkerActivity : FragmentActivity() {
             mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val tags =
-                    queryEngine.getTags(listOf(marker.primaryTagId, *marker.tagIds.toTypedArray()))
-                primaryTagAdapter.add(tags.first { it.id == marker.primaryTagId })
-                tagsAdapter.addAll(0, tags.filterNot { it.id == marker.primaryTagId })
+                val sceneData = queryEngine.findScenes(sceneIds = listOf(marker.scene.id)).first()
+                val markerData = sceneData.scene_markers.first { it.id == marker.id }
+
+                primaryTagAdapter.add(markerData.primary_tag.tagData)
+                tagsAdapter.addAll(0, markerData.tags.map { it.tagData })
                 if (tagsAdapter.isNotEmpty()) {
                     mAdapter.set(
                         TAG_POS,
