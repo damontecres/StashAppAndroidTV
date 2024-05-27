@@ -108,6 +108,10 @@
             android:name=".setup.SetupActivity"
             android:exported="false"
             android:theme="@style/Theme.StashAppAndroidTV.GuidedStep" />
+        <activity
+            android:name=".MarkerActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

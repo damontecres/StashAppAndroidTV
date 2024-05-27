@@ -52,6 +52,7 @@ import java.time.format.DateTimeFormatter
 import javax.net.ssl.SSLHandshakeException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -307,6 +308,14 @@ fun Context.toPx(dp: Int): Float =
         dp.toFloat(),
         resources.displayMetrics,
     )
+
+fun convertDpToPixel(
+    context: Context,
+    dp: Int,
+): Int {
+    val density = context.applicationContext.resources.displayMetrics.density
+    return (dp.toFloat() * density).roundToInt()
+}
 
 @OptIn(ExperimentalContracts::class)
 fun CharSequence?.isNotNullOrBlank(): Boolean {
