@@ -307,6 +307,7 @@ class FilterParser(private val serverVersion: Version) {
                 scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
                 image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["image_count"])),
                 gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
+                play_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["play_count"])),
                 o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter["o_counter"])),
                 stash_id_endpoint =
                     Optional.presentIfNotNull(
