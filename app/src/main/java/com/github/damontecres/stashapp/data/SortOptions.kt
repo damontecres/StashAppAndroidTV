@@ -1,8 +1,13 @@
 package com.github.damontecres.stashapp.data
 
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.util.Version
 
-data class SortOption(val key: String, val nameStringId: Int)
+data class SortOption(
+    val key: String,
+    val nameStringId: Int,
+    val requiresVersion: Version = Version.MINIMUM_STASH_VERSION,
+)
 
 val SCENE_SORT_OPTIONS =
     listOf(
@@ -14,7 +19,7 @@ val SCENE_SORT_OPTIONS =
         SortOption("performer_count", R.string.stashapp_performer_count),
         SortOption("random", R.string.stashapp_random),
         SortOption("organized", R.string.stashapp_organized),
-        SortOption("o_counter", R.string.stashapp_o_counter),
+        SortOption("o_counter", R.string.stashapp_o_count),
         SortOption("date", R.string.stashapp_date),
         SortOption("file_count", R.string.stashapp_file_count),
         SortOption("filesize", R.string.stashapp_filesize),
@@ -54,7 +59,7 @@ val IMAGE_SORT_OPTIONS =
         SortOption("tag_count", R.string.stashapp_tag_count),
         SortOption("performer_count", R.string.stashapp_performer_count),
         SortOption("random", R.string.stashapp_random),
-        SortOption("o_counter", R.string.stashapp_o_counter),
+        SortOption("o_counter", R.string.stashapp_o_count),
         SortOption("filesize", R.string.stashapp_filesize),
         SortOption("file_count", R.string.stashapp_file_count),
         SortOption("date", R.string.stashapp_date),
@@ -82,7 +87,10 @@ val PERFORMER_SORT_OPTIONS =
         SortOption("scenes_count", R.string.stashapp_scene_count),
         SortOption("images_count", R.string.stashapp_image_count),
         SortOption("galleries_count", R.string.stashapp_gallery_count),
-        SortOption("o_counter", R.string.stashapp_o_counter),
+        SortOption("o_counter", R.string.stashapp_o_count),
+        SortOption("play_count", R.string.stashapp_play_count, Version.V0_26_0),
+        SortOption("last_played_at", R.string.stashapp_last_played_at, Version.V0_26_0),
+        SortOption("last_o_at", R.string.stashapp_last_o_at, Version.V0_26_0),
     )
 
 val MARKER_SORT_OPTIONS =

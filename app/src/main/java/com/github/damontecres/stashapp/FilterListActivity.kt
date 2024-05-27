@@ -208,14 +208,17 @@ class FilterListActivity : FragmentActivity() {
                 null,
                 android.R.attr.listPopupWindowStyle,
             )
+        val serverVersion = ServerPreferences(this).serverVersion
         // Resolve the strings, then sort
         val sortOptions =
-            dataType.sortOptions.map {
-                Pair(
-                    it.key,
-                    this@FilterListActivity.getString(it.nameStringId),
-                )
-            }.sortedBy { it.second }
+            dataType.sortOptions
+                .filter { serverVersion.isAtLeast(it.requiresVersion) }
+                .map {
+                    Pair(
+                        it.key,
+                        this@FilterListActivity.getString(it.nameStringId),
+                    )
+                }.sortedBy { it.second }
         val resolvedNames = sortOptions.map { it.second }
 
         val currentDirection = filterData?.find_filter?.direction

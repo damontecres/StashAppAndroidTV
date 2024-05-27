@@ -62,6 +62,7 @@ data class Version(
         val MINIMUM_STASH_VERSION = fromString("0.23.0")
         val V0_24_3 = fromString("v0.24.3")
         val V0_25_0 = fromString("v0.25.0")
+        val V0_26_0 = fromString("v0.26.0")
 
         fun fromString(version: String): Version {
             val v = tryFromString(version)
