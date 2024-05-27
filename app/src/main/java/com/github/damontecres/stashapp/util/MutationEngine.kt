@@ -227,6 +227,7 @@ class MutationEngine(
 
     suspend fun setTagsOnMarker(
         markerId: String,
+        primaryTagId: String,
         tagIds: List<String>,
     ): MarkerData? {
         Log.v(TAG, "setTagsOnMarker markerId=$markerId, tagIds=$tagIds")
@@ -235,6 +236,7 @@ class MutationEngine(
                 input =
                     SceneMarkerUpdateInput(
                         id = markerId,
+                        primary_tag_id = Optional.present(primaryTagId),
                         tag_ids = Optional.present(tagIds),
                     ),
             )

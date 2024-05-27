@@ -43,6 +43,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.SingleItemObjectAdapter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.TagDiffCallback
@@ -71,6 +72,8 @@ class MarkerActivity : FragmentActivity() {
         companion object {
             private const val TAG = "MarkerDetailsFragment"
 
+            private const val REPLACE_PRIMARY_ID = 10012L
+
             private const val DETAILS_POS = 1
             private const val PRIMARY_TAG_POS = DETAILS_POS + 1
             private const val TAG_POS = PRIMARY_TAG_POS + 1
@@ -79,7 +82,8 @@ class MarkerActivity : FragmentActivity() {
 
         private val mPresenterSelector = ClassPresenterSelector().addClassPresenter(ListRow::class.java, ListRowPresenter())
         private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
-        private val primaryTagAdapter = ArrayObjectAdapter(TagPresenter())
+        private val primaryTagAdapter =
+            SingleItemObjectAdapter(TagPresenter(PrimaryTagLongClickListener()))
         private val tagsAdapter = ArrayObjectAdapter(TagPresenter(TagLongClickListener()))
         private val sceneActionsAdapter =
             SparseArrayObjectAdapter(
@@ -175,7 +179,7 @@ class MarkerActivity : FragmentActivity() {
                 val sceneData = queryEngine.findScenes(sceneIds = listOf(marker.scene.id)).first()
                 val markerData = sceneData.scene_markers.first { it.id == marker.id }
 
-                primaryTagAdapter.add(markerData.primary_tag.tagData)
+                primaryTagAdapter.item = markerData.primary_tag.tagData
                 tagsAdapter.addAll(0, markerData.tags.map { it.tagData })
                 if (tagsAdapter.isNotEmpty()) {
                     mAdapter.set(
@@ -309,6 +313,7 @@ class MarkerActivity : FragmentActivity() {
                             val mutResult =
                                 MutationEngine(requireContext()).setTagsOnMarker(
                                     marker.id,
+                                    primaryTagAdapter.item!!.id,
                                     tagIds.toList(),
                                 )
                             val newTags = mutResult?.tags?.map { it.tagData }
@@ -331,6 +336,66 @@ class MarkerActivity : FragmentActivity() {
                                 Toast.LENGTH_SHORT,
                             ).show()
                         }
+                    } else if (id == REPLACE_PRIMARY_ID) {
+                        val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
+                        Log.d(TAG, "Setting primary tag to $tagId to scene marker ${marker.id}")
+                        if (tagId != null) {
+                            viewLifecycleOwner.lifecycleScope.launch(
+                                StashCoroutineExceptionHandler { ex ->
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Failed to set primary tag: ${ex.message}",
+                                        Toast.LENGTH_LONG,
+                                    )
+                                },
+                            ) {
+                                val tagIds = tagsAdapter.unmodifiableList<TagData>().map { it.id }
+                                val markerData =
+                                    mutationEngine.setTagsOnMarker(marker.id, tagId, tagIds)
+                                if (markerData != null) {
+                                    primaryTagAdapter.item = markerData.primary_tag.tagData
+                                } else {
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Unexpected result setting primary tag",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private inner class PrimaryTagLongClickListener :
+            TagPresenter.DefaultTagLongClickCallBack() {
+            override fun getPopUpItems(
+                context: Context,
+                item: TagData,
+            ): List<StashPresenter.PopUpItem> {
+                val items = super.getPopUpItems(context, item).toMutableList()
+                items.add(StashPresenter.PopUpItem(REPLACE_PRIMARY_ID, "Replace"))
+                return items
+            }
+
+            override fun onItemLongClick(
+                context: Context,
+                item: TagData,
+                popUpItem: StashPresenter.PopUpItem,
+            ) {
+                when (popUpItem.id) {
+                    REPLACE_PRIMARY_ID -> {
+                        // Replace
+                        val intent = Intent(requireActivity(), SearchForActivity::class.java)
+                        val dataType = DataType.TAG
+                        intent.putExtra("dataType", dataType.name)
+                        intent.putExtra(SearchForFragment.ID_KEY, REPLACE_PRIMARY_ID)
+                        resultLauncher.launch(intent)
+                    }
+
+                    else -> {
+                        super.onItemLongClick(context, item, popUpItem)
                     }
                 }
             }
@@ -371,6 +436,7 @@ class MarkerActivity : FragmentActivity() {
                             val mutResult =
                                 MutationEngine(requireContext()).setTagsOnMarker(
                                     marker.id,
+                                    primaryTagAdapter.item!!.id,
                                     tagIds,
                                 )
                             val newTags = mutResult?.tags?.map { it.tagData }.orEmpty()
