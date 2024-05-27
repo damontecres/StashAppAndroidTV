@@ -105,7 +105,7 @@ class StashPagingSource<T : Query.Data, D : Any, C : Query.Data>(
                 // If the total fetched results is less than the total number of items, then there is a next page
                 // Advance the page by the number of requested items
                 val nextPageNum =
-                    if (results.isNotEmpty()) {
+                    if (results.size >= loadSize) {
                         pageNum + (params.loadSize / pageSize)
                     } else {
                         null
