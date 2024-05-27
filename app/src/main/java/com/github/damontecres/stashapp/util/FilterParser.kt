@@ -387,6 +387,7 @@ class FilterParser(private val serverVersion: Version) {
                         ),
                     ),
                 movies = Optional.presentIfNotNull(convertMultiCriterionInput(filter["movies"])),
+                galleries = Optional.presentIfNotNull(convertMultiCriterionInput(filter["galleries"])),
                 tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
                 tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["tag_count"])),
                 performer_tags =
