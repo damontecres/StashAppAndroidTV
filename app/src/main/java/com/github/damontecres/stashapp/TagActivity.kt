@@ -11,18 +11,21 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
+import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
+import com.github.damontecres.stashapp.suppliers.TagDataSupplier
 import com.github.damontecres.stashapp.util.GalleryComparator
 import com.github.damontecres.stashapp.util.ImageComparator
 import com.github.damontecres.stashapp.util.ListFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.MarkerComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
+import com.github.damontecres.stashapp.util.TagComparator
 
 class TagActivity : TabbedGridFragmentActivity() {
     override fun getTitleText(): CharSequence? {
@@ -31,6 +34,7 @@ class TagActivity : TabbedGridFragmentActivity() {
 
     override fun getPagerAdapter(): PagerAdapter {
         val tagId = intent.getStringExtra("tagId")!!
+        val includeSubTags = intent.getBooleanExtra("includeSubTags", false)
         val tabs =
             listOf(
                 getString(DataType.SCENE.pluralStringId),
@@ -38,14 +42,21 @@ class TagActivity : TabbedGridFragmentActivity() {
                 getString(DataType.IMAGE.pluralStringId),
                 getString(DataType.MARKER.pluralStringId),
                 getString(DataType.PERFORMER.pluralStringId),
+                getString(R.string.stashapp_sub_tags),
             )
 
-        return TabPageAdapter(tabs, tagId, supportFragmentManager)
+        return TabPageAdapter(tabs, tagId, includeSubTags, supportFragmentManager)
     }
 
-    class TabPageAdapter(tabs: List<String>, private val tagId: String, fm: FragmentManager) :
+    class TabPageAdapter(
+        tabs: List<String>,
+        private val tagId: String,
+        private val includeSubTags: Boolean,
+        fm: FragmentManager,
+    ) :
         ListFragmentPagerAdapter(tabs, fm) {
         override fun getItem(position: Int): Fragment {
+            val depth = Optional.present(if (includeSubTags) -1 else 0)
             return if (position == 0) {
                 StashGridFragment(
                     SceneComparator,
@@ -56,6 +67,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     HierarchicalMultiCriterionInput(
                                         value = Optional.present(listOf(tagId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
                                     ),
                                 ),
                         ),
@@ -71,6 +83,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     HierarchicalMultiCriterionInput(
                                         value = Optional.present(listOf(tagId)),
                                         modifier = CriterionModifier.INCLUDES,
+                                        depth = depth,
                                     ),
                                 ),
                         ),
@@ -86,6 +99,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     HierarchicalMultiCriterionInput(
                                         value = Optional.present(listOf(tagId)),
                                         modifier = CriterionModifier.INCLUDES,
+                                        depth = depth,
                                     ),
                                 ),
                         ),
@@ -101,6 +115,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     HierarchicalMultiCriterionInput(
                                         value = Optional.present(listOf(tagId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
                                     ),
                                 ),
                         ),
@@ -116,6 +131,24 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     HierarchicalMultiCriterionInput(
                                         value = Optional.present(listOf(tagId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
+                                    ),
+                                ),
+                        ),
+                    ),
+                )
+            } else if (position == 5) {
+                StashGridFragment(
+                    TagComparator,
+                    TagDataSupplier(
+                        DataType.TAG.asDefaultFindFilterType,
+                        TagFilterType(
+                            parents =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(listOf(tagId)),
+                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
                                     ),
                                 ),
                         ),

@@ -48,6 +48,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     var videoPosition = -1L
     val videoView: PlayerView = findViewById(R.id.main_video)
     val mainView: ViewSwitcher = findViewById(R.id.main_view)
+    var hideOverlayOnSelection = true
 
     private val dataTypeViews =
         EnumMap<DataType, Pair<TextView, View>>(DataType::class.java)
@@ -145,10 +146,10 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                 videoView.player = null
             }
         }
-        if (selected) {
+        if (selected && hideOverlayOnSelection) {
             cardOverlay.clearAnimation()
             cardOverlay.animateToInvisible(durationMs = animateTime)
-        } else {
+        } else if (hideOverlayOnSelection) {
             cardOverlay.clearAnimation()
             cardOverlay.animateToVisible(animateTime)
         }

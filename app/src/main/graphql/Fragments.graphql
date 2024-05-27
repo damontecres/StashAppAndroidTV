@@ -9,4 +9,6 @@ fragment TagData on Tag {
   image_path
   image_count
   gallery_count
+  parent_count
+  child_count
 }

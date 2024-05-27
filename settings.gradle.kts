@@ -15,3 +15,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "StashAppAndroidTV"
 include(":app")
+
+gradle.startParameter.excludedTaskNames.addAll(listOf(":buildSrc:testClasses"))
