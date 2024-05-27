@@ -93,7 +93,8 @@
                 android:scaleType="fitXY"
                 android:contentDescription="@string/stashapp_o_counter"
                 android:background="@drawable/image_button_selector"
-                android:nextFocusUp="@id/rating_bar" />
+                android:nextFocusUp="@id/rating_bar"
+                android:nextFocusDown="@id/o_counter_button" />
 
             <TextView
                 android:id="@+id/o_counter_text"
