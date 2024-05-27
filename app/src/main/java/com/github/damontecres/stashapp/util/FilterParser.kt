@@ -440,6 +440,7 @@ class FilterParser(private val serverVersion: Version) {
                         ),
                     is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
                     rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
+                    favorite = Optional.presentIfNotNull(convertBoolean(filter["favorite"])),
                     scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
                     image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["image_count"])),
                     gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
