@@ -1,10 +1,18 @@
 package com.github.damontecres.stashapp
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.app.DetailsSupportFragment
@@ -23,7 +31,13 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
+import com.github.damontecres.stashapp.actions.StashAction
+import com.github.damontecres.stashapp.actions.StashActionClickedListener
+import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
+import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
@@ -31,10 +45,14 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.TagDiffCallback
 import com.github.damontecres.stashapp.util.convertDpToPixel
+import com.github.damontecres.stashapp.util.isNotEmpty
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
@@ -50,16 +68,51 @@ class MarkerActivity : FragmentActivity() {
     }
 
     class MarkerDetailsFragment : DetailsSupportFragment() {
+        companion object {
+            private const val TAG = "MarkerDetailsFragment"
+
+            private const val DETAILS_POS = 1
+            private const val PRIMARY_TAG_POS = DETAILS_POS + 1
+            private const val TAG_POS = PRIMARY_TAG_POS + 1
+            private const val ACTIONS_POS = TAG_POS + 1
+        }
+
         private val mPresenterSelector = ClassPresenterSelector().addClassPresenter(ListRow::class.java, ListRowPresenter())
         private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
-        private val tagsAdapter = ArrayObjectAdapter(TagPresenter())
+        private val primaryTagAdapter = ArrayObjectAdapter(TagPresenter())
+        private val tagsAdapter = ArrayObjectAdapter(TagPresenter(TagLongClickListener()))
+        private val sceneActionsAdapter =
+            SparseArrayObjectAdapter(
+                ClassPresenterSelector().addClassPresenter(
+                    StashAction::class.java,
+                    ActionPresenter(),
+                ),
+            )
 
         private lateinit var queryEngine: QueryEngine
         private lateinit var mutationEngine: MutationEngine
+        private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
         private lateinit var marker: Marker
 
         private lateinit var detailsPresenter: FullWidthDetailsOverviewRowPresenter
+
+        private val actionClickListener =
+            object : StashActionClickedListener {
+                override fun onClicked(action: StashAction) {
+                    if (action == StashAction.ADD_TAG) {
+                        val intent = Intent(requireActivity(), SearchForActivity::class.java)
+                        val dataType = DataType.TAG
+                        intent.putExtra("dataType", dataType.name)
+                        intent.putExtra(SearchForFragment.ID_KEY, action.id)
+                        resultLauncher.launch(intent)
+                    }
+                }
+
+                override fun incrementOCounter(counter: OCounter) {
+                    throw IllegalStateException()
+                }
+            }
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
@@ -69,6 +122,12 @@ class MarkerActivity : FragmentActivity() {
             mutationEngine = MutationEngine(requireContext(), lock = lock)
 
             marker = requireActivity().intent.getParcelableExtra("marker")!!
+
+            resultLauncher =
+                registerForActivityResult(
+                    ActivityResultContracts.StartActivityForResult(),
+                    ResultCallback(),
+                )
 
             detailsPresenter =
                 FullWidthDetailsOverviewRowPresenter(
@@ -101,11 +160,28 @@ class MarkerActivity : FragmentActivity() {
             setupDetailsOverviewRowPresenter()
             setupDetailsOverviewRow()
 
-            mAdapter.set(2, ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter))
+            onItemViewClickedListener =
+                StashItemViewClickListener(requireContext(), actionClickListener)
+
+            mAdapter.set(
+                PRIMARY_TAG_POS,
+                ListRow(HeaderItem(getString(R.string.stashapp_primary_tag)), primaryTagAdapter),
+            )
+
+            sceneActionsAdapter.set(1, StashAction.ADD_TAG)
+            mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val tags = queryEngine.getTags(marker.tagIds)
-                tagsAdapter.addAll(0, tags)
+                val tags =
+                    queryEngine.getTags(listOf(marker.primaryTagId, *marker.tagIds.toTypedArray()))
+                primaryTagAdapter.add(tags.first { it.id == marker.primaryTagId })
+                tagsAdapter.addAll(0, tags.filterNot { it.id == marker.primaryTagId })
+                if (tagsAdapter.isNotEmpty()) {
+                    mAdapter.set(
+                        TAG_POS,
+                        ListRow(HeaderItem(getString(R.string.stashapp_tags)), tagsAdapter),
+                    )
+                }
             }
         }
 
@@ -195,6 +271,124 @@ class MarkerActivity : FragmentActivity() {
                                 }
                             },
                         )
+                }
+            }
+        }
+
+        private inner class ResultCallback : ActivityResultCallback<ActivityResult> {
+            override fun onActivityResult(result: ActivityResult) {
+                if (result.resultCode == Activity.RESULT_OK) {
+                    val data: Intent? = result.data
+                    val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
+                    if (id == StashAction.ADD_TAG.id) {
+                        val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
+                        Log.d(TAG, "Adding tag $tagId to scene marker ${marker.id}")
+                        viewLifecycleOwner.lifecycleScope.launch(
+                            StashCoroutineExceptionHandler { ex ->
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to add tag: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                )
+                            },
+                        ) {
+                            val tagIds =
+                                tagsAdapter.unmodifiableList<TagData>().map { it.id }
+                                    .toMutableSet()
+                            tagIds.add(tagId!!)
+                            if (tagsAdapter.size() == tagIds.size || tagId == marker.primaryTagId) {
+                                // Tag is already on the marker
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Tag is already set on this marker",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                                return@launch
+                            }
+                            val mutResult =
+                                MutationEngine(requireContext()).setTagsOnMarker(
+                                    marker.id,
+                                    tagIds.toList(),
+                                )
+                            val newTags = mutResult?.tags?.map { it.tagData }
+                            val newTagName =
+                                newTags?.firstOrNull { it.id == tagId }?.name
+                            tagsAdapter.setItems(newTags, TagDiffCallback)
+                            if (mAdapter.lookup(TAG_POS) == null) {
+                                mAdapter.set(
+                                    TAG_POS,
+                                    ListRow(
+                                        HeaderItem(getString(R.string.stashapp_tags)),
+                                        tagsAdapter,
+                                    ),
+                                )
+                            }
+
+                            Toast.makeText(
+                                requireContext(),
+                                "Added tag '$newTagName' to marker",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    }
+                }
+            }
+        }
+
+        private inner class TagLongClickListener : TagPresenter.DefaultTagLongClickCallBack() {
+            override fun getPopUpItems(
+                context: Context,
+                item: TagData,
+            ): List<StashPresenter.PopUpItem> {
+                val items = super.getPopUpItems(context, item).toMutableList()
+                items.add(StashPresenter.PopUpItem(1000L, "Remove"))
+                return items
+            }
+
+            override fun onItemLongClick(
+                context: Context,
+                item: TagData,
+                popUpItem: StashPresenter.PopUpItem,
+            ) {
+                when (popUpItem.id) {
+                    1000L -> {
+                        viewLifecycleOwner.lifecycleScope.launch(
+                            CoroutineExceptionHandler { _, ex ->
+                                Log.e(TAG, "Exception setting tags", ex)
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to remove tag: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            },
+                        ) {
+                            val tagIds =
+                                tagsAdapter.unmodifiableList<TagData>()
+                                    .map { it.id }
+                                    .toMutableList()
+                            tagIds.remove(item.id)
+                            val mutResult =
+                                MutationEngine(requireContext()).setTagsOnMarker(
+                                    marker.id,
+                                    tagIds,
+                                )
+                            val newTags = mutResult?.tags?.map { it.tagData }.orEmpty()
+                            if (newTags.isEmpty()) {
+                                mAdapter.clear(TAG_POS)
+                            } else {
+                                tagsAdapter.setItems(newTags, TagDiffCallback)
+                            }
+                            Toast.makeText(
+                                requireContext(),
+                                "Removed tag '${item.name}' from scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    }
+
+                    else -> {
+                        super.onItemLongClick(context, item, popUpItem)
+                    }
                 }
             }
         }

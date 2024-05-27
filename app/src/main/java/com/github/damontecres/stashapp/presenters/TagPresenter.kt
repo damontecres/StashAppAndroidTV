@@ -49,63 +49,69 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
     }
 
     override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<TagData> {
-        return object : LongClickCallBack<TagData> {
-            override fun getPopUpItems(
-                context: Context,
-                item: TagData,
-            ): List<PopUpItem> {
-                return buildList {
-                    add(PopUpItem.getDefault(context))
-                    if (item.child_count > 0) {
-                        // TODO, combining two i18n strings is rarely the correct thing
-                        val str =
-                            context.getString(R.string.go_to) + " " + context.getString(R.string.stashapp_sub_tags)
-                        add(PopUpItem(POPUP_GOTO_WITH_SUB_ID, str))
-                    }
-                    if (item.parent_count > 0) {
-                        val str = context.getString(R.string.stashapp_parent_tags)
-                        add(PopUpItem(POPUP_PARENTS_ID, str))
-                    }
-                    if (item.child_count > 0) {
-                        val str = context.getString(R.string.stashapp_sub_tags)
-                        add(PopUpItem(POPUP_CHILDREN_ID, str))
-                    }
+        return DefaultTagLongClickCallBack()
+    }
+
+    open class DefaultTagLongClickCallBack : LongClickCallBack<TagData> {
+        override fun getPopUpItems(
+            context: Context,
+            item: TagData,
+        ): List<PopUpItem> {
+            return buildList {
+                add(PopUpItem.getDefault(context))
+                if (item.child_count > 0) {
+                    // TODO, combining two i18n strings is rarely the correct thing
+                    val str =
+                        context.getString(R.string.go_to) + " " + context.getString(R.string.stashapp_sub_tags)
+                    add(PopUpItem(POPUP_GOTO_WITH_SUB_ID, str))
+                }
+                if (item.parent_count > 0) {
+                    val str = context.getString(R.string.stashapp_parent_tags)
+                    add(PopUpItem(POPUP_PARENTS_ID, str))
+                }
+                if (item.child_count > 0) {
+                    val str = context.getString(R.string.stashapp_sub_tags)
+                    add(PopUpItem(POPUP_CHILDREN_ID, str))
                 }
             }
+        }
 
-            override fun onItemLongClick(
-                context: Context,
-                item: TagData,
-                popUpItem: PopUpItem,
-            ) {
-                when (popUpItem.id) {
-                    PopUpItem.DEFAULT_ID -> {
-                        cardView.performClick()
-                    }
+        override fun onItemLongClick(
+            context: Context,
+            item: TagData,
+            popUpItem: PopUpItem,
+        ) {
+            when (popUpItem.id) {
+                PopUpItem.DEFAULT_ID -> {
+                    val intent = Intent(context, TagActivity::class.java)
+                    intent.putExtra("tagId", item.id)
+                    intent.putExtra("tagName", item.name)
+                    intent.putExtra("includeSubTags", false)
+                    context.startActivity(intent)
+                }
 
-                    POPUP_GOTO_WITH_SUB_ID -> {
-                        val intent = Intent(context, TagActivity::class.java)
-                        intent.putExtra("tagId", item.id)
-                        intent.putExtra("tagName", item.name)
-                        intent.putExtra("includeSubTags", true)
-                        context.startActivity(intent)
-                    }
+                POPUP_GOTO_WITH_SUB_ID -> {
+                    val intent = Intent(context, TagActivity::class.java)
+                    intent.putExtra("tagId", item.id)
+                    intent.putExtra("tagName", item.name)
+                    intent.putExtra("includeSubTags", true)
+                    context.startActivity(intent)
+                }
 
-                    POPUP_PARENTS_ID -> {
-                        val name = context.getString(R.string.stashapp_parent_of, item.name)
-                        val appFilter = GetParentTagsFilter(name, item.id)
-                        val intent = Intent(context, FilterListActivity::class.java)
-                        intent.putExtra("filter", appFilter)
-                        context.startActivity(intent)
-                    }
+                POPUP_PARENTS_ID -> {
+                    val name = context.getString(R.string.stashapp_parent_of, item.name)
+                    val appFilter = GetParentTagsFilter(name, item.id)
+                    val intent = Intent(context, FilterListActivity::class.java)
+                    intent.putExtra("filter", appFilter)
+                    context.startActivity(intent)
+                }
 
-                    POPUP_CHILDREN_ID -> {
-                        val name = context.getString(R.string.stashapp_sub_tag_of, item.name)
-                        val appFilter = GetSubTagsFilter(name, item.id)
-                        val intent = Intent(context, FilterListActivity::class.java)
-                        intent.putExtra("filter", appFilter)
-                        context.startActivity(intent)
-                    }
+                POPUP_CHILDREN_ID -> {
+                    val name = context.getString(R.string.stashapp_sub_tag_of, item.name)
+                    val appFilter = GetSubTagsFilter(name, item.id)
+                    val intent = Intent(context, FilterListActivity::class.java)
+                    intent.putExtra("filter", appFilter)
+                    context.startActivity(intent)
                 }
             }
         }
@@ -117,8 +123,8 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         const val CARD_WIDTH = 250
         const val CARD_HEIGHT = 250
 
-        private val POPUP_PARENTS_ID = 100L
-        private val POPUP_CHILDREN_ID = 101L
-        private val POPUP_GOTO_WITH_SUB_ID = 102L
+        const val POPUP_PARENTS_ID = 100L
+        const val POPUP_CHILDREN_ID = 101L
+        const val POPUP_GOTO_WITH_SUB_ID = 102L
     }
 }

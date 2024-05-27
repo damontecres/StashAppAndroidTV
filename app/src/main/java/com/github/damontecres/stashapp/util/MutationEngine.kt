@@ -26,11 +26,13 @@ import com.github.damontecres.stashapp.api.SceneResetOMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
 import com.github.damontecres.stashapp.api.UpdateImageMutation
+import com.github.damontecres.stashapp.api.UpdateMarkerMutation
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.ImageUpdateInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
+import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
 import com.github.damontecres.stashapp.data.OCounter
 import kotlinx.coroutines.Dispatchers
@@ -221,6 +223,23 @@ class MutationEngine(
             )
         val result = executeMutation(mutation)
         return result.data?.sceneUpdate
+    }
+
+    suspend fun setTagsOnMarker(
+        markerId: String,
+        tagIds: List<String>,
+    ): MarkerData? {
+        Log.v(TAG, "setTagsOnMarker markerId=$markerId, tagIds=$tagIds")
+        val mutation =
+            UpdateMarkerMutation(
+                input =
+                    SceneMarkerUpdateInput(
+                        id = markerId,
+                        tag_ids = Optional.present(tagIds),
+                    ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.sceneMarkerUpdate?.markerData
     }
 
     suspend fun setPerformersOnScene(
