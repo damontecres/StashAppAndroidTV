@@ -627,6 +627,7 @@ class FilterParser(private val serverVersion: Version) {
                         ),
                     ),
                 has_chapters = Optional.presentIfNotNull(convertString(filter["has_chapters"])),
+                scenes = Optional.presentIfNotNull(convertMultiCriterionInput(filter["scenes"])),
                 studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
                 tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
                 tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["tag_count"])),
