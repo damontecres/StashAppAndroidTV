@@ -432,8 +432,8 @@ class ImageActivity : FragmentActivity() {
 
                 val scale =
                     Math.min(
-                        mainImage.height.toDouble() / width,
-                        mainImage.width.toDouble() / height,
+                        mainImage.height.toDouble() / height,
+                        mainImage.width.toDouble() / width,
                     )
 
                 val targetHeight = height * scale
