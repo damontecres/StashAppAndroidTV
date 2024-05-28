@@ -218,3 +218,19 @@ object StudioDiffCallback : DiffCallback<StudioData>() {
         return oldItem == newItem
     }
 }
+
+object GalleryDiffCallback : DiffCallback<GalleryData>() {
+    override fun areItemsTheSame(
+        oldItem: GalleryData,
+        newItem: GalleryData,
+    ): Boolean {
+        return oldItem.id == newItem.id
+    }
+
+    override fun areContentsTheSame(
+        oldItem: GalleryData,
+        newItem: GalleryData,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}
