@@ -47,6 +47,7 @@ import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
+import com.github.damontecres.stashapp.presenters.GalleryPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
@@ -56,6 +57,7 @@ import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.util.GalleryDiffCallback
 import com.github.damontecres.stashapp.util.MarkerDiffCallback
 import com.github.damontecres.stashapp.util.MovieDiffCallback
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -92,6 +94,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private val tagsAdapter = ArrayObjectAdapter(TagPresenter(TagLongClickCallBack()))
     private val markersAdapter = ArrayObjectAdapter(MarkerPresenter(MarkerLongClickCallBack()))
     private val moviesAdapter = ArrayObjectAdapter(MoviePresenter())
+    private val galleriesAdapter = ArrayObjectAdapter(GalleryPresenter())
     private val sceneActionsAdapter =
         SparseArrayObjectAdapter(
             ClassPresenterSelector().addClassPresenter(
@@ -320,6 +323,25 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 moviesAdapter.setItems(movies, MovieDiffCallback)
             } else {
                 mAdapter.clear(MOVIE_POS)
+            }
+
+            if (mSelectedMovie!!.galleries.isNotEmpty()) {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    if (mAdapter.lookup(GALLERY_POS) == null) {
+                        mAdapter.set(
+                            GALLERY_POS,
+                            ListRow(
+                                HeaderItem(getString(R.string.stashapp_galleries)),
+                                galleriesAdapter,
+                            ),
+                        )
+                    }
+                    val galleries =
+                        queryEngine.getGalleries(mSelectedMovie!!.galleries.map { it.id })
+                    galleriesAdapter.setItems(galleries, GalleryDiffCallback)
+                }
+            } else {
+                mAdapter.clear(GALLERY_POS)
             }
         }
     }
@@ -926,7 +948,8 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         private const val STUDIO_POS = MOVIE_POS + 1
         private const val PERFORMER_POS = STUDIO_POS + 1
         private const val TAG_POS = PERFORMER_POS + 1
-        private const val ACTIONS_POS = TAG_POS + 1
+        private const val GALLERY_POS = TAG_POS + 1
+        private const val ACTIONS_POS = GALLERY_POS + 1
 
         // Actions row order
         private const val O_COUNTER_POS = 1

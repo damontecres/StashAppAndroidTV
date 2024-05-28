@@ -68,16 +68,7 @@ fragment SlimSceneData on Scene {
   }
   galleries {
     id
-    files {
-      path
-      __typename
-    }
-    folder {
-      path
-      __typename
-    }
     title
-    __typename
   }
   studio {
     ...StudioData

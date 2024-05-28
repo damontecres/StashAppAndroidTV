@@ -18,6 +18,14 @@ query FindGallery($id: ID!) {
   }
 }
 
+query FindGalleriesById_V0250($ids: [ID!]) {
+  findGalleries(ids: $ids) {
+    galleries {
+      ...GalleryData
+    }
+  }
+}
+
 fragment GalleryData on Gallery {
   id
   title
