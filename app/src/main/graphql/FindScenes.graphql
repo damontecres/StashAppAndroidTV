@@ -97,7 +97,10 @@ fragment SlimSceneData on Scene {
   scene_markers {
     id
     title
-    primary_tag{
+    primary_tag {
+      ...TagData
+    }
+    tags {
       ...TagData
     }
     screenshot
