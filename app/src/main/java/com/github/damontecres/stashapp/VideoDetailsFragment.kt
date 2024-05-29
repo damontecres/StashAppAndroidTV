@@ -99,7 +99,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private val tagsRowManager =
         ListRowManager<TagData>(
             DataType.TAG,
-            ListRowManager.SparseRowModifier(mAdapter, TAG_POS),
+            ListRowManager.SparseArrayRowModifier(mAdapter, TAG_POS),
             ArrayObjectAdapter(TagPresenter(TagLongClickCallBack())),
         ) { tagIds ->
             val result = mutationEngine.setTagsOnScene(mSelectedMovie!!.id, tagIds)
