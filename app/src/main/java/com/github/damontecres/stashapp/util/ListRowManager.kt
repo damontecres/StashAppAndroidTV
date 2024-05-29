@@ -128,7 +128,11 @@ class ListRowManager<T>(
     /**
      * Set the ids for something on a parent object.
      *
-     * For example wrapping [MutationEngine.setTagsOnScene] to set a list of tag IDs
+     * Returns the items on the parent object, typically the items represented by the IDs.
+     *
+     * For example wrapping [MutationEngine.setTagsOnScene] to set a list of tag IDs on a scene and return the [TagData] objects.
+     *
+     * @return the items from the parent object
      */
     fun interface SetIdsForItemCallback {
         suspend fun setIds(ids: List<String>): List<Any>
