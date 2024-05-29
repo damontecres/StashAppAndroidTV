@@ -21,6 +21,8 @@ class StashApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        application = this
+
         Log.v(TAG, "onCreate wasEnterBackground=$wasEnterBackground, mainDestroyed=$mainDestroyed")
 
         registerActivityLifecycleCallbacks(ActivityLifecycleCallbacksImpl())
@@ -137,6 +139,12 @@ class StashApplication : Application() {
     }
 
     companion object {
+        private lateinit var application: StashApplication
+
+        fun getApplication(): StashApplication {
+            return application
+        }
+
         const val TAG = "StashApplication"
         const val VERSION_NAME_PREVIOUS_KEY = "VERSION_NAME_PREVIOUS_NAME"
         const val VERSION_CODE_PREVIOUS_KEY = "VERSION_CODE_PREVIOUS_NAME"
