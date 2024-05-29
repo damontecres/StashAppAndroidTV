@@ -52,7 +52,6 @@ import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
-import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
@@ -62,7 +61,6 @@ import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MarkerDiffCallback
 import com.github.damontecres.stashapp.util.MovieDiffCallback
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.PerformerDiffCallback
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -92,9 +90,18 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
 
     private val studioAdapter = ArrayObjectAdapter(StudioPresenter())
-    private val performersAdapter =
-        ArrayObjectAdapter(PerformerPresenter(PerformerLongClickCallBack()))
-//    private val tagsAdapter = ArrayObjectAdapter(TagPresenter(TagLongClickCallBack()))
+
+    // Presenter is set in fetchData because it requires mSelectedMovie
+    private val mPerformersAdapter = ArrayObjectAdapter()
+    private val performersRowManager =
+        ListRowManager<PerformerData>(
+            DataType.PERFORMER,
+            ListRowManager.SparseArrayRowModifier(mAdapter, PERFORMER_POS),
+            mPerformersAdapter,
+        ) { performerIds ->
+            val result = mutationEngine.setPerformersOnScene(mSelectedMovie!!.id, performerIds)
+            result?.performers?.map { it.performerData }.orEmpty()
+        }
 
     private val tagsRowManager =
         ListRowManager<TagData>(
@@ -224,7 +231,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         ) {
             mSelectedMovie = queryEngine.getScene(sceneId)
             if (mSelectedMovie != null) {
-                performersAdapter.presenterSelector =
+                mPerformersAdapter.presenterSelector =
                     SinglePresenterSelector(
                         PerformerInScenePresenter(
                             mSelectedMovie!!,
@@ -297,19 +304,10 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             val performerIds = mSelectedMovie!!.performers.map { it.id }
             Log.v(TAG, "fetchData performerIds=$performerIds")
             if (performerIds.isNotEmpty()) {
-                if (mAdapter.lookup(PERFORMER_POS) == null) {
-                    mAdapter.set(
-                        PERFORMER_POS,
-                        ListRow(
-                            HeaderItem(getString(R.string.stashapp_performers)),
-                            performersAdapter,
-                        ),
-                    )
-                }
                 val perfs = queryEngine.findPerformers(performerIds = performerIds)
-                performersAdapter.setItems(perfs, PerformerDiffCallback)
+                performersRowManager.setItems(perfs)
             } else {
-                mAdapter.clear(PERFORMER_POS)
+                performersRowManager.setItems(listOf())
             }
 
             if (mSelectedMovie!!.movies.isNotEmpty()) {
@@ -566,7 +564,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         }
                     }
                 } else if (id == StashAction.ADD_PERFORMER.id) {
-                    val performerId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
+                    val performerId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
                     Log.d(TAG, "Adding performer $performerId to scene ${mSelectedMovie?.id}")
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
@@ -578,34 +576,14 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                             ).show()
                         },
                     ) {
-                        val performerIds =
-                            performersAdapter.unmodifiableList<PerformerData>().map { it.id }
-                                .toMutableList()
-                        performerIds.add(performerId.toString())
-                        val mutResult =
-                            MutationEngine(requireContext()).setPerformersOnScene(
-                                mSelectedMovie!!.id,
-                                performerIds,
-                            )
-                        val resultPerformers = mutResult?.performers?.map { it.performerData }
-                        val newPerformer =
-                            resultPerformers?.firstOrNull { it.id == performerId }
-                        performersAdapter.setItems(resultPerformers, PerformerDiffCallback)
-                        if (mAdapter.lookup(PERFORMER_POS) == null) {
-                            mAdapter.set(
-                                PERFORMER_POS,
-                                ListRow(
-                                    HeaderItem(getString(R.string.stashapp_performers)),
-                                    performersAdapter,
-                                ),
-                            )
+                        val newPerformer = performersRowManager.add(performerId)
+                        if (newPerformer != null) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Added performer '${newPerformer.name}' to scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                         }
-
-                        Toast.makeText(
-                            requireContext(),
-                            "Added performer '${newPerformer?.name}' to scene",
-                            Toast.LENGTH_SHORT,
-                        ).show()
                     }
                 } else if (id == StashAction.CREATE_MARKER.id) {
                     viewLifecycleOwner.lifecycleScope.launch(
@@ -869,29 +847,13 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         ).show()
                     },
                 ) {
-                    val performerIds =
-                        performersAdapter.unmodifiableList<PerformerData>()
-                            .map { it.id }
-                            .toMutableList()
-                    performerIds.remove(performerId)
-                    val mutResult =
-                        MutationEngine(requireContext()).setPerformersOnScene(
-                            mSelectedMovie!!.id,
-                            performerIds,
-                        )
-                    val resultPerformers =
-                        mutResult?.performers?.map { it.performerData }.orEmpty()
-                    if (resultPerformers.isEmpty()) {
-                        mAdapter.clear(PERFORMER_POS)
-                    } else {
-                        performersAdapter.setItems(resultPerformers, PerformerDiffCallback)
+                    if (performersRowManager.remove(item)) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Removed performer '${item.name}' from scene",
+                            Toast.LENGTH_SHORT,
+                        ).show()
                     }
-
-                    Toast.makeText(
-                        requireContext(),
-                        "Removed performer '${item.name}' from scene",
-                        Toast.LENGTH_SHORT,
-                    ).show()
                 }
             }
         }
