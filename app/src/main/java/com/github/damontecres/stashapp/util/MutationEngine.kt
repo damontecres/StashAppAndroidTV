@@ -230,7 +230,7 @@ class MutationEngine(
         primaryTagId: String,
         tagIds: List<String>,
     ): MarkerData? {
-        Log.v(TAG, "setTagsOnMarker markerId=$markerId, tagIds=$tagIds")
+        Log.v(TAG, "setTagsOnMarker markerId=$markerId, primaryTagId=$primaryTagId, tagIds=$tagIds")
         val mutation =
             UpdateMarkerMutation(
                 input =
