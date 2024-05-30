@@ -664,7 +664,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             preview = "",
             primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData),
             scene = MarkerData.Scene("", mSelectedMovie!!),
-            tags = emptyList(),
+            tags = it.tags.map { MarkerData.Tag("", it.tagData) },
             __typename = "",
         )
     }
