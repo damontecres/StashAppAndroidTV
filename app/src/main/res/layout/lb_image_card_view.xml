@@ -104,16 +104,7 @@
 
         </FrameLayout>
 
-        <androidx.media3.ui.PlayerView
-            android:id="@+id/main_video"
-            android:visibility="gone"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:adjustViewBounds="true"
-            android:background="@android:color/black"
-            app:use_controller="false"
-            app:show_buffering="never"
-            app:auto_show="false" />
+
     </ViewSwitcher>
     <androidx.leanback.widget.NonOverlappingFrameLayout
         android:layout_width="match_parent"

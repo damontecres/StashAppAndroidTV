@@ -1,101 +1,157 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/card_icon_row"
-    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="18dp"
     android:layout_alignParentStart="true"
     android:layout_below="@+id/content_text"
     android:layout_marginStart="0dp"
     android:layout_marginEnd="0dp"
-    android:gravity="center">
-
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+    android:layout_gravity="center_horizontal"
+    android:gravity="center_horizontal">
 
         <TextView
             android:id="@+id/extra_scene_icon"
             android:text="@string/fa_circle_play"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/extra_scene_count"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
 
         <TextView
             android:id="@+id/extra_scene_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
+            app:layout_constraintStart_toEndOf="@id/extra_scene_icon"
+            app:layout_constraintEnd_toStartOf="@id/extra_movie_icon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+            tools:text="1" />
 
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
 
         <TextView
             android:id="@+id/extra_movie_icon"
             android:text="@string/fa_film"
+            app:layout_constraintStart_toEndOf="@id/extra_scene_count"
+            app:layout_constraintEnd_toStartOf="@id/extra_movie_count"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
 
         <TextView
             android:id="@+id/extra_movie_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
-
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+            app:layout_constraintStart_toEndOf="@id/extra_movie_icon"
+            app:layout_constraintEnd_toStartOf="@id/extra_image_icon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+            tools:text="2" />
 
         <TextView
             android:id="@+id/extra_image_icon"
             android:text="@string/fa_image"
+            app:layout_constraintStart_toEndOf="@id/extra_movie_count"
+            app:layout_constraintEnd_toStartOf="@id/extra_image_count"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
 
         <TextView
             android:id="@+id/extra_image_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
-
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+            app:layout_constraintStart_toEndOf="@id/extra_image_icon"
+            app:layout_constraintEnd_toStartOf="@id/extra_gallery_icon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+            tools:text="1" />
 
         <TextView
             android:id="@+id/extra_gallery_icon"
             android:text="@string/fa_images"
+            app:layout_constraintStart_toEndOf="@id/extra_image_count"
+            app:layout_constraintEnd_toStartOf="@id/extra_gallery_count"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
 
         <TextView
             android:id="@+id/extra_gallery_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
-
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+            app:layout_constraintStart_toEndOf="@id/extra_gallery_icon"
+            app:layout_constraintEnd_toStartOf="@id/extra_tag_icon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+            tools:text="1" />
 
         <TextView
             android:id="@+id/extra_tag_icon"
             android:text="@string/fa_tag"
+            app:layout_constraintStart_toEndOf="@id/extra_gallery_count"
+            app:layout_constraintEnd_toStartOf="@id/extra_tag_count"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
 
         <TextView
             android:id="@+id/extra_tag_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
-
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+            app:layout_constraintStart_toEndOf="@id/extra_tag_icon"
+            app:layout_constraintEnd_toStartOf="@id/extra_performer_icon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+            tools:text="1" />
 
         <TextView
             android:id="@+id/extra_performer_icon"
             android:text="@string/fa_user"
+            app:layout_constraintStart_toEndOf="@id/extra_tag_count"
+            app:layout_constraintEnd_toStartOf="@id/extra_performer_count"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
 
         <TextView
             android:id="@+id/extra_performer_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
-
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+            app:layout_constraintStart_toEndOf="@id/extra_performer_icon"
+            app:layout_constraintEnd_toStartOf="@id/extra_marker_icon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+            tools:text="1" />
 
         <TextView
             android:id="@+id/extra_marker_icon"
             android:text="@string/fa_location_dot"
+            app:layout_constraintStart_toEndOf="@id/extra_performer_count"
+            app:layout_constraintEnd_toStartOf="@id/extra_marker_count"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon" />
 
         <TextView
             android:id="@+id/extra_marker_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
-
-    <LinearLayout style="@style/Widget.Theme.StashAppAndroidTV.ExtraWrapper">
+            app:layout_constraintStart_toEndOf="@id/extra_marker_icon"
+            app:layout_constraintEnd_toStartOf="@id/extra_ocounter_icon"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+            tools:text="1" />
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/extra_ocounter_icon"
@@ -103,13 +159,22 @@
             android:layout_width="@dimen/lb_basic_card_content_text_size"
             android:layout_height="@dimen/lb_basic_card_content_text_size"
             android:layout_gravity="center"
+            app:layout_constraintStart_toEndOf="@id/extra_marker_count"
+            app:layout_constraintEnd_toStartOf="@id/extra_ocounter_count"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
             android:contentDescription="icon"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon"
             app:tint="@color/lb_basic_card_content_text_color" />
 
         <TextView
             android:id="@+id/extra_ocounter_count"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText" />
-    </LinearLayout>
-
-</LinearLayout>
+            app:layout_constraintStart_toEndOf="@id/extra_ocounter_icon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+            tools:text="1" />
+</androidx.constraintlayout.widget.ConstraintLayout>
