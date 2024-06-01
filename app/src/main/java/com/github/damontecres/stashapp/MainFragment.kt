@@ -11,7 +11,6 @@ import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.BrowseFrameLayout
-import androidx.leanback.widget.BrowseFrameLayout.OnFocusSearchListener
 import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
@@ -56,6 +55,9 @@ class MainFragment : BrowseSupportFragment() {
     private lateinit var mBackgroundManager: BackgroundManager
     private var serverHash: Int? = null
 
+    @Volatile
+    private var fetchingData = false
+
     /**
      * This just hashes a few preferences that affect what this fragment shows
      */
@@ -75,11 +77,6 @@ class MainFragment : BrowseSupportFragment() {
         serverHash = computeServerHash()
 
         headersState = HEADERS_DISABLED
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        Log.i(TAG, "onCreate")
-        super.onActivityCreated(savedInstanceState)
 
         prepareBackgroundManager()
 
@@ -87,18 +84,44 @@ class MainFragment : BrowseSupportFragment() {
 
         setupEventListeners()
 
+        adapter = rowsAdapter
+
+        lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            val result =
+                testStashConnection(
+                    requireContext(),
+                    false,
+                    StashClient.getApolloClient(requireContext()),
+                )
+            if (result.status == TestResultStatus.SUCCESS) {
+                val serverInfo = result.serverInfo!!
+                ServerPreferences(requireContext()).updatePreferences()
+                val mainTitleView =
+                    requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
+                mainTitleView.refreshMenuItems()
+                if (rowsAdapter.size() == 0) {
+                    fetchData(serverInfo)
+                }
+            }
+        }
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
         // Override the focus search so that pressing up from the rows will move to search first
         val browseFrameLayout =
-            requireView().findViewById<BrowseFrameLayout>(androidx.leanback.R.id.browse_frame)
+            view.findViewById<BrowseFrameLayout>(androidx.leanback.R.id.browse_frame)
         browseFrameLayout.onFocusSearchListener =
-            OnFocusSearchListener { focused: View?, direction: Int ->
+            BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
                 if (direction == View.FOCUS_UP) {
                     requireActivity().findViewById(R.id.search_button)
                 } else {
                     null
                 }
             }
-        adapter = rowsAdapter
     }
 
     override fun onResume() {
@@ -219,6 +242,10 @@ class MainFragment : BrowseSupportFragment() {
     }
 
     private fun fetchData(serverInfo: ServerInfoQuery.Data) {
+        if (fetchingData) {
+            return
+        }
+        fetchingData = true
         clearData()
         viewLifecycleOwner.lifecycleScope.launch(
             Dispatchers.IO +
@@ -336,6 +363,8 @@ class MainFragment : BrowseSupportFragment() {
                     "Error fetching data: ${ex.message}",
                     Toast.LENGTH_LONG,
                 )
+            } finally {
+                fetchingData = false
             }
         }
     }
