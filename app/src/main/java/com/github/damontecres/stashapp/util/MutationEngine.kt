@@ -27,9 +27,12 @@ import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
 import com.github.damontecres.stashapp.api.UpdateImageMutation
 import com.github.damontecres.stashapp.api.UpdateMarkerMutation
+import com.github.damontecres.stashapp.api.UpdatePerformerMutation
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.ImageUpdateInput
+import com.github.damontecres.stashapp.api.type.PerformerUpdateInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
@@ -366,6 +369,24 @@ class MutationEngine(
             )
         val result = executeMutation(mutation)
         return result.data?.imageUpdate
+    }
+
+    suspend fun setPerformerFavorite(
+        performerId: String,
+        favorite: Boolean,
+    ): PerformerData? {
+        val input =
+            PerformerUpdateInput(
+                id = performerId,
+                favorite = Optional.present(favorite),
+            )
+        return updatePerformer(input)
+    }
+
+    suspend fun updatePerformer(input: PerformerUpdateInput): PerformerData? {
+        val mutation = UpdatePerformerMutation(input)
+        val result = executeMutation(mutation)
+        return result.data?.performerUpdate?.performerData
     }
 
     companion object {
