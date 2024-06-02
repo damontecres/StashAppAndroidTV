@@ -24,6 +24,7 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.StashGlide
@@ -307,6 +308,15 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             overlay.text = text
             ratingColors.recycle()
         }
+    }
+
+    fun setIsFavorite() {
+        val typeface = StashApplication.getFont(R.font.fa_solid_900)
+        val textView = getTextOverlay(OverlayPosition.TOP_RIGHT)
+        textView.typeface = typeface
+        textView.text = context.getString(R.string.fa_heart)
+        textView.setTextColor(context.getColor(android.R.color.holo_red_light))
+        textView.textSize = 18.0f
     }
 
     fun onUnbindViewHolder() {
