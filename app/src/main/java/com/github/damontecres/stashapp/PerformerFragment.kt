@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TableLayout
@@ -21,6 +22,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
+import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
@@ -32,6 +34,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
     private lateinit var mPerformerName: TextView
     private lateinit var mPerformerDisambiguation: TextView
     private lateinit var table: TableLayout
+    private lateinit var favoriteButton: Button
 
     override fun onViewCreated(
         view: View,
@@ -50,6 +53,8 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         mPerformerDisambiguation = view.findViewById(R.id.performer_disambiguation)
 
         table = view.findViewById(R.id.performer_table)
+        favoriteButton = view.findViewById(R.id.favorite_button)
+        favoriteButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
 
         val performer = requireActivity().intent.getParcelableExtra<Performer>("performer")
         if (performer != null) {
@@ -60,7 +65,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
 
             val exceptionHandler =
                 CoroutineExceptionHandler { _, ex ->
-                    Log.e(TAG, "\"Error fetching data", ex)
+                    Log.e(TAG, "Error fetching data", ex)
                     Toast.makeText(
                         requireContext(),
                         "Error fetching data: ${ex.message}",
@@ -76,6 +81,16 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                         Toast.LENGTH_LONG,
                     ).show()
                     return@launch
+                }
+
+                favoriteButton.isFocusable = true
+                if (perf.favorite) {
+                    favoriteButton.setTextColor(
+                        resources.getColor(
+                            android.R.color.holo_red_light,
+                            requireActivity().theme,
+                        ),
+                    )
                 }
 
                 if (perf.image_path != null) {

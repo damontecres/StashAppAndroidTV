@@ -4,7 +4,7 @@
         <ripple android:color="@color/selected_background">
             <item>
                 <shape android:shape="oval">
-                    <solid android:color="@color/selected_background" />
+                    <solid android:color="@android:color/transparent"/>
                 </shape>
             </item>
         </ripple>
