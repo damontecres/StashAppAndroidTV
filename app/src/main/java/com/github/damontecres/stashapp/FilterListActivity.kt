@@ -77,6 +77,10 @@ class FilterListActivity : FragmentActivity() {
     private var filter: StashFilter? = null
     private var filterData: SavedFilterData? = null
 
+    // Track the saved filter by name so when popping the back stack, we can restore the sort by
+    // This is a bit hacky, but the DB enforces a unique mode+name for a saved filter, so it works
+    private val filterDataByName = mutableMapOf<String, SavedFilterData?>()
+
     private lateinit var manager: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -122,6 +126,8 @@ class FilterListActivity : FragmentActivity() {
             val fragment =
                 supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment<*, *, *>?
             titleTextView.text = fragment?.name
+            filterData = filterDataByName[fragment?.name]
+            setUpSortButton()
         }
         val exHandler =
             CoroutineExceptionHandler { _, ex: Throwable ->
@@ -228,10 +234,17 @@ class FilterListActivity : FragmentActivity() {
 
         val currentDirection = filterData?.find_filter?.direction
         val currentKey = filterData?.find_filter?.sort
-        val index = sortOptions.map { it.first }.indexOf(currentKey)
+        val isRandom = currentKey?.startsWith("random_") ?: false
+        val index =
+            if (isRandom) {
+                sortOptions.map { it.first }.indexOf("random")
+            } else {
+                sortOptions.map { it.first }.indexOf(currentKey)
+            }
         setSortButtonText(
             currentDirection,
             if (index >= 0) sortOptions[index].second else null,
+            isRandom,
         )
 
         val adapter =
@@ -302,6 +315,7 @@ class FilterListActivity : FragmentActivity() {
     private fun setSortButtonText(
         currentDirection: SortDirectionEnum?,
         sortBy: CharSequence?,
+        isRandom: Boolean,
     ) {
         val directionString =
             when (currentDirection) {
@@ -310,7 +324,9 @@ class FilterListActivity : FragmentActivity() {
                 SortDirectionEnum.UNKNOWN__ -> null
                 null -> null
             }
-        if (directionString != null && sortBy != null) {
+        if (isRandom) {
+            sortButton.text = getString(R.string.stashapp_random)
+        } else if (directionString != null && sortBy != null) {
             SpannableString(directionString + " " + sortBy).apply {
                 val start = 0
                 val end = 1
@@ -439,6 +455,7 @@ class FilterListActivity : FragmentActivity() {
                 filter.object_filter,
             )
         fragment.requestFocus = true
+        filterDataByName[name] = filter
         setUpSortButton()
 
         if (first) {
