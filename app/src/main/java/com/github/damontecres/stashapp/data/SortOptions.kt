@@ -4,8 +4,15 @@ import com.github.damontecres.stashapp.R
 
 data class SortOption(val key: String, val nameStringId: Int)
 
+val COMMON_SORT_OPTIONS =
+    arrayOf(
+        SortOption("created_at", R.string.stashapp_created_at),
+        SortOption("updated_at", R.string.stashapp_updated_at),
+    )
+
 val SCENE_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("title", R.string.stashapp_title),
         SortOption("path", R.string.stashapp_path),
         SortOption("rating", R.string.stashapp_rating),
@@ -33,6 +40,7 @@ val SCENE_SORT_OPTIONS =
 
 val GALLERY_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("title", R.string.stashapp_title),
         SortOption("path", R.string.stashapp_path),
         SortOption("rating", R.string.stashapp_rating),
@@ -47,6 +55,7 @@ val GALLERY_SORT_OPTIONS =
 
 val IMAGE_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("title", R.string.stashapp_title),
         SortOption("path", R.string.stashapp_path),
         SortOption("rating", R.string.stashapp_rating),
@@ -62,6 +71,7 @@ val IMAGE_SORT_OPTIONS =
 
 val MOVIE_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("name", R.string.stashapp_name),
         SortOption("random", R.string.stashapp_random),
         SortOption("date", R.string.stashapp_date),
@@ -72,6 +82,7 @@ val MOVIE_SORT_OPTIONS =
 
 val PERFORMER_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("name", R.string.stashapp_name),
         SortOption("height", R.string.stashapp_height),
         SortOption("birthdate", R.string.stashapp_birthdate),
@@ -87,6 +98,7 @@ val PERFORMER_SORT_OPTIONS =
 
 val MARKER_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("title", R.string.stashapp_title),
         SortOption("seconds", R.string.stashapp_seconds),
         SortOption("scene_id", R.string.stashapp_scene_id),
@@ -96,6 +108,7 @@ val MARKER_SORT_OPTIONS =
 
 val STUDIO_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("name", R.string.stashapp_name),
         SortOption("random", R.string.stashapp_random),
         SortOption("rating", R.string.stashapp_rating),
@@ -106,6 +119,7 @@ val STUDIO_SORT_OPTIONS =
 
 val TAG_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("name", R.string.stashapp_name),
         SortOption("random", R.string.stashapp_random),
         SortOption("scenes_count", R.string.stashapp_scene_count),
