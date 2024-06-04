@@ -3,6 +3,8 @@ package com.github.damontecres.stashapp
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -57,6 +59,7 @@ import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.toFindFilterType
+import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -221,6 +224,11 @@ class FilterListActivity : FragmentActivity() {
         val currentDirection = filterData?.find_filter?.direction
         val currentKey = filterData?.find_filter?.sort
         val index = sortOptions.map { it.first }.indexOf(currentKey)
+        setSortButtonText(
+            sortButton,
+            currentDirection,
+            if (index >= 0) resolvedNames[index] else null,
+        )
 
         val adapter =
             SortByArrayAdapter(
@@ -251,6 +259,7 @@ class FilterListActivity : FragmentActivity() {
                 } else {
                     currentDirection ?: SortDirectionEnum.DESC
                 }
+            setSortButtonText(sortButton, newDirection, sortOptions[position].second)
 
             val newFilter =
                 filterData!!.copy(
@@ -286,9 +295,41 @@ class FilterListActivity : FragmentActivity() {
         }
     }
 
+    private fun setSortButtonText(
+        sortButton: Button,
+        currentDirection: SortDirectionEnum?,
+        sortBy: CharSequence?,
+    ) {
+        val directionString =
+            when (currentDirection) {
+                SortDirectionEnum.ASC -> getString(R.string.fa_caret_up)
+                SortDirectionEnum.DESC -> getString(R.string.fa_caret_down)
+                SortDirectionEnum.UNKNOWN__ -> null
+                null -> null
+            }
+        if (directionString != null && sortBy != null) {
+            SpannableString(directionString + " " + sortBy).apply {
+                val start = 0
+                val end = 1
+                setSpan(
+                    FontSpan(StashApplication.getFont(R.font.fa_solid_900)),
+                    start,
+                    end,
+                    Spannable.SPAN_INCLUSIVE_INCLUSIVE,
+                )
+                sortButton.text = this
+            }
+        } else if (sortBy != null) {
+            sortButton.text = sortBy
+        } else {
+            sortButton.text = "Sort By"
+        }
+    }
+
     private suspend fun getStartingFilter(): Pair<FilterType, SavedFilterData?> =
         withContext(Dispatchers.IO) {
             if (filter is AppFilter) {
+                Log.v(TAG, "getStartingFilter: filter is AppFilter=$filter")
                 return@withContext Pair(
                     FilterType.APP_FILTER,
                     (filter as AppFilter).toSavedFilterData(this@FilterListActivity),
@@ -307,12 +348,17 @@ class FilterListActivity : FragmentActivity() {
                 }
             val query = intent.getStringExtra("query")
             if (savedFilterId != null) {
+                Log.v(TAG, "getStartingFilter: filter is a saved filter id=$savedFilterId")
                 // Load a saved filter
                 return@withContext Pair(
                     FilterType.SAVED_FILTER,
                     queryEngine.getSavedFilter(savedFilterId.toString()),
                 )
             } else if (direction != null || sortBy != null || query != null) {
+                Log.v(
+                    TAG,
+                    "getStartingFilter: filter is generic direction=$direction, sortBy=$sortBy, query=$query",
+                )
                 // Generic filter
                 return@withContext Pair(
                     FilterType.CUSTOM_FILTER,
@@ -338,6 +384,10 @@ class FilterListActivity : FragmentActivity() {
                 // Default filter
                 val filter = queryEngine.getDefaultFilter(dataType)
                 if (filter == null) {
+                    Log.v(
+                        TAG,
+                        "getStartingFilter: filter is default from app for $dataType",
+                    )
                     return@withContext Pair(
                         FilterType.CUSTOM_FILTER,
                         SavedFilterData(
@@ -359,6 +409,10 @@ class FilterListActivity : FragmentActivity() {
                         ),
                     )
                 } else {
+                    Log.v(
+                        TAG,
+                        "getStartingFilter: filter is default from server for $dataType",
+                    )
                     return@withContext Pair(FilterType.SAVED_FILTER, filter)
                 }
             }
