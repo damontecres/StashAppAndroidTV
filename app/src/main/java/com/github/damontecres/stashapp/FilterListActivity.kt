@@ -3,6 +3,8 @@ package com.github.damontecres.stashapp
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -57,6 +59,7 @@ import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.toFindFilterType
+import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -66,10 +69,17 @@ import kotlinx.coroutines.withContext
 
 class FilterListActivity : FragmentActivity() {
     private lateinit var titleTextView: TextView
+    private lateinit var sortButton: Button
     private lateinit var queryEngine: QueryEngine
     private lateinit var dataType: DataType
+    private lateinit var sortOptions: List<Pair<String, String>>
+
     private var filter: StashFilter? = null
     private var filterData: SavedFilterData? = null
+
+    // Track the saved filter by name so when popping the back stack, we can restore the sort by
+    // This is a bit hacky, but the DB enforces a unique mode+name for a saved filter, so it works
+    private val filterDataByName = mutableMapOf<String, SavedFilterData?>()
 
     private lateinit var manager: SharedPreferences
 
@@ -89,12 +99,23 @@ class FilterListActivity : FragmentActivity() {
                 DataType.SCENE
             }
 
+        // Resolve the strings, then sort
+        sortOptions =
+            dataType.sortOptions.map {
+                Pair(
+                    it.key,
+                    this@FilterListActivity.getString(it.nameStringId),
+                )
+            }.sortedBy { it.second }
+
         val filterButton = findViewById<Button>(R.id.filter_button)
         filterButton.setOnClickListener {
             Toast.makeText(this, "Filters not loaded yet!", Toast.LENGTH_SHORT).show()
         }
         val onFocusChangeListener = StashOnFocusChangeListener(this)
         filterButton.onFocusChangeListener = onFocusChangeListener
+
+        sortButton = findViewById(R.id.sort_button)
 
         titleTextView = findViewById(R.id.list_title)
         supportFragmentManager.addFragmentOnAttachListener { _, fragment ->
@@ -105,6 +126,8 @@ class FilterListActivity : FragmentActivity() {
             val fragment =
                 supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment<*, *, *>?
             titleTextView.text = fragment?.name
+            filterData = filterDataByName[fragment?.name]
+            setUpSortButton()
         }
         val exHandler =
             CoroutineExceptionHandler { _, ex: Throwable ->
@@ -143,7 +166,6 @@ class FilterListActivity : FragmentActivity() {
                             }
                         }
                     setupFragment(filterData, true)
-                    setUpSortButton()
                 } else {
                     Log.e(TAG, "No starting filter found for $dataType was null")
                     finish()
@@ -182,6 +204,7 @@ class FilterListActivity : FragmentActivity() {
 
                 listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                     val savedFilter = savedFilters[position]
+                    this@FilterListActivity.filterData = savedFilter
                     listPopUp.dismiss()
                     setupFragment(savedFilter, false)
                     filter =
@@ -201,26 +224,28 @@ class FilterListActivity : FragmentActivity() {
     }
 
     private fun setUpSortButton() {
-        val sortButton = findViewById<Button>(R.id.sort_button)
         val listPopUp =
             ListPopupWindow(
                 this@FilterListActivity,
                 null,
                 android.R.attr.listPopupWindowStyle,
             )
-        // Resolve the strings, then sort
-        val sortOptions =
-            dataType.sortOptions.map {
-                Pair(
-                    it.key,
-                    this@FilterListActivity.getString(it.nameStringId),
-                )
-            }.sortedBy { it.second }
         val resolvedNames = sortOptions.map { it.second }
 
         val currentDirection = filterData?.find_filter?.direction
         val currentKey = filterData?.find_filter?.sort
-        val index = sortOptions.map { it.first }.indexOf(currentKey)
+        val isRandom = currentKey?.startsWith("random_") ?: false
+        val index =
+            if (isRandom) {
+                sortOptions.map { it.first }.indexOf("random")
+            } else {
+                sortOptions.map { it.first }.indexOf(currentKey)
+            }
+        setSortButtonText(
+            currentDirection,
+            if (index >= 0) sortOptions[index].second else null,
+            isRandom,
+        )
 
         val adapter =
             SortByArrayAdapter(
@@ -264,6 +289,7 @@ class FilterListActivity : FragmentActivity() {
                             __typename = "",
                         ),
                 )
+            this@FilterListActivity.filterData = newFilter
             setupFragment(newFilter, false, false)
             filter =
                 StashSavedFilter(
@@ -286,9 +312,43 @@ class FilterListActivity : FragmentActivity() {
         }
     }
 
+    private fun setSortButtonText(
+        currentDirection: SortDirectionEnum?,
+        sortBy: CharSequence?,
+        isRandom: Boolean,
+    ) {
+        val directionString =
+            when (currentDirection) {
+                SortDirectionEnum.ASC -> getString(R.string.fa_caret_up)
+                SortDirectionEnum.DESC -> getString(R.string.fa_caret_down)
+                SortDirectionEnum.UNKNOWN__ -> null
+                null -> null
+            }
+        if (isRandom) {
+            sortButton.text = getString(R.string.stashapp_random)
+        } else if (directionString != null && sortBy != null) {
+            SpannableString(directionString + " " + sortBy).apply {
+                val start = 0
+                val end = 1
+                setSpan(
+                    FontSpan(StashApplication.getFont(R.font.fa_solid_900)),
+                    start,
+                    end,
+                    Spannable.SPAN_INCLUSIVE_INCLUSIVE,
+                )
+                sortButton.text = this
+            }
+        } else if (sortBy != null) {
+            sortButton.text = sortBy
+        } else {
+            sortButton.text = "Sort By"
+        }
+    }
+
     private suspend fun getStartingFilter(): Pair<FilterType, SavedFilterData?> =
         withContext(Dispatchers.IO) {
             if (filter is AppFilter) {
+                Log.v(TAG, "getStartingFilter: filter is AppFilter=$filter")
                 return@withContext Pair(
                     FilterType.APP_FILTER,
                     (filter as AppFilter).toSavedFilterData(this@FilterListActivity),
@@ -307,12 +367,17 @@ class FilterListActivity : FragmentActivity() {
                 }
             val query = intent.getStringExtra("query")
             if (savedFilterId != null) {
+                Log.v(TAG, "getStartingFilter: filter is a saved filter id=$savedFilterId")
                 // Load a saved filter
                 return@withContext Pair(
                     FilterType.SAVED_FILTER,
                     queryEngine.getSavedFilter(savedFilterId.toString()),
                 )
             } else if (direction != null || sortBy != null || query != null) {
+                Log.v(
+                    TAG,
+                    "getStartingFilter: filter is generic direction=$direction, sortBy=$sortBy, query=$query",
+                )
                 // Generic filter
                 return@withContext Pair(
                     FilterType.CUSTOM_FILTER,
@@ -338,6 +403,10 @@ class FilterListActivity : FragmentActivity() {
                 // Default filter
                 val filter = queryEngine.getDefaultFilter(dataType)
                 if (filter == null) {
+                    Log.v(
+                        TAG,
+                        "getStartingFilter: filter is default from app for $dataType",
+                    )
                     return@withContext Pair(
                         FilterType.CUSTOM_FILTER,
                         SavedFilterData(
@@ -359,6 +428,10 @@ class FilterListActivity : FragmentActivity() {
                         ),
                     )
                 } else {
+                    Log.v(
+                        TAG,
+                        "getStartingFilter: filter is default from server for $dataType",
+                    )
                     return@withContext Pair(FilterType.SAVED_FILTER, filter)
                 }
             }
@@ -382,6 +455,8 @@ class FilterListActivity : FragmentActivity() {
                 filter.object_filter,
             )
         fragment.requestFocus = true
+        filterDataByName[name] = filter
+        setUpSortButton()
 
         if (first) {
             // If the first page, maybe scroll
