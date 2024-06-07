@@ -5,6 +5,7 @@ import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.util.CodecSupport
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -64,17 +65,60 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
                 )
             ) {
                 val videoFile = file.videoFileData
-                debugInfo =
-                    listOf(
-                        "Video: ${videoFile.video_codec}",
-                        "Audio: ${videoFile.audio_codec}",
-                        "Format: ${videoFile.format}",
-                    ).joinToString(", ")
+                val supportedCodecs = CodecSupport.getSupportedCodecs(context)
+                val videoSupported = supportedCodecs.isVideoSupported(videoFile.video_codec)
+                val audioSupported = supportedCodecs.isAudioSupported(videoFile.audio_codec)
+                val containerSupported =
+                    supportedCodecs.isContainerFormatSupported(videoFile.format)
+
+                val video =
+                    if (videoSupported) {
+                        "Video: ${videoFile.video_codec}"
+                    } else {
+                        "Video: ${videoFile.video_codec} (unsupported)"
+                    }
+                val audio =
+                    if (audioSupported) {
+                        "Audio: ${videoFile.audio_codec}"
+                    } else {
+                        "Audio: ${videoFile.audio_codec} (unsupported)"
+                    }
+                val format =
+                    if (containerSupported) {
+                        "Format: ${videoFile.format}"
+                    } else {
+                        "Format: ${videoFile.format} (unsupported)"
+                    }
+
+                debugInfo = listOf(video, audio, format).joinToString(", ")
             }
         }
+        val playCount =
+            if (scene.play_count != null && scene.play_count > 0) {
+                context.getString(R.string.stashapp_play_count) + ": " + scene.play_count.toString()
+            } else {
+                null
+            }
+        val playDuration =
+            if (scene.play_duration != null && scene.play_duration >= 1.0) {
+                context.getString(R.string.stashapp_play_duration) + ": " + durationToString(scene.play_duration)
+            } else {
+                null
+            }
+
+        val playHistory =
+            if (playCount != null || playDuration != null) {
+                concatIfNotBlank(
+                    ", ",
+                    playCount,
+                    playDuration,
+                )
+            } else {
+                null
+            }
 
         viewHolder.body.text =
-            listOfNotNull(scene.details, "", debugInfo, createdAt, updatedAt)
+            listOfNotNull(scene.details, "", debugInfo, playHistory, createdAt, updatedAt)
                 .joinToString("\n")
 
         val ratingBar = viewHolder.view.findViewById<StashRatingBar>(R.id.rating_bar)
