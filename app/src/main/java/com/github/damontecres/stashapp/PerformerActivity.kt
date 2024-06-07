@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.core.view.children
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
@@ -59,6 +60,9 @@ class PerformerActivity : FragmentActivity() {
             val viewPager = findViewById<LeanbackViewPager>(R.id.performer_view_pager)
             viewPager.adapter = PagerAdapter(columns, supportFragmentManager)
             tabLayout.setupWithViewPager(viewPager)
+
+            tabLayout.nextFocusDownId = R.id.performer_view_pager
+            tabLayout.children.forEach { it.nextFocusDownId = R.id.performer_view_pager }
 
             supportFragmentManager.beginTransaction()
                 .replace(R.id.performer_details, PerformerFragment())
