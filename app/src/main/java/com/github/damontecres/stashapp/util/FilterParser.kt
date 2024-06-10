@@ -14,6 +14,8 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
+import com.github.damontecres.stashapp.api.type.OrientationEnum
 import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
@@ -263,6 +265,19 @@ class FilterParser(private val serverVersion: Version) {
                 convertToResolutionEnum(it["value"].toString()),
                 CriterionModifier.valueOf(it["modifier"]!! as String),
             )
+        } else {
+            null
+        }
+    }
+
+    private fun convertOrientationCriterionInputInput(it: Map<String, *>?): OrientationCriterionInput? {
+        return if (it != null) {
+            val value = it["value"]
+            if (value is List<*>) {
+                OrientationCriterionInput(value.map { OrientationEnum.valueOf(it.toString()) })
+            } else {
+                OrientationCriterionInput(listOf(OrientationEnum.valueOf(value.toString())))
+            }
         } else {
             null
         }
@@ -572,6 +587,7 @@ class FilterParser(private val serverVersion: Version) {
                 organized = Optional.presentIfNotNull(convertBoolean(filter["organized"])),
                 o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter["o_counter"])),
                 resolution = Optional.presentIfNotNull(convertResolutionCriterionInput(filter["resolution"])),
+                orientation = Optional.present(convertOrientationCriterionInputInput(filter["orientation"])),
                 is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
                 studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
                 tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
