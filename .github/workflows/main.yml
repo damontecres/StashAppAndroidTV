@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - develop/v*
       - dev/workflows
 
 defaults:
@@ -16,7 +17,7 @@ concurrency:
 
 env:
   APK_SHORT_NAME: StashAppAndroidTV-debug.apk
-  TAG_NAME: develop
+  BRANCH_NAME: ${{ github.ref_name }}
   BUILD_TOOLS_VERSION: 34.0.0
 
 jobs:
@@ -31,10 +32,6 @@ jobs:
           fetch-depth: 0 # Need the tags to build
           submodules: true # Need the submodules to build
       # Setup the SDKs
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
@@ -50,8 +47,15 @@ jobs:
         run: |
           LATEST_TAG=$(git describe --tags --match 'v*' --abbrev=0)
           VERSION_NAME=$(git describe --tags --match 'v*' --long)
+          if [[ $BRANCH_NAME == "main" ]]; then
+            TAG_NAME="develop"
+          else
+            TAG_NAME="${BRANCH_NAME/\//-}"
+          fi
+
           echo "LATEST_TAG=$LATEST_TAG" >> "$GITHUB_ENV"
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_ENV"
       - name: Build app
         id: buildapp
         env:
@@ -105,8 +109,8 @@ jobs:
           tag: "${{ env.TAG_NAME }}"
 
           body: |
-            This pre-release tracks the latest development debug build of StashAppAndroidTV from the `main` branch.
+            This pre-release tracks the development debug build of StashAppAndroidTV from the `${{ env.BRANCH_NAME }}` branch.
 
             See https://github.com/damontecres/StashAppAndroidTV/releases/latest for the latest stable release.
 
-            [See changes since `${{ env.LATEST_TAG }}`](https://github.com/damontecres/StashAppAndroidTV/compare/${{ env.LATEST_TAG }}...develop)
+            [See changes since `${{ env.LATEST_TAG }}`](https://github.com/damontecres/StashAppAndroidTV/compare/${{ env.LATEST_TAG }}...${{ env.TAG_NAME }})
