@@ -460,6 +460,7 @@ class FilterParser(private val serverVersion: Version) {
                     gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
                     url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
                     aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
+                    child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
                     ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
                     created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                     updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
