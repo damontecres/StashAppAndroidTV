@@ -448,12 +448,26 @@ class FilterListActivity : FragmentActivity() {
                 getString(dataType.pluralStringId)
             }
         val fragment =
-            getFragment(
-                name,
-                dataType,
-                filter.find_filter?.toFindFilterType(),
-                filter.object_filter,
-            )
+            try {
+                getFragment(
+                    name,
+                    dataType,
+                    filter.find_filter?.toFindFilterType(),
+                    filter.object_filter,
+                )
+            } catch (ex: Exception) {
+                Log.e(
+                    TAG,
+                    "Error fetching fragment for saved filter id=${filter.id}",
+                    ex,
+                )
+                Toast.makeText(
+                    this@FilterListActivity,
+                    "Error occurred trying to setup filter! This might a bug.",
+                    Toast.LENGTH_LONG,
+                ).show()
+                return
+            }
         fragment.requestFocus = true
         filterDataByName[name] = filter
         setUpSortButton()
