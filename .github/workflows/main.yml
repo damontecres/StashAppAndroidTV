@@ -109,6 +109,8 @@ jobs:
           tag: "${{ env.TAG_NAME }}"
 
           body: |
+            ### `${{ env.BRANCH_NAME }}` development build
+
             This pre-release tracks the development debug build of StashAppAndroidTV from the `${{ env.BRANCH_NAME }}` branch.
 
             See https://github.com/damontecres/StashAppAndroidTV/releases/latest for the latest stable release.
