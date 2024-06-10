@@ -10,12 +10,12 @@ data class SortOption(
 )
 
 val COMMON_SORT_OPTIONS =
-    listOf(
-        SortOption("created_at", R.string.stashapp_created_at, Version.V0_26_0),
+    arrayOf(
+        SortOption("created_at", R.string.stashapp_created_at),
+        SortOption("updated_at", R.string.stashapp_updated_at),
         SortOption("id", R.string.stashapp_scene_id, Version.V0_26_0),
         SortOption("random", R.string.stashapp_random),
-        SortOption("updated_at", R.string.stashapp_updated_at, Version.V0_26_0),
-    ).toTypedArray()
+    )
 
 val SCENE_SORT_OPTIONS =
     listOf(
@@ -61,6 +61,7 @@ val GALLERY_SORT_OPTIONS =
 
 val IMAGE_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("date", R.string.stashapp_date),
         SortOption("file_count", R.string.stashapp_file_count),
         SortOption("file_mod_time", R.string.stashapp_file_mod_time),
@@ -75,6 +76,7 @@ val IMAGE_SORT_OPTIONS =
 
 val MOVIE_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("date", R.string.stashapp_date),
         SortOption("duration", R.string.stashapp_duration),
         SortOption("name", R.string.stashapp_name),
@@ -84,6 +86,7 @@ val MOVIE_SORT_OPTIONS =
 
 val PERFORMER_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("birthdate", R.string.stashapp_birthdate),
         SortOption("galleries_count", R.string.stashapp_gallery_count),
         SortOption("height", R.string.stashapp_height),
@@ -101,6 +104,7 @@ val PERFORMER_SORT_OPTIONS =
 
 val MARKER_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("scene_id", R.string.stashapp_scene_id),
         SortOption("scenes_updated_at", R.string.stashapp_scenes_updated_at),
         SortOption("seconds", R.string.stashapp_seconds),
@@ -109,6 +113,7 @@ val MARKER_SORT_OPTIONS =
 
 val STUDIO_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("child_count", R.string.stashapp_subsidiary_studio_count, Version.V0_26_0),
         SortOption("galleries_count", R.string.stashapp_gallery_count),
         SortOption("images_count", R.string.stashapp_image_count),
@@ -119,6 +124,7 @@ val STUDIO_SORT_OPTIONS =
 
 val TAG_SORT_OPTIONS =
     listOf(
+        *COMMON_SORT_OPTIONS,
         SortOption("galleries_count", R.string.stashapp_gallery_count),
         SortOption("images_count", R.string.stashapp_image_count),
         SortOption("name", R.string.stashapp_name),

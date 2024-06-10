@@ -68,16 +68,7 @@ fragment SlimSceneData on Scene {
   }
   galleries {
     id
-    files {
-      path
-      __typename
-    }
-    folder {
-      path
-      __typename
-    }
     title
-    __typename
   }
   studio {
     ...StudioData
@@ -106,7 +97,10 @@ fragment SlimSceneData on Scene {
   scene_markers {
     id
     title
-    primary_tag{
+    primary_tag {
+      ...TagData
+    }
+    tags {
       ...TagData
     }
     screenshot

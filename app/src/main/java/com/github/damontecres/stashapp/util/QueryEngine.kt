@@ -12,6 +12,7 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
+import com.github.damontecres.stashapp.api.FindGalleriesById_V0250Query
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
 import com.github.damontecres.stashapp.api.FindGalleryQuery
 import com.github.damontecres.stashapp.api.FindImageQuery
@@ -64,6 +65,7 @@ class QueryEngine(
     private val showToasts: Boolean = false,
     lock: ReadWriteLock? = null,
 ) {
+    private val serverVersion = ServerPreferences(context).serverVersion
     private val client = StashClient.getApolloClient(context)
 
     private val readLock = lock?.readLock()
@@ -200,7 +202,6 @@ class QueryEngine(
         if (tagIds.isEmpty()) {
             return listOf()
         }
-        val serverVersion = ServerPreferences(context).serverVersion
         if (serverVersion.isAtLeast(Version.V0_25_0)) {
             val query =
                 client.query(
@@ -288,9 +289,19 @@ class QueryEngine(
         return executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
     }
 
-    suspend fun getGallery(galleryId: String): GalleryData? {
-        val query = client.query(FindGalleryQuery(galleryId))
-        return executeQuery(query).data?.findGallery?.galleryData
+    suspend fun getGalleries(galleryIds: List<String>): List<GalleryData> {
+        return if (galleryIds.isEmpty()) {
+            return listOf()
+        } else if (serverVersion.isAtLeast(Version.V0_25_0)) {
+            val query = client.query(FindGalleriesById_V0250Query(galleryIds))
+            executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
+        } else {
+            galleryIds.mapNotNull {
+                val query =
+                    client.query(FindGalleryQuery(it))
+                executeQuery(query).data?.findGallery?.galleryData
+            }
+        }
     }
 
     /**

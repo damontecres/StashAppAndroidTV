@@ -3,10 +3,13 @@ package com.github.damontecres.stashapp
 import android.app.Activity
 import android.app.Application
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
+import androidx.annotation.FontRes
 import androidx.core.content.edit
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -20,6 +23,8 @@ class StashApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        application = this
 
         Log.v(TAG, "onCreate wasEnterBackground=$wasEnterBackground, mainDestroyed=$mainDestroyed")
 
@@ -137,6 +142,22 @@ class StashApplication : Application() {
     }
 
     companion object {
+        private lateinit var application: StashApplication
+
+        private val fontCache = mutableMapOf<Int, Typeface>()
+
+        fun getApplication(): StashApplication {
+            return application
+        }
+
+        fun getFont(
+            @FontRes fontId: Int,
+        ): Typeface {
+            return fontCache.getOrPut(fontId) {
+                return ResourcesCompat.getFont(getApplication(), fontId)!!
+            }
+        }
+
         const val TAG = "StashApplication"
         const val VERSION_NAME_PREVIOUS_KEY = "VERSION_NAME_PREVIOUS_NAME"
         const val VERSION_CODE_PREVIOUS_KEY = "VERSION_CODE_PREVIOUS_NAME"

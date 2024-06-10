@@ -26,6 +26,10 @@ open class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null
 
         cardView.setUpExtraRow(dataTypeMap, item.o_counter)
 
+        if (item.favorite) {
+            cardView.setIsFavorite()
+        }
+
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         if (item.image_path != null) {
             loadImage(cardView, item.image_path)
