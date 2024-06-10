@@ -274,9 +274,21 @@ class FilterParser(private val serverVersion: Version) {
         return if (it != null) {
             val value = it["value"]
             if (value is List<*>) {
-                OrientationCriterionInput(value.map { OrientationEnum.valueOf(it.toString()) })
+                OrientationCriterionInput(
+                    value.mapNotNull {
+                        OrientationEnum.valueOf(
+                            it.toString().uppercase(),
+                        )
+                    },
+                )
             } else {
-                OrientationCriterionInput(listOf(OrientationEnum.valueOf(value.toString())))
+                OrientationCriterionInput(
+                    listOf(
+                        OrientationEnum.valueOf(
+                            value.toString().uppercase(),
+                        ),
+                    ),
+                )
             }
         } else {
             null
