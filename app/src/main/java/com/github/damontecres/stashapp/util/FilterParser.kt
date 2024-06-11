@@ -14,6 +14,8 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
+import com.github.damontecres.stashapp.api.type.OrientationEnum
 import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
@@ -268,15 +270,40 @@ class FilterParser(private val serverVersion: Version) {
         }
     }
 
+    private fun convertOrientationCriterionInput(it: Map<String, *>?): OrientationCriterionInput? {
+        return if (it != null) {
+            val value = it["value"]
+            if (value is List<*>) {
+                OrientationCriterionInput(
+                    value.mapNotNull {
+                        OrientationEnum.valueOf(
+                            it.toString().uppercase(),
+                        )
+                    },
+                )
+            } else {
+                OrientationCriterionInput(
+                    listOf(
+                        OrientationEnum.valueOf(
+                            value.toString().uppercase(),
+                        ),
+                    ),
+                )
+            }
+        } else {
+            null
+        }
+    }
+
     fun convertPerformerObjectFilter(f: Any?): PerformerFilterType? {
         return if (f != null && f is PerformerFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             PerformerFilterType(
-                AND = Optional.presentIfNotNull(convertPerformerObjectFilter(filter["AND"] as Map<String, Map<String, *>>?)),
-                OR = Optional.presentIfNotNull(convertPerformerObjectFilter(filter["OR"] as Map<String, Map<String, *>>?)),
-                NOT = Optional.presentIfNotNull(convertPerformerObjectFilter(filter["NOT"] as Map<String, Map<String, *>>?)),
+                AND = Optional.presentIfNotNull(convertPerformerObjectFilter(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertPerformerObjectFilter(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertPerformerObjectFilter(filter["NOT"])),
                 name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
                 disambiguation = Optional.presentIfNotNull(convertStringCriterionInput(filter["disambiguation"])),
                 details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
@@ -290,12 +317,7 @@ class FilterParser(private val serverVersion: Version) {
                 measurements = Optional.presentIfNotNull(convertStringCriterionInput(filter["measurements"])),
                 fake_tits = Optional.presentIfNotNull(convertStringCriterionInput(filter["fake_tits"])),
                 penis_length = Optional.presentIfNotNull(convertFloatCriterionInput(filter["penis_length"])),
-                circumcised =
-                    Optional.presentIfNotNull(
-                        convertCircumcisionCriterionInput(
-                            filter["circumcised"],
-                        ),
-                    ),
+                circumcised = Optional.presentIfNotNull(convertCircumcisionCriterionInput(filter["circumcised"])),
                 career_length = Optional.presentIfNotNull(convertStringCriterionInput(filter["career_length"])),
                 tattoos = Optional.presentIfNotNull(convertStringCriterionInput(filter["tattoos"])),
                 piercings = Optional.presentIfNotNull(convertStringCriterionInput(filter["piercings"])),
@@ -309,23 +331,13 @@ class FilterParser(private val serverVersion: Version) {
                 gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
                 play_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["play_count"])),
                 o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter["o_counter"])),
-                stash_id_endpoint =
-                    Optional.presentIfNotNull(
-                        convertStashIDCriterionInput(
-                            filter["stash_id_endpoint"],
-                        ),
-                    ),
+                stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter["stash_id_endpoint"])),
                 rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
                 url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
                 hair_color = Optional.presentIfNotNull(convertStringCriterionInput(filter["hair_color"])),
                 weight = Optional.presentIfNotNull(convertIntCriterionInput(filter["weight"])),
                 death_year = Optional.presentIfNotNull(convertIntCriterionInput(filter["death_year"])),
-                studios =
-                    Optional.presentIfNotNull(
-                        convertHierarchicalMultiCriterionInput(
-                            filter["studios"],
-                        ),
-                    ),
+                studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
                 performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
                 ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
                 birthdate = Optional.presentIfNotNull(convertDateCriterionInput(filter["birthdate"])),
@@ -344,9 +356,9 @@ class FilterParser(private val serverVersion: Version) {
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             SceneFilterType(
-                AND = Optional.presentIfNotNull(convertSceneObjectFilter(filter["AND"] as Map<String, Map<String, *>>?)),
-                OR = Optional.presentIfNotNull(convertSceneObjectFilter(filter["OR"] as Map<String, Map<String, *>>?)),
-                NOT = Optional.presentIfNotNull(convertSceneObjectFilter(filter["NOT"] as Map<String, Map<String, *>>?)),
+                AND = Optional.presentIfNotNull(convertSceneObjectFilter(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertSceneObjectFilter(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertSceneObjectFilter(filter["NOT"])),
                 id = Optional.presentIfNotNull(convertIntCriterionInput(filter["id"])),
                 title = Optional.presentIfNotNull(convertStringCriterionInput(filter["title"])),
                 code = Optional.presentIfNotNull(convertStringCriterionInput(filter["code"])),
@@ -355,24 +367,15 @@ class FilterParser(private val serverVersion: Version) {
                 oshash = Optional.presentIfNotNull(convertStringCriterionInput(filter["oshash"])),
                 checksum = Optional.presentIfNotNull(convertStringCriterionInput(filter["checksum"])),
                 phash = Optional.presentIfNotNull(convertStringCriterionInput(filter["phash"])),
-                phash_distance =
-                    Optional.presentIfNotNull(
-                        convertPhashDistanceCriterionInput(
-                            filter["phash_distance"],
-                        ),
-                    ),
+                phash_distance = Optional.presentIfNotNull(convertPhashDistanceCriterionInput(filter["phash_distance"])),
                 path = Optional.presentIfNotNull(convertStringCriterionInput(filter["path"])),
                 file_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["file_count"])),
                 rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
                 organized = Optional.presentIfNotNull(convertBoolean(filter["organized"])),
                 o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter["o_counter"])),
-                duplicated =
-                    Optional.presentIfNotNull(
-                        convertPHashDuplicationCriterionInput(
-                            filter["duplicated"],
-                        ),
-                    ),
+                duplicated = Optional.presentIfNotNull(convertPHashDuplicationCriterionInput(filter["duplicated"])),
                 resolution = Optional.presentIfNotNull(convertResolutionCriterionInput(filter["resolution"])),
+                orientation = Optional.presentIfNotNull(convertOrientationCriterionInput(filter["orientation"])),
                 framerate = Optional.presentIfNotNull(convertIntCriterionInput(filter["framerate"])),
                 bitrate = Optional.presentIfNotNull(convertIntCriterionInput(filter["bitrate"])),
                 video_codec = Optional.presentIfNotNull(convertStringCriterionInput(filter["video_codec"])),
@@ -380,12 +383,7 @@ class FilterParser(private val serverVersion: Version) {
                 duration = Optional.presentIfNotNull(convertIntCriterionInput(filter["duration"])),
                 has_markers = Optional.presentIfNotNull(convertString(filter["has_markers"])),
                 is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
-                studios =
-                    Optional.presentIfNotNull(
-                        convertHierarchicalMultiCriterionInput(
-                            filter["studios"],
-                        ),
-                    ),
+                studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
                 movies = Optional.presentIfNotNull(convertMultiCriterionInput(filter["movies"])),
                 galleries = Optional.presentIfNotNull(convertMultiCriterionInput(filter["galleries"])),
                 tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
@@ -400,12 +398,7 @@ class FilterParser(private val serverVersion: Version) {
                 performer_age = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_age"])),
                 performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
                 performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_count"])),
-                stash_id_endpoint =
-                    Optional.presentIfNotNull(
-                        convertStashIDCriterionInput(
-                            filter["stash_id_endpoint"],
-                        ),
-                    ),
+                stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter["stash_id_endpoint"])),
                 url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
                 interactive = Optional.presentIfNotNull(convertBoolean(filter["interactive"])),
                 interactive_speed = Optional.presentIfNotNull(convertIntCriterionInput(filter["interactive_speed"])),
@@ -430,9 +423,9 @@ class FilterParser(private val serverVersion: Version) {
             val filter = f as Map<String, Map<String, *>>
             var studioFilter =
                 StudioFilterType(
-                    AND = Optional.presentIfNotNull(convertStudioObjectFilter(filter["AND"] as Map<String, Map<String, *>>?)),
-                    OR = Optional.presentIfNotNull(convertStudioObjectFilter(filter["OR"] as Map<String, Map<String, *>>?)),
-                    NOT = Optional.presentIfNotNull(convertStudioObjectFilter(filter["NOT"] as Map<String, Map<String, *>>?)),
+                    AND = Optional.presentIfNotNull(convertStudioObjectFilter(filter["AND"])),
+                    OR = Optional.presentIfNotNull(convertStudioObjectFilter(filter["OR"])),
+                    NOT = Optional.presentIfNotNull(convertStudioObjectFilter(filter["NOT"])),
                     name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
                     details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
                     parents = Optional.presentIfNotNull(convertMultiCriterionInput(filter["parents"])),
@@ -450,6 +443,7 @@ class FilterParser(private val serverVersion: Version) {
                     gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
                     url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
                     aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
+                    child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
                     ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
                     created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                     updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
@@ -472,9 +466,9 @@ class FilterParser(private val serverVersion: Version) {
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             TagFilterType(
-                AND = Optional.presentIfNotNull(convertTagObjectFilter(filter["AND"] as Map<String, Map<String, *>>?)),
-                OR = Optional.presentIfNotNull(convertTagObjectFilter(filter["OR"] as Map<String, Map<String, *>>?)),
-                NOT = Optional.presentIfNotNull(convertTagObjectFilter(filter["NOT"] as Map<String, Map<String, *>>?)),
+                AND = Optional.presentIfNotNull(convertTagObjectFilter(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertTagObjectFilter(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertTagObjectFilter(filter["NOT"])),
                 name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
                 aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
                 favorite = Optional.presentIfNotNull(convertBoolean(filter["favorite"])),
@@ -485,18 +479,8 @@ class FilterParser(private val serverVersion: Version) {
                 gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
                 performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_count"])),
                 marker_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["marker_count"])),
-                parents =
-                    Optional.presentIfNotNull(
-                        convertHierarchicalMultiCriterionInput(
-                            filter["parents"],
-                        ),
-                    ),
-                children =
-                    Optional.presentIfNotNull(
-                        convertHierarchicalMultiCriterionInput(
-                            filter["children"],
-                        ),
-                    ),
+                parents = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["parents"])),
+                children = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["children"])),
                 parent_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["parent_count"])),
                 child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
                 ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
@@ -519,12 +503,7 @@ class FilterParser(private val serverVersion: Version) {
                 synopsis = Optional.presentIfNotNull(convertStringCriterionInput(filter["synopsis"])),
                 duration = Optional.presentIfNotNull(convertIntCriterionInput(filter["duration"])),
                 rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
-                studios =
-                    Optional.presentIfNotNull(
-                        convertHierarchicalMultiCriterionInput(
-                            filter["studios"],
-                        ),
-                    ),
+                studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
                 is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
                 url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
                 performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
@@ -578,6 +557,7 @@ class FilterParser(private val serverVersion: Version) {
                 organized = Optional.presentIfNotNull(convertBoolean(filter["organized"])),
                 o_counter = Optional.presentIfNotNull(convertIntCriterionInput(filter["o_counter"])),
                 resolution = Optional.presentIfNotNull(convertResolutionCriterionInput(filter["resolution"])),
+                orientation = Optional.presentIfNotNull(convertOrientationCriterionInput(filter["orientation"])),
                 is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
                 studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
                 tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
@@ -591,6 +571,7 @@ class FilterParser(private val serverVersion: Version) {
                 performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
                 performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_count"])),
                 performer_favorite = Optional.presentIfNotNull(convertBoolean(filter["performer_favorite"])),
+                performer_age = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_age"])),
                 galleries = Optional.presentIfNotNull(convertMultiCriterionInput(filter["galleries"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),

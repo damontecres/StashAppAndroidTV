@@ -120,6 +120,9 @@ val STUDIO_SORT_OPTIONS =
         SortOption("name", R.string.stashapp_name),
         SortOption("rating", R.string.stashapp_rating),
         SortOption("scenes_count", R.string.stashapp_scene_count),
+        SortOption("images_count", R.string.stashapp_image_count),
+        SortOption("galleries_count", R.string.stashapp_gallery_count),
+        SortOption("child_count", R.string.stashapp_subsidiary_studio_count),
     )
 
 val TAG_SORT_OPTIONS =
