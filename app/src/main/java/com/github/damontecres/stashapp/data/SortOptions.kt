@@ -13,7 +13,6 @@ val COMMON_SORT_OPTIONS =
     arrayOf(
         SortOption("created_at", R.string.stashapp_created_at),
         SortOption("updated_at", R.string.stashapp_updated_at),
-        SortOption("id", R.string.stashapp_scene_id, Version.V0_26_0),
         SortOption("random", R.string.stashapp_random),
     )
 
@@ -114,15 +113,12 @@ val MARKER_SORT_OPTIONS =
 val STUDIO_SORT_OPTIONS =
     listOf(
         *COMMON_SORT_OPTIONS,
-        SortOption("child_count", R.string.stashapp_subsidiary_studio_count, Version.V0_26_0),
+        SortOption("child_count", R.string.stashapp_subsidiary_studio_count),
         SortOption("galleries_count", R.string.stashapp_gallery_count),
         SortOption("images_count", R.string.stashapp_image_count),
         SortOption("name", R.string.stashapp_name),
         SortOption("rating", R.string.stashapp_rating),
         SortOption("scenes_count", R.string.stashapp_scene_count),
-        SortOption("images_count", R.string.stashapp_image_count),
-        SortOption("galleries_count", R.string.stashapp_gallery_count),
-        SortOption("child_count", R.string.stashapp_subsidiary_studio_count),
     )
 
 val TAG_SORT_OPTIONS =
