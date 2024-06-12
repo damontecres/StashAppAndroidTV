@@ -230,11 +230,22 @@ class FilterListActivity : FragmentActivity() {
                 null,
                 android.R.attr.listPopupWindowStyle,
             )
+        val serverVersion = ServerPreferences(this).serverVersion
+        // Resolve the strings, then sort
+        val sortOptions =
+            dataType.sortOptions
+                .filter { serverVersion.isAtLeast(it.requiresVersion) }
+                .map {
+                    Pair(
+                        it.key,
+                        this@FilterListActivity.getString(it.nameStringId),
+                    )
+                }.sortedBy { it.second }
         val resolvedNames = sortOptions.map { it.second }
 
         val currentDirection = filterData?.find_filter?.direction
         val currentKey = filterData?.find_filter?.sort
-        val isRandom = currentKey?.startsWith("random_") ?: false
+        val isRandom = currentKey?.startsWith("random") ?: false
         val index =
             if (isRandom) {
                 sortOptions.map { it.first }.indexOf("random")
