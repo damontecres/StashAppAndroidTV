@@ -522,17 +522,18 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupPlayActionsAdapter() {
-        if (position > 0) {
-            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
-            // Force focus to move to Resume
-            playActionsAdapter.clear(1)
-            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
-        } else {
+        val serverPreferences = ServerPreferences(requireContext())
+        if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
             playActionsAdapter.set(
                 0,
                 Action(ACTION_PLAY_SCENE, resources.getString(R.string.play_scene)),
             )
             playActionsAdapter.clear(1)
+        } else {
+            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
+            // Force focus to move to Resume
+            playActionsAdapter.clear(1)
+            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
         }
     }
 

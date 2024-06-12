@@ -36,6 +36,8 @@ class ServerPreferences(private val context: Context) {
 
     val ratingsAsStars get() = preferences.getString(PREF_RATING_TYPE, "stars") == "stars"
 
+    val alwaysStartFromBeginning get() = preferences.getBoolean(PREF_ALWAYS_START_BEGINNING, false)
+
     suspend fun updatePreferences(): ServerPreferences {
         val queryEngine = QueryEngine(context)
         val query = ConfigurationQuery()
@@ -92,6 +94,14 @@ class ServerPreferences(private val context: Context) {
                             "Exception parsing ratingSystemOptions: $ratingSystemOptionsRaw",
                         )
                     }
+                }
+
+                val alwaysStartFromBeginning = ui.getCaseInsensitive("alwaysStartFromBeginning")
+                if (alwaysStartFromBeginning != null) {
+                    putBoolean(
+                        PREF_ALWAYS_START_BEGINNING,
+                        alwaysStartFromBeginning.toString().toBoolean(),
+                    )
                 }
 
                 val scan = config.defaults.scan
@@ -163,6 +173,7 @@ class ServerPreferences(private val context: Context) {
         const val PREF_MINIMUM_PLAY_PERCENT = "minimumPlayPercent"
         const val PREF_RATING_TYPE = "ratingSystemOptions.type"
         const val PREF_RATING_PRECISION = "ratingSystemOptions.starPrecision"
+        const val PREF_ALWAYS_START_BEGINNING = "ui.alwaysStartFromBeginning"
 
         // Scan default settings
         const val PREF_SCAN_GENERATE_COVERS = "scanGenerateCovers"
