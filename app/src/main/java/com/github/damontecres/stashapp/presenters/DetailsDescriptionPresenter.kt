@@ -8,6 +8,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.util.CodecSupport
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
+import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
@@ -48,7 +49,7 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
         var debugInfo: String? = null
         val file = scene.files.firstOrNull()
         if (file != null) {
-            val resolution = "${file.videoFileData.height}P"
+            val resolution = file.videoFileData.resolutionName()
             val duration = durationToString(file.videoFileData.duration)
             viewHolder.subtitle.text =
                 concatIfNotBlank(
