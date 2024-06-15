@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.data
 
+import androidx.annotation.StringRes
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -14,8 +15,9 @@ import com.github.damontecres.stashapp.presenters.TagPresenter
 
 enum class DataType(
     val filterMode: FilterMode,
-    val stringId: Int,
-    val pluralStringId: Int,
+    @StringRes val stringId: Int,
+    @StringRes val pluralStringId: Int,
+    @StringRes val iconStringId: Int,
     val defaultSort: SortAndDirection,
     val sortOptions: List<SortOption>,
 ) {
@@ -23,6 +25,7 @@ enum class DataType(
         FilterMode.SCENES,
         R.string.stashapp_scene,
         R.string.stashapp_scenes,
+        R.string.fa_circle_play,
         SortAndDirection("date", SortDirectionEnum.DESC),
         SCENE_SORT_OPTIONS,
     ),
@@ -30,6 +33,7 @@ enum class DataType(
         FilterMode.MOVIES,
         R.string.stashapp_movie,
         R.string.stashapp_movies,
+        R.string.fa_film,
         SortAndDirection.NAME_ASC,
         MOVIE_SORT_OPTIONS,
     ),
@@ -37,6 +41,7 @@ enum class DataType(
         FilterMode.SCENE_MARKERS,
         R.string.stashapp_markers,
         R.string.stashapp_markers,
+        R.string.fa_location_dot,
         SortAndDirection("created_at", SortDirectionEnum.DESC),
         MARKER_SORT_OPTIONS,
     ),
@@ -44,6 +49,7 @@ enum class DataType(
         FilterMode.PERFORMERS,
         R.string.stashapp_performer,
         R.string.stashapp_performers,
+        R.string.fa_user,
         SortAndDirection.NAME_ASC,
         PERFORMER_SORT_OPTIONS,
     ),
@@ -51,6 +57,7 @@ enum class DataType(
         FilterMode.STUDIOS,
         R.string.stashapp_studio,
         R.string.stashapp_studios,
+        R.string.fa_video,
         SortAndDirection.NAME_ASC,
         STUDIO_SORT_OPTIONS,
     ),
@@ -58,6 +65,7 @@ enum class DataType(
         FilterMode.TAGS,
         R.string.stashapp_tag,
         R.string.stashapp_tags,
+        R.string.fa_tag,
         SortAndDirection.NAME_ASC,
         TAG_SORT_OPTIONS,
     ),
@@ -65,6 +73,7 @@ enum class DataType(
         FilterMode.IMAGES,
         R.string.stashapp_image,
         R.string.stashapp_images,
+        R.string.fa_image,
         SortAndDirection.PATH_ASC,
         IMAGE_SORT_OPTIONS,
     ),
@@ -72,6 +81,7 @@ enum class DataType(
         FilterMode.GALLERIES,
         R.string.stashapp_gallery,
         R.string.stashapp_galleries,
+        R.string.fa_images,
         SortAndDirection.PATH_ASC,
         GALLERY_SORT_OPTIONS,
     ),
