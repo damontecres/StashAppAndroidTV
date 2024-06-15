@@ -5,6 +5,8 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.text.Spannable
+import android.text.SpannableStringBuilder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -33,12 +35,27 @@ import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.enableMarquee
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import java.util.EnumMap
 
 class StashImageCardView(context: Context) : ImageCardView(context) {
     companion object {
         private const val TAG = "StashImageCardView"
+
+        private val FA_FONT = StashApplication.getFont(R.font.fa_solid_900)
+
+        private val ICON_ORDER =
+            listOf(
+                DataType.SCENE,
+                DataType.MOVIE,
+                DataType.IMAGE,
+                DataType.GALLERY,
+                DataType.TAG,
+                DataType.PERFORMER,
+                DataType.MARKER,
+                DataType.STUDIO,
+            )
     }
 
     private val sSelectedBackgroundColor: Int =
@@ -55,10 +72,10 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     val mainView: ViewSwitcher = findViewById(R.id.main_view)
     var hideOverlayOnSelection = true
 
-    private val dataTypeViews =
-        EnumMap<DataType, Pair<TextView, View>>(DataType::class.java)
+    private val iconTextView: TextView
     private val oCounterTextView: TextView
     private val oCounterIconView: View
+
     private val cardOverlay = findViewById<View>(R.id.card_overlay)
     private val textOverlays = EnumMap<OverlayPosition, TextView>(OverlayPosition::class.java)
     private val progressOverlay = findViewById<ImageView>(R.id.card_overlay_progress)
@@ -89,46 +106,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         val contentTextView = findViewById<TextView>(androidx.leanback.R.id.content_text)
         contentTextView.enableMarquee(false)
 
-        dataTypeViews[DataType.MOVIE] =
-            Pair(
-                iconRow.findViewById(R.id.extra_movie_count),
-                iconRow.findViewById(R.id.extra_movie_icon),
-            )
-        dataTypeViews[DataType.MARKER] =
-            Pair(
-                iconRow.findViewById(R.id.extra_marker_count),
-                iconRow.findViewById(R.id.extra_marker_icon),
-            )
-        dataTypeViews[DataType.PERFORMER] =
-            Pair(
-                iconRow.findViewById(R.id.extra_performer_count),
-                iconRow.findViewById(R.id.extra_performer_icon),
-            )
-        dataTypeViews[DataType.TAG] =
-            Pair(
-                iconRow.findViewById(R.id.extra_tag_count),
-                iconRow.findViewById(R.id.extra_tag_icon),
-            )
-        dataTypeViews[DataType.SCENE] =
-            Pair(
-                iconRow.findViewById(R.id.extra_scene_count),
-                iconRow.findViewById(R.id.extra_scene_icon),
-            )
-        dataTypeViews[DataType.MOVIE] =
-            Pair(
-                iconRow.findViewById(R.id.extra_movie_count),
-                iconRow.findViewById(R.id.extra_movie_icon),
-            )
-        dataTypeViews[DataType.GALLERY] =
-            Pair(
-                iconRow.findViewById(R.id.extra_gallery_count),
-                iconRow.findViewById(R.id.extra_gallery_icon),
-            )
-        dataTypeViews[DataType.IMAGE] =
-            Pair(
-                iconRow.findViewById(R.id.extra_image_count),
-                iconRow.findViewById(R.id.extra_image_icon),
-            )
+        iconTextView = iconRow.findViewById(R.id.icon_text)
         oCounterTextView = iconRow.findViewById(R.id.extra_ocounter_count)
         oCounterIconView = iconRow.findViewById(R.id.extra_ocounter_icon)
 
@@ -225,10 +203,33 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         iconMap: EnumMap<DataType, Int>,
         oCounter: Int?,
     ) {
-        DataType.entries.forEach {
-            val count = iconMap[it] ?: -1
-            setUpIcon(it, count)
-        }
+        val countStrings =
+            ICON_ORDER.mapNotNull {
+                val count = iconMap[it]
+                if (count != null && count > 0) {
+                    context.getString(it.iconStringId) + " " + count.toString()
+                } else {
+                    null
+                }
+            }
+
+        iconTextView.text =
+            SpannableStringBuilder().apply {
+                countStrings.forEachIndexed { index, s ->
+                    val start = length
+                    append(s)
+                    if (index + 1 < countStrings.size) {
+                        append("   ")
+                    }
+                    setSpan(
+                        FontSpan(FA_FONT),
+                        start,
+                        start + 1,
+                        Spannable.SPAN_INCLUSIVE_INCLUSIVE,
+                    )
+                }
+            }
+
         if ((oCounter ?: -1) > 0) {
             oCounterTextView.text = oCounter.toString()
             oCounterTextView.visibility = View.VISIBLE
@@ -236,25 +237,6 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         } else {
             oCounterTextView.visibility = View.GONE
             oCounterIconView.visibility = View.GONE
-        }
-    }
-
-    private fun setUpIcon(
-        dataType: DataType,
-        count: Int,
-    ) {
-        val views = dataTypeViews[dataType]
-        if (views != null) {
-            val textView = views.first
-            val iconView = views.second
-            if (count > 0) {
-                textView.text = count.toString()
-                textView.visibility = View.VISIBLE
-                iconView.visibility = View.VISIBLE
-            } else {
-                textView.visibility = View.GONE
-                iconView.visibility = View.GONE
-            }
         }
     }
 
