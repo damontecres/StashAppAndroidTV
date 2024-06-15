@@ -139,6 +139,8 @@ class MarkerActivity : FragmentActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
 
+            primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
+
             val lock = ReentrantReadWriteLock()
             queryEngine = QueryEngine(requireContext(), lock = lock)
             mutationEngine = MutationEngine(requireContext(), lock = lock)

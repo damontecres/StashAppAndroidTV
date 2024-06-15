@@ -23,16 +23,23 @@ class ListRowManager<T>(
     dataType: DataType,
     rowModifier: SparseArrayRowModifier,
     private val adapter: ArrayObjectAdapter,
+    rowHeaderName: String? = null,
     private val setItemsCallback: SetIdsForItemCallback,
 ) {
-    private val name: String
+    var name: String =
+        rowHeaderName ?: StashApplication.getApplication().getString(dataType.pluralStringId)
+        set(name) {
+            field = name
+            if (adapter.isNotEmpty()) {
+                addRowCallback.addRow(ListRow(HeaderItem(name), adapter))
+            }
+        }
     private val addRowCallback: RowAdder
     private val removeRowCallback: RowRemover
     private val diffCallback: DiffCallback<*>
     private val idExtractor: (Any?) -> String
 
     init {
-        name = StashApplication.getApplication().getString(dataType.pluralStringId)
         addRowCallback = rowModifier
         removeRowCallback = rowModifier
         when (dataType) {
