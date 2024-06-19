@@ -67,6 +67,9 @@ class ServerPreferences(private val context: Context) {
                         // If server is >=0.26.0 and doesn't provide a value, default to true
                         // See https://github.com/stashapp/stash/pull/4710
                         putBoolean(PREF_TRACK_ACTIVITY, true)
+                    } else {
+                        // Server <0.26.0 default to false
+                        putBoolean(PREF_TRACK_ACTIVITY, false)
                     }
                 }
                 ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT)?.let {
