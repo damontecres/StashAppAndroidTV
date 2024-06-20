@@ -45,6 +45,10 @@ data class Version(
         return false
     }
 
+    fun isEqualOrBefore(version: Version): Boolean {
+        return !isGreaterThan(version)
+    }
+
     private fun compareNumCommits(version: Version): Int {
         return (this.numCommits ?: 0) - (version.numCommits ?: 0)
     }

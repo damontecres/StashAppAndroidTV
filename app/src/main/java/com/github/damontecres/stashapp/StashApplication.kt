@@ -15,6 +15,12 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.setup.SetupActivity
+import com.github.damontecres.stashapp.util.AppUpgradeHandler
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.Version
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class StashApplication : Application() {
     private var wasEnterBackground = false
@@ -46,6 +52,15 @@ class StashApplication : Application() {
                 putLong(VERSION_CODE_PREVIOUS_KEY, currentVersionCode)
                 putString(VERSION_NAME_CURRENT_KEY, pkgInfo.versionName)
                 putLong(VERSION_CODE_CURRENT_KEY, pkgInfo.versionCode.toLong())
+            }
+            if (currentVersion != null) {
+                CoroutineScope(Dispatchers.IO + StashCoroutineExceptionHandler()).launch {
+                    AppUpgradeHandler(
+                        this@StashApplication,
+                        Version.fromString(currentVersion),
+                        Version.fromString(pkgInfo.versionName),
+                    ).run()
+                }
             }
         }
     }
