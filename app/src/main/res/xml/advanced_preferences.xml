@@ -48,6 +48,36 @@
             app:defaultValue="HLS"
             app:entries="@array/stream_options"
             app:entryValues="@array/stream_options" />
+        <MultiSelectListPreference
+            app:key="@string/pref_key_default_forced_direct_video"
+            app:title="Direct Play Video"
+            app:summary="Video codecs which should always direct play even if the device doesn't report support"
+            app:defaultValue="@array/default_force_video_codecs"
+            app:entries="@array/video_codecs"
+            app:entryValues="@array/video_codecs"
+            />
+        <MultiSelectListPreference
+            app:key="@string/pref_key_default_forced_direct_audio"
+            app:title="Direct Play Audio"
+            app:summary="Audio codecs which should always direct play even if the device doesn't report support"
+            app:defaultValue="@array/default_force_audio_codecs"
+            app:entries="@array/audio_codecs"
+            app:entryValues="@array/audio_codecs"
+            />
+        <MultiSelectListPreference
+            app:key="@string/pref_key_default_forced_direct_containers"
+            app:title="Direct Play Formats"
+            app:summary="Container formats which should always direct play"
+            app:defaultValue="@array/default_force_container_formats"
+            app:entries="@array/container_formats"
+            app:entryValues="@array/container_formats"
+            />
+        <SwitchPreference
+            app:key="@string/pref_key_show_playback_debug_info"
+            app:title="Playback debug info"
+            app:summaryOn="Show debug info"
+            app:summaryOff="Hide debug info"
+            app:defaultValue="false" />
         <SeekBarPreference
             app:key="controllerShowTimeoutMs"
             app:title="Hide controls after (milliseconds)"

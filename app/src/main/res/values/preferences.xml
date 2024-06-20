@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="pref_key_pin_code">pinCode</string>
-    <string name="pref_key_pin_code_auto">pinCodeAuto</string>
-    <string name="pref_key_show_grid_footer">interface.showGridFooter</string>
-    <string name="pref_key_show_rating">interface.showRating</string>
+    <string name="pref_key_pin_code" translatable="false">pinCode</string>
+    <string name="pref_key_pin_code_auto" translatable="false">pinCodeAuto</string>
+    <string name="pref_key_trust_certs" translatable="false">trustAllCerts</string>
+    <string name="pref_key_show_grid_footer" translatable="false">interface.showGridFooter</string>
+    <string name="pref_key_show_rating" translatable="false">interface.showRating</string>
+    <string name="pref_key_max_search_results" translatable="false">maxSearchResults</string>
+    <string name="pref_key_page_size" translatable="false">@string/pref_key_max_search_results</string>
+    <string name="pref_key_current_server" translatable="false">stashUrl</string>
+    <string name="pref_key_current_api_key" translatable="false">stashApiKey</string>
+    <string name="pref_key_default_forced_direct_video" translatable="false">forcedDirectVideo</string>
+    <string name="pref_key_default_forced_direct_audio" translatable="false">forcedDirectAudio</string>
+    <string name="pref_key_default_forced_direct_containers" translatable="false">forcedDirectContainers</string>
+    <string name="pref_key_show_playback_debug_info" translatable="false">playback.showDebugInfo</string>
 </resources>

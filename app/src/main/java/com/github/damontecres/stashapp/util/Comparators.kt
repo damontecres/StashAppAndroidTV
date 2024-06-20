@@ -218,3 +218,51 @@ object StudioDiffCallback : DiffCallback<StudioData>() {
         return oldItem == newItem
     }
 }
+
+object GalleryDiffCallback : DiffCallback<GalleryData>() {
+    override fun areItemsTheSame(
+        oldItem: GalleryData,
+        newItem: GalleryData,
+    ): Boolean {
+        return oldItem.id == newItem.id
+    }
+
+    override fun areContentsTheSame(
+        oldItem: GalleryData,
+        newItem: GalleryData,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}
+
+object SceneDiffCallback : DiffCallback<SlimSceneData>() {
+    override fun areItemsTheSame(
+        oldItem: SlimSceneData,
+        newItem: SlimSceneData,
+    ): Boolean {
+        return oldItem.id == newItem.id
+    }
+
+    override fun areContentsTheSame(
+        oldItem: SlimSceneData,
+        newItem: SlimSceneData,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}
+
+object ImageDiffCallback : DiffCallback<ImageData>() {
+    override fun areItemsTheSame(
+        oldItem: ImageData,
+        newItem: ImageData,
+    ): Boolean {
+        return oldItem.id == newItem.id
+    }
+
+    override fun areContentsTheSame(
+        oldItem: ImageData,
+        newItem: ImageData,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}

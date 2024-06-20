@@ -6,8 +6,10 @@ import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.util.toFind_filter
 import kotlinx.parcelize.Parcelize
 
@@ -81,6 +83,50 @@ data class PerformTogetherAppFilter(override val name: String, val performerIds:
                         MultiCriterionInput(
                             value = Optional.present(performerIds),
                             modifier = CriterionModifier.INCLUDES_ALL,
+                        ),
+                    ),
+            )
+}
+
+/**
+ * Show sub-tags of the specified tag
+ */
+@Parcelize
+data class GetSubTagsFilter(override val name: String, val tagId: String) : AppFilter {
+    override val dataType: DataType
+        get() = DataType.TAG
+
+    override val objectFilter: TagFilterType
+        get() =
+            TagFilterType(
+                parents =
+                    Optional.present(
+                        HierarchicalMultiCriterionInput(
+                            value = Optional.present(listOf(tagId)),
+                            modifier = CriterionModifier.INCLUDES,
+                            depth = Optional.present(-1),
+                        ),
+                    ),
+            )
+}
+
+/**
+ * Show parent tags of the specified tag
+ */
+@Parcelize
+data class GetParentTagsFilter(override val name: String, val tagId: String) : AppFilter {
+    override val dataType: DataType
+        get() = DataType.TAG
+
+    override val objectFilter: TagFilterType
+        get() =
+            TagFilterType(
+                children =
+                    Optional.present(
+                        HierarchicalMultiCriterionInput(
+                            value = Optional.present(listOf(tagId)),
+                            modifier = CriterionModifier.INCLUDES,
+                            depth = Optional.present(-1),
                         ),
                     ),
             )

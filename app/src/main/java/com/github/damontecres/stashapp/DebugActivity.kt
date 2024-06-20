@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.util.CodecSupport
 import com.github.damontecres.stashapp.util.ServerPreferences
 
 class DebugActivity : FragmentActivity() {
@@ -18,12 +19,12 @@ class DebugActivity : FragmentActivity() {
         setContentView(R.layout.frame_layout)
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.frame_fragment, DebugFragement())
+                .replace(R.id.frame_fragment, DebugFragment())
                 .commitNow()
         }
     }
 
-    class DebugFragement : Fragment(R.layout.debug) {
+    class DebugFragment : Fragment(R.layout.debug) {
         override fun onViewCreated(
             view: View,
             savedInstanceState: Bundle?,
@@ -32,20 +33,42 @@ class DebugActivity : FragmentActivity() {
 
             val prefTable = view.findViewById<TableLayout>(R.id.preferences_table)
             val serverPrefTable = view.findViewById<TableLayout>(R.id.server_prefs_table)
+            val formatSupportedTable = view.findViewById<TableLayout>(R.id.supported_formats_table)
 
             val prefManager = PreferenceManager.getDefaultSharedPreferences(requireContext()).all
             prefManager.keys.sorted().forEach {
                 val row = createRow(it, prefManager[it].toString())
                 prefTable.addView(row)
             }
-            prefTable.isShrinkAllColumns = true
+            prefTable.isStretchAllColumns = true
 
             val serverPrefs = ServerPreferences(requireContext()).preferences.all
             serverPrefs.keys.sorted().forEach {
                 val row = createRow(it, serverPrefs[it].toString())
                 serverPrefTable.addView(row)
             }
-            serverPrefTable.isShrinkAllColumns = true
+            serverPrefTable.isStretchAllColumns = true
+
+            val codecs = CodecSupport.getSupportedCodecs(requireContext())
+            formatSupportedTable.addView(
+                createRow(
+                    "Video Codecs",
+                    codecs.videoCodecs.sorted().joinToString(", "),
+                ),
+            )
+            formatSupportedTable.addView(
+                createRow(
+                    "Audio Codecs",
+                    codecs.audioCodecs.sorted().joinToString(", "),
+                ),
+            )
+            formatSupportedTable.addView(
+                createRow(
+                    "Container Formats",
+                    codecs.containers.sorted().joinToString(", "),
+                ),
+            )
+            formatSupportedTable.isStretchAllColumns = true
         }
 
         private fun createRow(

@@ -3,15 +3,24 @@ package com.github.damontecres.stashapp
 import android.app.Activity
 import android.app.Application
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
+import androidx.annotation.FontRes
 import androidx.core.content.edit
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.setup.SetupActivity
+import com.github.damontecres.stashapp.util.AppUpgradeHandler
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.Version
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class StashApplication : Application() {
     private var wasEnterBackground = false
@@ -20,6 +29,8 @@ class StashApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        application = this
 
         Log.v(TAG, "onCreate wasEnterBackground=$wasEnterBackground, mainDestroyed=$mainDestroyed")
 
@@ -41,6 +52,15 @@ class StashApplication : Application() {
                 putLong(VERSION_CODE_PREVIOUS_KEY, currentVersionCode)
                 putString(VERSION_NAME_CURRENT_KEY, pkgInfo.versionName)
                 putLong(VERSION_CODE_CURRENT_KEY, pkgInfo.versionCode.toLong())
+            }
+            if (currentVersion != null) {
+                CoroutineScope(Dispatchers.IO + StashCoroutineExceptionHandler()).launch {
+                    AppUpgradeHandler(
+                        this@StashApplication,
+                        Version.fromString(currentVersion),
+                        Version.fromString(pkgInfo.versionName),
+                    ).run()
+                }
             }
         }
     }
@@ -137,6 +157,22 @@ class StashApplication : Application() {
     }
 
     companion object {
+        private lateinit var application: StashApplication
+
+        private val fontCache = mutableMapOf<Int, Typeface>()
+
+        fun getApplication(): StashApplication {
+            return application
+        }
+
+        fun getFont(
+            @FontRes fontId: Int,
+        ): Typeface {
+            return fontCache.getOrPut(fontId) {
+                return ResourcesCompat.getFont(getApplication(), fontId)!!
+            }
+        }
+
         const val TAG = "StashApplication"
         const val VERSION_NAME_PREVIOUS_KEY = "VERSION_NAME_PREVIOUS_NAME"
         const val VERSION_CODE_PREVIOUS_KEY = "VERSION_CODE_PREVIOUS_NAME"

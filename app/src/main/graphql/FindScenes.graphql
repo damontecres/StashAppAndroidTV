@@ -59,24 +59,16 @@ fragment SlimSceneData on Scene {
     seconds
     stream
     primary_tag {
-      id
-      name
-      __typename
+      ...TagData
+    }
+    tags {
+      ...TagData
     }
     __typename
   }
   galleries {
     id
-    files {
-      path
-      __typename
-    }
-    folder {
-      path
-      __typename
-    }
     title
-    __typename
   }
   studio {
     ...StudioData
@@ -102,15 +94,13 @@ fragment SlimSceneData on Scene {
     image_path
     __typename
   }
-  stash_ids {
-    endpoint
-    stash_id
-    __typename
-  }
   scene_markers {
     id
     title
-    primary_tag{
+    primary_tag {
+      ...TagData
+    }
+    tags {
       ...TagData
     }
     screenshot
@@ -128,6 +118,7 @@ fragment VideoFileData on VideoFile {
   duration
   video_codec
   audio_codec
+  format
   width
   height
   frame_rate

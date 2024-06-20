@@ -28,13 +28,15 @@ class ServerPreferences(private val context: Context) {
                 ),
             )
 
-    val trackActivity get() = preferences.getBoolean(PREF_TRACK_ACTIVITY, false)
+    val trackActivity get() = preferences.getBoolean(PREF_TRACK_ACTIVITY, true)
 
     val showStudioAsText get() = preferences.getBoolean(PREF_INTERFACE_STUDIOS_AS_TEXT, false)
 
     val minimumPlayPercent get() = preferences.getInt(PREF_MINIMUM_PLAY_PERCENT, 20)
 
     val ratingsAsStars get() = preferences.getString(PREF_RATING_TYPE, "stars") == "stars"
+
+    val alwaysStartFromBeginning get() = preferences.getBoolean(PREF_ALWAYS_START_BEGINNING, false)
 
     suspend fun updatePreferences(): ServerPreferences {
         val queryEngine = QueryEngine(context)
@@ -52,12 +54,23 @@ class ServerPreferences(private val context: Context) {
         config: ConfigurationQuery.Configuration?,
         serverInfo: ServerInfoQuery.Data?,
     ) {
+        val serverVersion =
+            Version.tryFromString(serverInfo?.version?.version)
         if (config != null) {
             val ui = config.ui as Map<String, *>
             preferences.edit(true) {
                 ui.getCaseInsensitive(PREF_TRACK_ACTIVITY).also {
-                    // If null, toString()=>"null".toBoolean()=>false
-                    putBoolean(PREF_TRACK_ACTIVITY, it.toString().toBoolean())
+                    if (it != null) {
+                        // Use a non-null value from server
+                        putBoolean(PREF_TRACK_ACTIVITY, it.toString().toBoolean())
+                    } else if (serverVersion != null && serverVersion.isAtLeast(Version.V0_26_0)) {
+                        // If server is >=0.26.0 and doesn't provide a value, default to true
+                        // See https://github.com/stashapp/stash/pull/4710
+                        putBoolean(PREF_TRACK_ACTIVITY, true)
+                    } else {
+                        // Server <0.26.0 default to false
+                        putBoolean(PREF_TRACK_ACTIVITY, false)
+                    }
                 }
                 ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT)?.let {
                     try {
@@ -92,6 +105,14 @@ class ServerPreferences(private val context: Context) {
                             "Exception parsing ratingSystemOptions: $ratingSystemOptionsRaw",
                         )
                     }
+                }
+
+                val alwaysStartFromBeginning = ui.getCaseInsensitive("alwaysStartFromBeginning")
+                if (alwaysStartFromBeginning != null) {
+                    putBoolean(
+                        PREF_ALWAYS_START_BEGINNING,
+                        alwaysStartFromBeginning.toString().toBoolean(),
+                    )
                 }
 
                 val scan = config.defaults.scan
@@ -163,6 +184,7 @@ class ServerPreferences(private val context: Context) {
         const val PREF_MINIMUM_PLAY_PERCENT = "minimumPlayPercent"
         const val PREF_RATING_TYPE = "ratingSystemOptions.type"
         const val PREF_RATING_PRECISION = "ratingSystemOptions.starPrecision"
+        const val PREF_ALWAYS_START_BEGINNING = "ui.alwaysStartFromBeginning"
 
         // Scan default settings
         const val PREF_SCAN_GENERATE_COVERS = "scanGenerateCovers"

@@ -19,7 +19,8 @@
     <string name="fa_magnifying_glass_minus" translatable="false">&#xf010;</string>
     <string name="fa_caret_up" translatable="false">&#xf0d8;</string>
     <string name="fa_caret_down" translatable="false">&#xf0d7;</string>
-
+    <string name="fa_heart" translatable="false">&#xf004;</string>
+    <string name="fa_video" translatable="false">&#xf03d;</string>
 
     <string name="go_to">Go to</string>
     <string name="go_to_scene">Go to scene</string>
@@ -29,7 +30,7 @@
 
     <string name="app_update_url" translatable="false">https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest</string>
 
-    <string name="setup_1_title">Setup the server</string>
-    <string name="setup_1_description">Configure the Stash server details</string>
+    <string name="setup_1_title">Server URL</string>
+    <string name="setup_1_description">Configure the server URL</string>
 
 </resources>

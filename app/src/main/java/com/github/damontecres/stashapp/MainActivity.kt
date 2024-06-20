@@ -21,14 +21,17 @@ class MainActivity : FragmentActivity() {
             supportFragmentManager.beginTransaction()
                 .replace(R.id.main_browse_fragment, fragment)
                 .commitNow()
+        }
+        maybeShowUpdate()
+    }
 
-            val checkForUpdates =
-                PreferenceManager.getDefaultSharedPreferences(this)
-                    .getBoolean("autoCheckForUpdates", true)
-            if (checkForUpdates) {
-                lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    UpdateChecker.checkForUpdate(this@MainActivity, false)
-                }
+    private fun maybeShowUpdate() {
+        val checkForUpdates =
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean("autoCheckForUpdates", true)
+        if (checkForUpdates) {
+            lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                UpdateChecker.checkForUpdate(this@MainActivity, false)
             }
         }
     }

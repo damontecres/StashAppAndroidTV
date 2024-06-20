@@ -7,6 +7,21 @@ query FindTags($filter: FindFilterType, $tag_filter: TagFilterType)  {
   }
 }
 
+query FindTagsV0250($filter: FindFilterType, $tag_filter: TagFilterType, $tagIds: [ID!])  {
+  findTags(filter: $filter, tag_filter: $tag_filter, ids: $tagIds){
+    tags {
+      ...TagData
+      __typename
+    }
+  }
+}
+
+query FindTag($tagId: ID!){
+  findTag(id: $tagId){
+    ...TagData
+  }
+}
+
 query CountTags($filter: FindFilterType, $tag_filter: TagFilterType)  {
   findTags(filter: $filter, tag_filter: $tag_filter){
     count

@@ -5,19 +5,20 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.text.Spannable
+import android.text.SpannableStringBuilder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.ViewSwitcher
-import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.bumptech.glide.load.DataSource
@@ -25,18 +26,38 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.enableMarquee
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.views.FontSpan
+import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import java.util.EnumMap
 
 class StashImageCardView(context: Context) : ImageCardView(context) {
+    companion object {
+        private const val TAG = "StashImageCardView"
+
+        private val FA_FONT = StashApplication.getFont(R.font.fa_solid_900)
+
+        private val ICON_ORDER =
+            listOf(
+                DataType.SCENE,
+                DataType.MOVIE,
+                DataType.IMAGE,
+                DataType.GALLERY,
+                DataType.TAG,
+                DataType.PERFORMER,
+                DataType.MARKER,
+                DataType.STUDIO,
+            )
+    }
+
     private val sSelectedBackgroundColor: Int =
         ContextCompat.getColor(context, R.color.selected_background)
     private val sDefaultBackgroundColor: Int =
@@ -46,13 +67,15 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
 
     var videoUrl: String? = null
     var videoPosition = -1L
-    val videoView: PlayerView = findViewById(R.id.main_video)
-    val mainView: ViewSwitcher = findViewById(R.id.main_view)
 
-    private val dataTypeViews =
-        EnumMap<DataType, Pair<TextView, View>>(DataType::class.java)
+    private var videoView: PlayerView? = null
+    val mainView: ViewSwitcher = findViewById(R.id.main_view)
+    var hideOverlayOnSelection = true
+
+    private val iconTextView: TextView
     private val oCounterTextView: TextView
     private val oCounterIconView: View
+
     private val cardOverlay = findViewById<View>(R.id.card_overlay)
     private val textOverlays = EnumMap<OverlayPosition, TextView>(OverlayPosition::class.java)
     private val progressOverlay = findViewById<ImageView>(R.id.card_overlay_progress)
@@ -83,46 +106,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         val contentTextView = findViewById<TextView>(androidx.leanback.R.id.content_text)
         contentTextView.enableMarquee(false)
 
-        dataTypeViews[DataType.MOVIE] =
-            Pair(
-                iconRow.findViewById(R.id.extra_movie_count),
-                iconRow.findViewById(R.id.extra_movie_icon),
-            )
-        dataTypeViews[DataType.MARKER] =
-            Pair(
-                iconRow.findViewById(R.id.extra_marker_count),
-                iconRow.findViewById(R.id.extra_marker_icon),
-            )
-        dataTypeViews[DataType.PERFORMER] =
-            Pair(
-                iconRow.findViewById(R.id.extra_performer_count),
-                iconRow.findViewById(R.id.extra_performer_icon),
-            )
-        dataTypeViews[DataType.TAG] =
-            Pair(
-                iconRow.findViewById(R.id.extra_tag_count),
-                iconRow.findViewById(R.id.extra_tag_icon),
-            )
-        dataTypeViews[DataType.SCENE] =
-            Pair(
-                iconRow.findViewById(R.id.extra_scene_count),
-                iconRow.findViewById(R.id.extra_scene_icon),
-            )
-        dataTypeViews[DataType.MOVIE] =
-            Pair(
-                iconRow.findViewById(R.id.extra_movie_count),
-                iconRow.findViewById(R.id.extra_movie_icon),
-            )
-        dataTypeViews[DataType.GALLERY] =
-            Pair(
-                iconRow.findViewById(R.id.extra_gallery_count),
-                iconRow.findViewById(R.id.extra_gallery_icon),
-            )
-        dataTypeViews[DataType.IMAGE] =
-            Pair(
-                iconRow.findViewById(R.id.extra_image_count),
-                iconRow.findViewById(R.id.extra_image_icon),
-            )
+        iconTextView = iconRow.findViewById(R.id.icon_text)
         oCounterTextView = iconRow.findViewById(R.id.extra_ocounter_count)
         oCounterIconView = iconRow.findViewById(R.id.extra_ocounter_icon)
 
@@ -136,19 +120,19 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         if (playVideoPreviews && videoUrl.isNotNullOrBlank()) {
             if (selected) {
                 initPlayer()
-                videoView.player?.seekToDefaultPosition()
-                videoView.player?.playWhenReady = true
+                videoView?.player?.seekToDefaultPosition()
+                videoView?.player?.playWhenReady = true
             } else {
                 showImage()
                 StashExoPlayer.removeListeners()
-                videoView.player?.stop()
-                videoView.player = null
+                videoView?.player?.stop()
+                videoView?.player = null
             }
         }
-        if (selected) {
+        if (selected && hideOverlayOnSelection) {
             cardOverlay.clearAnimation()
             cardOverlay.animateToInvisible(durationMs = animateTime)
-        } else {
+        } else if (hideOverlayOnSelection) {
             cardOverlay.clearAnimation()
             cardOverlay.animateToVisible(animateTime)
         }
@@ -184,7 +168,6 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         view.setInfoAreaBackgroundColor(color)
     }
 
-    @OptIn(UnstableApi::class)
     private fun initPlayer() {
         val mediaItem =
             MediaItem.Builder()
@@ -194,10 +177,18 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         val player = StashExoPlayer.getInstance(context)
         StashExoPlayer.addListener(listener)
 
-        videoView.player = player
-        player.setMediaItem(mediaItem)
+        if (videoView == null) {
+            // Create the PlayerView on demand
+            videoView =
+                LayoutInflater.from(context)
+                    .inflate(R.layout.stash_card_player_view, mainView, false) as PlayerView
+            mainView.addView(videoView)
+        }
+
+        videoView!!.player = player
+        player.setMediaItem(mediaItem, if (videoPosition > 0) videoPosition else C.TIME_UNSET)
         if (PreferenceManager.getDefaultSharedPreferences(context)
-                .getBoolean("videoPreviewAudio", true)
+                .getBoolean("videoPreviewAudio", false)
         ) {
             player.volume = 1f
         } else {
@@ -205,9 +196,6 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         }
         player.prepare()
         player.repeatMode = Player.REPEAT_MODE_ONE
-        if (videoPosition > 0) {
-            player.seekTo(videoPosition)
-        }
         player.playWhenReady = true
     }
 
@@ -215,40 +203,40 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         iconMap: EnumMap<DataType, Int>,
         oCounter: Int?,
     ) {
-        DataType.entries.forEach {
-            val count = iconMap[it] ?: -1
-            setUpIcon(it, count)
-        }
+        val countStrings =
+            ICON_ORDER.mapNotNull {
+                val count = iconMap[it]
+                if (count != null && count > 0) {
+                    context.getString(it.iconStringId) + " " + count.toString()
+                } else {
+                    null
+                }
+            }
+
+        iconTextView.text =
+            SpannableStringBuilder().apply {
+                countStrings.forEachIndexed { index, s ->
+                    val start = length
+                    append(s)
+                    if (index + 1 < countStrings.size) {
+                        append("   ")
+                    }
+                    setSpan(
+                        FontSpan(FA_FONT),
+                        start,
+                        start + 1,
+                        Spannable.SPAN_INCLUSIVE_INCLUSIVE,
+                    )
+                }
+            }
+
         if ((oCounter ?: -1) > 0) {
             oCounterTextView.text = oCounter.toString()
             oCounterTextView.visibility = View.VISIBLE
             oCounterIconView.visibility = View.VISIBLE
-            (oCounterTextView.parent as ViewGroup).visibility = View.VISIBLE
         } else {
             oCounterTextView.visibility = View.GONE
             oCounterIconView.visibility = View.GONE
-            (oCounterTextView.parent as ViewGroup).visibility = View.GONE
-        }
-    }
-
-    private fun setUpIcon(
-        dataType: DataType,
-        count: Int,
-    ) {
-        val views = dataTypeViews[dataType]
-        if (views != null) {
-            val textView = views.first
-            val iconView = views.second
-            if (count > 0) {
-                textView.text = count.toString()
-                textView.visibility = View.VISIBLE
-                iconView.visibility = View.VISIBLE
-                (textView.parent as ViewGroup).visibility = View.VISIBLE
-            } else {
-                textView.visibility = View.GONE
-                iconView.visibility = View.GONE
-                (textView.parent as ViewGroup).visibility = View.GONE
-            }
         }
     }
 
@@ -292,7 +280,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             PreferenceManager.getDefaultSharedPreferences(context)
                 .getBoolean(context.getString(R.string.pref_key_show_rating), true)
         if (rating100 != null && rating100 > 0 && showRatings) {
-            val ratingText = Constants.getRatingAsDecimalString(context, rating100)
+            val ratingText = getRatingAsDecimalString(context, rating100)
             val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
             val overlay = getTextOverlay(OverlayPosition.TOP_LEFT)
 
@@ -304,13 +292,22 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         }
     }
 
+    fun setIsFavorite() {
+        val typeface = StashApplication.getFont(R.font.fa_solid_900)
+        val textView = getTextOverlay(OverlayPosition.TOP_RIGHT)
+        textView.typeface = typeface
+        textView.text = context.getString(R.string.fa_heart)
+        textView.setTextColor(context.getColor(android.R.color.holo_red_light))
+        textView.textSize = 18.0f
+    }
+
     fun onUnbindViewHolder() {
         // Remove references to images so that the garbage collector can free up memory
         badgeImage = null
         mainImage = null
         videoUrl = null
-        videoView.player?.release()
-        videoView.player = null
+        videoView?.player?.release()
+        videoView?.player = null
 
         textOverlays.values.forEach {
             it.text = null

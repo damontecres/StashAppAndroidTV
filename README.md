@@ -28,6 +28,7 @@ Check the [Tips & Tricks](https://github.com/damontecres/StashAppAndroidTV/wiki/
         - Put the APK on an SD Card/USB stick/network share and use a file manager app from the Google Play Store / Amazon AppStore (e.g. `FX File Explorer`). Android's preinstalled file manager probably will not work!
         - Use `Send files to TV` from the Google Play Store on your phone & TV
         - (Expert) Use [ADB](https://developer.android.com/studio/command-line/adb) to install the APK from your computer ([guide](https://fossbytes.com/side-load-apps-android-tv/#h-how-to-sideload-apps-on-your-android-tv-using-adb))
+1. [Configure the app](#configuration)
 
 ### Upgrading the app
 
@@ -41,16 +42,19 @@ This build has the latest features, but may be unstable or have bugs.
 
 ### Configuration
 
-1. Open the app
-1. Open settings (the gear icon at the top-right)
-1. Enter the URL of your Stash server (e.g. `http://192.168.1.122:9999`)
+The first time you open the app, follow the prompts to configure the app to connect to your Stash server.
+
+1. Enter the full URL of your Stash server (e.g. `http://192.168.1.122:9999`)
     - Don't use `localhost`; use the IP address or domain of your Stash server
-    - If you have configured HTTPS, make sure to use `https://` instead of `http://`
-1. If you have enabled authentication on your Stash server, enter the API Key
+    - If you have configured HTTPS/SSL/TLS, make sure to use `https://` instead of `http://`
+1. If you have enabled authentication on your Stash server, to enter the API Key
     1. Use your phone to browse to your Stash server and copy the API Key from the Settings->Security page (e.g. http://192.168.1.122:9999/settings?tab=security)
     1. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) to paste the API Key into the TV app
-        - Do not enter an API Key if authentication is not enabled on your Stash server!
-1. Select `Test Connection` to verify that the app can connect to your Stash server
+1. If you have trouble submitting the URL or API Key using the virtual remote control, [see some tips here](https://github.com/damontecres/StashAppAndroidTV/wiki/Tips-&-Tricks#i-cant-submit-the-server-url-when-using-a-remote-phone-app)
+
+#### Multiple servers
+
+You can configure multiple servers in the app. To add, remove, or switch servers, use the `Manage Servers` option in the settings.
 
 ### Compatibility
 

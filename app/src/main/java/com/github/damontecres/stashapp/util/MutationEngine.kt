@@ -26,11 +26,16 @@ import com.github.damontecres.stashapp.api.SceneResetOMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
 import com.github.damontecres.stashapp.api.UpdateImageMutation
+import com.github.damontecres.stashapp.api.UpdateMarkerMutation
+import com.github.damontecres.stashapp.api.UpdatePerformerMutation
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.ImageUpdateInput
+import com.github.damontecres.stashapp.api.type.PerformerUpdateInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
+import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
 import com.github.damontecres.stashapp.data.OCounter
 import kotlinx.coroutines.Dispatchers
@@ -50,8 +55,7 @@ class MutationEngine(
     private val showToasts: Boolean = false,
     lock: ReadWriteLock? = null,
 ) {
-    private val client =
-        createApolloClient(context) ?: throw QueryEngine.StashNotConfiguredException()
+    private val client = StashClient.getApolloClient(context)
 
     private val serverPreferences = ServerPreferences(context)
 
@@ -224,6 +228,25 @@ class MutationEngine(
         return result.data?.sceneUpdate
     }
 
+    suspend fun setTagsOnMarker(
+        markerId: String,
+        primaryTagId: String,
+        tagIds: List<String>,
+    ): MarkerData? {
+        Log.v(TAG, "setTagsOnMarker markerId=$markerId, primaryTagId=$primaryTagId, tagIds=$tagIds")
+        val mutation =
+            UpdateMarkerMutation(
+                input =
+                    SceneMarkerUpdateInput(
+                        id = markerId,
+                        primary_tag_id = Optional.present(primaryTagId),
+                        tag_ids = Optional.present(tagIds),
+                    ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.sceneMarkerUpdate?.markerData
+    }
+
     suspend fun setPerformersOnScene(
         sceneId: String,
         performerIds: List<String>,
@@ -346,6 +369,24 @@ class MutationEngine(
             )
         val result = executeMutation(mutation)
         return result.data?.imageUpdate
+    }
+
+    suspend fun setPerformerFavorite(
+        performerId: String,
+        favorite: Boolean,
+    ): PerformerData? {
+        val input =
+            PerformerUpdateInput(
+                id = performerId,
+                favorite = Optional.present(favorite),
+            )
+        return updatePerformer(input)
+    }
+
+    suspend fun updatePerformer(input: PerformerUpdateInput): PerformerData? {
+        val mutation = UpdatePerformerMutation(input)
+        val result = executeMutation(mutation)
+        return result.data?.performerUpdate?.performerData
     }
 
     companion object {

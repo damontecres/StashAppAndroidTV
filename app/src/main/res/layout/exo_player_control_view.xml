@@ -14,10 +14,71 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/player_controls"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:layout_gravity="bottom"
     android:layoutDirection="ltr"
     android:orientation="vertical">
+
+    <TableLayout
+        android:id="@+id/playback_debug_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/transparent_black_50"
+        android:layout_margin="4dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <TableRow>
+
+            <TextView
+                style="@style/DebugInfoOverlayText"
+                android:text="Playback:" />
+
+            <TextView
+                android:id="@+id/debug_playback"
+                style="@style/DebugInfoOverlayText"
+                tools:text="Direct" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                style="@style/DebugInfoOverlayText"
+                android:text="Video:" />
+
+            <TextView
+                android:id="@+id/debug_video"
+                style="@style/DebugInfoOverlayText"
+                tools:text="h264" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                style="@style/DebugInfoOverlayText"
+                android:text="Audio:" />
+
+            <TextView
+                android:id="@+id/debug_audio"
+                style="@style/DebugInfoOverlayText"
+                tools:text="ac3" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                style="@style/DebugInfoOverlayText"
+                android:text="Format:" />
+
+            <TextView
+                android:id="@+id/debug_container_format"
+                style="@style/DebugInfoOverlayText"
+                tools:text="mp4" />
+        </TableRow>
+
+    </TableLayout>
 
     <LinearLayout
         android:id="@id/exo_center_controls"

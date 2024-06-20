@@ -2,9 +2,13 @@ package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
 import android.content.Intent
+import com.github.damontecres.stashapp.MarkerActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.VideoDetailsActivity
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.Marker
+import java.util.EnumMap
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -22,6 +26,10 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
         cardView.contentText =
             if (item.title.isNotBlank()) item.primary_tag.tagData.name else null
 
+        val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+        dataTypeMap[DataType.TAG] = item.tags.size
+        cardView.setUpExtraRow(dataTypeMap, null)
+
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         loadImage(cardView, item.screenshot)
         cardView.videoUrl = item.stream
@@ -36,6 +44,7 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
                 return listOf(
                     PopUpItem(0L, context.getString(R.string.go_to)),
                     PopUpItem(1L, context.getString(R.string.go_to_scene)),
+                    PopUpItem(2L, context.getString(R.string.stashapp_details)),
                 )
             }
 
@@ -52,6 +61,12 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
                     1L -> {
                         val intent = Intent(cardView.context, VideoDetailsActivity::class.java)
                         intent.putExtra(VideoDetailsActivity.MOVIE, item.scene.slimSceneData.id)
+                        cardView.context.startActivity(intent)
+                    }
+
+                    2L -> {
+                        val intent = Intent(cardView.context, MarkerActivity::class.java)
+                        intent.putExtra("marker", Marker(item))
                         cardView.context.startActivity(intent)
                     }
 

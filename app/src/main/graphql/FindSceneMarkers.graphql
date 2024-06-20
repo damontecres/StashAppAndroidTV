@@ -13,6 +13,12 @@ query CountMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFil
   }
 }
 
+mutation UpdateMarker($input: SceneMarkerUpdateInput!){
+  sceneMarkerUpdate(input: $input){
+    ...MarkerData
+  }
+}
+
 fragment MarkerData on SceneMarker {
   id
   title
@@ -28,7 +34,6 @@ fragment MarkerData on SceneMarker {
   }
   tags {
     ...TagData
-    __typename
   }
   scene {
     ...SlimSceneData

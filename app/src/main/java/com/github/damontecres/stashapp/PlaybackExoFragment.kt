@@ -25,7 +25,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Player.Listener
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
@@ -36,14 +38,15 @@ import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
-import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.CodecSupport
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
-import com.github.damontecres.stashapp.util.createOkHttpClient
 import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.StashPlayerView
+import com.github.damontecres.stashapp.views.durationToString
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -71,6 +74,11 @@ class PlaybackExoFragment :
     lateinit var videoView: StashPlayerView
     lateinit var previewTimeBar: PreviewTimeBar
     private lateinit var exoCenterControls: View
+    private lateinit var debugView: View
+    private lateinit var debugPlaybackTextView: TextView
+    private lateinit var debugVideoTextView: TextView
+    private lateinit var debugAudioTextView: TextView
+    private lateinit var debugContainerTextView: TextView
 
     private var playbackPosition = -1L
 
@@ -101,11 +109,39 @@ class PlaybackExoFragment :
         player = null
     }
 
+    private fun initializePlayer(position: Long) {
+        val forceTranscode =
+            requireActivity().intent.getBooleanExtra(
+                VideoDetailsFragment.FORCE_TRANSCODE,
+                false,
+            )
+        val forceDirectPlay =
+            requireActivity().intent.getBooleanExtra(
+                VideoDetailsFragment.FORCE_DIRECT_PLAY,
+                false,
+            )
+        val streamChoice = chooseStream(forceTranscode, forceDirectPlay)
+        initializePlayer(position, streamChoice)
+    }
+
     @OptIn(UnstableApi::class)
     private fun initializePlayer(
         position: Long,
-        forceTranscode: Boolean,
+        streamChoice: StreamChoice,
     ) {
+        when (streamChoice.transcodeDecision) {
+            TranscodeDecision.TRANSCODE -> debugPlaybackTextView.text = "Transcode"
+            TranscodeDecision.FORCED_TRANSCODE -> debugPlaybackTextView.text = "Force transcode"
+            TranscodeDecision.DIRECT_PLAY -> debugPlaybackTextView.text = "Direct"
+            TranscodeDecision.FORCED_DIRECT_PLAY -> debugPlaybackTextView.text = "Force direct"
+        }
+        debugVideoTextView.text =
+            if (streamChoice.videoSupported) scene.videoCodec else "${scene.videoCodec} (unsupported)"
+        debugAudioTextView.text =
+            if (streamChoice.audioSupported) scene.audioCodec else "${scene.audioCodec} (unsupported)"
+        debugContainerTextView.text =
+            if (streamChoice.containerSupported) scene.format else "${scene.format} (unsupported)"
+
         player =
             StashExoPlayer.getInstance(requireContext())
                 .also { exoPlayer ->
@@ -180,41 +216,32 @@ class PlaybackExoFragment :
                         else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
                     }
                 }.also { exoPlayer ->
-                    var mediaItem: MediaItem? = null
-                    var streamUrl = scene.streams["Direct stream"]
-                    if (streamUrl != null && !forceTranscode) {
-                        mediaItem = MediaItem.fromUri(streamUrl)
-                    } else {
-                        val streamChoice =
-                            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                                .getString("stream_choice", "HLS")
-                        streamUrl = scene.streams[streamChoice]
-                        val mimeType =
-                            when (streamChoice) {
-                                "DASH" -> {
-                                    MimeTypes.APPLICATION_MPD
-                                }
-
-                                "HLS" -> {
-                                    MimeTypes.APPLICATION_M3U8
-                                }
-
-                                "MP4" -> {
-                                    MimeTypes.VIDEO_MP4
-                                }
-
-                                else -> {
-                                    MimeTypes.VIDEO_WEBM
-                                }
+                    StashExoPlayer.addListener(
+                        object : Listener {
+                            override fun onPlayerError(error: PlaybackException) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Playback error: ${error.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             }
 
-                        mediaItem =
-                            MediaItem.Builder()
-                                .setUri(streamUrl)
-                                .setMimeType(mimeType)
-                                .build()
-                    }
-                    exoPlayer.setMediaItem(mediaItem, if (position > 0) position else C.TIME_UNSET)
+                            override fun onPlayerErrorChanged(error: PlaybackException?) {
+                                if (error != null) {
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Playback error: ${error.message}",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                }
+                            }
+                        },
+                    )
+                }.also { exoPlayer ->
+                    exoPlayer.setMediaItem(
+                        streamChoice.mediaItem,
+                        if (position > 0) position else C.TIME_UNSET,
+                    )
                     exoPlayer.prepare()
                     // Unless the video was paused before called the result launcher, play immediately
                     exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
@@ -240,15 +267,24 @@ class PlaybackExoFragment :
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
         exoCenterControls = view.findViewById(androidx.media3.ui.R.id.exo_center_controls)
+
+        debugView = view.findViewById(R.id.playback_debug_info)
+        debugPlaybackTextView = view.findViewById(R.id.debug_playback)
+        debugVideoTextView = view.findViewById(R.id.debug_video)
+        debugAudioTextView = view.findViewById(R.id.debug_audio)
+        debugContainerTextView = view.findViewById(R.id.debug_container_format)
+
+        if (manager.getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)) {
+            debugView.visibility = View.VISIBLE
+        }
 
         scene = requireActivity().intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
             ?: throw RuntimeException()
 
-        val showTitle =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getBoolean("exoShowTitle", true)
+        val showTitle = manager.getBoolean("exoShowTitle", true)
         val titleText = view.findViewById<TextView>(R.id.playback_title)
         val dateText = view.findViewById<TextView>(R.id.playback_date)
         if (showTitle) {
@@ -415,7 +451,7 @@ class PlaybackExoFragment :
             // Usually even if not null, there may not be sprites and the server will return a 404
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 withContext(Dispatchers.IO) {
-                    val client = createOkHttpClient(requireContext())
+                    val client = StashClient.getHttpClient(requireContext())
                     val request = Request.Builder().url(scene.spriteUrl!!).get().build()
                     client.newCall(request).execute().use {
                         Log.d(
@@ -451,11 +487,14 @@ class PlaybackExoFragment :
             listPopUp.width = 300
             listPopUp.isModal = true
 
+            val debugToggleText =
+                if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
+
             val adapter =
                 ArrayAdapter(
                     view.context,
                     R.layout.popup_item,
-                    listOf("Create Marker"),
+                    listOf("Create Marker", debugToggleText),
                 )
             listPopUp.setAdapter(adapter)
 
@@ -471,8 +510,14 @@ class PlaybackExoFragment :
                     intent.putExtra("dataType", DataType.TAG.name)
                     intent.putExtra(SearchForFragment.ID_KEY, StashAction.CREATE_MARKER.id)
                     resultLauncher.launch(intent)
-                    listPopUp.dismiss()
+                } else if (position == 1) {
+                    if (debugView.isVisible) {
+                        debugView.visibility = View.GONE
+                    } else {
+                        debugView.visibility = View.VISIBLE
+                    }
                 }
+                listPopUp.dismiss()
             }
 
             listPopUp.show()
@@ -489,12 +534,7 @@ class PlaybackExoFragment :
                 } else {
                     requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
                 }
-            val forceTranscode =
-                requireActivity().intent.getBooleanExtra(
-                    VideoDetailsFragment.FORCE_TRANSCODE,
-                    false,
-                )
-            initializePlayer(position, forceTranscode)
+            initializePlayer(position)
         }
     }
 
@@ -509,12 +549,7 @@ class PlaybackExoFragment :
                 } else {
                     requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
                 }
-            val forceTranscode =
-                requireActivity().intent.getBooleanExtra(
-                    VideoDetailsFragment.FORCE_TRANSCODE,
-                    false,
-                )
-            initializePlayer(position, forceTranscode)
+            initializePlayer(position)
         }
     }
 
@@ -698,7 +733,7 @@ class PlaybackExoFragment :
                                 videoPos,
                                 tagId,
                             )!!
-                        val dur = Constants.durationToString(newMarker.seconds)
+                        val dur = durationToString(newMarker.seconds)
                         Toast.makeText(
                             requireContext(),
                             "Created a new marker at $dur with primary tag '${newMarker.primary_tag.tagData.name}'",
@@ -707,6 +742,99 @@ class PlaybackExoFragment :
                     }
                 }
             }
+        }
+    }
+
+    enum class TranscodeDecision {
+        DIRECT_PLAY,
+        FORCED_DIRECT_PLAY,
+        TRANSCODE,
+        FORCED_TRANSCODE,
+    }
+
+    data class StreamChoice(
+        val transcodeDecision: TranscodeDecision,
+        val videoSupported: Boolean,
+        val audioSupported: Boolean,
+        val containerSupported: Boolean,
+        val mediaItem: MediaItem,
+    )
+
+    private fun chooseStream(
+        forceTranscode: Boolean,
+        forceDirectPlay: Boolean,
+    ): StreamChoice {
+        val supportedCodecs = CodecSupport.getSupportedCodecs(requireContext())
+        val videoSupported = supportedCodecs.isVideoSupported(scene.videoCodec)
+        val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
+        val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
+        if (
+            !forceTranscode &&
+            videoSupported &&
+            audioSupported &&
+            containerSupported &&
+            scene.streamUrl != null
+        ) {
+            Log.v(
+                TAG,
+                "Video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) supported",
+            )
+            return StreamChoice(
+                TranscodeDecision.DIRECT_PLAY,
+                videoSupported,
+                audioSupported,
+                containerSupported,
+                MediaItem.fromUri(scene.streamUrl!!),
+            )
+        } else if (forceDirectPlay) {
+            Log.v(
+                TAG,
+                "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
+            )
+            return StreamChoice(
+                TranscodeDecision.FORCED_DIRECT_PLAY,
+                videoSupported,
+                audioSupported,
+                containerSupported,
+                MediaItem.fromUri(scene.streamUrl!!),
+            )
+        } else {
+            val streamChoice =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getString("stream_choice", "HLS")
+            val streamUrl = scene.streams[streamChoice]
+            val mimeType =
+                when (streamChoice) {
+                    "DASH" -> {
+                        MimeTypes.APPLICATION_MPD
+                    }
+
+                    "HLS" -> {
+                        MimeTypes.APPLICATION_M3U8
+                    }
+
+                    "MP4" -> {
+                        MimeTypes.VIDEO_MP4
+                    }
+
+                    else -> {
+                        MimeTypes.VIDEO_WEBM
+                    }
+                }
+            Log.v(
+                TAG,
+                "Transcoding video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) using $streamChoice",
+            )
+            return StreamChoice(
+                if (forceTranscode) TranscodeDecision.FORCED_TRANSCODE else TranscodeDecision.TRANSCODE,
+                videoSupported,
+                audioSupported,
+                containerSupported,
+                MediaItem.Builder()
+                    .setUri(streamUrl)
+                    .setMimeType(mimeType)
+                    .build(),
+            )
         }
     }
 

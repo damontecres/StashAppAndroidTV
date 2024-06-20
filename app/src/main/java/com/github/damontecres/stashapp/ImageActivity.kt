@@ -48,10 +48,10 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
-import com.github.damontecres.stashapp.util.convertFilter
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.util.toFindFilterType
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
@@ -124,7 +124,7 @@ class ImageActivity : FragmentActivity() {
                 if (savedFilter != null) {
                     val findFilter =
                         queryEngine.updateFilter(
-                            convertFilter(savedFilter.find_filter),
+                            savedFilter.find_filter?.toFindFilterType(),
                             useRandom = true,
                         )?.copy(per_page = Optional.present(pageSize))
                             ?: DataType.IMAGE.asDefaultFindFilterType
@@ -193,7 +193,7 @@ class ImageActivity : FragmentActivity() {
                     if (image != null && image.paths.image != null) {
                         currentPosition = newPosition
                         imageFragment =
-                            ImageFragment(image.id, image.paths.image, image.maxFileSize)
+                            ImageFragment(image.id, image.paths.image, image.maxFileSize, image)
                         imageFragment.image = image
                         supportFragmentManager.beginTransaction()
                             .replace(R.id.image_fragment, imageFragment)
@@ -276,6 +276,7 @@ class ImageActivity : FragmentActivity() {
         val imageId: String,
         val imageUrl: String,
         val imageSize: Int = -1,
+        var image: ImageData? = null,
     ) :
         Fragment(R.layout.image_layout) {
         lateinit var mainImage: ZoomImageView
@@ -284,7 +285,6 @@ class ImageActivity : FragmentActivity() {
         lateinit var oCounterTextView: TextView
         lateinit var table: TableLayout
         lateinit var ratingBar: StashRatingBar
-        var image: ImageData? = null
 
         private var animationDuration by Delegates.notNull<Long>()
 
@@ -307,15 +307,6 @@ class ImageActivity : FragmentActivity() {
             ratingBar = view.findViewById(R.id.rating_bar)
 
             Log.v(TAG, "imageId=$imageId")
-            if (image != null) {
-                configureUI()
-            } else {
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val queryEngine = QueryEngine(requireContext())
-                    image = queryEngine.getImage(imageId)!!
-                    configureUI()
-                }
-            }
 
             ratingBar.nextFocusDownId = R.id.o_counter_button
             val focusListener = ImageButtonFocusListener(ratingBar)
@@ -416,6 +407,44 @@ class ImageActivity : FragmentActivity() {
             }
             zoomOutButton.nextFocusUpId = ratingBar.focusableViewId
 
+            viewCreated = true
+        }
+
+        override fun onStart() {
+            super.onStart()
+            if (image != null) {
+                configureUI()
+            } else {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val queryEngine = QueryEngine(requireContext())
+                    image = queryEngine.getImage(imageId)!!
+                    configureUI()
+                }
+            }
+        }
+
+        private fun loadImage() {
+            mainImage.post {
+                // Properly scale the image after layout
+                val imageFile = image!!.visual_files.first()
+                val width = imageFile.width!!
+                val height = imageFile.height!!
+
+                val scale =
+                    Math.min(
+                        mainImage.height.toDouble() / height,
+                        mainImage.width.toDouble() / width,
+                    )
+
+                val targetHeight = height * scale
+                val targetWidth = width * scale
+
+                val lp = mainImage.layoutParams
+                lp.width = targetWidth.toInt()
+                lp.height = targetHeight.toInt()
+                mainImage.layoutParams = lp
+            }
+
             val placeholder =
                 object : CircularProgressDrawable(requireContext()) {
                     // ZoomImageView requires that drawables have an intrinsic height/width
@@ -464,11 +493,11 @@ class ImageActivity : FragmentActivity() {
                     },
                 )
                 .into(mainImage)
-            viewCreated = true
         }
 
         fun configureUI() {
             val image = image!!
+            loadImage()
             titleText.text = image.title
 
             ratingBar.rating100 = image.rating100 ?: 0

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@android:color/black">
+    android:background="@android:color/black"
+    tools:background="@android:color/darker_gray">
 
     <!--    <ImageView-->
     <!--        android:id="@+id/image_view_image"-->
@@ -16,6 +18,8 @@
         android:id="@+id/image_view_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
         android:scrollbars="vertical|horizontal"
         app:transformation="centerInside"
         app:transformationGravity="auto"
@@ -57,11 +61,12 @@
         android:layout_alignParentEnd="true"
         android:background="@color/transparent_black_50"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="gone"
+        tools:visibility="visible">
 
         <com.github.damontecres.stashapp.views.StashRatingBar
             android:id="@+id/rating_bar"
-            android:layout_width="300dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:defaultRating100="0"
             android:textSize="16sp"
@@ -90,7 +95,8 @@
                 android:scaleType="fitXY"
                 android:contentDescription="@string/stashapp_o_counter"
                 android:background="@drawable/image_button_selector"
-                android:nextFocusUp="@id/rating_bar" />
+                android:nextFocusUp="@id/rating_bar"
+                android:nextFocusDown="@id/o_counter_button" />
 
             <TextView
                 android:id="@+id/o_counter_text"

@@ -4,17 +4,13 @@ import android.os.Bundle
 import android.text.InputType
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.core.content.edit
-import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.addAndSwitchServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
-class ConfigurePinStep(private val server: StashServer) : GuidedStepSupportFragment() {
+class SetupStep4Pin(private val setupState: SetupState) :
+    SetupActivity.SimpleGuidedStepSupportFragment() {
     private var pinCode: Int? = null
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
@@ -104,20 +100,13 @@ class ConfigurePinStep(private val server: StashServer) : GuidedStepSupportFragm
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
-            addAndSwitchServer(requireContext(), server)
-            if (pinCode != null) {
-                val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-                manager.edit(true) {
-                    putString("pinCode", pinCode.toString())
-                }
-            }
-            finishGuidedStepSupportFragments()
+            val newState = setupState.copy(pinCode = pinCode)
+            finishSetup(newState)
         }
     }
 
     companion object {
-        private const val ACTION_PIN = 1L
-        private const val ACTION_CONFIRM_PIN = 2L
-        private const val ACTION_NO = 3L
+        private const val ACTION_PIN = 100L
+        private const val ACTION_CONFIRM_PIN = 200L
     }
 }

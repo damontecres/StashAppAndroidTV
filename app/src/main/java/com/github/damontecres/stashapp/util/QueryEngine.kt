@@ -12,6 +12,7 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
+import com.github.damontecres.stashapp.api.FindGalleriesById_V0250Query
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
 import com.github.damontecres.stashapp.api.FindGalleryQuery
 import com.github.damontecres.stashapp.api.FindImageQuery
@@ -24,7 +25,9 @@ import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.FindSavedFiltersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
+import com.github.damontecres.stashapp.api.FindTagQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
+import com.github.damontecres.stashapp.api.FindTagsV0250Query
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -62,7 +65,8 @@ class QueryEngine(
     private val showToasts: Boolean = false,
     lock: ReadWriteLock? = null,
 ) {
-    private val client = createApolloClient(context) ?: throw StashNotConfiguredException()
+    private val serverVersion = ServerPreferences(context).serverVersion
+    private val client = StashClient.getApolloClient(context)
 
     private val readLock = lock?.readLock()
 
@@ -194,6 +198,30 @@ class QueryEngine(
         return tags.orEmpty()
     }
 
+    suspend fun getTags(tagIds: List<String>): List<TagData> {
+        if (tagIds.isEmpty()) {
+            return listOf()
+        }
+        if (serverVersion.isAtLeast(Version.V0_25_0)) {
+            val query =
+                client.query(
+                    FindTagsV0250Query(
+                        filter = null,
+                        tag_filter = null,
+                        tagIds = tagIds,
+                    ),
+                )
+            val tags =
+                executeQuery(query).data?.findTags?.tags?.map { it.tagData }
+            return tags.orEmpty()
+        } else {
+            return tagIds.mapNotNull {
+                val query = client.query(FindTagQuery(it))
+                executeQuery(query).data?.findTag?.tagData
+            }
+        }
+    }
+
     suspend fun findMovies(
         findFilter: FindFilterType? = null,
         movieFilter: MovieFilterType? = null,
@@ -261,9 +289,19 @@ class QueryEngine(
         return executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
     }
 
-    suspend fun getGallery(galleryId: String): GalleryData? {
-        val query = client.query(FindGalleryQuery(galleryId))
-        return executeQuery(query).data?.findGallery?.galleryData
+    suspend fun getGalleries(galleryIds: List<String>): List<GalleryData> {
+        return if (galleryIds.isEmpty()) {
+            return listOf()
+        } else if (serverVersion.isAtLeast(Version.V0_25_0)) {
+            val query = client.query(FindGalleriesById_V0250Query(galleryIds))
+            executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
+        } else {
+            galleryIds.mapNotNull {
+                val query =
+                    client.query(FindGalleryQuery(it))
+                executeQuery(query).data?.findGallery?.galleryData
+            }
+        }
     }
 
     /**
