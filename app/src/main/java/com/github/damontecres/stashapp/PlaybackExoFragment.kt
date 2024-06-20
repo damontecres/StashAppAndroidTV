@@ -487,11 +487,14 @@ class PlaybackExoFragment :
             listPopUp.width = 300
             listPopUp.isModal = true
 
+            val debugToggleText =
+                if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
+
             val adapter =
                 ArrayAdapter(
                     view.context,
                     R.layout.popup_item,
-                    listOf("Create Marker"),
+                    listOf("Create Marker", debugToggleText),
                 )
             listPopUp.setAdapter(adapter)
 
@@ -507,8 +510,14 @@ class PlaybackExoFragment :
                     intent.putExtra("dataType", DataType.TAG.name)
                     intent.putExtra(SearchForFragment.ID_KEY, StashAction.CREATE_MARKER.id)
                     resultLauncher.launch(intent)
-                    listPopUp.dismiss()
+                } else if (position == 1) {
+                    if (debugView.isVisible) {
+                        debugView.visibility = View.GONE
+                    } else {
+                        debugView.visibility = View.VISIBLE
+                    }
                 }
+                listPopUp.dismiss()
             }
 
             listPopUp.show()
