@@ -49,4 +49,12 @@ class VersionCompareTests {
         Assert.assertTrue(V_0_1_1_4.isGreaterThan(V_0_1_0_6))
         Assert.assertTrue(V_0_1_1_4.isGreaterThan(V_0_1_0))
     }
+
+    @Test
+    fun testEqualOrBefore() {
+        Assert.assertTrue(V_0_2_0.isEqualOrBefore(V_0_2_0))
+        Assert.assertTrue(V_0_1_1.isEqualOrBefore(V_0_2_0))
+
+        Assert.assertFalse(V_0_2_0.isEqualOrBefore(V_0_1_1))
+    }
 }

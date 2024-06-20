@@ -116,6 +116,7 @@
         <item>mov</item>
         <item>mp4</item>
         <item>mpeg</item>
+        <item>mpegts</item>
         <item>mpegvideo</item>
         <item>rm</item>
         <item>webm</item>
@@ -128,6 +129,7 @@
         <item>mov</item>
         <item>mp4</item>
         <item>mpeg</item>
+        <item>mpegts</item>
         <item>webm</item>
     </string-array>
 
