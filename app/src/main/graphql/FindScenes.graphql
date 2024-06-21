@@ -1,10 +1,14 @@
-query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $scene_ids: [Int!]) {
-  findScenes(filter: $filter, scene_filter: $scene_filter, scene_ids: $scene_ids) {
+query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType) {
+  findScenes(filter: $filter, scene_filter: $scene_filter) {
     scenes {
       ...SlimSceneData
-      __typename
     }
-    __typename
+  }
+}
+
+query GetScene($id: ID!) {
+  findScene(id: $id) {
+  	...FullSceneData
   }
 }
 
@@ -25,8 +29,67 @@ fragment SlimSceneData on Scene {
   rating100
   o_counter
   organized
-  interactive
-  interactive_speed
+  resume_time
+  created_at
+  updated_at
+  files {
+    ...VideoFileData
+  }
+  paths {
+    screenshot
+    preview
+    stream
+    sprite
+  }
+  sceneStreams {
+    url
+    mime_type
+    label
+  }
+  scene_markers {
+    id
+    title
+  }
+  galleries {
+    id
+    title
+  }
+  studio {
+    id
+    name
+    image_path
+  }
+  movies {
+    movie {
+      id
+      name
+    }
+  }
+  tags {
+    id
+    name
+  }
+  performers {
+    id
+    name
+  }
+  scene_markers {
+    id
+    title
+  }
+}
+
+fragment FullSceneData on Scene {
+  id
+  title
+  code
+  details
+  director
+  urls
+  date
+  rating100
+  o_counter
+  organized
   resume_time
   play_duration
   play_count
@@ -123,10 +186,5 @@ fragment VideoFileData on VideoFile {
   height
   frame_rate
   bit_rate
-  fingerprints {
-    type
-    value
-    __typename
-  }
   __typename
 }

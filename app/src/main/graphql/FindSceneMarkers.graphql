@@ -36,7 +36,7 @@ fragment MarkerData on SceneMarker {
     ...TagData
   }
   scene {
-    ...SlimSceneData
+    id
     __typename
   }
   __typename

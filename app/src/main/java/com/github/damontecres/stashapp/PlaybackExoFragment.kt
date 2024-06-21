@@ -64,13 +64,12 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 @OptIn(UnstableApi::class)
-class PlaybackExoFragment :
+class PlaybackExoFragment(private val scene: Scene) :
     Fragment(R.layout.video_playback),
     PlaybackActivity.StashVideoPlayer {
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
     private var player: ExoPlayer? = null
     private var trackActivityListener: PlaybackListener? = null
-    private lateinit var scene: Scene
     lateinit var videoView: StashPlayerView
     lateinit var previewTimeBar: PreviewTimeBar
     private lateinit var exoCenterControls: View
@@ -280,9 +279,6 @@ class PlaybackExoFragment :
         if (manager.getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)) {
             debugView.visibility = View.VISIBLE
         }
-
-        scene = requireActivity().intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
-            ?: throw RuntimeException()
 
         val showTitle = manager.getBoolean("exoShowTitle", true)
         val titleText = view.findViewById<TextView>(R.id.playback_title)

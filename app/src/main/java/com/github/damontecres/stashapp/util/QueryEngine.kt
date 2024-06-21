@@ -28,6 +28,8 @@ import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
 import com.github.damontecres.stashapp.api.FindTagsV0250Query
+import com.github.damontecres.stashapp.api.GetSceneQuery
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -114,7 +116,6 @@ class QueryEngine(
     suspend fun findScenes(
         findFilter: FindFilterType? = null,
         sceneFilter: SceneFilterType? = null,
-        sceneIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<SlimSceneData> {
         val query =
@@ -122,7 +123,6 @@ class QueryEngine(
                 FindScenesQuery(
                     filter = updateFilter(findFilter, useRandom),
                     scene_filter = sceneFilter,
-                    scene_ids = sceneIds?.map { it.toInt() },
                 ),
             )
         val scenes =
@@ -132,8 +132,9 @@ class QueryEngine(
         return scenes.orEmpty()
     }
 
-    suspend fun getScene(sceneId: String): SlimSceneData? {
-        return findScenes(sceneIds = listOf(sceneId)).firstOrNull()
+    suspend fun getScene(sceneId: String): FullSceneData? {
+        val query = client.query(GetSceneQuery(id = sceneId))
+        return executeQuery(query).data?.findScene?.fullSceneData
     }
 
     suspend fun findPerformers(
