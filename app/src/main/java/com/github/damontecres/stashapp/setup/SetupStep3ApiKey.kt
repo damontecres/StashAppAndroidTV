@@ -64,7 +64,7 @@ class SetupStep3ApiKey(private val setupState: SetupState) :
                             nextStep(SetupStep2Ssl(setupState))
                         }
 
-                        TestResultStatus.SUCCESS -> {
+                        TestResultStatus.SUCCESS, TestResultStatus.UNSUPPORTED_VERSION -> {
                             nextStep(SetupStep4Pin(setupState.copy(apiKey = apiKey.toString())))
                         }
 
