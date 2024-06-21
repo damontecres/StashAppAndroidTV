@@ -36,9 +36,11 @@ Starting with `v0.2.2`, the app will automatically check for updates and, as an 
 
 #### Develop build
 
+This build has the latest features, but may be unstable or have bugs!
+
 You can install the latest development debug build from the [develop pre-release](https://github.com/damontecres/StashAppAndroidTV/releases/tag/develop) using the same methods as above. The short code is `505547` or URL: https://aftv.news/505547
 
-This build has the latest features, but may be unstable or have bugs.
+Starting with `v0.2.2`, you update in-app to the newest development build by changing the URL in `Settings->Advanced->Update URL` to https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/tags/develop (replace `latest` with `tags/develop`).
 
 ### Configuration
 
@@ -47,7 +49,7 @@ The first time you open the app, follow the prompts to configure the app to conn
 1. Enter the full URL of your Stash server (e.g. `http://192.168.1.122:9999`)
     - Don't use `localhost`; use the IP address or domain of your Stash server
     - If you have configured HTTPS/SSL/TLS, make sure to use `https://` instead of `http://`
-1. If you have enabled authentication on your Stash server, to enter the API Key
+1. If you have enabled authentication on your Stash server, enter the API Key
     1. Use your phone to browse to your Stash server and copy the API Key from the Settings->Security page (e.g. http://192.168.1.122:9999/settings?tab=security)
     1. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) to paste the API Key into the TV app
 1. If you have trouble submitting the URL or API Key using the virtual remote control, [see some tips here](https://github.com/damontecres/StashAppAndroidTV/wiki/Tips-&-Tricks#i-cant-submit-the-server-url-when-using-a-remote-phone-app)
@@ -80,8 +82,10 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 
 ## Additional screenshots
 
-### Scene list & filters
-![scenes_filter Large](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/0f91b362-c2d4-414c-b813-59435c5951be)
+### Scene list, filters, & sorting
+![0_2_10_scenes](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/092e0a87-e097-44c2-a605-e1ba93443e89)
 
 ### Performer page
-![performer Large](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/3b55a090-bf83-4f20-b591-8a4f85aad941)
+![0_2_10_performer](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/83eefe0d-800c-4a0c-bcc5-4176372d296d)
+
+
