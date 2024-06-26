@@ -87,5 +87,3 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 
 ### Performer page
 ![0_2_10_performer](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/83eefe0d-800c-4a0c-bcc5-4176372d296d)
-
-
