@@ -756,6 +756,24 @@ class PlaybackExoFragment(private val scene: Scene) :
         val mediaItem: MediaItem,
     )
 
+    private fun buildMediaItems(
+        url: String,
+        format: String?,
+    ): MediaItem {
+        val mimeType =
+            when (format?.lowercase()) {
+                // As recommended by https://developer.android.com/media/media3/exoplayer/hls#using-mediaitem
+                // Specify the mimetype for HLS & DASH streams
+                "hls" -> MimeTypes.APPLICATION_M3U8
+                "dash" -> MimeTypes.APPLICATION_MPD
+                else -> null
+            }
+        return MediaItem.Builder()
+            .setUri(url)
+            .setMimeType(mimeType)
+            .build()
+    }
+
     private fun chooseStream(
         forceTranscode: Boolean,
         forceDirectPlay: Boolean,
@@ -780,7 +798,7 @@ class PlaybackExoFragment(private val scene: Scene) :
                 videoSupported,
                 audioSupported,
                 containerSupported,
-                MediaItem.fromUri(scene.streamUrl!!),
+                buildMediaItems(scene.streamUrl!!, scene.format),
             )
         } else if (forceDirectPlay) {
             Log.v(
@@ -792,7 +810,7 @@ class PlaybackExoFragment(private val scene: Scene) :
                 videoSupported,
                 audioSupported,
                 containerSupported,
-                MediaItem.fromUri(scene.streamUrl!!),
+                buildMediaItems(scene.streamUrl!!, scene.format),
             )
         } else {
             val streamChoice =
