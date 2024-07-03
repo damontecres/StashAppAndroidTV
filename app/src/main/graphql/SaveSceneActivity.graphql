@@ -2,14 +2,6 @@ mutation SceneSaveActivity($scene_id: ID!, $resume_time: Float!, $play_duration:
   sceneSaveActivity(id: $scene_id, resume_time: $resume_time, playDuration: $play_duration)
 }
 
-mutation SceneIncrementO($scene_id: ID!) {
-  sceneIncrementO(id: $scene_id)
-}
-
-mutation SceneDecrementO($scene_id: ID!) {
-  sceneDecrementO(id: $scene_id)
-}
-
 mutation SceneResetO($scene_id: ID!) {
   sceneResetO(id: $scene_id)
 }
@@ -26,10 +18,6 @@ mutation SceneDeleteO($scene_id: ID!, $times: [Timestamp!]) {
     count
     history
   }
-}
-
-mutation SceneIncrementPlayCount($id: ID!) {
-  sceneIncrementPlayCount(id: $id)
 }
 
 mutation SceneAddPlayCount($scene_id: ID!, $times: [Timestamp!]) {

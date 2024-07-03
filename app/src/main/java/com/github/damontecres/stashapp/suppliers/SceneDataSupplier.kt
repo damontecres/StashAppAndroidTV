@@ -24,6 +24,7 @@ class SceneDataSupplier(
         return FindScenesQuery(
             filter = filter,
             scene_filter = sceneFilter,
+            ids = null,
         )
     }
 
