@@ -22,6 +22,7 @@ query Configuration {
         previews
         sprites
         transcodes
+        imageThumbnails
       }
     }
     interface {
