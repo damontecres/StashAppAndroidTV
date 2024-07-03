@@ -50,7 +50,7 @@ class FrontPageFilterTests {
             mock<QueryEngine> {
                 onBlocking { getSavedFilter("1") } doReturn createSavedFilterData("1", FilterMode.SCENES)
                 onBlocking { getSavedFilter("2") } doReturn createSavedFilterData("2", FilterMode.PERFORMERS)
-                onBlocking { findScenes(anyOrNull(), anyOrNull(), anyOrNull(), any()) } doReturn listOf()
+                onBlocking { findScenes(anyOrNull(), anyOrNull(), any()) } doReturn listOf()
                 onBlocking { findPerformers(anyOrNull(), anyOrNull(), anyOrNull(), any()) } doReturn listOf()
             }
         val frontPageParser = FrontPageParser(mockedQueryEngine, FilterParser(Version.V0_25_0))
