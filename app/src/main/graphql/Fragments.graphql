@@ -1,3 +1,10 @@
+fragment SlimTagData on Tag {
+  id
+  name
+  description
+  image_path
+}
+
 fragment TagData on Tag {
   id
   name

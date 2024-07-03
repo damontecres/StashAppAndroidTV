@@ -36,6 +36,8 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.SlimTagData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
@@ -408,9 +410,12 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                         ),
                     )
                 },
-            tags = this.tags.map { SlimSceneData.Tag(it.tagData.id, it.tagData.name) },
+            tags = this.tags.map { SlimSceneData.Tag("", it.tagData.asSlimTagData) },
             performers = this.performers.map { SlimSceneData.Performer(it.id, it.name) },
         )
+
+val TagData.asSlimTagData: SlimTagData
+    get() = SlimTagData(id, name, description, image_path)
 
 val PerformerData.ageInYears: Int?
     @RequiresApi(Build.VERSION_CODES.O)

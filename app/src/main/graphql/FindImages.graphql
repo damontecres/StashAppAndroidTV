@@ -39,7 +39,7 @@ fragment ImageData on Image {
     ...StudioData
   }
   tags {
-    ...TagData
+    ...SlimTagData
   }
   galleries {
     id

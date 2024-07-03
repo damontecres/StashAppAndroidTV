@@ -526,7 +526,7 @@ class ImageActivity : FragmentActivity() {
             addRow(R.string.stashapp_details, image.details)
             addRow(
                 R.string.stashapp_tags,
-                concatIfNotBlank(", ", image.tags.map { it.tagData.name }),
+                concatIfNotBlank(", ", image.tags.map { it.slimTagData.name }),
             )
             addRow(
                 R.string.stashapp_performers,

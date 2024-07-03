@@ -22,6 +22,21 @@ query CountPerformers($filter: FindFilterType, $performer_filter: PerformerFilte
   }
 }
 
+query FindPerformerTags($filter: FindFilterType, $performer_filter: PerformerFilterType, $performer_ids: [Int!]) {
+  findPerformers(
+    filter: $filter
+    performer_filter: $performer_filter
+    performer_ids: $performer_ids
+  ) {
+    performers {
+      id
+      tags {
+        ...TagData
+      }
+    }
+  }
+}
+
 mutation UpdatePerformer($input: PerformerUpdateInput!) {
   performerUpdate(input: $input) {
     ...PerformerData
@@ -61,7 +76,7 @@ fragment PerformerData on Performer {
   created_at
   updated_at
   tags {
-    ...TagData
+    ...SlimTagData
     __typename
   }
   stash_ids {

@@ -66,8 +66,7 @@ fragment SlimSceneData on Scene {
     }
   }
   tags {
-    id
-    name
+    ...SlimTagData
   }
   performers {
     id
