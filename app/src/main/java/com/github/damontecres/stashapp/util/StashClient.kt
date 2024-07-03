@@ -73,7 +73,16 @@ class StashClient private constructor() {
             useApiKey: Boolean,
         ): OkHttpClient {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
-            val apiKey = manager.getString(context.getString(R.string.pref_key_current_api_key), null)
+            val server =
+                getServerRoot(
+                    manager.getString(
+                        context.getString(R.string.pref_key_current_server),
+                        null,
+                    ),
+                )
+            val apiKey =
+                manager.getString(context.getString(R.string.pref_key_current_api_key), null)
+                    ?.trim()
             val trustAll = manager.getBoolean("trustAllCerts", false)
             val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
             val cacheLogging = manager.getBoolean("networkCacheLogging", false)
@@ -108,9 +117,14 @@ class StashClient private constructor() {
                 builder =
                     builder.addInterceptor {
                         val request =
-                            it.request().newBuilder()
-                                .addHeader(Constants.STASH_API_HEADER, apiKey.trim())
-                                .build()
+                            if (server != null && it.request().url.toString().startsWith(server)) {
+                                // Only set the API Key if the target URL is the stash server
+                                it.request().newBuilder()
+                                    .addHeader(Constants.STASH_API_HEADER, apiKey)
+                                    .build()
+                            } else {
+                                it.request()
+                            }
                         it.proceed(request)
                     }
             }
@@ -234,6 +248,30 @@ class StashClient private constructor() {
                     .path(pathSegments.joinToString("/")) // Ensure the URL is the graphql endpoint
                     .build()
             Log.d(TAG, "StashUrl: $stashUrl => $url")
+            return url.toString()
+        }
+
+        /**
+         * Get the server URL excluding the (unlikely) `/graphql` last path segment
+         */
+        private fun getServerRoot(stashUrl: String?): String? {
+            if (stashUrl == null) {
+                return null
+            }
+            var cleanedStashUrl = stashUrl.trim()
+            if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
+                // Assume http
+                cleanedStashUrl = "http://$cleanedStashUrl"
+            }
+            var url = Uri.parse(cleanedStashUrl)
+            val pathSegments = url.pathSegments.toMutableList()
+            if (pathSegments.isNotEmpty() && pathSegments.last() == "graphql") {
+                pathSegments.removeLast()
+            }
+            url =
+                url.buildUpon()
+                    .path(pathSegments.joinToString("/"))
+                    .build()
             return url.toString()
         }
 
