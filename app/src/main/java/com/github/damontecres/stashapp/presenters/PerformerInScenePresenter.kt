@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter
  * A [PerformerPresenter] which will use the age of a [PerformerData] at the time of a [SlimSceneData] for the content text
  */
 class PerformerInScenePresenter(
-    private val sceneData: SlimSceneData,
+    private val sceneDate: String?,
     callback: LongClickCallBack<PerformerData>? = null,
 ) : PerformerPresenter(
         callback,
@@ -23,10 +23,10 @@ class PerformerInScenePresenter(
     ): CharSequence? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val ageInScene =
-                if (item.birthdate != null && sceneData.date != null) {
+                if (item.birthdate != null && sceneDate != null) {
                     Period.between(
                         LocalDate.parse(item.birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
-                        LocalDate.parse(sceneData.date, DateTimeFormatter.ISO_LOCAL_DATE),
+                        LocalDate.parse(sceneDate, DateTimeFormatter.ISO_LOCAL_DATE),
                     ).years
                 } else {
                     null

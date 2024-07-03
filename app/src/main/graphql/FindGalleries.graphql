@@ -44,8 +44,7 @@ fragment GalleryData on Gallery {
     name
   }
   tags {
-    id
-    name
+    ...SlimTagData
   }
   studio {
     id

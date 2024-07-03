@@ -30,11 +30,14 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.SlimTagData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
@@ -328,6 +331,19 @@ fun CharSequence?.isNotNullOrBlank(): Boolean {
 /**
  * Gets the scene's title if not null otherwise the first file's name
  */
+val FullSceneData.titleOrFilename: String?
+    get() =
+        if (title.isNullOrBlank()) {
+            val path = files.firstOrNull()?.videoFileData?.path
+            if (path != null) {
+                File(path).name
+            } else {
+                null
+            }
+        } else {
+            title
+        }
+
 val SlimSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
@@ -340,6 +356,66 @@ val SlimSceneData.titleOrFilename: String?
         } else {
             title
         }
+
+val FullSceneData.asSlimeSceneData: SlimSceneData
+    get() =
+        SlimSceneData(
+            id = this.id,
+            title = this.title,
+            code = this.code,
+            details = this.details,
+            director = this.director,
+            urls = this.urls,
+            date = this.date,
+            rating100 = this.rating100,
+            o_counter = this.o_counter,
+            organized = this.organized,
+            resume_time = this.resume_time,
+            created_at = this.created_at,
+            updated_at = this.updated_at,
+            files = this.files.map { SlimSceneData.File(it.__typename, it.videoFileData) },
+            paths =
+                SlimSceneData.Paths(
+                    screenshot = this.paths.screenshot,
+                    preview = this.paths.preview,
+                    stream = this.paths.stream,
+                    sprite = this.paths.sprite,
+                ),
+            sceneStreams =
+                this.sceneStreams.map {
+                    SlimSceneData.SceneStream(
+                        it.url,
+                        it.mime_type,
+                        it.label,
+                    )
+                },
+            scene_markers = this.scene_markers.map { SlimSceneData.Scene_marker(it.id, it.title) },
+            galleries = this.galleries.map { SlimSceneData.Gallery(it.id, it.title) },
+            studio =
+                if (this.studio != null) {
+                    SlimSceneData.Studio(
+                        this.studio.studioData.id,
+                        this.studio.studioData.name,
+                        this.studio.studioData.image_path,
+                    )
+                } else {
+                    null
+                },
+            movies =
+                this.movies.map {
+                    SlimSceneData.Movie(
+                        SlimSceneData.Movie1(
+                            it.movie.movieData.id,
+                            it.movie.movieData.name,
+                        ),
+                    )
+                },
+            tags = this.tags.map { SlimSceneData.Tag("", it.tagData.asSlimTagData) },
+            performers = this.performers.map { SlimSceneData.Performer(it.id, it.name) },
+        )
+
+val TagData.asSlimTagData: SlimTagData
+    get() = SlimTagData(id, name, description, image_path)
 
 val PerformerData.ageInYears: Int?
     @RequiresApi(Build.VERSION_CODES.O)
