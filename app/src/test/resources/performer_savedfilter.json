@@ -98,7 +98,9 @@
         },
         "gender": {
           "modifier": "EQUALS",
-          "value": "Female"
+          "value": [
+            "Female"
+          ]
         },
         "hair_color": {
           "modifier": "NOT_MATCHES_REGEX",
