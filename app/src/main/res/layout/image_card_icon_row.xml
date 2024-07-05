@@ -16,7 +16,7 @@
             android:id="@+id/icon_text"
             android:visibility="visible"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/extra_ocounter_icon"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintHorizontal_chainStyle="packed"
@@ -24,30 +24,5 @@
             android:singleLine="true"
             android:marqueeRepeatLimit="-1"
             android:ellipsize="marquee"
-            tools:text="1" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/extra_ocounter_icon"
-            android:src="@drawable/sweat_drops"
-            android:layout_width="@dimen/lb_basic_card_content_text_size"
-            android:layout_height="@dimen/lb_basic_card_content_text_size"
-            android:layout_gravity="center"
-            app:layout_constraintStart_toEndOf="@id/icon_text"
-            app:layout_constraintEnd_toStartOf="@id/extra_ocounter_count"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintHorizontal_chainStyle="packed"
-            android:contentDescription="icon"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraIcon"
-            app:tint="@color/lb_basic_card_content_text_color" />
-
-        <TextView
-            android:id="@+id/extra_ocounter_count"
-            app:layout_constraintStart_toEndOf="@id/extra_ocounter_icon"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintHorizontal_chainStyle="packed"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
             tools:text="1" />
 </androidx.constraintlayout.widget.ConstraintLayout>
