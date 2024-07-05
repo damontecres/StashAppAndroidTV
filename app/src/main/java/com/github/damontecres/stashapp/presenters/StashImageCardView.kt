@@ -5,8 +5,11 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Build
 import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.style.ImageSpan
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -228,16 +231,42 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                         Spannable.SPAN_INCLUSIVE_INCLUSIVE,
                     )
                 }
+                if (oCounter != null && oCounter > 0) {
+                    if (countStrings.isNotEmpty()) {
+                        // Add space after previous icons
+                        append("  ")
+                    }
+                    val size =
+                        TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_SP,
+                            12f,
+                            context.resources.displayMetrics,
+                        ).toInt()
+                    val sweat = ContextCompat.getDrawable(context, R.drawable.sweat_drops)!!
+
+                    sweat.setBounds(0, 0, size, size)
+                    val imageSpan =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            ImageSpan(sweat, ImageSpan.ALIGN_CENTER)
+                        } else {
+                            ImageSpan(sweat, ImageSpan.ALIGN_BASELINE)
+                        }
+
+                    val start = length
+                    append("  ")
+                    setSpan(imageSpan, start, start + 1, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+                    append(oCounter.toString())
+                }
             }
 
-        if ((oCounter ?: -1) > 0) {
-            oCounterTextView.text = oCounter.toString()
-            oCounterTextView.visibility = View.VISIBLE
-            oCounterIconView.visibility = View.VISIBLE
-        } else {
-            oCounterTextView.visibility = View.GONE
-            oCounterIconView.visibility = View.GONE
-        }
+//        if ((oCounter ?: -1) > 0) {
+//            oCounterTextView.text = oCounter.toString()
+//            oCounterTextView.visibility = View.VISIBLE
+//            oCounterIconView.visibility = View.VISIBLE
+//        } else {
+//            oCounterTextView.visibility = View.GONE
+//            oCounterIconView.visibility = View.GONE
+//        }
     }
 
     fun showVideo() {

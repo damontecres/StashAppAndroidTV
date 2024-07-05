@@ -21,6 +21,9 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintHorizontal_chainStyle="packed"
             style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+            android:singleLine="true"
+            android:marqueeRepeatLimit="-1"
+            android:ellipsize="marquee"
             tools:text="1" />
 
         <androidx.appcompat.widget.AppCompatImageView
