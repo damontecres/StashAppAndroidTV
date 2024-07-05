@@ -13,6 +13,7 @@ import androidx.leanback.widget.ClassPresenterSelector
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
@@ -23,8 +24,10 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.PerformTogetherAppFilter
 import com.github.damontecres.stashapp.data.Performer
+import com.github.damontecres.stashapp.data.PerformerWithTagAppFilter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
@@ -155,7 +158,14 @@ class PerformerActivity : FragmentActivity() {
                     getColumns(DataType.MOVIE),
                 )
             } else if (position == 4) {
+                val presenter =
+                    ClassPresenterSelector()
+                        .addClassPresenter(
+                            TagData::class.java,
+                            TagPresenter(PerformersWithTagLongClickCallback()),
+                        )
                 StashGridFragment(
+                    presenter,
                     TagComparator,
                     PerformerTagDataSupplier(performer.id),
                     getColumns(DataType.TAG),
@@ -215,6 +225,39 @@ class PerformerActivity : FragmentActivity() {
                     val performerIds = listOf(performer.id, item.id)
                     val name = "${performer.name} & ${item.name}"
                     val appFilter = PerformTogetherAppFilter(name, performerIds)
+                    val intent = Intent(context, FilterListActivity::class.java)
+                    intent.putExtra("filter", appFilter)
+                    context.startActivity(intent)
+                }
+            }
+        }
+    }
+
+    private class PerformersWithTagLongClickCallback :
+        StashPresenter.LongClickCallBack<TagData> {
+        override fun getPopUpItems(
+            context: Context,
+            item: TagData,
+        ): List<StashPresenter.PopUpItem> {
+            return listOf(
+                StashPresenter.PopUpItem.getDefault(context),
+                StashPresenter.PopUpItem(1, "View performers with this tag"),
+            )
+        }
+
+        override fun onItemLongClick(
+            context: Context,
+            item: TagData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            when (popUpItem.id) {
+                StashPresenter.PopUpItem.DEFAULT_ID -> {
+                    StashItemViewClickListener(context).onItemClicked(item)
+                }
+
+                1L -> {
+                    val name = "Performers with ${item.name}"
+                    val appFilter = PerformerWithTagAppFilter(name, item.id)
                     val intent = Intent(context, FilterListActivity::class.java)
                     intent.putExtra("filter", appFilter)
                     context.startActivity(intent)

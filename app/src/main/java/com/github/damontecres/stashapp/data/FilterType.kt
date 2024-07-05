@@ -8,6 +8,7 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.util.toFind_filter
@@ -83,6 +84,28 @@ data class PerformTogetherAppFilter(override val name: String, val performerIds:
                         MultiCriterionInput(
                             value = Optional.present(performerIds),
                             modifier = CriterionModifier.INCLUDES_ALL,
+                        ),
+                    ),
+            )
+}
+
+@Parcelize
+data class PerformerWithTagAppFilter(
+    override val name: String,
+    val tagId: String,
+) : AppFilter {
+    override val dataType: DataType
+        get() = DataType.PERFORMER
+
+    override val objectFilter: Any
+        get() =
+            PerformerFilterType(
+                tags =
+                    Optional.present(
+                        HierarchicalMultiCriterionInput(
+                            value = Optional.present(listOf(tagId)),
+                            modifier = CriterionModifier.INCLUDES_ALL,
+                            depth = Optional.absent(),
                         ),
                     ),
             )
