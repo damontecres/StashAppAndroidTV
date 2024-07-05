@@ -112,6 +112,10 @@
             android:name=".MarkerActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
+        <activity
+            android:name=".UpdateChangelogActivity"
+            android:exported="false"
+            android:theme="@style/NoTitleTheme" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
