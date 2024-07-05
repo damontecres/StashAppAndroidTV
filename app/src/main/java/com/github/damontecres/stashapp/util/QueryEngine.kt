@@ -12,9 +12,7 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
-import com.github.damontecres.stashapp.api.FindGalleriesById_V0250Query
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
-import com.github.damontecres.stashapp.api.FindGalleryQuery
 import com.github.damontecres.stashapp.api.FindImageQuery
 import com.github.damontecres.stashapp.api.FindImagesQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
@@ -25,9 +23,7 @@ import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.FindSavedFiltersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
-import com.github.damontecres.stashapp.api.FindTagQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
-import com.github.damontecres.stashapp.api.FindTagsV0250Query
 import com.github.damontecres.stashapp.api.GetSceneQuery
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -123,6 +119,7 @@ class QueryEngine(
                 FindScenesQuery(
                     filter = updateFilter(findFilter, useRandom),
                     scene_filter = sceneFilter,
+                    ids = null,
                 ),
             )
         val scenes =
@@ -148,7 +145,7 @@ class QueryEngine(
                 FindPerformersQuery(
                     filter = updateFilter(findFilter, useRandom),
                     performer_filter = performerFilter,
-                    performer_ids = performerIds?.map { it.toInt() },
+                    ids = performerIds,
                 ),
             )
         val performers =
@@ -192,6 +189,7 @@ class QueryEngine(
                 FindTagsQuery(
                     filter = updateFilter(findFilter, useRandom),
                     tag_filter = tagFilter,
+                    ids = null,
                 ),
             )
         val tags =
@@ -203,24 +201,17 @@ class QueryEngine(
         if (tagIds.isEmpty()) {
             return listOf()
         }
-        if (serverVersion.isAtLeast(Version.V0_25_0)) {
-            val query =
-                client.query(
-                    FindTagsV0250Query(
-                        filter = null,
-                        tag_filter = null,
-                        tagIds = tagIds,
-                    ),
-                )
-            val tags =
-                executeQuery(query).data?.findTags?.tags?.map { it.tagData }
-            return tags.orEmpty()
-        } else {
-            return tagIds.mapNotNull {
-                val query = client.query(FindTagQuery(it))
-                executeQuery(query).data?.findTag?.tagData
-            }
-        }
+        val query =
+            client.query(
+                FindTagsQuery(
+                    filter = null,
+                    tag_filter = null,
+                    ids = tagIds,
+                ),
+            )
+        val tags =
+            executeQuery(query).data?.findTags?.tags?.map { it.tagData }
+        return tags.orEmpty()
     }
 
     suspend fun findMovies(
@@ -286,22 +277,23 @@ class QueryEngine(
         useRandom: Boolean = true,
     ): List<GalleryData> {
         val query =
-            client.query(FindGalleriesQuery(updateFilter(findFilter, useRandom), galleryFilter))
+            client.query(
+                FindGalleriesQuery(
+                    updateFilter(findFilter, useRandom),
+                    galleryFilter,
+                    null,
+                ),
+            )
         return executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
     }
 
     suspend fun getGalleries(galleryIds: List<String>): List<GalleryData> {
         return if (galleryIds.isEmpty()) {
-            return listOf()
-        } else if (serverVersion.isAtLeast(Version.V0_25_0)) {
-            val query = client.query(FindGalleriesById_V0250Query(galleryIds))
-            executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
+            listOf()
         } else {
-            galleryIds.mapNotNull {
-                val query =
-                    client.query(FindGalleryQuery(it))
-                executeQuery(query).data?.findGallery?.galleryData
-            }
+            val query = client.query(FindGalleriesQuery(null, null, galleryIds))
+            executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }
+                .orEmpty()
         }
     }
 

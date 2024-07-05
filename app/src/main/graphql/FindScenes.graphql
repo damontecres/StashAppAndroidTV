@@ -1,5 +1,5 @@
-query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType) {
-  findScenes(filter: $filter, scene_filter: $scene_filter) {
+query FindScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $ids: [ID!]) {
+  findScenes(filter: $filter, scene_filter: $scene_filter, ids: $ids) {
     scenes {
       ...SlimSceneData
     }
@@ -12,8 +12,8 @@ query GetScene($id: ID!) {
   }
 }
 
-query CountScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $scene_ids: [Int!]) {
-  findScenes(filter: $filter, scene_filter: $scene_filter, scene_ids: $scene_ids) {
+query CountScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $ids: [ID!]) {
+  findScenes(filter: $filter, scene_filter: $scene_filter, ids: $ids) {
     count
   }
 }

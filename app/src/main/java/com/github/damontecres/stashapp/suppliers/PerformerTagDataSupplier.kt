@@ -18,7 +18,7 @@ class PerformerTagDataSupplier(private val performerId: String) :
         return FindPerformerTagsQuery(
             filter = filter,
             performer_filter = null,
-            performer_ids = listOf(performerId.toInt()),
+            ids = listOf(performerId),
         )
     }
 

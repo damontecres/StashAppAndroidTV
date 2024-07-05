@@ -24,6 +24,7 @@ class GalleryDataSupplier(
         return FindGalleriesQuery(
             filter = filter,
             gallery_filter = galleryFilter,
+            ids = null,
         )
     }
 

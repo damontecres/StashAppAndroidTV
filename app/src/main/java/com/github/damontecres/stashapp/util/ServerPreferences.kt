@@ -207,6 +207,7 @@ class ServerPreferences(private val context: Context) {
         const val PREF_GEN_PREVIEWS = "previews"
         const val PREF_GEN_SPRITES = "sprites"
         const val PREF_GEN_TRANSCODES = "transcodes"
+        const val PREF_GEN_IMAGE_THUMBNAILS = "imageThumbnails"
 
         const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
         const val PREF_INTERFACE_STUDIOS_AS_TEXT = "interface.showStudioAsText"

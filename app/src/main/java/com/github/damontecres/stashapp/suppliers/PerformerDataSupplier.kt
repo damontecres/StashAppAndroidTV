@@ -24,7 +24,7 @@ class PerformerDataSupplier(
         return FindPerformersQuery(
             filter = filter,
             performer_filter = performerFilter,
-            performer_ids = null,
+            ids = null,
         )
     }
 

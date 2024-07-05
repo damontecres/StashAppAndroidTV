@@ -38,7 +38,7 @@ class ObjectFilterParsingTests {
     fun testSceneFilter() {
         val savedFilterData = getSavedFilterData("scene_savedfilter.json")
         val sceneFilter =
-            FilterParser(Version.V0_24_3).convertSceneObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.V0_25_0).convertSceneObjectFilter(savedFilterData.object_filter)
         Assert.assertNotNull(sceneFilter!!)
         Assert.assertEquals(FilterMode.SCENES, savedFilterData.mode)
         Assert.assertEquals(
@@ -71,7 +71,7 @@ class ObjectFilterParsingTests {
     fun testPerformerFilter() {
         val savedFilterData = getSavedFilterData("performer_savedfilter.json")
         val performerFilter =
-            FilterParser(Version.V0_24_3).convertPerformerObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.V0_25_0).convertPerformerObjectFilter(savedFilterData.object_filter)
         Assert.assertNotNull(performerFilter!!)
         Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
 
@@ -82,7 +82,11 @@ class ObjectFilterParsingTests {
             "94",
             performerFilter.studios.getOrThrow()!!.excludes.getOrThrow()!!.first(),
         )
-        Assert.assertNull(performerFilter.gender.getOrThrow()!!.value_list.getOrNull())
+        Assert.assertNull(performerFilter.gender.getOrThrow()!!.value.getOrNull())
+        Assert.assertEquals(
+            listOf(GenderEnum.FEMALE),
+            performerFilter.gender.getOrThrow()!!.value_list.getOrNull(),
+        )
     }
 
     @Test
