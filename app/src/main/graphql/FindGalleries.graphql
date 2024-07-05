@@ -33,6 +33,10 @@ fragment GalleryData on Gallery {
   date
   details
   rating100
+  code
+  photographer
+  created_at
+  updated_at
   files {
     path
   }
@@ -50,6 +54,7 @@ fragment GalleryData on Gallery {
   studio {
     id
     name
+    image_path
   }
   scenes {
     id
