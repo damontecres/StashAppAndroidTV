@@ -36,6 +36,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         dataTypeMap[DataType.PERFORMER] = item.performers.size
         dataTypeMap[DataType.MOVIE] = item.movies.size
         dataTypeMap[DataType.MARKER] = item.scene_markers.size
+        dataTypeMap[DataType.GALLERY] = item.galleries.size
 
         cardView.setUpExtraRow(dataTypeMap, item.o_counter)
 
