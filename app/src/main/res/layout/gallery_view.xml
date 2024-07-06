@@ -37,7 +37,6 @@
             android:layout_marginBottom="20dp"
             android:contentDescription="@string/stashapp_studio"
             android:layout_centerHorizontal="true"
-            android:background="@color/cardview_dark_background"
             android:scaleType="fitCenter"
             app:layout_constraintTop_toBottomOf="@id/gallery_name"
             app:layout_constraintWidth="match_parent"
