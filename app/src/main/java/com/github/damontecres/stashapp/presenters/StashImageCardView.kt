@@ -2,11 +2,15 @@ package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Build
 import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.style.ImageSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -43,6 +47,8 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     companion object {
         private const val TAG = "StashImageCardView"
 
+        private const val ICON_SPACING = "  "
+
         private val FA_FONT = StashApplication.getFont(R.font.fa_solid_900)
 
         private val ICON_ORDER =
@@ -73,8 +79,6 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     var hideOverlayOnSelection = true
 
     private val iconTextView: TextView
-    private val oCounterTextView: TextView
-    private val oCounterIconView: View
 
     private val cardOverlay = findViewById<View>(R.id.card_overlay)
     private val textOverlays = EnumMap<OverlayPosition, TextView>(OverlayPosition::class.java)
@@ -96,6 +100,12 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             }
         }
 
+    private val color =
+        context.getColor(androidx.leanback.R.color.lb_basic_card_content_text_color)
+    private val textSize =
+        context.resources.getDimension(androidx.leanback.R.dimen.lb_basic_card_content_text_size)
+    private val sweat = ContextCompat.getDrawable(context, R.drawable.sweat_drops)!!
+
     init {
         mainImageView.visibility = View.VISIBLE
         val infoArea = findViewById<ViewGroup>(R.id.info_field)
@@ -107,13 +117,18 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         contentTextView.enableMarquee(false)
 
         iconTextView = iconRow.findViewById(R.id.icon_text)
-        oCounterTextView = iconRow.findViewById(R.id.extra_ocounter_count)
-        oCounterIconView = iconRow.findViewById(R.id.extra_ocounter_icon)
 
         textOverlays[OverlayPosition.TOP_LEFT] = findViewById(R.id.card_overlay_top_left)
         textOverlays[OverlayPosition.TOP_RIGHT] = findViewById(R.id.card_overlay_top_right)
         textOverlays[OverlayPosition.BOTTOM_LEFT] = findViewById(R.id.card_overlay_bottom_left)
         textOverlays[OverlayPosition.BOTTOM_RIGHT] = findViewById(R.id.card_overlay_bottom_right)
+
+        sweat.colorFilter =
+            PorterDuffColorFilter(
+                color,
+                PorterDuff.Mode.MULTIPLY,
+            )
+        sweat.setBounds(0, 0, textSize.toInt(), textSize.toInt())
     }
 
     override fun setSelected(selected: Boolean) {
@@ -219,7 +234,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                     val start = length
                     append(s)
                     if (index + 1 < countStrings.size) {
-                        append("   ")
+                        append(ICON_SPACING)
                     }
                     setSpan(
                         FontSpan(FA_FONT),
@@ -228,16 +243,24 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                         Spannable.SPAN_INCLUSIVE_INCLUSIVE,
                     )
                 }
-            }
+                if (oCounter != null && oCounter > 0) {
+                    if (countStrings.isNotEmpty()) {
+                        // Add space after previous icons
+                        append(ICON_SPACING)
+                    }
+                    val imageSpan =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            ImageSpan(sweat, ImageSpan.ALIGN_CENTER)
+                        } else {
+                            ImageSpan(sweat, ImageSpan.ALIGN_BASELINE)
+                        }
 
-        if ((oCounter ?: -1) > 0) {
-            oCounterTextView.text = oCounter.toString()
-            oCounterTextView.visibility = View.VISIBLE
-            oCounterIconView.visibility = View.VISIBLE
-        } else {
-            oCounterTextView.visibility = View.GONE
-            oCounterIconView.visibility = View.GONE
-        }
+                    val start = length
+                    append(ICON_SPACING)
+                    setSpan(imageSpan, start, start + 1, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
+                    append(oCounter.toString())
+                }
+            }
     }
 
     fun showVideo() {
