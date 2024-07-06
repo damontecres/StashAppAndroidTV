@@ -16,19 +16,22 @@ import androidx.leanback.tab.LeanbackViewPager
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo3.api.Query
 import com.bumptech.glide.request.target.Target
+import com.github.damontecres.stashapp.api.FindGalleryQuery
+import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
-import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
-import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
-import com.github.damontecres.stashapp.suppliers.TagDataSupplier
+import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.ImageComparator
 import com.github.damontecres.stashapp.util.ListFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.PerformerComparator
@@ -59,20 +62,25 @@ class GalleryActivity : FragmentActivity() {
 
             val tabLayout = findViewById<LeanbackTabLayout>(R.id.gallery_tab_layout)
             val viewPager = findViewById<LeanbackViewPager>(R.id.gallery_view_pager)
-            viewPager.adapter = PagerAdapter(galleryId, columns, supportFragmentManager)
-            tabLayout.setupWithViewPager(viewPager)
 
-            tabLayout.nextFocusDownId = R.id.gallery_view_pager
-            tabLayout.children.forEach { it.nextFocusDownId = R.id.gallery_view_pager }
+            val queryEngine = QueryEngine(this)
+            lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val gallery = queryEngine.getGalleries(listOf(galleryId)).first()
+                viewPager.adapter = PagerAdapter(gallery, columns, supportFragmentManager)
+                tabLayout.setupWithViewPager(viewPager)
 
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.gallery_details, GalleryFragment(galleryId))
-                .commitNow()
+                tabLayout.nextFocusDownId = R.id.gallery_view_pager
+                tabLayout.children.forEach { it.nextFocusDownId = R.id.gallery_view_pager }
+
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.gallery_details, GalleryFragment(gallery))
+                    .commitNow()
+            }
         }
     }
 
     inner class PagerAdapter(
-        private val galleryId: String,
+        private val gallery: GalleryData,
         private val columns: Double,
         fm: FragmentManager,
     ) :
@@ -100,7 +108,7 @@ class GalleryActivity : FragmentActivity() {
                                 galleries =
                                     Optional.present(
                                         MultiCriterionInput(
-                                            value = Optional.present(listOf(galleryId)),
+                                            value = Optional.present(listOf(gallery.id)),
                                             modifier = CriterionModifier.INCLUDES_ALL,
                                         ),
                                     ),
@@ -118,7 +126,7 @@ class GalleryActivity : FragmentActivity() {
                                 galleries =
                                     Optional.present(
                                         MultiCriterionInput(
-                                            value = Optional.present(listOf(galleryId)),
+                                            value = Optional.present(listOf(gallery.id)),
                                             modifier = CriterionModifier.INCLUDES_ALL,
                                         ),
                                     ),
@@ -128,41 +136,17 @@ class GalleryActivity : FragmentActivity() {
                     )
 
                 2 ->
-                    // TODO
                     StashGridFragment(
                         PerformerComparator,
-                        PerformerDataSupplier(
-                            DataType.PERFORMER.asDefaultFindFilterType,
-                            PerformerFilterType(
-//                            galleries =
-//                            Optional.present(
-//                                MultiCriterionInput(
-//                                    value = Optional.present(listOf(galleryId)),
-//                                    modifier = CriterionModifier.INCLUDES_ALL,
-//                                ),
-//                            ),
-                            ),
-                        ),
+                        GalleryPerformerDataSupplier(gallery),
                         getColumns(DataType.PERFORMER),
                     )
 
                 3 ->
-                    // TODO
                     StashGridFragment(
                         TagComparator,
-                        TagDataSupplier(
-                            DataType.TAG.asDefaultFindFilterType,
-                            TagFilterType(
-//                            galleries =
-//                            Optional.present(
-//                                MultiCriterionInput(
-//                                    value = Optional.present(listOf(galleryId)),
-//                                    modifier = CriterionModifier.INCLUDES_ALL,
-//                                ),
-//                            ),
-                            ),
-                        ),
-                        getColumns(DataType.PERFORMER),
+                        GalleryTagDataSupplier(gallery),
+                        getColumns(DataType.TAG),
                     )
 
                 else -> throw IllegalArgumentException()
@@ -170,7 +154,7 @@ class GalleryActivity : FragmentActivity() {
         }
     }
 
-    class GalleryFragment(val galleryId: String) : Fragment(R.layout.gallery_view) {
+    class GalleryFragment(val gallery: GalleryData) : Fragment(R.layout.gallery_view) {
         override fun onViewCreated(
             view: View,
             savedInstanceState: Bundle?,
@@ -182,28 +166,23 @@ class GalleryActivity : FragmentActivity() {
             val descriptionTextView = view.findViewById<TextView>(R.id.gallery_description)
             val table = view.findViewById<TableLayout>(R.id.gallery_table)
 
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val queryEngine = QueryEngine(requireContext())
-                val gallery = queryEngine.getGalleries(listOf(galleryId)).first()
+            titleTextView.text = gallery.name
+            descriptionTextView.text = gallery.details
 
-                titleTextView.text = gallery.name
-                descriptionTextView.text = gallery.details
+            addRow(table, R.string.stashapp_date, gallery.date)
+            addRow(table, R.string.stashapp_scene_code, gallery.code)
+            addRow(table, R.string.stashapp_photographer, gallery.photographer)
 
-                addRow(table, R.string.stashapp_date, gallery.date)
-                addRow(table, R.string.stashapp_scene_code, gallery.code)
-                addRow(table, R.string.stashapp_photographer, gallery.photographer)
+            view.findViewById<ScrollView>(R.id.gallery_scrollview).onlyScrollIfNeeded()
 
-                view.findViewById<ScrollView>(R.id.gallery_scrollview).onlyScrollIfNeeded()
-
-                if (gallery.studio?.image_path.isNotNullOrBlank()) {
-                    StashGlide.with(requireContext(), gallery.studio!!.image_path!!)
-                        .override(gallerySidebar.width, Target.SIZE_ORIGINAL)
-                        .centerCrop()
-                        .error(StashPresenter.glideError(requireContext()))
-                        .into(studioImage)
-                } else {
-                    studioImage.visibility = View.GONE
-                }
+            if (gallery.studio?.image_path.isNotNullOrBlank()) {
+                StashGlide.with(requireContext(), gallery.studio!!.image_path!!)
+                    .override(gallerySidebar.width, Target.SIZE_ORIGINAL)
+                    .centerCrop()
+                    .error(StashPresenter.glideError(requireContext()))
+                    .into(studioImage)
+            } else {
+                studioImage.visibility = View.GONE
             }
         }
 
@@ -231,6 +210,58 @@ class GalleryActivity : FragmentActivity() {
             valueView.text = value
 
             table.addView(row)
+        }
+    }
+
+    private class GalleryPerformerDataSupplier(private val gallery: GalleryData) :
+        StashPagingSource.DataSupplier<FindGalleryQuery.Data, PerformerData, FindGalleryQuery.Data> {
+        override val dataType: DataType
+            get() = DataType.PERFORMER
+
+        override fun createQuery(filter: FindFilterType?): Query<FindGalleryQuery.Data> {
+            return FindGalleryQuery(gallery.id)
+        }
+
+        override fun getDefaultFilter(): FindFilterType {
+            return DataType.PERFORMER.asDefaultFindFilterType
+        }
+
+        override fun createCountQuery(filter: FindFilterType?): Query<FindGalleryQuery.Data> {
+            return FindGalleryQuery(gallery.id)
+        }
+
+        override fun parseCountQuery(data: FindGalleryQuery.Data): Int {
+            return data.findGallery?.galleryData?.performers?.size ?: 0
+        }
+
+        override fun parseQuery(data: FindGalleryQuery.Data): List<PerformerData> {
+            return data.findGallery?.galleryData?.performers?.map { it.performerData }.orEmpty()
+        }
+    }
+
+    private class GalleryTagDataSupplier(private val gallery: GalleryData) :
+        StashPagingSource.DataSupplier<FindGalleryQuery.Data, TagData, FindGalleryQuery.Data> {
+        override val dataType: DataType
+            get() = DataType.TAG
+
+        override fun createQuery(filter: FindFilterType?): Query<FindGalleryQuery.Data> {
+            return FindGalleryQuery(gallery.id)
+        }
+
+        override fun getDefaultFilter(): FindFilterType {
+            return DataType.TAG.asDefaultFindFilterType
+        }
+
+        override fun createCountQuery(filter: FindFilterType?): Query<FindGalleryQuery.Data> {
+            return FindGalleryQuery(gallery.id)
+        }
+
+        override fun parseCountQuery(data: FindGalleryQuery.Data): Int {
+            return data.findGallery?.galleryData?.performers?.size ?: 0
+        }
+
+        override fun parseQuery(data: FindGalleryQuery.Data): List<TagData> {
+            return data.findGallery?.galleryData?.tags?.map { it.tagData }.orEmpty()
         }
     }
 

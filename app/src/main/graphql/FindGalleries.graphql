@@ -44,12 +44,10 @@ fragment GalleryData on Gallery {
     path
   }
   performers {
-    id
-    name
+    ...PerformerData
   }
   tags {
-    id
-    name
+    ...TagData
   }
   studio {
     id
