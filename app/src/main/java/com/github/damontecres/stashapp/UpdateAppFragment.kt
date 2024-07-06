@@ -12,15 +12,20 @@ import com.github.damontecres.stashapp.UpdateChangelogActivity.Companion.INTENT_
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import kotlinx.coroutines.launch
 
 class UpdateAppFragment(private val release: UpdateChecker.Release) : GuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
         val description =
-            "${getString(R.string.stashapp_package_manager_installed_version)}: $installedVersion"
+            buildList {
+                add("${getString(R.string.stashapp_package_manager_installed_version)}: $installedVersion")
+                addAll(release.notes)
+            }.joinNotNullOrBlank("\n\n")
+
         return GuidanceStylist.Guidance(
-            "${release.version} available!",
+            "${getString(R.string.stashapp_package_manager_latest_version)}: ${release.version}",
             description,
             null,
             AppCompatResources.getDrawable(requireContext(), R.mipmap.stash_logo),

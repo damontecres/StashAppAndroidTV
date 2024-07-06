@@ -39,6 +39,8 @@ class UpdateChecker {
 
         private const val TAG = "UpdateChecker"
 
+        private val NOTE_REGEX = Regex("<!-- app-note:(.+) -->")
+
         suspend fun checkForUpdate(
             activity: Activity,
             showNegativeToast: Boolean = false,
@@ -83,7 +85,15 @@ class UpdateChecker {
                                 assetName == ASSET_NAME || assetName == DEBUG_ASSET_NAME
                             }?.jsonObject?.get("browser_download_url")?.jsonPrimitive?.contentOrNull
                         if (version != null) {
-                            return@use Release(version, downloadUrl, publishedAt, body)
+                            val notes =
+                                if (body.isNotNullOrBlank()) {
+                                    NOTE_REGEX.findAll(body).map { m ->
+                                        m.groupValues[1]
+                                    }.toList()
+                                } else {
+                                    listOf()
+                                }
+                            return@use Release(version, downloadUrl, publishedAt, body, notes)
                         } else {
                             Log.w(TAG, "Update version parsing failed. name=$name")
                         }
@@ -197,5 +207,11 @@ class UpdateChecker {
         }
     }
 
-    data class Release(val version: Version, val downloadUrl: String?, val publishedAt: String?, val body: String?)
+    data class Release(
+        val version: Version,
+        val downloadUrl: String?,
+        val publishedAt: String?,
+        val body: String?,
+        val notes: List<String>,
+    )
 }
