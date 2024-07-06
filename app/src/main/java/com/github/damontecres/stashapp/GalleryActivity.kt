@@ -185,7 +185,7 @@ class GalleryActivity : FragmentActivity() {
             if (gallery.studio?.image_path.isNotNullOrBlank()) {
                 StashGlide.with(requireContext(), gallery.studio!!.image_path!!)
                     .override(gallerySidebar.width, Target.SIZE_ORIGINAL)
-                    .centerCrop()
+                    .fitCenter()
                     .error(StashPresenter.glideError(requireContext()))
                     .into(studioImage)
             } else {
