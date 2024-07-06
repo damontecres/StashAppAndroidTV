@@ -44,6 +44,7 @@ import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
+import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import kotlinx.coroutines.launch
 
 class GalleryActivity : FragmentActivity() {
@@ -99,24 +100,30 @@ class GalleryActivity : FragmentActivity() {
 
         override fun getItem(position: Int): Fragment {
             return when (position) {
-                0 ->
-                    StashGridFragment(
-                        ImageComparator,
-                        ImageDataSupplier(
-                            DataType.IMAGE.asDefaultFindFilterType,
-                            ImageFilterType(
-                                galleries =
-                                    Optional.present(
-                                        MultiCriterionInput(
-                                            value = Optional.present(listOf(gallery.id)),
-                                            modifier = CriterionModifier.INCLUDES_ALL,
+                0 -> {
+                    val fragment =
+                        StashGridFragment(
+                            ImageComparator,
+                            ImageDataSupplier(
+                                DataType.IMAGE.asDefaultFindFilterType,
+                                ImageFilterType(
+                                    galleries =
+                                        Optional.present(
+                                            MultiCriterionInput(
+                                                value = Optional.present(listOf(gallery.id)),
+                                                modifier = CriterionModifier.INCLUDES_ALL,
+                                            ),
                                         ),
-                                    ),
+                                ),
                             ),
-                        ),
-                        getColumns(DataType.IMAGE),
-                    )
-
+                            getColumns(DataType.IMAGE),
+                        )
+                    fragment.onItemViewClickedListener =
+                        ImageGridClickedListener(this@GalleryActivity, fragment) {
+                            it.putExtra(ImageActivity.INTENT_GALLERY_ID, gallery.id)
+                        }
+                    fragment
+                }
                 1 ->
                     StashGridFragment(
                         SceneComparator,
