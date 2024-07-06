@@ -72,6 +72,7 @@ class GalleryActivity : FragmentActivity() {
 
                 tabLayout.nextFocusDownId = R.id.gallery_view_pager
                 tabLayout.children.forEach { it.nextFocusDownId = R.id.gallery_view_pager }
+                tabLayout.children.first().requestFocus()
 
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.gallery_details, GalleryFragment(gallery))
