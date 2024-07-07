@@ -12,6 +12,13 @@ query CountGalleries($filter: FindFilterType, $gallery_filter: GalleryFilterType
   }
 }
 
+
+query FindGallery($id: ID!) {
+  findGallery(id: $id) {
+    ...GalleryData
+  }
+}
+
 fragment GalleryData on Gallery {
   id
   title
@@ -19,6 +26,10 @@ fragment GalleryData on Gallery {
   date
   details
   rating100
+  code
+  photographer
+  created_at
+  updated_at
   files {
     path
   }
@@ -26,15 +37,15 @@ fragment GalleryData on Gallery {
     path
   }
   performers {
-    id
-    name
+    ...PerformerData
   }
   tags {
-    ...SlimTagData
+    ...TagData
   }
   studio {
     id
     name
+    image_path
   }
   scenes {
     id

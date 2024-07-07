@@ -21,6 +21,9 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         dataTypeMap[DataType.SCENE] = item.scene_count
         dataTypeMap[DataType.PERFORMER] = item.performer_count
         dataTypeMap[DataType.MARKER] = item.scene_marker_count
+        dataTypeMap[DataType.IMAGE] = item.image_count
+        dataTypeMap[DataType.GALLERY] = item.gallery_count
+
         cardView.setUpExtraRow(dataTypeMap, null)
         cardView.hideOverlayOnSelection = false
 

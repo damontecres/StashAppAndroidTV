@@ -23,6 +23,8 @@ open class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null
         dataTypeMap[DataType.SCENE] = item.scene_count
         dataTypeMap[DataType.TAG] = item.tags.size
         dataTypeMap[DataType.MOVIE] = item.movie_count
+        dataTypeMap[DataType.IMAGE] = item.image_count
+        dataTypeMap[DataType.GALLERY] = item.gallery_count
 
         cardView.setUpExtraRow(dataTypeMap, item.o_counter)
 
