@@ -57,7 +57,7 @@ class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
                         nextStep(SetupStep2Ssl(state))
                     }
 
-                    TestResultStatus.SUCCESS -> {
+                    TestResultStatus.SUCCESS, TestResultStatus.UNSUPPORTED_VERSION -> {
                         nextStep(SetupStep4Pin(state))
                     }
 
