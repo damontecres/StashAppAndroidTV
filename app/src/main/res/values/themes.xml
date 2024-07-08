@@ -37,6 +37,13 @@
         <item name="background">@color/default_background</item>
         <item name="guidedActionsBackground">@color/popup_background</item>
         <item name="guidedActionsSelectorDrawable">@drawable/guided_actions_selector</item>
+        <item name="guidanceDescriptionStyle">
+            @style/Theme.StashAppAndroidTV.GuidedStep.Description
+        </item>
+    </style>
+
+    <style name="Theme.StashAppAndroidTV.GuidedStep.Description" parent="Widget.Leanback.GuidanceDescriptionStyle">
+        <item name="android:maxLines">12</item>
     </style>
 
 </resources>
