@@ -72,7 +72,11 @@ class FilterParser(private val serverVersion: Version) {
     }
 
     private fun mapToIds(list: Any?): List<String>? {
-        return (list as List<*>?)?.mapNotNull { (it as Map<*, *>)["id"]?.toString() }?.toList()
+        return if (list != null && list is List<*>) {
+            list.mapNotNull { (it as Map<*, *>)["id"]?.toString() }.toList()
+        } else {
+            null
+        }
     }
 
     private fun convertHierarchicalMultiCriterionInput(it: Map<String, *>?): HierarchicalMultiCriterionInput? {
@@ -93,8 +97,9 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertMultiCriterionInput(it: Map<String, *>?): MultiCriterionInput? {
         return if (it != null) {
-            val items = mapToIds(it["items"])
-            val excludes = mapToIds(it["excluded"])
+            val values = it["value"]!! as Map<String, *>
+            val items = mapToIds(values["items"])
+            val excludes = mapToIds(values["excluded"])
             MultiCriterionInput(
                 Optional.presentIfNotNull(items),
                 CriterionModifier.valueOf(it["modifier"]!!.toString()),
