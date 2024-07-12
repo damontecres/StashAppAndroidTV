@@ -56,6 +56,7 @@ import javax.net.ssl.SSLHandshakeException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.math.roundToInt
+import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -123,6 +124,7 @@ enum class TestResultStatus {
     SUCCESS,
     AUTH_REQUIRED,
     ERROR,
+    UNSUPPORTED_VERSION,
     SSL_REQUIRED,
     SELF_SIGNED_REQUIRED,
 }
@@ -160,16 +162,29 @@ suspend fun testStashConnection(
                 }
                 Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
             } else {
-                if (showToast) {
-                    val version = info.data?.version?.version
-                    val sceneCount = info.data?.findScenes?.count
-                    Toast.makeText(
-                        context,
-                        "Connected to Stash ($version) with $sceneCount scenes!",
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                val serverVersion = Version.tryFromString(info.data?.version?.version)
+                if (!Version.isStashVersionSupported(serverVersion)) {
+                    if (showToast) {
+                        val version = info.data?.version?.version
+                        Toast.makeText(
+                            context,
+                            "Connected to unsupported Stash version $version!",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                    return TestResult(TestResultStatus.UNSUPPORTED_VERSION, info.data)
+                } else {
+                    if (showToast) {
+                        val version = info.data?.version?.version
+                        val sceneCount = info.data?.findScenes?.count
+                        Toast.makeText(
+                            context,
+                            "Connected to Stash ($version) with $sceneCount scenes!",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                    return TestResult(TestResultStatus.SUCCESS, info.data)
                 }
-                return TestResult(TestResultStatus.SUCCESS, info.data)
             }
         } catch (ex: ApolloHttpException) {
             Log.e(Constants.TAG, "ApolloHttpException", ex)
@@ -633,4 +648,11 @@ fun VideoFileData.resolutionName(): CharSequence {
     } else {
         "${number}p"
     }
+}
+
+/**
+ * Gets a sort by string for a random sort
+ */
+fun getRandomSort(): String {
+    return "random_" + Random.nextInt(1e8.toInt()).toString()
 }

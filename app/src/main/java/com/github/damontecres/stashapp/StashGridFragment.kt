@@ -80,7 +80,7 @@ class StashGridFragment<T : Query.Data, D : Any, C : Query.Data>(
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 50)
 
-        val useRandom = requireActivity().intent.getBooleanExtra("useRandom", true)
+        val useRandom = requireActivity().intent.getBooleanExtra("useRandom", false)
         val sortBy = requireActivity().intent.getStringExtra("sortBy")
 
         Log.v(TAG, "useRandom=$useRandom, sortBy=$sortBy")

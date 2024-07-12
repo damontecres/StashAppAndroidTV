@@ -56,7 +56,7 @@ class SetupStep2Ssl(private val setupState: SetupState) :
                         Log.w(TAG, "Trusting certs, but still error")
                     }
 
-                    TestResultStatus.SUCCESS -> {
+                    TestResultStatus.SUCCESS, TestResultStatus.UNSUPPORTED_VERSION -> {
                         nextStep(SetupStep4Pin(newState))
                     }
 

@@ -58,6 +58,7 @@ import com.github.damontecres.stashapp.util.StudioComparator
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
+import com.github.damontecres.stashapp.util.getRandomSort
 import com.github.damontecres.stashapp.util.toFindFilterType
 import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
@@ -203,7 +204,17 @@ class FilterListActivity : FragmentActivity() {
                 listPopUp.isModal = true
 
                 listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
-                    val savedFilter = savedFilters[position]
+                    var savedFilter = savedFilters[position]
+                    savedFilter =
+                        if (savedFilter.find_filter != null &&
+                            savedFilter.find_filter!!.sort?.startsWith("random_") == true
+                        ) {
+                            val newFindFilter =
+                                savedFilter.find_filter!!.copy(sort = getRandomSort())
+                            savedFilter.copy(find_filter = newFindFilter)
+                        } else {
+                            savedFilter
+                        }
                     this@FilterListActivity.filterData = savedFilter
                     listPopUp.dismiss()
                     setupFragment(savedFilter, false)
@@ -257,7 +268,7 @@ class FilterListActivity : FragmentActivity() {
             if (index >= 0) sortOptions[index].second else null,
             isRandom,
         )
-
+        Log.v(TAG, "index=$index, currentKey=$currentKey, currentDirection=$currentDirection")
         val adapter =
             SortByArrayAdapter(
                 this@FilterListActivity,
@@ -287,7 +298,13 @@ class FilterListActivity : FragmentActivity() {
                 } else {
                     currentDirection ?: SortDirectionEnum.DESC
                 }
-
+            val resolvedNewSortBy =
+                if (newSortBy.startsWith("random")) {
+                    getRandomSort()
+                } else {
+                    newSortBy
+                }
+            Log.v(TAG, "New sort: resolvedNewSortBy=$resolvedNewSortBy, newDirection=$newDirection")
             val newFilter =
                 filterData!!.copy(
                     find_filter =
@@ -295,7 +312,7 @@ class FilterListActivity : FragmentActivity() {
                             q = null,
                             page = null,
                             per_page = null,
-                            sort = newSortBy,
+                            sort = resolvedNewSortBy,
                             direction = newDirection,
                             __typename = "",
                         ),

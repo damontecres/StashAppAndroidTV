@@ -104,7 +104,7 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                 val result =
                     testConnection(testServerUrl.toString(), serverApiKey?.toString(), trustCerts)
                 when (result.status) {
-                    TestResultStatus.SUCCESS -> {
+                    TestResultStatus.SUCCESS, TestResultStatus.UNSUPPORTED_VERSION -> {
                         guidedActionSubmit.isEnabled = true
                         guidedActionSubmit.isFocusable = true
                         val index = findActionPositionById(guidedActionSubmit.id)
