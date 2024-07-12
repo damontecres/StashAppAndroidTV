@@ -21,9 +21,16 @@ body:
         1. Click on '...'
         2. Scroll to '....'
         3. See error
-      render: bash
     validations:
       required: false
+  - type: input
+    id: app-version
+    attributes:
+      label: "App Version"
+      description: What version of the app?
+      placeholder: "v0.2.11"
+    validations:
+      required: true
   - type: input
     id: server
     attributes:
@@ -39,7 +46,7 @@ body:
       description: What device are you using?
       placeholder: "NVIDIA Shield TV Pro 2019"
     validations:
-      required: true
+      required: false
   - type: textarea
     id: logs
     attributes:
