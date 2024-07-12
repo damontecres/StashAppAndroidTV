@@ -76,7 +76,6 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         url: String,
     ) {
         StashGlide.with(cardView.context, url)
-            .fitCenter()
             .error(glideError(cardView.context))
             .into(cardView.mainImageView!!)
     }

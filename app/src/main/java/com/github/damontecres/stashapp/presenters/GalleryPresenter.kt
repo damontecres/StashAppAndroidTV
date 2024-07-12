@@ -1,9 +1,7 @@
 package com.github.damontecres.stashapp.presenters
 
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
@@ -31,11 +29,8 @@ class GalleryPresenter(callback: LongClickCallBack<GalleryData>? = null) : Stash
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         val coverPaths = item.cover?.paths
-        if (coverPaths?.thumbnail.isNotNullOrBlank()) {
-            StashGlide.with(cardView.context, coverPaths!!.thumbnail!!)
-                .transform(CenterCrop())
-                .error(glideError(cardView.context))
-                .into(cardView.mainImageView!!)
+        if (coverPaths != null && coverPaths.thumbnail.isNotNullOrBlank()) {
+            loadImage(cardView, coverPaths.thumbnail)
         }
         if (coverPaths?.preview.isNotNullOrBlank()) {
             cardView.videoUrl = coverPaths?.preview

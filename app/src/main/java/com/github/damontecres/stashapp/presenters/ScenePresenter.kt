@@ -10,7 +10,6 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.ServerPreferences
-import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
@@ -73,11 +72,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         }
 
         if (!item.paths.screenshot.isNullOrBlank()) {
-            StashGlide.with(cardView.context, item.paths.screenshot)
-                .centerCrop()
-                // .transform(CenterCrop(), TextOverlay(cardView.context, item))
-                .error(glideError(cardView.context))
-                .into(cardView.mainImageView!!)
+            loadImage(cardView, item.paths.screenshot)
         }
         if (item.paths.preview.isNotNullOrBlank()) {
             cardView.videoUrl = item.paths.preview
