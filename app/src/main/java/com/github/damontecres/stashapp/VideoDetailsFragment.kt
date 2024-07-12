@@ -355,7 +355,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
 
             if (screenshotUrl.isNotNullOrBlank()) {
                 StashGlide.withBitmap(requireActivity(), screenshotUrl)
-                    .centerCrop()
+                    .optionalCenterCrop()
                     .error(R.drawable.baseline_camera_indoor_48)
                     .into<CustomTarget<Bitmap>>(
                         object : CustomTarget<Bitmap>() {
@@ -385,7 +385,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
             val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
             StashGlide.with(requireActivity(), screenshotUrl)
-                .centerCrop()
+                .optionalCenterCrop()
                 .error(StashPresenter.glideError(requireContext()))
                 .into<CustomTarget<Drawable>>(
                     object : CustomTarget<Drawable>(width, height) {
