@@ -4,6 +4,7 @@ import com.apollographql.apollo3.api.json.BufferedSourceJsonReader
 import com.apollographql.apollo3.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.util.FilterParser
@@ -64,6 +65,18 @@ class ObjectFilterParsingTests {
         Assert.assertEquals(
             "2024-01-01 23:00",
             sceneFilter.updated_at.getOrThrow()!!.value,
+        )
+        Assert.assertEquals(
+            listOf("1131"),
+            sceneFilter.performers.getOrThrow()!!.value.getOrThrow()!!,
+        )
+        Assert.assertEquals(
+            listOf<String>(),
+            sceneFilter.movies.getOrThrow()!!.value.getOrThrow()!!,
+        )
+        Assert.assertEquals(
+            CriterionModifier.NOT_NULL,
+            sceneFilter.movies.getOrThrow()!!.modifier,
         )
     }
 
