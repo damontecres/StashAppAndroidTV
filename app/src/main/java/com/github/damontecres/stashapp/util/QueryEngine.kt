@@ -51,7 +51,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReadWriteLock
-import kotlin.random.Random
 
 /**
  * Handles making graphql queries to the server
@@ -350,7 +349,7 @@ class QueryEngine(
         return if (filter != null) {
             if (useRandom && filter.sort.getOrNull()?.startsWith("random_") == true) {
                 Log.v(TAG, "Updating random filter")
-                filter.copy(sort = Optional.present("random_" + Random.nextInt(1e8.toInt())))
+                filter.copy(sort = Optional.present(getRandomSort()))
             } else {
                 filter
             }

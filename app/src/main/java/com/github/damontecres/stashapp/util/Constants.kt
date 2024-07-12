@@ -53,6 +53,7 @@ import javax.net.ssl.SSLHandshakeException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.math.roundToInt
+import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -571,4 +572,11 @@ fun VideoFileData.resolutionName(): CharSequence {
     } else {
         "${number}p"
     }
+}
+
+/**
+ * Gets a sort by string for a random sort
+ */
+fun getRandomSort(): String {
+    return "random_" + Random.nextInt(1e8.toInt()).toString()
 }
