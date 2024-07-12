@@ -44,14 +44,14 @@ class MovieFragment : Fragment(R.layout.movie_view) {
             if (movie.frontImagePath != null) {
                 configureLayout(frontImage)
                 StashGlide.with(requireActivity(), movie.frontImagePath)
-                    .centerCrop()
+                    .optionalCenterCrop()
                     .error(StashPresenter.glideError(requireContext()))
                     .into(frontImage)
             }
             if (movie.backImagePath != null) {
                 configureLayout(backImage)
                 StashGlide.with(requireActivity(), movie.backImagePath)
-                    .centerCrop()
+                    .optionalCenterCrop()
                     .error(StashPresenter.glideError(requireContext()))
                     .into(backImage)
             }

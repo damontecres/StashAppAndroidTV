@@ -135,7 +135,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         }
         if (perf.image_path != null) {
             StashGlide.with(requireContext(), perf.image_path)
-                .centerCrop()
+                .optionalCenterCrop()
                 .error(StashPresenter.glideError(requireContext()))
                 .into(mPerformerImage)
         }

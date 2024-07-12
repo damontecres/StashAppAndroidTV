@@ -231,7 +231,7 @@ class MarkerActivity : FragmentActivity() {
                         ScenePresenter.CARD_HEIGHT,
                     )
                 StashGlide.with(requireActivity(), screenshotUrl)
-                    .centerCrop()
+                    .optionalCenterCrop()
                     .error(StashPresenter.glideError(requireContext()))
                     .into<CustomTarget<Drawable>>(
                         object : CustomTarget<Drawable>(width, height) {
@@ -266,7 +266,7 @@ class MarkerActivity : FragmentActivity() {
 
                 if (screenshotUrl.isNotNullOrBlank()) {
                     StashGlide.withBitmap(requireActivity(), screenshotUrl)
-                        .centerCrop()
+                        .optionalCenterCrop()
                         .error(R.drawable.baseline_camera_indoor_48)
                         .into<CustomTarget<Bitmap>>(
                             object : CustomTarget<Bitmap>() {
