@@ -2,12 +2,12 @@ package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.OptIn
 import androidx.fragment.app.findFragment
 import androidx.media3.common.Player.Listener
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.PlaybackExoFragment
@@ -28,32 +28,38 @@ class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
         if (player != null &&
             (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
         ) {
-            val isPaused = !player!!.isPlaying
-            if (event.action == KeyEvent.ACTION_DOWN && isPaused) {
-                // If paused and user presses play, resume playback without showing controls
-                Log.v(TAG, "Resuming")
-                if (!fragment.isControllerVisible) {
-                    // If the controller is visible, we don't want to change its behavior
-                    controllerAutoShow = false
-                    player!!.addListener(
-                        object : Listener {
-                            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                                Log.v(
-                                    TAG,
-                                    "onIsPlayingChanged: controllerAutoShow=$controllerAutoShow, useController=$useController",
-                                )
-                                if (isPlaying) {
-                                    controllerAutoShow = true
-                                    player!!.removeListener(this)
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                val isPaused = !player!!.isPlaying
+                if (isPaused) {
+                    // If paused and user presses play, resume playback without showing controls
+                    if (!fragment.isControllerVisible) {
+                        // If the controller is already visible, don't change its behavior
+                        useController = false
+                        player!!.addListener(
+                            object : Listener {
+                                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                                    if (isPlaying) {
+                                        useController = true
+                                        player!!.removeListener(this)
+                                    }
                                 }
-                            }
-                        },
-                    )
+                            },
+                        )
+                    }
+                    when (keyCode) {
+                        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE ->
+                            Util.handlePlayPauseButtonAction(
+                                player,
+                                true,
+                            )
+
+                        KeyEvent.KEYCODE_MEDIA_PLAY -> Util.handlePlayButtonAction(player)
+                    }
+                    return true
+                } else {
+                    // Not paused, so allow normal handling
+                    return super.dispatchKeyEvent(event)
                 }
-                player!!.play()
-                return true
-            } else if (event.action == KeyEvent.ACTION_DOWN && !isPaused) {
-                return super.dispatchKeyEvent(event)
             } else {
                 return true
             }
