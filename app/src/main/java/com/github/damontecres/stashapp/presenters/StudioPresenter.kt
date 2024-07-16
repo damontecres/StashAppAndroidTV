@@ -37,6 +37,10 @@ class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
         }
 
         cardView.setRating100(item.rating100)
+
+        if (item.favorite) {
+            cardView.setIsFavorite()
+        }
     }
 
     companion object {
