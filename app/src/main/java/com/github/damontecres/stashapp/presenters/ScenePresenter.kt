@@ -61,12 +61,12 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
             if (ServerPreferences(cardView.context).showStudioAsText) {
                 cardView.setTextOverlayText(
                     StashImageCardView.OverlayPosition.TOP_RIGHT,
-                    item.studio.studioData.name,
+                    item.studio.name,
                 )
             } else {
                 cardView.setTopRightImage(
-                    item.studio.studioData.image_path,
-                    item.studio.studioData.name,
+                    item.studio.image_path,
+                    item.studio.name,
                 )
             }
         }

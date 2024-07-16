@@ -12,8 +12,8 @@ data class Marker(
     val primaryTagId: String,
     val primaryTagName: String,
     val screenshot: String,
-    val scene: Scene,
     val seconds: Double,
+    val sceneId: String,
 ) : Parcelable {
     constructor(
         markerData: MarkerData,
@@ -24,7 +24,7 @@ data class Marker(
         markerData.primary_tag.tagData.id,
         markerData.primary_tag.tagData.name,
         markerData.screenshot,
-        Scene.fromSlimSceneData(markerData.scene.slimSceneData),
         markerData.seconds,
+        markerData.scene.id,
     )
 }

@@ -31,6 +31,7 @@ import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.Version
+import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.showToastOnMain
@@ -168,7 +169,7 @@ class MainFragment : BrowseSupportFragment() {
                             if (item is SlimSceneData) {
                                 val queryEngine = QueryEngine(requireContext())
                                 queryEngine.getScene(item.id)?.let {
-                                    adapter.replace(position.column, it)
+                                    adapter.replace(position.column, it.asSlimeSceneData)
                                 }
                             }
                         }

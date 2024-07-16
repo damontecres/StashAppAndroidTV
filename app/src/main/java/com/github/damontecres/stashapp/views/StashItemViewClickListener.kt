@@ -31,7 +31,6 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Performer
-import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.util.addToIntent
@@ -78,10 +77,7 @@ class StashItemViewClickListener(
             context.startActivity(intent)
         } else if (item is MarkerData) {
             val intent = Intent(context, PlaybackActivity::class.java)
-            intent.putExtra(
-                VideoDetailsActivity.MOVIE,
-                Scene.fromSlimSceneData(item.scene.slimSceneData),
-            )
+            intent.putExtra(VideoDetailsActivity.MOVIE_ID, item.scene.id)
             intent.putExtra(POSITION_ARG, (item.seconds * 1000).toLong())
             context.startActivity(intent)
         } else if (item is ImageData) {

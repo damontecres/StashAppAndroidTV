@@ -4,7 +4,7 @@ import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.util.CodecSupport
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
@@ -21,7 +21,7 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
         item: Any,
     ) {
         val context = viewHolder.view.context
-        val scene = item as SlimSceneData
+        val scene = item as FullSceneData
         val manager = PreferenceManager.getDefaultSharedPreferences(context)
 
         viewHolder.title.text = scene.titleOrFilename

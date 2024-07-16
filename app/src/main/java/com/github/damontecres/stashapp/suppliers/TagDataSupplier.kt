@@ -19,6 +19,7 @@ class TagDataSupplier(
         return FindTagsQuery(
             filter = filter,
             tag_filter = tagFilter,
+            ids = null,
         )
     }
 

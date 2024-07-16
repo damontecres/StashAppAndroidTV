@@ -1,8 +1,8 @@
-query FindPerformers($filter: FindFilterType, $performer_filter: PerformerFilterType, $performer_ids: [Int!]) {
+query FindPerformers($filter: FindFilterType, $performer_filter: PerformerFilterType, $ids: [ID!]) {
   findPerformers(
     filter: $filter
     performer_filter: $performer_filter
-    performer_ids: $performer_ids
+    ids: $ids
   ) {
     performers {
       ...PerformerData
@@ -12,13 +12,28 @@ query FindPerformers($filter: FindFilterType, $performer_filter: PerformerFilter
   }
 }
 
-query CountPerformers($filter: FindFilterType, $performer_filter: PerformerFilterType, $performer_ids: [Int!]) {
+query CountPerformers($filter: FindFilterType, $performer_filter: PerformerFilterType, $ids: [ID!]) {
   findPerformers(
     filter: $filter
     performer_filter: $performer_filter
-    performer_ids: $performer_ids
+    ids: $ids
   ) {
     count
+  }
+}
+
+query FindPerformerTags($filter: FindFilterType, $performer_filter: PerformerFilterType, $ids: [ID!]) {
+  findPerformers(
+    filter: $filter
+    performer_filter: $performer_filter
+    ids: $ids
+  ) {
+    performers {
+      id
+      tags {
+        ...TagData
+      }
+    }
   }
 }
 
@@ -61,7 +76,7 @@ fragment PerformerData on Performer {
   created_at
   updated_at
   tags {
-    ...TagData
+    ...SlimTagData
     __typename
   }
   stash_ids {

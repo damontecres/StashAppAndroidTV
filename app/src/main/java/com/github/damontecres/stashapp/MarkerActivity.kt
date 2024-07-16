@@ -37,6 +37,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -189,11 +190,26 @@ class MarkerActivity : FragmentActivity() {
             mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val sceneData = queryEngine.findScenes(sceneIds = listOf(marker.scene.id)).first()
+                val sceneData = queryEngine.getScene(marker.sceneId)!!
                 val markerData = sceneData.scene_markers.first { it.id == marker.id }
 
                 primaryTagRowManager.setItems(listOf(markerData.primary_tag.tagData))
                 tagsRowManager.setItems(markerData.tags.map { it.tagData })
+
+                detailsPresenter.onActionClickedListener =
+                    OnActionClickedListener { _ ->
+                        val intent = Intent(requireActivity(), PlaybackActivity::class.java)
+                        intent.putExtra(
+                            VideoDetailsActivity.MOVIE,
+                            Scene.fromFullSceneData(sceneData),
+                        )
+                        intent.putExtra(
+                            VideoDetailsFragment.POSITION_ARG,
+                            (marker.seconds * 1000).toLong(),
+                        )
+
+                        requireContext().startActivity(intent)
+                    }
             }
         }
 
@@ -201,15 +217,6 @@ class MarkerActivity : FragmentActivity() {
             // Set detail background.
             detailsPresenter.backgroundColor =
                 ContextCompat.getColor(requireActivity(), R.color.default_card_background)
-
-            detailsPresenter.onActionClickedListener =
-                OnActionClickedListener { action ->
-                    val intent = Intent(requireActivity(), PlaybackActivity::class.java)
-                    intent.putExtra(VideoDetailsActivity.MOVIE, marker.scene)
-                    intent.putExtra(VideoDetailsFragment.POSITION_ARG, (marker.seconds * 1000).toLong())
-
-                    requireContext().startActivity(intent)
-                }
 
             mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
         }

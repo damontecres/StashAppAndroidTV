@@ -36,9 +36,9 @@ import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
@@ -81,7 +81,7 @@ import kotlin.math.roundToInt
  * It shows a detailed view of video and its metadata plus related videos.
  */
 class VideoDetailsFragment : DetailsSupportFragment() {
-    private var mSelectedMovie: SlimSceneData? = null
+    private var mSelectedMovie: FullSceneData? = null
 
     private lateinit var queryEngine: QueryEngine
     private lateinit var mutationEngine: MutationEngine
@@ -234,7 +234,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                 mPerformersAdapter.presenterSelector =
                     SinglePresenterSelector(
                         PerformerInScenePresenter(
-                            mSelectedMovie!!,
+                            mSelectedMovie!!.date,
                             PerformerLongClickCallBack(),
                         ),
                     )
@@ -438,7 +438,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
                         intent.putExtra(
                             VideoDetailsActivity.MOVIE,
-                            Scene.fromSlimSceneData(mSelectedMovie!!),
+                            Scene.fromFullSceneData(mSelectedMovie!!),
                         )
                         if (action.id == ACTION_RESUME_SCENE ||
                             action.id == ACTION_TRANSCODE_RESUME_SCENE ||
@@ -608,9 +608,12 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                                 position,
                                 tagId,
                             )!!
-                        val markers =
-                            newMarker.scene.slimSceneData.scene_markers.map(::convertMarker)
-                        markersAdapter.setItems(markers, MarkerDiffCallback)
+                        val index =
+                            markersAdapter.unmodifiableList<MarkerData>()
+                                .indexOfFirst {
+                                    newMarker.seconds < it.seconds
+                                }.coerceAtLeast(0)
+                        markersAdapter.add(index, newMarker)
                         if (mAdapter.lookup(MARKER_POS) == null) {
                             mAdapter.set(
                                 MARKER_POS,
@@ -653,7 +656,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private fun convertMarker(it: SlimSceneData.Scene_marker): MarkerData {
+    private fun convertMarker(it: FullSceneData.Scene_marker): MarkerData {
         return MarkerData(
             id = it.id,
             title = it.title,
@@ -664,7 +667,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             seconds = it.seconds,
             preview = "",
             primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData),
-            scene = MarkerData.Scene("", mSelectedMovie!!),
+            scene = MarkerData.Scene(mSelectedMovie!!.id, ""),
             tags = it.tags.map { MarkerData.Tag("", it.tagData) },
             __typename = "",
         )
