@@ -4,11 +4,13 @@ import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.util.StashClient
+import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 class StashExoPlayer private constructor() {
     companion object {
@@ -28,8 +30,21 @@ class StashExoPlayer private constructor() {
             if (instance == null) {
                 synchronized(this) { // synchronized to avoid concurrency problem
                     if (instance == null) {
+                        val apiKey = StashServer.getCurrentStashServer(context)?.apiKey
                         val dataSourceFactory =
-                            OkHttpDataSource.Factory(StashClient.getHttpClient(context))
+                            if (apiKey.isNotNullOrBlank()) {
+                                DefaultHttpDataSource.Factory()
+                                    .setDefaultRequestProperties(
+                                        mapOf(
+                                            Pair(
+                                                Constants.STASH_API_HEADER,
+                                                apiKey,
+                                            ),
+                                        ),
+                                    )
+                            } else {
+                                DefaultHttpDataSource.Factory()
+                            }
 
                         instance =
                             ExoPlayer.Builder(context)

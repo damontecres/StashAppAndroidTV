@@ -58,6 +58,10 @@
             android:exported="false"
             android:theme="@style/PlaybackTheme" />
         <activity
+            android:name=".PlaybackMarkersActivity"
+            android:exported="false"
+            android:theme="@style/PlaybackTheme" />
+        <activity
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity

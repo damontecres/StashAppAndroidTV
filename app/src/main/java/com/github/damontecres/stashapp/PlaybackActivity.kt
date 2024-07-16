@@ -26,6 +26,7 @@ class PlaybackActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val scene = intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
         if (scene != null) {
             this.scene = scene
@@ -105,6 +106,7 @@ class PlaybackActivity : FragmentActivity() {
     }
 
     interface StashVideoPlayer {
+        val isControllerVisible: Boolean
         val currentVideoPosition: Long
 
         /**
@@ -113,6 +115,8 @@ class PlaybackActivity : FragmentActivity() {
          * @return true if the controls needed to be hidden
          */
         fun hideControlsIfVisible(): Boolean
+
+        fun showAndFocusSeekBar()
     }
 
     companion object {

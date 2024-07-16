@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFileData
+import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
@@ -372,6 +373,19 @@ val SlimSceneData.titleOrFilename: String?
             title
         }
 
+val VideoSceneData.titleOrFilename: String?
+    get() =
+        if (title.isNullOrBlank()) {
+            val path = files.firstOrNull()?.videoFileData?.path
+            if (path != null) {
+                File(path).name
+            } else {
+                null
+            }
+        } else {
+            title
+        }
+
 val FullSceneData.asSlimeSceneData: SlimSceneData
     get() =
         SlimSceneData(
@@ -427,6 +441,25 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                 },
             tags = this.tags.map { SlimSceneData.Tag("", it.tagData.asSlimTagData) },
             performers = this.performers.map { SlimSceneData.Performer(it.id, it.name) },
+        )
+
+val FullSceneData.File.asVideoSceneDataFile: VideoSceneData.File
+    get() = VideoSceneData.File("", videoFileData)
+
+val FullSceneData.asVideoSceneData: VideoSceneData
+    get() =
+        VideoSceneData(
+            id,
+            title,
+            urls,
+            date,
+            rating100,
+            o_counter,
+            created_at,
+            updated_at,
+            files.map { VideoSceneData.File("", it.videoFileData) },
+            VideoSceneData.Paths(paths.screenshot, paths.preview, paths.stream, paths.sprite),
+            sceneStreams.map { VideoSceneData.SceneStream(it.url, it.mime_type, it.label) },
         )
 
 val TagData.asSlimTagData: SlimTagData

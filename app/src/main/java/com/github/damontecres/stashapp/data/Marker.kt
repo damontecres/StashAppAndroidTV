@@ -25,6 +25,6 @@ data class Marker(
         markerData.primary_tag.tagData.name,
         markerData.screenshot,
         markerData.seconds,
-        markerData.scene.id,
+        markerData.scene.videoSceneData.id,
     )
 }

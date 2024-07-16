@@ -66,6 +66,7 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StudioDiffCallback
+import com.github.damontecres.stashapp.util.asVideoSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
@@ -667,7 +668,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
             seconds = it.seconds,
             preview = "",
             primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData),
-            scene = MarkerData.Scene(mSelectedMovie!!.id, ""),
+            scene = MarkerData.Scene(mSelectedMovie!!.id, mSelectedMovie!!.asVideoSceneData),
             tags = it.tags.map { MarkerData.Tag("", it.tagData) },
             __typename = "",
         )

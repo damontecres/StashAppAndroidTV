@@ -86,7 +86,7 @@ class PlaybackExoFragment(private val scene: Scene) :
 
     override val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
 
-    val isControllerVisible get() = videoView.isControllerFullyVisible || previewTimeBar.isShown
+    override val isControllerVisible get() = videoView.isControllerFullyVisible || previewTimeBar.isShown
 
     override fun hideControlsIfVisible(): Boolean {
         if (isControllerVisible) {
@@ -852,7 +852,7 @@ class PlaybackExoFragment(private val scene: Scene) :
         }
     }
 
-    fun showAndFocusSeekBar() {
+    override fun showAndFocusSeekBar() {
         videoView.showController()
         previewTimeBar.showPreview()
         previewTimeBar.requestFocus()

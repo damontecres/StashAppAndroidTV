@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.Spannable
@@ -71,11 +72,25 @@ import kotlinx.coroutines.withContext
 class FilterListActivity : FragmentActivity() {
     private lateinit var titleTextView: TextView
     private lateinit var sortButton: Button
+    private lateinit var playMarkersButton: Button
     private lateinit var queryEngine: QueryEngine
     private lateinit var dataType: DataType
     private lateinit var sortOptions: List<Pair<String, String>>
 
     private var filter: StashFilter? = null
+        set(newFilter) {
+            field = newFilter
+            Log.v(TAG, "newFilter=$newFilter")
+            if (dataType == DataType.MARKER) {
+                playMarkersButton.setOnClickListener {
+                    val intent = Intent(this, PlaybackMarkersActivity::class.java)
+                    intent.putExtra(PlaybackMarkersFragment.INTENT_FILTER_ID, newFilter)
+                    // TODO duration?
+                    intent.putExtra(PlaybackMarkersFragment.INTENT_DURATION_ID, 3_000L)
+                    startActivity(intent)
+                }
+            }
+        }
     private var filterData: SavedFilterData? = null
 
     // Track the saved filter by name so when popping the back stack, we can restore the sort by
@@ -87,7 +102,6 @@ class FilterListActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         manager = PreferenceManager.getDefaultSharedPreferences(this)
-        filter = intent.getParcelableExtra("filter")
         queryEngine = QueryEngine(this, true)
 
         setContentView(R.layout.filter_list)
@@ -117,6 +131,10 @@ class FilterListActivity : FragmentActivity() {
         filterButton.onFocusChangeListener = onFocusChangeListener
 
         sortButton = findViewById(R.id.sort_button)
+        playMarkersButton = findViewById(R.id.play_makers_button)
+        if (dataType == DataType.MARKER) {
+            playMarkersButton.visibility = View.VISIBLE
+        }
 
         titleTextView = findViewById(R.id.list_title)
         supportFragmentManager.addFragmentOnAttachListener { _, fragment ->
@@ -163,7 +181,7 @@ class FilterListActivity : FragmentActivity() {
                             }
 
                             FilterType.APP_FILTER -> {
-                                filter
+                                intent.getParcelableExtra("filter")
                             }
                         }
                     setupFragment(filterData, true)

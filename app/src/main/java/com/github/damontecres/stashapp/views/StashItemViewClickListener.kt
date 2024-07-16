@@ -77,7 +77,7 @@ class StashItemViewClickListener(
             context.startActivity(intent)
         } else if (item is MarkerData) {
             val intent = Intent(context, PlaybackActivity::class.java)
-            intent.putExtra(VideoDetailsActivity.MOVIE_ID, item.scene.id)
+            intent.putExtra(VideoDetailsActivity.MOVIE_ID, item.scene.videoSceneData.id)
             intent.putExtra(POSITION_ARG, (item.seconds * 1000).toLong())
             context.startActivity(intent)
         } else if (item is ImageData) {
