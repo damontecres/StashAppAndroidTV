@@ -33,10 +33,11 @@ class PlaybackMarkersActivity : FragmentActivity() {
         }
     }
 
+    @OptIn(UnstableApi::class)
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         return if (fragment != null) {
-            fragment!!.videoView.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
+            fragment!!.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
         } else {
             super.dispatchKeyEvent(event)
         }

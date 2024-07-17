@@ -5,7 +5,7 @@ import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.PlaybackExoFragment
+import com.github.damontecres.stashapp.PlaybackSceneFragment
 import com.github.damontecres.stashapp.data.Scene
 
 enum class TranscodeDecision {
@@ -97,7 +97,7 @@ fun getStreamDecision(
         scene.streamUrl != null
     ) {
         Log.v(
-            PlaybackExoFragment.TAG,
+            PlaybackSceneFragment.TAG,
             "Video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) supported",
         )
         return StreamDecision(
@@ -109,7 +109,7 @@ fun getStreamDecision(
         )
     } else if (forceDirectPlay) {
         Log.v(
-            PlaybackExoFragment.TAG,
+            PlaybackSceneFragment.TAG,
             "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
         )
         return StreamDecision(
@@ -122,7 +122,7 @@ fun getStreamDecision(
     } else {
         // Transcode
         Log.v(
-            PlaybackExoFragment.TAG,
+            PlaybackSceneFragment.TAG,
             "Transcoding video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
         )
         return StreamDecision(
