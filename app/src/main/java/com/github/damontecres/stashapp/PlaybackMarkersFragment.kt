@@ -18,7 +18,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaItem.ClippingConfiguration
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.Listener
@@ -40,12 +39,15 @@ import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
-import com.github.damontecres.stashapp.util.CodecSupport
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StreamDecision
+import com.github.damontecres.stashapp.util.TranscodeDecision
+import com.github.damontecres.stashapp.util.buildMediaItem
+import com.github.damontecres.stashapp.util.getStreamDecision
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toFindFilterType
 import com.github.damontecres.stashapp.views.StashPlayerView
@@ -103,30 +105,25 @@ class PlaybackMarkersFragment() :
     }
 
     private fun updateDebugInfo(
-        streamChoice: StreamChoice,
+        streamDecision: StreamDecision,
         scene: Scene,
     ) {
-        when (streamChoice.transcodeDecision) {
+        when (streamDecision.transcodeDecision) {
             TranscodeDecision.TRANSCODE -> debugPlaybackTextView.text = "Transcode"
             TranscodeDecision.FORCED_TRANSCODE -> debugPlaybackTextView.text = "Force transcode"
             TranscodeDecision.DIRECT_PLAY -> debugPlaybackTextView.text = "Direct"
             TranscodeDecision.FORCED_DIRECT_PLAY -> debugPlaybackTextView.text = "Force direct"
         }
         debugVideoTextView.text =
-            if (streamChoice.videoSupported) scene.videoCodec else "${scene.videoCodec} (unsupported)"
+            if (streamDecision.videoSupported) scene.videoCodec else "${scene.videoCodec} (unsupported)"
         debugAudioTextView.text =
-            if (streamChoice.audioSupported) scene.audioCodec else "${scene.audioCodec} (unsupported)"
+            if (streamDecision.audioSupported) scene.audioCodec else "${scene.audioCodec} (unsupported)"
         debugContainerTextView.text =
-            if (streamChoice.containerSupported) scene.format else "${scene.format} (unsupported)"
+            if (streamDecision.containerSupported) scene.format else "${scene.format} (unsupported)"
     }
 
-    private fun updateUi(marker: MarkerData) {
-        val streamChoice = chooseStream(marker, 0L, false, false)
-        val scene = Scene.fromVideoSceneData(marker.scene.videoSceneData)
-        updateDebugInfo(streamChoice, scene)
-
+    private fun updateUi(scene: Scene) {
         Toast.makeText(requireContext(), scene.title, Toast.LENGTH_SHORT).show()
-
         val showTitle = PreferenceManager.getDefaultSharedPreferences(requireContext()).getBoolean("exoShowTitle", true)
         if (showTitle) {
             titleText.text = scene.title
@@ -475,6 +472,8 @@ class PlaybackMarkersFragment() :
         }
     }
 
+    private data class MediaItemTag(val marker: MarkerData, val streamDecision: StreamDecision)
+
     private suspend fun addPageToPlaylist(
         page: Int,
         duration: Long,
@@ -482,10 +481,23 @@ class PlaybackMarkersFragment() :
         Log.v(TAG, "Fetching page #$page")
         val newMarkers = pagingSource.fetchPage(page, 25)
         val mediaItems =
-            newMarkers.map { chooseStream(it, duration, false, false).mediaItem }
+            newMarkers.map { marker ->
+                val scene = Scene.fromVideoSceneData(marker.scene.videoSceneData)
+                val startPos = (marker.seconds * 1000).toLong()
+                val clipConfig =
+                    ClippingConfiguration.Builder()
+                        .setStartPositionMs(startPos)
+                        .setEndPositionMs(startPos + duration)
+                        .build()
+                val streamDecision = getStreamDecision(requireContext(), scene)
+                buildMediaItem(requireContext(), streamDecision, scene) {
+                    it.setClippingConfiguration(clipConfig)
+                    it.setTag(MediaItemTag(marker, streamDecision))
+                }
+            }
         Log.v(TAG, "Got ${mediaItems.size} media items")
         if (mediaItems.isNotEmpty()) {
-            updateUi(newMarkers[0])
+            updateUi(Scene.fromVideoSceneData(newMarkers[0].scene.videoSceneData))
             player!!.addMediaItems(mediaItems)
             return true
         } else {
@@ -513,9 +525,11 @@ class PlaybackMarkersFragment() :
             reason: Int,
         ) {
             if (mediaItem != null) {
-                val marker = mediaItem.localConfiguration!!.tag!! as MarkerData
-                Log.v(TAG, "Starting playback of marker ${marker.id}")
-                updateUi(marker)
+                val tag = mediaItem.localConfiguration!!.tag!! as MediaItemTag
+                val scene = Scene.fromVideoSceneData(tag.marker.scene.videoSceneData)
+                Log.v(TAG, "Starting playback of marker ${tag.marker.id} from scene ${scene.id}")
+                updateUi(scene)
+                updateDebugInfo(tag.streamDecision, scene)
             }
             if (hasMorePages) {
                 val count = player!!.mediaItemCount
@@ -532,133 +546,6 @@ class PlaybackMarkersFragment() :
                     }
                 }
             }
-        }
-    }
-
-    enum class TranscodeDecision {
-        DIRECT_PLAY,
-        FORCED_DIRECT_PLAY,
-        TRANSCODE,
-        FORCED_TRANSCODE,
-    }
-
-    data class StreamChoice(
-        val transcodeDecision: TranscodeDecision,
-        val videoSupported: Boolean,
-        val audioSupported: Boolean,
-        val containerSupported: Boolean,
-        val mediaItem: MediaItem,
-    )
-
-    private fun buildMediaItems(
-        url: String,
-        format: String?,
-        marker: MarkerData,
-        clipConfig: MediaItem.ClippingConfiguration,
-    ): MediaItem {
-        val mimeType =
-            when (format?.lowercase()) {
-                // As recommended by https://developer.android.com/media/media3/exoplayer/hls#using-mediaitem
-                // Specify the mimetype for HLS & DASH streams
-                "hls" -> MimeTypes.APPLICATION_M3U8
-                "dash" -> MimeTypes.APPLICATION_MPD
-                else -> null
-            }
-        return MediaItem.Builder()
-            .setUri(url)
-            .setMimeType(mimeType)
-            .setClippingConfiguration(clipConfig)
-            .setTag(marker)
-            .build()
-    }
-
-    private fun chooseStream(
-        marker: MarkerData,
-        duration: Long,
-        forceTranscode: Boolean,
-        forceDirectPlay: Boolean,
-    ): StreamChoice {
-        val startPos = (marker.seconds * 1000).toLong()
-        val clipConfig =
-            ClippingConfiguration.Builder()
-                .setStartPositionMs(startPos)
-                .setEndPositionMs(startPos + duration)
-                .build()
-
-        val scene = Scene.fromVideoSceneData(marker.scene.videoSceneData)
-        val supportedCodecs = CodecSupport.getSupportedCodecs(requireContext())
-        val videoSupported = supportedCodecs.isVideoSupported(scene.videoCodec)
-        val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
-        val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
-        if (
-            !forceTranscode &&
-            videoSupported &&
-            audioSupported &&
-            containerSupported &&
-            scene.streamUrl != null
-        ) {
-            Log.v(
-                TAG,
-                "Video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) supported",
-            )
-            return StreamChoice(
-                TranscodeDecision.DIRECT_PLAY,
-                videoSupported,
-                audioSupported,
-                containerSupported,
-                buildMediaItems(scene.streamUrl!!, scene.format, marker, clipConfig),
-            )
-        } else if (forceDirectPlay) {
-            Log.v(
-                TAG,
-                "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
-            )
-            return StreamChoice(
-                TranscodeDecision.FORCED_DIRECT_PLAY,
-                videoSupported,
-                audioSupported,
-                containerSupported,
-                buildMediaItems(scene.streamUrl!!, scene.format, marker, clipConfig),
-            )
-        } else {
-            val streamChoice =
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
-                    .getString("stream_choice", "HLS")
-            val streamUrl = scene.streams[streamChoice]
-            val mimeType =
-                when (streamChoice) {
-                    "DASH" -> {
-                        MimeTypes.APPLICATION_MPD
-                    }
-
-                    "HLS" -> {
-                        MimeTypes.APPLICATION_M3U8
-                    }
-
-                    "MP4" -> {
-                        MimeTypes.VIDEO_MP4
-                    }
-
-                    else -> {
-                        MimeTypes.VIDEO_WEBM
-                    }
-                }
-            Log.v(
-                TAG,
-                "Transcoding video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) using $streamChoice",
-            )
-            return StreamChoice(
-                if (forceTranscode) TranscodeDecision.FORCED_TRANSCODE else TranscodeDecision.TRANSCODE,
-                videoSupported,
-                audioSupported,
-                containerSupported,
-                MediaItem.Builder()
-                    .setUri(streamUrl)
-                    .setMimeType(mimeType)
-                    .setTag(marker)
-                    .setClippingConfiguration(clipConfig)
-                    .build(),
-            )
         }
     }
 

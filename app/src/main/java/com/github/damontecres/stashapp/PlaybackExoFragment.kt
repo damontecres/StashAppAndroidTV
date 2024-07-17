@@ -23,8 +23,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.Listener
@@ -38,12 +36,15 @@ import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
-import com.github.damontecres.stashapp.util.CodecSupport
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
+import com.github.damontecres.stashapp.util.StreamDecision
+import com.github.damontecres.stashapp.util.TranscodeDecision
+import com.github.damontecres.stashapp.util.buildMediaItem
+import com.github.damontecres.stashapp.util.getStreamDecision
 import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.StashPlayerView
 import com.github.damontecres.stashapp.views.durationToString
@@ -119,27 +120,27 @@ class PlaybackExoFragment(private val scene: Scene) :
                 VideoDetailsFragment.FORCE_DIRECT_PLAY,
                 false,
             )
-        val streamChoice = chooseStream(forceTranscode, forceDirectPlay)
-        initializePlayer(position, streamChoice)
+        val streamDecision = getStreamDecision(requireContext(), scene)
+        initializePlayer(position, streamDecision)
     }
 
     @OptIn(UnstableApi::class)
     private fun initializePlayer(
         position: Long,
-        streamChoice: StreamChoice,
+        streamDecision: StreamDecision,
     ) {
-        when (streamChoice.transcodeDecision) {
+        when (streamDecision.transcodeDecision) {
             TranscodeDecision.TRANSCODE -> debugPlaybackTextView.text = "Transcode"
             TranscodeDecision.FORCED_TRANSCODE -> debugPlaybackTextView.text = "Force transcode"
             TranscodeDecision.DIRECT_PLAY -> debugPlaybackTextView.text = "Direct"
             TranscodeDecision.FORCED_DIRECT_PLAY -> debugPlaybackTextView.text = "Force direct"
         }
         debugVideoTextView.text =
-            if (streamChoice.videoSupported) scene.videoCodec else "${scene.videoCodec} (unsupported)"
+            if (streamDecision.videoSupported) scene.videoCodec else "${scene.videoCodec} (unsupported)"
         debugAudioTextView.text =
-            if (streamChoice.audioSupported) scene.audioCodec else "${scene.audioCodec} (unsupported)"
+            if (streamDecision.audioSupported) scene.audioCodec else "${scene.audioCodec} (unsupported)"
         debugContainerTextView.text =
-            if (streamChoice.containerSupported) scene.format else "${scene.format} (unsupported)"
+            if (streamDecision.containerSupported) scene.format else "${scene.format} (unsupported)"
 
         player =
             StashExoPlayer.getInstance(requireContext())
@@ -238,7 +239,7 @@ class PlaybackExoFragment(private val scene: Scene) :
                     )
                 }.also { exoPlayer ->
                     exoPlayer.setMediaItem(
-                        streamChoice.mediaItem,
+                        buildMediaItem(requireContext(), streamDecision, scene),
                         if (position > 0) position else C.TIME_UNSET,
                     )
                     exoPlayer.prepare()
@@ -738,117 +739,6 @@ class PlaybackExoFragment(private val scene: Scene) :
                     }
                 }
             }
-        }
-    }
-
-    enum class TranscodeDecision {
-        DIRECT_PLAY,
-        FORCED_DIRECT_PLAY,
-        TRANSCODE,
-        FORCED_TRANSCODE,
-    }
-
-    data class StreamChoice(
-        val transcodeDecision: TranscodeDecision,
-        val videoSupported: Boolean,
-        val audioSupported: Boolean,
-        val containerSupported: Boolean,
-        val mediaItem: MediaItem,
-    )
-
-    private fun buildMediaItems(
-        url: String,
-        format: String?,
-    ): MediaItem {
-        val mimeType =
-            when (format?.lowercase()) {
-                // As recommended by https://developer.android.com/media/media3/exoplayer/hls#using-mediaitem
-                // Specify the mimetype for HLS & DASH streams
-                "hls" -> MimeTypes.APPLICATION_M3U8
-                "dash" -> MimeTypes.APPLICATION_MPD
-                else -> null
-            }
-        return MediaItem.Builder()
-            .setUri(url)
-            .setMimeType(mimeType)
-            .build()
-    }
-
-    private fun chooseStream(
-        forceTranscode: Boolean,
-        forceDirectPlay: Boolean,
-    ): StreamChoice {
-        val supportedCodecs = CodecSupport.getSupportedCodecs(requireContext())
-        val videoSupported = supportedCodecs.isVideoSupported(scene.videoCodec)
-        val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
-        val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
-        if (
-            !forceTranscode &&
-            videoSupported &&
-            audioSupported &&
-            containerSupported &&
-            scene.streamUrl != null
-        ) {
-            Log.v(
-                TAG,
-                "Video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) supported",
-            )
-            return StreamChoice(
-                TranscodeDecision.DIRECT_PLAY,
-                videoSupported,
-                audioSupported,
-                containerSupported,
-                buildMediaItems(scene.streamUrl!!, scene.format),
-            )
-        } else if (forceDirectPlay) {
-            Log.v(
-                TAG,
-                "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
-            )
-            return StreamChoice(
-                TranscodeDecision.FORCED_DIRECT_PLAY,
-                videoSupported,
-                audioSupported,
-                containerSupported,
-                buildMediaItems(scene.streamUrl!!, scene.format),
-            )
-        } else {
-            val streamChoice =
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
-                    .getString("stream_choice", "HLS")
-            val streamUrl = scene.streams[streamChoice]
-            val mimeType =
-                when (streamChoice) {
-                    "DASH" -> {
-                        MimeTypes.APPLICATION_MPD
-                    }
-
-                    "HLS" -> {
-                        MimeTypes.APPLICATION_M3U8
-                    }
-
-                    "MP4" -> {
-                        MimeTypes.VIDEO_MP4
-                    }
-
-                    else -> {
-                        MimeTypes.VIDEO_WEBM
-                    }
-                }
-            Log.v(
-                TAG,
-                "Transcoding video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format}) using $streamChoice",
-            )
-            return StreamChoice(
-                if (forceTranscode) TranscodeDecision.FORCED_TRANSCODE else TranscodeDecision.TRANSCODE,
-                videoSupported,
-                audioSupported,
-                containerSupported,
-                MediaItem.Builder()
-                    .setUri(streamUrl)
-                    .setMimeType(mimeType)
-                    .build(),
-            )
         }
     }
 
