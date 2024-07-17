@@ -64,6 +64,7 @@ import com.github.damontecres.stashapp.util.toFindFilterType
 import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
+import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -83,11 +84,23 @@ class FilterListActivity : FragmentActivity() {
             Log.v(TAG, "newFilter=$newFilter")
             if (dataType == DataType.MARKER) {
                 playMarkersButton.setOnClickListener {
-                    val intent = Intent(this, PlaybackMarkersActivity::class.java)
-                    intent.putExtra(PlaybackMarkersFragment.INTENT_FILTER_ID, newFilter)
-                    // TODO duration?
-                    intent.putExtra(PlaybackMarkersFragment.INTENT_DURATION_ID, 3_000L)
-                    startActivity(intent)
+                    showSimpleListPopupWindow(
+                        playMarkersButton,
+                        listOf("3 seconds", "15 seconds", "20 seconds", "30 seconds"),
+                    ) {
+                        val duration =
+                            when (it) {
+                                0 -> 3000L
+                                1 -> 15_000L
+                                2 -> 20_000L
+                                3 -> 30_000L
+                                else -> 30_000L
+                            }
+                        val intent = Intent(this, PlaybackMarkersActivity::class.java)
+                        intent.putExtra(PlaybackMarkersFragment.INTENT_FILTER_ID, newFilter)
+                        intent.putExtra(PlaybackMarkersFragment.INTENT_DURATION_ID, duration)
+                        startActivity(intent)
+                    }
                 }
             }
         }
