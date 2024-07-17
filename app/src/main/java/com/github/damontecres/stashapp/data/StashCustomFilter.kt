@@ -2,9 +2,11 @@ package com.github.damontecres.stashapp.data
 
 import android.os.Parcelable
 import com.apollographql.apollo3.api.Optional
+import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.util.toFind_filter
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -38,6 +40,18 @@ data class StashCustomFilter(
             per_page = Optional.absent(),
             sort = Optional.presentIfNotNull(sortBy),
             direction = Optional.presentIfNotNull(direction),
+        )
+    }
+
+    fun toSavedFilterData(): SavedFilterData {
+        return SavedFilterData(
+            id = "-1",
+            mode = dataType.filterMode,
+            name = description,
+            find_filter = asFindFilterType().toFind_filter(),
+            object_filter = null,
+            ui_options = null,
+            __typename = javaClass.name,
         )
     }
 }

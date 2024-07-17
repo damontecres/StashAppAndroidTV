@@ -50,7 +50,7 @@ class StashClient private constructor() {
                 synchronized(this) {
                     if (httpClient == null) {
                         Log.v(TAG, "Creating new OkHttpClient")
-                        val newClient = createOkHttpClient(context, true)
+                        val newClient = createOkHttpClient(context, true, true)
                         httpClient = newClient
                     }
                 }
@@ -65,12 +65,17 @@ class StashClient private constructor() {
          */
         fun getGlideHttpClient(context: Context): OkHttpClient {
             Log.v(TAG, "Creating new OkHttpClient for Glide")
-            return createOkHttpClient(context, false)
+            return createOkHttpClient(context, false, true)
+        }
+
+        fun getStreamHttpClient(context: Context): OkHttpClient {
+            return createOkHttpClient(context, true, false)
         }
 
         private fun createOkHttpClient(
             context: Context,
             useApiKey: Boolean,
+            useCache: Boolean,
         ): OkHttpClient {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
             val server =
@@ -128,7 +133,7 @@ class StashClient private constructor() {
                         it.proceed(request)
                     }
             }
-            if (cacheLogging) {
+            if (useCache && cacheLogging) {
                 Log.d(
                     OK_HTTP_TAG,
                     "cacheDuration in hours: ${cacheDuration?.toInt(
@@ -161,7 +166,7 @@ class StashClient private constructor() {
                         },
                     )
             }
-            if (cacheDuration != null) {
+            if (useCache && cacheDuration != null) {
                 builder =
                     builder.addInterceptor {
                         val request =
@@ -175,11 +180,16 @@ class StashClient private constructor() {
                         it.proceed(request)
                     }
             }
-            builder = builder.cache(Constants.getNetworkCache(context))
+            builder =
+                if (useCache) {
+                    builder.cache(Constants.getNetworkCache(context))
+                } else {
+                    builder.cache(null)
+                }
             return builder.build()
         }
 
-        private fun createUserAgent(context: Context): String {
+        fun createUserAgent(context: Context): String {
             val appName = context.getString(R.string.app_name)
             val versionStr = context.packageManager.getPackageInfo(context.packageName, 0).versionName
             val comments =

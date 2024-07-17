@@ -157,6 +157,12 @@
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Advanced">
+        <SwitchPreference
+            app:key="@string/pref_key_experimental_features"
+            app:title="Experimental features"
+            app:summaryOn="Enabled"
+            app:summaryOff="Disabled"
+            app:defaultValue="false" />
         <SeekBarPreference
             app:key="networkTimeout"
             app:title="Network timeout in seconds"

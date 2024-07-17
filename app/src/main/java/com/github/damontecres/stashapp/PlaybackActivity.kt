@@ -19,18 +19,20 @@ import com.github.damontecres.stashapp.util.toMilliseconds
 import kotlinx.coroutines.launch
 
 class PlaybackActivity : FragmentActivity() {
-    private var fragment: PlaybackExoFragment? = null
+    private var fragment: PlaybackSceneFragment? = null
     private var maxPlayPercent = 98
 
     private lateinit var scene: Scene
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val scene = intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
         if (scene != null) {
             this.scene = scene
             if (savedInstanceState == null) {
-                fragment = PlaybackExoFragment(scene)
+                fragment = PlaybackSceneFragment()
+                fragment!!.scene = scene
                 supportFragmentManager.beginTransaction()
                     .replace(android.R.id.content, fragment!!)
                     .commit()
@@ -42,7 +44,8 @@ class PlaybackActivity : FragmentActivity() {
                 val scene = Scene.fromFullSceneData(fullScene)
                 this@PlaybackActivity.scene = scene
                 if (savedInstanceState == null) {
-                    fragment = PlaybackExoFragment(scene)
+                    fragment = PlaybackSceneFragment()
+                    fragment!!.scene = scene
                     supportFragmentManager.beginTransaction()
                         .replace(android.R.id.content, fragment!!)
                         .commit()
@@ -66,10 +69,11 @@ class PlaybackActivity : FragmentActivity() {
         }
     }
 
+    @OptIn(UnstableApi::class)
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         return if (fragment != null) {
-            fragment!!.videoView.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
+            fragment!!.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
         } else {
             super.dispatchKeyEvent(event)
         }
@@ -86,7 +90,7 @@ class PlaybackActivity : FragmentActivity() {
         val positionToSave =
             if (playedPercent >= maxPlayPercent) {
                 Log.v(
-                    PlaybackExoFragment.TAG,
+                    PlaybackSceneFragment.TAG,
                     "Setting position to 0 since $playedPercent >= $maxPlayPercent",
                 )
                 0L
@@ -105,6 +109,7 @@ class PlaybackActivity : FragmentActivity() {
     }
 
     interface StashVideoPlayer {
+        val isControllerVisible: Boolean
         val currentVideoPosition: Long
 
         /**
@@ -113,6 +118,8 @@ class PlaybackActivity : FragmentActivity() {
          * @return true if the controls needed to be hidden
          */
         fun hideControlsIfVisible(): Boolean
+
+        fun showAndFocusSeekBar()
     }
 
     companion object {

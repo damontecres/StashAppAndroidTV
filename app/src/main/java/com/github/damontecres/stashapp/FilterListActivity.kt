@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.Spannable
@@ -63,6 +64,7 @@ import com.github.damontecres.stashapp.util.toFindFilterType
 import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
+import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,11 +73,36 @@ import kotlinx.coroutines.withContext
 class FilterListActivity : FragmentActivity() {
     private lateinit var titleTextView: TextView
     private lateinit var sortButton: Button
+    private lateinit var playMarkersButton: Button
     private lateinit var queryEngine: QueryEngine
     private lateinit var dataType: DataType
     private lateinit var sortOptions: List<Pair<String, String>>
 
     private var filter: StashFilter? = null
+        set(newFilter) {
+            field = newFilter
+            if (dataType == DataType.MARKER) {
+                playMarkersButton.setOnClickListener {
+                    showSimpleListPopupWindow(
+                        playMarkersButton,
+                        listOf("3 seconds", "15 seconds", "20 seconds", "30 seconds"),
+                    ) {
+                        val duration =
+                            when (it) {
+                                0 -> 3000L
+                                1 -> 15_000L
+                                2 -> 20_000L
+                                3 -> 30_000L
+                                else -> 30_000L
+                            }
+                        val intent = Intent(this, PlaybackMarkersActivity::class.java)
+                        intent.putExtra(PlaybackMarkersFragment.INTENT_FILTER_ID, newFilter)
+                        intent.putExtra(PlaybackMarkersFragment.INTENT_DURATION_ID, duration)
+                        startActivity(intent)
+                    }
+                }
+            }
+        }
     private var filterData: SavedFilterData? = null
 
     // Track the saved filter by name so when popping the back stack, we can restore the sort by
@@ -87,7 +114,6 @@ class FilterListActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         manager = PreferenceManager.getDefaultSharedPreferences(this)
-        filter = intent.getParcelableExtra("filter")
         queryEngine = QueryEngine(this, true)
 
         setContentView(R.layout.filter_list)
@@ -117,6 +143,13 @@ class FilterListActivity : FragmentActivity() {
         filterButton.onFocusChangeListener = onFocusChangeListener
 
         sortButton = findViewById(R.id.sort_button)
+        playMarkersButton = findViewById(R.id.play_makers_button)
+
+        val experimentalEnabled =
+            manager.getBoolean(getString(R.string.pref_key_experimental_features), false)
+        if (experimentalEnabled && dataType == DataType.MARKER) {
+            playMarkersButton.visibility = View.VISIBLE
+        }
 
         titleTextView = findViewById(R.id.list_title)
         supportFragmentManager.addFragmentOnAttachListener { _, fragment ->
@@ -163,7 +196,7 @@ class FilterListActivity : FragmentActivity() {
                             }
 
                             FilterType.APP_FILTER -> {
-                                filter
+                                intent.getParcelableExtra("filter")
                             }
                         }
                     setupFragment(filterData, true)

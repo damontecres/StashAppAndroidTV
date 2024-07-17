@@ -19,6 +19,31 @@ mutation UpdateMarker($input: SceneMarkerUpdateInput!){
   }
 }
 
+fragment VideoSceneData on Scene {
+  id
+  title
+  urls
+  date
+  rating100
+  o_counter
+  created_at
+  updated_at
+  files {
+    ...VideoFileData
+  }
+  paths {
+    screenshot
+    preview
+    stream
+    sprite
+  }
+  sceneStreams {
+    url
+    mime_type
+    label
+  }
+}
+
 fragment MarkerData on SceneMarker {
   id
   title
@@ -36,8 +61,7 @@ fragment MarkerData on SceneMarker {
     ...TagData
   }
   scene {
-    id
-    __typename
+    ...VideoSceneData
   }
   __typename
 }

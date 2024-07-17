@@ -60,7 +60,7 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
 
                     1L -> {
                         val intent = Intent(cardView.context, VideoDetailsActivity::class.java)
-                        intent.putExtra(VideoDetailsActivity.MOVIE, item.scene.id)
+                        intent.putExtra(VideoDetailsActivity.MOVIE, item.scene.videoSceneData.id)
                         cardView.context.startActivity(intent)
                     }
 
