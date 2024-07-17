@@ -44,6 +44,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
@@ -81,7 +82,7 @@ import kotlin.math.roundToInt
  * A wrapper fragment for leanback details screens.
  * It shows a detailed view of video and its metadata plus related videos.
  */
-class VideoDetailsFragment : DetailsSupportFragment() {
+class SceneDetailsFragment : DetailsSupportFragment() {
     private var mSelectedMovie: FullSceneData? = null
 
     private lateinit var queryEngine: QueryEngine
@@ -203,7 +204,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val sceneId = requireActivity().intent.getStringExtra(VideoDetailsActivity.MOVIE)
+        val sceneId = requireActivity().intent.getStringExtra(SceneDetailsActivity.MOVIE)
         if (sceneId == null) {
             Log.w(TAG, "No scene found in intent")
             val intent = Intent(requireActivity(), MainActivity::class.java)
@@ -420,7 +421,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
         val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
         sharedElementHelper.setSharedElementEnterTransition(
             activity,
-            VideoDetailsActivity.SHARED_ELEMENT_NAME,
+            SceneDetailsActivity.SHARED_ELEMENT_NAME,
         )
         detailsPresenter.setListener(sharedElementHelper)
         detailsPresenter.isParticipatingEntranceTransition = true
@@ -438,7 +439,7 @@ class VideoDetailsFragment : DetailsSupportFragment() {
                     ) {
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
                         intent.putExtra(
-                            VideoDetailsActivity.MOVIE,
+                            SceneDetailsActivity.MOVIE,
                             Scene.fromFullSceneData(mSelectedMovie!!),
                         )
                         if (action.id == ACTION_RESUME_SCENE ||

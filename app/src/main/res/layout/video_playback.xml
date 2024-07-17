@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <com.github.damontecres.stashapp.views.StashPlayerView
+    <com.github.damontecres.stashapp.playback.StashPlayerView
         android:id="@+id/video_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

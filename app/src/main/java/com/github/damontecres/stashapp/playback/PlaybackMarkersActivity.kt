@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.playback
 
 import android.annotation.SuppressLint
 import android.os.Bundle

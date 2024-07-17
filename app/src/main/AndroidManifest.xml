@@ -50,15 +50,15 @@
             android:exported="false"
             android:launchMode="singleTop" />
         <activity
-            android:name=".VideoDetailsActivity"
+            android:name=".SceneDetailsActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".PlaybackActivity"
+            android:name=".playback.PlaybackActivity"
             android:exported="false"
             android:theme="@style/PlaybackTheme" />
         <activity
-            android:name=".PlaybackMarkersActivity"
+            android:name=".playback.PlaybackMarkersActivity"
             android:exported="false"
             android:theme="@style/PlaybackTheme" />
         <activity

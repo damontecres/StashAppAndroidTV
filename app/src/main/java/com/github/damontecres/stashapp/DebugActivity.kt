@@ -10,7 +10,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.util.CodecSupport
+import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.util.ServerPreferences
 
 class DebugActivity : FragmentActivity() {

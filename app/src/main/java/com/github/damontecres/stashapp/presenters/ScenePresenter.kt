@@ -3,12 +3,12 @@ package com.github.damontecres.stashapp.presenters
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
-import com.github.damontecres.stashapp.PlaybackActivity
-import com.github.damontecres.stashapp.VideoDetailsActivity
-import com.github.damontecres.stashapp.VideoDetailsFragment
+import com.github.damontecres.stashapp.SceneDetailsActivity
+import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -114,12 +114,12 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                         // Resume
                         val intent = Intent(context, PlaybackActivity::class.java)
                         intent.putExtra(
-                            VideoDetailsActivity.MOVIE,
+                            SceneDetailsActivity.MOVIE,
                             Scene.fromSlimSceneData(item),
                         )
                         if (item.resume_time != null) {
                             intent.putExtra(
-                                VideoDetailsFragment.POSITION_ARG,
+                                SceneDetailsFragment.POSITION_ARG,
                                 item.resume_position!!,
                             )
                         }
@@ -130,7 +130,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                         // Restart/Play
                         val intent = Intent(context, PlaybackActivity::class.java)
                         intent.putExtra(
-                            VideoDetailsActivity.MOVIE,
+                            SceneDetailsActivity.MOVIE,
                             Scene.fromSlimSceneData(item),
                         )
                         context.startActivity(intent)
