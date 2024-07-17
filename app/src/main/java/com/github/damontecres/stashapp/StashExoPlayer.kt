@@ -27,6 +27,15 @@ class StashExoPlayer private constructor() {
             val skipBack =
                 PreferenceManager.getDefaultSharedPreferences(context)
                     .getInt("skip_back_time", 10)
+            return getInstance(context, skipForward * 1000L, skipBack * 1000L)
+        }
+
+        @OptIn(UnstableApi::class)
+        fun getInstance(
+            context: Context,
+            skipForward: Long,
+            skipBack: Long,
+        ): ExoPlayer {
             if (instance == null) {
                 synchronized(this) { // synchronized to avoid concurrency problem
                     if (instance == null) {
@@ -53,8 +62,8 @@ class StashExoPlayer private constructor() {
                                         dataSourceFactory,
                                     ),
                                 )
-                                .setSeekBackIncrementMs(skipBack * 1000L)
-                                .setSeekForwardIncrementMs(skipForward * 1000L)
+                                .setSeekBackIncrementMs(skipBack)
+                                .setSeekForwardIncrementMs(skipForward)
                                 .build()
                     }
                 }

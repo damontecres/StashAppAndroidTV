@@ -218,8 +218,9 @@ class PlaybackMarkersFragment() :
 
     @OptIn(UnstableApi::class)
     private fun initializePlayer() {
+        val duration = requireActivity().intent.getLongExtra(INTENT_DURATION_ID, 15_000L)
         player =
-            StashExoPlayer.getInstance(requireContext())
+            StashExoPlayer.getInstance(requireContext(), duration / 5, duration / 5)
                 .also { exoPlayer ->
                     videoView.player = exoPlayer
                     StashExoPlayer.addListener(AmbientPlaybackListener())
@@ -463,6 +464,7 @@ class PlaybackMarkersFragment() :
                 MarkerDataSupplier(savedFilter.find_filter?.toFindFilterType(), objectFilter)
             pagingSource = StashPagingSource(requireContext(), 25, dataSupplier)
             addPageToPlaylist(1, duration)
+            player!!.seekBackIncrement
             player!!.addListener(PlaylistListener(duration))
             player!!.prepare()
             player!!.volume = 1f
@@ -505,13 +507,6 @@ class PlaybackMarkersFragment() :
     private inner class PlaylistListener(val duration: Long) :
         Listener {
         private var hasMorePages = true
-
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            player!!.currentMediaItem?.let {
-                val marker = it.localConfiguration!!.tag!! as MarkerData
-                updateUi(marker)
-            }
-        }
 
         override fun onMediaItemTransition(
             mediaItem: MediaItem?,
