@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.playback
 
 import android.app.Activity
 import android.content.Intent
@@ -18,14 +18,17 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.SceneDetailsFragment
+import com.github.damontecres.stashapp.SearchForActivity
+import com.github.damontecres.stashapp.SearchForFragment
+import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.buildMediaItem
-import com.github.damontecres.stashapp.util.getStreamDecision
 import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
@@ -56,16 +59,16 @@ class PlaybackSceneFragment : PlaybackFragment() {
             if (playbackPosition >= 0) {
                 playbackPosition
             } else {
-                requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
+                requireActivity().intent.getLongExtra(SceneDetailsFragment.POSITION_ARG, -1)
             }
         val forceTranscode =
             requireActivity().intent.getBooleanExtra(
-                VideoDetailsFragment.FORCE_TRANSCODE,
+                SceneDetailsFragment.FORCE_TRANSCODE,
                 false,
             )
         val forceDirectPlay =
             requireActivity().intent.getBooleanExtra(
-                VideoDetailsFragment.FORCE_DIRECT_PLAY,
+                SceneDetailsFragment.FORCE_DIRECT_PLAY,
                 false,
             )
         val streamDecision =
@@ -116,7 +119,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                                             -1L,
                                         )
                                         result.putExtra(
-                                            VideoDetailsFragment.POSITION_RESULT_ARG,
+                                            SceneDetailsFragment.POSITION_RESULT_ARG,
                                             0L,
                                         )
                                         requireActivity().setResult(Activity.RESULT_OK, result)
@@ -174,8 +177,8 @@ class PlaybackSceneFragment : PlaybackFragment() {
 
         currentScene = scene
 
-        val position = requireActivity().intent.getLongExtra(VideoDetailsFragment.POSITION_ARG, -1)
-        Log.d(TAG, "scene=${scene.id}, ${VideoDetailsFragment.POSITION_ARG}=$position")
+        val position = requireActivity().intent.getLongExtra(SceneDetailsFragment.POSITION_ARG, -1)
+        Log.d(TAG, "scene=${scene.id}, ${SceneDetailsFragment.POSITION_ARG}=$position")
 
         moreOptionsButton.setOnClickListener {
             val debugToggleText =
@@ -375,12 +378,6 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 }
             }
         }
-    }
-
-    override fun showAndFocusSeekBar() {
-        videoView.showController()
-        previewTimeBar.showPreview()
-        previewTimeBar.requestFocus()
     }
 
     companion object {

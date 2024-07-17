@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.playback
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -12,6 +12,8 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.SceneDetailsActivity
+import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -27,7 +29,7 @@ class PlaybackActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val scene = intent.getParcelableExtra(VideoDetailsActivity.MOVIE) as Scene?
+        val scene = intent.getParcelableExtra(SceneDetailsActivity.MOVIE) as Scene?
         if (scene != null) {
             this.scene = scene
             if (savedInstanceState == null) {
@@ -39,7 +41,7 @@ class PlaybackActivity : FragmentActivity() {
             }
         } else {
             lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val sceneId = intent.getStringExtra(VideoDetailsActivity.MOVIE_ID)!!
+                val sceneId = intent.getStringExtra(SceneDetailsActivity.MOVIE_ID)!!
                 val fullScene = QueryEngine(this@PlaybackActivity).getScene(sceneId)!!
                 val scene = Scene.fromFullSceneData(fullScene)
                 this@PlaybackActivity.scene = scene
@@ -103,23 +105,9 @@ class PlaybackActivity : FragmentActivity() {
         )
 
         val intent = Intent()
-        intent.putExtra(VideoDetailsFragment.POSITION_RESULT_ARG, positionToSave)
+        intent.putExtra(SceneDetailsFragment.POSITION_RESULT_ARG, positionToSave)
         setResult(Activity.RESULT_OK, intent)
         finish()
-    }
-
-    interface StashVideoPlayer {
-        val isControllerVisible: Boolean
-        val currentVideoPosition: Long
-
-        /**
-         * Hide the controls if needed
-         *
-         * @return true if the controls needed to be hidden
-         */
-        fun hideControlsIfVisible(): Boolean
-
-        fun showAndFocusSeekBar()
     }
 
     companion object {

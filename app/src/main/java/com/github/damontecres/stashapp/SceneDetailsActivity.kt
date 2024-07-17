@@ -4,15 +4,15 @@ import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 
 /**
- * Details activity class that loads [VideoDetailsFragment] class.
+ * Details activity class that loads [SceneDetailsFragment] class.
  */
-class VideoDetailsActivity : FragmentActivity() {
+class SceneDetailsActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_details)
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.details_fragment, VideoDetailsFragment())
+                .replace(R.id.details_fragment, SceneDetailsFragment())
                 .commitNow()
         }
     }

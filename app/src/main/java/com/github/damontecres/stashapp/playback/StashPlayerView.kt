@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.views
+package com.github.damontecres.stashapp.playback
 
 import android.content.Context
 import android.util.AttributeSet
@@ -11,7 +11,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.PlaybackActivity
 
 class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     PlayerView(context, attrs, defStyleAttr) {
@@ -25,7 +24,7 @@ class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
     @OptIn(UnstableApi::class)
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val keyCode = event.keyCode
-        val fragment = findFragment<Fragment>() as PlaybackActivity.StashVideoPlayer
+        val fragment = findFragment<Fragment>() as PlaybackFragment
         if (player != null &&
             (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
         ) {

@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.util
+package com.github.damontecres.stashapp.playback
 
 import android.content.Context
 import android.media.MediaCodecList

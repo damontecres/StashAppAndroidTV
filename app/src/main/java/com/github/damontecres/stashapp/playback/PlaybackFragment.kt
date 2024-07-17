@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.playback
 
 import android.os.Build
 import android.os.Bundle
@@ -23,15 +23,13 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
-import com.github.damontecres.stashapp.util.StreamDecision
-import com.github.damontecres.stashapp.util.TranscodeDecision
-import com.github.damontecres.stashapp.views.StashPlayerView
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
 import kotlinx.coroutines.Dispatchers
@@ -46,8 +44,7 @@ import java.time.format.DateTimeParseException
  * Parent [Fragment] for playing videos
  */
 @UnstableApi
-abstract class PlaybackFragment : PlaybackActivity.StashVideoPlayer,
-    Fragment(R.layout.video_playback) {
+abstract class PlaybackFragment : Fragment(R.layout.video_playback) {
     /**
      * Whether to show video previews when scrubbing
      */
@@ -78,7 +75,7 @@ abstract class PlaybackFragment : PlaybackActivity.StashVideoPlayer,
     protected lateinit var moreOptionsButton: ImageButton
 
     protected var playbackPosition = -1L
-    override val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
+    val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
     protected var currentScene: Scene? = null
         set(newScene) {
             field = newScene
@@ -87,9 +84,9 @@ abstract class PlaybackFragment : PlaybackActivity.StashVideoPlayer,
             }
         }
 
-    override val isControllerVisible get() = videoView.isControllerFullyVisible || previewTimeBar.isShown
+    val isControllerVisible get() = videoView.isControllerFullyVisible || previewTimeBar.isShown
 
-    override fun hideControlsIfVisible(): Boolean {
+    fun hideControlsIfVisible(): Boolean {
         if (isControllerVisible) {
             videoView.hideController()
             previewTimeBar.hidePreview()
@@ -400,7 +397,7 @@ abstract class PlaybackFragment : PlaybackActivity.StashVideoPlayer,
         }
     }
 
-    override fun showAndFocusSeekBar() {
+    fun showAndFocusSeekBar() {
         videoView.showController()
         previewTimeBar.showPreview()
         previewTimeBar.requestFocus()

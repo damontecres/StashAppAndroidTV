@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.playback
 
 import android.os.Bundle
 import android.util.Log
@@ -14,6 +14,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.Player.Listener
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.CountMarkersQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -29,9 +30,6 @@ import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StreamDecision
-import com.github.damontecres.stashapp.util.buildMediaItem
-import com.github.damontecres.stashapp.util.getStreamDecision
 import com.github.damontecres.stashapp.util.toFindFilterType
 import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlinx.coroutines.launch
@@ -206,12 +204,6 @@ class PlaybackMarkersFragment : PlaybackFragment() {
                 }
             }
         }
-    }
-
-    override fun showAndFocusSeekBar() {
-        videoView.showController()
-        previewTimeBar.showPreview()
-        previewTimeBar.requestFocus()
     }
 
     companion object {

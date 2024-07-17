@@ -1,11 +1,10 @@
-package com.github.damontecres.stashapp.util
+package com.github.damontecres.stashapp.playback
 
 import android.content.Context
 import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.PlaybackSceneFragment
 import com.github.damontecres.stashapp.data.Scene
 
 enum class TranscodeDecision {

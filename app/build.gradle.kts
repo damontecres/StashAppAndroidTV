@@ -9,7 +9,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
-    id("com.apollographql.apollo3") version "3.8.2"
+    id("com.apollographql.apollo3") version "3.8.4"
     id("kotlin-kapt")
 }
 
@@ -132,7 +132,7 @@ val mediaVersion = "1.3.1"
 val glideVersion = "4.16.0"
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.leanback:leanback:1.1.0-rc02")
     implementation("androidx.leanback:leanback-preference:1.1.0-rc01")
     implementation("androidx.leanback:leanback-paging:1.1.0-alpha11")
@@ -143,11 +143,11 @@ dependencies {
     implementation("com.caverock:androidsvg-aar:1.4")
 
     implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    implementation("com.apollographql.apollo3:apollo-runtime:3.8.2")
+    implementation("com.apollographql.apollo3:apollo-runtime:3.8.4")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.media3:media3-exoplayer:$mediaVersion")
     implementation("androidx.media3:media3-ui:$mediaVersion")
@@ -157,12 +157,12 @@ dependencies {
     implementation("com.github.rubensousa:previewseekbar:3.1.1")
     implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.lifecycle:lifecycle-process:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-process:2.8.3")
     implementation("com.otaliastudios:zoomlayout:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
     implementation("io.noties.markwon:core:4.6.2")
 
-    testImplementation("androidx.test:core-ktx:1.5.0")
+    testImplementation("androidx.test:core-ktx:1.6.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.9.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")

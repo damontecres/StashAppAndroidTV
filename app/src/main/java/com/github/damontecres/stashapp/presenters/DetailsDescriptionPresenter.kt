@@ -5,7 +5,7 @@ import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
-import com.github.damontecres.stashapp.util.CodecSupport
+import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.resolutionName

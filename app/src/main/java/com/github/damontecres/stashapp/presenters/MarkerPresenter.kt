@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.github.damontecres.stashapp.MarkerActivity
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.VideoDetailsActivity
+import com.github.damontecres.stashapp.SceneDetailsActivity
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
@@ -59,8 +59,8 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
                     }
 
                     1L -> {
-                        val intent = Intent(cardView.context, VideoDetailsActivity::class.java)
-                        intent.putExtra(VideoDetailsActivity.MOVIE, item.scene.videoSceneData.id)
+                        val intent = Intent(cardView.context, SceneDetailsActivity::class.java)
+                        intent.putExtra(SceneDetailsActivity.MOVIE, item.scene.videoSceneData.id)
                         cardView.context.startActivity(intent)
                     }
 
