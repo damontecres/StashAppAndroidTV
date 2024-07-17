@@ -81,7 +81,6 @@ class FilterListActivity : FragmentActivity() {
     private var filter: StashFilter? = null
         set(newFilter) {
             field = newFilter
-            Log.v(TAG, "newFilter=$newFilter")
             if (dataType == DataType.MARKER) {
                 playMarkersButton.setOnClickListener {
                     showSimpleListPopupWindow(
@@ -145,7 +144,10 @@ class FilterListActivity : FragmentActivity() {
 
         sortButton = findViewById(R.id.sort_button)
         playMarkersButton = findViewById(R.id.play_makers_button)
-        if (dataType == DataType.MARKER) {
+
+        val experimentalEnabled =
+            manager.getBoolean(getString(R.string.pref_key_experimental_features), false)
+        if (experimentalEnabled && dataType == DataType.MARKER) {
             playMarkersButton.visibility = View.VISIBLE
         }
 
