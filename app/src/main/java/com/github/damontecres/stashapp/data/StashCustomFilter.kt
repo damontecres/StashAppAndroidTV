@@ -12,8 +12,8 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class StashCustomFilter(
     val mode: FilterMode,
-    val direction: String?,
-    val sortBy: String?,
+    override val direction: String?,
+    override val sortBy: String?,
     val description: String,
     val query: String? = null,
 ) : Parcelable, StashFilter {

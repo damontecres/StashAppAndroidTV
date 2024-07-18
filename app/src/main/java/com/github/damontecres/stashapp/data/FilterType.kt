@@ -31,6 +31,18 @@ interface StashFilter : Parcelable {
     val filterType: FilterType
 
     val dataType: DataType
+
+    /**
+     * Provide an optional sort by if known
+     */
+    val sortBy: String?
+        get() = dataType.defaultSort.sort
+
+    /**
+     * Provide an optional sort direction if known
+     */
+    val direction: String?
+        get() = dataType.defaultSort.direction.toString()
 }
 
 /**

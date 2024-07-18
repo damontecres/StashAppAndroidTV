@@ -23,6 +23,7 @@ import androidx.leanback.widget.ObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
@@ -97,6 +98,7 @@ class FilterListActivity : FragmentActivity() {
                                 3 -> 30_000L
                                 else -> 30_000L
                             }
+                        Log.v(TAG, "playMarkersButton clicked: newFilter=$newFilter")
                         val intent = Intent(this, PlaybackMarkersActivity::class.java)
                         intent.putExtra(PlaybackMarkersFragment.INTENT_FILTER_ID, newFilter)
                         intent.putExtra(PlaybackMarkersFragment.INTENT_DURATION_ID, duration)
@@ -194,6 +196,7 @@ class FilterListActivity : FragmentActivity() {
                                     savedFilterId = filterData.id,
                                     mode = filterData.mode,
                                     sortBy = filterData.find_filter?.sort,
+                                    direction = filterData.find_filter?.direction?.toString(),
                                 )
                             }
 
@@ -252,13 +255,13 @@ class FilterListActivity : FragmentActivity() {
                         }
                     this@FilterListActivity.filterData = savedFilter
                     listPopUp.dismiss()
-                    setupFragment(savedFilter, false)
                     filter =
-                        StashSavedFilter(
-                            savedFilter.id,
-                            savedFilter.mode,
+                        copyFilter(
+                            filter,
                             savedFilter.find_filter?.sort,
+                            savedFilter.find_filter?.direction,
                         )
+                    setupFragment(savedFilter, false)
                 }
 
                 filterButton.setOnClickListener {
@@ -266,6 +269,29 @@ class FilterListActivity : FragmentActivity() {
                     listPopUp.listView?.requestFocus()
                 }
             }
+        }
+    }
+
+    private fun copyFilter(
+        filter: StashFilter?,
+        sortBy: String?,
+        sortDirection: SortDirectionEnum?,
+    ): StashFilter? {
+        return when (filter) {
+            is AppFilter -> filter
+            is StashCustomFilter ->
+                filter.copy(
+                    sortBy = sortBy,
+                    direction = sortDirection?.toString(),
+                )
+
+            is StashSavedFilter ->
+                filter.copy(
+                    sortBy = sortBy,
+                    direction = sortDirection?.toString(),
+                )
+
+            else -> filter
         }
     }
 
@@ -353,13 +379,9 @@ class FilterListActivity : FragmentActivity() {
                         ),
                 )
             this@FilterListActivity.filterData = newFilter
-            setupFragment(newFilter, false, false)
             filter =
-                StashSavedFilter(
-                    newFilter.id,
-                    newFilter.mode,
-                    newFilter.find_filter?.sort,
-                )
+                copyFilter(filter, newFilter.find_filter?.sort, newFilter.find_filter?.direction)
+            setupFragment(newFilter, false, false)
             filterData = newFilter
         }
 
@@ -532,6 +554,17 @@ class FilterListActivity : FragmentActivity() {
                 return
             }
         fragment.requestFocus = true
+        if (dataType == DataType.IMAGE) {
+            fragment.onItemViewClickedListener =
+                ImageGridClickedListener(this, fragment as StashGridFragment<*, ImageData, *>) {
+                    Log.v(TAG, "Image click with filter=${this@FilterListActivity.filter}")
+                    it.putExtra(ImageActivity.INTENT_FILTER, this@FilterListActivity.filter)
+                    it.putExtra(
+                        ImageActivity.INTENT_FILTER_TYPE,
+                        this@FilterListActivity.filter?.filterType?.name,
+                    )
+                }
+        }
         filterDataByName[name] = filter
         setUpSortButton()
 
@@ -664,12 +697,6 @@ class FilterListActivity : FragmentActivity() {
                         calculatedCardSize,
                         name,
                     )
-                fragment.onItemViewClickedListener =
-                    ImageGridClickedListener(this, fragment) {
-                        it.putExtra(ImageActivity.INTENT_FILTER, filter)
-                        it.putExtra(ImageActivity.INTENT_FILTER_TYPE, filter?.filterType?.name)
-                    }
-
                 fragment
             }
 

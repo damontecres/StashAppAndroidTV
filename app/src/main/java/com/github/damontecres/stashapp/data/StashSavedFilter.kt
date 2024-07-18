@@ -8,7 +8,8 @@ import kotlinx.parcelize.Parcelize
 data class StashSavedFilter(
     val savedFilterId: String,
     val mode: FilterMode,
-    val sortBy: String? = null,
+    override val sortBy: String? = null,
+    override val direction: String? = null,
 ) : Parcelable, StashFilter {
     override val filterType: FilterType
         get() = FilterType.SAVED_FILTER

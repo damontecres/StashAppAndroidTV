@@ -14,10 +14,12 @@ import androidx.media3.common.Player
 import androidx.media3.common.Player.Listener
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.CountMarkersQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.AppFilter
 import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.Scene
@@ -117,12 +119,26 @@ class PlaybackMarkersFragment : PlaybackFragment() {
                 }
             }
         if (savedFilter != null) {
+            val newSort = filter.sortBy ?: savedFilter.find_filter?.sort
+            val newDirection =
+                if (filter.direction != null) {
+                    SortDirectionEnum.valueOf(filter.direction!!)
+                } else {
+                    savedFilter.find_filter?.direction
+                }
+
             val duration = requireActivity().intent.getLongExtra(INTENT_DURATION_ID, 15_000L)
             val filterParser = FilterParser(ServerPreferences(requireContext()).serverVersion)
+            val findFilter =
+                savedFilter.find_filter?.toFindFilterType()
+                    ?.copy(
+                        sort = Optional.presentIfNotNull(newSort),
+                        direction = Optional.presentIfNotNull(newDirection),
+                    )
             val objectFilter = filterParser.convertMarkerObjectFilter(savedFilter.object_filter)
             val dataSupplier =
-                MarkerDataSupplier(savedFilter.find_filter?.toFindFilterType(), objectFilter)
-            pagingSource = StashPagingSource(requireContext(), 25, dataSupplier)
+                MarkerDataSupplier(findFilter, objectFilter)
+            pagingSource = StashPagingSource(requireContext(), 25, dataSupplier, useRandom = false)
             addPageToPlaylist(1, duration)
             player!!.seekBackIncrement
             player!!.addListener(PlaylistListener(duration))

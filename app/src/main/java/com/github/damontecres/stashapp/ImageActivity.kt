@@ -33,6 +33,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.StashCustomFilter
@@ -88,7 +89,13 @@ class ImageActivity : FragmentActivity() {
             lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val dataSupplier = createDataSupplier()
                 if (dataSupplier != null) {
-                    val pagingSource = StashPagingSource(this@ImageActivity, pageSize, dataSupplier)
+                    val pagingSource =
+                        StashPagingSource(
+                            this@ImageActivity,
+                            pageSize,
+                            dataSupplier,
+                            useRandom = false,
+                        )
                     pager = StashSparseFilterFetcher(pagingSource, pageSize)
                     totalCount = pagingSource.getCount()
                     canScrollImages = true
@@ -122,12 +129,27 @@ class ImageActivity : FragmentActivity() {
                 val filter = intent.getParcelableExtra<StashSavedFilter>(INTENT_FILTER)!!
                 val savedFilter = queryEngine.getSavedFilter(filter.savedFilterId)
                 if (savedFilter != null) {
+                    val newSort = filter.sortBy ?: savedFilter.find_filter?.sort
+                    val newDirection =
+                        if (filter.direction != null) {
+                            SortDirectionEnum.valueOf(filter.direction)
+                        } else {
+                            savedFilter.find_filter?.direction
+                        }
                     val findFilter =
                         queryEngine.updateFilter(
                             savedFilter.find_filter?.toFindFilterType(),
-                            useRandom = true,
-                        )?.copy(per_page = Optional.present(pageSize))
+                            useRandom = false,
+                        )?.copy(
+                            per_page = Optional.present(pageSize),
+                            sort = Optional.presentIfNotNull(newSort),
+                            direction = Optional.presentIfNotNull(newDirection),
+                        )
                             ?: DataType.IMAGE.asDefaultFindFilterType
+                    Log.v(
+                        TAG,
+                        "newSort=$newSort, newDirection=$newDirection, findFilter=$findFilter",
+                    )
                     val filterParser =
                         FilterParser(ServerPreferences(this@ImageActivity).serverVersion)
                     val imageFilter =

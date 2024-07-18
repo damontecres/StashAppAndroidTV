@@ -259,6 +259,7 @@ class FrontPageParser(private val queryEngine: QueryEngine, private val filterPa
                                 filterId.toString(),
                                 result!!.mode,
                                 filter?.sort?.getOrNull(),
+                                filter?.direction?.getOrNull()?.toString(),
                             )
                         FrontPageRow(result.name, savedFilter, data)
                     } else {
