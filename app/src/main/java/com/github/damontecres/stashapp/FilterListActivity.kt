@@ -255,12 +255,7 @@ class FilterListActivity : FragmentActivity() {
                         }
                     this@FilterListActivity.filterData = savedFilter
                     listPopUp.dismiss()
-                    filter =
-                        copyFilter(
-                            filter,
-                            savedFilter.find_filter?.sort,
-                            savedFilter.find_filter?.direction,
-                        )
+                    filter = StashSavedFilter(savedFilter)
                     setupFragment(savedFilter, false)
                 }
 
