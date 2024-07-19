@@ -50,6 +50,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.height
+import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.toFindFilterType
@@ -62,7 +63,7 @@ import kotlin.math.abs
 import kotlin.properties.Delegates
 
 class ImageActivity : FragmentActivity() {
-    private lateinit var imageFragment: ImageFragment
+    private lateinit var imageFragment: StashImageFragment
     private lateinit var pager: StashSparseFilterFetcher<FindImagesQuery.Data, ImageData>
 
     private var currentPosition = -1
@@ -74,19 +75,28 @@ class ImageActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_image)
         if (savedInstanceState == null) {
-            val imageUrl = intent.getStringExtra(INTENT_IMAGE_URL)!!
-            val imageId = intent.getStringExtra(INTENT_IMAGE_ID)!!
-            val imageSize = intent.getIntExtra(INTENT_IMAGE_SIZE, -1)
-            imageFragment = ImageFragment(imageId, imageUrl, imageSize)
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.image_fragment, imageFragment)
-                .commitNow()
-
-            val pageSize =
-                PreferenceManager.getDefaultSharedPreferences(this).getInt("maxSearchResults", 25)
-
-            currentPosition = intent.getIntExtra(INTENT_POSITION, -1)
             lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val imageId = intent.getStringExtra(INTENT_IMAGE_ID)!!
+
+                val queryEngine = QueryEngine(this@ImageActivity)
+                val image = queryEngine.getImage(imageId)!!
+
+                imageFragment =
+                    if (image.isImageClip) {
+                        ImageClipFragment(image)
+                    } else {
+                        ImageFragment(image)
+                    }
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.image_fragment, imageFragment as Fragment)
+                    .commitNow()
+
+                val pageSize =
+                    PreferenceManager.getDefaultSharedPreferences(this@ImageActivity)
+                        .getInt("maxSearchResults", 25)
+
+                currentPosition = intent.getIntExtra(INTENT_POSITION, -1)
+
                 val dataSupplier = createDataSupplier()
                 if (dataSupplier != null) {
                     val pagingSource =
@@ -215,10 +225,13 @@ class ImageActivity : FragmentActivity() {
                     if (image != null && image.paths.image != null) {
                         currentPosition = newPosition
                         imageFragment =
-                            ImageFragment(image.id, image.paths.image, image.maxFileSize, image)
-                        imageFragment.image = image
+                            if (image.isImageClip) {
+                                ImageClipFragment(image)
+                            } else {
+                                ImageFragment(image)
+                            }
                         supportFragmentManager.beginTransaction()
-                            .replace(R.id.image_fragment, imageFragment)
+                            .replace(R.id.image_fragment, imageFragment as Fragment)
                             .commitNow()
                     } else if (image == null) {
                         Toast.makeText(this@ImageActivity, "No more images", Toast.LENGTH_SHORT)
@@ -294,13 +307,8 @@ class ImageActivity : FragmentActivity() {
         }
     }
 
-    class ImageFragment(
-        val imageId: String,
-        val imageUrl: String,
-        val imageSize: Int = -1,
-        var image: ImageData? = null,
-    ) :
-        Fragment(R.layout.image_layout) {
+    class ImageFragment(var image: ImageData) :
+        Fragment(R.layout.image_layout), StashImageFragment {
         lateinit var mainImage: ZoomImageView
         lateinit var bottomOverlay: View
         lateinit var titleText: TextView
@@ -310,7 +318,7 @@ class ImageActivity : FragmentActivity() {
 
         private var animationDuration by Delegates.notNull<Long>()
 
-        var viewCreated = false
+        override var viewCreated = false
         private val duration = 200L
         private var duringAnimation = false
 
@@ -328,7 +336,7 @@ class ImageActivity : FragmentActivity() {
             oCounterTextView = view.findViewById(R.id.o_counter_text)
             ratingBar = view.findViewById(R.id.rating_bar)
 
-            Log.v(TAG, "imageId=$imageId")
+            Log.v(TAG, "imageId=${image.id}")
 
             ratingBar.nextFocusDownId = R.id.o_counter_button
             val focusListener = ImageButtonFocusListener(ratingBar)
@@ -388,7 +396,7 @@ class ImageActivity : FragmentActivity() {
             oCounterButton.onFocusChangeListener = focusListener
             oCounterButton.setOnClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val newOCounter = mutationEngine.incrementImageOCounter(imageId)
+                    val newOCounter = mutationEngine.incrementImageOCounter(image.id)
                     oCounterTextView.text = newOCounter.count.toString()
                 }
             }
@@ -404,9 +412,9 @@ class ImageActivity : FragmentActivity() {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                         val newOCounter =
                             when (position) {
-                                0 -> mutationEngine.incrementImageOCounter(imageId)
-                                1 -> mutationEngine.decrementImageOCounter(imageId)
-                                2 -> mutationEngine.resetImageOCounter(imageId)
+                                0 -> mutationEngine.incrementImageOCounter(image.id)
+                                1 -> mutationEngine.decrementImageOCounter(image.id)
+                                2 -> mutationEngine.resetImageOCounter(image.id)
                                 else -> null
                             }
                         oCounterTextView.text = newOCounter?.count?.toString()
@@ -434,15 +442,7 @@ class ImageActivity : FragmentActivity() {
 
         override fun onStart() {
             super.onStart()
-            if (image != null) {
-                configureUI()
-            } else {
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val queryEngine = QueryEngine(requireContext())
-                    image = queryEngine.getImage(imageId)!!
-                    configureUI()
-                }
-            }
+            configureUI()
         }
 
         private fun loadImage() {
@@ -483,42 +483,44 @@ class ImageActivity : FragmentActivity() {
             placeholder.setColorSchemeColors(requireContext().getColor(R.color.selected_background))
             placeholder.start()
 
-            StashGlide.with(requireContext(), imageUrl, imageSize)
-                .placeholder(placeholder)
-                .transition(withCrossFade())
-                .listener(
-                    object : RequestListener<Drawable?> {
-                        override fun onLoadFailed(
-                            e: GlideException?,
-                            model: Any?,
-                            target: Target<Drawable?>,
-                            isFirstResource: Boolean,
-                        ): Boolean {
-                            Log.v(TAG, "onLoadFailed for $imageUrl")
-                            Toast.makeText(
-                                requireContext(),
-                                "Image loading failed!",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                            return true
-                        }
+            val imageUrl = image.paths.image
+            if (imageUrl != null) {
+                StashGlide.with(requireContext(), imageUrl, image.maxFileSize)
+                    .placeholder(placeholder)
+                    .transition(withCrossFade())
+                    .listener(
+                        object : RequestListener<Drawable?> {
+                            override fun onLoadFailed(
+                                e: GlideException?,
+                                model: Any?,
+                                target: Target<Drawable?>,
+                                isFirstResource: Boolean,
+                            ): Boolean {
+                                Log.v(TAG, "onLoadFailed for $imageUrl")
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Image loading failed!",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                                return true
+                            }
 
-                        override fun onResourceReady(
-                            resource: Drawable,
-                            model: Any,
-                            target: Target<Drawable?>?,
-                            dataSource: DataSource,
-                            isFirstResource: Boolean,
-                        ): Boolean {
-                            return false
-                        }
-                    },
-                )
-                .into(mainImage)
+                            override fun onResourceReady(
+                                resource: Drawable,
+                                model: Any,
+                                target: Target<Drawable?>?,
+                                dataSource: DataSource,
+                                isFirstResource: Boolean,
+                            ): Boolean {
+                                return false
+                            }
+                        },
+                    )
+                    .into(mainImage)
+            }
         }
 
         fun configureUI() {
-            val image = image!!
             loadImage()
             titleText.text = image.title
 
@@ -556,7 +558,7 @@ class ImageActivity : FragmentActivity() {
             )
         }
 
-        fun isOverlayVisible(): Boolean {
+        override fun isOverlayVisible(): Boolean {
             return titleText.isVisible
         }
 
@@ -572,7 +574,7 @@ class ImageActivity : FragmentActivity() {
             }
         }
 
-        fun hideOverlay() {
+        override fun hideOverlay() {
             listOf(titleText, bottomOverlay).forEach {
                 it.alpha = 1.0f
                 it.visibility = View.VISIBLE
@@ -693,15 +695,15 @@ class ImageActivity : FragmentActivity() {
             }
         }
 
-        fun isImageZoomedIn(): Boolean {
+        override fun isImageZoomedIn(): Boolean {
             return (mainImage.zoom * 100).toInt() > 100
         }
 
-        fun resetImageZoom() {
+        override fun resetImageZoom() {
             mainImage.zoomTo(1.0f, true)
         }
 
-        fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        override fun dispatchKeyEvent(event: KeyEvent): Boolean {
             if (isOverlayVisible()) {
                 return false
             }
@@ -730,5 +732,19 @@ class ImageActivity : FragmentActivity() {
             }
             return true
         }
+    }
+
+    interface StashImageFragment {
+        val viewCreated: Boolean
+
+        fun dispatchKeyEvent(event: KeyEvent): Boolean
+
+        fun isOverlayVisible(): Boolean
+
+        fun hideOverlay()
+
+        fun isImageZoomedIn(): Boolean
+
+        fun resetImageZoom()
     }
 }

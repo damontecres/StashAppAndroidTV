@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.presenters
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.concatIfNotBlank
+import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
 
@@ -28,7 +29,7 @@ class ImagePresenter(callback: LongClickCallBack<ImageData>? = null) : StashPres
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         if (item.paths.thumbnail.isNotNullOrBlank()) {
             loadImage(cardView, item.paths.thumbnail)
-        } else if (item.paths.image.isNotNullOrBlank()) {
+        } else if (item.paths.image.isNotNullOrBlank() && !item.isImageClip) {
             loadImage(cardView, item.paths.image)
         }
         if (item.paths.preview.isNotNullOrBlank()) {
