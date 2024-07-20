@@ -689,3 +689,6 @@ fun VideoFileData.resolutionName(): CharSequence {
 fun getRandomSort(): String {
     return "random_" + Random.nextInt(1e8.toInt()).toString()
 }
+
+val ImageData.isImageClip: Boolean
+    get() = visual_files.firstOrNull()?.onVideoFile != null

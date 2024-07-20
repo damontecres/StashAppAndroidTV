@@ -38,24 +38,35 @@ class StashExoPlayer private constructor() {
             if (instance == null) {
                 synchronized(this) { // synchronized to avoid concurrency problem
                     if (instance == null) {
-                        val dataSourceFactory =
-                            OkHttpDataSource.Factory(StashClient.getStreamHttpClient(context))
-                                .setCacheControl(CacheControl.FORCE_NETWORK)
-
-                        instance =
-                            ExoPlayer.Builder(context)
-                                .setMediaSourceFactory(
-                                    DefaultMediaSourceFactory(context).setDataSourceFactory(
-                                        dataSourceFactory,
-                                    ),
-                                )
-                                .setSeekBackIncrementMs(skipBack)
-                                .setSeekForwardIncrementMs(skipForward)
-                                .build()
+                        instance = createInstance(context, skipForward, skipBack)
                     }
                 }
             }
             return instance!!
+        }
+
+        /**
+         * Create a new [ExoPlayer] instance. [getInstance] should be preferred where possible.
+         */
+        @UnstableApi
+        fun createInstance(
+            context: Context,
+            skipForward: Long,
+            skipBack: Long,
+        ): ExoPlayer {
+            val dataSourceFactory =
+                OkHttpDataSource.Factory(StashClient.getStreamHttpClient(context))
+                    .setCacheControl(CacheControl.FORCE_NETWORK)
+
+            return ExoPlayer.Builder(context)
+                .setMediaSourceFactory(
+                    DefaultMediaSourceFactory(context).setDataSourceFactory(
+                        dataSourceFactory,
+                    ),
+                )
+                .setSeekBackIncrementMs(skipBack)
+                .setSeekForwardIncrementMs(skipForward)
+                .build()
         }
 
         fun releasePlayer() {

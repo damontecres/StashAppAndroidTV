@@ -11,6 +11,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -44,7 +45,10 @@ import java.time.format.DateTimeParseException
  * Parent [Fragment] for playing videos
  */
 @UnstableApi
-abstract class PlaybackFragment : Fragment(R.layout.video_playback) {
+abstract class PlaybackFragment(
+    @LayoutRes layoutId: Int = R.layout.video_playback,
+) :
+    Fragment(layoutId) {
     /**
      * Whether to show video previews when scrubbing
      */
