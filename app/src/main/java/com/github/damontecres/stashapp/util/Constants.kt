@@ -691,4 +691,11 @@ fun getRandomSort(): String {
 }
 
 val ImageData.isImageClip: Boolean
-    get() = visual_files.firstOrNull()?.onVideoFile != null
+    get() =
+        visual_files.firstOrNull()?.onVideoFile != null &&
+            visual_files.firstOrNull()?.onVideoFile!!.format != "gif"
+
+val ImageData.isGif: Boolean
+    get() =
+        visual_files.firstOrNull()?.onVideoFile != null &&
+            visual_files.firstOrNull()?.onVideoFile!!.format == "gif"

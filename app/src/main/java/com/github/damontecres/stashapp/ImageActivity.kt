@@ -50,6 +50,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.height
+import com.github.damontecres.stashapp.util.isGif
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -446,25 +447,28 @@ class ImageActivity : FragmentActivity() {
         }
 
         private fun loadImage() {
-            mainImage.post {
-                // Properly scale the image after layout
-                val imageFile = image!!.visual_files.first()
-                val width = imageFile.width!!
-                val height = imageFile.height!!
+            if (image.isGif) {
+                Log.v(TAG, "Image ${image.id} is a gif")
+                mainImage.post {
+                    // Properly scale the image after layout
+                    val imageFile = image.visual_files.first()
+                    val width = imageFile.width!!
+                    val height = imageFile.height!!
 
-                val scale =
-                    Math.min(
-                        mainImage.height.toDouble() / height,
-                        mainImage.width.toDouble() / width,
-                    )
+                    val scale =
+                        Math.min(
+                            mainImage.height.toDouble() / height,
+                            mainImage.width.toDouble() / width,
+                        )
 
-                val targetHeight = height * scale
-                val targetWidth = width * scale
+                    val targetHeight = height * scale
+                    val targetWidth = width * scale
 
-                val lp = mainImage.layoutParams
-                lp.width = targetWidth.toInt()
-                lp.height = targetHeight.toInt()
-                mainImage.layoutParams = lp
+                    val lp = mainImage.layoutParams
+                    lp.width = targetWidth.toInt()
+                    lp.height = targetHeight.toInt()
+                    mainImage.layoutParams = lp
+                }
             }
 
             val placeholder =
