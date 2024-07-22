@@ -268,6 +268,23 @@ class MutationEngine(
         return result.data?.sceneUpdate
     }
 
+    suspend fun setStudioOnScene(
+        sceneId: String,
+        studioId: String?,
+    ): SceneUpdateMutation.SceneUpdate? {
+        Log.v(TAG, "setStudioOnScene sceneId=$sceneId, studioId=$studioId")
+        val mutation =
+            SceneUpdateMutation(
+                input =
+                    SceneUpdateInput(
+                        id = sceneId,
+                        studio_id = Optional.present(studioId),
+                    ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.sceneUpdate
+    }
+
     suspend fun incrementOCounter(sceneId: String): OCounter {
         val mutation = SceneAddOMutation(sceneId, emptyList())
         val result = executeMutation(mutation)
