@@ -4,6 +4,10 @@ import androidx.leanback.widget.ObjectAdapter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 
 class SingleItemObjectAdapter<T : Any>(presenter: StashPresenter<T>) : ObjectAdapter(presenter) {
+    constructor(presenter: StashPresenter<T>, item: T) : this(presenter) {
+        this.item = item
+    }
+
     var item: T? = null
         set(newValue) {
             field = newValue

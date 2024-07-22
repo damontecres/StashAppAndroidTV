@@ -6,6 +6,7 @@ enum class StashAction(val id: Long, val actionName: String) {
     FORCE_TRANSCODE(3L, "Play with Transcoding"),
     CREATE_MARKER(4L, "Create Marker"),
     FORCE_DIRECT_PLAY(5L, "Play directly"),
+    CREATE_NEW(6L, "Create new"),
     ;
 
     companion object {

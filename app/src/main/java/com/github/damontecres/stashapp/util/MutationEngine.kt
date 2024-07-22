@@ -10,6 +10,8 @@ import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.CreateMarkerMutation
+import com.github.damontecres.stashapp.api.CreatePerformerMutation
+import com.github.damontecres.stashapp.api.CreateTagMutation
 import com.github.damontecres.stashapp.api.DeleteMarkerMutation
 import com.github.damontecres.stashapp.api.ImageDecrementOMutation
 import com.github.damontecres.stashapp.api.ImageIncrementOMutation
@@ -27,13 +29,16 @@ import com.github.damontecres.stashapp.api.UpdateMarkerMutation
 import com.github.damontecres.stashapp.api.UpdatePerformerMutation
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.ImageUpdateInput
+import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.PerformerUpdateInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
+import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.OCounter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -374,6 +379,18 @@ class MutationEngine(
         val mutation = UpdatePerformerMutation(input)
         val result = executeMutation(mutation)
         return result.data?.performerUpdate?.performerData
+    }
+
+    suspend fun createTag(input: TagCreateInput): TagData? {
+        val mutation = CreateTagMutation(input)
+        val result = executeMutation(mutation)
+        return result.data?.tagCreate?.tagData
+    }
+
+    suspend fun createPerformer(input: PerformerCreateInput): PerformerData? {
+        val mutation = CreatePerformerMutation(input)
+        val result = executeMutation(mutation)
+        return result.data?.performerCreate?.performerData
     }
 
     companion object {

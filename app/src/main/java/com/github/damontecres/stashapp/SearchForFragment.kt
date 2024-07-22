@@ -19,6 +19,7 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
+import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -28,13 +29,19 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.presenters.PerformerPresenter
+import com.github.damontecres.stashapp.presenters.ActionPresenter.Companion.CARD_HEIGHT
+import com.github.damontecres.stashapp.presenters.ActionPresenter.Companion.CARD_WIDTH
+import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.SingleItemObjectAdapter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -48,10 +55,13 @@ class SearchForFragment(
     SearchSupportFragment(),
         SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
+    private var query: String? = null
 
     private val adapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val searchResultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
     private var perPage by Delegates.notNull<Int>()
+    private var createNewAdapter =
+        SingleItemObjectAdapter(CreateNewPresenter(), StashAction.CREATE_NEW)
 
     private val exceptionHandler =
         CoroutineExceptionHandler { _: CoroutineContext, ex: Throwable ->
@@ -69,14 +79,7 @@ class SearchForFragment(
             requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
         adapter.set(0, ListRow(HeaderItem("Results"), searchResultsAdapter))
 
-        searchResultsAdapter.presenterSelector =
-            StashPresenter.SELECTOR.addClassPresenter(
-                PerformerData::class.java,
-                PerformerPresenter(),
-            ).addClassPresenter(
-                TagData::class.java,
-                TagPresenter(),
-            )
+        searchResultsAdapter.presenterSelector = StashPresenter.SELECTOR
 
         setSearchResultProvider(this)
         setOnItemViewClickedListener {
@@ -85,6 +88,45 @@ class SearchForFragment(
                 rowViewHolder: RowPresenter.ViewHolder?,
                 row: Row?,
             ->
+            if (item == StashAction.CREATE_NEW) {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    handleCreate(query)
+                }
+            } else {
+                returnId(item)
+            }
+        }
+    }
+
+    private suspend fun handleCreate(query: String?) {
+        if (query.isNotNullOrBlank()) {
+            val name = query.replaceFirstChar(Char::titlecase)
+            val mutationEngine = MutationEngine(requireContext())
+            val item =
+                when (dataType) {
+                    DataType.TAG -> {
+                        mutationEngine.createTag(TagCreateInput(name = name))
+                    }
+
+                    DataType.PERFORMER -> {
+                        mutationEngine.createPerformer(PerformerCreateInput(name = name))
+                    }
+
+                    else -> throw IllegalArgumentException("Unsupported datatype $dataType")
+                }
+            if (item != null) {
+                Toast.makeText(
+                    requireContext(),
+                    "Created new ${getString(dataType.stringId)}: $name",
+                    Toast.LENGTH_LONG,
+                ).show()
+                returnId(item)
+            }
+        }
+    }
+
+    private fun returnId(item: Any?) {
+        if (item != null) {
             val result = Intent()
             val resultId =
                 when (dataType) {
@@ -116,16 +158,7 @@ class SearchForFragment(
                     )
                 },
             ) {
-                val results =
-                    ArrayObjectAdapter(
-                        StashPresenter.SELECTOR.addClassPresenter(
-                            PerformerData::class.java,
-                            PerformerPresenter(),
-                        ).addClassPresenter(
-                            TagData::class.java,
-                            TagPresenter(),
-                        ),
-                    )
+                val results = ArrayObjectAdapter(StashPresenter.SELECTOR)
                 val queryEngine = QueryEngine(requireContext(), false)
                 val filter =
                     FindFilterType(
@@ -168,6 +201,7 @@ class SearchForFragment(
     private suspend fun search(query: String) {
         searchResultsAdapter.clear()
 
+        this.query = query
         if (!TextUtils.isEmpty(query)) {
             val filter =
                 FindFilterType(
@@ -176,8 +210,50 @@ class SearchForFragment(
                 )
             val queryEngine = QueryEngine(requireContext(), true)
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                searchResultsAdapter.addAll(0, queryEngine.find(dataType, filter))
+                val results = queryEngine.find(dataType, filter)
+                searchResultsAdapter.addAll(0, results)
+                val itemExists =
+                    results.map {
+                        when (dataType) {
+                            DataType.TAG -> (it as TagData).name
+                            DataType.MOVIE -> (it as MovieData).name
+                            DataType.STUDIO -> (it as StudioData).name
+                            DataType.PERFORMER -> (it as PerformerData).name
+                            else -> throw IllegalArgumentException("Unsupported datatype $dataType")
+//                        DataType.SCENE -> (it as SlimSceneData).id
+//                        DataType.MARKER -> (it as MarkerData).id
+//                        DataType.IMAGE -> (it as ImageData).id
+//                        DataType.GALLERY -> (it as GalleryData).id
+                        }.lowercase()
+                    }.contains(query.lowercase())
+                if (!itemExists) {
+                    if (adapter.lookup(2) == null) {
+                        adapter.set(
+                            2,
+                            ListRow(
+                                HeaderItem("Create " + getString(dataType.stringId)),
+                                createNewAdapter,
+                            ),
+                        )
+                    }
+                    createNewAdapter.notifyItemRangeChanged(0, 1)
+                } else {
+                    adapter.clear(2)
+                }
             }
+        } else {
+            adapter.clear(2)
+        }
+    }
+
+    private inner class CreateNewPresenter : StashPresenter<StashAction>() {
+        override fun doOnBindViewHolder(
+            cardView: StashImageCardView,
+            item: StashAction,
+        ) {
+            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
+            cardView.titleText = query?.replaceFirstChar(Char::titlecase)
+            cardView.contentText = "Create new ${getString(dataType.stringId)}"
         }
     }
 
