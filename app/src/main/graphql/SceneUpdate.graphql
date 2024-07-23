@@ -7,6 +7,9 @@ mutation SceneUpdate($input: SceneUpdateInput!) {
     performers {
       ...PerformerData
     }
+    studio {
+      ...StudioData
+    }
     rating100
   }
 }

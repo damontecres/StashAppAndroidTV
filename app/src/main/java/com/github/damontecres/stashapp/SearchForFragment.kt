@@ -226,7 +226,7 @@ class SearchForFragment(
 //                        DataType.GALLERY -> (it as GalleryData).id
                         }.lowercase()
                     }.contains(query.lowercase())
-                if (!itemExists) {
+                if (dataType in DATA_TYPE_ALLOW_CREATE && !itemExists) {
                     if (adapter.lookup(2) == null) {
                         adapter.set(
                             2,
@@ -264,6 +264,10 @@ class SearchForFragment(
         const val RESULT_ID_KEY = "resultId"
         const val TITLE_KEY = "title"
 
-        val DATA_TYPE_SUGGESTIONS = setOf(DataType.TAG, DataType.PERFORMER)
+        // List of data types that support querying for suggestions
+        val DATA_TYPE_SUGGESTIONS = setOf(DataType.TAG, DataType.PERFORMER, DataType.STUDIO)
+
+        // List of data types that support creating a new one
+        val DATA_TYPE_ALLOW_CREATE = setOf(DataType.TAG, DataType.PERFORMER)
     }
 }

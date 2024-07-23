@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
@@ -66,7 +67,6 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
-import com.github.damontecres.stashapp.util.StudioDiffCallback
 import com.github.damontecres.stashapp.util.asVideoSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -91,7 +91,30 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private val mPresenterSelector = ClassPresenterSelector()
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
 
-    private val studioAdapter = ArrayObjectAdapter(StudioPresenter())
+    private val mStudioAdapter = ArrayObjectAdapter(StudioPresenter(StudioLongClickCallBack()))
+    private val studioAdapter =
+        ListRowManager<StudioData>(
+            DataType.STUDIO,
+            ListRowManager.SparseArrayRowModifier(mAdapter, STUDIO_POS),
+            mStudioAdapter,
+        ) { studioIds ->
+            val newStudioId =
+                if (studioIds.isEmpty()) {
+                    null
+                } else if (studioIds.size == 1) {
+                    studioIds.first()
+                } else {
+                    studioIds.last()
+                }
+
+            val result = mutationEngine.setStudioOnScene(mSelectedMovie!!.id, newStudioId)
+            val newStudio = result?.studio?.studioData
+            if (newStudio != null) {
+                listOf(newStudio)
+            } else {
+                listOf()
+            }
+        }
 
     // Presenter is set in fetchData because it requires mSelectedMovie
     private val mPerformersAdapter = ArrayObjectAdapter()
@@ -268,22 +291,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
             sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
             sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
+            sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
             sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
             sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
 
             if (mSelectedMovie!!.studio?.studioData != null) {
-                studioAdapter.setItems(
-                    listOf(mSelectedMovie!!.studio!!.studioData),
-                    StudioDiffCallback,
-                )
-                if (mAdapter.lookup(STUDIO_POS) == null) {
-                    mAdapter.set(
-                        STUDIO_POS,
-                        ListRow(HeaderItem(getString(R.string.stashapp_studio)), studioAdapter),
-                    )
-                }
-            } else {
-                mAdapter.clear(STUDIO_POS)
+                studioAdapter.setItems(listOf(mSelectedMovie!!.studio!!.studioData))
             }
 
             tagsRowManager.setItems(mSelectedMovie!!.tags.map { it.tagData })
@@ -478,6 +491,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     when (action) {
                         StashAction.ADD_TAG -> DataType.TAG
                         StashAction.ADD_PERFORMER -> DataType.PERFORMER
+                        StashAction.SET_STUDIO -> DataType.STUDIO
                         StashAction.CREATE_MARKER -> {
                             intent.putExtra(
                                 SearchForFragment.TITLE_KEY,
@@ -630,6 +644,28 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
                             Toast.LENGTH_SHORT,
                         ).show()
+                    }
+                } else if (id == StashAction.SET_STUDIO.id) {
+                    val studioId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
+                    Log.d(TAG, "Setting studio to $studioId to scene ${mSelectedMovie?.id}")
+                    viewLifecycleOwner.lifecycleScope.launch(
+                        CoroutineExceptionHandler { _, ex ->
+                            Log.e(TAG, "Exception setting studio", ex)
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to set sudio: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        },
+                    ) {
+                        val newStudio = studioAdapter.add(studioId)
+                        if (newStudio != null) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Set studio to '${newStudio.name}'",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
                     }
                 } else {
                     val localPosition = data.getLongExtra(POSITION_RESULT_ARG, -1)
@@ -865,6 +901,35 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         }
     }
 
+    private inner class StudioLongClickCallBack : DetailsLongClickCallBack<StudioData> {
+        override fun onItemLongClick(
+            context: Context,
+            item: StudioData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            if (popUpItem == REMOVE_POPUP_ITEM) {
+                viewLifecycleOwner.lifecycleScope.launch(
+                    CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception setting studio", ex)
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to remove studio: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    },
+                ) {
+                    if (studioAdapter.remove(item)) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Removed studio from scene",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "VideoDetailsFragment"
 
@@ -896,7 +961,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val ADD_TAG_POS = O_COUNTER_POS + 1
         private const val ADD_PERFORMER_POS = ADD_TAG_POS + 1
         private const val CREATE_MARKER_POS = ADD_PERFORMER_POS + 1
-        private const val FORCE_TRANSCODE_POS = CREATE_MARKER_POS + 1
+        private const val SET_STUDIO_POS = CREATE_MARKER_POS + 1
+        private const val FORCE_TRANSCODE_POS = SET_STUDIO_POS + 1
         private const val FORCE_DIRECT_PLAY_POS = FORCE_TRANSCODE_POS + 1
 
         private val REMOVE_POPUP_ITEM = StashPresenter.PopUpItem(0L, "Remove")

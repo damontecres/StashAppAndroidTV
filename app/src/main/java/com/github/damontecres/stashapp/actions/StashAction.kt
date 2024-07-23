@@ -7,9 +7,10 @@ enum class StashAction(val id: Long, val actionName: String) {
     CREATE_MARKER(4L, "Create Marker"),
     FORCE_DIRECT_PLAY(5L, "Play directly"),
     CREATE_NEW(6L, "Create new"),
+    SET_STUDIO(7L, "Set Studio"),
     ;
 
     companion object {
-        val SEARCH_FOR_ACTIONS = setOf(ADD_TAG, ADD_PERFORMER, CREATE_MARKER)
+        val SEARCH_FOR_ACTIONS = setOf(ADD_TAG, ADD_PERFORMER, CREATE_MARKER, SET_STUDIO)
     }
 }
