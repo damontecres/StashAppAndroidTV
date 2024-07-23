@@ -12,3 +12,9 @@ query CountTags($filter: FindFilterType, $tag_filter: TagFilterType)  {
     count
   }
 }
+
+mutation CreateTag($input: TagCreateInput!) {
+  tagCreate(input: $input) {
+    ...TagData
+  }
+}

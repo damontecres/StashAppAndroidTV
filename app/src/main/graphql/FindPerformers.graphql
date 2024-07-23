@@ -43,6 +43,12 @@ mutation UpdatePerformer($input: PerformerUpdateInput!) {
   }
 }
 
+mutation CreatePerformer($input: PerformerCreateInput!){
+  performerCreate(input: $input){
+    ...PerformerData
+  }
+}
+
 fragment PerformerData on Performer {
   id
   name
