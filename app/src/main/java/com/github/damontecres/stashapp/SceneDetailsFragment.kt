@@ -91,7 +91,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private val mPresenterSelector = ClassPresenterSelector()
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
 
-    private val mStudioAdapter = ArrayObjectAdapter(StudioPresenter())
+    private val mStudioAdapter = ArrayObjectAdapter(StudioPresenter(StudioLongClickCallBack()))
     private val studioAdapter =
         ListRowManager<StudioData>(
             DataType.STUDIO,
@@ -99,11 +99,14 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             mStudioAdapter,
         ) { studioIds ->
             val newStudioId =
-                if (studioIds.size == 1) {
+                if (studioIds.isEmpty()) {
+                    null
+                } else if (studioIds.size == 1) {
                     studioIds.first()
                 } else {
                     studioIds.last()
                 }
+
             val result = mutationEngine.setStudioOnScene(mSelectedMovie!!.id, newStudioId)
             val newStudio = result?.studio?.studioData
             if (newStudio != null) {
@@ -890,6 +893,35 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         Toast.makeText(
                             requireContext(),
                             "Removed performer '${item.name}' from scene",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private inner class StudioLongClickCallBack : DetailsLongClickCallBack<StudioData> {
+        override fun onItemLongClick(
+            context: Context,
+            item: StudioData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            if (popUpItem == REMOVE_POPUP_ITEM) {
+                viewLifecycleOwner.lifecycleScope.launch(
+                    CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception setting studio", ex)
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to remove studio: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    },
+                ) {
+                    if (studioAdapter.remove(item)) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Removed studio from scene",
                             Toast.LENGTH_SHORT,
                         ).show()
                     }
