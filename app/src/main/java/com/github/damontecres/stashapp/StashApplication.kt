@@ -17,11 +17,14 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.setup.SetupActivity
 import com.github.damontecres.stashapp.util.AppUpgradeHandler
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.Version
+import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+@HiltAndroidApp
 class StashApplication : Application() {
     private var wasEnterBackground = false
     private var mainDestroyed = false
@@ -163,6 +166,10 @@ class StashApplication : Application() {
 
         fun getApplication(): StashApplication {
             return application
+        }
+
+        fun getCurrentStashServer(): StashServer? {
+            return StashServer.getCurrentStashServer(application)
         }
 
         fun getFont(

@@ -11,6 +11,7 @@ plugins {
     id("kotlin-parcelize")
     id("com.apollographql.apollo3") version "3.8.4"
     id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 fun getVersionCode(): Int {
@@ -39,6 +40,14 @@ android {
         getByName("main") {
             res.srcDirs("src/main/res", "$buildDir/generated/res/server")
         }
+    }
+
+    buildFeatures { // Enables Jetpack Compose for this module
+        compose = true
+    }
+    composeOptions {
+        // https://developer.android.com/jetpack/androidx/releases/compose-kotlin
+        kotlinCompilerExtensionVersion = "1.5.13"
     }
 
     defaultConfig {
@@ -125,6 +134,11 @@ tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrin
     outputDirectory = File("$buildDir/generated/res/server")
 }
 
+// Allow references to generated code
+kapt {
+    correctErrorTypes = true
+}
+
 // tasks.preBuild.dependsOn("generateStrings")
 tasks.preBuild.dependsOn("generateStrings")
 
@@ -138,7 +152,21 @@ dependencies {
     implementation("androidx.leanback:leanback-paging:1.1.0-alpha11")
     implementation("com.github.bumptech.glide:glide:$glideVersion")
     implementation("com.github.bumptech.glide:okhttp3-integration:$glideVersion")
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
     implementation("androidx.leanback:leanback-tab:1.1.0-beta01")
+    implementation("androidx.navigation:navigation-runtime-ktx:2.7.7")
+    implementation("androidx.compose.runtime:runtime-android:1.6.8")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
+    implementation("androidx.activity:activity-compose:1.9.1")
+    implementation("androidx.compose.ui:ui:1.6.8")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.6.8")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    implementation("androidx.tv:tv-foundation:1.0.0-alpha11")
+    implementation("androidx.tv:tv-material:1.0.0-rc01")
+    implementation("androidx.compose.ui:ui-viewbinding:1.7.0-beta06")
+    implementation("androidx.paging:paging-compose:3.3.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     kapt("com.github.bumptech.glide:compiler:$glideVersion")
     implementation("com.caverock:androidsvg-aar:1.4")
 
@@ -161,6 +189,8 @@ dependencies {
     implementation("com.otaliastudios:zoomlayout:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
     implementation("io.noties.markwon:core:4.6.2")
+    implementation("com.google.dagger:hilt-android:2.44")
+    kapt("com.google.dagger:hilt-android-compiler:2.44")
 
     testImplementation("androidx.test:core-ktx:1.6.1")
     testImplementation("junit:junit:4.13.2")
