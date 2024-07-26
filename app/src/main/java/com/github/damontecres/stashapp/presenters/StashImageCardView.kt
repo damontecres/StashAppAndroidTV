@@ -47,11 +47,11 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     companion object {
         private const val TAG = "StashImageCardView"
 
-        private const val ICON_SPACING = "  "
+        const val ICON_SPACING = "  "
 
-        private val FA_FONT = StashApplication.getFont(R.font.fa_solid_900)
+        val FA_FONT = StashApplication.getFont(R.font.fa_solid_900)
 
-        private val ICON_ORDER =
+        val ICON_ORDER =
             listOf(
                 DataType.SCENE,
                 DataType.MOVIE,
