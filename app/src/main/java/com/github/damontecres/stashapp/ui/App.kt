@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -98,7 +99,7 @@ fun App() {
                 TvLazyColumn(
                     Modifier
                         .selectableGroup(),
-                    horizontalAlignment = Alignment.Start,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
                 ) {
                     items(PAGES, key = { it.route }) { page ->
@@ -114,7 +115,12 @@ fun App() {
                                 }
                             },
                             leadingContent = {
-                                Text(stringResource(id = page.iconString), fontFamily = fontFamily)
+                                Text(
+                                    stringResource(id = page.iconString),
+                                    fontFamily = fontFamily,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier,
+                                )
                             },
                         ) {
                             Text(stringResource(id = page.name))
@@ -153,13 +159,7 @@ fun App() {
 //                    .padding(start = collapsedDrawerItemWidth),
         ) {
             composable(route = DrawerPage.Home.route) {
-                Button(
-                    onClick = {
-                        Toast.makeText(context, "Home clicked", Toast.LENGTH_SHORT).show()
-                    },
-                ) {
-                    Text(text = "Home")
-                }
+                HomePage()
             }
             composable(route = DrawerPage.Scenes.route) {
                 Button(

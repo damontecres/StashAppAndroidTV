@@ -12,6 +12,7 @@ plugins {
     id("com.apollographql.apollo3") version "3.8.4"
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+    kotlin("kapt")
 }
 
 fun getVersionCode(): Int {
@@ -189,8 +190,9 @@ dependencies {
     implementation("com.otaliastudios:zoomlayout:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
     implementation("io.noties.markwon:core:4.6.2")
-    implementation("com.google.dagger:hilt-android:2.44")
-    kapt("com.google.dagger:hilt-android-compiler:2.44")
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    kapt("com.google.dagger:hilt-android-compiler:2.51.1")
 
     testImplementation("androidx.test:core-ktx:1.6.1")
     testImplementation("junit:junit:4.13.2")
