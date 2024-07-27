@@ -3,16 +3,25 @@ package com.github.damontecres.stashapp.ui
 import android.content.Context
 import android.os.Parcelable
 import android.util.Log
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LiveData
@@ -43,6 +52,7 @@ import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.ui.theme.Material3AppTheme
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
@@ -75,10 +85,6 @@ data class ResolvedFilter(
     val objectFilter: Any? = null,
 )
 
-val DefaultResolvedFilter = ResolvedFilter(DataType.SCENE)
-
-val ErrorResolvedFilter = ResolvedFilter(DataType.SCENE)
-
 fun SavedFilterData.resolve(dataType: DataType): ResolvedFilter =
     ResolvedFilter(
         dataType = DataType.fromFilterMode(mode) ?: dataType,
@@ -94,11 +100,11 @@ fun SavedFilterData.resolve(dataType: DataType): ResolvedFilter =
     )
 
 sealed class ResolvedFilterState {
-    object Loading : ResolvedFilterState()
+    data object Loading : ResolvedFilterState()
 
     data class Success(val filter: ResolvedFilter, val pagingSource: StashPagingSource<*, Any, *>) : ResolvedFilterState()
 
-    object Error : ResolvedFilterState()
+    data object Error : ResolvedFilterState()
 }
 
 @HiltViewModel
@@ -113,12 +119,16 @@ class FilterGridViewModel
         private val _resolvedFilterState = MutableLiveData<ResolvedFilterState>()
         val resolvedFilterState: LiveData<ResolvedFilterState> get() = _resolvedFilterState
 
-        val currentFilter = mutableStateOf<ResolvedFilter>(DefaultResolvedFilter)
-//        val _pagingSource = MutableLiveData<StashPagingSource<*, Any, *>?>()
-//        val pagingSource: LiveData<StashPagingSource<*, Any, *>?>
-//            get() = _pagingSource
+        private val _savedFilters = mutableStateListOf<ResolvedFilter>()
+        val savedFilters: SnapshotStateList<ResolvedFilter> get() = _savedFilters
+
+        suspend fun fetchSavedFilters(dataType: DataType) {
+            val filters = queryEngine.getSavedFilters(dataType).map { it.resolve(dataType) }
+            _savedFilters.addAll(filters)
+        }
 
         suspend fun updateFilter(filter: StashFilter) {
+            _resolvedFilterState.value = ResolvedFilterState.Loading
             val resolvedFilter =
                 when (filter) {
                     is AppFilter -> {
@@ -156,35 +166,37 @@ class FilterGridViewModel
                     else -> throw IllegalStateException("Unsupported StashFilter type: $filter")
                 }
 
-            if (resolvedFilter == null) {
-                currentFilter.value = ErrorResolvedFilter
-            } else {
-                val dataSupplier =
-                    when (resolvedFilter.dataType) {
-                        DataType.SCENE -> {
-                            val objectFilter =
-                                filterParser.convertSceneObjectFilter(resolvedFilter.objectFilter)
-                            SceneDataSupplier(
-                                resolvedFilter.findFilter?.asFindFilterType,
-                                objectFilter,
-                            )
-                        }
-
-                        else -> TODO()
-                    } as StashPagingSource.DataSupplier<*, Any, *>
-
-                _resolvedFilterState.value =
-                    ResolvedFilterState.Success(
-                        resolvedFilter,
-                        StashPagingSource(
-                            StashApplication.getApplication(),
-                            25, // TODO
-                            dataSupplier = dataSupplier,
-                            useRandom = false,
-                        ),
-                    )
-                currentFilter.value = resolvedFilter
+            if (resolvedFilter != null) {
+                updateFilter(resolvedFilter)
             }
+        }
+
+        fun updateFilter(resolvedFilter: ResolvedFilter) {
+            _resolvedFilterState.value = ResolvedFilterState.Loading
+            val dataSupplier =
+                when (resolvedFilter.dataType) {
+                    DataType.SCENE -> {
+                        val objectFilter =
+                            filterParser.convertSceneObjectFilter(resolvedFilter.objectFilter)
+                        SceneDataSupplier(
+                            resolvedFilter.findFilter?.asFindFilterType,
+                            objectFilter,
+                        )
+                    }
+
+                    else -> TODO()
+                } as StashPagingSource.DataSupplier<*, Any, *>
+
+            _resolvedFilterState.value =
+                ResolvedFilterState.Success(
+                    resolvedFilter,
+                    StashPagingSource(
+                        StashApplication.getApplication(),
+                        25, // TODO
+                        dataSupplier = dataSupplier,
+                        useRandom = false,
+                    ),
+                )
         }
     }
 
@@ -197,6 +209,9 @@ fun FilterGrid(startingFilter: StashFilter) {
 
     LaunchedEffect(Unit) {
         viewModel.updateFilter(startingFilter)
+    }
+    LaunchedEffect(Unit) {
+        viewModel.fetchSavedFilters(startingFilter.dataType)
     }
 
     when (resolvedFilterState) {
@@ -258,9 +273,7 @@ fun ResolvedFilterGrid(resolvedFilter: ResolvedFilterState.Success) {
                         text = filterName,
                     )
                 }
-                Button(onClick = { /*TODO*/ }) {
-                    Text(text = "Filters")
-                }
+                SavedFilterDropDown()
             }
         }
         if (lazyPagingItems.loadState.refresh == LoadState.Loading) {
@@ -295,6 +308,44 @@ fun ResolvedFilterGrid(resolvedFilter: ResolvedFilterState.Success) {
                             .fillMaxWidth()
                             .wrapContentWidth(Alignment.CenterHorizontally),
                 )
+            }
+        }
+    }
+}
+
+@Suppress("ktlint:standard:function-naming")
+@Composable
+fun SavedFilterDropDown() {
+    val viewModel = hiltViewModel<FilterGridViewModel>()
+    val context = LocalContext.current
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(
+        modifier =
+            Modifier.fillMaxWidth()
+                .wrapContentSize(Alignment.TopEnd),
+    ) {
+        Button(onClick = { expanded = !expanded }) {
+            ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
+                Text("Filters")
+            }
+        }
+        Material3AppTheme {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                viewModel.savedFilters.forEach { savedFilter ->
+                    if (savedFilter.name != null) {
+                        DropdownMenuItem(
+                            text = { Text(savedFilter.name) },
+                            onClick = {
+                                expanded = false
+                                viewModel.updateFilter(savedFilter)
+                            },
+                        )
+                    }
+                }
             }
         }
     }
