@@ -1,13 +1,16 @@
 package com.github.damontecres.stashapp.ui
 
+import android.graphics.Color
 import android.net.Uri
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,9 +36,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
@@ -71,9 +76,46 @@ import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.ICON_ORDER
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
+import com.github.damontecres.stashapp.views.durationToString
+import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import java.util.EnumMap
+
+@Suppress("ktlint:standard:function-naming")
+@Composable
+fun ImageOverlay(
+    rating100: Int? = null,
+    favorite: Boolean = false,
+    content: @Composable BoxScope.() -> Unit = {},
+) {
+    val context = LocalContext.current
+    val showRatings =
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .getBoolean(context.getString(R.string.pref_key_show_rating), true)
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (showRatings && rating100 != null && rating100 >= 0) {
+            val ratingText = getRatingAsDecimalString(context, rating100)
+            val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
+            val ratingColors = context.resources.obtainTypedArray(R.array.rating_colors)
+            val bgColor = ratingColors.getColor(rating100 / 5, Color.WHITE)
+            ratingColors.recycle()
+
+            Text(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopStart)
+                        .background(color = androidx.compose.ui.graphics.Color(bgColor))
+                        .padding(4.dp),
+                style = TextStyle(fontWeight = FontWeight.Bold),
+                text = text,
+            )
+        }
+        content.invoke(this)
+    }
+}
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
@@ -143,6 +185,7 @@ fun RootCard(
     imageUrl: String? = null,
     videoUrl: String? = null,
     onLongClick: (() -> Unit)? = null,
+    imageOverlay: @Composable BoxScope.() -> Unit = {},
     subtitle: @Composable () -> Unit = {},
     description: @Composable () -> Unit = {},
     shape: CardShape = CardDefaults.shape(),
@@ -215,15 +258,20 @@ fun RootCard(
                         }
                     })
                 } else {
-                    GlideImage(
-                        model = imageUrl,
-                        contentDescription = "",
+                    Box(
                         modifier =
                             Modifier
-                                .padding(0.dp)
                                 .width(imageWidth)
-                                .height(imageHeight),
-                    )
+                                .height(imageHeight)
+                                .padding(0.dp),
+                    ) {
+                        GlideImage(
+                            model = imageUrl,
+                            contentDescription = "",
+                            modifier = Modifier,
+                        )
+                        imageOverlay.invoke(this)
+                    }
                 }
             }
             Column(modifier = Modifier.padding(6.dp)) {
@@ -300,6 +348,29 @@ fun SceneCard(
         subtitle = { Text(item.date ?: "") },
         description = {
             IconRowText(dataTypeMap, item.o_counter ?: -1)
+        },
+        imageOverlay = {
+            ImageOverlay(item.rating100) {
+                val videoFile = item.files.firstOrNull()?.videoFileData
+                if (videoFile != null) {
+                    val duration = durationToString(videoFile.duration)
+                    Text(
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(4.dp),
+                        text = duration,
+                    )
+                    Text(
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(4.dp),
+                        style = TextStyle(fontWeight = FontWeight.Bold),
+                        text = videoFile.resolutionName().toString(),
+                    )
+                }
+            }
         },
     )
 }
