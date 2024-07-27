@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui
 
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -97,7 +98,10 @@ fun HomePage() {
 fun HomePageRow(row: FrontPageParser.FrontPageRow) {
     val rowData = row.data!!
     Text(text = rowData.name, modifier = Modifier.padding(top = 20.dp, bottom = 20.dp))
-    TvLazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    TvLazyRow(
+        modifier = Modifier.focusGroup(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         items(rowData.data) { item ->
             if (item != null) {
                 StashCard(item)

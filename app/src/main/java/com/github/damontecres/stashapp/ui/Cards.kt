@@ -2,8 +2,11 @@ package com.github.damontecres.stashapp.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +16,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -26,8 +37,16 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.Card
+import androidx.tv.material3.CardBorder
+import androidx.tv.material3.CardColors
+import androidx.tv.material3.CardDefaults
+import androidx.tv.material3.CardGlow
+import androidx.tv.material3.CardScale
+import androidx.tv.material3.CardShape
 import androidx.tv.material3.ClassicCard
 import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -94,6 +113,77 @@ fun IconRowText(
     )
 }
 
+/**
+ * Main card based on [ClassicCard]
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Suppress("ktlint:standard:function-naming")
+@Composable
+fun RootCard(
+    onClick: () -> Unit,
+    image: @Composable BoxScope.() -> Unit,
+    title: String,
+    modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+    subtitle: @Composable () -> Unit = {},
+    description: @Composable () -> Unit = {},
+    shape: CardShape = CardDefaults.shape(),
+    colors: CardColors = CardDefaults.colors(),
+    scale: CardScale = CardDefaults.scale(),
+    border: CardBorder = CardDefaults.border(),
+    glow: CardGlow = CardDefaults.glow(),
+    contentPadding: PaddingValues = PaddingValues(),
+    interactionSource: MutableInteractionSource? = null,
+) {
+    var focused by remember { mutableStateOf(false) }
+
+    Card(
+        onClick = onClick,
+        onLongClick = onLongClick,
+        modifier =
+            modifier.onFocusChanged { focusState ->
+                focused = focusState.isFocused
+            },
+        interactionSource = interactionSource,
+        shape = shape,
+        colors = colors,
+        scale = scale,
+        border = border,
+        glow = glow,
+    ) {
+        Column(modifier = Modifier.padding(contentPadding)) {
+            Box(contentAlignment = Alignment.Center, content = image)
+            Column(modifier = Modifier.padding(6.dp)) {
+                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                    Text(
+                        title,
+                        maxLines = 1,
+                        modifier =
+                            Modifier
+                                .then(
+                                    if (focused) {
+                                        Modifier.basicMarquee(initialDelayMillis = 250)
+                                    } else {
+                                        Modifier
+                                    },
+                                ),
+                    )
+                }
+                ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+                    Box(Modifier.graphicsLayer { alpha = 0.6f }) { subtitle.invoke() }
+                }
+                ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+                    Box(
+                        Modifier.graphicsLayer {
+                            alpha = 0.8f
+                        },
+                    ) { description.invoke() }
+                }
+            }
+        }
+    }
+}
+
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun StashCard(item: Any) {
@@ -118,13 +208,13 @@ fun SceneCard(
     dataTypeMap[DataType.MOVIE] = item.movies.size
     dataTypeMap[DataType.MARKER] = item.scene_markers.size
     dataTypeMap[DataType.GALLERY] = item.galleries.size
-
-    ClassicCard(
+    val focusRequester = remember { FocusRequester() }
+    RootCard(
         modifier =
             Modifier
-                .width(ScenePresenter.CARD_WIDTH.dp / 2)
-                .padding(4.dp),
-        contentPadding = PaddingValues(4.dp),
+                .padding(0.dp)
+                .width(ScenePresenter.CARD_WIDTH.dp / 2),
+        contentPadding = PaddingValues(0.dp),
         onClick = onClick,
         image = {
             GlideImage(
@@ -137,12 +227,7 @@ fun SceneCard(
                         .height(ScenePresenter.CARD_HEIGHT.dp / 2),
             )
         },
-        title = {
-            Text(
-                item.titleOrFilename ?: "",
-                modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.WhileFocused),
-            )
-        },
+        title = item.titleOrFilename ?: "",
         subtitle = { Text(item.date ?: "") },
         description = {
             IconRowText(dataTypeMap, item.o_counter ?: -1)
@@ -157,19 +242,11 @@ fun PerformerCard(
     item: PerformerData,
     onClick: (() -> Unit),
 ) {
-//    val presenter = ScenePresenter()
-//
-//    AndroidView(factory = { context ->
-//        val cardView = StashImageCardView(context)
-//        cardView.isFocusable = true
-//        cardView.isFocusableInTouchMode = true
-//        cardView.updateCardBackgroundColor(cardView, false)
-//        cardView.onFocusChangeListener = StashOnFocusChangeListener(context)
-//        cardView
-//    }) { view ->
-//        presenter.onBindViewHolder(Presenter.ViewHolder(view), scene)
-//    }
-    ClassicCard(
+    RootCard(
+        modifier =
+            Modifier
+                .padding(0.dp)
+                .width(PerformerPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
         image = {
             GlideImage(
@@ -182,6 +259,6 @@ fun PerformerCard(
                         .height(PerformerPresenter.CARD_HEIGHT.dp / 2),
             )
         },
-        title = { Text(item.name) },
+        title = item.name,
     )
 }

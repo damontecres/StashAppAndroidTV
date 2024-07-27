@@ -6,6 +6,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -113,6 +114,7 @@ fun App() {
         drawerContent = {
             Column(
                 Modifier
+                    .focusGroup()
                     .fillMaxHeight()
                     .padding(4.dp)
                     .width(if (drawerState.currentValue == DrawerValue.Closed) collapsedDrawerItemWidth else Dp.Unspecified),
