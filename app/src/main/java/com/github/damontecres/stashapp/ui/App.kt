@@ -1,7 +1,11 @@
 package com.github.damontecres.stashapp.ui
 
 import android.content.Intent
+import android.util.Log
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.MarqueeAnimationMode
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,29 +43,45 @@ import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.SearchActivity
 import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashDefaultFilter
-import com.github.damontecres.stashapp.ui.DrawerPage.Home
-import com.github.damontecres.stashapp.ui.DrawerPage.Scenes
 import com.github.damontecres.stashapp.util.StashServer
 
-sealed class DrawerPage(
+class DrawerPage(
     val route: String,
     @StringRes val iconString: Int,
     @StringRes val name: Int,
 ) {
-    data object Home : DrawerPage("home", R.string.fa_house, R.string.home)
+    companion object {
+        val HOME_PAGE = DrawerPage("home", R.string.fa_house, R.string.home)
 
-    data object Scenes : DrawerPage("scenes", DataType.SCENE.iconStringId, DataType.SCENE.pluralStringId)
+        val SEARCH_PAGE =
+            DrawerPage(
+                "search",
+                R.string.fa_magnifying_glass_plus,
+                R.string.stashapp_actions_search,
+            )
+
+        val PAGES =
+            buildList<DrawerPage> {
+                add(SEARCH_PAGE)
+                add(HOME_PAGE)
+                addAll(
+                    DataType.entries.map { dataType ->
+                        DrawerPage(dataType.name, dataType.iconStringId, dataType.pluralStringId)
+                    },
+                )
+            }
+    }
 }
-
-val PAGES = listOf(Home, Scenes)
 
 class AppViewModel : ViewModel() {
     val currentServer = mutableStateOf<StashServer?>(StashServer.getCurrentStashServer())
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun App() {
@@ -77,7 +97,7 @@ fun App() {
             ),
         )
 
-    val defaultSelection: DrawerPage = DrawerPage.Home
+    val defaultSelection: DrawerPage = DrawerPage.HOME_PAGE
 
     var currentScreen by remember { mutableStateOf(defaultSelection) }
 
@@ -99,20 +119,23 @@ fun App() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
-//                NavigationDrawerItem(
-//                    selected = currentScreen == DrawerScreen.UserAccount,
-//                    onClick = {
-//                        currentScreen = DrawerScreen.UserAccount
-//                    },
-//                    leadingContent = {
-//                        Icon(
-//                            imageVector = DrawerScreen.UserAccount.icon,
-//                            contentDescription = null,
-//                        )
-//                    },
-//                ) {
-//                    Text(stringResource(id = DrawerScreen.UserAccount.title))
-//                }
+                NavigationDrawerItem(
+                    selected = false,
+                    onClick = {
+                        // TODO
+                    },
+                    leadingContent = {
+                        Icon(
+                            painterResource(id = R.mipmap.stash_logo),
+                            contentDescription = null,
+                        )
+                    },
+                ) {
+                    Text(
+                        modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.WhileFocused),
+                        text = StashServer.getCurrentStashServer()?.url ?: "No server",
+                    )
+                }
 
                 // Group of item with same padding
 
@@ -124,15 +147,24 @@ fun App() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
                 ) {
-                    items(PAGES, key = { it.route }) { page ->
+                    Log.v("App", "DrawerPage.PAGES=${DrawerPage.PAGES}")
+                    items(DrawerPage.PAGES, key = { it.route }) { page ->
                         NavigationDrawerItem(
                             selected = navController.currentDestination?.route == page.route,
                             onClick = {
-                                drawerState.setValue(DrawerValue.Closed)
-                                navController.navigate(page.route) {
-                                    // remove the previous Composable from the back stack
-                                    popUpTo(navController.currentDestination?.route ?: "") {
-                                        inclusive = true
+                                if (page == DrawerPage.SEARCH_PAGE) {
+                                    startActivity(
+                                        context,
+                                        Intent(context, SearchActivity::class.java),
+                                        null,
+                                    )
+                                } else {
+                                    drawerState.setValue(DrawerValue.Closed)
+                                    navController.navigate(page.route) {
+                                        // remove the previous Composable from the back stack
+                                        popUpTo(navController.currentDestination?.route ?: "") {
+                                            inclusive = true
+                                        }
                                     }
                                 }
                             },
@@ -153,7 +185,7 @@ fun App() {
                 NavigationDrawerItem(
                     selected = false,
                     onClick = {
-                        navController.navigate(DrawerPage.Home.route) {
+                        navController.navigate(DrawerPage.HOME_PAGE.route) {
                             popUpTo(navController.currentDestination?.route ?: "") {
                                 inclusive = true
                             }
@@ -175,24 +207,22 @@ fun App() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = DrawerPage.Home.route,
+            startDestination = DrawerPage.HOME_PAGE.route,
             modifier =
             Modifier,
 //                    .fillMaxSize()
 //                    .padding(start = collapsedDrawerItemWidth),
         ) {
-            composable(route = DrawerPage.Home.route) {
+            composable(route = DrawerPage.SEARCH_PAGE.route) {
+                // TODO
+            }
+            composable(route = DrawerPage.HOME_PAGE.route) {
                 HomePage()
             }
-            composable(route = DrawerPage.Scenes.route) {
-                FilterGrid(StashDefaultFilter(DataType.SCENE))
-//                Button(
-//                    onClick = {
-//                        Toast.makeText(context, "Scenes clicked", Toast.LENGTH_SHORT).show()
-//                    },
-//                ) {
-//                    Text(text = "Scenes")
-//                }
+            DataType.entries.forEach { dataType ->
+                composable(route = dataType.name) {
+                    FilterGrid(StashDefaultFilter(dataType))
+                }
             }
         }
     }
