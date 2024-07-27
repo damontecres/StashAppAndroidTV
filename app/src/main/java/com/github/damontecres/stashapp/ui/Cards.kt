@@ -1,7 +1,12 @@
 package com.github.damontecres.stashapp.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.MarqueeAnimationMode
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -21,8 +26,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ClassicCard
+import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -64,14 +69,15 @@ fun IconRowText(
             }
             if (oCounter > 0) {
                 appendInlineContent(id = "ocounter", "O")
-                append(oCounter.toString())
+                append(" $oCounter")
             }
         }
+    val fontSize = MaterialTheme.typography.bodySmall.fontSize
     val inlineContentMap =
         mapOf(
             "ocounter" to
                 InlineTextContent(
-                    Placeholder(20.sp, 20.sp, PlaceholderVerticalAlign.TextCenter),
+                    Placeholder(fontSize, fontSize, PlaceholderVerticalAlign.TextCenter),
                 ) {
                     Image(
                         painterResource(id = R.drawable.sweat_drops),
@@ -80,7 +86,12 @@ fun IconRowText(
                     )
                 },
         )
-    Text(annotatedString, inlineContent = inlineContentMap, textAlign = TextAlign.Center)
+    Text(
+        annotatedString,
+        inlineContent = inlineContentMap,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Suppress("ktlint:standard:function-naming")
@@ -94,7 +105,7 @@ fun StashCard(item: Any) {
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalFoundationApi::class)
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun SceneCard(
@@ -109,6 +120,11 @@ fun SceneCard(
     dataTypeMap[DataType.GALLERY] = item.galleries.size
 
     ClassicCard(
+        modifier =
+            Modifier
+                .width(ScenePresenter.CARD_WIDTH.dp / 2)
+                .padding(4.dp),
+        contentPadding = PaddingValues(4.dp),
         onClick = onClick,
         image = {
             GlideImage(
@@ -121,8 +137,14 @@ fun SceneCard(
                         .height(ScenePresenter.CARD_HEIGHT.dp / 2),
             )
         },
-        title = { Text(item.titleOrFilename ?: "") },
-        subtitle = {
+        title = {
+            Text(
+                item.titleOrFilename ?: "",
+                modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.WhileFocused),
+            )
+        },
+        subtitle = { Text(item.date ?: "") },
+        description = {
             IconRowText(dataTypeMap, item.o_counter ?: -1)
         },
     )

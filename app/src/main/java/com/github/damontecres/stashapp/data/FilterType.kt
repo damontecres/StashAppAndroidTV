@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.toFind_filter
 import kotlinx.parcelize.Parcelize
 
@@ -18,6 +19,7 @@ enum class FilterType {
     CUSTOM_FILTER,
     SAVED_FILTER,
     APP_FILTER,
+    DEFAULT_FILTER,
     ;
 
     companion object {
@@ -43,6 +45,15 @@ interface StashFilter : Parcelable {
      */
     val direction: String?
         get() = dataType.defaultSort.direction.toString()
+}
+
+/**
+ * Represents a default starting filter for a data type. It should be resolved via [QueryEngine.getDefaultFilter].
+ */
+@Parcelize
+data class StashDefaultFilter(override val dataType: DataType) : StashFilter {
+    override val filterType: FilterType
+        get() = FilterType.DEFAULT_FILTER
 }
 
 /**

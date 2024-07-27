@@ -1,11 +1,8 @@
 package com.github.damontecres.stashapp.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
@@ -14,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import androidx.tv.foundation.lazy.list.TvLazyColumn
+import androidx.tv.foundation.lazy.list.TvLazyRow
+import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
@@ -79,11 +79,11 @@ fun HomePage() {
         viewModel.fetchFrontPage()
     }
 
-    LazyColumn(
+    TvLazyColumn(
         verticalArrangement = Arrangement.spacedBy(24.dp),
         modifier =
             Modifier
-                .fillMaxHeight()
+                .fillMaxSize()
                 .padding(12.dp),
     ) {
         items(rows, key = { rows.indexOf(it) }) { row ->
@@ -97,7 +97,7 @@ fun HomePage() {
 fun HomePageRow(row: FrontPageParser.FrontPageRow) {
     val rowData = row.data!!
     Text(text = rowData.name, modifier = Modifier.padding(top = 20.dp, bottom = 20.dp))
-    LazyRow {
+    TvLazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         items(rowData.data) { item ->
             if (item != null) {
                 StashCard(item)

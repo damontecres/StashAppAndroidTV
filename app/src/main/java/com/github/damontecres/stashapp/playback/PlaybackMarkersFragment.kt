@@ -117,6 +117,7 @@ class PlaybackMarkersFragment : PlaybackFragment() {
                     filter as StashCustomFilter
                     filter.toSavedFilterData()
                 }
+                FilterType.DEFAULT_FILTER -> throw IllegalStateException()
             }
         if (savedFilter != null) {
             val newSort = filter.sortBy ?: savedFilter.find_filter?.sort

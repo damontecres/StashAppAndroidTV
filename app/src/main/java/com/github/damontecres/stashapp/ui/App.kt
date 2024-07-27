@@ -1,6 +1,6 @@
 package com.github.damontecres.stashapp.ui
 
-import android.widget.Toast
+import android.content.Intent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,25 +19,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.tv.material3.Button
 import androidx.tv.material3.DrawerValue
+import androidx.tv.material3.Icon
 import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashDefaultFilter
 import com.github.damontecres.stashapp.ui.DrawerPage.Home
 import com.github.damontecres.stashapp.ui.DrawerPage.Scenes
+import com.github.damontecres.stashapp.util.StashServer
 
 sealed class DrawerPage(
     val route: String,
@@ -51,9 +58,18 @@ sealed class DrawerPage(
 
 val PAGES = listOf(Home, Scenes)
 
+class AppViewModel : ViewModel() {
+    val currentServer = mutableStateOf<StashServer?>(StashServer.getCurrentStashServer())
+}
+
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun App() {
+    val context = LocalContext.current
+
+    val appViewModel = viewModel<AppViewModel>()
+    appViewModel.currentServer.value = StashServer.getCurrentStashServer()
+
     val fontFamily =
         FontFamily(
             Font(
@@ -134,28 +150,29 @@ fun App() {
                     }
                 }
 
-                // Separated item from other for better UI purpose
-//                NavigationDrawerItem(
-//                    selected = currentScreen == DrawerScreen.SettingsScreen,
-//                    onClick = {
-//                        currentScreen = DrawerScreen.SettingsScreen
-//                    },
-//                    leadingContent = {
-//                        Icon(
-//                            imageVector = DrawerScreen.SettingsScreen.icon,
-//                            contentDescription = null,
-//                        )
-//                    },
-//                ) {
-//                    Text(stringResource(id = DrawerScreen.SettingsScreen.title))
-//                }
+                NavigationDrawerItem(
+                    selected = false,
+                    onClick = {
+                        navController.navigate(DrawerPage.Home.route) {
+                            popUpTo(navController.currentDestination?.route ?: "") {
+                                inclusive = true
+                            }
+                        }
+                        val intent = Intent(context, SettingsActivity::class.java)
+                        startActivity(context, intent, null)
+                    },
+                    leadingContent = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.vector_settings),
+                            contentDescription = null,
+                        )
+                    },
+                ) {
+                    Text(stringResource(id = R.string.stashapp_settings))
+                }
             }
         },
     ) {
-        // content
-
-        val context = LocalContext.current
-
         NavHost(
             navController = navController,
             startDestination = DrawerPage.Home.route,
@@ -168,13 +185,14 @@ fun App() {
                 HomePage()
             }
             composable(route = DrawerPage.Scenes.route) {
-                Button(
-                    onClick = {
-                        Toast.makeText(context, "Scenes clicked", Toast.LENGTH_SHORT).show()
-                    },
-                ) {
-                    Text(text = "Scenes")
-                }
+                FilterGrid(StashDefaultFilter(DataType.SCENE))
+//                Button(
+//                    onClick = {
+//                        Toast.makeText(context, "Scenes clicked", Toast.LENGTH_SHORT).show()
+//                    },
+//                ) {
+//                    Text(text = "Scenes")
+//                }
             }
         }
     }

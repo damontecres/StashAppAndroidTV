@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import kotlinx.coroutines.Dispatchers
@@ -699,3 +700,7 @@ val ImageData.isGif: Boolean
     get() =
         visual_files.firstOrNull()?.onVideoFile != null &&
             visual_files.firstOrNull()?.onVideoFile!!.format == "gif"
+
+fun parseSortDirection(direction: String?): SortDirectionEnum? {
+    return SortDirectionEnum.entries.firstOrNull { it.rawValue == direction?.uppercase() }
+}

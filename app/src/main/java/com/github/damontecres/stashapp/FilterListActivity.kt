@@ -203,6 +203,9 @@ class FilterListActivity : FragmentActivity() {
                             FilterType.APP_FILTER -> {
                                 intent.getParcelableExtra("filter")
                             }
+                            FilterType.DEFAULT_FILTER -> {
+                                throw IllegalStateException()
+                            }
                         }
                     setupFragment(filterData, true)
                 } else {
