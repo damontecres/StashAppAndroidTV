@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui
 
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -73,12 +74,17 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.presenters.ImagePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.ICON_ORDER
+import com.github.damontecres.stashapp.util.ageInYears
+import com.github.damontecres.stashapp.util.concatIfNotBlank
+import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -336,10 +342,12 @@ fun RootCard(
 @Composable
 fun StashCard(item: Any) {
     val context = LocalContext.current
+    // TODO need to navigate instead
     val clicker = StashItemViewClickListener(context)
     when (item) {
         is SlimSceneData -> SceneCard(item, onClick = { clicker.onItemClicked(item) })
         is PerformerData -> PerformerCard(item, onClick = { clicker.onItemClicked(item) })
+        is ImageData -> ImageCard(item, onClick = { clicker.onItemClicked(item) })
     }
 }
 
@@ -413,7 +421,6 @@ fun SceneCard(
     )
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun PerformerCard(
@@ -437,11 +444,66 @@ fun PerformerCard(
         imageHeight = PerformerPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = item.image_path,
         title = item.name,
+        subtitle = {
+            if (item.birthdate != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val yearsOldStr = stringResource(R.string.stashapp_years_old)
+                Text(text = "${item.ageInYears} $yearsOldStr")
+            } else {
+                Text("")
+            }
+        },
         description = {
             IconRowText(dataTypeMap, item.o_counter ?: -1)
         },
         imageOverlay = {
             ImageOverlay(favorite = item.favorite)
+        },
+    )
+}
+
+@Suppress("ktlint:standard:function-naming")
+@Composable
+fun ImageCard(
+    item: ImageData,
+    onClick: (() -> Unit),
+) {
+    val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+    dataTypeMap[DataType.TAG] = item.tags.size
+    dataTypeMap[DataType.PERFORMER] = item.performers.size
+    dataTypeMap[DataType.GALLERY] = item.galleries.size
+
+    val imageUrl =
+        if (item.paths.thumbnail.isNotNullOrBlank()) {
+            item.paths.thumbnail
+        } else if (item.paths.image.isNotNullOrBlank() && !item.isImageClip) {
+            item.paths.image
+        } else {
+            null
+        }
+
+    val details = mutableListOf<String?>()
+    details.add(item.studio?.studioData?.name)
+    details.add(item.date)
+
+    RootCard(
+        modifier =
+            Modifier
+                .padding(0.dp)
+                .width(ImagePresenter.CARD_WIDTH.dp / 2),
+        onClick = onClick,
+        imageWidth = ImagePresenter.CARD_WIDTH.dp / 2,
+        imageHeight = ImagePresenter.CARD_HEIGHT.dp / 2,
+        imageUrl = imageUrl,
+        videoUrl = item.paths.preview,
+        title = item.title ?: "",
+        subtitle = {
+            Text(concatIfNotBlank(" - ", details))
+        },
+        description = {
+            IconRowText(dataTypeMap, item.o_counter ?: -1)
+        },
+        imageOverlay = {
+            ImageOverlay(rating100 = item.rating100)
         },
     )
 }

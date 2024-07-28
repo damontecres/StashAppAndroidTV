@@ -3,9 +3,11 @@ package com.github.damontecres.stashapp.ui
 import android.content.Context
 import android.os.Parcelable
 import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.DropdownMenu
@@ -23,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -340,9 +343,14 @@ fun ResolvedFilterGrid(resolvedFilter: ResolvedFilterState.Success) {
 
     val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
 
-    TvLazyVerticalGrid(columns = TvGridCells.Fixed(5)) {
+    TvLazyVerticalGrid(
+        modifier = Modifier.padding(16.dp),
+        columns = TvGridCells.Fixed(5),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         item("header", span = { TvGridItemSpan(this.maxLineSpan) }) {
-            Column {
+            Column { // TODO Box?
                 ProvideTextStyle(MaterialTheme.typography.titleLarge) {
                     val filterName =
                         if (resolvedFilter.filter.name.isNotNullOrBlank()) {

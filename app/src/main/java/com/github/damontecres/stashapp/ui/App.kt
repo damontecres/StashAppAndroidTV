@@ -210,8 +210,7 @@ fun App() {
         NavHost(
             navController = navController,
             startDestination = DrawerPage.HOME_PAGE.route,
-            modifier =
-            Modifier,
+            modifier = Modifier,
 //                    .fillMaxSize()
 //                    .padding(start = collapsedDrawerItemWidth),
         ) {

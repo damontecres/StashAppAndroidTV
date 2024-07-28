@@ -81,11 +81,10 @@ fun HomePage() {
     }
 
     TvLazyColumn(
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
         modifier =
             Modifier
-                .fillMaxSize()
-                .padding(12.dp),
+                .fillMaxSize(),
     ) {
         items(rows, key = { rows.indexOf(it) }) { row ->
             HomePageRow(row)
