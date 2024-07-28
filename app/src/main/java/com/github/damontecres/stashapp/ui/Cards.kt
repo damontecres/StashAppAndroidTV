@@ -74,15 +74,27 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.presenters.GalleryPresenter
 import com.github.damontecres.stashapp.presenters.ImagePresenter
+import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.ICON_ORDER
+import com.github.damontecres.stashapp.presenters.StudioPresenter
+import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.ageInYears
+import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -92,6 +104,8 @@ import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import java.util.EnumMap
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
@@ -346,8 +360,18 @@ fun StashCard(item: Any) {
     val clicker = StashItemViewClickListener(context)
     when (item) {
         is SlimSceneData -> SceneCard(item, onClick = { clicker.onItemClicked(item) })
+        is FullSceneData ->
+            SceneCard(
+                item.asSlimeSceneData,
+                onClick = { clicker.onItemClicked(item) },
+            )
         is PerformerData -> PerformerCard(item, onClick = { clicker.onItemClicked(item) })
         is ImageData -> ImageCard(item, onClick = { clicker.onItemClicked(item) })
+        is GalleryData -> GalleryCard(item, onClick = { clicker.onItemClicked(item) })
+        is MarkerData -> MarkerCard(item, onClick = { clicker.onItemClicked(item) })
+        is MovieData -> MovieCard(item, onClick = { clicker.onItemClicked(item) })
+        is StudioData -> StudioCard(item, onClick = { clicker.onItemClicked(item) })
+        is TagData -> TagCard(item, onClick = { clicker.onItemClicked(item) })
     }
 }
 
@@ -504,6 +528,232 @@ fun ImageCard(
         },
         imageOverlay = {
             ImageOverlay(rating100 = item.rating100)
+        },
+    )
+}
+
+@Suppress("ktlint:standard:function-naming")
+@Composable
+fun GalleryCard(
+    item: GalleryData,
+    onClick: (() -> Unit),
+) {
+    val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+    dataTypeMap[DataType.TAG] = item.tags.size
+    dataTypeMap[DataType.PERFORMER] = item.performers.size
+    dataTypeMap[DataType.SCENE] = item.scenes.size
+    dataTypeMap[DataType.IMAGE] = item.image_count
+
+    val imageUrl = item.cover?.paths?.thumbnail
+    val videoUrl = item.cover?.paths?.preview
+
+    val details = mutableListOf<String?>()
+    details.add(item.studio?.name)
+    details.add(item.date)
+
+    RootCard(
+        modifier =
+            Modifier
+                .padding(0.dp)
+                .width(GalleryPresenter.CARD_WIDTH.dp / 2),
+        onClick = onClick,
+        imageWidth = GalleryPresenter.CARD_WIDTH.dp / 2,
+        imageHeight = GalleryPresenter.CARD_HEIGHT.dp / 2,
+        imageUrl = imageUrl,
+        videoUrl = videoUrl,
+        title = item.title ?: "",
+        subtitle = {
+            Text(concatIfNotBlank(" - ", details))
+        },
+        description = {
+            IconRowText(dataTypeMap, null)
+        },
+        imageOverlay = {
+            ImageOverlay(rating100 = item.rating100)
+        },
+    )
+}
+
+@Suppress("ktlint:standard:function-naming")
+@Composable
+fun MarkerCard(
+    item: MarkerData,
+    onClick: (() -> Unit),
+) {
+    val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+    dataTypeMap[DataType.TAG] = item.tags.size
+
+    val title =
+        item.title.ifBlank {
+            item.primary_tag.tagData.name
+        } + " - ${item.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
+
+    val imageUrl = item.screenshot
+    val videoUrl = item.preview
+
+    val details = if (item.title.isNotBlank()) item.primary_tag.tagData.name else ""
+
+    RootCard(
+        modifier =
+            Modifier
+                .padding(0.dp)
+                .width(MarkerPresenter.CARD_WIDTH.dp / 2),
+        onClick = onClick,
+        imageWidth = MarkerPresenter.CARD_WIDTH.dp / 2,
+        imageHeight = MarkerPresenter.CARD_HEIGHT.dp / 2,
+        imageUrl = imageUrl,
+        videoUrl = videoUrl,
+        title = title,
+        subtitle = {
+            Text(details)
+        },
+        description = {
+            IconRowText(dataTypeMap, null)
+        },
+        imageOverlay = {},
+    )
+}
+
+@Suppress("ktlint:standard:function-naming")
+@Composable
+fun MovieCard(
+    item: MovieData,
+    onClick: (() -> Unit),
+) {
+    val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+    dataTypeMap[DataType.SCENE] = item.scene_count
+
+    val title = item.name
+    val imageUrl = item.front_image_path
+    val details = item.date ?: ""
+
+    RootCard(
+        modifier =
+            Modifier
+                .padding(0.dp)
+                .width(MoviePresenter.CARD_WIDTH.dp / 2),
+        onClick = onClick,
+        imageWidth = MoviePresenter.CARD_WIDTH.dp / 2,
+        imageHeight = MoviePresenter.CARD_HEIGHT.dp / 2,
+        imageUrl = imageUrl,
+        videoUrl = null,
+        title = title,
+        subtitle = {
+            Text(details)
+        },
+        description = {
+            IconRowText(dataTypeMap, null)
+        },
+        imageOverlay = {
+            ImageOverlay(rating100 = item.rating100)
+        },
+    )
+}
+
+@Suppress("ktlint:standard:function-naming")
+@Composable
+fun StudioCard(
+    item: StudioData,
+    onClick: (() -> Unit),
+) {
+    val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+    dataTypeMap[DataType.SCENE] = item.scene_count
+    dataTypeMap[DataType.PERFORMER] = item.performer_count
+    dataTypeMap[DataType.MOVIE] = item.movie_count
+    dataTypeMap[DataType.IMAGE] = item.image_count
+    dataTypeMap[DataType.GALLERY] = item.gallery_count
+
+    val title = item.name
+    val imageUrl = item.image_path
+    val details =
+        if (item.parent_studio != null) {
+            stringResource(R.string.stashapp_part_of, item.parent_studio.name)
+        } else {
+            ""
+        }
+
+    RootCard(
+        modifier =
+            Modifier
+                .padding(0.dp)
+                .width(StudioPresenter.CARD_WIDTH.dp / 2),
+        onClick = onClick,
+        imageWidth = StudioPresenter.CARD_WIDTH.dp / 2,
+        imageHeight = StudioPresenter.CARD_HEIGHT.dp / 2,
+        imageUrl = imageUrl,
+        videoUrl = null,
+        title = title,
+        subtitle = {
+            Text(details)
+        },
+        description = {
+            IconRowText(dataTypeMap, null)
+        },
+        imageOverlay = {
+            ImageOverlay(rating100 = item.rating100)
+        },
+    )
+}
+
+@Suppress("ktlint:standard:function-naming")
+@Composable
+fun TagCard(
+    item: TagData,
+    onClick: (() -> Unit),
+) {
+    val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
+    dataTypeMap[DataType.SCENE] = item.scene_count
+    dataTypeMap[DataType.PERFORMER] = item.performer_count
+    dataTypeMap[DataType.MARKER] = item.scene_marker_count
+    dataTypeMap[DataType.IMAGE] = item.image_count
+    dataTypeMap[DataType.GALLERY] = item.gallery_count
+
+    val title = item.name
+    val imageUrl = item.image_path
+    val details = item.description ?: ""
+
+    RootCard(
+        modifier =
+            Modifier
+                .padding(0.dp)
+                .width(TagPresenter.CARD_WIDTH.dp / 2),
+        onClick = onClick,
+        imageWidth = TagPresenter.CARD_WIDTH.dp / 2,
+        imageHeight = TagPresenter.CARD_HEIGHT.dp / 2,
+        imageUrl = imageUrl,
+        videoUrl = null,
+        title = title,
+        subtitle = {
+            Text(details)
+        },
+        description = {
+            IconRowText(dataTypeMap, null)
+        },
+        imageOverlay = {
+            ImageOverlay {
+                if (item.child_count > 0) {
+                    val parentText =
+                        stringResource(
+                            R.string.stashapp_parent_of,
+                            item.child_count.toString(),
+                        )
+                    Text(
+                        modifier = Modifier.align(Alignment.TopStart),
+                        text = parentText,
+                    )
+                }
+                if (item.parent_count > 0) {
+                    val childText =
+                        stringResource(
+                            R.string.stashapp_sub_tag_of,
+                            item.parent_count.toString(),
+                        )
+                    Text(
+                        modifier = Modifier.align(Alignment.BottomStart),
+                        text = childText,
+                    )
+                }
+            }
         },
     )
 }
