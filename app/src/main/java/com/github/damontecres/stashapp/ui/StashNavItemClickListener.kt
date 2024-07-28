@@ -41,7 +41,7 @@ class StashNavItemClickListener(
         if (item is SlimSceneData) {
             navController.navigate(DrawerPage.DATA_TYPE_PAGES[DataType.SCENE]!!.idRoute(item.id))
         } else if (item is PerformerData) {
-            navController.navigate(DrawerPage.DATA_TYPE_PAGES[DataType.PERFORMER]!!.idRoute(item.id))
+            navController.navigate(DrawerPage.dataType(DataType.PERFORMER).idRoute(item.id))
         } else if (item is TagData) {
             navController.navigate(DrawerPage.DATA_TYPE_PAGES[DataType.TAG]!!.idRoute(item.id))
         } else if (item is StudioData) {
@@ -49,7 +49,9 @@ class StashNavItemClickListener(
         } else if (item is MovieData) {
             navController.navigate(DrawerPage.DATA_TYPE_PAGES[DataType.MOVIE]!!.idRoute(item.id))
         } else if (item is MarkerData) {
-            navController.navigate(DrawerPage.DATA_TYPE_PAGES[DataType.MARKER]!!.idRoute(item.id))
+            val route =
+                Routes.playback(item.scene.videoSceneData.id, (item.seconds * 1000).toLong())
+            navController.navigate(route)
         } else if (item is ImageData) {
             // TODO handle image switches
             navController.navigate(DrawerPage.DATA_TYPE_PAGES[DataType.IMAGE]!!.idRoute(item.id))

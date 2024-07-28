@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui
 
-import android.content.Intent
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -30,7 +29,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -38,22 +36,32 @@ import androidx.navigation.activity
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
+import com.github.damontecres.stashapp.PerformerActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SceneDetailsActivity
+import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.POSITION_ARG
 import com.github.damontecres.stashapp.SearchActivity
 import com.github.damontecres.stashapp.SettingsActivity
+import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.MovieData
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashDefaultFilter
+import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.secondsMs
 
 class DrawerPage(
     val route: String,
@@ -74,6 +82,13 @@ class DrawerPage(
                 R.string.stashapp_actions_search,
             )
 
+        val SETTINGS_PAGE =
+            DrawerPage(
+                "settings",
+                R.string.fa_arrow_right_arrow_left, // Ignored
+                R.string.stashapp_settings,
+            )
+
         val DATA_TYPE_PAGES =
             buildMap {
                 DataType.entries.forEach { dataType ->
@@ -84,12 +99,31 @@ class DrawerPage(
                 }
             }
 
+        fun dataType(dataType: DataType): DrawerPage {
+            return DATA_TYPE_PAGES[dataType]!!
+        }
+
         val PAGES =
             buildList<DrawerPage> {
                 add(SEARCH_PAGE)
                 add(HOME_PAGE)
                 addAll(DATA_TYPE_PAGES.values)
+                add(SETTINGS_PAGE)
             }
+    }
+}
+
+sealed class Routes {
+    companion object {
+        val PLAYBACK =
+            "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE}}/play/{$POSITION_ARG]"
+
+        fun playback(
+            sceneId: String,
+            position: Long,
+        ): String {
+            return "${DrawerPage.dataType(DataType.SCENE).route}/$sceneId/play/$position"
+        }
     }
 }
 
@@ -176,56 +210,33 @@ fun App() {
                         NavigationDrawerItem(
                             selected = navController.currentDestination?.route == page.route,
                             onClick = {
-                                if (page == DrawerPage.SEARCH_PAGE) {
-                                    drawerState.setValue(DrawerValue.Closed)
-                                    navController.navigate(DrawerPage.SEARCH_PAGE.route) {
-                                        popUpTo(navController.currentDestination?.route ?: "") {
-                                            inclusive = true
-                                        }
-                                    }
-                                } else {
-                                    drawerState.setValue(DrawerValue.Closed)
-                                    navController.navigate(page.route) {
-                                        // remove the previous Composable from the back stack
-                                        popUpTo(navController.currentDestination?.route ?: "") {
-                                            inclusive = true
-                                        }
+                                drawerState.setValue(DrawerValue.Closed)
+                                navController.navigate(page.route) {
+                                    // remove the previous Composable from the back stack
+                                    popUpTo(navController.currentDestination?.route ?: "") {
+                                        inclusive = true
                                     }
                                 }
                             },
                             leadingContent = {
-                                Text(
-                                    stringResource(id = page.iconString),
-                                    fontFamily = fontFamily,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier,
-                                )
+                                if (page != DrawerPage.SETTINGS_PAGE) {
+                                    Text(
+                                        stringResource(id = page.iconString),
+                                        fontFamily = fontFamily,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier,
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.vector_settings),
+                                        contentDescription = null,
+                                    )
+                                }
                             },
                         ) {
                             Text(stringResource(id = page.name))
                         }
                     }
-                }
-
-                NavigationDrawerItem(
-                    selected = false,
-                    onClick = {
-                        navController.navigate(DrawerPage.HOME_PAGE.route) {
-                            popUpTo(navController.currentDestination?.route ?: "") {
-                                inclusive = true
-                            }
-                        }
-                        val intent = Intent(context, SettingsActivity::class.java)
-                        startActivity(context, intent, null)
-                    },
-                    leadingContent = {
-                        Icon(
-                            painter = painterResource(id = R.drawable.vector_settings),
-                            contentDescription = null,
-                        )
-                    },
-                ) {
-                    Text(stringResource(id = R.string.stashapp_settings))
                 }
             }
         },
@@ -241,7 +252,35 @@ fun App() {
                 val route =
                     when (item) {
                         is SlimSceneData -> {
-                            DrawerPage.DATA_TYPE_PAGES[DataType.SCENE]!!.idRoute(item.id)
+                            DrawerPage.dataType(DataType.SCENE).idRoute(item.id)
+                        }
+
+                        is GalleryData -> {
+                            DrawerPage.dataType(DataType.GALLERY).idRoute(item.id)
+                        }
+
+                        is ImageData -> {
+                            DrawerPage.dataType(DataType.IMAGE).idRoute(item.id)
+                        }
+
+                        is MarkerData -> {
+                            Routes.playback(item.scene.videoSceneData.id, item.secondsMs)
+                        }
+
+                        is MovieData -> {
+                            DrawerPage.dataType(DataType.MOVIE).idRoute(item.id)
+                        }
+
+                        is PerformerData -> {
+                            DrawerPage.dataType(DataType.PERFORMER).idRoute(item.id)
+                        }
+
+                        is StudioData -> {
+                            DrawerPage.dataType(DataType.STUDIO).idRoute(item.id)
+                        }
+
+                        is TagData -> {
+                            DrawerPage.dataType(DataType.TAG).idRoute(item.id)
                         }
 
                         else -> throw UnsupportedOperationException()
@@ -249,6 +288,9 @@ fun App() {
                 navController.navigate(route = route)
             }
 
+            composable(route = DrawerPage.HOME_PAGE.route) {
+                HomePage(itemOnClick)
+            }
             activity(route = DrawerPage.SEARCH_PAGE.route) {
                 activityClass = SearchActivity::class
                 argument(Constants.USE_NAV_CONTROLLER) {
@@ -256,39 +298,48 @@ fun App() {
                     defaultValue = true
                 }
             }
-            composable(route = DrawerPage.HOME_PAGE.route) {
-                HomePage(itemOnClick)
+            activity(route = DrawerPage.SETTINGS_PAGE.route) {
+                activityClass = SettingsActivity::class
+                argument(Constants.USE_NAV_CONTROLLER) {
+                    type = NavType.BoolType
+                    defaultValue = true
+                }
             }
             DataType.entries.forEach { dataType ->
-                val drawerPage = DrawerPage.DATA_TYPE_PAGES[dataType]!!
-
                 composable(route = dataType.name) {
                     FilterGrid(StashDefaultFilter(dataType), itemOnClick)
                 }
-                if (dataType == DataType.SCENE) {
-                    activity(
-                        route = "${drawerPage.route}/{${SceneDetailsActivity.MOVIE}}",
-                    ) {
-                        argument(SceneDetailsActivity.MOVIE) {
-                            type = NavType.StringType
-                            nullable = false
-                        }
-                        activityClass = SceneDetailsActivity::class
-                    }
-                } else {
-                    composable(
-                        route = "${dataType.name}/{id}",
-                        arguments =
-                            listOf(
-                                navArgument("id") {
-                                    type = NavType.StringType
-                                    nullable = false
-                                },
-                            ),
-                    ) {
-                        TODO()
-                    }
+            }
+
+            activity(
+                route = "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE}}",
+            ) {
+                argument(SceneDetailsActivity.MOVIE) {
+                    type = NavType.StringType
+                    nullable = false
                 }
+                activityClass = SceneDetailsActivity::class
+            }
+
+            activity(route = "${DrawerPage.dataType(DataType.PERFORMER).route}/{id}") {
+                argument("id") {
+                    type = NavType.StringType
+                    nullable = false
+                }
+                activityClass = PerformerActivity::class
+            }
+
+            activity(route = Routes.PLAYBACK) {
+                argument(SceneDetailsActivity.MOVIE) {
+                    type = NavType.StringType
+                    nullable = false
+                }
+                argument(POSITION_ARG) {
+                    type = NavType.LongType
+                    nullable = false
+                    defaultValue = 0L
+                }
+                activityClass = PlaybackActivity::class
             }
         }
     }

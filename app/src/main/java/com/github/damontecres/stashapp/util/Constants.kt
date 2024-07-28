@@ -33,6 +33,7 @@ import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -701,6 +702,9 @@ val ImageData.isGif: Boolean
     get() =
         visual_files.firstOrNull()?.onVideoFile != null &&
             visual_files.firstOrNull()?.onVideoFile!!.format == "gif"
+
+val MarkerData.secondsMs: Long
+    get() = (seconds * 1000).toLong()
 
 fun parseSortDirection(direction: String?): SortDirectionEnum? {
     return SortDirectionEnum.entries.firstOrNull { it.rawValue == direction?.uppercase() }

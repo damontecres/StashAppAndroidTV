@@ -29,7 +29,6 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.data.OCounter
-import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.playback.PlaybackActivity
@@ -59,7 +58,7 @@ class StashItemViewClickListener(
             context.startActivity(intent)
         } else if (item is PerformerData) {
             val intent = Intent(context, PerformerActivity::class.java)
-            intent.putExtra("performer", Performer(item))
+            intent.putExtra("id", item.id)
             context.startActivity(intent, null)
         } else if (item is TagData) {
             val intent = Intent(context, TagActivity::class.java)

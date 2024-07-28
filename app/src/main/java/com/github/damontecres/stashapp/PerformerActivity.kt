@@ -23,7 +23,6 @@ import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.PerformTogetherAppFilter
-import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.data.PerformerWithTagAppFilter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -45,13 +44,13 @@ import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
 class PerformerActivity : FragmentActivity() {
-    private lateinit var performer: Performer
+    private lateinit var performerId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_performer)
         if (savedInstanceState == null) {
-            performer = this.intent.getParcelableExtra("performer")!!
+            performerId = this.intent.getStringExtra("id")!!
 
             val cardSize =
                 PreferenceManager.getDefaultSharedPreferences(this)
@@ -101,7 +100,7 @@ class PerformerActivity : FragmentActivity() {
                             performers =
                                 Optional.present(
                                     MultiCriterionInput(
-                                        value = Optional.present(listOf(performer.id)),
+                                        value = Optional.present(listOf(performerId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
                                     ),
                                 ),
@@ -117,7 +116,7 @@ class PerformerActivity : FragmentActivity() {
                             performers =
                                 Optional.present(
                                     MultiCriterionInput(
-                                        value = Optional.present(listOf(performer.id)),
+                                        value = Optional.present(listOf(performerId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
                                     ),
                                 ),
@@ -133,7 +132,7 @@ class PerformerActivity : FragmentActivity() {
                             performers =
                                 Optional.present(
                                     MultiCriterionInput(
-                                        value = Optional.present(listOf(performer.id)),
+                                        value = Optional.present(listOf(performerId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
                                     ),
                                 ),
@@ -149,7 +148,7 @@ class PerformerActivity : FragmentActivity() {
                             performers =
                                 Optional.present(
                                     MultiCriterionInput(
-                                        value = Optional.present(listOf(performer.id)),
+                                        value = Optional.present(listOf(performerId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
                                     ),
                                 ),
@@ -167,7 +166,7 @@ class PerformerActivity : FragmentActivity() {
                 StashGridFragment(
                     presenter,
                     TagComparator,
-                    PerformerTagDataSupplier(performer.id),
+                    PerformerTagDataSupplier(performerId),
                     getColumns(DataType.TAG),
                 )
             } else if (position == 5) {
@@ -175,7 +174,7 @@ class PerformerActivity : FragmentActivity() {
                     ClassPresenterSelector()
                         .addClassPresenter(
                             PerformerData::class.java,
-                            PerformerPresenter(PerformTogetherLongClickCallback(performer)),
+                            PerformerPresenter(PerformTogetherLongClickCallback(performerId)),
                         )
                 StashGridFragment(
                     presenter,
@@ -185,7 +184,7 @@ class PerformerActivity : FragmentActivity() {
                             performers =
                                 Optional.present(
                                     MultiCriterionInput(
-                                        value = Optional.present(listOf(performer.id)),
+                                        value = Optional.present(listOf(performerId)),
                                         modifier = CriterionModifier.INCLUDES_ALL,
                                     ),
                                 ),
@@ -199,7 +198,7 @@ class PerformerActivity : FragmentActivity() {
         }
     }
 
-    private class PerformTogetherLongClickCallback(val performer: Performer) :
+    private class PerformTogetherLongClickCallback(val performerId: String) :
         StashPresenter.LongClickCallBack<PerformerData> {
         override fun getPopUpItems(
             context: Context,
@@ -222,8 +221,10 @@ class PerformerActivity : FragmentActivity() {
                 }
 
                 1L -> {
-                    val performerIds = listOf(performer.id, item.id)
-                    val name = "${performer.name} & ${item.name}"
+                    val performerIds = listOf(performerId, item.id)
+                    // TODO
+//                    val name = "${performer.name} & ${item.name}"
+                    val name = ""
                     val appFilter = PerformTogetherAppFilter(name, performerIds)
                     val intent = Intent(context, FilterListActivity::class.java)
                     intent.putExtra("filter", appFilter)

@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -16,7 +15,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
-import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -63,44 +61,40 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         favoriteButton = view.findViewById(R.id.favorite_button)
         favoriteButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
 
-        val performer = requireActivity().intent.getParcelableExtra<Performer>("performer")
-        if (performer != null) {
-            mPerformerName.text = performer.name
-            mPerformerDisambiguation.text = performer.disambiguation
+        val performerId = requireActivity().intent.getStringExtra("id")!!
 
-            val lock = ReentrantReadWriteLock()
-            queryEngine = QueryEngine(requireContext(), true, lock)
-            mutationEngine = MutationEngine(requireContext(), true, lock)
+        val lock = ReentrantReadWriteLock()
+        queryEngine = QueryEngine(requireContext(), true, lock)
+        mutationEngine = MutationEngine(requireContext(), true, lock)
 
-            val exceptionHandler =
-                CoroutineExceptionHandler { _, ex ->
-                    Log.e(TAG, "Error fetching data", ex)
-                    Toast.makeText(
-                        requireContext(),
-                        "Error fetching data: ${ex.message}",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-            viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                val perf = queryEngine.getPerformer(performer.id)
-                if (perf == null) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Performer not found: ${performer.id}",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                    return@launch
-                } else {
-                    updateUi(perf)
-                }
+        val exceptionHandler =
+            CoroutineExceptionHandler { _, ex ->
+                Log.e(TAG, "Error fetching data", ex)
+                Toast.makeText(
+                    requireContext(),
+                    "Error fetching data: ${ex.message}",
+                    Toast.LENGTH_LONG,
+                ).show()
             }
-        } else {
-            val intent = Intent(requireActivity(), MainActivity::class.java)
-            startActivity(intent)
+        viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
+            val perf = queryEngine.getPerformer(performerId)
+            if (perf == null) {
+                Toast.makeText(
+                    requireContext(),
+                    "Performer not found: $performerId",
+                    Toast.LENGTH_LONG,
+                ).show()
+                return@launch
+            } else {
+                updateUi(perf)
+            }
         }
     }
 
     private fun updateUi(perf: PerformerData) {
+        mPerformerName.text = perf.name
+        mPerformerDisambiguation.text = perf.disambiguation
+
         favoriteButton.isFocusable = true
         if (perf.favorite) {
             favoriteButton.setTextColor(
