@@ -70,6 +70,7 @@ object Constants {
     const val STASH_API_HEADER = "ApiKey"
     const val TAG = "Constants"
     const val OK_HTTP_CACHE_DIR = "okhttpcache"
+    const val USE_NAV_CONTROLLER = "useNavController"
 
     fun getNetworkCache(context: Context): Cache {
         val cacheSize =

@@ -11,12 +11,15 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.ui.StashNavItemClickListener
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
@@ -32,7 +35,12 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setSearchResultProvider(this)
-        setOnItemViewClickedListener(StashItemViewClickListener(requireActivity()))
+        if (requireActivity().intent.getBooleanExtra(Constants.USE_NAV_CONTROLLER, false)) {
+            val navController = findNavController()
+            setOnItemViewClickedListener(StashNavItemClickListener(navController))
+        } else {
+            setOnItemViewClickedListener(StashItemViewClickListener(requireActivity()))
+        }
     }
 
     override fun getResultsAdapter(): ObjectAdapter {

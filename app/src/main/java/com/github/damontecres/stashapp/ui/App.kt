@@ -53,6 +53,7 @@ import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashDefaultFilter
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashServer
 
 class DrawerPage(
@@ -170,11 +171,12 @@ fun App() {
                             selected = navController.currentDestination?.route == page.route,
                             onClick = {
                                 if (page == DrawerPage.SEARCH_PAGE) {
-                                    startActivity(
-                                        context,
-                                        Intent(context, SearchActivity::class.java),
-                                        null,
-                                    )
+                                    drawerState.setValue(DrawerValue.Closed)
+                                    navController.navigate(DrawerPage.SEARCH_PAGE.route) {
+                                        popUpTo(navController.currentDestination?.route ?: "") {
+                                            inclusive = true
+                                        }
+                                    }
                                 } else {
                                     drawerState.setValue(DrawerValue.Closed)
                                     navController.navigate(page.route) {
@@ -241,8 +243,12 @@ fun App() {
                 navController.navigate(route = route)
             }
 
-            composable(route = DrawerPage.SEARCH_PAGE.route) {
-                // TODO
+            activity(route = DrawerPage.SEARCH_PAGE.route) {
+                activityClass = SearchActivity::class
+                argument(Constants.USE_NAV_CONTROLLER) {
+                    type = NavType.BoolType
+                    defaultValue = true
+                }
             }
             composable(route = DrawerPage.HOME_PAGE.route) {
                 HomePage(itemOnClick)
