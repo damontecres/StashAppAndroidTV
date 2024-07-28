@@ -116,7 +116,7 @@ class DrawerPage(
 sealed class Routes {
     companion object {
         val PLAYBACK =
-            "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE}}/play/{$POSITION_ARG]"
+            "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE_ID}}/play/{$POSITION_ARG}"
 
         fun playback(
             sceneId: String,
@@ -330,7 +330,7 @@ fun App() {
             }
 
             activity(route = Routes.PLAYBACK) {
-                argument(SceneDetailsActivity.MOVIE) {
+                argument(SceneDetailsActivity.MOVIE_ID) {
                     type = NavType.StringType
                     nullable = false
                 }
