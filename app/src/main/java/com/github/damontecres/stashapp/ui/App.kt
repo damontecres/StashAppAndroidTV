@@ -4,8 +4,6 @@ import android.content.Intent
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.MarqueeAnimationMode
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -137,7 +136,12 @@ fun App() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
+                var serverFocused by remember { mutableStateOf(false) }
                 NavigationDrawerItem(
+                    modifier =
+                        Modifier.onFocusChanged {
+                            serverFocused = it.isFocused
+                        },
                     selected = false,
                     onClick = {
                         // TODO
@@ -150,8 +154,10 @@ fun App() {
                     },
                 ) {
                     Text(
-                        modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.WhileFocused),
+                        modifier =
+                            Modifier.enableMarquee(serverFocused),
                         text = StashServer.getCurrentStashServer()?.url ?: "No server",
+                        maxLines = 1,
                     )
                 }
 

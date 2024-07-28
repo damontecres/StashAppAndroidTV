@@ -8,7 +8,6 @@ import android.widget.FrameLayout
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -325,13 +324,7 @@ fun RootCard(
                         maxLines = 1,
                         modifier =
                             Modifier
-                                .then(
-                                    if (focused) {
-                                        Modifier.basicMarquee(initialDelayMillis = 250)
-                                    } else {
-                                        Modifier
-                                    },
-                                ),
+                                .enableMarquee(focused),
                     )
                 }
                 // Subtitle
