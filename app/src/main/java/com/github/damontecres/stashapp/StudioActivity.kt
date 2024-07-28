@@ -34,7 +34,7 @@ class StudioActivity : TabbedGridFragmentActivity() {
     }
 
     override fun getPagerAdapter(): PagerAdapter {
-        val studioId = this.intent.getIntExtra("studioId", -1)
+        val studioId = this.intent.getStringExtra("id")!!
         val tabTitles =
             listOf(
                 getString(DataType.SCENE.pluralStringId),
@@ -44,7 +44,7 @@ class StudioActivity : TabbedGridFragmentActivity() {
                 getString(DataType.MOVIE.pluralStringId),
                 getString(R.string.stashapp_subsidiary_studios),
             )
-        return StudioPagerAdapter(tabTitles, studioId.toString(), supportFragmentManager)
+        return StudioPagerAdapter(tabTitles, studioId, supportFragmentManager)
     }
 
     class StudioPagerAdapter(

@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -8,19 +7,15 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import com.github.damontecres.stashapp.data.Movie
+import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.views.parseTimeToString
-import kotlinx.coroutines.launch
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-class MovieFragment : Fragment(R.layout.movie_view) {
+class MovieFragment(private val movie: MovieData) : Fragment(R.layout.movie_view) {
     private lateinit var frontImage: ImageView
     private lateinit var backImage: ImageView
     private lateinit var titleText: TextView
@@ -38,42 +33,32 @@ class MovieFragment : Fragment(R.layout.movie_view) {
 
         table = view.findViewById(R.id.movie_table)
 
-        val movie = requireActivity().intent.getParcelableExtra<Movie>("movie")
-        if (movie != null) {
-            titleText.text = movie.name
-            if (movie.frontImagePath != null) {
-                configureLayout(frontImage)
-                StashGlide.with(requireActivity(), movie.frontImagePath)
-                    .optionalCenterCrop()
-                    .error(StashPresenter.glideError(requireContext()))
-                    .into(frontImage)
-            }
-            if (movie.backImagePath != null) {
-                configureLayout(backImage)
-                StashGlide.with(requireActivity(), movie.backImagePath)
-                    .optionalCenterCrop()
-                    .error(StashPresenter.glideError(requireContext()))
-                    .into(backImage)
-            }
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val queryEngine = QueryEngine(requireContext())
-                val movie = queryEngine.getMovie(movie.id)
-                addRow(
-                    R.string.stashapp_duration,
-                    movie?.duration?.toDuration(DurationUnit.MINUTES)?.toString(),
-                )
-                addRow(R.string.stashapp_date, movie?.date)
-                addRow(R.string.stashapp_studio, movie?.studio?.name)
-                addRow(R.string.stashapp_director, movie?.director)
-                addRow(R.string.stashapp_synopsis, movie?.synopsis)
-                addRow(R.string.stashapp_created_at, parseTimeToString(movie?.created_at))
-                addRow(R.string.stashapp_updated_at, parseTimeToString(movie?.updated_at))
-                table.setColumnShrinkable(1, true)
-            }
-        } else {
-            val intent = Intent(requireActivity(), MainActivity::class.java)
-            startActivity(intent)
+        titleText.text = movie.name
+        if (movie.front_image_path != null) {
+            configureLayout(frontImage)
+            StashGlide.with(requireActivity(), movie.front_image_path)
+                .optionalCenterCrop()
+                .error(StashPresenter.glideError(requireContext()))
+                .into(frontImage)
         }
+        if (movie.back_image_path != null) {
+            configureLayout(backImage)
+            StashGlide.with(requireActivity(), movie.back_image_path)
+                .optionalCenterCrop()
+                .error(StashPresenter.glideError(requireContext()))
+                .into(backImage)
+        }
+        addRow(
+            R.string.stashapp_duration,
+            movie?.duration?.toDuration(DurationUnit.MINUTES)?.toString(),
+        )
+        addRow(R.string.stashapp_date, movie?.date)
+        addRow(R.string.stashapp_studio, movie?.studio?.name)
+        addRow(R.string.stashapp_director, movie?.director)
+        addRow(R.string.stashapp_synopsis, movie?.synopsis)
+        addRow(R.string.stashapp_created_at, parseTimeToString(movie?.created_at))
+        addRow(R.string.stashapp_updated_at, parseTimeToString(movie?.updated_at))
+        table.setColumnShrinkable(1, true)
     }
 
     private fun configureLayout(view: ImageView) {

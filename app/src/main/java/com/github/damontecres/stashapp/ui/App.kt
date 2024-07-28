@@ -42,12 +42,17 @@ import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
+import com.github.damontecres.stashapp.GalleryActivity
+import com.github.damontecres.stashapp.ImageActivity
+import com.github.damontecres.stashapp.MovieActivity
 import com.github.damontecres.stashapp.PerformerActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SceneDetailsActivity
 import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.POSITION_ARG
 import com.github.damontecres.stashapp.SearchActivity
 import com.github.damontecres.stashapp.SettingsActivity
+import com.github.damontecres.stashapp.StudioActivity
+import com.github.damontecres.stashapp.TagActivity
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -123,6 +128,13 @@ sealed class Routes {
             position: Long,
         ): String {
             return "${DrawerPage.dataType(DataType.SCENE).route}/$sceneId/play/$position"
+        }
+
+        fun dataType(
+            dataType: DataType,
+            id: String,
+        ): String {
+            return "${DrawerPage.dataType(dataType).route}/$id"
         }
     }
 }
@@ -306,7 +318,7 @@ fun App() {
                 }
             }
             DataType.entries.forEach { dataType ->
-                composable(route = dataType.name) {
+                composable(route = DrawerPage.dataType(dataType).route) {
                     FilterGrid(StashDefaultFilter(dataType), itemOnClick)
                 }
             }
@@ -327,6 +339,46 @@ fun App() {
                     nullable = false
                 }
                 activityClass = PerformerActivity::class
+            }
+
+            activity(route = "${DrawerPage.dataType(DataType.GALLERY).route}/{id}") {
+                argument("id") {
+                    type = NavType.StringType
+                    nullable = false
+                }
+                activityClass = GalleryActivity::class
+            }
+
+            activity(route = "${DrawerPage.dataType(DataType.IMAGE).route}/{id}") {
+                argument("id") {
+                    type = NavType.StringType
+                    nullable = false
+                }
+                activityClass = ImageActivity::class
+            }
+
+            activity(route = "${DrawerPage.dataType(DataType.MOVIE).route}/{id}") {
+                argument("id") {
+                    type = NavType.StringType
+                    nullable = false
+                }
+                activityClass = MovieActivity::class
+            }
+
+            activity(route = "${DrawerPage.dataType(DataType.STUDIO).route}/{id}") {
+                argument("id") {
+                    type = NavType.StringType
+                    nullable = false
+                }
+                activityClass = StudioActivity::class
+            }
+
+            activity(route = "${DrawerPage.dataType(DataType.TAG).route}/{id}") {
+                argument("id") {
+                    type = NavType.StringType
+                    nullable = false
+                }
+                activityClass = TagActivity::class
             }
 
             activity(route = Routes.PLAYBACK) {

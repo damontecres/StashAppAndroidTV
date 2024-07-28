@@ -247,7 +247,7 @@ class ImageActivity : FragmentActivity() {
 
     companion object {
         const val TAG = "ImageActivity"
-        const val INTENT_IMAGE_ID = "image.id"
+        const val INTENT_IMAGE_ID = "id"
         const val INTENT_IMAGE_URL = "image.url"
         const val INTENT_IMAGE_SIZE = "image.size"
 

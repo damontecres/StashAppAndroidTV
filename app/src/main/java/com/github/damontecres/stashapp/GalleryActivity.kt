@@ -53,7 +53,6 @@ class GalleryActivity : FragmentActivity() {
         setContentView(R.layout.activity_gallery)
         if (savedInstanceState == null) {
             val galleryId = intent.getStringExtra(INTENT_GALLERY_ID)!!
-            val galleryName = intent.getStringExtra(INTENT_GALLERY_NAME)
 
             val cardSize =
                 PreferenceManager.getDefaultSharedPreferences(this)
@@ -274,7 +273,6 @@ class GalleryActivity : FragmentActivity() {
     }
 
     companion object {
-        const val INTENT_GALLERY_ID = "gallery.id"
-        const val INTENT_GALLERY_NAME = "gallery.name"
+        const val INTENT_GALLERY_ID = "id"
     }
 }

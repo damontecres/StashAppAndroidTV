@@ -29,11 +29,13 @@ import com.github.damontecres.stashapp.util.TagComparator
 
 class TagActivity : TabbedGridFragmentActivity() {
     override fun getTitleText(): CharSequence? {
-        return intent.getStringExtra("tagName")
+        // TODO
+        return null
+//        return intent.getStringExtra("tagName")
     }
 
     override fun getPagerAdapter(): PagerAdapter {
-        val tagId = intent.getStringExtra("tagId")!!
+        val tagId = intent.getStringExtra("id")!!
         val includeSubTags = intent.getBooleanExtra("includeSubTags", false)
         val tabs =
             listOf(
