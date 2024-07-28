@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui
 
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusGroup
@@ -323,18 +324,31 @@ fun App() {
                 }
             }
 
-            activity(
-                route = "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE}}",
-            ) {
+//            activity(
+//                route = "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE}}",
+//            ) {
+//                argument(SceneDetailsActivity.MOVIE) {
+//                    type = NavType.StringType
+//                    nullable = false
+//                }
+//                argument(Constants.USE_NAV_CONTROLLER) {
+//                    type = NavType.BoolType
+//                    defaultValue = true
+//                }
+//                activityClass = SceneDetailsActivity::class
+//            }
+            composable(route = "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE}}") {
                 argument(SceneDetailsActivity.MOVIE) {
                     type = NavType.StringType
                     nullable = false
                 }
-                argument(Constants.USE_NAV_CONTROLLER) {
-                    type = NavType.BoolType
-                    defaultValue = true
-                }
-                activityClass = SceneDetailsActivity::class
+                ScenePage(itemClick = { item ->
+                    Toast.makeText(
+                        context,
+                        "Item clicked ${item.javaClass.name}",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                })
             }
 
             activity(route = "${DrawerPage.dataType(DataType.PERFORMER).route}/{id}") {

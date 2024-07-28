@@ -347,5 +347,6 @@ fun StashCard(
         is MovieData -> MovieCard(item, onClick = { itemOnClick(item) })
         is StudioData -> StudioCard(item, onClick = { itemOnClick(item) })
         is TagData -> TagCard(item, onClick = { itemOnClick(item) })
+        else -> throw UnsupportedOperationException("Item with class ${item.javaClass} not supported.")
     }
 }
