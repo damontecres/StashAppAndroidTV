@@ -109,7 +109,17 @@ class PinActivity() : FragmentActivity() {
             if (requireActivity().isTaskRoot || mainDestroyed) {
                 // This is the task root when invoked from the start
                 // mainDestroyed is true when the MainActivity was destroyed, but not the entire app
-                val intent = Intent(requireContext(), MainActivity::class.java)
+
+                val mainClass =
+                    if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+                            .getBoolean(getString(R.string.pref_key_use_compose_ui), false)
+                    ) {
+                        MainComposeActivity::class.java
+                    } else {
+                        MainActivity::class.java
+                    }
+
+                val intent = Intent(requireContext(), mainClass)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(intent)
             }

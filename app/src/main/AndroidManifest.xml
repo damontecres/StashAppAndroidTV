@@ -31,7 +31,7 @@
         android:theme="@style/Theme.StashAppAndroidTV"
         android:usesCleartextTraffic="true">
         <activity
-            android:name=".RootActivity"
+            android:name=".PinActivity"
             android:banner="@mipmap/stash_logo"
             android:exported="true"
             android:icon="@mipmap/stash_logo"
@@ -45,6 +45,10 @@
         </activity>
         <activity
             android:name=".MainActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
+        <activity
+            android:name=".MainComposeActivity"
             android:exported="false"
             android:launchMode="singleTop" />
         <activity
