@@ -28,9 +28,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
@@ -45,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -111,6 +115,24 @@ fun ImageOverlay(
                         .padding(4.dp),
                 style = TextStyle(fontWeight = FontWeight.Bold),
                 text = text,
+            )
+        }
+        if (favorite) {
+            val faFontFamily =
+                FontFamily(
+                    Font(
+                        resId = R.font.fa_solid_900,
+                    ),
+                )
+            Text(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp),
+                color = colorResource(android.R.color.holo_red_light),
+                text = stringResource(R.string.fa_heart),
+                fontSize = 20.sp,
+                fontFamily = faFontFamily,
             )
         }
         content.invoke(this)
@@ -270,7 +292,9 @@ fun RootCard(
                             contentDescription = "",
                             modifier = Modifier,
                         )
-                        imageOverlay.invoke(this)
+                        if (!focused) {
+                            imageOverlay.invoke(this)
+                        }
                     }
                 }
             }
@@ -369,6 +393,20 @@ fun SceneCard(
                         style = TextStyle(fontWeight = FontWeight.Bold),
                         text = videoFile.resolutionName().toString(),
                     )
+                    if (item.resume_time != null) {
+                        val percentWatched = item.resume_time / videoFile.duration
+                        Box(
+                            modifier =
+                                Modifier
+                                    .align(Alignment.BottomStart)
+                                    .background(
+                                        androidx.compose.ui.graphics.Color.White,
+                                    )
+                                    .clip(RectangleShape)
+                                    .height(4.dp)
+                                    .width((ScenePresenter.CARD_WIDTH * percentWatched).dp / 2),
+                        )
+                    }
                 }
             }
         },
@@ -401,6 +439,9 @@ fun PerformerCard(
         title = item.name,
         description = {
             IconRowText(dataTypeMap, item.o_counter ?: -1)
+        },
+        imageOverlay = {
+            ImageOverlay(favorite = item.favorite)
         },
     )
 }
