@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -290,7 +291,8 @@ fun RootCard(
                         GlideImage(
                             model = imageUrl,
                             contentDescription = "",
-                            modifier = Modifier,
+                            contentScale = ContentScale.Crop, // TODO or ContentScale.Fit ?
+                            modifier = Modifier.fillMaxSize(),
                         )
                         if (!focused) {
                             imageOverlay.invoke(this)
