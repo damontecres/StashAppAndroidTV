@@ -34,9 +34,12 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.activity
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.NavigationDrawer
@@ -44,8 +47,10 @@ import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.SceneDetailsActivity
 import com.github.damontecres.stashapp.SearchActivity
 import com.github.damontecres.stashapp.SettingsActivity
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashDefaultFilter
 import com.github.damontecres.stashapp.util.StashServer
@@ -55,6 +60,10 @@ class DrawerPage(
     @StringRes val iconString: Int,
     @StringRes val name: Int,
 ) {
+    fun idRoute(id: String): String {
+        return "$route/$id"
+    }
+
     companion object {
         val HOME_PAGE = DrawerPage("home", R.string.fa_house, R.string.home)
 
@@ -65,15 +74,21 @@ class DrawerPage(
                 R.string.stashapp_actions_search,
             )
 
+        val DATA_TYPE_PAGES =
+            buildMap {
+                DataType.entries.forEach { dataType ->
+                    put(
+                        dataType,
+                        DrawerPage(dataType.name, dataType.iconStringId, dataType.pluralStringId),
+                    )
+                }
+            }
+
         val PAGES =
             buildList<DrawerPage> {
                 add(SEARCH_PAGE)
                 add(HOME_PAGE)
-                addAll(
-                    DataType.entries.map { dataType ->
-                        DrawerPage(dataType.name, dataType.iconStringId, dataType.pluralStringId)
-                    },
-                )
+                addAll(DATA_TYPE_PAGES.values)
             }
     }
 }
@@ -214,15 +229,53 @@ fun App() {
 //                    .fillMaxSize()
 //                    .padding(start = collapsedDrawerItemWidth),
         ) {
+            val itemOnClick = { item: Any ->
+                val route =
+                    when (item) {
+                        is SlimSceneData -> {
+                            DrawerPage.DATA_TYPE_PAGES[DataType.SCENE]!!.idRoute(item.id)
+                        }
+
+                        else -> throw UnsupportedOperationException()
+                    }
+                navController.navigate(route = route)
+            }
+
             composable(route = DrawerPage.SEARCH_PAGE.route) {
                 // TODO
             }
             composable(route = DrawerPage.HOME_PAGE.route) {
-                HomePage()
+                HomePage(itemOnClick)
             }
             DataType.entries.forEach { dataType ->
+                val drawerPage = DrawerPage.DATA_TYPE_PAGES[dataType]!!
+
                 composable(route = dataType.name) {
-                    FilterGrid(StashDefaultFilter(dataType))
+                    FilterGrid(StashDefaultFilter(dataType), itemOnClick)
+                }
+                if (dataType == DataType.SCENE) {
+                    activity(
+                        route = "${drawerPage.route}/{${SceneDetailsActivity.MOVIE}}",
+                    ) {
+                        argument(SceneDetailsActivity.MOVIE) {
+                            type = NavType.StringType
+                            nullable = false
+                        }
+                        activityClass = SceneDetailsActivity::class
+                    }
+                } else {
+                    composable(
+                        route = "${dataType.name}/{id}",
+                        arguments =
+                            listOf(
+                                navArgument("id") {
+                                    type = NavType.StringType
+                                    nullable = false
+                                },
+                            ),
+                    ) {
+                        TODO()
+                    }
                 }
             }
         }

@@ -100,7 +100,6 @@ import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.titleOrFilename
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import java.util.EnumMap
@@ -354,24 +353,25 @@ fun RootCard(
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
-fun StashCard(item: Any) {
-    val context = LocalContext.current
-    // TODO need to navigate instead
-    val clicker = StashItemViewClickListener(context)
+fun StashCard(
+    item: Any,
+    itemOnClick: (item: Any) -> Unit,
+) {
     when (item) {
-        is SlimSceneData -> SceneCard(item, onClick = { clicker.onItemClicked(item) })
+        is SlimSceneData -> SceneCard(item, onClick = { itemOnClick(item) })
         is FullSceneData ->
             SceneCard(
                 item.asSlimeSceneData,
-                onClick = { clicker.onItemClicked(item) },
+                onClick = { itemOnClick(item) },
             )
-        is PerformerData -> PerformerCard(item, onClick = { clicker.onItemClicked(item) })
-        is ImageData -> ImageCard(item, onClick = { clicker.onItemClicked(item) })
-        is GalleryData -> GalleryCard(item, onClick = { clicker.onItemClicked(item) })
-        is MarkerData -> MarkerCard(item, onClick = { clicker.onItemClicked(item) })
-        is MovieData -> MovieCard(item, onClick = { clicker.onItemClicked(item) })
-        is StudioData -> StudioCard(item, onClick = { clicker.onItemClicked(item) })
-        is TagData -> TagCard(item, onClick = { clicker.onItemClicked(item) })
+
+        is PerformerData -> PerformerCard(item, onClick = { itemOnClick(item) })
+        is ImageData -> ImageCard(item, onClick = { itemOnClick(item) })
+        is GalleryData -> GalleryCard(item, onClick = { itemOnClick(item) })
+        is MarkerData -> MarkerCard(item, onClick = { itemOnClick(item) })
+        is MovieData -> MovieCard(item, onClick = { itemOnClick(item) })
+        is StudioData -> StudioCard(item, onClick = { itemOnClick(item) })
+        is TagData -> TagCard(item, onClick = { itemOnClick(item) })
     }
 }
 

@@ -71,7 +71,7 @@ class HomePageViewModel
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
-fun HomePage() {
+fun HomePage(itemOnClick: (Any) -> Unit) {
     val viewModel = hiltViewModel<HomePageViewModel>()
 
     val rows = remember { viewModel.rows }
@@ -87,14 +87,17 @@ fun HomePage() {
                 .fillMaxSize(),
     ) {
         items(rows, key = { rows.indexOf(it) }) { row ->
-            HomePageRow(row)
+            HomePageRow(row, itemOnClick)
         }
     }
 }
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
-fun HomePageRow(row: FrontPageParser.FrontPageRow) {
+fun HomePageRow(
+    row: FrontPageParser.FrontPageRow,
+    itemOnClick: (Any) -> Unit,
+) {
     val rowData = row.data!!
     Text(text = rowData.name, modifier = Modifier.padding(top = 20.dp, bottom = 20.dp))
     TvLazyRow(
@@ -103,7 +106,7 @@ fun HomePageRow(row: FrontPageParser.FrontPageRow) {
     ) {
         items(rowData.data) { item ->
             if (item != null) {
-                StashCard(item)
+                StashCard(item, itemOnClick)
             }
         }
     }

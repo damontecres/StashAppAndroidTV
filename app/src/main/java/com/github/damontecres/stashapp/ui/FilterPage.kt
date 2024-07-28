@@ -286,7 +286,10 @@ class FilterGridViewModel
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
-fun FilterGrid(startingFilter: StashFilter) {
+fun FilterGrid(
+    startingFilter: StashFilter,
+    itemOnClick: (item: Any) -> Unit,
+) {
     Log.v(TAG, "startingFilter=$startingFilter")
     val viewModel = hiltViewModel<FilterGridViewModel>()
 
@@ -319,7 +322,7 @@ fun FilterGrid(startingFilter: StashFilter) {
             )
         }
         is ResolvedFilterState.Success -> {
-            ResolvedFilterGrid(resolvedFilterState as ResolvedFilterState.Success)
+            ResolvedFilterGrid(resolvedFilterState as ResolvedFilterState.Success, itemOnClick)
         }
     }
 }
@@ -327,7 +330,10 @@ fun FilterGrid(startingFilter: StashFilter) {
 @OptIn(ExperimentalTvFoundationApi::class)
 @Suppress("ktlint:standard:function-naming")
 @Composable
-fun ResolvedFilterGrid(resolvedFilter: ResolvedFilterState.Success) {
+fun ResolvedFilterGrid(
+    resolvedFilter: ResolvedFilterState.Success,
+    itemOnClick: (item: Any) -> Unit,
+) {
 //    val viewModel = hiltViewModel<FilterGridViewModel>()
     val pager =
         Pager(
@@ -380,7 +386,7 @@ fun ResolvedFilterGrid(resolvedFilter: ResolvedFilterState.Success) {
         items(lazyPagingItems.itemCount) { index ->
             val item = lazyPagingItems[index]
             if (item != null) {
-                StashCard(item = item)
+                StashCard(item = item, itemOnClick)
             }
         }
 
