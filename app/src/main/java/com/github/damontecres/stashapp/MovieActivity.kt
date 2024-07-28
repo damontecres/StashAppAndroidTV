@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.isNavHostActive
 import kotlinx.coroutines.launch
 
 class MovieActivity : FragmentActivity() {
@@ -53,11 +54,6 @@ class MovieActivity : FragmentActivity() {
                         ),
                         columns,
                     )
-
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.movie_fragment, MovieFragment(movie))
-                    .replace(R.id.movie_list_fragment, sceneFragment)
-                    .commitNow()
                 sceneFragment.pagingAdapter.registerObserver(
                     object : ObjectAdapter.DataObserver() {
                         override fun onChanged() {
@@ -66,6 +62,18 @@ class MovieActivity : FragmentActivity() {
                         }
                     },
                 )
+
+                if (isNavHostActive()) {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.movie_fragment, NavFragment(MovieFragment(movie)))
+                        .replace(R.id.movie_list_fragment, NavFragment(sceneFragment))
+                        .commitNow()
+                } else {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.movie_fragment, MovieFragment(movie))
+                        .replace(R.id.movie_list_fragment, sceneFragment)
+                        .commitNow()
+                }
             }
         }
     }

@@ -27,6 +27,7 @@ import com.github.damontecres.stashapp.util.MovieComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.StudioComparator
+import com.github.damontecres.stashapp.util.isNavHostActive
 
 class StudioActivity : TabbedGridFragmentActivity() {
     override fun getTitleText(): CharSequence? {
@@ -47,105 +48,111 @@ class StudioActivity : TabbedGridFragmentActivity() {
         return StudioPagerAdapter(tabTitles, studioId, supportFragmentManager)
     }
 
-    class StudioPagerAdapter(
+    inner class StudioPagerAdapter(
         tabTitles: List<String>,
         private val studioId: String,
         fm: FragmentManager,
     ) :
         ListFragmentPagerAdapter(tabTitles, fm) {
         override fun getItem(position: Int): Fragment {
-            return if (position == 0) {
-                StashGridFragment(
-                    SceneComparator,
-                    SceneDataSupplier(
-                        SceneFilterType(
-                            studios =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(studioId)),
-                                        modifier = CriterionModifier.INCLUDES,
+            val createdFragment =
+                if (position == 0) {
+                    StashGridFragment(
+                        SceneComparator,
+                        SceneDataSupplier(
+                            SceneFilterType(
+                                studios =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(studioId)),
+                                            modifier = CriterionModifier.INCLUDES,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
-            } else if (position == 1) {
-                StashGridFragment(
-                    GalleryComparator,
-                    GalleryDataSupplier(
-                        GalleryFilterType(
-                            studios =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(studioId)),
-                                        modifier = CriterionModifier.INCLUDES,
+                    )
+                } else if (position == 1) {
+                    StashGridFragment(
+                        GalleryComparator,
+                        GalleryDataSupplier(
+                            GalleryFilterType(
+                                studios =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(studioId)),
+                                            modifier = CriterionModifier.INCLUDES,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
-            } else if (position == 2) {
-                StashGridFragment(
-                    ImageComparator,
-                    ImageDataSupplier(
-                        ImageFilterType(
-                            studios =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(studioId)),
-                                        modifier = CriterionModifier.INCLUDES,
+                    )
+                } else if (position == 2) {
+                    StashGridFragment(
+                        ImageComparator,
+                        ImageDataSupplier(
+                            ImageFilterType(
+                                studios =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(studioId)),
+                                            modifier = CriterionModifier.INCLUDES,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
-            } else if (position == 3) {
-                StashGridFragment(
-                    PerformerComparator,
-                    PerformerDataSupplier(
-                        PerformerFilterType(
-                            studios =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(studioId)),
-                                        modifier = CriterionModifier.INCLUDES,
+                    )
+                } else if (position == 3) {
+                    StashGridFragment(
+                        PerformerComparator,
+                        PerformerDataSupplier(
+                            PerformerFilterType(
+                                studios =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(studioId)),
+                                            modifier = CriterionModifier.INCLUDES,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
-            } else if (position == 4) {
-                StashGridFragment(
-                    MovieComparator,
-                    MovieDataSupplier(
-                        MovieFilterType(
-                            studios =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(studioId)),
-                                        modifier = CriterionModifier.INCLUDES,
+                    )
+                } else if (position == 4) {
+                    StashGridFragment(
+                        MovieComparator,
+                        MovieDataSupplier(
+                            MovieFilterType(
+                                studios =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(studioId)),
+                                            modifier = CriterionModifier.INCLUDES,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
-            } else if (position == 5) {
-                StashGridFragment(
-                    StudioComparator,
-                    StudioDataSupplier(
-                        StudioFilterType(
-                            parents =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(studioId)),
-                                        modifier = CriterionModifier.INCLUDES,
+                    )
+                } else if (position == 5) {
+                    StashGridFragment(
+                        StudioComparator,
+                        StudioDataSupplier(
+                            StudioFilterType(
+                                parents =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(listOf(studioId)),
+                                            modifier = CriterionModifier.INCLUDES,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
+                    )
+                } else {
+                    throw IllegalStateException()
+                }
+            return if (this@StudioActivity.isNavHostActive()) {
+                NavFragment(createdFragment)
             } else {
-                throw IllegalStateException()
+                createdFragment
             }
         }
     }

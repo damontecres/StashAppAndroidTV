@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.isNavHostActive
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
@@ -72,10 +73,15 @@ class GalleryActivity : FragmentActivity() {
                 tabLayout.nextFocusDownId = R.id.gallery_view_pager
                 tabLayout.children.forEach { it.nextFocusDownId = R.id.gallery_view_pager }
                 tabLayout.children.first().requestFocus()
-
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.gallery_details, GalleryFragment(gallery))
-                    .commitNow()
+                if (isNavHostActive()) {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.gallery_details, NavFragment(GalleryFragment(gallery)))
+                        .commitNow()
+                } else {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.gallery_details, GalleryFragment(gallery))
+                        .commitNow()
+                }
             }
         }
     }
@@ -99,14 +105,39 @@ class GalleryActivity : FragmentActivity() {
         }
 
         override fun getItem(position: Int): Fragment {
-            return when (position) {
-                0 -> {
-                    val fragment =
+            val createdFragment =
+                when (position) {
+                    0 -> {
+                        val fragment =
+                            StashGridFragment(
+                                ImageComparator,
+                                ImageDataSupplier(
+                                    DataType.IMAGE.asDefaultFindFilterType,
+                                    ImageFilterType(
+                                        galleries =
+                                            Optional.present(
+                                                MultiCriterionInput(
+                                                    value = Optional.present(listOf(gallery.id)),
+                                                    modifier = CriterionModifier.INCLUDES_ALL,
+                                                ),
+                                            ),
+                                    ),
+                                ),
+                                getColumns(DataType.IMAGE),
+                            )
+                        fragment.onItemViewClickedListener =
+                            ImageGridClickedListener(this@GalleryActivity, fragment) {
+                                it.putExtra(ImageActivity.INTENT_GALLERY_ID, gallery.id)
+                            }
+                        fragment
+                    }
+
+                    1 ->
                         StashGridFragment(
-                            ImageComparator,
-                            ImageDataSupplier(
-                                DataType.IMAGE.asDefaultFindFilterType,
-                                ImageFilterType(
+                            SceneComparator,
+                            SceneDataSupplier(
+                                DataType.SCENE.asDefaultFindFilterType,
+                                SceneFilterType(
                                     galleries =
                                         Optional.present(
                                             MultiCriterionInput(
@@ -116,47 +147,29 @@ class GalleryActivity : FragmentActivity() {
                                         ),
                                 ),
                             ),
-                            getColumns(DataType.IMAGE),
+                            getColumns(DataType.SCENE),
                         )
-                    fragment.onItemViewClickedListener =
-                        ImageGridClickedListener(this@GalleryActivity, fragment) {
-                            it.putExtra(ImageActivity.INTENT_GALLERY_ID, gallery.id)
-                        }
-                    fragment
+
+                    2 ->
+                        StashGridFragment(
+                            PerformerComparator,
+                            GalleryPerformerDataSupplier(gallery),
+                            getColumns(DataType.PERFORMER),
+                        )
+
+                    3 ->
+                        StashGridFragment(
+                            TagComparator,
+                            GalleryTagDataSupplier(gallery),
+                            getColumns(DataType.TAG),
+                        )
+
+                    else -> throw IllegalArgumentException()
                 }
-                1 ->
-                    StashGridFragment(
-                        SceneComparator,
-                        SceneDataSupplier(
-                            DataType.SCENE.asDefaultFindFilterType,
-                            SceneFilterType(
-                                galleries =
-                                    Optional.present(
-                                        MultiCriterionInput(
-                                            value = Optional.present(listOf(gallery.id)),
-                                            modifier = CriterionModifier.INCLUDES_ALL,
-                                        ),
-                                    ),
-                            ),
-                        ),
-                        getColumns(DataType.SCENE),
-                    )
-
-                2 ->
-                    StashGridFragment(
-                        PerformerComparator,
-                        GalleryPerformerDataSupplier(gallery),
-                        getColumns(DataType.PERFORMER),
-                    )
-
-                3 ->
-                    StashGridFragment(
-                        TagComparator,
-                        GalleryTagDataSupplier(gallery),
-                        getColumns(DataType.TAG),
-                    )
-
-                else -> throw IllegalArgumentException()
+            return if (isNavHostActive()) {
+                NavFragment(createdFragment)
+            } else {
+                createdFragment
             }
         }
     }

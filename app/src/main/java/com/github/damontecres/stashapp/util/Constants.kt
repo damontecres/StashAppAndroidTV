@@ -709,3 +709,7 @@ val MarkerData.secondsMs: Long
 fun parseSortDirection(direction: String?): SortDirectionEnum? {
     return SortDirectionEnum.entries.firstOrNull { it.rawValue == direction?.uppercase() }
 }
+
+fun Activity.isNavHostActive(): Boolean {
+    return intent.getBooleanExtra(Constants.USE_NAV_CONTROLLER, false)
+}

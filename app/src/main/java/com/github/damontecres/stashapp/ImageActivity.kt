@@ -52,6 +52,7 @@ import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isGif
 import com.github.damontecres.stashapp.util.isImageClip
+import com.github.damontecres.stashapp.util.isNavHostActive
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.toFindFilterType
@@ -88,9 +89,15 @@ class ImageActivity : FragmentActivity() {
                     } else {
                         ImageFragment(image)
                     }
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.image_fragment, imageFragment as Fragment)
-                    .commitNow()
+                if (isNavHostActive()) {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.image_fragment, NavFragment(imageFragment as Fragment))
+                        .commitNow()
+                } else {
+                    supportFragmentManager.beginTransaction()
+                        .replace(R.id.image_fragment, imageFragment as Fragment)
+                        .commitNow()
+                }
 
                 val pageSize =
                     PreferenceManager.getDefaultSharedPreferences(this@ImageActivity)
@@ -231,9 +238,18 @@ class ImageActivity : FragmentActivity() {
                             } else {
                                 ImageFragment(image)
                             }
-                        supportFragmentManager.beginTransaction()
-                            .replace(R.id.image_fragment, imageFragment as Fragment)
-                            .commitNow()
+                        if (isNavHostActive()) {
+                            supportFragmentManager.beginTransaction()
+                                .replace(
+                                    R.id.image_fragment,
+                                    NavFragment(imageFragment as Fragment),
+                                )
+                                .commitNow()
+                        } else {
+                            supportFragmentManager.beginTransaction()
+                                .replace(R.id.image_fragment, imageFragment as Fragment)
+                                .commitNow()
+                        }
                     } else if (image == null) {
                         Toast.makeText(this@ImageActivity, "No more images", Toast.LENGTH_SHORT)
                             .show()

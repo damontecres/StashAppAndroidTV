@@ -12,6 +12,7 @@ import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
@@ -20,9 +21,11 @@ import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.ui.StashNavItemClickListener
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.isNavHostActive
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -73,7 +76,11 @@ class StashGridFragment<T : Query.Data, D : Any, C : Query.Data>(
         totalCountTextView = view.findViewById(R.id.total_count_text)
 
         if (onItemViewClickedListener == null) {
-            onItemViewClickedListener = StashItemViewClickListener(requireActivity())
+            if (requireActivity().isNavHostActive()) {
+                onItemViewClickedListener = StashNavItemClickListener(findNavController())
+            } else {
+                onItemViewClickedListener = StashItemViewClickListener(requireActivity())
+            }
         }
 
         val pageSize =

@@ -330,6 +330,10 @@ fun App() {
                     type = NavType.StringType
                     nullable = false
                 }
+                argument(Constants.USE_NAV_CONTROLLER) {
+                    type = NavType.BoolType
+                    defaultValue = true
+                }
                 activityClass = SceneDetailsActivity::class
             }
 
@@ -337,6 +341,10 @@ fun App() {
                 argument("id") {
                     type = NavType.StringType
                     nullable = false
+                }
+                argument(Constants.USE_NAV_CONTROLLER) {
+                    type = NavType.BoolType
+                    defaultValue = true
                 }
                 activityClass = PerformerActivity::class
             }
@@ -346,6 +354,10 @@ fun App() {
                     type = NavType.StringType
                     nullable = false
                 }
+                argument(Constants.USE_NAV_CONTROLLER) {
+                    type = NavType.BoolType
+                    defaultValue = true
+                }
                 activityClass = GalleryActivity::class
             }
 
@@ -353,6 +365,10 @@ fun App() {
                 argument("id") {
                     type = NavType.StringType
                     nullable = false
+                }
+                argument(Constants.USE_NAV_CONTROLLER) {
+                    type = NavType.BoolType
+                    defaultValue = true
                 }
                 activityClass = ImageActivity::class
             }
@@ -362,6 +378,10 @@ fun App() {
                     type = NavType.StringType
                     nullable = false
                 }
+                argument(Constants.USE_NAV_CONTROLLER) {
+                    type = NavType.BoolType
+                    defaultValue = true
+                }
                 activityClass = MovieActivity::class
             }
 
@@ -370,6 +390,10 @@ fun App() {
                     type = NavType.StringType
                     nullable = false
                 }
+                argument(Constants.USE_NAV_CONTROLLER) {
+                    type = NavType.BoolType
+                    defaultValue = true
+                }
                 activityClass = StudioActivity::class
             }
 
@@ -377,6 +401,10 @@ fun App() {
                 argument("id") {
                     type = NavType.StringType
                     nullable = false
+                }
+                argument(Constants.USE_NAV_CONTROLLER) {
+                    type = NavType.BoolType
+                    defaultValue = true
                 }
                 activityClass = TagActivity::class
             }
@@ -390,6 +418,10 @@ fun App() {
                     type = NavType.LongType
                     nullable = false
                     defaultValue = 0L
+                }
+                argument(Constants.USE_NAV_CONTROLLER) {
+                    type = NavType.BoolType
+                    defaultValue = true
                 }
                 activityClass = PlaybackActivity::class
             }

@@ -1,30 +1,16 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
-import android.view.View
 import androidx.fragment.app.FragmentActivity
-import androidx.navigation.fragment.NavHostFragment
-import com.github.damontecres.stashapp.util.Constants
-
-class NavFragment() : NavHostFragment() {
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-    ) {
-        super.onViewCreated(view, savedInstanceState)
-        childFragmentManager.beginTransaction()
-            .add(view.id, StashSearchFragment())
-            .commitNow()
-    }
-}
+import com.github.damontecres.stashapp.util.isNavHostActive
 
 class SearchActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
-            if (intent.getBooleanExtra(Constants.USE_NAV_CONTROLLER, false)) {
-                val navFragment = NavFragment()
+            if (isNavHostActive()) {
+                val navFragment = NavFragment(StashSearchFragment())
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.main_browse_fragment, navFragment)
                     .commitNow()

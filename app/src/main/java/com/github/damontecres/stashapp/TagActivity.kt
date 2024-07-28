@@ -26,6 +26,7 @@ import com.github.damontecres.stashapp.util.MarkerComparator
 import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.TagComparator
+import com.github.damontecres.stashapp.util.isNavHostActive
 
 class TagActivity : TabbedGridFragmentActivity() {
     override fun getTitleText(): CharSequence? {
@@ -50,7 +51,7 @@ class TagActivity : TabbedGridFragmentActivity() {
         return TabPageAdapter(tabs, tagId, includeSubTags, supportFragmentManager)
     }
 
-    class TabPageAdapter(
+    inner class TabPageAdapter(
         tabs: List<String>,
         private val tagId: String,
         private val includeSubTags: Boolean,
@@ -59,105 +60,111 @@ class TagActivity : TabbedGridFragmentActivity() {
         ListFragmentPagerAdapter(tabs, fm) {
         override fun getItem(position: Int): Fragment {
             val depth = Optional.present(if (includeSubTags) -1 else 0)
-            return if (position == 0) {
-                StashGridFragment(
-                    SceneComparator,
-                    SceneDataSupplier(
-                        SceneFilterType(
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                        depth = depth,
+            val createdFragment =
+                if (position == 0) {
+                    StashGridFragment(
+                        SceneComparator,
+                        SceneDataSupplier(
+                            SceneFilterType(
+                                tags =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(tagId)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                            depth = depth,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
-            } else if (position == 1) {
-                StashGridFragment(
-                    GalleryComparator,
-                    GalleryDataSupplier(
-                        GalleryFilterType(
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES,
-                                        depth = depth,
+                    )
+                } else if (position == 1) {
+                    StashGridFragment(
+                        GalleryComparator,
+                        GalleryDataSupplier(
+                            GalleryFilterType(
+                                tags =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(tagId)),
+                                            modifier = CriterionModifier.INCLUDES,
+                                            depth = depth,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
-            } else if (position == 2) {
-                StashGridFragment(
-                    ImageComparator,
-                    ImageDataSupplier(
-                        ImageFilterType(
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES,
-                                        depth = depth,
+                    )
+                } else if (position == 2) {
+                    StashGridFragment(
+                        ImageComparator,
+                        ImageDataSupplier(
+                            ImageFilterType(
+                                tags =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(tagId)),
+                                            modifier = CriterionModifier.INCLUDES,
+                                            depth = depth,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
-            } else if (position == 3) {
-                StashGridFragment(
-                    MarkerComparator,
-                    MarkerDataSupplier(
-                        SceneMarkerFilterType(
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                        depth = depth,
+                    )
+                } else if (position == 3) {
+                    StashGridFragment(
+                        MarkerComparator,
+                        MarkerDataSupplier(
+                            SceneMarkerFilterType(
+                                tags =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(tagId)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                            depth = depth,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
-            } else if (position == 4) {
-                StashGridFragment(
-                    PerformerComparator,
-                    PerformerDataSupplier(
-                        PerformerFilterType(
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                        depth = depth,
+                    )
+                } else if (position == 4) {
+                    StashGridFragment(
+                        PerformerComparator,
+                        PerformerDataSupplier(
+                            PerformerFilterType(
+                                tags =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(tagId)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                            depth = depth,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
-            } else if (position == 5) {
-                StashGridFragment(
-                    TagComparator,
-                    TagDataSupplier(
-                        DataType.TAG.asDefaultFindFilterType,
-                        TagFilterType(
-                            parents =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                        depth = depth,
+                    )
+                } else if (position == 5) {
+                    StashGridFragment(
+                        TagComparator,
+                        TagDataSupplier(
+                            DataType.TAG.asDefaultFindFilterType,
+                            TagFilterType(
+                                parents =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(tagId)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                            depth = depth,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                )
+                    )
+                } else {
+                    throw IllegalStateException()
+                }
+            return if (this@TagActivity.isNavHostActive()) {
+                NavFragment(createdFragment)
             } else {
-                throw IllegalStateException()
+                createdFragment
             }
         }
     }

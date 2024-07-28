@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.util.PerformerComparator
 import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.TagComparator
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.isNavHostActive
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
 class PerformerActivity : FragmentActivity() {
@@ -65,10 +66,15 @@ class PerformerActivity : FragmentActivity() {
 
             tabLayout.nextFocusDownId = R.id.performer_view_pager
             tabLayout.children.forEach { it.nextFocusDownId = R.id.performer_view_pager }
-
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.performer_details, PerformerFragment())
-                .commitNow()
+            if (isNavHostActive()) {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.performer_details, NavFragment(PerformerFragment()))
+                    .commitNow()
+            } else {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.performer_details, PerformerFragment())
+                    .commitNow()
+            }
         }
     }
 
@@ -92,108 +98,114 @@ class PerformerActivity : FragmentActivity() {
         }
 
         override fun getItem(position: Int): Fragment {
-            return if (position == 0) {
-                StashGridFragment(
-                    SceneComparator,
-                    SceneDataSupplier(
-                        SceneFilterType(
-                            performers =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(performerId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
+            val createdFragment =
+                if (position == 0) {
+                    StashGridFragment(
+                        SceneComparator,
+                        SceneDataSupplier(
+                            SceneFilterType(
+                                performers =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(listOf(performerId)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                    getColumns(DataType.SCENE),
-                )
-            } else if (position == 1) {
-                StashGridFragment(
-                    GalleryComparator,
-                    GalleryDataSupplier(
-                        GalleryFilterType(
-                            performers =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(performerId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
+                        getColumns(DataType.SCENE),
+                    )
+                } else if (position == 1) {
+                    StashGridFragment(
+                        GalleryComparator,
+                        GalleryDataSupplier(
+                            GalleryFilterType(
+                                performers =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(listOf(performerId)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                    getColumns(DataType.GALLERY),
-                )
-            } else if (position == 2) {
-                StashGridFragment(
-                    ImageComparator,
-                    ImageDataSupplier(
-                        ImageFilterType(
-                            performers =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(performerId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
+                        getColumns(DataType.GALLERY),
+                    )
+                } else if (position == 2) {
+                    StashGridFragment(
+                        ImageComparator,
+                        ImageDataSupplier(
+                            ImageFilterType(
+                                performers =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(listOf(performerId)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                    getColumns(DataType.IMAGE),
-                )
-            } else if (position == 3) {
-                StashGridFragment(
-                    MovieComparator,
-                    MovieDataSupplier(
-                        MovieFilterType(
-                            performers =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(performerId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
+                        getColumns(DataType.IMAGE),
+                    )
+                } else if (position == 3) {
+                    StashGridFragment(
+                        MovieComparator,
+                        MovieDataSupplier(
+                            MovieFilterType(
+                                performers =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(listOf(performerId)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                    getColumns(DataType.MOVIE),
-                )
-            } else if (position == 4) {
-                val presenter =
-                    ClassPresenterSelector()
-                        .addClassPresenter(
-                            TagData::class.java,
-                            TagPresenter(PerformersWithTagLongClickCallback()),
-                        )
-                StashGridFragment(
-                    presenter,
-                    TagComparator,
-                    PerformerTagDataSupplier(performerId),
-                    getColumns(DataType.TAG),
-                )
-            } else if (position == 5) {
-                val presenter =
-                    ClassPresenterSelector()
-                        .addClassPresenter(
-                            PerformerData::class.java,
-                            PerformerPresenter(PerformTogetherLongClickCallback(performerId)),
-                        )
-                StashGridFragment(
-                    presenter,
-                    PerformerComparator,
-                    PerformerDataSupplier(
-                        PerformerFilterType(
-                            performers =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(performerId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
+                        getColumns(DataType.MOVIE),
+                    )
+                } else if (position == 4) {
+                    val presenter =
+                        ClassPresenterSelector()
+                            .addClassPresenter(
+                                TagData::class.java,
+                                TagPresenter(PerformersWithTagLongClickCallback()),
+                            )
+                    StashGridFragment(
+                        presenter,
+                        TagComparator,
+                        PerformerTagDataSupplier(performerId),
+                        getColumns(DataType.TAG),
+                    )
+                } else if (position == 5) {
+                    val presenter =
+                        ClassPresenterSelector()
+                            .addClassPresenter(
+                                PerformerData::class.java,
+                                PerformerPresenter(PerformTogetherLongClickCallback(performerId)),
+                            )
+                    StashGridFragment(
+                        presenter,
+                        PerformerComparator,
+                        PerformerDataSupplier(
+                            PerformerFilterType(
+                                performers =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(listOf(performerId)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                        ),
                                     ),
-                                ),
+                            ),
                         ),
-                    ),
-                    getColumns(DataType.PERFORMER),
-                )
+                        getColumns(DataType.PERFORMER),
+                    )
+                } else {
+                    throw IllegalStateException()
+                }
+            return if (this@PerformerActivity.isNavHostActive()) {
+                NavFragment(createdFragment)
             } else {
-                throw IllegalStateException()
+                createdFragment
             }
         }
     }

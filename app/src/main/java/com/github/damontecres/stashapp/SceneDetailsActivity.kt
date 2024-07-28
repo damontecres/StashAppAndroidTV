@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
+import com.github.damontecres.stashapp.util.isNavHostActive
 
 /**
  * Details activity class that loads [SceneDetailsFragment] class.
@@ -11,9 +12,15 @@ class SceneDetailsActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_details)
         if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.details_fragment, SceneDetailsFragment())
-                .commitNow()
+            if (isNavHostActive()) {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.details_fragment, NavFragment(SceneDetailsFragment()))
+                    .commitNow()
+            } else {
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.details_fragment, SceneDetailsFragment())
+                    .commitNow()
+            }
         }
     }
 
