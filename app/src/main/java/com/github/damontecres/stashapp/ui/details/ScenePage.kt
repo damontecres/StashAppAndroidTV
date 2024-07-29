@@ -5,6 +5,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,6 +40,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SceneDetailsActivity
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.playback.CodecSupport
@@ -103,12 +105,21 @@ class SceneViewModel
             val results = queryEngine.findPerformers(performerIds = ids)
             _performers.addAll(results)
         }
+
+        private val _galleries = mutableStateListOf<GalleryData>()
+        val galleries: SnapshotStateList<GalleryData> get() = _galleries
+
+        suspend fun fetchGalleries(scene: FullSceneData) {
+            val ids = scene.galleries.map { it.id }
+            val results = queryEngine.getGalleries(ids)
+            _galleries.addAll(results)
+        }
     }
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun ScenePage(
-    itemClick: (Any) -> Unit,
+    itemOnClick: (Any) -> Unit,
     viewModel: SceneViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -125,10 +136,11 @@ fun ScenePage(
         is SceneUiState.Success -> {
             LaunchedEffect(Unit) {
                 viewModel.fetchPerformers(s.scene)
+                viewModel.fetchGalleries(s.scene)
             }
             SceneDetails(
                 s.scene,
-                itemClick,
+                itemOnClick,
                 Modifier
                     .fillMaxSize()
                     .animateContentSize(),
@@ -142,7 +154,7 @@ fun ScenePage(
 @Composable
 private fun SceneDetails(
     scene: FullSceneData,
-    itemClick: (Any) -> Unit,
+    itemOnClick: (Any) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SceneViewModel = hiltViewModel(),
 ) {
@@ -239,8 +251,8 @@ private fun SceneDetails(
             .joinToString("\n")
 
     TvLazyColumn(
-        contentPadding = PaddingValues(bottom = 135.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier =
             modifier
                 .focusGroup(),
@@ -294,25 +306,60 @@ private fun SceneDetails(
                 }
             }
         }
-//        private const val MARKER_POS = DETAILS_POS + 1
-//        private const val MOVIE_POS = MARKER_POS + 1
-//        private const val STUDIO_POS = MOVIE_POS + 1
-//        private const val PERFORMER_POS = STUDIO_POS + 1
-//        private const val TAG_POS = PERFORMER_POS + 1
-//        private const val GALLERY_POS = TAG_POS + 1
-//        private const val ACTIONS_POS = GALLERY_POS + 1
+        // Markers
         item {
             ItemRow(
                 name = stringResource(R.string.stashapp_markers),
                 items = scene.scene_markers.map { convertMarker(scene, it) },
-                itemClick,
+                itemOnClick,
             )
         }
-        item {
-            ItemRow(name = stringResource(R.string.stashapp_performers), items = viewModel.performers, itemClick)
+
+        // Studio
+        if (scene.studio != null) {
+            item {
+                ItemRow(
+                    name = stringResource(R.string.stashapp_studio),
+                    items = listOf(scene.studio.studioData),
+                    itemOnClick,
+                )
+            }
         }
+
+        // Movies
         item {
-            ItemRow(name = stringResource(R.string.stashapp_tags), items = scene.tags.map { it.tagData }, itemClick)
+            ItemRow(
+                name = stringResource(R.string.stashapp_movies),
+                items = scene.movies.sortedBy { it.scene_index }.map { it.movie.movieData },
+                itemOnClick,
+            )
+        }
+
+        // Performers
+        item {
+            ItemRow(
+                name = stringResource(R.string.stashapp_performers),
+                items = viewModel.performers,
+                itemOnClick,
+            )
+        }
+
+        // Tags
+        item {
+            ItemRow(
+                name = stringResource(R.string.stashapp_tags),
+                items = scene.tags.map { it.tagData },
+                itemOnClick,
+            )
+        }
+
+        // Galleries
+        item {
+            ItemRow(
+                name = stringResource(R.string.stashapp_galleries),
+                items = viewModel.galleries,
+                itemOnClick,
+            )
         }
     }
 }
@@ -325,19 +372,24 @@ fun ItemRow(
     itemOnClick: (Any) -> Unit,
 ) {
     if (items.isNotEmpty()) {
-        Text(
-            modifier = Modifier.padding(top = 20.dp, bottom = 20.dp),
-            text = name,
-        )
-        TvLazyRow(
-            modifier =
-                Modifier
-                    .focusGroup()
-                    .fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            items(items) { item ->
-                StashCard(item, itemOnClick)
+        Column {
+            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                Text(
+                    modifier = Modifier.padding(top = 20.dp, bottom = 10.dp, start = 16.dp),
+                    text = name,
+                )
+            }
+            TvLazyRow(
+                contentPadding = PaddingValues(start = 16.dp),
+                modifier =
+                    Modifier
+                        .focusGroup()
+                        .fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                items(items) { item ->
+                    StashCard(item, itemOnClick)
+                }
             }
         }
     }

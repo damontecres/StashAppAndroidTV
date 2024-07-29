@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.ui
 
 import android.util.Log
-import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusGroup
@@ -56,7 +55,6 @@ import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.POSITION_A
 import com.github.damontecres.stashapp.SearchActivity
 import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.StudioActivity
-import com.github.damontecres.stashapp.TagActivity
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -69,6 +67,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashDefaultFilter
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.ui.details.ScenePage
+import com.github.damontecres.stashapp.ui.details.TagPage
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.secondsMs
@@ -305,7 +304,8 @@ fun App() {
 
                         else -> throw UnsupportedOperationException()
                     }
-                navController.navigate(route = route)
+                navController.navigate(route = route) {
+                }
             }
 
             composable(route = DrawerPage.HOME_PAGE.route) {
@@ -331,31 +331,12 @@ fun App() {
                 }
             }
 
-//            activity(
-//                route = "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE}}",
-//            ) {
-//                argument(SceneDetailsActivity.MOVIE) {
-//                    type = NavType.StringType
-//                    nullable = false
-//                }
-//                argument(Constants.USE_NAV_CONTROLLER) {
-//                    type = NavType.BoolType
-//                    defaultValue = true
-//                }
-//                activityClass = SceneDetailsActivity::class
-//            }
             composable(route = "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE}}") {
                 argument(SceneDetailsActivity.MOVIE) {
                     type = NavType.StringType
                     nullable = false
                 }
-                ScenePage(itemClick = { item ->
-                    Toast.makeText(
-                        context,
-                        "Item clicked ${item.javaClass.name}",
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                })
+                ScenePage(itemOnClick = itemOnClick)
             }
 
             activity(route = "${DrawerPage.dataType(DataType.PERFORMER).route}/{id}") {
@@ -418,16 +399,12 @@ fun App() {
                 activityClass = StudioActivity::class
             }
 
-            activity(route = "${DrawerPage.dataType(DataType.TAG).route}/{id}") {
+            composable(route = "${DrawerPage.dataType(DataType.TAG).route}/{id}") {
                 argument("id") {
                     type = NavType.StringType
                     nullable = false
                 }
-                argument(Constants.USE_NAV_CONTROLLER) {
-                    type = NavType.BoolType
-                    defaultValue = true
-                }
-                activityClass = TagActivity::class
+                TagPage(itemOnClick)
             }
 
             activity(route = Routes.PLAYBACK) {

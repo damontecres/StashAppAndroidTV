@@ -6,6 +6,8 @@ import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
@@ -23,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -323,7 +324,10 @@ fun FilterGrid(
             )
         }
         is ResolvedFilterState.Success -> {
-            ResolvedFilterGrid(resolvedFilterState as ResolvedFilterState.Success, itemOnClick)
+            ResolvedFilterGrid(
+                resolvedFilterState as ResolvedFilterState.Success,
+                itemOnClick = itemOnClick,
+            )
         }
     }
 }
@@ -333,6 +337,9 @@ fun FilterGrid(
 @Composable
 fun ResolvedFilterGrid(
     resolvedFilter: ResolvedFilterState.Success,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
+    showHeader: Boolean = true,
     itemOnClick: (item: Any) -> Unit,
 ) {
 //    val viewModel = hiltViewModel<FilterGridViewModel>()
@@ -351,26 +358,31 @@ fun ResolvedFilterGrid(
     val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
 
     TvLazyVerticalGrid(
-        modifier = Modifier.padding(16.dp),
+        modifier =
+            modifier
+                .padding(16.dp)
+                .fillMaxSize(),
         columns = TvGridCells.Fixed(5),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item("header", span = { TvGridItemSpan(this.maxLineSpan) }) {
-            Column { // TODO Box?
-                ProvideTextStyle(MaterialTheme.typography.titleLarge) {
-                    val filterName =
-                        if (resolvedFilter.filter.name.isNotNullOrBlank()) {
-                            resolvedFilter.filter.name
-                        } else {
-                            stringResource(id = resolvedFilter.filter.dataType.pluralStringId)
-                        }
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = filterName,
-                    )
+        if (showHeader) {
+            item("header", span = { TvGridItemSpan(this.maxLineSpan) }) {
+                Column { // TODO Box?
+                    ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                        val filterName =
+                            if (resolvedFilter.filter.name.isNotNullOrBlank()) {
+                                resolvedFilter.filter.name
+                            } else {
+                                stringResource(id = resolvedFilter.filter.dataType.pluralStringId)
+                            }
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = filterName,
+                        )
+                    }
+                    SavedFilterDropDown()
                 }
-                SavedFilterDropDown()
             }
         }
         if (lazyPagingItems.loadState.refresh == LoadState.Loading) {
@@ -414,7 +426,6 @@ fun ResolvedFilterGrid(
 @Composable
 fun SavedFilterDropDown() {
     val viewModel = hiltViewModel<FilterGridViewModel>()
-    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
 
     Box(

@@ -88,7 +88,7 @@ fun HomePage(itemOnClick: (Any) -> Unit) {
 
     TvLazyColumn(
         verticalArrangement = Arrangement.spacedBy(20.dp),
-//        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(bottom = 75.dp),
         modifier =
             Modifier
                 .fillMaxSize(),
