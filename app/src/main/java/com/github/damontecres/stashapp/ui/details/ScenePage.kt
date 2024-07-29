@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.ui
+package com.github.damontecres.stashapp.ui.details
 
 import android.content.Context
 import androidx.compose.animation.animateContentSize
