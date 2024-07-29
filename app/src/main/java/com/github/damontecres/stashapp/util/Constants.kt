@@ -34,10 +34,12 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
+import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
@@ -712,4 +714,80 @@ fun parseSortDirection(direction: String?): SortDirectionEnum? {
 
 fun Activity.isNavHostActive(): Boolean {
     return intent.getBooleanExtra(Constants.USE_NAV_CONTROLLER, false)
+}
+
+fun getDataType(item: Any): DataType {
+    return when (item) {
+        is SlimSceneData -> {
+            DataType.SCENE
+        }
+
+        is GalleryData -> {
+            DataType.GALLERY
+        }
+
+        is ImageData -> {
+            DataType.IMAGE
+        }
+
+        is MarkerData -> {
+            DataType.MARKER
+        }
+
+        is MovieData -> {
+            DataType.MOVIE
+        }
+
+        is PerformerData -> {
+            DataType.PERFORMER
+        }
+
+        is StudioData -> {
+            DataType.STUDIO
+        }
+
+        is TagData -> {
+            DataType.TAG
+        }
+
+        else -> throw IllegalArgumentException("Item of type ${item.javaClass} is not supported")
+    }
+}
+
+fun getId(item: Any): String {
+    return when (item) {
+        is SlimSceneData -> {
+            item.id
+        }
+
+        is GalleryData -> {
+            item.id
+        }
+
+        is ImageData -> {
+            item.id
+        }
+
+        is MarkerData -> {
+            item.id
+        }
+
+        is MovieData -> {
+            item.id
+        }
+
+        is PerformerData -> {
+            item.id
+        }
+
+        is StudioData -> {
+            item.id
+        }
+
+        is TagData -> {
+            item.id
+        }
+
+        else -> throw IllegalArgumentException("Item of type ${item.javaClass} is not supported")
+    }
 }

@@ -2,34 +2,16 @@ package com.github.damontecres.stashapp.ui.details
 
 import android.content.Context
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.ProvideTextStyle
-import androidx.tv.material3.Tab
-import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
@@ -52,9 +34,7 @@ import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.TagDataSupplier
-import com.github.damontecres.stashapp.ui.ResolvedFilter
-import com.github.damontecres.stashapp.ui.ResolvedFilterGrid
-import com.github.damontecres.stashapp.ui.ResolvedFilterState
+import com.github.damontecres.stashapp.ui.TabbedFilterGrid
 import com.github.damontecres.stashapp.util.QueryEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -119,93 +99,26 @@ fun TagPage(
         }
 
         is TagUiState.Success -> {
-            LaunchedEffect(Unit) {
-            }
-            TagDetails(
-                s.tag,
-                itemOnClick,
-                Modifier
-                    .fillMaxSize()
-                    .animateContentSize(),
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Suppress("ktlint:standard:function-naming")
-@Composable
-fun TagDetails(
-    tag: TagData,
-    itemOnClick: (Any) -> Unit,
-    modifier: Modifier,
-) {
-    val tabs =
-        listOf(
-            stringResource(DataType.SCENE.pluralStringId),
-            stringResource(DataType.GALLERY.pluralStringId),
-            stringResource(DataType.IMAGE.pluralStringId),
-            stringResource(DataType.MARKER.pluralStringId),
-            stringResource(DataType.PERFORMER.pluralStringId),
-            stringResource(R.string.stashapp_sub_tags),
-        )
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
-
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize(),
-    ) {
-        Column {
-            ProvideTextStyle(MaterialTheme.typography.headlineLarge) {
-                Text(
-                    text = tag.name,
-                    modifier =
-                        Modifier
-                            .align(Alignment.CenterHorizontally),
+            val tabs =
+                listOf(
+                    stringResource(DataType.SCENE.pluralStringId),
+                    stringResource(DataType.GALLERY.pluralStringId),
+                    stringResource(DataType.IMAGE.pluralStringId),
+                    stringResource(DataType.MARKER.pluralStringId),
+                    stringResource(DataType.PERFORMER.pluralStringId),
+                    stringResource(R.string.stashapp_sub_tags),
                 )
-            }
-            // https://developer.android.com/reference/kotlin/androidx/tv/material3/package-summary#TabRow(kotlin.Int,androidx.compose.ui.Modifier,androidx.compose.ui.graphics.Color,androidx.compose.ui.graphics.Color,kotlin.Function0,kotlin.Function2,kotlin.Function1)
-            // TODO center tabs?
-            TabRow(
-                selectedTabIndex = selectedTabIndex,
+            TabbedFilterGrid(
+                name = s.tag.name,
+                tabs = tabs,
+                contentProvider = { index ->
+                    getPagingSource(index, s.tag)
+                },
+                itemOnClick = itemOnClick,
                 modifier =
                     Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .fillMaxWidth()
-                        .focusRestorer(),
-            ) {
-                tabs.forEachIndexed { index, tab ->
-                    key(index) {
-                        Tab(
-                            selected = index == selectedTabIndex,
-                            onFocus = { selectedTabIndex = index },
-                            modifier =
-                                Modifier
-                                    .align(Alignment.CenterHorizontally),
-                        ) {
-                            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                                Text(
-                                    text = tab,
-                                    modifier =
-                                        Modifier.padding(
-                                            horizontal = 16.dp,
-                                            vertical = 6.dp,
-                                        ),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            val resolvedFilter =
-                ResolvedFilterState.Success(ResolvedFilter(DataType.TAG), getPagingSource(selectedTabIndex, tag))
-            ResolvedFilterGrid(
-                resolvedFilter,
-                showHeader = false,
-                itemOnClick = itemOnClick,
-                contentPadding = PaddingValues(top = 16.dp),
-                modifier = Modifier,
+                        .fillMaxSize()
+                        .animateContentSize(),
             )
         }
     }

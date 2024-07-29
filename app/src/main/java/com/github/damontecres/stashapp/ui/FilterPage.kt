@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.ui
 import android.content.Context
 import android.os.Parcelable
 import android.util.Log
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -356,12 +359,15 @@ fun ResolvedFilterGrid(
     Log.v("ResolvedFilterGrid", "resolvedFilter.filter.name=${resolvedFilter.filter.name}")
 
     val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
+    val focusRequester = remember { FocusRequester() }
 
     TvLazyVerticalGrid(
         modifier =
             modifier
                 .padding(16.dp)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .focusGroup()
+                .focusRequester(focusRequester),
         columns = TvGridCells.Fixed(5),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -395,11 +401,26 @@ fun ResolvedFilterGrid(
                             .wrapContentWidth(Alignment.CenterHorizontally),
                 )
             }
+        } else if (lazyPagingItems.itemCount == 0) {
+            item {
+                Text(
+                    text = "No items found",
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .wrapContentWidth(Alignment.CenterHorizontally),
+                )
+            }
         }
+
         items(lazyPagingItems.itemCount) { index ->
             val item = lazyPagingItems[index]
             if (item != null) {
                 StashCard(item = item, itemOnClick)
+            }
+            // TODO is this inefficient?
+            if (index == 0) {
+                focusRequester.requestFocus()
             }
         }
 

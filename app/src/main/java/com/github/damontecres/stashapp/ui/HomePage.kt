@@ -11,7 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -40,7 +43,8 @@ class HomePageViewModel
     constructor(
         private val queryRepository: QueryRepository,
     ) : ViewModel() {
-        val rows = mutableStateListOf<FrontPageParser.FrontPageRow>()
+        private val _rows = mutableStateListOf<FrontPageParser.FrontPageRow>()
+        val rows: SnapshotStateList<FrontPageParser.FrontPageRow> get() = _rows
 
         suspend fun fetchFrontPage() {
             val config = queryRepository.getServerConfiguration()
@@ -68,7 +72,7 @@ class HomePageViewModel
                 frontPageParser.parse(frontPageContent).forEach { deferredRow ->
                     val result = deferredRow.await()
                     if (result.successful) {
-                        rows.add(result)
+                        _rows.add(result)
                     }
                 }
             }
@@ -81,6 +85,7 @@ fun HomePage(itemOnClick: (Any) -> Unit) {
     val viewModel = hiltViewModel<HomePageViewModel>()
 
     val rows = remember { viewModel.rows }
+    val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
         viewModel.fetchFrontPage()
@@ -91,12 +96,17 @@ fun HomePage(itemOnClick: (Any) -> Unit) {
         contentPadding = PaddingValues(bottom = 75.dp),
         modifier =
             Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .focusGroup()
+                .focusRequester(focusRequester),
     ) {
         items(rows, key = { rows.indexOf(it) }) { row ->
             HomePageRow(row, itemOnClick)
         }
     }
+//    if (rows.isNotEmpty()) {
+//        focusRequester.requestFocus()
+//    }
 }
 
 @Suppress("ktlint:standard:function-naming")

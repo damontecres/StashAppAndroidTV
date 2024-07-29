@@ -13,14 +13,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -38,11 +42,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.tv.material3.DrawerValue
-import androidx.tv.material3.Glow
 import androidx.tv.material3.Icon
 import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
-import androidx.tv.material3.NavigationDrawerItemDefaults
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import com.github.damontecres.stashapp.GalleryActivity
@@ -55,14 +57,7 @@ import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.POSITION_A
 import com.github.damontecres.stashapp.SearchActivity
 import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.StudioActivity
-import com.github.damontecres.stashapp.api.fragment.GalleryData
-import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
-import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.api.fragment.StudioData
-import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashDefaultFilter
 import com.github.damontecres.stashapp.playback.PlaybackActivity
@@ -70,9 +65,13 @@ import com.github.damontecres.stashapp.ui.details.ScenePage
 import com.github.damontecres.stashapp.ui.details.TagPage
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getDataType
+import com.github.damontecres.stashapp.util.getId
 import com.github.damontecres.stashapp.util.secondsMs
 
-class DrawerPage(
+private const val TAG = "Compose.App"
+
+data class DrawerPage(
     val route: String,
     @StringRes val iconString: Int,
     @StringRes val name: Int,
@@ -147,7 +146,7 @@ class AppViewModel : ViewModel() {
     val currentServer = mutableStateOf<StashServer?>(StashServer.getCurrentStashServer())
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun App() {
@@ -173,6 +172,8 @@ fun App() {
     val paddingValue = 12.dp
 
     val navController = rememberNavController()
+    val focusRequester = remember { FocusRequester() }
+    val focusRequesters = remember { DrawerPage.PAGES.associateWith { FocusRequester() } }
 
     NavigationDrawer(
         drawerState = drawerState,
@@ -182,7 +183,28 @@ fun App() {
                     .focusGroup()
                     .fillMaxHeight()
                     .padding(4.dp)
-                    .width(if (drawerState.currentValue == DrawerValue.Closed) collapsedDrawerItemWidth else Dp.Unspecified),
+                    .width(if (drawerState.currentValue == DrawerValue.Closed) collapsedDrawerItemWidth else Dp.Unspecified)
+                    .focusRequester(focusRequester)
+                    .focusProperties {
+                        enter = { focusDirection ->
+                            if (focusDirection == FocusDirection.Left) {
+                                val currentPage =
+                                    DrawerPage.PAGES.firstOrNull { page ->
+                                        navController.currentDestination?.route?.startsWith(
+                                            page.route,
+                                        ) ?: false
+                                    }
+                                Log.v(TAG, "focus enter currentPage=$currentPage")
+                                if (currentPage != null) {
+                                    focusRequesters[currentPage]!!
+                                } else {
+                                    focusRequesters[DrawerPage.HOME_PAGE]!!
+                                }
+                            } else {
+                                FocusRequester.Default
+                            }
+                        }
+                    },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
             ) {
@@ -214,22 +236,27 @@ fun App() {
                 // Group of item with same padding
 
                 LazyColumn(
-                    contentPadding = PaddingValues(8.dp),
+                    contentPadding = PaddingValues(0.dp),
                     modifier =
                         Modifier
                             .selectableGroup(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
+                    verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
                 ) {
-                    Log.v("App", "DrawerPage.PAGES=${DrawerPage.PAGES}")
+                    Log.v(TAG, "DrawerPage.PAGES=${DrawerPage.PAGES}")
                     items(DrawerPage.PAGES, key = { it.route }) { page ->
                         NavigationDrawerItem(
-                            modifier = Modifier,
-                            shape = NavigationDrawerItemDefaults.shape(shape = RoundedCornerShape(50)),
-                            glow = NavigationDrawerItemDefaults.glow(Glow.None),
-                            selected = navController.currentDestination?.route == page.route,
+                            modifier =
+                                Modifier
+                                    .focusRequester(focusRequesters[page]!!),
+                            //                            shape = NavigationDrawerItemDefaults.shape(shape = RoundedCornerShape(50)),
+//                            glow = NavigationDrawerItemDefaults.glow(Glow.None),
+                            selected =
+                                navController.currentDestination?.route?.startsWith(page.route)
+                                    ?: false,
                             onClick = {
                                 drawerState.setValue(DrawerValue.Closed)
+                                Log.v(TAG, "Navigating to ${page.route}")
                                 navController.navigate(page.route) {
                                     // remove the previous Composable from the back stack
                                     popUpTo(navController.currentDestination?.route ?: "") {
@@ -268,41 +295,14 @@ fun App() {
 //                    .padding(start = collapsedDrawerItemWidth),
         ) {
             val itemOnClick = { item: Any ->
+                val dataType = getDataType(item)
+
                 val route =
-                    when (item) {
-                        is SlimSceneData -> {
-                            DrawerPage.dataType(DataType.SCENE).idRoute(item.id)
-                        }
-
-                        is GalleryData -> {
-                            DrawerPage.dataType(DataType.GALLERY).idRoute(item.id)
-                        }
-
-                        is ImageData -> {
-                            DrawerPage.dataType(DataType.IMAGE).idRoute(item.id)
-                        }
-
-                        is MarkerData -> {
-                            Routes.playback(item.scene.videoSceneData.id, item.secondsMs)
-                        }
-
-                        is MovieData -> {
-                            DrawerPage.dataType(DataType.MOVIE).idRoute(item.id)
-                        }
-
-                        is PerformerData -> {
-                            DrawerPage.dataType(DataType.PERFORMER).idRoute(item.id)
-                        }
-
-                        is StudioData -> {
-                            DrawerPage.dataType(DataType.STUDIO).idRoute(item.id)
-                        }
-
-                        is TagData -> {
-                            DrawerPage.dataType(DataType.TAG).idRoute(item.id)
-                        }
-
-                        else -> throw UnsupportedOperationException()
+                    if (dataType == DataType.MARKER) {
+                        item as MarkerData
+                        Routes.playback(item.scene.videoSceneData.id, item.secondsMs)
+                    } else {
+                        Routes.dataType(dataType, getId(item))
                     }
                 navController.navigate(route = route) {
                 }
