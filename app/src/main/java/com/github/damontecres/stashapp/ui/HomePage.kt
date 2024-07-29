@@ -2,6 +2,8 @@ package com.github.damontecres.stashapp.ui
 
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -15,6 +17,8 @@ import androidx.lifecycle.ViewModel
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.TvLazyRow
 import androidx.tv.foundation.lazy.list.items
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
@@ -83,6 +87,7 @@ fun HomePage(itemOnClick: (Any) -> Unit) {
 
     TvLazyColumn(
         verticalArrangement = Arrangement.spacedBy(20.dp),
+//        contentPadding = PaddingValues(16.dp),
         modifier =
             Modifier
                 .fillMaxSize(),
@@ -100,14 +105,24 @@ fun HomePageRow(
     itemOnClick: (Any) -> Unit,
 ) {
     val rowData = row.data!!
-    Text(text = rowData.name, modifier = Modifier.padding(top = 20.dp, bottom = 20.dp))
-    TvLazyRow(
-        modifier = Modifier.focusGroup(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        items(rowData.data) { item ->
-            if (item != null) {
-                StashCard(item, itemOnClick)
+    Column(modifier = Modifier) {
+        ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+            Text(
+                modifier = Modifier.padding(top = 20.dp, bottom = 10.dp, start = 16.dp),
+                text = rowData.name,
+            )
+        }
+        TvLazyRow(
+            modifier =
+                Modifier
+                    .focusGroup(),
+            contentPadding = PaddingValues(start = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            items(rowData.data) { item ->
+                if (item != null) {
+                    StashCard(item, itemOnClick)
+                }
             }
         }
     }

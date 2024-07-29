@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,9 +39,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.tv.material3.DrawerValue
+import androidx.tv.material3.Glow
 import androidx.tv.material3.Icon
 import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
+import androidx.tv.material3.NavigationDrawerItemDefaults
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import com.github.damontecres.stashapp.GalleryActivity
@@ -166,7 +169,7 @@ fun App() {
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
-    val collapsedDrawerItemWidth = 56.dp
+    val collapsedDrawerItemWidth = 48.dp
     val paddingValue = 12.dp
 
     val navController = rememberNavController()
@@ -221,6 +224,9 @@ fun App() {
                     Log.v("App", "DrawerPage.PAGES=${DrawerPage.PAGES}")
                     items(DrawerPage.PAGES, key = { it.route }) { page ->
                         NavigationDrawerItem(
+                            modifier = Modifier,
+                            shape = NavigationDrawerItemDefaults.shape(shape = RoundedCornerShape(50)),
+                            glow = NavigationDrawerItemDefaults.glow(Glow.None),
                             selected = navController.currentDestination?.route == page.route,
                             onClick = {
                                 drawerState.setValue(DrawerValue.Closed)
