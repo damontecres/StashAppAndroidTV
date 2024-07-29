@@ -238,6 +238,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<SeekBarPreference>("skip_back_time")!!.min = 5
             findPreference<SeekBarPreference>("skip_forward_time")!!.min = 5
 
+            val uiPreferences = findPreference<Preference>("uiPreferences")!!
+            uiPreferences.setOnPreferenceClickListener {
+                startPreferenceFragmentFunc(UiPreferencesFragment())
+                true
+            }
+
             val advancedPreferences = findPreference<Preference>("advancedPreferences")!!
             advancedPreferences.setOnPreferenceClickListener {
                 startPreferenceFragmentFunc(AdvancedPreferencesFragment())
@@ -324,6 +330,15 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             const val SERVER_PREF_PREFIX = "server_"
             const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
+        }
+    }
+
+    class UiPreferencesFragment : LeanbackPreferenceFragmentCompat() {
+        override fun onCreatePreferences(
+            savedInstanceState: Bundle?,
+            rootKey: String?,
+        ) {
+            setPreferencesFromResource(R.xml.ui_preferences, rootKey)
         }
     }
 

@@ -15,4 +15,15 @@
     <string name="pref_key_show_playback_debug_info" translatable="false">playback.showDebugInfo</string>
     <string name="pref_key_experimental_features" translatable="false">playback.experimentalFeatures</string>
     <string name="pref_key_use_compose_ui" translatable="false">useComposeUI</string>
+
+    <string name="pref_key_ui_theme_dark_appearance" translatable="false">ui.theme.darkAppearance</string>
+
+    <string name="ui_theme_dark_appearance_choice_default">System</string>
+    <string name="ui_theme_dark_appearance_choice_light">Light</string>
+    <string name="ui_theme_dark_appearance_choice_dark">Dark</string>
+    <string-array name="ui_theme_dark_appearance_choices">
+        <item>@string/ui_theme_dark_appearance_choice_default</item>
+        <item>@string/ui_theme_dark_appearance_choice_light</item>
+        <item>@string/ui_theme_dark_appearance_choice_dark</item>
+    </string-array>
 </resources>

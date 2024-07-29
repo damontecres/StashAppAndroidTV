@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory  app:title="Interface">
+        <ListPreference
+            app:key="@string/pref_key_ui_theme_dark_appearance"
+            app:title="Theme appearance"
+            app:summary="Light, dark, or system theme"
+            app:defaultValue="@string/ui_theme_dark_appearance_choice_default"
+            app:entries="@array/ui_theme_dark_appearance_choices"
+            app:entryValues="@array/ui_theme_dark_appearance_choices" />
+    </PreferenceCategory>
+
+</androidx.preference.PreferenceScreen>

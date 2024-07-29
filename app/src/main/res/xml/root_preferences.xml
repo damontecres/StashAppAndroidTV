@@ -98,6 +98,10 @@
 
     <PreferenceCategory app:title="Advanced">
         <Preference
+            app:key="uiPreferences"
+            app:title="UI Settings"
+            app:summary="Go to UI settings" />
+        <Preference
             app:key="advancedPreferences"
             app:title="Advanced"
             app:summary="Go to advanced settings" />
