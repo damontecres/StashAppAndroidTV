@@ -41,6 +41,7 @@ import androidx.navigation.activity
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
 import androidx.tv.material3.NavigationDrawer
@@ -59,7 +60,9 @@ import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.StudioActivity
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashDefaultFilter
+import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.ui.details.ScenePage
 import com.github.damontecres.stashapp.ui.details.TagPage
@@ -68,6 +71,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getId
 import com.github.damontecres.stashapp.util.secondsMs
+import kotlin.reflect.typeOf
 
 private const val TAG = "Compose.App"
 
@@ -301,8 +305,10 @@ fun App() {
                     if (dataType == DataType.MARKER) {
                         item as MarkerData
                         Routes.playback(item.scene.videoSceneData.id, item.secondsMs)
-                    } else {
+                    } else if (dataType != null) {
                         Routes.dataType(dataType, getId(item))
+                    } else {
+                        item
                     }
                 navController.navigate(route = route) {
                 }
@@ -422,6 +428,19 @@ fun App() {
                     defaultValue = true
                 }
                 activityClass = PlaybackActivity::class
+            }
+
+            val typeMap =
+                mapOf(
+                    typeOf<DataType>() to NavType.EnumType(DataType::class.java),
+                )
+            composable<StashCustomFilter>(typeMap = typeMap) { backStackEntry ->
+                val filter: StashCustomFilter = backStackEntry.toRoute()
+                FilterGrid(startingFilter = filter, itemOnClick = itemOnClick)
+            }
+            composable<StashSavedFilter>(typeMap = typeMap) { backStackEntry ->
+                val filter: StashSavedFilter = backStackEntry.toRoute()
+                FilterGrid(startingFilter = filter, itemOnClick = itemOnClick)
             }
         }
     }

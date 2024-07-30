@@ -13,6 +13,8 @@ plugins {
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
+    id("androidx.navigation.safeargs.kotlin")
+    kotlin("plugin.serialization") version "1.9.25"
 }
 
 fun getVersionCode(): Int {
@@ -48,7 +50,7 @@ android {
     }
     composeOptions {
         // https://developer.android.com/jetpack/androidx/releases/compose-kotlin
-        kotlinCompilerExtensionVersion = "1.5.13"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 
     defaultConfig {
@@ -145,6 +147,7 @@ tasks.preBuild.dependsOn("generateStrings")
 
 val mediaVersion = "1.3.1"
 val glideVersion = "4.16.0"
+val navVersion = "2.8.0-beta06"
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
@@ -155,10 +158,10 @@ dependencies {
     implementation("com.github.bumptech.glide:okhttp3-integration:$glideVersion")
     implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
     implementation("androidx.leanback:leanback-tab:1.1.0-beta01")
-    implementation("androidx.navigation:navigation-runtime-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-runtime-ktx:$navVersion")
     implementation("androidx.compose.runtime:runtime-android:1.6.8")
-    implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-compose:$navVersion")
+    implementation("androidx.navigation:navigation-fragment-ktx:$navVersion")
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.activity:activity-compose:1.9.1")
     implementation("androidx.compose.ui:ui:1.6.8")
@@ -192,7 +195,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-process:2.8.3")
     implementation("com.otaliastudios:zoomlayout:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("io.noties.markwon:core:4.6.2")
     implementation("com.google.dagger:hilt-android:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")

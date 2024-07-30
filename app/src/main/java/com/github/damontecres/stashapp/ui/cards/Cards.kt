@@ -206,6 +206,7 @@ fun RootCard(
     imageHeight: Dp,
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
+    imageContent: @Composable BoxScope.() -> Unit = {},
     videoUrl: String? = null,
     onLongClick: (() -> Unit)? = null,
     imageOverlay: @Composable BoxScope.() -> Unit = {},
@@ -288,12 +289,15 @@ fun RootCard(
                                 .height(imageHeight)
                                 .padding(0.dp),
                     ) {
-                        GlideImage(
-                            model = imageUrl,
-                            contentDescription = "",
-                            contentScale = ContentScale.Crop, // TODO or ContentScale.Fit ?
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                        if (imageUrl.isNotNullOrBlank()) {
+                            GlideImage(
+                                model = imageUrl,
+                                contentDescription = "",
+                                contentScale = ContentScale.Crop, // TODO or ContentScale.Fit ?
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                        imageContent.invoke(this)
                         if (!focused) {
                             imageOverlay.invoke(this)
                         }

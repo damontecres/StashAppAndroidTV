@@ -716,7 +716,7 @@ fun Activity.isNavHostActive(): Boolean {
     return intent.getBooleanExtra(Constants.USE_NAV_CONTROLLER, false)
 }
 
-fun getDataType(item: Any): DataType {
+fun getDataType(item: Any): DataType? {
     return when (item) {
         is SlimSceneData -> {
             DataType.SCENE
@@ -750,7 +750,7 @@ fun getDataType(item: Any): DataType {
             DataType.TAG
         }
 
-        else -> throw IllegalArgumentException("Item of type ${item.javaClass} is not supported")
+        else -> null
     }
 }
 

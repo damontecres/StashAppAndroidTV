@@ -27,6 +27,7 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.ui.cards.StashCard
+import com.github.damontecres.stashapp.ui.cards.ViewAllCard
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -134,6 +135,11 @@ fun HomePageRow(
             items(rowData.data) { item ->
                 if (item != null) {
                     StashCard(item, itemOnClick)
+                }
+            }
+            if (rowData.data.isNotEmpty()) {
+                item {
+                    ViewAllCard(filter = row.data.filter, itemOnClick)
                 }
             }
         }

@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.toFind_filter
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
 enum class FilterType {
     CUSTOM_FILTER,
@@ -93,6 +94,7 @@ interface AppFilter : StashFilter {
     }
 }
 
+@Serializable
 @Parcelize
 data class PerformTogetherAppFilter(override val name: String, val performerIds: List<String>) :
     AppFilter {
