@@ -8,19 +8,30 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.util.toFind_filter
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Parcelize
 data class StashCustomFilter(
-    val mode: FilterMode,
+    override val dataType: DataType,
     override val direction: String?,
     override val sortBy: String?,
     val description: String,
     val query: String? = null,
 ) : Parcelable, StashFilter {
+    constructor(
+        mode: FilterMode,
+        direction: String?,
+        sortBy: String?,
+        description: String,
+        query: String? = null,
+    ) :
+        this(DataType.fromFilterMode(mode)!!, direction, sortBy, description, query)
+
     override val filterType: FilterType
         get() = FilterType.CUSTOM_FILTER
-    override val dataType: DataType
-        get() = DataType.fromFilterMode(mode)!!
+    val mode: FilterMode
+        get() = dataType.filterMode
 
     fun asFindFilterType(): FindFilterType {
         val direction =
