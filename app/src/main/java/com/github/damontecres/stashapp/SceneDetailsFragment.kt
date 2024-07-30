@@ -44,7 +44,6 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.data.OCounter
-import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
@@ -227,7 +226,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val sceneId = requireActivity().intent.getStringExtra(SceneDetailsActivity.MOVIE)
+        val sceneId = requireActivity().intent.getStringExtra(SceneDetailsActivity.MOVIE_ID)
         if (sceneId == null) {
             Log.w(TAG, "No scene found in intent")
             val intent = Intent(requireActivity(), MainActivity::class.java)
@@ -452,8 +451,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     ) {
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
                         intent.putExtra(
-                            SceneDetailsActivity.MOVIE,
-                            Scene.fromFullSceneData(mSelectedMovie!!),
+                            SceneDetailsActivity.MOVIE_ID,
+                            mSelectedMovie!!.id,
                         )
                         if (action.id == ACTION_RESUME_SCENE ||
                             action.id == ACTION_TRANSCODE_RESUME_SCENE ||

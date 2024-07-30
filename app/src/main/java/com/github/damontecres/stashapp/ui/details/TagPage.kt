@@ -4,14 +4,15 @@ import android.content.Context
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import androidx.tv.material3.Text
 import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
@@ -38,9 +39,6 @@ import com.github.damontecres.stashapp.ui.TabbedFilterGrid
 import com.github.damontecres.stashapp.util.QueryEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 sealed class TagUiState {
@@ -60,34 +58,32 @@ class TagViewModel
     ) : ViewModel() {
         private val queryEngine = QueryEngine(context)
 
-        val uiState =
-            savedStateHandle
-                .getStateFlow<String?>("id", null)
-                .map { id ->
-                    if (id == null) {
-                        TagUiState.Error("TagId cannot be null")
-                    } else {
-                        val tag = queryEngine.getTags(listOf(id)).firstOrNull()
-                        if (tag != null) {
-                            TagUiState.Success(tag)
-                        } else {
-                            TagUiState.Error("No Tag with id=$id")
-                        }
-                    }
-                }.stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5_000),
-                    initialValue = TagUiState.Loading,
-                )
+        private val _uiState = MutableLiveData<TagUiState>(TagUiState.Loading)
+        val uiState: LiveData<TagUiState> get() = _uiState
+
+        suspend fun fetchTag(tagId: String) {
+            val tag = queryEngine.getTags(listOf(tagId)).firstOrNull()
+            _uiState.value =
+                if (tag != null) {
+                    TagUiState.Success(tag)
+                } else {
+                    TagUiState.Error("No Tag with id=$tagId")
+                }
+        }
     }
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun TagPage(
+    tagId: String,
     itemOnClick: (Any) -> Unit,
     viewModel: TagViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState = viewModel.uiState.observeAsState().value
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchTag(tagId)
+    }
 
     when (val s = uiState) {
         is TagUiState.Loading -> {
@@ -121,6 +117,8 @@ fun TagPage(
                         .animateContentSize(),
             )
         }
+
+        null -> throw IllegalStateException()
     }
 }
 

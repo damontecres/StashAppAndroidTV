@@ -71,6 +71,7 @@ import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getId
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.secondsMs
 import kotlin.reflect.typeOf
 
@@ -126,25 +127,18 @@ data class DrawerPage(
     }
 }
 
-sealed class Routes {
-    companion object {
-        val PLAYBACK =
-            "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE_ID}}/play/{$POSITION_ARG}"
+sealed class Route {
+    data class DataTypeRoute(val dataType: DataType, val id: String? = null) : Route()
 
-        fun playback(
-            sceneId: String,
-            position: Long,
-        ): String {
-            return "${DrawerPage.dataType(DataType.SCENE).route}/$sceneId/play/$position"
-        }
+    data class Playback(val id: String, val position: Long = 0) : Route()
 
-        fun dataType(
-            dataType: DataType,
-            id: String,
-        ): String {
-            return "${DrawerPage.dataType(dataType).route}/$id"
-        }
-    }
+    data class Filter(val filter: StashFilter) : Route()
+
+    data object Home : Route()
+
+    data object Search : Route()
+
+    data object Settings : Route()
 }
 
 class AppViewModel : ViewModel() {
@@ -302,53 +296,62 @@ fun App() {
             val itemOnClick = { item: Any ->
                 val dataType = getDataType(item)
 
-                if (dataType != null) {
-                    val route =
-                        if (dataType == DataType.MARKER) {
-                            item as MarkerData
-                            Routes.playback(item.scene.videoSceneData.id, item.secondsMs)
-                        } else {
-                            Routes.dataType(dataType, getId(item))
-                        }
-                    navController.navigate(route = route) {
+                val route =
+                    if (dataType == DataType.MARKER) {
+                        item as MarkerData
+                        Route.Playback(item.scene.videoSceneData.id, item.secondsMs)
+                    } else if (dataType != null) {
+                        Route.DataTypeRoute(dataType, getId(item))
+                    } else if (item is StashFilter) {
+                        item
+                    } else {
+                        throw IllegalArgumentException("Unknown item clicked: $item")
                     }
-                } else if (item is StashFilter) {
-                    navController.navigate(route = item) {
-                    }
-                } else {
-                    throw IllegalArgumentException("Unknown item clicked: $item")
+                navController.navigate(route = route) {
                 }
             }
 
-            composable(route = DrawerPage.HOME_PAGE.route) {
+            composable<Route.Home> {
                 HomePage(itemOnClick)
             }
-            activity(route = DrawerPage.SEARCH_PAGE.route) {
+            activity<Route.Search> {
                 activityClass = SearchActivity::class
                 argument(Constants.USE_NAV_CONTROLLER) {
                     type = NavType.BoolType
                     defaultValue = true
                 }
             }
-            activity(route = DrawerPage.SETTINGS_PAGE.route) {
+            activity<Route.Settings> {
                 activityClass = SettingsActivity::class
                 argument(Constants.USE_NAV_CONTROLLER) {
                     type = NavType.BoolType
                     defaultValue = true
                 }
             }
-            DataType.entries.forEach { dataType ->
-                composable(route = DrawerPage.dataType(dataType).route) {
-                    FilterGrid(StashDefaultFilter(dataType), itemOnClick)
-                }
-            }
 
-            composable(route = "${DrawerPage.dataType(DataType.SCENE).route}/{${SceneDetailsActivity.MOVIE}}") {
-                argument(SceneDetailsActivity.MOVIE) {
-                    type = NavType.StringType
-                    nullable = false
+            val composedDataTypes = listOf(DataType.SCENE, DataType.TAG)
+
+            composable<Route.DataTypeRoute> {
+                val dataTypeRoute = it.toRoute<Route.DataTypeRoute>()
+                if (dataTypeRoute.dataType == DataType.MARKER) {
+                    throw IllegalArgumentException("Cannot pass DataType.Marker in a DataTypeRoute")
                 }
-                ScenePage(itemOnClick = itemOnClick)
+                if (dataTypeRoute.id.isNotNullOrBlank()) {
+                    FilterGrid(StashDefaultFilter(dataTypeRoute.dataType), itemOnClick)
+                } else if (dataTypeRoute.id != null && dataTypeRoute.dataType in composedDataTypes) {
+                    when (dataTypeRoute.dataType) {
+                        DataType.SCENE ->
+                            ScenePage(
+                                sceneId = dataTypeRoute.id,
+                                itemOnClick = itemOnClick,
+                            )
+
+                        DataType.TAG -> TagPage(dataTypeRoute.id, itemOnClick = itemOnClick)
+                        else -> throw IllegalStateException()
+                    }
+                } else {
+                    throw IllegalStateException()
+                }
             }
 
             activity(route = "${DrawerPage.dataType(DataType.PERFORMER).route}/{id}") {
@@ -411,15 +414,7 @@ fun App() {
                 activityClass = StudioActivity::class
             }
 
-            composable(route = "${DrawerPage.dataType(DataType.TAG).route}/{id}") {
-                argument("id") {
-                    type = NavType.StringType
-                    nullable = false
-                }
-                TagPage(itemOnClick)
-            }
-
-            activity(route = Routes.PLAYBACK) {
+            activity<Route.Playback> {
                 argument(SceneDetailsActivity.MOVIE_ID) {
                     type = NavType.StringType
                     nullable = false

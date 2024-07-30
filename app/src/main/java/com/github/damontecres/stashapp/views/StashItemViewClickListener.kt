@@ -52,7 +52,7 @@ class StashItemViewClickListener(
     ) {
         if (item is SlimSceneData) {
             val intent = Intent(context, SceneDetailsActivity::class.java)
-            intent.putExtra(SceneDetailsActivity.MOVIE, item.id)
+            intent.putExtra(SceneDetailsActivity.MOVIE_ID, item.id)
             context.startActivity(intent)
         } else if (item is PerformerData) {
             val intent = Intent(context, PerformerActivity::class.java)

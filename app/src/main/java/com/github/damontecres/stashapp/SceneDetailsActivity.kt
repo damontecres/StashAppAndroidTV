@@ -26,7 +26,9 @@ class SceneDetailsActivity : FragmentActivity() {
 
     companion object {
         const val SHARED_ELEMENT_NAME = "hero"
+
+        @Deprecated("Use an id instead")
         const val MOVIE = "Movie"
-        const val MOVIE_ID = "MovieID"
+        const val MOVIE_ID = "id"
     }
 }

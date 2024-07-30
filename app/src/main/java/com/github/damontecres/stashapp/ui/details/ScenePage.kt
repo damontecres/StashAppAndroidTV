@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -23,10 +23,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.TvLazyRow
@@ -38,7 +38,6 @@ import androidx.tv.material3.Text
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SceneDetailsActivity
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -55,9 +54,6 @@ import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.parseTimeToString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 sealed class SceneUiState {
@@ -77,25 +73,18 @@ class SceneViewModel
     ) : ViewModel() {
         private val queryEngine = QueryEngine(context)
 
-        val uiState =
-            savedStateHandle
-                .getStateFlow<String?>(SceneDetailsActivity.MOVIE, null)
-                .map { id ->
-                    if (id == null) {
-                        SceneUiState.Error("sceneId cannot be null")
-                    } else {
-                        val scene = queryEngine.getScene(id)
-                        if (scene != null) {
-                            SceneUiState.Success(scene)
-                        } else {
-                            SceneUiState.Error("No scene with id=$id")
-                        }
-                    }
-                }.stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5_000),
-                    initialValue = SceneUiState.Loading,
-                )
+        private val _uiState = MutableLiveData<SceneUiState>(SceneUiState.Loading)
+        val uiState: LiveData<SceneUiState> get() = _uiState
+
+        suspend fun fetchScene(sceneId: String) {
+            val scene = queryEngine.getScene(sceneId)
+            _uiState.value =
+                if (scene != null) {
+                    SceneUiState.Success(scene)
+                } else {
+                    SceneUiState.Error("No scene with id=$sceneId")
+                }
+        }
 
         private val _performers = mutableStateListOf<PerformerData>()
         val performers: SnapshotStateList<PerformerData> get() = _performers
@@ -119,10 +108,15 @@ class SceneViewModel
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun ScenePage(
+    sceneId: String,
     itemOnClick: (Any) -> Unit,
     viewModel: SceneViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState = viewModel.uiState.observeAsState().value
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchScene(sceneId)
+    }
 
     when (val s = uiState) {
         is SceneUiState.Loading -> {
@@ -146,6 +140,8 @@ fun ScenePage(
                     .animateContentSize(),
             )
         }
+
+        null -> throw IllegalStateException()
     }
 }
 

@@ -7,7 +7,6 @@ import com.github.damontecres.stashapp.SceneDetailsActivity
 import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.concatIfNotBlank
@@ -114,8 +113,8 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                         // Resume
                         val intent = Intent(context, PlaybackActivity::class.java)
                         intent.putExtra(
-                            SceneDetailsActivity.MOVIE,
-                            Scene.fromSlimSceneData(item),
+                            SceneDetailsActivity.MOVIE_ID,
+                            item.id,
                         )
                         if (item.resume_time != null) {
                             intent.putExtra(
@@ -130,8 +129,8 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                         // Restart/Play
                         val intent = Intent(context, PlaybackActivity::class.java)
                         intent.putExtra(
-                            SceneDetailsActivity.MOVIE,
-                            Scene.fromSlimSceneData(item),
+                            SceneDetailsActivity.MOVIE_ID,
+                            item.id,
                         )
                         context.startActivity(intent)
                     }
