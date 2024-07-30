@@ -62,6 +62,7 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashDefaultFilter
+import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.ui.details.ScenePage
@@ -301,16 +302,21 @@ fun App() {
             val itemOnClick = { item: Any ->
                 val dataType = getDataType(item)
 
-                val route =
-                    if (dataType == DataType.MARKER) {
-                        item as MarkerData
-                        Routes.playback(item.scene.videoSceneData.id, item.secondsMs)
-                    } else if (dataType != null) {
-                        Routes.dataType(dataType, getId(item))
-                    } else {
-                        item
+                if (dataType != null) {
+                    val route =
+                        if (dataType == DataType.MARKER) {
+                            item as MarkerData
+                            Routes.playback(item.scene.videoSceneData.id, item.secondsMs)
+                        } else {
+                            Routes.dataType(dataType, getId(item))
+                        }
+                    navController.navigate(route = route) {
                     }
-                navController.navigate(route = route) {
+                } else if (item is StashFilter) {
+                    navController.navigate(route = item) {
+                    }
+                } else {
+                    throw IllegalArgumentException("Unknown item clicked: $item")
                 }
             }
 
