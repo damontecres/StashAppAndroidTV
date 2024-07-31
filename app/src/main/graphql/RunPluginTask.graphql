@@ -1,0 +1,3 @@
+mutation RunPluginTask($plugin_id: ID!, $task_name: String!, $args: [PluginArgInput!]) {
+  runPluginTask(plugin_id: $plugin_id, task_name: $task_name, args: $args)
+}

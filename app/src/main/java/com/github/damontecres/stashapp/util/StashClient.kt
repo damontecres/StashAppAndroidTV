@@ -225,6 +225,9 @@ class StashClient private constructor() {
             return apolloClient!!
         }
 
+        /**
+         * Create a new [ApolloClient]. Using [getApolloClient] is preferred.
+         */
         private fun createApolloClient(context: Context): ApolloClient {
             val stashUrl =
                 PreferenceManager.getDefaultSharedPreferences(context).getString(

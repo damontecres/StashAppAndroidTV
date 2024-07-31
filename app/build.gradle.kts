@@ -41,6 +41,10 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.github.damontecres.stashapp"
         minSdk = 23
@@ -130,6 +134,7 @@ tasks.preBuild.dependsOn("generateStrings")
 
 val mediaVersion = "1.3.1"
 val glideVersion = "4.16.0"
+val acraVersion = "5.11.3"
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
@@ -139,6 +144,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:$glideVersion")
     implementation("com.github.bumptech.glide:okhttp3-integration:$glideVersion")
     implementation("androidx.leanback:leanback-tab:1.1.0-beta01")
+    implementation("androidx.test.ext:junit-ktx:1.2.1")
     kapt("com.github.bumptech.glide:compiler:$glideVersion")
     implementation("com.caverock:androidsvg-aar:1.4")
 
@@ -161,6 +167,12 @@ dependencies {
     implementation("com.otaliastudios:zoomlayout:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
     implementation("io.noties.markwon:core:4.6.2")
+
+    implementation("ch.acra:acra-http:$acraVersion")
+    implementation("ch.acra:acra-dialog:$acraVersion")
+    implementation("ch.acra:acra-limiter:$acraVersion")
+    compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
+    kapt("com.google.auto.service:auto-service:1.1.1")
 
     testImplementation("androidx.test:core-ktx:1.6.1")
     testImplementation("junit:junit:4.13.2")

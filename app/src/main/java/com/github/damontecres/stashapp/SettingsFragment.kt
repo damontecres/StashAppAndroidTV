@@ -22,16 +22,23 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
+import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
+import com.github.damontecres.stashapp.api.RunPluginTaskMutation
+import com.github.damontecres.stashapp.api.type.PluginArgInput
+import com.github.damontecres.stashapp.api.type.PluginValueInput
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.CrashReportSenderFactory
+import com.github.damontecres.stashapp.util.LOGCAT_TAGS
 import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.THIRD_PARTY_TAGS
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.testStashConnection
@@ -40,7 +47,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Cache
+import java.io.BufferedReader
 import java.io.File
+import java.io.InputStreamReader
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
@@ -107,6 +116,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
 
             findPreference<Preference>(PREF_STASH_URL)!!.setOnPreferenceClickListener {
+                throw IllegalStateException()
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     testStashConnection(
                         requireContext(),
@@ -286,37 +296,125 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             if (savedInstanceState == null) {
-                val serverPref = findPreference<Preference>(PREF_STASH_URL)!!
                 requireActivity().supportFragmentManager.addOnBackStackChangedListener {
-                    val currentServer = StashServer.getCurrentStashServer(requireContext())
-                    serverPref.summary = currentServer?.url
+                    if (requireActivity().supportFragmentManager.backStackEntryCount == 0) {
+                        refresh()
+                    }
                 }
             }
         }
 
         override fun onResume() {
             super.onResume()
+            refresh()
+        }
 
+        private fun refresh() {
+            Log.v(TAG, "refresh")
             val currentServer = StashServer.getCurrentStashServer(requireContext())
             findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer?.url
 
+            val sendLogsPref = findPreference<LongClickPreference>("sendLogs")!!
+            sendLogsPref.isEnabled = false
+            sendLogsPref.summary = "Checking for companion plugin..."
+
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                ServerPreferences(requireContext()).updatePreferences()
+                val serverPrefs = ServerPreferences(requireContext()).updatePreferences()
+                if (serverPrefs.companionPluginInstalled) {
+                    sendLogsPref.isEnabled = true
+                    sendLogsPref.summary = "Send a copy of recent app logs to your server"
+                    sendLogsPref.setOnPreferenceClickListener {
+                        sendLogCat(false)
+                        true
+                    }
+                    sendLogsPref.setOnLongClickListener {
+                        sendLogCat(true)
+                        true
+                    }
+                } else {
+                    sendLogsPref.isEnabled = false
+                    sendLogsPref.summary = "Companion plugin not installed"
+                }
             }
         }
 
-        override fun onStop() {
-            super.onStop()
-        }
+        private fun sendLogCat(verbose: Boolean) {
+            val lineCount = if (verbose) 500 else 200
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                val args =
+                    buildList {
+                        add("logcat")
+                        add("-d")
+                        add("-t")
+                        add(lineCount.toString())
+                        if (verbose) {
+                            addAll(THIRD_PARTY_TAGS)
+                            add("*:V")
+                        } else {
+                            add("-s")
+                            addAll(LOGCAT_TAGS)
+                            addAll(THIRD_PARTY_TAGS)
+                            add("*:E")
+                        }
+                    }
+                val process = ProcessBuilder().command(args).redirectErrorStream(true).start()
+                try {
+                    val reader = BufferedReader(InputStreamReader(process.inputStream))
+                    var count = 0
+                    val sb = StringBuilder("** LOGCAT START **\n")
+                    while (count < lineCount) {
+                        val line = reader.readLine()
+                        if (line != null) {
+                            sb.append(line)
+                            sb.append("\n")
+                        } else {
+                            break
+                        }
+                        count++
+                    }
+                    sb.append("\n** LOGCAT END **")
+                    // Avoid individual lines being logged server-side
+                    val logcat = sb.replace(Regex("\n"), "<newline>")
 
-        private fun setServers() {
-            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            val keys =
-                manager.all.keys.filter { it.startsWith(SERVER_PREF_PREFIX) }.sorted().toList()
-            val values = keys.map { manager.all[it].toString() }.toList()
-
-            serverKeys = values
-            serverValues = keys
+                    val mutationEngine = MutationEngine(requireContext(), true)
+                    val mutation =
+                        RunPluginTaskMutation(
+                            plugin_id = CrashReportSenderFactory.PLUGIN_ID,
+                            task_name = "logcat",
+                            args =
+                                listOf(
+                                    PluginArgInput(
+                                        key = "logcat",
+                                        value =
+                                            Optional.present(
+                                                PluginValueInput(
+                                                    str = Optional.present(logcat),
+                                                ),
+                                            ),
+                                    ),
+                                ),
+                        )
+                    mutationEngine.executeMutation(mutation)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Logs sent! Check the server's log page.",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Error sending logs", ex)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Error sending logs: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                } finally {
+                    process.destroy()
+                }
+            }
         }
 
         companion object {

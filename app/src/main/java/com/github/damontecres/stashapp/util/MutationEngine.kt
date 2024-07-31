@@ -63,7 +63,7 @@ class MutationEngine(
 
     private val writeLock = lock?.writeLock()
 
-    private suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> {
+    suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> {
         val mutationName = mutation.name()
         val id = MUTATION_ID.getAndIncrement()
         try {

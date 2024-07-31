@@ -17,7 +17,6 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -295,44 +294,41 @@ class MainFragment : BrowseSupportFragment() {
                                     ?: Version.MINIMUM_STASH_VERSION,
                             )
 
-                        val query = ConfigurationQuery()
-                        val config = queryEngine.executeQuery(query).data?.configuration
-                        ServerPreferences(requireContext()).updatePreferences(config, serverInfo)
+                        val config = queryEngine.getServerConfiguration()
+                        ServerPreferences(requireContext()).updatePreferences(config)
 
-                        if (config?.ui != null) {
-                            val ui = config.ui
-                            val frontPageContent =
-                                (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>
-                            val pageSize =
-                                PreferenceManager.getDefaultSharedPreferences(requireContext())
-                                    .getInt(getString(R.string.pref_key_page_size), 25)
-                            val frontPageParser =
-                                FrontPageParser(queryEngine, filterParser, pageSize)
-                            val jobs = frontPageParser.parse(frontPageContent)
-                            jobs.forEachIndexed { index, job ->
-                                job.await().let { row ->
-                                    if (row.successful) {
-                                        val rowData = row.data!!
-                                        filterList.set(index, rowData.filter)
+                        val ui = config.configuration.ui
+                        val frontPageContent =
+                            (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>
+                        val pageSize =
+                            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                                .getInt(getString(R.string.pref_key_page_size), 25)
+                        val frontPageParser =
+                            FrontPageParser(queryEngine, filterParser, pageSize)
+                        val jobs = frontPageParser.parse(frontPageContent)
+                        jobs.forEachIndexed { index, job ->
+                            job.await().let { row ->
+                                if (row.successful) {
+                                    val rowData = row.data!!
+                                    filterList.set(index, rowData.filter)
 
-                                        val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
-                                        adapter.addAll(0, rowData.data)
-                                        adapter.add(rowData.filter)
-                                        adapters.add(adapter)
-                                        withContext(Dispatchers.Main) {
-                                            rowsAdapter.set(
-                                                index,
-                                                ListRow(HeaderItem(rowData.name), adapter),
-                                            )
-                                        }
-                                    } else if (row.result == FrontPageParser.FrontPageRowResult.ERROR) {
-                                        withContext(Dispatchers.Main) {
-                                            Toast.makeText(
-                                                requireContext(),
-                                                "Error loading row $index on front page",
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                        }
+                                    val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                                    adapter.addAll(0, rowData.data)
+                                    adapter.add(rowData.filter)
+                                    adapters.add(adapter)
+                                    withContext(Dispatchers.Main) {
+                                        rowsAdapter.set(
+                                            index,
+                                            ListRow(HeaderItem(rowData.name), adapter),
+                                        )
+                                    }
+                                } else if (row.result == FrontPageParser.FrontPageRowResult.ERROR) {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Error loading row $index on front page",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
                                     }
                                 }
                             }
