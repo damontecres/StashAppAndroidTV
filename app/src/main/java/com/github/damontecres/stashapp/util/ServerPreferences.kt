@@ -61,7 +61,7 @@ class ServerPreferences(private val context: Context) {
         val serverVersion = Version.tryFromString(config.version.version)
 
         val companionPluginVersion =
-            config.plugins?.firstOrNull { it.id == CrashReportSenderFactory.PLUGIN_ID }?.version
+            config.plugins?.firstOrNull { it.id == CompanionPlugin.PLUGIN_ID }?.version
 
         preferences.edit {
             putString(PREF_SERVER_VERSION, config.version.version)

@@ -37,12 +37,12 @@ class CrashReportSenderFactory : ReportSenderFactory {
                 val client = StashClient.getApolloClient(context)
                 val mutation =
                     RunPluginTaskMutation(
-                        plugin_id = PLUGIN_ID,
-                        task_name = TASK_NAME,
+                        plugin_id = CompanionPlugin.PLUGIN_ID,
+                        task_name = CompanionPlugin.CRASH_TASK_NAME,
                         args =
                             listOf(
                                 PluginArgInput(
-                                    key = "report",
+                                    key = CompanionPlugin.CRASH_TASK_NAME,
                                     value =
                                         Optional.present(
                                             PluginValueInput(
@@ -67,7 +67,5 @@ class CrashReportSenderFactory : ReportSenderFactory {
 
     companion object {
         const val TAG = "CrashReportSenderFactory"
-        const val PLUGIN_ID = "stashAppAndroidTvCompanion"
-        private const val TASK_NAME = "crash_report"
     }
 }
