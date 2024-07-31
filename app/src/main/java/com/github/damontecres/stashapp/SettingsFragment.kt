@@ -108,7 +108,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
 
             findPreference<Preference>(PREF_STASH_URL)!!.setOnPreferenceClickListener {
-                throw IllegalStateException()
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     testStashConnection(
                         requireContext(),
