@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.content.Intent
 import android.graphics.Typeface
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
@@ -23,6 +24,11 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.acra.ACRA
+import org.acra.ReportField
+import org.acra.config.dialog
+import org.acra.data.StringFormat
+import org.acra.ktx.initAcra
 
 @HiltAndroidApp
 class StashApplication : Application() {
@@ -36,6 +42,42 @@ class StashApplication : Application() {
         application = this
 
         Log.v(TAG, "onCreate wasEnterBackground=$wasEnterBackground, mainDestroyed=$mainDestroyed")
+
+        initAcra {
+            buildConfigClass = BuildConfig::class.java
+            reportFormat = StringFormat.JSON
+            excludeMatchingSharedPreferencesKeys =
+                listOf("^stashApiKey$", "^stashUrl$", "^server_.*", "^apikey_.*", "^pinCode$")
+            reportContent =
+                listOf(
+                    ReportField.ANDROID_VERSION,
+                    ReportField.APP_VERSION_CODE,
+                    ReportField.APP_VERSION_NAME,
+                    ReportField.BRAND,
+                    // ReportField.BUILD_CONFIG,
+                    // ReportField.BUILD,
+                    ReportField.CUSTOM_DATA,
+                    ReportField.LOGCAT,
+                    ReportField.PHONE_MODEL,
+                    ReportField.PRODUCT,
+                    ReportField.REPORT_ID,
+                    ReportField.SHARED_PREFERENCES,
+                    ReportField.STACK_TRACE,
+                    ReportField.USER_COMMENT,
+                    ReportField.USER_CRASH_DATE,
+                )
+            dialog {
+                text =
+                    "StashAppAndroidTV has crashed! Would you like to attempt to send a crash report to your Stash server?" +
+                    "\n\nThis will only work if you have already installed the companion plugin."
+                title = "StashAppAndroidTV Crash Report"
+                positiveButtonText = "Send"
+                negativeButtonText = "Do not send"
+            }
+            reportSendFailureToast = "Crash report failed to send"
+            reportSendSuccessToast = "Attempted to send crash report!"
+        }
+        ACRA.errorReporter.putCustomData("SDK_INT", Build.VERSION.SDK_INT.toString())
 
         registerActivityLifecycleCallbacks(ActivityLifecycleCallbacksImpl())
         ProcessLifecycleOwner.get().lifecycle.addObserver(LifecycleObserverImpl())

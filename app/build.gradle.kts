@@ -45,14 +45,14 @@ android {
         }
     }
 
-    buildFeatures { // Enables Jetpack Compose for this module
+    buildFeatures {
+        buildConfig = true
         compose = true
     }
     composeOptions {
         // https://developer.android.com/jetpack/androidx/releases/compose-kotlin
         kotlinCompilerExtensionVersion = "1.5.14"
     }
-
     defaultConfig {
         applicationId = "com.github.damontecres.stashapp"
         minSdk = 23
@@ -147,6 +147,7 @@ tasks.preBuild.dependsOn("generateStrings")
 
 val mediaVersion = "1.3.1"
 val glideVersion = "4.16.0"
+val acraVersion = "5.11.3"
 val navVersion = "2.8.0-beta06"
 
 dependencies {
@@ -175,6 +176,7 @@ dependencies {
     implementation("androidx.paging:paging-compose:3.3.1")
     implementation("androidx.compose.runtime:runtime-livedata:1.6.8")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+    implementation("androidx.test.ext:junit-ktx:1.2.1")
     kapt("com.github.bumptech.glide:compiler:$glideVersion")
     implementation("com.caverock:androidsvg-aar:1.4")
 
@@ -200,6 +202,12 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")
+
+    implementation("ch.acra:acra-http:$acraVersion")
+    implementation("ch.acra:acra-dialog:$acraVersion")
+    implementation("ch.acra:acra-limiter:$acraVersion")
+    compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
+    kapt("com.google.auto.service:auto-service:1.1.1")
 
     testImplementation("androidx.test:core-ktx:1.6.1")
     testImplementation("junit:junit:4.13.2")

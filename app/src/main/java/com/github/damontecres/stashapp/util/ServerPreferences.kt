@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import com.github.damontecres.stashapp.api.ConfigurationQuery
-import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 
 /**
  * Represents configuration that users have set server-side
@@ -38,26 +38,38 @@ class ServerPreferences(private val context: Context) {
 
     val alwaysStartFromBeginning get() = preferences.getBoolean(PREF_ALWAYS_START_BEGINNING, false)
 
+    val companionPluginVersion
+        get() =
+            preferences.getString(
+                PREF_COMPANION_PLUGIN_VERSION,
+                null,
+            )
+
+    val companionPluginInstalled
+        get() = companionPluginVersion != null
+
     suspend fun updatePreferences(): ServerPreferences {
         val queryEngine = QueryEngine(context)
-        val query = ConfigurationQuery()
-        val config = queryEngine.executeQuery(query).data?.configuration
-        val serverInfo = queryEngine.executeQuery(ServerInfoQuery()).data
-        updatePreferences(config, serverInfo)
+        val result = queryEngine.getServerConfiguration()
+        updatePreferences(result)
         return this
     }
 
     /**
      * Update the local preferences from the server configuration
      */
-    fun updatePreferences(
-        config: ConfigurationQuery.Configuration?,
-        serverInfo: ServerInfoQuery.Data?,
-    ) {
-        val serverVersion =
-            Version.tryFromString(serverInfo?.version?.version)
-        if (config != null) {
-            val ui = config.ui as Map<String, *>
+    fun updatePreferences(config: ConfigurationQuery.Data) {
+        val serverVersion = Version.tryFromString(config.version.version)
+
+        val companionPluginVersion =
+            config.plugins?.firstOrNull { it.id == CompanionPlugin.PLUGIN_ID }?.version
+
+        preferences.edit {
+            putString(PREF_SERVER_VERSION, config.version.version)
+            putString(PREF_COMPANION_PLUGIN_VERSION, companionPluginVersion)
+        }
+        if (config.configuration.ui is Map<*, *>) {
+            val ui = config.configuration.ui as Map<String, *>
             preferences.edit(true) {
                 ui.getCaseInsensitive(PREF_TRACK_ACTIVITY).also {
                     if (it != null) {
@@ -115,7 +127,7 @@ class ServerPreferences(private val context: Context) {
                     )
                 }
 
-                val scan = config.defaults.scan
+                val scan = config.configuration.defaults.scan
                 if (scan != null) {
                     putBoolean(PREF_SCAN_GENERATE_COVERS, scan.scanGenerateCovers)
                     putBoolean(PREF_SCAN_GENERATE_PREVIEWS, scan.scanGeneratePreviews)
@@ -126,7 +138,7 @@ class ServerPreferences(private val context: Context) {
                     putBoolean(PREF_SCAN_GENERATE_CLIP_PREVIEWS, scan.scanGenerateClipPreviews)
                 }
 
-                val generate = config.defaults.generate
+                val generate = config.configuration.defaults.generate
                 if (generate != null) {
                     putBoolean(PREF_GEN_CLIP_PREVIEWS, generate.clipPreviews ?: false)
                     putBoolean(PREF_GEN_COVERS, generate.covers ?: false)
@@ -147,19 +159,14 @@ class ServerPreferences(private val context: Context) {
                     putBoolean(PREF_GEN_TRANSCODES, generate.transcodes ?: false)
                 }
 
-                val menuItems = config.`interface`.menuItems?.map(String::lowercase)?.toSet()
+                val menuItems =
+                    config.configuration.`interface`.menuItems?.map(String::lowercase)?.toSet()
                 putStringSet(PREF_INTERFACE_MENU_ITEMS, menuItems)
 
                 putBoolean(
                     PREF_INTERFACE_STUDIOS_AS_TEXT,
-                    config.`interface`.showStudioAsText ?: false,
+                    config.configuration.`interface`.showStudioAsText ?: false,
                 )
-            }
-        }
-
-        if (serverInfo != null) {
-            preferences.edit(true) {
-                putString(PREF_SERVER_VERSION, serverInfo.version.version)
             }
         }
     }
@@ -179,6 +186,7 @@ class ServerPreferences(private val context: Context) {
             )
 
         const val PREF_SERVER_VERSION = "serverInfo.version"
+        const val PREF_COMPANION_PLUGIN_VERSION = "companionPlugin.version"
 
         const val PREF_TRACK_ACTIVITY = "trackActivity"
         const val PREF_MINIMUM_PLAY_PERCENT = "minimumPlayPercent"

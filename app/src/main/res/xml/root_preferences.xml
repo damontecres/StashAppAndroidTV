@@ -97,6 +97,9 @@
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Advanced">
+        <com.github.damontecres.stashapp.util.LongClickPreference
+            app:key="sendLogs"
+            app:title="Send logs" />
         <Preference
             app:key="uiPreferences"
             app:title="UI Settings"

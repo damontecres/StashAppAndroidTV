@@ -39,24 +39,24 @@ class StashNavItemClickListener(
         row: Row?,
     ) {
         if (item is SlimSceneData) {
-            navController.navigate(Routes.dataType(DataType.SCENE, item.id))
+            navController.navigate(Route.DataTypeRoute(DataType.SCENE, item.id))
         } else if (item is PerformerData) {
-            navController.navigate(Routes.dataType(DataType.PERFORMER, item.id))
+            navController.navigate(Route.DataTypeRoute(DataType.PERFORMER, item.id))
         } else if (item is TagData) {
-            navController.navigate(Routes.dataType(DataType.TAG, item.id))
+            navController.navigate(Route.DataTypeRoute(DataType.TAG, item.id))
         } else if (item is StudioData) {
-            navController.navigate(Routes.dataType(DataType.STUDIO, item.id))
+            navController.navigate(Route.DataTypeRoute(DataType.STUDIO, item.id))
         } else if (item is MovieData) {
-            navController.navigate(Routes.dataType(DataType.MOVIE, item.id))
+            navController.navigate(Route.DataTypeRoute(DataType.MOVIE, item.id))
         } else if (item is MarkerData) {
             val route =
-                Routes.playback(item.scene.videoSceneData.id, (item.seconds * 1000).toLong())
+                Route.Playback(item.scene.videoSceneData.id, (item.seconds * 1000).toLong())
             navController.navigate(route)
         } else if (item is ImageData) {
             // TODO handle image switches
-            navController.navigate(Routes.dataType(DataType.IMAGE, item.id))
+            navController.navigate(Route.DataTypeRoute(DataType.IMAGE, item.id))
         } else if (item is GalleryData) {
-            navController.navigate(Routes.dataType(DataType.GALLERY, item.id))
+            navController.navigate(Route.DataTypeRoute(DataType.GALLERY, item.id))
         } else if (item is StashSavedFilter) {
             throw UnsupportedOperationException()
         } else if (item is StashCustomFilter) {

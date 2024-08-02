@@ -34,6 +34,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
+import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import com.github.damontecres.stashapp.util.testStashConnection
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -292,41 +293,54 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             if (savedInstanceState == null) {
-                val serverPref = findPreference<Preference>(PREF_STASH_URL)!!
                 requireActivity().supportFragmentManager.addOnBackStackChangedListener {
-                    val currentServer = StashServer.getCurrentStashServer(requireContext())
-                    serverPref.summary = currentServer?.url
+                    if (requireActivity().supportFragmentManager.backStackEntryCount == 0) {
+                        refresh()
+                    }
                 }
             }
         }
 
         override fun onResume() {
             super.onResume()
+            refresh()
+        }
 
+        private fun refresh() {
+            Log.v(TAG, "refresh")
             val currentServer = StashServer.getCurrentStashServer(requireContext())
             findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer?.url
 
+            val sendLogsPref = findPreference<LongClickPreference>("sendLogs")!!
+            sendLogsPref.isEnabled = false
+            sendLogsPref.summary = "Checking for companion plugin..."
+
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                ServerPreferences(requireContext()).updatePreferences()
+                val serverPrefs = ServerPreferences(requireContext()).updatePreferences()
+                if (serverPrefs.companionPluginInstalled) {
+                    sendLogsPref.isEnabled = true
+                    sendLogsPref.summary = "Send a copy of recent app logs to your current server"
+                    sendLogsPref.setOnPreferenceClickListener {
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                            CompanionPlugin.sendLogCat(requireContext(), false)
+                        }
+                        true
+                    }
+                    sendLogsPref.setOnLongClickListener {
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                            CompanionPlugin.sendLogCat(requireContext(), true)
+                        }
+                        true
+                    }
+                } else {
+                    sendLogsPref.isEnabled = false
+                    sendLogsPref.summary = "Companion plugin not installed"
+                }
             }
         }
 
-        override fun onStop() {
-            super.onStop()
-        }
-
-        private fun setServers() {
-            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            val keys =
-                manager.all.keys.filter { it.startsWith(SERVER_PREF_PREFIX) }.sorted().toList()
-            val values = keys.map { manager.all[it].toString() }.toList()
-
-            serverKeys = values
-            serverValues = keys
-        }
-
         companion object {
-            const val TAG = "SettingsFragment"
+            private const val TAG = "SettingsFragment"
 
             const val SERVER_PREF_PREFIX = "server_"
             const val SERVER_APIKEY_PREF_PREFIX = "apikey_"

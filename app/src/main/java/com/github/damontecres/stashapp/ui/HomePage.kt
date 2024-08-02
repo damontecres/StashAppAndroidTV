@@ -25,7 +25,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
 import com.github.damontecres.stashapp.util.FilterParser
@@ -54,14 +53,7 @@ class HomePageViewModel
                     Version.tryFromString(config.version.version) ?: Version.MINIMUM_STASH_VERSION
                 val ui = config.configuration.ui
 
-                // TODO A little hacky
-                ServerPreferences(StashApplication.getApplication()).updatePreferences(
-                    config.configuration,
-                    ServerInfoQuery.Data(
-                        ServerInfoQuery.Version(config.version.version),
-                        ServerInfoQuery.FindScenes(-1),
-                    ),
-                )
+                ServerPreferences(StashApplication.getApplication()).updatePreferences(config)
 
                 val frontPageContent =
                     (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>

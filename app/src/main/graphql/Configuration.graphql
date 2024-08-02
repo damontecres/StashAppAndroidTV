@@ -36,6 +36,11 @@ query Configuration {
     hash
     build_time
   }
+  plugins {
+    id
+    name
+    version
+  }
 }
 
 query ConfigurationUI {
