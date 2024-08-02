@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.util
+package com.github.damontecres.stashapp.util.plugin
 
 import android.content.Context
 import android.util.Log
@@ -7,6 +7,8 @@ import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.RunPluginTaskMutation
 import com.github.damontecres.stashapp.api.type.PluginArgInput
 import com.github.damontecres.stashapp.api.type.PluginValueInput
+import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -24,10 +26,7 @@ class CompanionPlugin {
         const val CRASH_TASK_NAME = "crash_report"
         const val LOGCAT_TASK_NAME = "logcat"
 
-        suspend fun sendLogCat(
-            context: Context,
-            verbose: Boolean,
-        ) = withContext(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+        fun getLogCatLines(verbose: Boolean): List<String> {
             val lineCount = if (verbose) 500 else 200
             val args =
                 buildList {
@@ -46,20 +45,34 @@ class CompanionPlugin {
                     }
                 }
             val process = ProcessBuilder().command(args).redirectErrorStream(true).start()
+            val logLines = mutableListOf<String>()
             try {
                 val reader = BufferedReader(InputStreamReader(process.inputStream))
                 var count = 0
-                val sb = StringBuilder("** LOGCAT START **\n")
+
                 while (count < lineCount) {
                     val line = reader.readLine()
                     if (line != null) {
-                        sb.append(line)
-                        sb.append("\n")
+                        logLines.add(line)
                     } else {
                         break
                     }
                     count++
                 }
+            } finally {
+                process.destroy()
+            }
+            return logLines
+        }
+
+        suspend fun sendLogCat(
+            context: Context,
+            verbose: Boolean,
+        ) = withContext(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+            try {
+                val lines = getLogCatLines(verbose)
+                val sb = StringBuilder("** LOGCAT START **\n")
+                sb.append(lines.joinToString("\n"))
                 sb.append("\n** LOGCAT END **")
                 // Avoid individual lines being logged server-side
                 val logcat = sb.replace(Regex("\n"), "<newline>")
@@ -104,8 +117,6 @@ class CompanionPlugin {
                         Toast.LENGTH_LONG,
                     ).show()
                 }
-            } finally {
-                process.destroy()
             }
         }
     }

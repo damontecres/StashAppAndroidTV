@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.util
+package com.github.damontecres.stashapp.util.plugin
 
 import android.content.Context
 import android.util.Log
@@ -6,6 +6,7 @@ import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.RunPluginTaskMutation
 import com.github.damontecres.stashapp.api.type.PluginArgInput
 import com.github.damontecres.stashapp.api.type.PluginValueInput
+import com.github.damontecres.stashapp.util.StashClient
 import com.google.auto.service.AutoService
 import kotlinx.coroutines.runBlocking
 import org.acra.config.CoreConfiguration
