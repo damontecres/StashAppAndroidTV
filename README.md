@@ -29,6 +29,8 @@ Check the [Tips & Tricks](https://github.com/damontecres/StashAppAndroidTV/wiki/
         - Use `Send files to TV` from the Google Play Store on your phone & TV
         - (Expert) Use [ADB](https://developer.android.com/studio/command-line/adb) to install the APK from your computer ([guide](https://fossbytes.com/side-load-apps-android-tv/#h-how-to-sideload-apps-on-your-android-tv-using-adb))
 1. [Configure the app](#configuration)
+1. Optionally, install the [StashAppAndroidTV Companion](https://github.com/damontecres/StashAppAndroidTV-Companion) plugin on your server to enable additional features
+    - Search for `StashAppAndroidTV Companion` on your server's Settings->Plugins page
 
 ### Upgrading the app
 
@@ -71,6 +73,12 @@ Currently, the minimum supported/tested server version is Stash `0.25.0`.
 The app supports many devices running Android TV OS, such as the NVIDIA Shield, Amazon Fire TV devices (Fire OS 6 or greater), or Chromecast with Google TV.
 
 See [Device Compatibility](https://github.com/damontecres/StashAppAndroidTV/wiki/Device-Compatibility) for more information.
+
+## Companion plugin
+
+The [StashAppAndroidTV Companion](https://github.com/damontecres/StashAppAndroidTV-Companion) plugin enables additional features in the app. It is not required to use the app, but it is recommended especially if you run into issues.
+
+Currently, the plugin only supports receiving crash reports and logs from the app. But, this can help diagnose issues and improve the app.
 
 ## Contributions
 
