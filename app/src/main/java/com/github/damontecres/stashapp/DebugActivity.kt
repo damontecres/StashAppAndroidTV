@@ -1,17 +1,25 @@
 package com.github.damontecres.stashapp
 
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashClient
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import kotlinx.coroutines.launch
 
 class DebugActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,6 +42,8 @@ class DebugActivity : FragmentActivity() {
             val prefTable = view.findViewById<TableLayout>(R.id.preferences_table)
             val serverPrefTable = view.findViewById<TableLayout>(R.id.server_prefs_table)
             val formatSupportedTable = view.findViewById<TableLayout>(R.id.supported_formats_table)
+            val otherTable = view.findViewById<TableLayout>(R.id.other_table)
+            val logTextView = view.findViewById<TextView>(R.id.logs)
 
             val prefManager = PreferenceManager.getDefaultSharedPreferences(requireContext()).all
             prefManager.keys.sorted().forEach {
@@ -42,9 +52,10 @@ class DebugActivity : FragmentActivity() {
             }
             prefTable.isStretchAllColumns = true
 
-            val serverPrefs = ServerPreferences(requireContext()).preferences.all
-            serverPrefs.keys.sorted().forEach {
-                val row = createRow(it, serverPrefs[it].toString())
+            val serverPrefs = ServerPreferences(requireContext())
+            val serverPrefsRaw = serverPrefs.preferences.all
+            serverPrefsRaw.keys.sorted().forEach {
+                val row = createRow(it, serverPrefsRaw[it].toString())
                 serverPrefTable.addView(row)
             }
             serverPrefTable.isStretchAllColumns = true
@@ -69,6 +80,54 @@ class DebugActivity : FragmentActivity() {
                 ),
             )
             formatSupportedTable.isStretchAllColumns = true
+
+            val server = StashServer.getCurrentStashServer(requireContext())
+            if (server != null) {
+                otherTable.addView(
+                    createRow(
+                        "Current server URL",
+                        server.url,
+                    ),
+                )
+                otherTable.addView(
+                    createRow(
+                        "Current server API Key",
+                        server.apiKey,
+                    ),
+                )
+                otherTable.addView(
+                    createRow(
+                        "Current server URL (resolved endpoint)",
+                        StashClient.cleanServerUrl(server.url),
+                    ),
+                )
+                otherTable.addView(
+                    createRow(
+                        "Current server URL (root)",
+                        StashClient.getServerRoot(server.url),
+                    ),
+                )
+            }
+            otherTable.addView(
+                createRow(
+                    "User-Agent",
+                    StashClient.createUserAgent(requireContext()),
+                ),
+            )
+            otherTable.isStretchAllColumns = true
+
+            viewLifecycleOwner.lifecycleScope.launch(
+                StashCoroutineExceptionHandler {
+                    Toast.makeText(
+                        requireContext(),
+                        "Exception getting logs: ${it.message}",
+                        Toast.LENGTH_LONG,
+                    )
+                },
+            ) {
+                val logs = CompanionPlugin.getLogCatLines(true).joinToString("\n")
+                logTextView.text = logs
+            }
         }
 
         private fun createRow(
@@ -95,8 +154,19 @@ class DebugActivity : FragmentActivity() {
 //            keyView.maxLines=8
 //            keyView.maxWidth=400
 
+            val isApiKey = key.contains("apikey", true) || key.contains("api key", true)
+
             val valueView = TextView(requireContext())
-            valueView.text = if (key.contains("apikey", true)) "*****" else value
+            valueView.text =
+                if (isApiKey && value != null
+                ) {
+                    value.take(4) + "..." + value.takeLast(8)
+                } else {
+                    value
+                }
+            if (isApiKey) {
+                valueView.typeface = Typeface.MONOSPACE
+            }
             valueView.textSize = TABLE_TEXT_SIZE
             valueView.setTextColor(Color.WHITE)
             valueView.textAlignment = TextView.TEXT_ALIGNMENT_VIEW_START

@@ -11,6 +11,7 @@ import com.apollographql.apollo3.api.Query
 import com.apollographql.apollo3.exception.ApolloException
 import com.apollographql.apollo3.exception.ApolloHttpException
 import com.apollographql.apollo3.exception.ApolloNetworkException
+import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
 import com.github.damontecres.stashapp.api.FindImageQuery
@@ -328,6 +329,11 @@ class QueryEngine(
     suspend fun getDefaultFilter(type: DataType): SavedFilterData? {
         val query = FindDefaultFilterQuery(type.filterMode)
         return executeQuery(query).data?.findDefaultFilter?.savedFilterData
+    }
+
+    suspend fun getServerConfiguration(): ConfigurationQuery.Data {
+        val query = ConfigurationQuery()
+        return executeQuery(query).data!!
     }
 
     /**
