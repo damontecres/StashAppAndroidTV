@@ -3,10 +3,7 @@ package com.github.damontecres.stashapp.util.plugin
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.RunPluginTaskMutation
-import com.github.damontecres.stashapp.api.type.PluginArgInput
-import com.github.damontecres.stashapp.api.type.PluginValueInput
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -82,18 +79,7 @@ class CompanionPlugin {
                     RunPluginTaskMutation(
                         plugin_id = PLUGIN_ID,
                         task_name = LOGCAT_TASK_NAME,
-                        args =
-                            listOf(
-                                PluginArgInput(
-                                    key = LOGCAT_TASK_NAME,
-                                    value =
-                                        Optional.present(
-                                            PluginValueInput(
-                                                str = Optional.present(logcat),
-                                            ),
-                                        ),
-                                ),
-                            ),
+                        args_map = mapOf(LOGCAT_TASK_NAME to logcat),
                     )
                 mutationEngine.executeMutation(mutation)
                 val msg =

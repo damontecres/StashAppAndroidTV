@@ -2,10 +2,7 @@ package com.github.damontecres.stashapp.util.plugin
 
 import android.content.Context
 import android.util.Log
-import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.RunPluginTaskMutation
-import com.github.damontecres.stashapp.api.type.PluginArgInput
-import com.github.damontecres.stashapp.api.type.PluginValueInput
 import com.github.damontecres.stashapp.util.StashClient
 import com.google.auto.service.AutoService
 import kotlinx.coroutines.runBlocking
@@ -40,18 +37,7 @@ class CrashReportSenderFactory : ReportSenderFactory {
                     RunPluginTaskMutation(
                         plugin_id = CompanionPlugin.PLUGIN_ID,
                         task_name = CompanionPlugin.CRASH_TASK_NAME,
-                        args =
-                            listOf(
-                                PluginArgInput(
-                                    key = CompanionPlugin.CRASH_TASK_NAME,
-                                    value =
-                                        Optional.present(
-                                            PluginValueInput(
-                                                str = Optional.present(errorContent.toJSON()),
-                                            ),
-                                        ),
-                                ),
-                            ),
+                        args_map = mapOf(CompanionPlugin.CRASH_TASK_NAME to errorContent.toJSON()),
                     )
                 runBlocking {
                     val response = client.mutation(mutation).execute()
