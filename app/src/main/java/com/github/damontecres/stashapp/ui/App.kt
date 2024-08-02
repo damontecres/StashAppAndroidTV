@@ -73,6 +73,7 @@ import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getId
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.secondsMs
+import kotlinx.serialization.Serializable
 import kotlin.reflect.typeOf
 
 private const val TAG = "Compose.App"
@@ -127,17 +128,24 @@ data class DrawerPage(
     }
 }
 
+@Serializable
 sealed class Route {
+    @Serializable
     data class DataTypeRoute(val dataType: DataType, val id: String? = null) : Route()
 
+    @Serializable
     data class Playback(val id: String, val position: Long = 0) : Route()
 
+    @Serializable
     data class Filter(val filter: StashFilter) : Route()
 
+    @Serializable
     data object Home : Route()
 
+    @Serializable
     data object Search : Route()
 
+    @Serializable
     data object Settings : Route()
 }
 
@@ -288,11 +296,16 @@ fun App() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = DrawerPage.HOME_PAGE.route,
+            startDestination = Route.Home,
             modifier = Modifier,
 //                    .fillMaxSize()
 //                    .padding(start = collapsedDrawerItemWidth),
         ) {
+            val typeMap =
+                mapOf(
+                    typeOf<DataType>() to NavType.EnumType(DataType::class.java),
+                )
+
             val itemOnClick = { item: Any ->
                 val dataType = getDataType(item)
 
@@ -331,7 +344,7 @@ fun App() {
 
             val composedDataTypes = listOf(DataType.SCENE, DataType.TAG)
 
-            composable<Route.DataTypeRoute> {
+            composable<Route.DataTypeRoute>(typeMap) {
                 val dataTypeRoute = it.toRoute<Route.DataTypeRoute>()
                 if (dataTypeRoute.dataType == DataType.MARKER) {
                     throw IllegalArgumentException("Cannot pass DataType.Marker in a DataTypeRoute")
@@ -430,11 +443,6 @@ fun App() {
                 }
                 activityClass = PlaybackActivity::class
             }
-
-            val typeMap =
-                mapOf(
-                    typeOf<DataType>() to NavType.EnumType(DataType::class.java),
-                )
             composable<StashCustomFilter>(typeMap = typeMap) { backStackEntry ->
                 val filter: StashCustomFilter = backStackEntry.toRoute()
                 FilterGrid(startingFilter = filter, itemOnClick = itemOnClick)
