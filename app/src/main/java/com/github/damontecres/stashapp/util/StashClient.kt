@@ -245,7 +245,7 @@ class StashClient private constructor() {
                 .build()
         }
 
-        private fun cleanServerUrl(stashUrl: String): String {
+        fun cleanServerUrl(stashUrl: String): String {
             var cleanedStashUrl = stashUrl.trim()
             if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
                 // Assume http
@@ -260,14 +260,13 @@ class StashClient private constructor() {
                 url.buildUpon()
                     .path(pathSegments.joinToString("/")) // Ensure the URL is the graphql endpoint
                     .build()
-            Log.d(TAG, "StashUrl: $stashUrl => $url")
             return url.toString()
         }
 
         /**
          * Get the server URL excluding the (unlikely) `/graphql` last path segment
          */
-        private fun getServerRoot(stashUrl: String?): String? {
+        fun getServerRoot(stashUrl: String?): String? {
             if (stashUrl == null) {
                 return null
             }
