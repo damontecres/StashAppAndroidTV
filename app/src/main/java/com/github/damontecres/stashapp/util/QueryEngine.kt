@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
 import com.github.damontecres.stashapp.api.FindImageQuery
 import com.github.damontecres.stashapp.api.FindImagesQuery
+import com.github.damontecres.stashapp.api.FindJobQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.FindMovieQuery
 import com.github.damontecres.stashapp.api.FindMoviesQuery
@@ -37,8 +38,10 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.FindJobInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
+import com.github.damontecres.stashapp.api.type.JobStatus
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
@@ -46,10 +49,15 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.JobResult
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReadWriteLock
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /**
  * Handles making graphql queries to the server
@@ -334,6 +342,29 @@ class QueryEngine(
     suspend fun getServerConfiguration(): ConfigurationQuery.Data {
         val query = ConfigurationQuery()
         return executeQuery(query).data!!
+    }
+
+    suspend fun waitForJob(
+        jobId: String,
+        delay: Duration = 1.toDuration(DurationUnit.SECONDS),
+    ): JobResult {
+        val query = FindJobQuery(FindJobInput((jobId)))
+        var job: FindJobQuery.FindJob? =
+            executeQuery(query).data?.findJob ?: return JobResult.NotFound
+        while (job?.status !in
+            setOf(
+                JobStatus.FINISHED,
+                JobStatus.FAILED,
+            )
+        ) {
+            delay(delay)
+            job = executeQuery(query).data?.findJob ?: return JobResult.NotFound
+        }
+        if (job?.status == JobStatus.FAILED) {
+            return JobResult.Failure(job.error)
+        } else {
+            return JobResult.Success
+        }
     }
 
     /**

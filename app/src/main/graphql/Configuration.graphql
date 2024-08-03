@@ -56,3 +56,18 @@ mutation MetadataScan($input: ScanMetadataInput!){
 mutation MetadataGenerate($input: GenerateMetadataInput!){
   metadataGenerate(input: $input)
 }
+
+mutation InstallPackages($type: PackageType!, $packages: [PackageSpecInput!]!) {
+  installPackages(type: $type, packages: $packages)
+}
+
+query FindJob($input: FindJobInput!) {
+  findJob(input: $input) {
+    id
+    status
+    progress
+    startTime
+    endTime
+    error
+  }
+}
