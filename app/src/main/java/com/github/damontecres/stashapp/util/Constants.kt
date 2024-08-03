@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.Uri
 import android.os.Build
 import android.text.TextUtils
 import android.util.DisplayMetrics
@@ -43,6 +42,7 @@ import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
+import com.github.damontecres.stashapp.views.fileNameFromPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Cache
@@ -351,11 +351,7 @@ val FullSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
             val path = files.firstOrNull()?.videoFileData?.path
-            if (path != null) {
-                File(path).name
-            } else {
-                null
-            }
+            path?.fileNameFromPath
         } else {
             title
         }
@@ -364,11 +360,7 @@ val SlimSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
             val path = files.firstOrNull()?.videoFileData?.path
-            if (path != null) {
-                File(path).name
-            } else {
-                null
-            }
+            path?.fileNameFromPath
         } else {
             title
         }
@@ -377,11 +369,7 @@ val VideoSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
             val path = files.firstOrNull()?.videoFileData?.path
-            if (path != null) {
-                File(path).name
-            } else {
-                null
-            }
+            path?.fileNameFromPath
         } else {
             title
         }
@@ -481,10 +469,10 @@ val GalleryData.name: String?
     get() =
         if (title.isNotNullOrBlank()) {
             title
+        } else if (files.isNotEmpty() && files.first().path.isNotNullOrBlank()) {
+            files.first().path.fileNameFromPath
         } else if (folder != null && folder.path.isNotNullOrBlank()) {
-            Uri.parse(folder.path).pathSegments.last()
-        } else if (files.firstOrNull()?.path.isNotNullOrBlank()) {
-            Uri.parse(files.firstOrNull()?.path).pathSegments.last()
+            folder.path.fileNameFromPath
         } else {
             null
         }

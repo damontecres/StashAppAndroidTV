@@ -51,3 +51,6 @@ fun parseTimeToString(ts: Any?): String? {
         ts.toString()
     }
 }
+
+val String.fileNameFromPath
+    get() = this.replace(Regex("^.*[\\\\/]"), "")
