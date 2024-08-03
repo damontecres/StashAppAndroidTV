@@ -9,6 +9,7 @@ class FormattingTests {
     fun testFileNameFromPath() {
         Assert.assertEquals("test.zip", "/path/to/test.zip".fileNameFromPath)
         Assert.assertEquals("test.zip", "to/test.zip".fileNameFromPath)
-        Assert.assertEquals("test.zip", "C:\\\\path\\to\\test.zip".fileNameFromPath)
+        Assert.assertEquals("test.zip", """C:\\path\to\test.zip""".fileNameFromPath)
+        Assert.assertEquals("test.zip", """\\192.168.1.100\path\to\test.zip""".fileNameFromPath)
     }
 }
