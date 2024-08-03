@@ -24,10 +24,12 @@ import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
+import com.github.damontecres.stashapp.data.JobResult
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -306,29 +308,75 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer?.url
 
             val sendLogsPref = findPreference<LongClickPreference>("sendLogs")!!
-            sendLogsPref.isEnabled = false
-            sendLogsPref.summary = "Checking for companion plugin..."
+            sendLogsPref.title = "Checking for companion plugin..."
+            sendLogsPref.summary = null
+
+            val setupSendLogsPref = {
+                sendLogsPref.title = "Send Logs"
+                sendLogsPref.summary = "Send a copy of recent app logs to your current server"
+                sendLogsPref.setOnPreferenceClickListener {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        CompanionPlugin.sendLogCat(requireContext(), false)
+                    }
+                    true
+                }
+                sendLogsPref.setOnLongClickListener {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        CompanionPlugin.sendLogCat(requireContext(), true)
+                    }
+                    true
+                }
+            }
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val serverPrefs = ServerPreferences(requireContext()).updatePreferences()
                 if (serverPrefs.companionPluginInstalled) {
-                    sendLogsPref.isEnabled = true
-                    sendLogsPref.summary = "Send a copy of recent app logs to your current server"
-                    sendLogsPref.setOnPreferenceClickListener {
-                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                            CompanionPlugin.sendLogCat(requireContext(), false)
-                        }
-                        true
-                    }
-                    sendLogsPref.setOnLongClickListener {
-                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                            CompanionPlugin.sendLogCat(requireContext(), true)
-                        }
-                        true
-                    }
+                    setupSendLogsPref()
                 } else {
-                    sendLogsPref.isEnabled = false
-                    sendLogsPref.summary = "Companion plugin not installed"
+                    sendLogsPref.title = "Install companion plugin"
+                    sendLogsPref.summary =
+                        "Install StashAppAndroid TV Companion plugin on the current server"
+                    sendLogsPref.setOnPreferenceClickListener {
+                        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                            val jobId =
+                                CompanionPlugin.installPlugin(MutationEngine(requireContext()))
+                            val queryEngine = QueryEngine(requireContext())
+                            val result = queryEngine.waitForJob(jobId)
+                            withContext(Dispatchers.Main) {
+                                if (result is JobResult.Failure) {
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Error installing plugin: ${result.message}",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                } else if (result is JobResult.NotFound) {
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Error installing plugin",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                } else {
+                                    val serverPrefs =
+                                        ServerPreferences(requireContext()).updatePreferences()
+                                    if (serverPrefs.companionPluginInstalled) {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Companion plugin installed!",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                        setupSendLogsPref()
+                                    } else {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Error installing plugin",
+                                            Toast.LENGTH_LONG,
+                                        ).show()
+                                    }
+                                }
+                            }
+                        }
+                        true
+                    }
                 }
             }
         }

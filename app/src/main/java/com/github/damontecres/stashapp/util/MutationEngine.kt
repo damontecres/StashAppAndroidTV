@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.api.DeleteMarkerMutation
 import com.github.damontecres.stashapp.api.ImageDecrementOMutation
 import com.github.damontecres.stashapp.api.ImageIncrementOMutation
 import com.github.damontecres.stashapp.api.ImageResetOMutation
+import com.github.damontecres.stashapp.api.InstallPackagesMutation
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
 import com.github.damontecres.stashapp.api.SceneAddOMutation
@@ -32,6 +33,8 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.ImageUpdateInput
+import com.github.damontecres.stashapp.api.type.PackageSpecInput
+import com.github.damontecres.stashapp.api.type.PackageType
 import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.PerformerUpdateInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
@@ -408,6 +411,15 @@ class MutationEngine(
         val mutation = CreatePerformerMutation(input)
         val result = executeMutation(mutation)
         return result.data?.performerCreate?.performerData
+    }
+
+    suspend fun installPackage(
+        type: PackageType,
+        input: PackageSpecInput,
+    ): String {
+        val mutation = InstallPackagesMutation(type, listOf(input))
+        val result = executeMutation(mutation)
+        return result.data!!.installPackages
     }
 
     companion object {

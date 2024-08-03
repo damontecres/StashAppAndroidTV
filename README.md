@@ -31,6 +31,7 @@ Check the [Tips & Tricks](https://github.com/damontecres/StashAppAndroidTV/wiki/
 1. [Configure the app](#configuration)
 1. Optionally, install the [StashAppAndroidTV Companion](https://github.com/damontecres/StashAppAndroidTV-Companion) plugin on your server to enable additional features
     - Search for `StashAppAndroidTV Companion` on your server's Settings->Plugins page
+    - Alternatively, trigger an install from the Android TV app in `Settings->Advanced->Install companion plugin`
 
 ### Upgrading the app
 

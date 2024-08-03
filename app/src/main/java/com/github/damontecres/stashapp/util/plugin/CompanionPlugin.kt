@@ -4,8 +4,13 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import com.github.damontecres.stashapp.api.RunPluginTaskMutation
+import com.github.damontecres.stashapp.api.type.PackageSpecInput
+import com.github.damontecres.stashapp.api.type.PackageType
+import com.github.damontecres.stashapp.data.JobResult
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -19,9 +24,18 @@ class CompanionPlugin {
         private const val TAG = "CompanionPlugin"
 
         const val PLUGIN_ID = "stashAppAndroidTvCompanion"
+        private const val SOURCE_URL =
+            "https://stashapp.github.io/CommunityScripts/stable/index.yml"
 
         const val CRASH_TASK_NAME = "crash_report"
         const val LOGCAT_TASK_NAME = "logcat"
+
+        suspend fun installPlugin(mutationEngine: MutationEngine): String {
+            return mutationEngine.installPackage(
+                PackageType.Plugin,
+                PackageSpecInput(PLUGIN_ID, SOURCE_URL),
+            )
+        }
 
         fun getLogCatLines(verbose: Boolean): List<String> {
             val lineCount = if (verbose) 500 else 200
@@ -81,18 +95,34 @@ class CompanionPlugin {
                         task_name = LOGCAT_TASK_NAME,
                         args_map = mapOf(LOGCAT_TASK_NAME to logcat),
                     )
-                mutationEngine.executeMutation(mutation)
-                val msg =
-                    buildString {
-                        if (verbose) {
-                            append("Verbose logs sent!")
-                        } else {
-                            append("Logs sent!")
+                val jobId = mutationEngine.executeMutation(mutation).data?.runPluginTask
+                if (jobId.isNotNullOrBlank()) {
+                    val result = QueryEngine(context).waitForJob(jobId)
+                    withContext(Dispatchers.Main) {
+                        if (result is JobResult.Success) {
+                            val msg =
+                                buildString {
+                                    if (verbose) {
+                                        append("Verbose logs sent!")
+                                    } else {
+                                        append("Logs sent!")
+                                    }
+                                    append(" Check the server's log page.")
+                                }
+
+                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                        } else if (result is JobResult.NotFound) {
+                            Toast.makeText(context, "Error sending logs", Toast.LENGTH_LONG).show()
+                        } else if (result is JobResult.Failure) {
+                            Toast.makeText(
+                                context,
+                                "Error sending logs: ${result.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                         }
-                        append(" Check the server's log page.")
                     }
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "Error sending logs", Toast.LENGTH_LONG).show()
                 }
             } catch (ex: Exception) {
                 Log.e(TAG, "Error sending logs", ex)
