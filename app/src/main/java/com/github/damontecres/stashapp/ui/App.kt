@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui
 
+import android.content.Intent
 import android.os.Parcelable
 import android.util.Log
 import androidx.annotation.StringRes
@@ -355,7 +356,7 @@ fun App() {
                 }
                 if (dataTypeRoute.id.isNullOrBlank()) {
                     FilterGrid(StashDefaultFilter(dataTypeRoute.dataType), itemOnClick)
-                } else if (dataTypeRoute.dataType in composedDataTypes) {
+                } else {
                     when (dataTypeRoute.dataType) {
                         DataType.SCENE ->
                             ScenePage(
@@ -364,71 +365,60 @@ fun App() {
                             )
 
                         DataType.TAG -> TagPage(dataTypeRoute.id, itemOnClick = itemOnClick)
-                        else -> throw IllegalStateException()
+
+                        DataType.PERFORMER -> {
+                            context.startActivity(
+                                Intent(
+                                    context,
+                                    PerformerActivity::class.java,
+                                ).putExtra("id", dataTypeRoute.id)
+                                    .putExtra(Constants.USE_NAV_CONTROLLER, true),
+                            )
+                        }
+
+                        DataType.STUDIO -> {
+                            context.startActivity(
+                                Intent(
+                                    context,
+                                    StudioActivity::class.java,
+                                ).putExtra("id", dataTypeRoute.id)
+                                    .putExtra(Constants.USE_NAV_CONTROLLER, true),
+                            )
+                        }
+
+                        DataType.MOVIE -> {
+                            context.startActivity(
+                                Intent(
+                                    context,
+                                    MovieActivity::class.java,
+                                ).putExtra("id", dataTypeRoute.id)
+                                    .putExtra(Constants.USE_NAV_CONTROLLER, true),
+                            )
+                        }
+
+                        DataType.IMAGE -> {
+                            context.startActivity(
+                                Intent(
+                                    context,
+                                    ImageActivity::class.java,
+                                ).putExtra("id", dataTypeRoute.id)
+                                    .putExtra(Constants.USE_NAV_CONTROLLER, true),
+                            )
+                        }
+
+                        DataType.GALLERY -> {
+                            context.startActivity(
+                                Intent(
+                                    context,
+                                    GalleryActivity::class.java,
+                                ).putExtra("id", dataTypeRoute.id)
+                                    .putExtra(Constants.USE_NAV_CONTROLLER, true),
+                            )
+                        }
+
+                        DataType.MARKER -> throw IllegalStateException()
                     }
-                } else {
-                    throw IllegalStateException()
                 }
-            }
-
-            activity(route = "${DrawerPage.dataType(DataType.PERFORMER).route}/{id}") {
-                argument("id") {
-                    type = NavType.StringType
-                    nullable = false
-                }
-                argument(Constants.USE_NAV_CONTROLLER) {
-                    type = NavType.BoolType
-                    defaultValue = true
-                }
-                activityClass = PerformerActivity::class
-            }
-
-            activity(route = "${DrawerPage.dataType(DataType.GALLERY).route}/{id}") {
-                argument("id") {
-                    type = NavType.StringType
-                    nullable = false
-                }
-                argument(Constants.USE_NAV_CONTROLLER) {
-                    type = NavType.BoolType
-                    defaultValue = true
-                }
-                activityClass = GalleryActivity::class
-            }
-
-            activity(route = "${DrawerPage.dataType(DataType.IMAGE).route}/{id}") {
-                argument("id") {
-                    type = NavType.StringType
-                    nullable = false
-                }
-                argument(Constants.USE_NAV_CONTROLLER) {
-                    type = NavType.BoolType
-                    defaultValue = true
-                }
-                activityClass = ImageActivity::class
-            }
-
-            activity(route = "${DrawerPage.dataType(DataType.MOVIE).route}/{id}") {
-                argument("id") {
-                    type = NavType.StringType
-                    nullable = false
-                }
-                argument(Constants.USE_NAV_CONTROLLER) {
-                    type = NavType.BoolType
-                    defaultValue = true
-                }
-                activityClass = MovieActivity::class
-            }
-
-            activity(route = "${DrawerPage.dataType(DataType.STUDIO).route}/{id}") {
-                argument("id") {
-                    type = NavType.StringType
-                    nullable = false
-                }
-                argument(Constants.USE_NAV_CONTROLLER) {
-                    type = NavType.BoolType
-                    defaultValue = true
-                }
-                activityClass = StudioActivity::class
             }
 
             activity<Route.Playback> {
