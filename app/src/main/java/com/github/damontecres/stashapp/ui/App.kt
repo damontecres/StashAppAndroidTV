@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui
 
+import android.os.Parcelable
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -71,35 +72,31 @@ import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getId
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.secondsMs
+import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import kotlin.reflect.typeOf
 
 private const val TAG = "Compose.App"
 
 data class DrawerPage(
-    val route: String,
+    val route: Route,
     @StringRes val iconString: Int,
     @StringRes val name: Int,
 ) {
-    fun idRoute(id: String): String {
-        return "$route/$id"
-    }
-
     companion object {
-        val HOME_PAGE = DrawerPage("home", R.string.fa_house, R.string.home)
+        val HOME_PAGE = DrawerPage(Route.Home, R.string.fa_house, R.string.home)
 
         val SEARCH_PAGE =
             DrawerPage(
-                "search",
+                Route.Search,
                 R.string.fa_magnifying_glass_plus,
                 R.string.stashapp_actions_search,
             )
 
         val SETTINGS_PAGE =
             DrawerPage(
-                "settings",
+                Route.Settings,
                 R.string.fa_arrow_right_arrow_left, // Ignored
                 R.string.stashapp_settings,
             )
@@ -109,7 +106,11 @@ data class DrawerPage(
                 DataType.entries.forEach { dataType ->
                     put(
                         dataType,
-                        DrawerPage(dataType.name, dataType.iconStringId, dataType.pluralStringId),
+                        DrawerPage(
+                            Route.DataTypeRoute(dataType),
+                            dataType.iconStringId,
+                            dataType.pluralStringId,
+                        ),
                     )
                 }
             }
@@ -129,7 +130,8 @@ data class DrawerPage(
 }
 
 @Serializable
-sealed class Route {
+@Parcelize
+sealed class Route : Parcelable {
     @Serializable
     data class DataTypeRoute(val dataType: DataType, val id: String? = null) : Route()
 
@@ -195,18 +197,19 @@ fun App() {
                     .focusProperties {
                         enter = { focusDirection ->
                             if (focusDirection == FocusDirection.Left) {
-                                val currentPage =
-                                    DrawerPage.PAGES.firstOrNull { page ->
-                                        navController.currentDestination?.route?.startsWith(
-                                            page.route,
-                                        ) ?: false
-                                    }
-                                Log.v(TAG, "focus enter currentPage=$currentPage")
-                                if (currentPage != null) {
-                                    focusRequesters[currentPage]!!
-                                } else {
-                                    focusRequesters[DrawerPage.HOME_PAGE]!!
-                                }
+//                                val currentPage =
+//                                    DrawerPage.PAGES.firstOrNull { page ->
+//                                        navController.currentDestination?.route?.startsWith(
+//                                            page.route,
+//                                        ) ?: false
+//                                    }
+//                                Log.v(TAG, "focus enter currentPage=$currentPage")
+//                                if (currentPage != null) {
+//                                    focusRequesters[currentPage]!!
+//                                } else {
+//                                    focusRequesters[DrawerPage.HOME_PAGE]!!
+//                                }
+                                FocusRequester.Default
                             } else {
                                 FocusRequester.Default
                             }
@@ -258,9 +261,9 @@ fun App() {
                                     .focusRequester(focusRequesters[page]!!),
                             //                            shape = NavigationDrawerItemDefaults.shape(shape = RoundedCornerShape(50)),
 //                            glow = NavigationDrawerItemDefaults.glow(Glow.None),
-                            selected =
-                                navController.currentDestination?.route?.startsWith(page.route)
-                                    ?: false,
+                            selected = false,
+//                                navController.currentDestination?.route?.startsWith(page.route)
+//                                    ?: false,
                             onClick = {
                                 drawerState.setValue(DrawerValue.Closed)
                                 Log.v(TAG, "Navigating to ${page.route}")
@@ -346,12 +349,13 @@ fun App() {
 
             composable<Route.DataTypeRoute>(typeMap) {
                 val dataTypeRoute = it.toRoute<Route.DataTypeRoute>()
+                Log.v(TAG, "dataTypeRoute=$dataTypeRoute")
                 if (dataTypeRoute.dataType == DataType.MARKER) {
                     throw IllegalArgumentException("Cannot pass DataType.Marker in a DataTypeRoute")
                 }
-                if (dataTypeRoute.id.isNotNullOrBlank()) {
+                if (dataTypeRoute.id.isNullOrBlank()) {
                     FilterGrid(StashDefaultFilter(dataTypeRoute.dataType), itemOnClick)
-                } else if (dataTypeRoute.id != null && dataTypeRoute.dataType in composedDataTypes) {
+                } else if (dataTypeRoute.dataType in composedDataTypes) {
                     when (dataTypeRoute.dataType) {
                         DataType.SCENE ->
                             ScenePage(
