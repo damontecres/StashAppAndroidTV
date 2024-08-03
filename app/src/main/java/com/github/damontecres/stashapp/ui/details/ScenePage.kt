@@ -110,6 +110,7 @@ class SceneViewModel
 fun ScenePage(
     sceneId: String,
     itemOnClick: (Any) -> Unit,
+    playbackCallback: (Long) -> Unit,
     viewModel: SceneViewModel = hiltViewModel(),
 ) {
     val uiState = viewModel.uiState.observeAsState().value
@@ -135,6 +136,7 @@ fun ScenePage(
             SceneDetails(
                 s.scene,
                 itemOnClick,
+                playbackCallback,
                 Modifier
                     .fillMaxSize()
                     .animateContentSize(),
@@ -151,6 +153,7 @@ fun ScenePage(
 private fun SceneDetails(
     scene: FullSceneData,
     itemOnClick: (Any) -> Unit,
+    playbackCallback: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SceneViewModel = hiltViewModel(),
 ) {
@@ -275,7 +278,9 @@ private fun SceneDetails(
         }
 
         item {
-            Button(onClick = { /*TODO*/ }) {
+            Button(onClick = {
+                playbackCallback.invoke(0L)
+            }) {
                 Text(text = "Play")
             }
         }

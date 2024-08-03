@@ -362,6 +362,14 @@ fun App() {
                             ScenePage(
                                 sceneId = dataTypeRoute.id,
                                 itemOnClick = itemOnClick,
+                                playbackCallback = { position ->
+                                    navController.navigate(
+                                        Route.Playback(
+                                            dataTypeRoute.id,
+                                            position,
+                                        ),
+                                    )
+                                },
                             )
 
                         DataType.TAG -> TagPage(dataTypeRoute.id, itemOnClick = itemOnClick)
