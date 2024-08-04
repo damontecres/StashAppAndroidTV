@@ -684,6 +684,8 @@ val ImageData.isImageClip: Boolean
             visual_files.firstOrNull()?.onVideoFile!!.format != "gif"
 
 val ImageData.isGif: Boolean
-    get() =
-        visual_files.firstOrNull()?.onVideoFile != null &&
-            visual_files.firstOrNull()?.onVideoFile!!.format == "gif"
+    get() {
+        val file = visual_files.firstOrNull()
+        return (file?.onVideoFile != null && file.onVideoFile.format == "gif") ||
+            file?.onBaseFile?.path?.endsWith(".gif", true) == true
+    }
