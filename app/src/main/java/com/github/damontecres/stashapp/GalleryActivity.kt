@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
+import androidx.leanback.widget.ClassPresenterSelector
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
@@ -28,6 +29,7 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
@@ -145,6 +147,10 @@ class GalleryActivity : FragmentActivity() {
 
                 2 ->
                     StashGridFragment(
+                        ClassPresenterSelector().addClassPresenter(
+                            PerformerData::class.java,
+                            PerformerInScenePresenter(gallery.date),
+                        ),
                         PerformerComparator,
                         GalleryPerformerDataSupplier(gallery),
                         getColumns(DataType.PERFORMER),
