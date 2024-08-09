@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <layer-list>
+            <item>
+                <ripple android:color="@color/selected_background">
+                    <item>
+                        <shape android:shape="oval">
+                            <solid android:color="@color/selected_background"/>
+                        </shape>
+                    </item>
+                </ripple>
+            </item>
+            <item android:drawable="@mipmap/stash_logo"/>
+        </layer-list>
+    </item>
+    <item android:state_focused="true">
+        <layer-list>
+            <item>
+                <shape android:shape="oval">
+                    <solid android:color="@color/selected_background"/>
+                </shape>
+            </item>
+            <item android:drawable="@mipmap/stash_logo"/>
+        </layer-list>
+    </item>
+    <item android:drawable="@mipmap/stash_logo"/>
+</selector>

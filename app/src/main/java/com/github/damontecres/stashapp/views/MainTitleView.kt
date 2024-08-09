@@ -9,12 +9,16 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat.startActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.findFragment
+import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
@@ -24,6 +28,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
     private var mPreferencesView: ImageButton
     private lateinit var searchButton: ImageButton
 
+    private val iconButtom: ImageButton
     private val scenesButton: Button
     private val performersButton: Button
     private val studiosButton: Button
@@ -42,6 +47,13 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
 
     init {
         val root = LayoutInflater.from(context).inflate(R.layout.title, this)
+        iconButtom = root.findViewById(R.id.icon)
+        iconButtom.setOnClickListener {
+            GuidedStepSupportFragment.add(
+                findFragment<Fragment>().parentFragmentManager,
+                ManageServersFragment(),
+            )
+        }
         searchButton = root.findViewById(R.id.search_button)
         mPreferencesView = root.findViewById(R.id.settings_button)
         mPreferencesView.setOnClickListener {

@@ -85,22 +85,10 @@ class MainFragment : BrowseSupportFragment() {
         setupEventListeners()
 
         adapter = rowsAdapter
-
-        lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            val result =
-                testStashConnection(
-                    requireContext(),
-                    false,
-                    StashClient.getApolloClient(requireContext()),
-                )
-            if (result.status == TestResultStatus.SUCCESS) {
-                val serverInfo = result.serverInfo!!
-                ServerPreferences(requireContext()).updatePreferences()
-                val mainTitleView =
-                    requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-                mainTitleView.refreshMenuItems()
-                if (rowsAdapter.size() == 0) {
-                    fetchData(serverInfo)
+        if (savedInstanceState == null) {
+            requireActivity().supportFragmentManager.addOnBackStackChangedListener {
+                if (requireActivity().supportFragmentManager.backStackEntryCount == 0) {
+                    doOnResume()
                 }
             }
         }
@@ -122,11 +110,17 @@ class MainFragment : BrowseSupportFragment() {
                     null
                 }
             }
+        if (savedInstanceState == null) {
+            doOnResume()
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        doOnResume()
+    }
 
+    private fun doOnResume() {
         val newServerHash = computeServerHash()
         if (serverHash != newServerHash) {
             Log.v(TAG, "server hash changed")
