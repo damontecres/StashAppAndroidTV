@@ -73,20 +73,24 @@ class PlaybackSceneFragment : PlaybackFragment() {
     private var videoRotation = 0
 
     private fun applyEffects() {
-        Log.d(TAG, "Applying ${videoEffects.size} effects, videoRotation=$videoRotation")
-        val effectList =
-            buildList {
-                addAll(videoEffects)
-                if (videoRotation != 0 && videoRotation % 360 != 0) {
-                    add(
-                        ScaleAndRotateTransformation.Builder()
-                            .setRotationDegrees(videoRotation.toFloat())
-                            .build(),
-                    )
+        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_experimental_features), false)
+        ) {
+            Log.d(TAG, "Applying ${videoEffects.size} effects, videoRotation=$videoRotation")
+            val effectList =
+                buildList {
+                    addAll(videoEffects)
+                    if (videoRotation != 0 && videoRotation % 360 != 0) {
+                        add(
+                            ScaleAndRotateTransformation.Builder()
+                                .setRotationDegrees(videoRotation.toFloat())
+                                .build(),
+                        )
+                    }
                 }
-            }
-        player?.setVideoEffects(effectList)
-        saveEffects()
+            player?.setVideoEffects(effectList)
+            saveEffects()
+        }
     }
 
     private fun saveEffects() {
@@ -193,7 +197,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
                 }
             }.also { exoPlayer ->
-                exoPlayer.setVideoEffects(listOf())
+                applyEffects()
                 exoPlayer.setMediaItem(
                     buildMediaItem(requireContext(), streamDecision, scene),
                     if (position > 0) position else C.TIME_UNSET,
@@ -267,16 +271,19 @@ class PlaybackSceneFragment : PlaybackFragment() {
 
     override fun onResume() {
         super.onResume()
-        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getBoolean(getString(R.string.pref_key_playback_save_effects), true)
+        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        if (preferences.getBoolean(getString(R.string.pref_key_experimental_features), false) &&
+            preferences.getBoolean(getString(R.string.pref_key_playback_save_effects), true)
         ) {
             viewLifecycleOwner.lifecycleScope.launchIO {
                 val currentServer = StashServer.getCurrentStashServer(requireContext())!!
-                val effects = db.playbackEffectsDao().getPlaybackEffect(currentServer.url, scene.id)
-                videoRotation = effects.rotation
-                withContext(Dispatchers.Main) {
-                    applyEffects()
-                }
+                db.playbackEffectsDao().getPlaybackEffect(currentServer.url, scene.id)
+                    ?.let { effect ->
+                        videoRotation = effect.rotation
+                        withContext(Dispatchers.Main) {
+                            applyEffects()
+                        }
+                    }
             }
         }
     }
