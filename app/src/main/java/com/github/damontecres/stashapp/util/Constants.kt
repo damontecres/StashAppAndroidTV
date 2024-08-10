@@ -43,7 +43,11 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Cache
 import java.io.File
@@ -689,3 +693,17 @@ val ImageData.isGif: Boolean
         return (file?.onVideoFile != null && file.onVideoFile.format == "gif") ||
             file?.onBaseFile?.path?.endsWith(".gif", true) == true
     }
+
+/**
+ * Launch in the [Dispatchers.IO] context with an optional [CoroutineExceptionHandler] defaulting to [StashCoroutineExceptionHandler]
+ */
+fun CoroutineScope.launchIO(
+    exceptionHandler: CoroutineExceptionHandler? = StashCoroutineExceptionHandler(),
+    block: suspend CoroutineScope.() -> Unit,
+): Job {
+    return if (exceptionHandler == null) {
+        launch(Dispatchers.IO, block = block)
+    } else {
+        launch(Dispatchers.IO + exceptionHandler, block = block)
+    }
+}
