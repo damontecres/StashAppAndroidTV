@@ -90,10 +90,14 @@ class PlaybackSceneFragment : PlaybackFragment() {
     }
 
     private fun saveEffects() {
-        viewLifecycleOwner.lifecycleScope.launchIO {
-            val currentServer = StashServer.getCurrentStashServer(requireContext())!!
-            db.playbackEffectsDao()
-                .insert(PlaybackEffect(currentServer.url, scene.id, videoRotation))
+        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_playback_save_effects), true)
+        ) {
+            viewLifecycleOwner.lifecycleScope.launchIO {
+                val currentServer = StashServer.getCurrentStashServer(requireContext())!!
+                db.playbackEffectsDao()
+                    .insert(PlaybackEffect(currentServer.url, scene.id, videoRotation))
+            }
         }
     }
 
@@ -263,12 +267,16 @@ class PlaybackSceneFragment : PlaybackFragment() {
 
     override fun onResume() {
         super.onResume()
-        viewLifecycleOwner.lifecycleScope.launchIO {
-            val currentServer = StashServer.getCurrentStashServer(requireContext())!!
-            val effects = db.playbackEffectsDao().getPlaybackEffect(currentServer.url, scene.id)
-            videoRotation = effects.rotation
-            withContext(Dispatchers.Main) {
-                applyEffects()
+        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_playback_save_effects), true)
+        ) {
+            viewLifecycleOwner.lifecycleScope.launchIO {
+                val currentServer = StashServer.getCurrentStashServer(requireContext())!!
+                val effects = db.playbackEffectsDao().getPlaybackEffect(currentServer.url, scene.id)
+                videoRotation = effects.rotation
+                withContext(Dispatchers.Main) {
+                    applyEffects()
+                }
             }
         }
     }

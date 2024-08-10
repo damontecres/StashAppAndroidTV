@@ -15,4 +15,7 @@ interface PlaybackEffectsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg items: PlaybackEffect)
+
+    @Query("DELETE FROM playback_effects")
+    fun deleteAll()
 }
