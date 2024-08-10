@@ -36,6 +36,25 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
         val saturationText = view.findViewById<TextView>(R.id.saturation_adjust_text)
         val hueText = view.findViewById<TextView>(R.id.hue_adjust_text)
 
+        fun setUi(vf: VideoFilter) {
+            redAdjust.progress = vf.red
+            greenAdjust.progress = vf.green
+            blueAdjust.progress = vf.blue
+            brightnessAdjust.progress = vf.brightness
+            contrastAdjust.progress = vf.contrast
+            saturationAdjust.progress = vf.saturation
+            hueAdjust.progress = vf.hue
+
+            redText.text = "${vf.red}%"
+            greenText.text = "${vf.green}%"
+            blueText.text = "${vf.blue}%"
+            brightnessText.text = "${vf.brightness}%"
+            contrastText.text = "${vf.contrast}%"
+            saturationText.text = "${vf.saturation}%"
+            hueText.text = "${vf.hue}"
+        }
+        setUi(viewModel.videoFilter.value ?: VideoFilter())
+
         redAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(red = it)
             redText.text = "$it%"
@@ -85,29 +104,9 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
 
         val resetButton = view.findViewById<Button>(R.id.reset_button)
         resetButton.setOnClickListener {
-            viewModel.videoFilter.value = VideoFilter()
-            listOf(
-                redAdjust,
-                greenAdjust,
-                blueAdjust,
-                brightnessAdjust,
-                contrastAdjust,
-                saturationAdjust,
-            ).forEach {
-                it.progress = VideoFilter.COLOR_DEFAULT
-            }
-            hueAdjust.progress = VideoFilter.HUE_DEFAULT
-            listOf(
-                redText,
-                greenText,
-                blueText,
-                brightnessText,
-                contrastText,
-                saturationText,
-            ).forEach {
-                it.text = VideoFilter.COLOR_DEFAULT.toString() + "%"
-            }
-            hueText.text = "0"
+            val vf = VideoFilter()
+            viewModel.videoFilter.value = vf
+            setUi(vf)
         }
     }
 
