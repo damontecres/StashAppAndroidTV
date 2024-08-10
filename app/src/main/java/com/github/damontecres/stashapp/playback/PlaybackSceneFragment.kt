@@ -12,11 +12,15 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.core.view.isVisible
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
-import androidx.media3.common.Effect
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.Brightness
+import androidx.media3.effect.Contrast
+import androidx.media3.effect.HslAdjustment
+import androidx.media3.effect.RgbAdjustment
 import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
@@ -31,19 +35,16 @@ import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.room.AppDatabase
-import com.github.damontecres.stashapp.data.room.PlaybackEffect
+import com.github.damontecres.stashapp.data.room.VideoFilter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.Timer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -69,41 +70,72 @@ class PlaybackSceneFragment : PlaybackFragment() {
             DB_NAME,
         ).build()
 
-    private val videoEffects = mutableListOf<Effect>()
-    private var videoRotation = 0
+    private val viewModel: VideoFilterViewModel by activityViewModels()
 
     private fun applyEffects() {
         if (PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_experimental_features), false)
         ) {
-            Log.d(TAG, "Applying ${videoEffects.size} effects, videoRotation=$videoRotation")
-            val effectList =
-                buildList {
-                    addAll(videoEffects)
-                    if (videoRotation != 0 && videoRotation % 360 != 0) {
-                        add(
-                            ScaleAndRotateTransformation.Builder()
-                                .setRotationDegrees(videoRotation.toFloat())
-                                .build(),
-                        )
-                    }
-                }
-            player?.setVideoEffects(effectList)
-            saveEffects()
-        }
-    }
+            Log.v(TAG, "Initializing video effects")
+            player?.setVideoEffects(listOf())
 
-    private fun saveEffects() {
-        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getBoolean(getString(R.string.pref_key_playback_save_effects), true)
-        ) {
-            viewLifecycleOwner.lifecycleScope.launchIO {
-                val currentServer = StashServer.getCurrentStashServer(requireContext())!!
-                db.playbackEffectsDao()
-                    .insert(PlaybackEffect(currentServer.url, scene.id, videoRotation))
+            viewModel.videoFilter.observe(
+                viewLifecycleOwner,
+            ) { vf ->
+                Log.v(TAG, "Got new VideoFilter: $vf")
+                if (vf != null) {
+                    val rotation = vf.rotation
+                    val effectList =
+                        buildList {
+                            if (vf.isRotated()) {
+                                add(
+                                    ScaleAndRotateTransformation.Builder()
+                                        .setRotationDegrees(rotation.toFloat())
+                                        .build(),
+                                )
+                            }
+                            if (vf.hasRgb()) {
+                                add(
+                                    RgbAdjustment.Builder()
+                                        .setRedScale(vf.red / VideoFilter.COLOR_DEFAULT.toFloat())
+                                        .setGreenScale(vf.green / VideoFilter.COLOR_DEFAULT.toFloat())
+                                        .setBlueScale(vf.blue / VideoFilter.COLOR_DEFAULT.toFloat())
+                                        .build(),
+                                )
+                            }
+                            if (vf.hasBrightness()) {
+                                add(Brightness((vf.brightness - 100) / 100f))
+                            }
+                            if (vf.hasContrast()) {
+                                add(Contrast((vf.contrast - 100) / 100f))
+                            }
+                            if (vf.hasHsl()) {
+                                add(
+                                    HslAdjustment.Builder()
+                                        .adjustHue(vf.hue.toFloat())
+                                        .adjustSaturation((vf.saturation - 100).toFloat())
+                                        .build(),
+                                )
+                            }
+                        }
+                    Log.d(TAG, "Applying ${effectList.size} effects: $effectList")
+                    player?.setVideoEffects(effectList)
+                }
             }
         }
     }
+
+//    private fun saveEffects() {
+//        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+//                .getBoolean(getString(R.string.pref_key_playback_save_effects), true)
+//        ) {
+//            viewLifecycleOwner.lifecycleScope.launchIO {
+//                val currentServer = StashServer.getCurrentStashServer(requireContext())!!
+//                db.playbackEffectsDao()
+//                    .insert(PlaybackEffect(currentServer.url, scene.id, videoRotation))
+//            }
+//        }
+//    }
 
     @OptIn(UnstableApi::class)
     override fun initializePlayer(): ExoPlayer {
@@ -202,6 +234,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     buildMediaItem(requireContext(), streamDecision, scene),
                     if (position > 0) position else C.TIME_UNSET,
                 )
+                Log.v(TAG, "Preparing playback")
                 exoPlayer.prepare()
                 // Unless the video was paused before called the result launcher, play immediately
                 exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
@@ -238,7 +271,13 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
             showSimpleListPopupWindow(
                 moreOptionsButton,
-                listOf("Create Marker", debugToggleText, "Rotate left", "Rotate Right"),
+                listOf(
+                    "Create Marker",
+                    debugToggleText,
+                    "Apply Filters",
+                    "Rotate left",
+                    "Rotate Right",
+                ),
             ) { position ->
                 if (position == 0) {
                     // Save current playback state
@@ -258,12 +297,20 @@ class PlaybackSceneFragment : PlaybackFragment() {
                         debugView.visibility = View.VISIBLE
                     }
                 } else if (position == 2) {
-                    // Rotate left
-                    videoRotation += 90
-                    applyEffects()
+                    requireActivity().supportFragmentManager.beginTransaction()
+                        .replace(R.id.video_filter_container, PlaybackFilterFragment())
+                        .commitNow()
                 } else if (position == 3) {
-                    videoRotation -= 90
-                    applyEffects()
+                    Log.v(TAG, "rotate left")
+                    val effects =
+                        listOf(
+                            ScaleAndRotateTransformation.Builder()
+                                .setRotationDegrees(90f)
+                                .build(),
+                        )
+                    player?.setVideoEffects(effects)
+                } else if (position == 4) {
+                    TODO()
                 }
             }
         }
@@ -271,21 +318,20 @@ class PlaybackSceneFragment : PlaybackFragment() {
 
     override fun onResume() {
         super.onResume()
-        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        if (preferences.getBoolean(getString(R.string.pref_key_experimental_features), false) &&
-            preferences.getBoolean(getString(R.string.pref_key_playback_save_effects), true)
-        ) {
-            viewLifecycleOwner.lifecycleScope.launchIO {
-                val currentServer = StashServer.getCurrentStashServer(requireContext())!!
-                db.playbackEffectsDao().getPlaybackEffect(currentServer.url, scene.id)
-                    ?.let { effect ->
-                        videoRotation = effect.rotation
-                        withContext(Dispatchers.Main) {
-                            applyEffects()
-                        }
-                    }
-            }
-        }
+//        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+//        if (preferences.getBoolean(getString(R.string.pref_key_experimental_features), false) &&
+//            preferences.getBoolean(getString(R.string.pref_key_playback_save_effects), true)
+//        ) {
+//            viewLifecycleOwner.lifecycleScope.launchIO {
+//                val currentServer = StashServer.getCurrentStashServer(requireContext())!!
+//                db.playbackEffectsDao().getPlaybackEffect(currentServer.url, scene.id)
+//                    ?.let { effect ->
+//                        withContext(Dispatchers.Main) {
+//                            applyEffects()
+//                        }
+//                    }
+//            }
+//        }
     }
 
     override fun releasePlayer() {

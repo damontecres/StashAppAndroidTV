@@ -12,6 +12,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SceneDetailsActivity
 import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.data.Scene
@@ -29,6 +30,8 @@ class PlaybackActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        setContentView(R.layout.activity_playback)
+
         val scene = intent.getParcelableExtra(SceneDetailsActivity.MOVIE) as Scene?
         if (scene != null) {
             this.scene = scene
@@ -36,7 +39,7 @@ class PlaybackActivity : FragmentActivity() {
                 fragment = PlaybackSceneFragment()
                 fragment!!.scene = scene
                 supportFragmentManager.beginTransaction()
-                    .replace(android.R.id.content, fragment!!)
+                    .replace(R.id.playback_container, fragment!!)
                     .commit()
             }
         } else {
@@ -49,7 +52,7 @@ class PlaybackActivity : FragmentActivity() {
                     fragment = PlaybackSceneFragment()
                     fragment!!.scene = scene
                     supportFragmentManager.beginTransaction()
-                        .replace(android.R.id.content, fragment!!)
+                        .replace(R.id.playback_container, fragment!!)
                         .commit()
                 }
             }
