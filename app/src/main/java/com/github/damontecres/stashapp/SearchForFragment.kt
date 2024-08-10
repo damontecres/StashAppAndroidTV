@@ -153,7 +153,7 @@ class SearchForFragment(
                     DataType.GALLERY -> (item as GalleryData).id
                 }
             val currentServer = StashServer.getCurrentStashServer(requireContext())
-            if (currentServer != null) {
+            if (dataType in DATA_TYPE_SUGGESTIONS && currentServer != null) {
                 viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                     db.recentSearchItemsDao()
                         .insert(RecentSearchItem(currentServer.url, resultId, dataType))
@@ -202,6 +202,7 @@ class SearchForFragment(
                             when (dataType) {
                                 DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
                                 DataType.TAG -> queryEngine.getTags(mostRecentIds)
+                                DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
                                 else -> {
                                     listOf()
                                 }
