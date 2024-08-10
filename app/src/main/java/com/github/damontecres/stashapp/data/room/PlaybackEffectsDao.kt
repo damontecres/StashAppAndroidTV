@@ -11,7 +11,7 @@ interface PlaybackEffectsDao {
     fun getPlaybackEffect(
         serverUrl: String,
         sceneId: String,
-    ): PlaybackEffect
+    ): PlaybackEffect?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg items: PlaybackEffect)
