@@ -24,6 +24,7 @@ class StudioDataSupplier(
         return FindStudiosQuery(
             filter = filter,
             studio_filter = studioFilter,
+            ids = null,
         )
     }
 

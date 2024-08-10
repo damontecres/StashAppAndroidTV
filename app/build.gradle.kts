@@ -135,6 +135,7 @@ tasks.preBuild.dependsOn("generateStrings")
 val mediaVersion = "1.3.1"
 val glideVersion = "4.16.0"
 val acraVersion = "5.11.3"
+val roomVersion = "2.6.1"
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
@@ -173,6 +174,10 @@ dependencies {
     implementation("ch.acra:acra-limiter:$acraVersion")
     compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
     kapt("com.google.auto.service:auto-service:1.1.1")
+
+    implementation("androidx.room:room-runtime:$roomVersion")
+    kapt("androidx.room:room-compiler:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
 
     testImplementation("androidx.test:core-ktx:1.6.1")
     testImplementation("junit:junit:4.13.2")

@@ -167,10 +167,10 @@ class QueryEngine(
         return findPerformers(performerIds = listOf(performerId)).firstOrNull()
     }
 
-    // TODO Add studioIds?
     suspend fun findStudios(
         findFilter: FindFilterType? = null,
         studioFilter: StudioFilterType? = null,
+        studioIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<StudioData> {
         val query =
@@ -178,6 +178,7 @@ class QueryEngine(
                 FindStudiosQuery(
                     filter = updateFilter(findFilter, useRandom),
                     studio_filter = studioFilter,
+                    ids = studioIds,
                 ),
             )
         val studios =
