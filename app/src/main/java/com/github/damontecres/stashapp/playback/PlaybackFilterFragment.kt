@@ -1,11 +1,11 @@
 package com.github.damontecres.stashapp.playback
 
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.github.damontecres.stashapp.R
@@ -28,33 +28,41 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
         val saturationAdjust = view.findViewById<SeekBar>(R.id.saturation_adjust)
         val hueAdjust = view.findViewById<SeekBar>(R.id.hue_adjust)
 
+        val redText = view.findViewById<TextView>(R.id.red_adjust_text)
+        val greenText = view.findViewById<TextView>(R.id.green_adjust_text)
+        val blueText = view.findViewById<TextView>(R.id.blue_adjust_text)
+        val brightnessText = view.findViewById<TextView>(R.id.brightness_adjust_text)
+        val contrastText = view.findViewById<TextView>(R.id.contrast_adjust_text)
+        val saturationText = view.findViewById<TextView>(R.id.saturation_adjust_text)
+        val hueText = view.findViewById<TextView>(R.id.hue_adjust_text)
+
         redAdjust.setOnSeekBarChangeListener {
-            Log.v(TAG, "red=$it")
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(red = it)
+            redText.text = "$it%"
         }
         greenAdjust.setOnSeekBarChangeListener {
-            Log.v(TAG, "green=$it")
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(green = it)
+            greenText.text = "$it%"
         }
         blueAdjust.setOnSeekBarChangeListener {
-            Log.v(TAG, "blue=$it")
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(blue = it)
+            blueText.text = "$it%"
         }
         brightnessAdjust.setOnSeekBarChangeListener {
-            Log.v(TAG, "brightness=$it")
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(brightness = it)
+            brightnessText.text = "$it%"
         }
         contrastAdjust.setOnSeekBarChangeListener {
-            Log.v(TAG, "contrast=$it")
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(contrast = it)
+            contrastText.text = "$it%"
         }
         saturationAdjust.setOnSeekBarChangeListener {
-            Log.v(TAG, "saturation=$it")
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(saturation = it)
+            saturationText.text = "$it%"
         }
         hueAdjust.setOnSeekBarChangeListener {
-            Log.v(TAG, "hue=$it")
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(hue = it)
+            hueText.text = "$it"
         }
 
         val rotateLeftButton = view.findViewById<Button>(R.id.rotate_left_button)
@@ -66,6 +74,40 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
         rotateRightButton.setOnClickListener {
             val vf = getOrCreateVideoFilter()
             viewModel.videoFilter.value = vf.copy(rotation = vf.rotation - 90)
+        }
+        val submitButton = view.findViewById<Button>(R.id.apply_button)
+        submitButton.setOnClickListener {
+            viewModel.saveFilter()
+            requireActivity().supportFragmentManager.beginTransaction()
+                .remove(this@PlaybackFilterFragment)
+                .commitNow()
+        }
+
+        val resetButton = view.findViewById<Button>(R.id.reset_button)
+        resetButton.setOnClickListener {
+            viewModel.videoFilter.value = VideoFilter()
+            listOf(
+                redAdjust,
+                greenAdjust,
+                blueAdjust,
+                brightnessAdjust,
+                contrastAdjust,
+                saturationAdjust,
+            ).forEach {
+                it.progress = VideoFilter.COLOR_DEFAULT
+            }
+            hueAdjust.progress = VideoFilter.HUE_DEFAULT
+            listOf(
+                redText,
+                greenText,
+                blueText,
+                brightnessText,
+                contrastText,
+                saturationText,
+            ).forEach {
+                it.text = VideoFilter.COLOR_DEFAULT.toString() + "%"
+            }
+            hueText.text = "0"
         }
     }
 
@@ -90,7 +132,9 @@ fun SeekBar.setOnSeekBarChangeListener(listener: (Int) -> Unit) {
                 progress: Int,
                 fromUser: Boolean,
             ) {
-                listener(progress)
+                if (fromUser) {
+                    listener(progress)
+                }
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {

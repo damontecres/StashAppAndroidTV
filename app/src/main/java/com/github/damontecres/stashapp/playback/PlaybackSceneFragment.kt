@@ -24,21 +24,20 @@ import androidx.media3.effect.RgbAdjustment
 import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
-import androidx.room.Room
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.SearchForActivity
 import com.github.damontecres.stashapp.SearchForFragment
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.data.room.AppDatabase
+import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.data.room.VideoFilter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
@@ -63,23 +62,16 @@ class PlaybackSceneFragment : PlaybackFragment() {
     override val previewsEnabled: Boolean
         get() = true
 
-    private val db =
-        Room.databaseBuilder(
-            StashApplication.getApplication(),
-            AppDatabase::class.java,
-            DB_NAME,
-        ).build()
-
     private val viewModel: VideoFilterViewModel by activityViewModels()
 
-    private fun applyEffects() {
+    private fun applyEffects(exoPlayer: ExoPlayer) {
         if (PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_experimental_features), false)
         ) {
             Log.v(TAG, "Initializing video effects")
-            player?.setVideoEffects(listOf())
+            exoPlayer.setVideoEffects(listOf())
 
-            viewModel.videoFilter.observe(
+            ThrottledLiveData(viewModel.videoFilter, 500L).observe(
                 viewLifecycleOwner,
             ) { vf ->
                 Log.v(TAG, "Got new VideoFilter: $vf")
@@ -229,7 +221,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
                 }
             }.also { exoPlayer ->
-                applyEffects()
+                applyEffects(exoPlayer)
                 exoPlayer.setMediaItem(
                     buildMediaItem(requireContext(), streamDecision, scene),
                     if (position > 0) position else C.TIME_UNSET,
@@ -266,6 +258,8 @@ class PlaybackSceneFragment : PlaybackFragment() {
         val position = requireActivity().intent.getLongExtra(SceneDetailsFragment.POSITION_ARG, -1)
         Log.d(TAG, "scene=${scene.id}, ${SceneDetailsFragment.POSITION_ARG}=$position")
 
+        viewModel.initialize(StashServer.getCurrentStashServer(requireContext())!!, scene.id)
+
         moreOptionsButton.setOnClickListener {
             val debugToggleText =
                 if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
@@ -275,8 +269,6 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     "Create Marker",
                     debugToggleText,
                     "Apply Filters",
-                    "Rotate left",
-                    "Rotate Right",
                 ),
             ) { position ->
                 if (position == 0) {

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -28,7 +27,7 @@
                 android:id="@+id/brightness_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="100%"
+                android:text="100%"
                 />
         </TableRow>
         <TableRow>
@@ -48,7 +47,7 @@
                 android:id="@+id/contrast_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="50%"
+                android:text="100%"
                 />
         </TableRow>
         <TableRow>
@@ -68,7 +67,7 @@
                 android:id="@+id/saturation_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="50%"
+                android:text="100%"
                 />
         </TableRow>
         <TableRow>
@@ -88,7 +87,7 @@
                 android:id="@+id/hue_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="50"
+                android:text="50"
                 />
         </TableRow>
         <TableRow>
@@ -108,7 +107,7 @@
                 android:id="@+id/red_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="50%"
+                android:text="50%"
                 />
         </TableRow>
         <TableRow>
@@ -128,7 +127,7 @@
                 android:id="@+id/green_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="50%"
+                android:text="50%"
                 />
         </TableRow>
         <TableRow>
@@ -148,7 +147,7 @@
                 android:id="@+id/blue_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="50%"
+                android:text="50%"
                 />
         </TableRow>
     </TableLayout>
