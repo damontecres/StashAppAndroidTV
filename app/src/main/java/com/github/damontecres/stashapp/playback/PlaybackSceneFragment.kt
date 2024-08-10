@@ -259,10 +259,15 @@ class PlaybackSceneFragment : PlaybackFragment() {
         Log.d(TAG, "scene=${scene.id}, ${SceneDetailsFragment.POSITION_ARG}=$position")
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val saveFilters =
+            preferences.getBoolean(
+                getString(R.string.pref_key_playback_save_effects),
+                true,
+            ) && preferences.getBoolean(getString(R.string.pref_key_experimental_features), false)
         viewModel.initialize(
             StashServer.getCurrentStashServer(requireContext())!!,
             scene.id,
-            preferences.getBoolean(getString(R.string.pref_key_playback_save_effects), true),
+            saveFilters,
         )
 
         moreOptionsButton.setOnClickListener {
