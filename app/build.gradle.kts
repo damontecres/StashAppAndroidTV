@@ -132,7 +132,7 @@ tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrin
 // tasks.preBuild.dependsOn("generateStrings")
 tasks.preBuild.dependsOn("generateStrings")
 
-val mediaVersion = "1.3.1"
+val mediaVersion = "1.4.0"
 val glideVersion = "4.16.0"
 val acraVersion = "5.11.3"
 val roomVersion = "2.6.1"
@@ -150,7 +150,7 @@ dependencies {
     implementation("com.caverock:androidsvg-aar:1.4")
 
     implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
@@ -161,10 +161,12 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer-dash:$mediaVersion")
     implementation("androidx.media3:media3-exoplayer-hls:$mediaVersion")
     implementation("androidx.media3:media3-datasource-okhttp:$mediaVersion")
+    implementation("androidx.media3:media3-effect:$mediaVersion")
+    implementation("androidx.media3:media3-transformer:$mediaVersion")
     implementation("com.github.rubensousa:previewseekbar:3.1.1")
     implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.lifecycle:lifecycle-process:2.8.3")
+    implementation("androidx.lifecycle:lifecycle-process:2.8.4")
     implementation("com.otaliastudios:zoomlayout:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
     implementation("io.noties.markwon:core:4.6.2")

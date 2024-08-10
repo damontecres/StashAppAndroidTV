@@ -14,8 +14,10 @@ import androidx.annotation.OptIn
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
+import androidx.media3.common.Effect
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
@@ -52,6 +54,25 @@ class PlaybackSceneFragment : PlaybackFragment() {
     private var wasPlayingBeforeResultLauncher: Boolean? = null
     override val previewsEnabled: Boolean
         get() = true
+
+    private val videoEffects = mutableListOf<Effect>()
+    private var videoRotation = 0
+
+    private fun applyEffects() {
+        Log.d(TAG, "Applying ${videoEffects.size} effects, videoRotation=$videoRotation")
+        val effectList =
+            buildList {
+                addAll(videoEffects)
+                if (videoRotation != 0 && videoRotation % 360 != 0) {
+                    add(
+                        ScaleAndRotateTransformation.Builder()
+                            .setRotationDegrees(videoRotation.toFloat())
+                            .build(),
+                    )
+                }
+            }
+        player?.setVideoEffects(effectList)
+    }
 
     @OptIn(UnstableApi::class)
     override fun initializePlayer(): ExoPlayer {
@@ -145,6 +166,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
                 }
             }.also { exoPlayer ->
+                exoPlayer.setVideoEffects(listOf())
                 exoPlayer.setMediaItem(
                     buildMediaItem(requireContext(), streamDecision, scene),
                     if (position > 0) position else C.TIME_UNSET,
@@ -185,7 +207,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
             showSimpleListPopupWindow(
                 moreOptionsButton,
-                listOf("Create Marker", debugToggleText),
+                listOf("Create Marker", debugToggleText, "Rotate left", "Rotate Right"),
             ) { position ->
                 if (position == 0) {
                     // Save current playback state
@@ -204,6 +226,13 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     } else {
                         debugView.visibility = View.VISIBLE
                     }
+                } else if (position == 2) {
+                    // Rotate left
+                    videoRotation += 90
+                    applyEffects()
+                } else if (position == 3) {
+                    videoRotation -= 90
+                    applyEffects()
                 }
             }
         }
