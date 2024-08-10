@@ -91,6 +91,12 @@
             app:summaryOn="Show title &amp; date"
             app:summaryOff="Hide title &amp; date"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_save_effects"
+            app:title="Persist scene filters"
+            app:summaryOn="Save applied filters (rotation, etc) for future plays"
+            app:summaryOff="Do not save applied filters"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Search">

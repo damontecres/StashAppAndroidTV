@@ -14,27 +14,36 @@ import androidx.annotation.OptIn
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
+import androidx.media3.common.Effect
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
+import androidx.room.Room
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.SearchForActivity
 import com.github.damontecres.stashapp.SearchForFragment
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.data.room.AppDatabase
+import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Timer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -52,6 +61,45 @@ class PlaybackSceneFragment : PlaybackFragment() {
     private var wasPlayingBeforeResultLauncher: Boolean? = null
     override val previewsEnabled: Boolean
         get() = true
+
+    private val db =
+        Room.databaseBuilder(
+            StashApplication.getApplication(),
+            AppDatabase::class.java,
+            DB_NAME,
+        ).build()
+
+    private val videoEffects = mutableListOf<Effect>()
+    private var videoRotation = 0
+
+    private fun applyEffects() {
+        Log.d(TAG, "Applying ${videoEffects.size} effects, videoRotation=$videoRotation")
+        val effectList =
+            buildList {
+                addAll(videoEffects)
+                if (videoRotation != 0 && videoRotation % 360 != 0) {
+                    add(
+                        ScaleAndRotateTransformation.Builder()
+                            .setRotationDegrees(videoRotation.toFloat())
+                            .build(),
+                    )
+                }
+            }
+        player?.setVideoEffects(effectList)
+        saveEffects()
+    }
+
+    private fun saveEffects() {
+        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_playback_save_effects), true)
+        ) {
+            viewLifecycleOwner.lifecycleScope.launchIO {
+                val currentServer = StashServer.getCurrentStashServer(requireContext())!!
+                db.playbackEffectsDao()
+                    .insert(PlaybackEffect(currentServer.url, scene.id, videoRotation))
+            }
+        }
+    }
 
     @OptIn(UnstableApi::class)
     override fun initializePlayer(): ExoPlayer {
@@ -145,6 +193,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
                 }
             }.also { exoPlayer ->
+                exoPlayer.setVideoEffects(listOf())
                 exoPlayer.setMediaItem(
                     buildMediaItem(requireContext(), streamDecision, scene),
                     if (position > 0) position else C.TIME_UNSET,
@@ -185,7 +234,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
             showSimpleListPopupWindow(
                 moreOptionsButton,
-                listOf("Create Marker", debugToggleText),
+                listOf("Create Marker", debugToggleText, "Rotate left", "Rotate Right"),
             ) { position ->
                 if (position == 0) {
                     // Save current playback state
@@ -204,6 +253,29 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     } else {
                         debugView.visibility = View.VISIBLE
                     }
+                } else if (position == 2) {
+                    // Rotate left
+                    videoRotation += 90
+                    applyEffects()
+                } else if (position == 3) {
+                    videoRotation -= 90
+                    applyEffects()
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_playback_save_effects), true)
+        ) {
+            viewLifecycleOwner.lifecycleScope.launchIO {
+                val currentServer = StashServer.getCurrentStashServer(requireContext())!!
+                val effects = db.playbackEffectsDao().getPlaybackEffect(currentServer.url, scene.id)
+                videoRotation = effects.rotation
+                withContext(Dispatchers.Main) {
+                    applyEffects()
                 }
             }
         }
@@ -382,5 +454,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
 
     companion object {
         const val TAG = "PlaybackExoFragment"
+
+        const val DB_NAME = "playback_db"
     }
 }
