@@ -258,17 +258,32 @@ class PlaybackSceneFragment : PlaybackFragment() {
         val position = requireActivity().intent.getLongExtra(SceneDetailsFragment.POSITION_ARG, -1)
         Log.d(TAG, "scene=${scene.id}, ${SceneDetailsFragment.POSITION_ARG}=$position")
 
-        viewModel.initialize(StashServer.getCurrentStashServer(requireContext())!!, scene.id)
+        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        viewModel.initialize(
+            StashServer.getCurrentStashServer(requireContext())!!,
+            scene.id,
+            preferences.getBoolean(getString(R.string.pref_key_playback_save_effects), true),
+        )
 
         moreOptionsButton.setOnClickListener {
             val debugToggleText =
                 if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
+            val applyFiltersText =
+                if (preferences.getBoolean(
+                        getString(R.string.pref_key_experimental_features),
+                        false,
+                    )
+                ) {
+                    "Apply Filters"
+                } else {
+                    null
+                }
             showSimpleListPopupWindow(
                 moreOptionsButton,
-                listOf(
+                listOfNotNull(
                     "Create Marker",
                     debugToggleText,
-                    "Apply Filters",
+                    applyFiltersText,
                 ),
             ) { position ->
                 if (position == 0) {
@@ -292,17 +307,6 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     requireActivity().supportFragmentManager.beginTransaction()
                         .replace(R.id.video_filter_container, PlaybackFilterFragment())
                         .commitNow()
-                } else if (position == 3) {
-                    Log.v(TAG, "rotate left")
-                    val effects =
-                        listOf(
-                            ScaleAndRotateTransformation.Builder()
-                                .setRotationDegrees(90f)
-                                .build(),
-                        )
-                    player?.setVideoEffects(effects)
-                } else if (position == 4) {
-                    TODO()
                 }
             }
         }
