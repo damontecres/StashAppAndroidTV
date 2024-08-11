@@ -90,7 +90,7 @@ class SearchForFragment(
                 .getInt("maxSearchResults", 25)
         title =
             requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
-        adapter.set(0, ListRow(HeaderItem("Results"), searchResultsAdapter))
+        adapter.set(0, ListRow(HeaderItem(getString(R.string.results)), searchResultsAdapter))
 
         searchResultsAdapter.presenterSelector = StashPresenter.SELECTOR
 
@@ -187,7 +187,7 @@ class SearchForFragment(
                         sort = Optional.present("scenes_count"),
                     )
                 results.addAll(0, queryEngine.find(dataType, filter))
-                adapter.set(1, ListRow(HeaderItem("Suggestions"), results))
+                adapter.set(1, ListRow(HeaderItem(getString(R.string.suggestions)), results))
             }
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 val currentServer = StashServer.getCurrentStashServer(requireContext())
@@ -215,7 +215,12 @@ class SearchForFragment(
                             )
                             results.addAll(0, items)
                             withContext(Dispatchers.Main) {
-                                adapter.set(2, ListRow(HeaderItem("Recently used"), results))
+                                val headerName =
+                                    getString(
+                                        R.string.stashapp_recently_added_objects,
+                                        getString(dataType.pluralStringId),
+                                    )
+                                adapter.set(2, ListRow(HeaderItem(headerName), results))
                             }
                         }
                     }
@@ -280,10 +285,15 @@ class SearchForFragment(
                     }.contains(query.lowercase())
                 if (dataType in DATA_TYPE_ALLOW_CREATE && !itemExists) {
                     if (adapter.lookup(2) == null) {
+                        val headerName =
+                            getString(
+                                R.string.stashapp_dialogs_create_new_entity,
+                                getString(dataType.stringId),
+                            )
                         adapter.set(
                             2,
                             ListRow(
-                                HeaderItem("Create " + getString(dataType.stringId)),
+                                HeaderItem(headerName),
                                 createNewAdapter,
                             ),
                         )

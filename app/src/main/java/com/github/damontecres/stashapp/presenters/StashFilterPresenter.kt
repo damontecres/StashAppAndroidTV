@@ -13,7 +13,7 @@ class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
         cardView: StashImageCardView,
         item: Any,
     ) {
-        cardView.titleText = "View All"
+        cardView.titleText = cardView.context.getString(R.string.stashapp_view_all)
 
         val mode: FilterMode =
             when (item) {

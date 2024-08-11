@@ -14,8 +14,8 @@ import kotlinx.coroutines.launch
 class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
-            "Stash Server URL",
-            "Enter the URL for your Stash server, including the port if needed",
+            getString(R.string.stash_server_url),
+            getString(R.string.stash_server_url_desc),
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )

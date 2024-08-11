@@ -14,6 +14,7 @@ import android.widget.TextView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.ServerPreferences
 
+@SuppressLint("SetTextI18n")
 class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs) {
     constructor(context: Context) : this(context, null)
 

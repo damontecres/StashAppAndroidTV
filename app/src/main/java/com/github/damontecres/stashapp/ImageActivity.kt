@@ -665,8 +665,8 @@ class ImageActivity : FragmentActivity() {
         private fun calculateRotationScale(mainImage: ImageView): Float {
             val viewHeight = mainImage.height.toFloat()
             val viewWidth = mainImage.width.toFloat()
-            val imageHeight = image!!.visual_files.first().height!!.toFloat()
-            val imageWidth = image!!.visual_files.first().width!!.toFloat()
+            val imageHeight = image.visual_files.first().height!!.toFloat()
+            val imageWidth = image.visual_files.first().width!!.toFloat()
             val imageHeightPx = mainImage.drawable.intrinsicHeight
             val imageWidthPx = mainImage.drawable.intrinsicWidth
 

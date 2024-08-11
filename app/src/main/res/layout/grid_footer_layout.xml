@@ -10,15 +10,18 @@
         android:id="@+id/position_text"
         style="@style/GridFooterText"
         android:text="\?"
-        tools:text="11" />
+        tools:text="11"
+        tools:ignore="HardcodedText" />
 
     <TextView
         style="@style/GridFooterText"
-        android:text="/" />
+        android:text="/"
+        tools:ignore="HardcodedText" />
 
     <TextView
         android:id="@+id/total_count_text"
         style="@style/GridFooterText"
-        android:text="Unknown"
-        tools:text="100" />
+        android:text="\?"
+        tools:text="100"
+        tools:ignore="HardcodedText" />
 </LinearLayout>

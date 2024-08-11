@@ -48,48 +48,48 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
             hueAdjust.progress = vf.hue
             blurAdjust.progress = vf.blur
 
-            redText.text = "${vf.red - 100}%"
-            greenText.text = "${vf.green - 100}%"
-            blueText.text = "${vf.blue - 100}%"
-            brightnessText.text = "${vf.brightness}%"
-            contrastText.text = "${vf.contrast}%"
-            saturationText.text = "${vf.saturation}%"
-            hueText.text = "${vf.hue}\u00b0"
-            blurText.text = "${vf.blur / 10f}px"
+            redText.text = getString(R.string.format_percent, vf.red - 100)
+            greenText.text = getString(R.string.format_percent, vf.green - 100)
+            blueText.text = getString(R.string.format_percent, vf.blue - 100)
+            brightnessText.text = getString(R.string.format_percent, vf.brightness)
+            contrastText.text = getString(R.string.format_percent, vf.contrast)
+            saturationText.text = getString(R.string.format_percent, vf.saturation)
+            hueText.text = getString(R.string.format_degrees, vf.hue)
+            blurText.text = getString(R.string.format_pixels, vf.blur / 10f)
         }
         setUi(viewModel.videoFilter.value ?: VideoFilter())
 
         redAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(red = it)
-            redText.text = "${it - 100}%"
+            redText.text = getString(R.string.format_percent, it - 100)
         }
         greenAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(green = it)
-            greenText.text = "${it - 100}%"
+            greenText.text = getString(R.string.format_percent, it - 100)
         }
         blueAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(blue = it)
-            blueText.text = "${it - 100}%"
+            blueText.text = getString(R.string.format_percent, it - 100)
         }
         brightnessAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(brightness = it)
-            brightnessText.text = "$it%"
+            brightnessText.text = getString(R.string.format_percent, it)
         }
         contrastAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(contrast = it)
-            contrastText.text = "$it%"
+            contrastText.text = getString(R.string.format_percent, it)
         }
         saturationAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(saturation = it)
-            saturationText.text = "$it%"
+            saturationText.text = getString(R.string.format_percent, it)
         }
         hueAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(hue = it)
-            hueText.text = "$it\u00b0"
+            hueText.text = getString(R.string.format_degrees, it)
         }
         blurAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(blur = it)
-            blurText.text = "${it / 10f}px"
+            blurText.text = getString(R.string.format_pixels, it / 10f)
         }
 
         val rotateLeftButton = view.findViewById<Button>(R.id.rotate_left_button)

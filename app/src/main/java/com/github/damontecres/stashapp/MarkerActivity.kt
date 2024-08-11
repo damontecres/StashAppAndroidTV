@@ -64,7 +64,7 @@ class MarkerActivity : FragmentActivity() {
         if (savedInstanceState == null) {
             val marker = intent.getParcelableExtra<Marker>("marker")!!
             supportFragmentManager.beginTransaction()
-                .replace(R.id.details_fragment, MarkerDetailsFragment(marker))
+                .replace(android.R.id.content, MarkerDetailsFragment(marker))
                 .commitNow()
         }
     }
@@ -188,7 +188,10 @@ class MarkerActivity : FragmentActivity() {
                 StashItemViewClickListener(requireContext(), actionClickListener)
 
             sceneActionsAdapter.set(1, StashAction.ADD_TAG)
-            mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
+            mAdapter.set(
+                ACTIONS_POS,
+                ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
+            )
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val sceneData = queryEngine.getScene(marker.sceneId)!!
@@ -356,7 +359,7 @@ class MarkerActivity : FragmentActivity() {
                 item: TagData,
             ): List<StashPresenter.PopUpItem> {
                 val items = super.getPopUpItems(context, item).toMutableList()
-                items.add(StashPresenter.PopUpItem(REPLACE_PRIMARY_ID, "Replace"))
+                items.add(StashPresenter.PopUpItem(REPLACE_PRIMARY_ID, getString(R.string.replace)))
                 return items
             }
 
@@ -388,7 +391,12 @@ class MarkerActivity : FragmentActivity() {
                 item: TagData,
             ): List<StashPresenter.PopUpItem> {
                 val items = super.getPopUpItems(context, item).toMutableList()
-                items.add(StashPresenter.PopUpItem(1000L, "Remove"))
+                items.add(
+                    StashPresenter.PopUpItem(
+                        1000L,
+                        getString(R.string.stashapp_actions_remove),
+                    ),
+                )
                 return items
             }
 

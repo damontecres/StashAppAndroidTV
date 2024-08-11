@@ -4,7 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [RecentSearchItem::class, PlaybackEffect::class], version = 3)
+@Database(entities = [RecentSearchItem::class, PlaybackEffect::class], version = 4)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun recentSearchItemsDao(): RecentSearchItemsDao

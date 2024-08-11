@@ -216,7 +216,10 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             }
 
         setupDetailsOverviewRowPresenter()
-        mAdapter.set(ACTIONS_POS, ListRow(HeaderItem("Actions"), sceneActionsAdapter))
+        mAdapter.set(
+            ACTIONS_POS,
+            ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
+        )
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
         return super.onCreateView(inflater, container, savedInstanceState)
     }
@@ -546,10 +549,10 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             )
             playActionsAdapter.clear(1)
         } else {
-            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, "Resume"))
+            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, getString(R.string.resume)))
             // Force focus to move to Resume
             playActionsAdapter.clear(1)
-            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, "Restart"))
+            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, getString(R.string.restart)))
         }
     }
 
@@ -653,7 +656,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             Log.e(TAG, "Exception setting studio", ex)
                             Toast.makeText(
                                 requireContext(),
-                                "Failed to set sudio: ${ex.message}",
+                                "Failed to set studio: ${ex.message}",
                                 Toast.LENGTH_LONG,
                             ).show()
                         },
@@ -717,9 +720,9 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             item: OCounter,
         ): List<StashPresenter.PopUpItem> {
             return listOf(
-                StashPresenter.PopUpItem(0L, "Increment"),
-                StashPresenter.PopUpItem(1L, "Decrement"),
-                StashPresenter.PopUpItem(2L, "Reset"),
+                StashPresenter.PopUpItem(0L, getString(R.string.increment)),
+                StashPresenter.PopUpItem(1L, getString(R.string.decrement)),
+                StashPresenter.PopUpItem(2L, getString(R.string.reset)),
             )
         }
 
@@ -965,6 +968,10 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val FORCE_TRANSCODE_POS = SET_STUDIO_POS + 1
         private const val FORCE_DIRECT_PLAY_POS = FORCE_TRANSCODE_POS + 1
 
-        private val REMOVE_POPUP_ITEM = StashPresenter.PopUpItem(0L, "Remove")
+        private val REMOVE_POPUP_ITEM =
+            StashPresenter.PopUpItem(
+                0L,
+                StashApplication.getApplication().getString(R.string.stashapp_actions_remove),
+            )
     }
 }

@@ -45,7 +45,7 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
             guidedActionSubmit =
                 GuidedAction.Builder(requireContext())
                     .id(GuidedAction.ACTION_ID_OK)
-                    .title("Submit")
+                    .title(getString(R.string.stashapp_actions_submit))
                     .description("")
                     .enabled(false)
                     .focusable(false)

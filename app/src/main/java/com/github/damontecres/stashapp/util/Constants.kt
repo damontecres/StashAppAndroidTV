@@ -8,7 +8,6 @@ import android.os.Build
 import android.text.TextUtils
 import android.util.DisplayMetrics
 import android.util.Log
-import android.util.TypedValue
 import android.view.View
 import android.widget.Adapter
 import android.widget.ArrayAdapter
@@ -324,13 +323,6 @@ fun cacheDurationPrefToDuration(value: Int): Duration? {
         else -> (value - 3).toDuration(DurationUnit.DAYS)
     }
 }
-
-fun Context.toPx(dp: Int): Float =
-    TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP,
-        dp.toFloat(),
-        resources.displayMetrics,
-    )
 
 fun convertDpToPixel(
     context: Context,

@@ -34,7 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="0"
-            android:text="Play All"
+            android:text="@string/play_all"
             android:visibility="gone"
             style="@style/TitleBarButton" />
 
@@ -43,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="0"
-            android:text="Sort By"
+            android:text="@string/sort_by"
             style="@style/TitleBarButton" />
 
         <Button

@@ -7,7 +7,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="80dp"
-        android:text="Enter PIN"
+        android:text="@string/enter_pin"
         android:textSize="50sp"
         android:textAlignment="center" />
 
@@ -23,6 +23,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:text="Submit" />
+        android:text="@string/stashapp_actions_submit" />
 
 </LinearLayout>

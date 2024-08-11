@@ -276,24 +276,6 @@ class PlaybackSceneFragment : PlaybackFragment() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-//        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-//        if (preferences.getBoolean(getString(R.string.pref_key_experimental_features), false) &&
-//            preferences.getBoolean(getString(R.string.pref_key_playback_save_effects), true)
-//        ) {
-//            viewLifecycleOwner.lifecycleScope.launchIO {
-//                val currentServer = StashServer.getCurrentStashServer(requireContext())!!
-//                db.playbackEffectsDao().getPlaybackEffect(currentServer.url, scene.id)
-//                    ?.let { effect ->
-//                        withContext(Dispatchers.Main) {
-//                            applyEffects()
-//                        }
-//                    }
-//            }
-//        }
-    }
-
     override fun releasePlayer() {
         super.releasePlayer()
         trackActivityListener?.release(playbackPosition)
