@@ -36,7 +36,7 @@ import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.MainTitleView
 import com.github.damontecres.stashapp.views.OnImageFilterClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
-import com.github.damontecres.stashapp.views.models.GlobalViewModel
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,7 +46,7 @@ import kotlinx.coroutines.withContext
  * Loads a grid of cards with movies to browse.
  */
 class MainFragment : BrowseSupportFragment() {
-    private val viewModel: GlobalViewModel by activityViewModels()
+    private val viewModel: ServerViewModel by activityViewModels()
 
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()

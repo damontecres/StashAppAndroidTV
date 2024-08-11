@@ -10,7 +10,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getInt
 import java.util.Objects
 
-class GlobalViewModel : ViewModel() {
+class ServerViewModel : ViewModel() {
     private val _currentServer = MutableLiveData<StashServer?>(StashServer.getCurrentStashServer(StashApplication.getApplication()))
     val currentServer: LiveData<StashServer?> = _currentServer
 

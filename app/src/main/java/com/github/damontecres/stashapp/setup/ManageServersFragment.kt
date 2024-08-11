@@ -10,10 +10,10 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.views.models.GlobalViewModel
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 class ManageServersFragment : GuidedStepSupportFragment() {
-    private val viewModel: GlobalViewModel by activityViewModels()
+    private val viewModel: ServerViewModel by activityViewModels()
 
     private var currentServer: StashServer? = null
     private lateinit var allServers: List<StashServer>
