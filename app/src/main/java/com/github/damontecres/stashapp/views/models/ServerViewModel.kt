@@ -14,7 +14,7 @@ class ServerViewModel : ViewModel() {
     private val _currentServer = MutableLiveData<StashServer?>(StashServer.getCurrentStashServer(StashApplication.getApplication()))
     val currentServer: LiveData<StashServer?> = _currentServer
 
-    private val _currentSettingsHash = MutableLiveData<Int>(computeSettingsHash())
+    private val _currentSettingsHash = EqualityMutableLiveData(computeSettingsHash())
     val currentSettingsHash: LiveData<Int> = _currentSettingsHash
 
     fun switchServer(newServer: StashServer) {
@@ -33,6 +33,7 @@ class ServerViewModel : ViewModel() {
     }
 
     fun recomputeSettingsHash() {
-        _currentSettingsHash.value = computeSettingsHash()
+        val newHash = computeSettingsHash()
+        _currentSettingsHash.value = newHash
     }
 }
