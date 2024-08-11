@@ -421,7 +421,7 @@ class FilterListActivity : FragmentActivity() {
         } else if (sortBy != null) {
             sortButton.text = sortBy
         } else {
-            sortButton.text = "Sort By"
+            sortButton.text = getString(R.string.sort_by)
         }
     }
 

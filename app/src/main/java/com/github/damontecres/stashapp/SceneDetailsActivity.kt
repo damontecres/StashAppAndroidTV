@@ -12,7 +12,7 @@ class SceneDetailsActivity : FragmentActivity() {
         setContentView(R.layout.activity_details)
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.details_fragment, SceneDetailsFragment())
+                .replace(android.R.id.content, SceneDetailsFragment())
                 .commitNow()
         }
     }

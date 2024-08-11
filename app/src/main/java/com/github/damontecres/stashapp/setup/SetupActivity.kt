@@ -18,7 +18,7 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
             GuidedStepSupportFragment.addAsRoot(
                 this,
                 SetupStep0(),
-                R.id.frame_fragment,
+                android.R.id.content,
             )
         }
     }
@@ -38,7 +38,7 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
 
     open class SimpleGuidedStepSupportFragment : GuidedStepSupportFragment() {
         fun nextStep(step: GuidedStepSupportFragment) {
-            add(requireActivity().supportFragmentManager, step, R.id.frame_fragment)
+            add(requireActivity().supportFragmentManager, step, android.R.id.content)
         }
 
         fun finishSetup(setupState: SetupState) {

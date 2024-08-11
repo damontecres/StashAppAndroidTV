@@ -34,7 +34,7 @@
 
             <TextView
                 style="@style/DebugInfoOverlayText"
-                android:text="Playback:" />
+                android:text="@string/playback" />
 
             <TextView
                 android:id="@+id/debug_playback"
@@ -46,7 +46,7 @@
 
             <TextView
                 style="@style/DebugInfoOverlayText"
-                android:text="Video:" />
+                android:text="@string/stashapp_video_codec" />
 
             <TextView
                 android:id="@+id/debug_video"
@@ -58,7 +58,7 @@
 
             <TextView
                 style="@style/DebugInfoOverlayText"
-                android:text="Audio:" />
+                android:text="@string/stashapp_audio_codec" />
 
             <TextView
                 android:id="@+id/debug_audio"
@@ -70,7 +70,7 @@
 
             <TextView
                 style="@style/DebugInfoOverlayText"
-                android:text="Format:" />
+                android:text="@string/format" />
 
             <TextView
                 android:id="@+id/debug_container_format"

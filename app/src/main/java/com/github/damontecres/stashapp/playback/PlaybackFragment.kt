@@ -60,9 +60,7 @@ abstract class PlaybackFragment(
     protected abstract fun initializePlayer(): ExoPlayer
 
     protected var player: ExoPlayer? = null
-        private set(player) {
-            field = player
-        }
+        private set
     protected lateinit var videoView: StashPlayerView
     protected lateinit var previewImageView: ImageView
     protected lateinit var previewTimeBar: PreviewTimeBar
@@ -142,10 +140,20 @@ abstract class PlaybackFragment(
         scene: Scene,
     ) {
         when (streamDecision.transcodeDecision) {
-            TranscodeDecision.TRANSCODE -> debugPlaybackTextView.text = "Transcode"
-            TranscodeDecision.FORCED_TRANSCODE -> debugPlaybackTextView.text = "Force transcode"
-            TranscodeDecision.DIRECT_PLAY -> debugPlaybackTextView.text = "Direct"
-            TranscodeDecision.FORCED_DIRECT_PLAY -> debugPlaybackTextView.text = "Force direct"
+            TranscodeDecision.TRANSCODE ->
+                debugPlaybackTextView.text =
+                    getString(R.string.transcode)
+
+            TranscodeDecision.FORCED_TRANSCODE ->
+                debugPlaybackTextView.text =
+                    getString(R.string.force_transcode)
+
+            TranscodeDecision.DIRECT_PLAY ->
+                debugPlaybackTextView.text = getString(R.string.direct)
+
+            TranscodeDecision.FORCED_DIRECT_PLAY ->
+                debugPlaybackTextView.text =
+                    getString(R.string.force_direct)
         }
         debugVideoTextView.text =
             if (streamDecision.videoSupported) scene.videoCodec else "${scene.videoCodec} (unsupported)"
@@ -184,7 +192,7 @@ abstract class PlaybackFragment(
         if (scene.oCounter != null) {
             oCounterText.text = scene.oCounter.toString()
         } else {
-            oCounterText.text = "0"
+            oCounterText.text = getString(R.string.zero)
         }
 
         oCounterButton.setOnClickListener {
@@ -226,14 +234,14 @@ abstract class PlaybackFragment(
                             if (newCount.count > 0) {
                                 oCounterText.text = newCount.count.toString()
                             } else {
-                                oCounterText.text = "0"
+                                oCounterText.text = getString(R.string.zero)
                             }
                         }
 
                         1 -> {
                             // Reset
                             mutationEngine.resetOCounter(scene.id)
-                            oCounterText.text = "0"
+                            oCounterText.text = getString(R.string.zero)
                         }
 
                         else ->
@@ -257,8 +265,8 @@ abstract class PlaybackFragment(
         super.onViewCreated(view, savedInstanceState)
         val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
-        titleText = view.findViewById<TextView>(R.id.playback_title)
-        dateText = view.findViewById<TextView>(R.id.playback_date)
+        titleText = view.findViewById(R.id.playback_title)
+        dateText = view.findViewById(R.id.playback_date)
         exoCenterControls = view.findViewById(androidx.media3.ui.R.id.exo_center_controls)
 
         debugView = view.findViewById(R.id.playback_debug_info)
@@ -313,7 +321,7 @@ abstract class PlaybackFragment(
         oCounterButton = view.findViewById(R.id.controls_o_counter_button)
         oCounterButton.onFocusChangeListener = onFocusChangeListener
 
-        previewImageView = view.findViewById<ImageView>(R.id.video_preview_image_view)
+        previewImageView = view.findViewById(R.id.video_preview_image_view)
         previewTimeBar = view.findViewById(R.id.exo_progress)
 
         previewTimeBar.isPreviewEnabled = false
@@ -342,12 +350,12 @@ abstract class PlaybackFragment(
     }
 
     private fun updatePreviewLoader(scene: Scene) {
-        if (previewsEnabled && scene?.spriteUrl != null) {
+        if (previewsEnabled && scene.spriteUrl != null) {
             // Usually even if not null, there may not be sprites and the server will return a 404
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 withContext(Dispatchers.IO) {
                     val client = StashClient.getHttpClient(requireContext())
-                    val request = Request.Builder().url(scene.spriteUrl!!).get().build()
+                    val request = Request.Builder().url(scene.spriteUrl).get().build()
                     client.newCall(request).execute().use {
                         Log.d(
                             TAG,

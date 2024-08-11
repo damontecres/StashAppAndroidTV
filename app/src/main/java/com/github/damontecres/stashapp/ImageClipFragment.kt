@@ -32,10 +32,14 @@ class ImageClipFragment(private val imageData: ImageData) : PlaybackFragment(), 
         val audioSupported = supportedCodecs.isAudioSupported(audioCodec)
         val formatSupported = supportedCodecs.isContainerFormatSupported(videoFile?.format)
 
-        debugPlaybackTextView.text = "Force direct"
-        debugVideoTextView.text = if (videoSupported) videoCodec else "$videoCodec (unsupported)"
-        debugAudioTextView.text = if (audioSupported) audioCodec else "$audioCodec (unsupported)"
-        debugContainerTextView.text = if (formatSupported) videoFile?.format else "${videoFile?.format} (unsupported)"
+        val unsupportedStr = getString(R.string.unsupported)
+        debugPlaybackTextView.text = getString(R.string.force_direct)
+        debugVideoTextView.text =
+            if (videoSupported) videoCodec else "$videoCodec ($unsupportedStr)"
+        debugAudioTextView.text =
+            if (audioSupported) audioCodec else "$audioCodec ($unsupportedStr)"
+        debugContainerTextView.text =
+            if (formatSupported) videoFile?.format else "${videoFile?.format} ($unsupportedStr)"
 
         titleText.text = imageData.title
         dateText.text = imageData.date

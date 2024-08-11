@@ -31,9 +31,11 @@
         tools:layout_width="351dp"
         tools:layout_height="198dp">
 
-        <FrameLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/card_overlay"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent">
 
             <ImageView
                 android:id="@+id/main_image"
@@ -41,13 +43,11 @@
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
                 android:adjustViewBounds="true"
-                android:contentDescription="@null" />
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/card_overlay"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@android:color/transparent">
+                android:contentDescription="@null"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
                 <TextView
                     android:id="@+id/card_overlay_bottom_left"
@@ -102,7 +102,6 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </FrameLayout>
 
 
     </ViewSwitcher>

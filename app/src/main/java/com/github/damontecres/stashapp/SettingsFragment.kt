@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
@@ -469,6 +470,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             pref.summary = duration?.toString() ?: "Always request from server"
         }
 
+        @SuppressLint("DefaultLocale")
         private fun setUsedCachedSummary(
             cacheSizePref: Preference,
             cache: Cache,
