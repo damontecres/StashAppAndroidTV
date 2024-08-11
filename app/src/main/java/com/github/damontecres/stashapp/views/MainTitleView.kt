@@ -46,6 +46,8 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         }
 
     init {
+        val onFocusChangeListener = StashOnFocusChangeListener(context)
+
         val root = LayoutInflater.from(context).inflate(R.layout.title, this)
         iconButtom = root.findViewById(R.id.icon)
         iconButtom.setOnClickListener {
@@ -54,13 +56,15 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
                 ManageServersFragment(),
             )
         }
+        iconButtom.onFocusChangeListener = onFocusChangeListener
+
         searchButton = root.findViewById(R.id.search_button)
         mPreferencesView = root.findViewById(R.id.settings_button)
         mPreferencesView.setOnClickListener {
             val intent = Intent(context, SettingsActivity::class.java)
             startActivity(context, intent, null)
         }
-        val onFocusChangeListener = StashOnFocusChangeListener(context)
+
         searchButton.onFocusChangeListener = onFocusChangeListener
         mPreferencesView.onFocusChangeListener = onFocusChangeListener
 
