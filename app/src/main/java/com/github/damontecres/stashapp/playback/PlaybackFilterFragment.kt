@@ -1,0 +1,156 @@
+package com.github.damontecres.stashapp.playback
+
+import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.SeekBar
+import android.widget.SeekBar.OnSeekBarChangeListener
+import android.widget.TextView
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.data.room.VideoFilter
+
+class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
+    private val viewModel: VideoFilterViewModel by activityViewModels()
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val redAdjust = view.findViewById<SeekBar>(R.id.red_adjust)
+        val greenAdjust = view.findViewById<SeekBar>(R.id.green_adjust)
+        val blueAdjust = view.findViewById<SeekBar>(R.id.blue_adjust)
+        val brightnessAdjust = view.findViewById<SeekBar>(R.id.brightness_adjust)
+        val contrastAdjust = view.findViewById<SeekBar>(R.id.contrast_adjust)
+        val saturationAdjust = view.findViewById<SeekBar>(R.id.saturation_adjust)
+        val hueAdjust = view.findViewById<SeekBar>(R.id.hue_adjust)
+        val blurAdjust = view.findViewById<SeekBar>(R.id.blur_adjust)
+
+        val redText = view.findViewById<TextView>(R.id.red_adjust_text)
+        val greenText = view.findViewById<TextView>(R.id.green_adjust_text)
+        val blueText = view.findViewById<TextView>(R.id.blue_adjust_text)
+        val brightnessText = view.findViewById<TextView>(R.id.brightness_adjust_text)
+        val contrastText = view.findViewById<TextView>(R.id.contrast_adjust_text)
+        val saturationText = view.findViewById<TextView>(R.id.saturation_adjust_text)
+        val hueText = view.findViewById<TextView>(R.id.hue_adjust_text)
+        val blurText = view.findViewById<TextView>(R.id.blur_adjust_text)
+
+        fun setUi(vf: VideoFilter) {
+            redAdjust.progress = vf.red
+            greenAdjust.progress = vf.green
+            blueAdjust.progress = vf.blue
+            brightnessAdjust.progress = vf.brightness
+            contrastAdjust.progress = vf.contrast
+            saturationAdjust.progress = vf.saturation
+            hueAdjust.progress = vf.hue
+            blurAdjust.progress = vf.blur
+
+            redText.text = "${vf.red - 100}%"
+            greenText.text = "${vf.green - 100}%"
+            blueText.text = "${vf.blue - 100}%"
+            brightnessText.text = "${vf.brightness}%"
+            contrastText.text = "${vf.contrast}%"
+            saturationText.text = "${vf.saturation}%"
+            hueText.text = "${vf.hue}\u00b0"
+            blurText.text = "${vf.blur / 10f}px"
+        }
+        setUi(viewModel.videoFilter.value ?: VideoFilter())
+
+        redAdjust.setOnSeekBarChangeListener {
+            viewModel.videoFilter.value = getOrCreateVideoFilter().copy(red = it)
+            redText.text = "${it - 100}%"
+        }
+        greenAdjust.setOnSeekBarChangeListener {
+            viewModel.videoFilter.value = getOrCreateVideoFilter().copy(green = it)
+            greenText.text = "${it - 100}%"
+        }
+        blueAdjust.setOnSeekBarChangeListener {
+            viewModel.videoFilter.value = getOrCreateVideoFilter().copy(blue = it)
+            blueText.text = "${it - 100}%"
+        }
+        brightnessAdjust.setOnSeekBarChangeListener {
+            viewModel.videoFilter.value = getOrCreateVideoFilter().copy(brightness = it)
+            brightnessText.text = "$it%"
+        }
+        contrastAdjust.setOnSeekBarChangeListener {
+            viewModel.videoFilter.value = getOrCreateVideoFilter().copy(contrast = it)
+            contrastText.text = "$it%"
+        }
+        saturationAdjust.setOnSeekBarChangeListener {
+            viewModel.videoFilter.value = getOrCreateVideoFilter().copy(saturation = it)
+            saturationText.text = "$it%"
+        }
+        hueAdjust.setOnSeekBarChangeListener {
+            viewModel.videoFilter.value = getOrCreateVideoFilter().copy(hue = it)
+            hueText.text = "$it\u00b0"
+        }
+        blurAdjust.setOnSeekBarChangeListener {
+            viewModel.videoFilter.value = getOrCreateVideoFilter().copy(blur = it)
+            blurText.text = "${it / 10f}px"
+        }
+
+        val rotateLeftButton = view.findViewById<Button>(R.id.rotate_left_button)
+        val rotateRightButton = view.findViewById<Button>(R.id.rotate_right_button)
+        rotateLeftButton.setOnClickListener {
+            val vf = getOrCreateVideoFilter()
+            viewModel.videoFilter.value = vf.copy(rotation = vf.rotation + 90)
+        }
+        rotateRightButton.setOnClickListener {
+            val vf = getOrCreateVideoFilter()
+            viewModel.videoFilter.value = vf.copy(rotation = vf.rotation - 90)
+        }
+        val submitButton = view.findViewById<Button>(R.id.apply_button)
+        submitButton.setOnClickListener {
+            viewModel.maybeSaveFilter()
+            requireActivity().supportFragmentManager.beginTransaction()
+                .remove(this@PlaybackFilterFragment)
+                .commitNow()
+        }
+
+        val resetButton = view.findViewById<Button>(R.id.reset_button)
+        resetButton.setOnClickListener {
+            val vf = VideoFilter()
+            viewModel.videoFilter.value = vf
+            setUi(vf)
+        }
+    }
+
+    private fun getOrCreateVideoFilter(): VideoFilter {
+        return if (viewModel.videoFilter.isInitialized) {
+            viewModel.videoFilter.value!!
+        } else {
+            VideoFilter()
+        }
+    }
+
+    companion object {
+        const val TAG = "PlaybackFilterFragment"
+    }
+}
+
+fun SeekBar.setOnSeekBarChangeListener(listener: (Int) -> Unit) {
+    setOnSeekBarChangeListener(
+        object : OnSeekBarChangeListener {
+            override fun onProgressChanged(
+                seekBar: SeekBar,
+                progress: Int,
+                fromUser: Boolean,
+            ) {
+                if (fromUser) {
+                    listener(progress)
+                }
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                // no-op
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                // no-op
+            }
+        },
+    )
+}
