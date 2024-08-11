@@ -27,6 +27,7 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
         val contrastAdjust = view.findViewById<SeekBar>(R.id.contrast_adjust)
         val saturationAdjust = view.findViewById<SeekBar>(R.id.saturation_adjust)
         val hueAdjust = view.findViewById<SeekBar>(R.id.hue_adjust)
+        val blurAdjust = view.findViewById<SeekBar>(R.id.blur_adjust)
 
         val redText = view.findViewById<TextView>(R.id.red_adjust_text)
         val greenText = view.findViewById<TextView>(R.id.green_adjust_text)
@@ -35,6 +36,7 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
         val contrastText = view.findViewById<TextView>(R.id.contrast_adjust_text)
         val saturationText = view.findViewById<TextView>(R.id.saturation_adjust_text)
         val hueText = view.findViewById<TextView>(R.id.hue_adjust_text)
+        val blurText = view.findViewById<TextView>(R.id.blur_adjust_text)
 
         fun setUi(vf: VideoFilter) {
             redAdjust.progress = vf.red
@@ -44,6 +46,7 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
             contrastAdjust.progress = vf.contrast
             saturationAdjust.progress = vf.saturation
             hueAdjust.progress = vf.hue
+            blurAdjust.progress = vf.blur
 
             redText.text = "${vf.red - 100}%"
             greenText.text = "${vf.green - 100}%"
@@ -52,6 +55,7 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
             contrastText.text = "${vf.contrast}%"
             saturationText.text = "${vf.saturation}%"
             hueText.text = "${vf.hue}"
+            blurText.text = "${vf.blur / 10f}px"
         }
         setUi(viewModel.videoFilter.value ?: VideoFilter())
 
@@ -82,6 +86,10 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
         hueAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(hue = it)
             hueText.text = "$it"
+        }
+        blurAdjust.setOnSeekBarChangeListener {
+            viewModel.videoFilter.value = getOrCreateVideoFilter().copy(blur = it)
+            blurText.text = "${it / 10f}px"
         }
 
         val rotateLeftButton = view.findViewById<Button>(R.id.rotate_left_button)

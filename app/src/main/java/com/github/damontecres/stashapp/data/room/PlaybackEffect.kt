@@ -4,6 +4,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.effect.Brightness
 import androidx.media3.effect.Contrast
+import androidx.media3.effect.GaussianBlur
 import androidx.media3.effect.GlEffect
 import androidx.media3.effect.HslAdjustment
 import androidx.media3.effect.RgbAdjustment
@@ -27,6 +28,7 @@ data class VideoFilter(
     val red: Int = COLOR_DEFAULT,
     val green: Int = COLOR_DEFAULT,
     val blue: Int = COLOR_DEFAULT,
+    val blur: Int = 0,
 ) {
     companion object {
         const val COLOR_DEFAULT = 100
@@ -51,6 +53,10 @@ data class VideoFilter(
 
     fun hasHsl(): Boolean {
         return hue != HUE_DEFAULT || saturation != COLOR_DEFAULT
+    }
+
+    fun hasBlur(): Boolean {
+        return blur > 0
     }
 
     @OptIn(UnstableApi::class)
@@ -85,6 +91,9 @@ data class VideoFilter(
                         .adjustSaturation((saturation - 100).toFloat())
                         .build(),
                 )
+            }
+            if (hasBlur()) {
+                add(GaussianBlur(blur / 10f))
             }
         }
     }

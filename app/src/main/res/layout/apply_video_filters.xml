@@ -153,6 +153,28 @@
                 android:text="50%"
                 />
         </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/stashapp_effect_filters_blur" />
+
+            <SeekBar
+                android:id="@+id/blur_adjust"
+                android:layout_width="@dimen/filter_seek_bar"
+                android:layout_height="wrap_content"
+                android:progress="0"
+                android:min="0"
+                android:max="250" />
+
+            <TextView
+                android:id="@+id/blur_adjust_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="12.5px" />
+        </TableRow>
     </TableLayout>
     <LinearLayout
         style="?android:attr/buttonBarStyle"
