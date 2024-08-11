@@ -87,7 +87,7 @@
                 android:id="@+id/hue_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="50"
+                android:text="0\u00b0"
                 />
         </TableRow>
         <TableRow>
@@ -108,7 +108,7 @@
                 android:id="@+id/red_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="50%"
+                android:text="0%"
                 />
         </TableRow>
         <TableRow>
@@ -129,7 +129,7 @@
                 android:id="@+id/green_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="50%"
+                android:text="0%"
                 />
         </TableRow>
         <TableRow>
@@ -150,7 +150,7 @@
                 android:id="@+id/blue_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="50%"
+                android:text="0%"
                 />
         </TableRow>
 
@@ -173,7 +173,7 @@
                 android:id="@+id/blur_adjust_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="12.5px" />
+                android:text="0px" />
         </TableRow>
     </TableLayout>
     <LinearLayout
@@ -216,7 +216,7 @@
             android:padding="8dp"
             android:background="@drawable/button_selector"
             android:textColor="@android:color/white"
-            android:text="@string/stashapp_actions_submit" />
+            android:text="@string/stashapp_actions_save" />
 
         <Button
             android:id="@+id/reset_button"

@@ -54,7 +54,7 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
             brightnessText.text = "${vf.brightness}%"
             contrastText.text = "${vf.contrast}%"
             saturationText.text = "${vf.saturation}%"
-            hueText.text = "${vf.hue}"
+            hueText.text = "${vf.hue}\u00b0"
             blurText.text = "${vf.blur / 10f}px"
         }
         setUi(viewModel.videoFilter.value ?: VideoFilter())
@@ -85,7 +85,7 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
         }
         hueAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(hue = it)
-            hueText.text = "$it"
+            hueText.text = "$it\u00b0"
         }
         blurAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(blur = it)
