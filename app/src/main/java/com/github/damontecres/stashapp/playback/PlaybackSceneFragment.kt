@@ -17,12 +17,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.effect.Brightness
-import androidx.media3.effect.Contrast
-import androidx.media3.effect.HslAdjustment
-import androidx.media3.effect.RgbAdjustment
-import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SceneDetailsFragment
@@ -33,7 +29,6 @@ import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.ThrottledLiveData
-import com.github.damontecres.stashapp.data.room.VideoFilter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -71,63 +66,23 @@ class PlaybackSceneFragment : PlaybackFragment() {
             Log.v(TAG, "Initializing video effects")
             exoPlayer.setVideoEffects(listOf())
 
+            val filterContainer = requireActivity().findViewById<View>(R.id.video_filter_container)
+            videoView.setControllerVisibilityListener(
+                PlayerView.ControllerVisibilityListener {
+                    filterContainer.visibility = it
+                },
+            )
+
             ThrottledLiveData(viewModel.videoFilter, 500L).observe(
                 viewLifecycleOwner,
             ) { vf ->
                 Log.v(TAG, "Got new VideoFilter: $vf")
-                if (vf != null) {
-                    val rotation = vf.rotation
-                    val effectList =
-                        buildList {
-                            if (vf.isRotated()) {
-                                add(
-                                    ScaleAndRotateTransformation.Builder()
-                                        .setRotationDegrees(rotation.toFloat())
-                                        .build(),
-                                )
-                            }
-                            if (vf.hasRgb()) {
-                                add(
-                                    RgbAdjustment.Builder()
-                                        .setRedScale(vf.red / VideoFilter.COLOR_DEFAULT.toFloat())
-                                        .setGreenScale(vf.green / VideoFilter.COLOR_DEFAULT.toFloat())
-                                        .setBlueScale(vf.blue / VideoFilter.COLOR_DEFAULT.toFloat())
-                                        .build(),
-                                )
-                            }
-                            if (vf.hasBrightness()) {
-                                add(Brightness((vf.brightness - 100) / 100f))
-                            }
-                            if (vf.hasContrast()) {
-                                add(Contrast((vf.contrast - 100) / 100f))
-                            }
-                            if (vf.hasHsl()) {
-                                add(
-                                    HslAdjustment.Builder()
-                                        .adjustHue(vf.hue.toFloat())
-                                        .adjustSaturation((vf.saturation - 100).toFloat())
-                                        .build(),
-                                )
-                            }
-                        }
-                    Log.d(TAG, "Applying ${effectList.size} effects: $effectList")
-                    player?.setVideoEffects(effectList)
-                }
+                val effectList = vf?.createEffectList().orEmpty()
+                Log.d(TAG, "Applying ${effectList.size} effects")
+                player?.setVideoEffects(effectList)
             }
         }
     }
-
-//    private fun saveEffects() {
-//        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
-//                .getBoolean(getString(R.string.pref_key_playback_save_effects), true)
-//        ) {
-//            viewLifecycleOwner.lifecycleScope.launchIO {
-//                val currentServer = StashServer.getCurrentStashServer(requireContext())!!
-//                db.playbackEffectsDao()
-//                    .insert(PlaybackEffect(currentServer.url, scene.id, videoRotation))
-//            }
-//        }
-//    }
 
     @OptIn(UnstableApi::class)
     override fun initializePlayer(): ExoPlayer {
@@ -310,7 +265,11 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     }
                 } else if (position == 2) {
                     requireActivity().supportFragmentManager.beginTransaction()
-                        .replace(R.id.video_filter_container, PlaybackFilterFragment())
+                        .replace(
+                            R.id.video_filter_container,
+                            PlaybackFilterFragment(),
+                            PlaybackFilterFragment.TAG,
+                        )
                         .commitNow()
                 }
             }

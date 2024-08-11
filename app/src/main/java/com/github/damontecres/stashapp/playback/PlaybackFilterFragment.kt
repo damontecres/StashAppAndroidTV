@@ -45,9 +45,9 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
             saturationAdjust.progress = vf.saturation
             hueAdjust.progress = vf.hue
 
-            redText.text = "${vf.red}%"
-            greenText.text = "${vf.green}%"
-            blueText.text = "${vf.blue}%"
+            redText.text = "${vf.red - 100}%"
+            greenText.text = "${vf.green - 100}%"
+            blueText.text = "${vf.blue - 100}%"
             brightnessText.text = "${vf.brightness}%"
             contrastText.text = "${vf.contrast}%"
             saturationText.text = "${vf.saturation}%"
@@ -57,15 +57,15 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
 
         redAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(red = it)
-            redText.text = "$it%"
+            redText.text = "${it - 100}%"
         }
         greenAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(green = it)
-            greenText.text = "$it%"
+            greenText.text = "${it - 100}%"
         }
         blueAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(blue = it)
-            blueText.text = "$it%"
+            blueText.text = "${it - 100}%"
         }
         brightnessAdjust.setOnSeekBarChangeListener {
             viewModel.videoFilter.value = getOrCreateVideoFilter().copy(brightness = it)

@@ -1,5 +1,13 @@
 package com.github.damontecres.stashapp.data.room
 
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.effect.Brightness
+import androidx.media3.effect.Contrast
+import androidx.media3.effect.GlEffect
+import androidx.media3.effect.HslAdjustment
+import androidx.media3.effect.RgbAdjustment
+import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.room.Embedded
 import androidx.room.Entity
 
@@ -43,5 +51,41 @@ data class VideoFilter(
 
     fun hasHsl(): Boolean {
         return hue != HUE_DEFAULT || saturation != COLOR_DEFAULT
+    }
+
+    @OptIn(UnstableApi::class)
+    fun createEffectList(): List<GlEffect> {
+        return buildList {
+            if (isRotated()) {
+                add(
+                    ScaleAndRotateTransformation.Builder()
+                        .setRotationDegrees(rotation.toFloat())
+                        .build(),
+                )
+            }
+            if (hasRgb()) {
+                add(
+                    RgbAdjustment.Builder()
+                        .setRedScale(red / COLOR_DEFAULT.toFloat())
+                        .setGreenScale(green / COLOR_DEFAULT.toFloat())
+                        .setBlueScale(blue / COLOR_DEFAULT.toFloat())
+                        .build(),
+                )
+            }
+            if (hasBrightness()) {
+                add(Brightness((brightness - 100) / 100f))
+            }
+            if (hasContrast()) {
+                add(Contrast((contrast - 100) / 100f))
+            }
+            if (hasHsl()) {
+                add(
+                    HslAdjustment.Builder()
+                        .adjustHue(hue.toFloat())
+                        .adjustSaturation((saturation - 100).toFloat())
+                        .build(),
+                )
+            }
+        }
     }
 }

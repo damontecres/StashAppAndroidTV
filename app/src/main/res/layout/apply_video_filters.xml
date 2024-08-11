@@ -3,7 +3,7 @@
     android:orientation="vertical"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@color/transparent_black_25">
+    android:background="@color/transparent_black_50">
 
     <TableLayout
         android:layout_width="wrap_content"
@@ -17,7 +17,7 @@
                 android:text="@string/stashapp_effect_filters_brightness"/>
             <SeekBar
                 android:id="@+id/brightness_adjust"
-                android:layout_width="300dp"
+                android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
                 android:progress="100"
                 android:min="0"
@@ -37,7 +37,7 @@
                 android:text="@string/stashapp_effect_filters_contrast"/>
             <SeekBar
                 android:id="@+id/contrast_adjust"
-                android:layout_width="300dp"
+                android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
                 android:progress="100"
                 android:min="0"
@@ -57,7 +57,7 @@
                 android:text="@string/stashapp_effect_filters_saturation"/>
             <SeekBar
                 android:id="@+id/saturation_adjust"
-                android:layout_width="300dp"
+                android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
                 android:progress="100"
                 android:min="0"
@@ -77,7 +77,7 @@
                 android:text="@string/stashapp_effect_filters_hue"/>
             <SeekBar
                 android:id="@+id/hue_adjust"
-                android:layout_width="300dp"
+                android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
                 android:progress="0"
                 android:min="0"
@@ -97,8 +97,9 @@
                 android:text="@string/stashapp_effect_filters_red"/>
             <SeekBar
                 android:id="@+id/red_adjust"
-                android:layout_width="300dp"
+                android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
+                android:progressTint="@android:color/holo_red_dark"
                 android:progress="100"
                 android:min="0"
                 android:max="200"
@@ -117,8 +118,9 @@
                 android:text="@string/stashapp_effect_filters_green"/>
             <SeekBar
                 android:id="@+id/green_adjust"
-                android:layout_width="300dp"
+                android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
+                android:progressTint="@android:color/holo_green_dark"
                 android:progress="100"
                 android:min="0"
                 android:max="200"
@@ -137,8 +139,9 @@
                 android:text="@string/stashapp_effect_filters_blue"/>
             <SeekBar
                 android:id="@+id/blue_adjust"
-                android:layout_width="300dp"
+                android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
+                android:progressTint="@android:color/holo_blue_dark"
                 android:progress="100"
                 android:min="0"
                 android:max="200"
@@ -166,7 +169,9 @@
             android:layout_margin="8dp"
             android:padding="8dp"
             android:background="@drawable/button_selector"
-            android:text="Rotate Left" />
+            android:fontFamily="@font/fa_solid_900"
+            android:textColor="@android:color/white"
+            android:text="@string/fa_rotate_left" />
 
         <Button
             android:id="@+id/rotate_right_button"
@@ -176,7 +181,9 @@
             android:layout_margin="8dp"
             android:padding="8dp"
             android:background="@drawable/button_selector"
-            android:text="Rotate Right" />
+            android:fontFamily="@font/fa_solid_900"
+            android:textColor="@android:color/white"
+            android:text="@string/fa_rotate_right" />
 
         <Button
             android:id="@+id/apply_button"
@@ -186,6 +193,7 @@
             android:layout_margin="8dp"
             android:padding="8dp"
             android:background="@drawable/button_selector"
+            android:textColor="@android:color/white"
             android:text="@string/stashapp_actions_submit" />
 
         <Button
@@ -196,6 +204,7 @@
             android:layout_margin="8dp"
             android:padding="8dp"
             android:background="@drawable/button_selector"
+            android:textColor="@android:color/white"
             android:text="@string/stashapp_effect_filters_reset_filters" />
     </LinearLayout>
 
