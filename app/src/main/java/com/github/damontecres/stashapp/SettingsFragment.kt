@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
@@ -43,6 +44,7 @@ import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import com.github.damontecres.stashapp.util.testStashConnection
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -105,8 +107,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
     class PreferencesFragment(val startPreferenceFragmentFunc: (fragment: LeanbackPreferenceFragmentCompat) -> Unit) :
         LeanbackPreferenceFragmentCompat() {
-        private var serverKeys = listOf<String>()
-        private var serverValues = listOf<String>()
+        private val viewModel: ServerViewModel by activityViewModels()
 
         override fun onCreatePreferences(
             savedInstanceState: Bundle?,
@@ -259,6 +260,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         ) {
             super.onViewCreated(view, savedInstanceState)
 
+            viewModel.currentServer.observe(viewLifecycleOwner) {
+                refresh(it)
+            }
+
             if (PreferenceManager.getDefaultSharedPreferences(requireContext())
                     .getBoolean("autoCheckForUpdates", true)
             ) {
@@ -291,25 +296,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
         }
 
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            if (savedInstanceState == null) {
-                requireActivity().supportFragmentManager.addOnBackStackChangedListener {
-                    if (requireActivity().supportFragmentManager.backStackEntryCount == 0) {
-                        refresh()
-                    }
-                }
-            }
-        }
-
-        override fun onResume() {
-            super.onResume()
-            refresh()
-        }
-
-        private fun refresh() {
+        private fun refresh(currentServer: StashServer?) {
             Log.v(TAG, "refresh")
-            val currentServer = StashServer.getCurrentStashServer(requireContext())
             findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer?.url
 
             val sendLogsPref = findPreference<LongClickPreference>("sendLogs")!!

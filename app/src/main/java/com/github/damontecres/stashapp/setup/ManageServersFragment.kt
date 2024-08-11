@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.setup
 
 import android.os.Bundle
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
@@ -9,8 +10,11 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 class ManageServersFragment : GuidedStepSupportFragment() {
+    private val viewModel: ServerViewModel by activityViewModels()
+
     private var currentServer: StashServer? = null
     private lateinit var allServers: List<StashServer>
     private lateinit var otherServers: List<StashServer>
@@ -118,7 +122,7 @@ class ManageServersFragment : GuidedStepSupportFragment() {
             // Switching servers
             val index = action.id - ACTION_SWITCH_OFFSET
             val server = otherServers[index.toInt()]
-            StashServer.setCurrentStashServer(requireContext(), server)
+            viewModel.switchServer(server)
             finishGuidedStepSupportFragments()
         } else if (action.id >= ACTION_REMOVE_OFFSET) {
             // Remove a server
