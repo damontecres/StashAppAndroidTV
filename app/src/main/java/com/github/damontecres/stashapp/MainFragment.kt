@@ -67,8 +67,6 @@ class MainFragment : BrowseSupportFragment() {
         setupEventListeners()
 
         adapter = rowsAdapter
-
-        viewModel.recomputeSettingsHash()
     }
 
     override fun onViewCreated(
@@ -109,6 +107,7 @@ class MainFragment : BrowseSupportFragment() {
                     )
                 },
             ) {
+                Log.d(TAG, "Settings hash changed: $it")
                 if (!firstTime) {
                     clearData()
                     rowsAdapter.clear()
