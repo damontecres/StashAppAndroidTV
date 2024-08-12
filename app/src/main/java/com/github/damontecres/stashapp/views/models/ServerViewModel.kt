@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.views.models
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
@@ -11,7 +10,8 @@ import com.github.damontecres.stashapp.util.getInt
 import java.util.Objects
 
 class ServerViewModel : ViewModel() {
-    private val _currentServer = MutableLiveData<StashServer?>(StashServer.getCurrentStashServer(StashApplication.getApplication()))
+    private val _currentServer =
+        EqualityMutableLiveData<StashServer?>(StashServer.getCurrentStashServer(StashApplication.getApplication()))
     val currentServer: LiveData<StashServer?> = _currentServer
 
     private val _currentSettingsHash = EqualityMutableLiveData(computeSettingsHash())
@@ -32,8 +32,11 @@ class ServerViewModel : ViewModel() {
         return Objects.hash(maxSearchResults, playVideoPreviews, columns, showRatings)
     }
 
-    fun recomputeSettingsHash() {
+    fun refresh() {
         val newHash = computeSettingsHash()
         _currentSettingsHash.value = newHash
+
+        val currentServer = StashServer.getCurrentStashServer(StashApplication.getApplication())
+        _currentServer.value = currentServer
     }
 }

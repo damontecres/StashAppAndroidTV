@@ -15,6 +15,8 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.preference.PreferenceManager
+import androidx.room.Room
+import com.github.damontecres.stashapp.data.room.AppDatabase
 import com.github.damontecres.stashapp.setup.SetupActivity
 import com.github.damontecres.stashapp.util.AppUpgradeHandler
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -105,6 +107,16 @@ class StashApplication : Application() {
                 }
             }
         }
+
+        setupDB()
+    }
+
+    private fun setupDB() {
+        val dbName = getString(R.string.app_name)
+        database =
+            Room.databaseBuilder(this, AppDatabase::class.java, dbName)
+                .fallbackToDestructiveMigration()
+                .build()
     }
 
     fun showPinActivity() {
@@ -200,6 +212,7 @@ class StashApplication : Application() {
 
     companion object {
         private lateinit var application: StashApplication
+        private lateinit var database: AppDatabase
 
         private val fontCache = mutableMapOf<Int, Typeface>()
 
@@ -213,6 +226,10 @@ class StashApplication : Application() {
             return fontCache.getOrPut(fontId) {
                 return ResourcesCompat.getFont(getApplication(), fontId)!!
             }
+        }
+
+        fun getDatabase(): AppDatabase {
+            return database
         }
 
         const val TAG = "StashApplication"

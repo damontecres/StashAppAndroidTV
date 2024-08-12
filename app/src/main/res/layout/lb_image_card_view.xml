@@ -31,11 +31,10 @@
         tools:layout_width="351dp"
         tools:layout_height="198dp">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/card_overlay"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@android:color/transparent">
+            tools:ignore="UselessParent"> <!-- Another view is added in code so the parent is not useless -->
 
             <ImageView
                 android:id="@+id/main_image"
@@ -48,6 +47,12 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/card_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent">
 
                 <TextView
                     android:id="@+id/card_overlay_bottom_left"
@@ -102,7 +107,7 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-
+        </RelativeLayout>
 
     </ViewSwitcher>
     <androidx.leanback.widget.NonOverlappingFrameLayout

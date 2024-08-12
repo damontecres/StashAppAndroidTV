@@ -18,7 +18,6 @@ import androidx.leanback.widget.RowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import androidx.room.Room
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -34,7 +33,6 @@ import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.room.AppDatabase
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
 import com.github.damontecres.stashapp.presenters.ActionPresenter.Companion.CARD_HEIGHT
 import com.github.damontecres.stashapp.presenters.ActionPresenter.Companion.CARD_WIDTH
@@ -75,13 +73,6 @@ class SearchForFragment(
             Toast.makeText(requireContext(), "Search failed: ${ex.message}", Toast.LENGTH_LONG)
                 .show()
         }
-
-    private val db =
-        Room.databaseBuilder(
-            StashApplication.getApplication(),
-            AppDatabase::class.java,
-            "search_for",
-        ).build()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -155,7 +146,7 @@ class SearchForFragment(
             val currentServer = StashServer.getCurrentStashServer(requireContext())
             if (dataType in DATA_TYPE_SUGGESTIONS && currentServer != null) {
                 viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                    db.recentSearchItemsDao()
+                    StashApplication.getDatabase().recentSearchItemsDao()
                         .insert(RecentSearchItem(currentServer.url, resultId, dataType))
                 }
             }
@@ -194,7 +185,7 @@ class SearchForFragment(
                 val queryEngine = QueryEngine(requireContext(), false)
                 if (currentServer != null) {
                     val mostRecentIds =
-                        db.recentSearchItemsDao()
+                        StashApplication.getDatabase().recentSearchItemsDao()
                             .getMostRecent(perPage, currentServer.url, dataType).map { it.id }
                     Log.v(TAG, "Got ${mostRecentIds.size} recent items")
                     if (mostRecentIds.isNotEmpty()) {
