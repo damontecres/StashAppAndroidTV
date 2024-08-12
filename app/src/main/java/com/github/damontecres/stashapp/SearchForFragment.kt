@@ -81,9 +81,11 @@ class SearchForFragment(
                 .getInt("maxSearchResults", 25)
         title =
             requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
-        adapter.set(0, ListRow(HeaderItem(getString(R.string.results)), searchResultsAdapter))
-
         searchResultsAdapter.presenterSelector = StashPresenter.SELECTOR
+        adapter.set(
+            RESULTS_POS,
+            ListRow(HeaderItem(getString(R.string.waiting_for_query)), ArrayObjectAdapter()),
+        )
 
         setSearchResultProvider(this)
         setOnItemViewClickedListener {
@@ -178,7 +180,10 @@ class SearchForFragment(
                         sort = Optional.present("scenes_count"),
                     )
                 results.addAll(0, queryEngine.find(dataType, filter))
-                adapter.set(1, ListRow(HeaderItem(getString(R.string.suggestions)), results))
+                adapter.set(
+                    SUGGESTIONS_POS,
+                    ListRow(HeaderItem(getString(R.string.suggestions)), results),
+                )
             }
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 val currentServer = StashServer.getCurrentStashServer(requireContext())
@@ -208,10 +213,10 @@ class SearchForFragment(
                             withContext(Dispatchers.Main) {
                                 val headerName =
                                     getString(
-                                        R.string.stashapp_recently_added_objects,
-                                        getString(dataType.pluralStringId),
+                                        R.string.format_recently_used,
+                                        getString(dataType.pluralStringId).lowercase(),
                                     )
-                                adapter.set(2, ListRow(HeaderItem(headerName), results))
+                                adapter.set(RECENT_POS, ListRow(HeaderItem(headerName), results))
                             }
                         }
                     }
@@ -251,6 +256,13 @@ class SearchForFragment(
 
         this.query = query
         if (!TextUtils.isEmpty(query)) {
+            adapter.set(
+                RESULTS_POS,
+                ListRow(
+                    HeaderItem(getString(R.string.stashapp_loading_generic)),
+                    ArrayObjectAdapter(),
+                ),
+            )
             val filter =
                 FindFilterType(
                     q = Optional.present(query),
@@ -259,43 +271,37 @@ class SearchForFragment(
             val queryEngine = QueryEngine(requireContext(), true)
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val results = queryEngine.find(dataType, filter)
-                searchResultsAdapter.addAll(0, results)
-                val itemExists =
-                    results.map {
-                        when (dataType) {
-                            DataType.TAG -> (it as TagData).name
-                            DataType.MOVIE -> (it as MovieData).name
-                            DataType.STUDIO -> (it as StudioData).name
-                            DataType.PERFORMER -> (it as PerformerData).name
-                            else -> throw IllegalArgumentException("Unsupported datatype $dataType")
-//                        DataType.SCENE -> (it as SlimSceneData).id
-//                        DataType.MARKER -> (it as MarkerData).id
-//                        DataType.IMAGE -> (it as ImageData).id
-//                        DataType.GALLERY -> (it as GalleryData).id
-                        }.lowercase()
-                    }.contains(query.lowercase())
-                if (dataType in DATA_TYPE_ALLOW_CREATE && !itemExists) {
-                    if (adapter.lookup(2) == null) {
-                        val headerName =
-                            getString(
-                                R.string.stashapp_dialogs_create_new_entity,
-                                getString(dataType.stringId),
-                            )
+                if (results.isNotEmpty()) {
+                    searchResultsAdapter.addAll(0, results)
+                    adapter.set(
+                        RESULTS_POS,
+                        ListRow(HeaderItem(getString(R.string.results)), searchResultsAdapter),
+                    )
+                } else {
+                    if (dataType in DATA_TYPE_ALLOW_CREATE) {
                         adapter.set(
-                            2,
+                            RESULTS_POS,
                             ListRow(
-                                HeaderItem(headerName),
+                                HeaderItem(getString(R.string.stashapp_component_tagger_results_match_failed_no_result)),
                                 createNewAdapter,
                             ),
                         )
+                    } else {
+                        adapter.set(
+                            RESULTS_POS,
+                            ListRow(
+                                HeaderItem(getString(R.string.stashapp_component_tagger_results_match_failed_no_result)),
+                                ArrayObjectAdapter(),
+                            ),
+                        )
                     }
-                    createNewAdapter.notifyItemRangeChanged(0, 1)
-                } else {
-                    adapter.clear(2)
                 }
             }
         } else {
-            adapter.clear(2)
+            adapter.set(
+                RESULTS_POS,
+                ListRow(HeaderItem(getString(R.string.waiting_for_query)), ArrayObjectAdapter()),
+            )
         }
     }
 
@@ -304,9 +310,9 @@ class SearchForFragment(
             cardView: StashImageCardView,
             item: StashAction,
         ) {
-            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-            cardView.titleText = query?.replaceFirstChar(Char::titlecase)
-            cardView.contentText = "Create new ${getString(dataType.stringId)}"
+            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT / 2)
+            cardView.titleText = "Create new ${getString(dataType.stringId)}"
+            cardView.contentText = query?.replaceFirstChar(Char::titlecase)
         }
     }
 
@@ -316,6 +322,10 @@ class SearchForFragment(
         const val ID_KEY = "id"
         const val RESULT_ID_KEY = "resultId"
         const val TITLE_KEY = "title"
+
+        private const val RESULTS_POS = 0
+        private const val SUGGESTIONS_POS = RESULTS_POS + 1
+        private const val RECENT_POS = SUGGESTIONS_POS + 1
 
         // List of data types that support querying for suggestions
         val DATA_TYPE_SUGGESTIONS = setOf(DataType.TAG, DataType.PERFORMER, DataType.STUDIO)
