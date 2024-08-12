@@ -116,6 +116,8 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
             viewModel.videoFilter.value = vf
             setUi(vf)
         }
+
+        submitButton.requestFocus()
     }
 
     private fun getOrCreateVideoFilter(): VideoFilter {
