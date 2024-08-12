@@ -92,7 +92,7 @@ class MainFragment : BrowseSupportFragment() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.recomputeSettingsHash()
+        viewModel.refresh()
     }
 
     private fun setupObservers() {
