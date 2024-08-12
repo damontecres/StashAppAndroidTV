@@ -5,7 +5,7 @@ import android.util.AttributeSet
 import android.view.KeyEvent
 import androidx.appcompat.widget.AppCompatSeekBar
 
-class DecimalRatingBar(context: Context, attrs: AttributeSet?) : AppCompatSeekBar(context, attrs) {
+class WrapAroundSeekBar(context: Context, attrs: AttributeSet?) : AppCompatSeekBar(context, attrs) {
     override fun onKeyDown(
         keyCode: Int,
         event: KeyEvent?,
