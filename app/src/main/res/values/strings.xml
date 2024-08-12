@@ -50,6 +50,7 @@
     <string name="force_direct">Force direct</string>
     <string name="unsupported">unsupported</string>
     <string name="results">Results</string>
+    <string name="waiting_for_query">Enter search query</string>
     <string name="suggestions">Suggestions</string>
     <string name="resume">Resume</string>
     <string name="restart">Restart</string>
@@ -57,6 +58,7 @@
     <string name="decrement">Decrement</string>
     <string name="reset">Reset</string>
     <string name="replace">Replace</string>
+    <string name="format_recently_used">Recently used %1$s</string>
 
     <string name="format_percent" formatted="true">%1$d\%%</string>
     <string name="format_pixels" formatted="true">%1$.1fpx</string>
