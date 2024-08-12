@@ -25,12 +25,9 @@ import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
-import androidx.room.Room
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
 import com.github.damontecres.stashapp.data.JobResult
-import com.github.damontecres.stashapp.data.room.AppDatabase
-import com.github.damontecres.stashapp.playback.PlaybackSceneFragment.Companion.DB_NAME
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
@@ -449,13 +446,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             persistPlaybackEffectsPref.setOnPreferenceChangeListener { preference, newValue ->
                 if (newValue == false) {
                     viewLifecycleOwner.lifecycleScope.launchIO {
-                        val db =
-                            Room.databaseBuilder(
-                                StashApplication.getApplication(),
-                                AppDatabase::class.java,
-                                DB_NAME,
-                            ).build()
-                        db.playbackEffectsDao().deleteAll()
+                        StashApplication.getDatabase().playbackEffectsDao().deleteAll()
                     }
                 }
                 true
