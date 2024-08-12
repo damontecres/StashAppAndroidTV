@@ -141,9 +141,7 @@ fun SeekBar.setOnSeekBarChangeListener(listener: (Int) -> Unit) {
                 progress: Int,
                 fromUser: Boolean,
             ) {
-                if (fromUser) {
-                    listener(progress)
-                }
+                listener(progress)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
