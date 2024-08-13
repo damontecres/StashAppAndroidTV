@@ -191,6 +191,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
+        android:nextFocusLeft="@id/exo_progress"
+        android:nextFocusRight="@id/exo_progress"
         app:layout_constraintBottom_toBottomOf="@id/exo_position"
         app:layout_constraintEnd_toStartOf="@id/exo_duration"
         app:layout_constraintStart_toEndOf="@+id/exo_position"

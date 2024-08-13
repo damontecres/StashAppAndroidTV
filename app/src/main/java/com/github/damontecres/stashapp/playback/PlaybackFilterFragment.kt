@@ -116,6 +116,8 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
             viewModel.videoFilter.value = vf
             setUi(vf)
         }
+
+        submitButton.requestFocus()
     }
 
     private fun getOrCreateVideoFilter(): VideoFilter {
@@ -139,9 +141,7 @@ fun SeekBar.setOnSeekBarChangeListener(listener: (Int) -> Unit) {
                 progress: Int,
                 fromUser: Boolean,
             ) {
-                if (fromUser) {
-                    listener(progress)
-                }
+                listener(progress)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {

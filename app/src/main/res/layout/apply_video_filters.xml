@@ -16,13 +16,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/stashapp_effect_filters_brightness"/>
-            <SeekBar
+
+            <com.github.damontecres.stashapp.views.WrapAroundSeekBar
                 android:id="@+id/brightness_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:nextFocusLeft="@id/brightness_adjust"
+                android:nextFocusRight="@id/brightness_adjust"
                 />
             <TextView
                 android:id="@+id/brightness_adjust_text"
@@ -36,13 +39,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/stashapp_effect_filters_contrast"/>
-            <SeekBar
+
+            <com.github.damontecres.stashapp.views.WrapAroundSeekBar
                 android:id="@+id/contrast_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:nextFocusLeft="@id/contrast_adjust"
+                android:nextFocusRight="@id/contrast_adjust"
                 />
             <TextView
                 android:id="@+id/contrast_adjust_text"
@@ -56,13 +62,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/stashapp_effect_filters_saturation"/>
-            <SeekBar
+
+            <com.github.damontecres.stashapp.views.WrapAroundSeekBar
                 android:id="@+id/saturation_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:nextFocusLeft="@id/saturation_adjust"
+                android:nextFocusRight="@id/saturation_adjust"
                 />
             <TextView
                 android:id="@+id/saturation_adjust_text"
@@ -76,13 +85,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/stashapp_effect_filters_hue"/>
-            <SeekBar
+
+            <com.github.damontecres.stashapp.views.WrapAroundSeekBar
                 android:id="@+id/hue_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
                 android:progress="0"
                 android:min="0"
                 android:max="360"
+                android:nextFocusLeft="@id/hue_adjust"
+                android:nextFocusRight="@id/hue_adjust"
                 />
             <TextView
                 android:id="@+id/hue_adjust_text"
@@ -96,7 +108,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/stashapp_effect_filters_red"/>
-            <SeekBar
+
+            <com.github.damontecres.stashapp.views.WrapAroundSeekBar
                 android:id="@+id/red_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
@@ -104,6 +117,8 @@
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:nextFocusLeft="@id/red_adjust"
+                android:nextFocusRight="@id/red_adjust"
                 />
             <TextView
                 android:id="@+id/red_adjust_text"
@@ -117,7 +132,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/stashapp_effect_filters_green"/>
-            <SeekBar
+
+            <com.github.damontecres.stashapp.views.WrapAroundSeekBar
                 android:id="@+id/green_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
@@ -125,6 +141,8 @@
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:nextFocusLeft="@id/green_adjust"
+                android:nextFocusRight="@id/green_adjust"
                 />
             <TextView
                 android:id="@+id/green_adjust_text"
@@ -138,7 +156,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/stashapp_effect_filters_blue"/>
-            <SeekBar
+
+            <com.github.damontecres.stashapp.views.WrapAroundSeekBar
                 android:id="@+id/blue_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
@@ -146,6 +165,8 @@
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:nextFocusLeft="@id/blue_adjust"
+                android:nextFocusRight="@id/blue_adjust"
                 />
             <TextView
                 android:id="@+id/blue_adjust_text"
@@ -162,13 +183,15 @@
                 android:layout_height="wrap_content"
                 android:text="@string/stashapp_effect_filters_blur" />
 
-            <SeekBar
+            <com.github.damontecres.stashapp.views.WrapAroundSeekBar
                 android:id="@+id/blur_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
                 android:progress="0"
                 android:min="0"
-                android:max="250" />
+                android:max="250"
+                android:nextFocusLeft="@id/blur_adjust"
+                android:nextFocusRight="@id/blur_adjust" />
 
             <TextView
                 android:id="@+id/blur_adjust_text"
