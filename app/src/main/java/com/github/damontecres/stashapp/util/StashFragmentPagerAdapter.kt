@@ -34,7 +34,7 @@ abstract class StashFragmentPagerAdapter(private val items: MutableList<PagerEnt
         return items[position].title
     }
 
-    abstract fun getFragment(position: Int): StashGridFragment2<*, *, *>
+    abstract fun getFragment(position: Int): StashGridFragment2
 
     data class PagerEntry(val title: String, val dataType: DataType, val sortAndDirection: SortAndDirection = dataType.defaultSort) {
         constructor(dataType: DataType) : this(StashApplication.getApplication().getString(dataType.pluralStringId), dataType)

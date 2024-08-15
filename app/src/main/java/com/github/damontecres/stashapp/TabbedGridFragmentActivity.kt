@@ -34,68 +34,67 @@ abstract class TabbedGridFragmentActivity : FragmentActivity(R.layout.tabbed_gri
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState == null) {
-            titleView = findViewById<TabbedGridTitleView>(R.id.browse_title_group)
-            findViewById<TextView>(R.id.grid_title).text = getTitleText()
-            val viewPager = findViewById<LeanbackViewPager>(R.id.view_pager)
-            val tabLayout = findViewById<LeanbackTabLayout>(R.id.tab_layout)
 
-            adapter = getPagerAdapter()
-            viewPager.adapter = adapter
+        titleView = findViewById<TabbedGridTitleView>(R.id.browse_title_group)
+        findViewById<TextView>(R.id.grid_title).text = getTitleText()
+        val viewPager = findViewById<LeanbackViewPager>(R.id.view_pager)
+        val tabLayout = findViewById<LeanbackTabLayout>(R.id.tab_layout)
+
+        adapter = getPagerAdapter()
+        viewPager.adapter = adapter
 //            TabLayoutMediator(tabLayout, viewPager, true) { tab, position ->
 //                tab.text = adapter.items[position].title
 //            }.attach()
-            tabLayout.setupWithViewPager(viewPager)
-            if (tabLayout.childCount > 0) {
-                tabLayout.getChildAt(0).requestFocus()
-            }
+        tabLayout.setupWithViewPager(viewPager)
+        if (tabLayout.childCount > 0) {
+            tabLayout.getChildAt(0).requestFocus()
+        }
 
-            for (i in 0..<adapter.count) {
-                val fragment = adapter.getItem(i) as StashGridFragment2<*, *, *>
-                fragment.lifecycle.addObserver(
-                    object : DefaultLifecycleObserver {
-                        override fun onStart(owner: LifecycleOwner) {
-                            fragment.setTitleView(titleView)
-                        }
-                    },
-                )
-            }
-
-            tabLayout.addOnTabSelectedListener(
-                object : TabLayout.OnTabSelectedListener {
-                    override fun onTabSelected(tab: TabLayout.Tab) {
-                        for (i in 0..<tabLayout.tabCount) {
-                            if (tab == tabLayout.getTabAt(i)) {
-                                currentTabPosition = i
-                                val fragment =
-                                    adapter.getItem(i) as StashGridFragment2<*, *, *>
-
-                                Log.v(
-                                    TAG,
-                                    "Got tab ${tab.text}, currentSortAndDirection=${fragment.currentSortAndDirection}",
-                                )
-                                setUpSortButton(
-                                    fragment.dataType,
-                                    fragment.currentSortAndDirection,
-                                )
-                            }
-                        }
-                    }
-
-                    override fun onTabUnselected(tab: TabLayout.Tab) {
-                        // no-op
-                    }
-
-                    override fun onTabReselected(tab: TabLayout.Tab) {
-                        // no-op
+        for (i in 0..<adapter.count) {
+            val fragment = adapter.getItem(i) as StashGridFragment2
+            fragment.lifecycle.addObserver(
+                object : DefaultLifecycleObserver {
+                    override fun onStart(owner: LifecycleOwner) {
+                        fragment.setTitleView(titleView)
                     }
                 },
             )
-
-            sortButton = findViewById<Button>(R.id.sort_button)
-            val startFragment = adapter.getItem(0) as StashGridFragment2<*, *, *>
-            setUpSortButton(startFragment.dataType, startFragment.currentSortAndDirection)
         }
+
+        tabLayout.addOnTabSelectedListener(
+            object : TabLayout.OnTabSelectedListener {
+                override fun onTabSelected(tab: TabLayout.Tab) {
+                    for (i in 0..<tabLayout.tabCount) {
+                        if (tab == tabLayout.getTabAt(i)) {
+                            currentTabPosition = i
+                            val fragment =
+                                adapter.getItem(i) as StashGridFragment2
+
+                            Log.v(
+                                TAG,
+                                "Got tab ${tab.text}, currentSortAndDirection=${fragment.currentSortAndDirection}",
+                            )
+                            setUpSortButton(
+                                fragment.dataType,
+                                fragment.currentSortAndDirection,
+                            )
+                        }
+                    }
+                }
+
+                override fun onTabUnselected(tab: TabLayout.Tab) {
+                    // no-op
+                }
+
+                override fun onTabReselected(tab: TabLayout.Tab) {
+                    // no-op
+                }
+            },
+        )
+
+        sortButton = findViewById<Button>(R.id.sort_button)
+        val startFragment = adapter.getItem(0) as StashGridFragment2
+        setUpSortButton(startFragment.dataType, startFragment.currentSortAndDirection)
     }
 
     override fun onStart() {
@@ -181,7 +180,7 @@ abstract class TabbedGridFragmentActivity : FragmentActivity(R.layout.tabbed_gri
             )
 
             val newSortAndDirection = SortAndDirection(resolvedNewSortBy, newDirection)
-            (this@TabbedGridFragmentActivity.adapter.getItem(currentTabPosition) as StashGridFragment2<*, *, *>)
+            (this@TabbedGridFragmentActivity.adapter.getItem(currentTabPosition) as StashGridFragment2)
                 .refresh(newSortAndDirection)
             setUpSortButton(dataType, newSortAndDirection)
         }

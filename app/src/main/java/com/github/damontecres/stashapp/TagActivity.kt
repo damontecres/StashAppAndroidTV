@@ -11,19 +11,7 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
-import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
-import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
-import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
-import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
-import com.github.damontecres.stashapp.suppliers.TagDataSupplier
-import com.github.damontecres.stashapp.util.GalleryComparator
-import com.github.damontecres.stashapp.util.ImageComparator
-import com.github.damontecres.stashapp.util.MarkerComparator
-import com.github.damontecres.stashapp.util.PerformerComparator
-import com.github.damontecres.stashapp.util.SceneComparator
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
-import com.github.damontecres.stashapp.util.TagComparator
 
 class TagActivity : TabbedGridFragmentActivity() {
     override fun getTitleText(): CharSequence? {
@@ -36,14 +24,14 @@ class TagActivity : TabbedGridFragmentActivity() {
         val tabs =
             mutableListOf(
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
-                StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY),
-                StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE),
-                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER),
-                StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER),
-                StashFragmentPagerAdapter.PagerEntry(
-                    getString(R.string.stashapp_sub_tags),
-                    DataType.TAG,
-                ),
+//                StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY),
+//                StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE),
+//                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER),
+//                StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER),
+//                StashFragmentPagerAdapter.PagerEntry(
+//                    getString(R.string.stashapp_sub_tags),
+//                    DataType.TAG,
+//                ),
             )
 
         return TabPageAdapter(tabs, tagId, includeSubTags, supportFragmentManager)
@@ -56,127 +44,97 @@ class TagActivity : TabbedGridFragmentActivity() {
         fm: FragmentManager,
     ) :
         StashFragmentPagerAdapter(tabs, fm) {
-        override fun getFragment(position: Int): StashGridFragment2<*, *, *> {
+        override fun getFragment(position: Int): StashGridFragment2 {
             val depth = Optional.present(if (includeSubTags) -1 else 0)
             return if (position == 0) {
                 StashGridFragment2(
                     dataType = DataType.SCENE,
-                    comparator = SceneComparator,
-                    factory = { sortAndDirection ->
-                        SceneDataSupplier(
-                            sortAndDirection.asFindFilterType,
-                            SceneFilterType(
-                                tags =
-                                    Optional.present(
-                                        HierarchicalMultiCriterionInput(
-                                            value = Optional.present(listOf(tagId)),
-                                            modifier = CriterionModifier.INCLUDES_ALL,
-                                            depth = depth,
-                                        ),
+                    objectFilter =
+                        SceneFilterType(
+                            tags =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(listOf(tagId)),
+                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
                                     ),
-                            ),
-                        )
-                    },
+                                ),
+                        ),
                 )
             } else if (position == 1) {
                 StashGridFragment2(
                     dataType = DataType.GALLERY,
-                    comparator = GalleryComparator,
-                    factory = { sortAndDirection ->
-                        GalleryDataSupplier(
-                            sortAndDirection.asFindFilterType,
-                            GalleryFilterType(
-                                tags =
-                                    Optional.present(
-                                        HierarchicalMultiCriterionInput(
-                                            value = Optional.present(listOf(tagId)),
-                                            modifier = CriterionModifier.INCLUDES,
-                                            depth = depth,
-                                        ),
+                    objectFilter =
+                        GalleryFilterType(
+                            tags =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(listOf(tagId)),
+                                        modifier = CriterionModifier.INCLUDES,
+                                        depth = depth,
                                     ),
-                            ),
-                        )
-                    },
+                                ),
+                        ),
                 )
             } else if (position == 2) {
                 StashGridFragment2(
                     dataType = DataType.IMAGE,
-                    comparator = ImageComparator,
-                    factory = { sortAndDirection ->
-                        ImageDataSupplier(
-                            sortAndDirection.asFindFilterType,
-                            ImageFilterType(
-                                tags =
-                                    Optional.present(
-                                        HierarchicalMultiCriterionInput(
-                                            value = Optional.present(listOf(tagId)),
-                                            modifier = CriterionModifier.INCLUDES,
-                                            depth = depth,
-                                        ),
+                    objectFilter =
+                        ImageFilterType(
+                            tags =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(listOf(tagId)),
+                                        modifier = CriterionModifier.INCLUDES,
+                                        depth = depth,
                                     ),
-                            ),
-                        )
-                    },
+                                ),
+                        ),
                 )
             } else if (position == 3) {
                 StashGridFragment2(
                     dataType = DataType.MARKER,
-                    comparator = MarkerComparator,
-                    factory = { sortAndDirection ->
-                        MarkerDataSupplier(
-                            sortAndDirection.asFindFilterType,
-                            SceneMarkerFilterType(
-                                tags =
-                                    Optional.present(
-                                        HierarchicalMultiCriterionInput(
-                                            value = Optional.present(listOf(tagId)),
-                                            modifier = CriterionModifier.INCLUDES_ALL,
-                                            depth = depth,
-                                        ),
+                    objectFilter =
+                        SceneMarkerFilterType(
+                            tags =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(listOf(tagId)),
+                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
                                     ),
-                            ),
-                        )
-                    },
+                                ),
+                        ),
                 )
             } else if (position == 4) {
                 StashGridFragment2(
                     dataType = DataType.PERFORMER,
-                    comparator = PerformerComparator,
-                    factory = { sortAndDirection ->
-                        PerformerDataSupplier(
-                            sortAndDirection.asFindFilterType,
-                            PerformerFilterType(
-                                tags =
-                                    Optional.present(
-                                        HierarchicalMultiCriterionInput(
-                                            value = Optional.present(listOf(tagId)),
-                                            modifier = CriterionModifier.INCLUDES_ALL,
-                                            depth = depth,
-                                        ),
+                    objectFilter =
+                        PerformerFilterType(
+                            tags =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(listOf(tagId)),
+                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
                                     ),
-                            ),
-                        )
-                    },
+                                ),
+                        ),
                 )
             } else if (position == 5) {
                 StashGridFragment2(
                     dataType = DataType.TAG,
-                    comparator = TagComparator,
-                    factory = { sortAndDirection ->
-                        TagDataSupplier(
-                            sortAndDirection.asFindFilterType,
-                            TagFilterType(
-                                parents =
-                                    Optional.present(
-                                        HierarchicalMultiCriterionInput(
-                                            value = Optional.present(listOf(tagId)),
-                                            modifier = CriterionModifier.INCLUDES_ALL,
-                                            depth = depth,
-                                        ),
+                    objectFilter =
+                        TagFilterType(
+                            parents =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(listOf(tagId)),
+                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                        depth = depth,
                                     ),
-                            ),
-                        )
-                    },
+                                ),
+                        ),
                 )
             } else {
                 throw IllegalStateException()

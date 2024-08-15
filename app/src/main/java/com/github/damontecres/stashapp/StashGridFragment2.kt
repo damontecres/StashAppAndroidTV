@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,38 +16,49 @@ import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.OnChildLaidOutListener
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.OnItemViewSelectedListener
-import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
-import androidx.recyclerview.widget.DiffUtil
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashComparator
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class StashGridFragment2<T : Query.Data, D : Any, C : Query.Data>(
-    private val presenter: PresenterSelector = StashPresenter.SELECTOR,
-    private val comparator: DiffUtil.ItemCallback<D>,
-    val dataType: DataType,
-    private var sortAndDirection: SortAndDirection = dataType.defaultSort,
-    private val cardSize: Int? = null,
-    val name: String? = null,
-    private val factory: DataSupplierFactory<T, D, C>,
-) : Fragment() {
-    fun interface DataSupplierFactory<T : Query.Data, D : Any, C : Query.Data> {
-        fun createDataSupplier(sortAndDirection: SortAndDirection): StashPagingSource.DataSupplier<T, D, C>
+class StashGridFragment2() : Fragment() {
+    private lateinit var filterArgs: FilterArgs
+    private var cardSize: Int? = null
+
+    val dataType: DataType
+        get() = filterArgs.dataType
+
+    constructor(filterArgs: FilterArgs, cardSize: Int? = null) : this() {
+        this.filterArgs = filterArgs
+        this.cardSize = cardSize
+        this._currentSortAndDirection = filterArgs.sortAndDirection
     }
+
+    constructor(
+        dataType: DataType,
+        findFilter: StashFindFilter? = null,
+        objectFilter: Any? = null,
+        cardSize: Int? = null,
+    ) : this(FilterArgs(dataType, findFilter, objectFilter), cardSize)
 
     private lateinit var mAdapter: ObjectAdapter
     private lateinit var mGridPresenter: VerticalGridPresenter
@@ -72,8 +84,9 @@ class StashGridFragment2<T : Query.Data, D : Any, C : Query.Data>(
 
     private var titleTransitionHelper: TitleTransitionHelper? = null
 
+    private lateinit var _currentSortAndDirection: SortAndDirection
     val currentSortAndDirection: SortAndDirection
-        get() = sortAndDirection
+        get() = _currentSortAndDirection
 
     private lateinit var positionTextView: TextView
     private lateinit var totalCountTextView: TextView
@@ -101,11 +114,13 @@ class StashGridFragment2<T : Query.Data, D : Any, C : Query.Data>(
             }
         }
 
+    @SuppressLint("SetTextI18n")
     private fun gridOnItemSelected(position: Int) {
         if (position != mSelectedPosition) {
             Log.v(TAG, "gridOnItemSelected=$position")
             mSelectedPosition = position
             showOrHideTitle()
+            positionTextView.text = (position + 1).toString()
         }
     }
 
@@ -128,6 +143,18 @@ class StashGridFragment2<T : Query.Data, D : Any, C : Query.Data>(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val cardSize =
+            if (savedInstanceState == null) {
+                this.cardSize
+            } else {
+                val temp = savedInstanceState.getInt("cardSize")
+                if (temp > 0) {
+                    temp
+                } else {
+                    null
+                }
+            }
 
         val gridPresenter = StashGridPresenter()
         val columns =
@@ -170,7 +197,28 @@ class StashGridFragment2<T : Query.Data, D : Any, C : Query.Data>(
 
         onItemViewClickedListener = StashItemViewClickListener(requireContext())
 
-        refresh(sortAndDirection)
+        if (savedInstanceState == null) {
+            refresh(filterArgs.sortAndDirection)
+        } else {
+            filterArgs = savedInstanceState.getParcelable("filterArgs")!!
+            val previousPosition = savedInstanceState.getInt("mSelectedPosition")
+            Log.v(TAG, "previousPosition=$previousPosition")
+
+            refresh(filterArgs.sortAndDirection) {
+                if (previousPosition > 0) {
+                    positionTextView.text = (previousPosition + 1).toString()
+                    mGridViewHolder.gridView.requestFocus()
+                    currentSelectedPosition = previousPosition
+                }
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt("mSelectedPosition", mSelectedPosition)
+        cardSize?.let { outState.putInt("cardSize", it) }
+        outState.putParcelable("filterArgs", filterArgs)
     }
 
     private fun setGridPresenter(gridPresenter: VerticalGridPresenter) {
@@ -190,15 +238,28 @@ class StashGridFragment2<T : Query.Data, D : Any, C : Query.Data>(
         }
     }
 
-    fun refresh(newSortAndDirection: SortAndDirection) {
-        Log.v(TAG, "refresh: dataType=$dataType, newSortAndDirection=$newSortAndDirection")
-        val pagingAdapter = PagingDataAdapter(presenter, comparator)
+    /**
+     * Update the filter's sort & direction
+     *
+     * Specify a callback for when the data is first loaded allowing for scrolling, etc
+     */
+    fun refresh(
+        newSortAndDirection: SortAndDirection,
+        firstPageListener: (() -> Unit)? = null,
+    ) {
+        Log.v(
+            TAG,
+            "refresh: dataType=${filterArgs.dataType}, newSortAndDirection=$newSortAndDirection",
+        )
+        val pagingAdapter = PagingDataAdapter(StashPresenter.SELECTOR, StashComparator)
         mAdapter = pagingAdapter
         updateAdapter()
         val pageSize =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 50)
-        val dataSupplier = factory.createDataSupplier(newSortAndDirection)
+        val factory = DataSupplierFactory(ServerPreferences(requireContext()).serverVersion)
+        val dataSupplier =
+            factory.create<Query.Data, Any, Query.Data>(filterArgs.with(newSortAndDirection))
         val pagingSource =
             StashPagingSource(
                 requireContext(),
@@ -207,34 +268,35 @@ class StashGridFragment2<T : Query.Data, D : Any, C : Query.Data>(
                 useRandom = false,
                 sortByOverride = null,
             )
+        if (firstPageListener != null) {
+            pagingSource.addListener(
+                object : StashPagingSource.Listener<Any> {
+                    override fun onPageFetch(
+                        pageNum: Int,
+                        page: List<Any>,
+                    ) {
+                        firstPageListener()
+                        pagingSource.removeListener(this)
+                    }
+                },
+            )
+        }
 
-//        val showFooter =
-//            PreferenceManager.getDefaultSharedPreferences(requireContext())
-//                .getBoolean(getString(R.string.pref_key_show_grid_footer), true)
-//        val footerLayout = requireView().findViewById<View>(R.id.footer_layout)
-//        if (showFooter) {
-//            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-//                val count = pagingSource.getCount()
-//                if (count > 0) {
-//                    totalCountTextView.text = count.toString()
-//                    footerLayout.animateToVisible()
-//                }
-//            }
-//            setOnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
-//                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-//                    val position =
-//                        withContext(Dispatchers.IO) {
-//                            val snapshot = pagingAdapter.snapshot()
-//                            snapshot.indexOf(item) + 1
-//                        }
-//                    if (position > 0) {
-//                        positionTextView.text = position.toString()
-//                    }
-//                }
-//            }
-//        } else {
-//            footerLayout.visibility = View.GONE
-//        }
+        val showFooter =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_show_grid_footer), true)
+        val footerLayout = requireView().findViewById<View>(R.id.footer_layout)
+        if (showFooter) {
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val count = pagingSource.getCount()
+                if (count > 0) {
+                    totalCountTextView.text = count.toString()
+                    footerLayout.animateToVisible()
+                }
+            }
+        } else {
+            footerLayout.visibility = View.GONE
+        }
 
         val flow =
             Pager(
@@ -262,7 +324,7 @@ class StashGridFragment2<T : Query.Data, D : Any, C : Query.Data>(
             }
         }
 
-        sortAndDirection = newSortAndDirection
+        _currentSortAndDirection = newSortAndDirection
     }
 
     override fun onStart() {
@@ -295,10 +357,6 @@ class StashGridFragment2<T : Query.Data, D : Any, C : Query.Data>(
 
     fun showTitle(show: Boolean) {
         titleTransitionHelper?.showTitle(show)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
     }
 
     companion object {

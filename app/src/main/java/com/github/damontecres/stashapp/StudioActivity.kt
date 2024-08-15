@@ -32,7 +32,7 @@ class StudioActivity : TabbedGridFragmentActivity() {
         fm: FragmentManager,
     ) :
         StashFragmentPagerAdapter(tabs, fm) {
-        override fun getFragment(position: Int): StashGridFragment2<*, *, *> {
+        override fun getFragment(position: Int): StashGridFragment2 {
             TODO()
 //            return if (position == 0) {
 //                StashGridFragment(

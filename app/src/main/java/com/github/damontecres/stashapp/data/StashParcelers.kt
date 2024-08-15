@@ -25,9 +25,14 @@ import kotlinx.parcelize.TypeParceler
 private const val ABSENT = 0.toByte()
 private const val PRESENT = 1.toByte()
 
+interface FilterHolder<T> : Parcelable {
+    val value: T?
+}
+
 @Parcelize
-@TypeParceler<SceneFilterType, SceneFilterTypeParceler>()
-data class SceneFilterTypeHolder(val value: SceneFilterType) : Parcelable
+@TypeParceler<SceneFilterType?, SceneFilterTypeParceler>()
+data class SceneFilterTypeHolder(override val value: SceneFilterType?) :
+    FilterHolder<SceneFilterType>
 
 fun <T> writeList(
     parcel: Parcel,
