@@ -1,6 +1,16 @@
 package com.github.damontecres.stashapp
 
 import androidx.fragment.app.FragmentManager
+import com.apollographql.apollo3.api.Optional
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.ImageFilterType
+import com.github.damontecres.stashapp.api.type.MovieFilterType
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
+import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 
@@ -33,106 +43,55 @@ class StudioActivity : TabbedGridFragmentActivity() {
     ) :
         StashFragmentPagerAdapter(tabs, fm) {
         override fun getFragment(position: Int): StashGridFragment2 {
-            TODO()
-//            return if (position == 0) {
-//                StashGridFragment(
-//                    SceneComparator,
-//                    SceneDataSupplier(
-//                        items[position].getFindFilter(),
-//                        SceneFilterType(
-//                            studios =
-//                                Optional.present(
-//                                    HierarchicalMultiCriterionInput(
-//                                        value = Optional.present(listOf(studioId)),
-//                                        modifier = CriterionModifier.INCLUDES,
-//                                    ),
-//                                ),
-//                        ),
-//                    ),
-//                )
-//            } else if (position == 1) {
-//                StashGridFragment(
-//                    GalleryComparator,
-//                    GalleryDataSupplier(
-//                        items[position].getFindFilter(),
-//                        GalleryFilterType(
-//                            studios =
-//                                Optional.present(
-//                                    HierarchicalMultiCriterionInput(
-//                                        value = Optional.present(listOf(studioId)),
-//                                        modifier = CriterionModifier.INCLUDES,
-//                                    ),
-//                                ),
-//                        ),
-//                    ),
-//                )
-//            } else if (position == 2) {
-//                StashGridFragment(
-//                    ImageComparator,
-//                    ImageDataSupplier(
-//                        items[position].getFindFilter(),
-//                        ImageFilterType(
-//                            studios =
-//                                Optional.present(
-//                                    HierarchicalMultiCriterionInput(
-//                                        value = Optional.present(listOf(studioId)),
-//                                        modifier = CriterionModifier.INCLUDES,
-//                                    ),
-//                                ),
-//                        ),
-//                    ),
-//                )
-//            } else if (position == 3) {
-//                StashGridFragment(
-//                    PerformerComparator,
-//                    PerformerDataSupplier(
-//                        items[position].getFindFilter(),
-//                        PerformerFilterType(
-//                            studios =
-//                                Optional.present(
-//                                    HierarchicalMultiCriterionInput(
-//                                        value = Optional.present(listOf(studioId)),
-//                                        modifier = CriterionModifier.INCLUDES,
-//                                    ),
-//                                ),
-//                        ),
-//                    ),
-//                )
-//            } else if (position == 4) {
-//                StashGridFragment(
-//                    MovieComparator,
-//                    MovieDataSupplier(
-//                        items[position].getFindFilter(),
-//                        MovieFilterType(
-//                            studios =
-//                                Optional.present(
-//                                    HierarchicalMultiCriterionInput(
-//                                        value = Optional.present(listOf(studioId)),
-//                                        modifier = CriterionModifier.INCLUDES,
-//                                    ),
-//                                ),
-//                        ),
-//                    ),
-//                )
-//            } else if (position == 5) {
-//                StashGridFragment(
-//                    StudioComparator,
-//                    StudioDataSupplier(
-//                        items[position].getFindFilter(),
-//                        StudioFilterType(
-//                            parents =
-//                                Optional.present(
-//                                    MultiCriterionInput(
-//                                        value = Optional.present(listOf(studioId)),
-//                                        modifier = CriterionModifier.INCLUDES,
-//                                    ),
-//                                ),
-//                        ),
-//                    ),
-//                )
-//            } else {
-//                throw IllegalStateException()
-//            }
+            val studios =
+                Optional.present(
+                    HierarchicalMultiCriterionInput(
+                        value = Optional.present(listOf(studioId)),
+                        modifier = CriterionModifier.INCLUDES,
+                    ),
+                )
+            return if (position == 0) {
+                StashGridFragment2(
+                    dataType = DataType.SCENE,
+                    objectFilter = SceneFilterType(studios = studios),
+                )
+            } else if (position == 1) {
+                StashGridFragment2(
+                    dataType = DataType.GALLERY,
+                    objectFilter = GalleryFilterType(studios = studios),
+                )
+            } else if (position == 2) {
+                StashGridFragment2(
+                    dataType = DataType.IMAGE,
+                    objectFilter = ImageFilterType(studios = studios),
+                )
+            } else if (position == 3) {
+                StashGridFragment2(
+                    dataType = DataType.PERFORMER,
+                    objectFilter = PerformerFilterType(studios = studios),
+                )
+            } else if (position == 4) {
+                StashGridFragment2(
+                    dataType = DataType.MOVIE,
+                    objectFilter = MovieFilterType(studios = studios),
+                )
+            } else if (position == 5) {
+                StashGridFragment2(
+                    dataType = DataType.STUDIO,
+                    objectFilter =
+                        StudioFilterType(
+                            parents =
+                                Optional.present(
+                                    MultiCriterionInput(
+                                        value = Optional.present(listOf(studioId)),
+                                        modifier = CriterionModifier.INCLUDES,
+                                    ),
+                                ),
+                        ),
+                )
+            } else {
+                throw IllegalStateException()
+            }
         }
     }
 }
