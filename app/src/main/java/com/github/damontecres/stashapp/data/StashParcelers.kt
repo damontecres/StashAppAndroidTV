@@ -1,492 +1,26 @@
 package com.github.damontecres.stashapp.data
 
 import android.os.Parcel
-import android.os.Parcelable
 import com.apollographql.apollo3.api.Optional
-import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.DateCriterionInput
-import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
-import com.github.damontecres.stashapp.api.type.IntCriterionInput
-import com.github.damontecres.stashapp.api.type.MultiCriterionInput
-import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
-import com.github.damontecres.stashapp.api.type.OrientationEnum
-import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
-import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
-import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
-import com.github.damontecres.stashapp.api.type.ResolutionEnum
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.ImageFilterType
+import com.github.damontecres.stashapp.api.type.MovieFilterType
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
-import com.github.damontecres.stashapp.api.type.StringCriterionInput
-import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
+import com.github.damontecres.stashapp.api.type.StudioFilterType
+import com.github.damontecres.stashapp.api.type.TagFilterType
 import kotlinx.parcelize.Parceler
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
-
-private const val ABSENT = 0.toByte()
-private const val PRESENT = 1.toByte()
-
-interface FilterHolder<T> : Parcelable {
-    val value: T?
-}
 
 @Parcelize
 @TypeParceler<SceneFilterType?, SceneFilterTypeParceler>()
 data class SceneFilterTypeHolder(override val value: SceneFilterType?) :
     FilterHolder<SceneFilterType>
 
-fun <T> writeList(
-    parcel: Parcel,
-    list: Optional<List<T>?>,
-    addFun: (T) -> Unit,
-) {
-    if (list.getOrNull() != null) {
-        parcel.writeByte(PRESENT)
-        writeList(parcel, list.getOrNull()!!, addFun)
-    } else {
-        parcel.writeByte(ABSENT)
-    }
-}
-
-fun <T> writeList(
-    parcel: Parcel,
-    list: List<T>,
-    addFun: (T) -> Unit,
-) {
-    parcel.writeInt(list.size)
-    list.forEach(addFun)
-}
-
-fun <T> readList(
-    parcel: Parcel,
-    mapFun: (Parcel) -> T,
-): List<T> {
-    return buildList {
-        0.rangeUntil(parcel.readInt()).forEach { _ ->
-            add(mapFun(parcel))
-        }
-    }
-}
-
-fun <T> readOptionalList(
-    parcel: Parcel,
-    mapFun: (Parcel) -> T,
-): Optional<List<T>?> {
-    if (parcel.readByte() == PRESENT) {
-        return Optional.present(readList(parcel, mapFun))
-    } else {
-        return Optional.absent()
-    }
-}
-
-fun writeString(
-    parcel: Parcel,
-    value: String?,
-) {
-    parcel.writeString(value)
-}
-
-fun readString(parcel: Parcel): String? {
-    return parcel.readString()
-}
-
-fun writeOptionalInt(
-    parcel: Parcel,
-    op: Optional<Int?>,
-) {
-    if (op.getOrNull() != null) {
-        parcel.writeByte(PRESENT)
-        parcel.writeInt(op.getOrNull()!!)
-    } else {
-        parcel.writeByte(ABSENT)
-    }
-}
-
-fun readOptionalInt(parcel: Parcel): Optional<Int?> {
-    if (parcel.readByte() == PRESENT) {
-        return Optional.present(parcel.readInt())
-    } else {
-        return Optional.absent()
-    }
-}
-
-fun writeOptionalBoolean(
-    parcel: Parcel,
-    op: Optional<Boolean?>,
-) {
-    if (op.getOrNull() != null) {
-        parcel.writeByte(PRESENT)
-        if (op.getOrNull()!!) {
-            parcel.writeByte(PRESENT)
-        } else {
-            parcel.writeByte(ABSENT)
-        }
-    } else {
-        parcel.writeByte(ABSENT)
-    }
-}
-
-fun readOptionalBoolean(parcel: Parcel): Optional<Boolean?> {
-    if (parcel.readByte() == PRESENT) {
-        return Optional.present(parcel.readByte() == PRESENT)
-    } else {
-        return Optional.absent()
-    }
-}
-
-fun writeOptionalString(
-    parcel: Parcel,
-    op: Optional<String?>,
-) {
-    if (op.getOrNull() != null) {
-        parcel.writeByte(PRESENT)
-        parcel.writeString(op.getOrNull())
-    } else {
-        parcel.writeByte(ABSENT)
-    }
-}
-
-fun readOptionalString(parcel: Parcel): Optional<String?> {
-    if (parcel.readByte() == PRESENT) {
-        return Optional.present(parcel.readString())
-    } else {
-        return Optional.absent()
-    }
-}
-
-fun writeIntCriterionInput(
-    parcel: Parcel,
-    value: IntCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        parcel.writeInt(value.value)
-        if (value.value2 is Optional.Present) {
-            parcel.writeByte(PRESENT)
-            parcel.writeInt(value.value2.value!!)
-        } else {
-            parcel.writeByte(ABSENT)
-        }
-        parcel.writeInt(value.modifier.ordinal)
-    }
-}
-
-fun readIntCriterionInput(parcel: Parcel): IntCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        val value = parcel.readInt()
-        val value2 =
-            if (parcel.readByte() == PRESENT) {
-                parcel.readInt()
-            } else {
-                null
-            }
-        val modifier = CriterionModifier.entries[parcel.readInt()]
-        return IntCriterionInput(value, Optional.presentIfNotNull(value2), modifier)
-    } else {
-        return null
-    }
-}
-
-fun writeStringCriterionInput(
-    parcel: Parcel,
-    value: StringCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        parcel.writeString(value.value)
-        parcel.writeInt(value.modifier.ordinal)
-    }
-}
-
-fun readStringCriterionInput(parcel: Parcel): StringCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        val value = parcel.readString()!!
-        val modifier = CriterionModifier.entries[parcel.readInt()]
-        return StringCriterionInput(value, modifier)
-    } else {
-        return null
-    }
-}
-
-fun writeBoolean(
-    parcel: Parcel,
-    value: Boolean?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        if (value) {
-            parcel.writeByte(PRESENT)
-        } else {
-            parcel.writeByte(ABSENT)
-        }
-    }
-}
-
-fun readBoolean(parcel: Parcel): Boolean? {
-    if (parcel.readByte() == PRESENT) {
-        return parcel.readByte() == PRESENT
-    } else {
-        return null
-    }
-}
-
-fun writePhashDistanceCriterionInput(
-    parcel: Parcel,
-    value: PhashDistanceCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        parcel.writeString(value.value)
-        parcel.writeInt(value.modifier.ordinal)
-        writeOptionalInt(parcel, value.distance)
-    }
-}
-
-fun readPhashDistanceCriterionInput(parcel: Parcel): PhashDistanceCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        val value = parcel.readString()!!
-        val modifier = CriterionModifier.entries[parcel.readInt()]
-        val distance = readOptionalInt(parcel)
-        return PhashDistanceCriterionInput(value, modifier, distance)
-    } else {
-        return null
-    }
-}
-
-fun writePHashDuplicationCriterionInput(
-    parcel: Parcel,
-    value: PHashDuplicationCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        writeOptionalBoolean(parcel, value.duplicated)
-        writeOptionalInt(parcel, value.distance)
-    }
-}
-
-fun readPHashDuplicationCriterionInput(parcel: Parcel): PHashDuplicationCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        return PHashDuplicationCriterionInput(readOptionalBoolean(parcel), readOptionalInt(parcel))
-    } else {
-        return null
-    }
-}
-
-fun writeResolutionCriterionInput(
-    parcel: Parcel,
-    value: ResolutionCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        parcel.writeInt(value.value.ordinal)
-        parcel.writeInt(value.modifier.ordinal)
-    }
-}
-
-fun readResolutionCriterionInput(parcel: Parcel): ResolutionCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        return ResolutionCriterionInput(
-            ResolutionEnum.entries[parcel.readInt()],
-            CriterionModifier.entries[parcel.readInt()],
-        )
-    } else {
-        return null
-    }
-}
-
-fun writeOrientationCriterionInput(
-    parcel: Parcel,
-    value: OrientationCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        writeList(parcel, value.value) {
-            parcel.writeInt(it.ordinal)
-        }
-    }
-}
-
-fun readOrientationCriterionInput(parcel: Parcel): OrientationCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        return OrientationCriterionInput(
-            readList(parcel) {
-                OrientationEnum.entries[it.readInt()]
-            },
-        )
-    } else {
-        return null
-    }
-}
-
-fun writeHierarchicalMultiCriterionInput(
-    parcel: Parcel,
-    value: HierarchicalMultiCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        writeList(parcel, value.value) {
-            parcel.writeString(it)
-        }
-        parcel.writeInt(value.modifier.ordinal)
-        writeOptionalInt(parcel, value.depth)
-        writeList(parcel, value.excludes) {
-            parcel.writeString(it)
-        }
-    }
-}
-
-fun readHierarchicalMultiCriterionInput(parcel: Parcel): HierarchicalMultiCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        return HierarchicalMultiCriterionInput(
-            value =
-                readOptionalList(parcel) {
-                    it.readString()!!
-                },
-            modifier = CriterionModifier.entries[parcel.readInt()],
-            depth = readOptionalInt(parcel),
-            excludes =
-                readOptionalList(parcel) {
-                    it.readString()!!
-                },
-        )
-    } else {
-        return null
-    }
-}
-
-fun writeMultiCriterionInput(
-    parcel: Parcel,
-    value: MultiCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        writeList(parcel, value.value) {
-            parcel.writeString(it)
-        }
-        parcel.writeInt(value.modifier.ordinal)
-        writeList(parcel, value.excludes) {
-            parcel.writeString(it)
-        }
-    }
-}
-
-fun readMultiCriterionInput(parcel: Parcel): MultiCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        return MultiCriterionInput(
-            value =
-                readOptionalList(parcel) {
-                    it.readString()!!
-                },
-            modifier = CriterionModifier.entries[parcel.readInt()],
-            excludes =
-                readOptionalList(parcel) {
-                    it.readString()!!
-                },
-        )
-    } else {
-        return null
-    }
-}
-
-fun writeStashIDCriterionInput(
-    parcel: Parcel,
-    value: StashIDCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        writeOptionalString(parcel, value.endpoint)
-        writeOptionalString(parcel, value.stash_id)
-        parcel.writeInt(value.modifier.ordinal)
-    }
-}
-
-fun readStashIDCriterionInput(parcel: Parcel): StashIDCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        return StashIDCriterionInput(
-            endpoint = readOptionalString(parcel),
-            stash_id = readOptionalString(parcel),
-            modifier = CriterionModifier.entries[parcel.readInt()],
-        )
-    } else {
-        return null
-    }
-}
-
-fun writeTimestampCriterionInput(
-    parcel: Parcel,
-    value: TimestampCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        parcel.writeString(value.value)
-        writeOptionalString(parcel, value.value2)
-        parcel.writeInt(value.modifier.ordinal)
-    }
-}
-
-fun readTimestampCriterionInput(parcel: Parcel): TimestampCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        return TimestampCriterionInput(
-            value = parcel.readString()!!,
-            value2 = readOptionalString(parcel),
-            modifier = CriterionModifier.entries[parcel.readInt()],
-        )
-    } else {
-        return null
-    }
-}
-
-fun writeDateCriterionInput(
-    parcel: Parcel,
-    value: DateCriterionInput?,
-) {
-    if (value == null) {
-        parcel.writeByte(ABSENT)
-    } else {
-        parcel.writeByte(PRESENT)
-        parcel.writeString(value.value)
-        writeOptionalString(parcel, value.value2)
-        parcel.writeInt(value.modifier.ordinal)
-    }
-}
-
-fun readDateCriterionInput(parcel: Parcel): DateCriterionInput? {
-    if (parcel.readByte() == PRESENT) {
-        return DateCriterionInput(
-            value = parcel.readString()!!,
-            value2 = readOptionalString(parcel),
-            modifier = CriterionModifier.entries[parcel.readInt()],
-        )
-    } else {
-        return null
-    }
-}
-
 object SceneFilterTypeParceler : Parceler<SceneFilterType?> {
     override fun create(parcel: Parcel): SceneFilterType? {
-        // Regex: (public )?val (\w+): Optional<(\w+)\?> = Optional.Absent,?
-        // Replace: $2 = Optional.presentIfNotNull(read$3(parcel)),
         if (parcel.readByte() == ABSENT) {
             return null
         } else {
@@ -552,8 +86,7 @@ object SceneFilterTypeParceler : Parceler<SceneFilterType?> {
             parcel.writeByte(ABSENT)
         } else {
             parcel.writeByte(PRESENT)
-            // Regex: (public )?val (\w+): Optional<(\w+)\?> = Optional.Absent,?
-            // Replace: write$3(parcel, $2.getOrNull())
+
             AND.getOrNull().write(parcel, flags)
             OR.getOrNull().write(parcel, flags)
             NOT.getOrNull().write(parcel, flags)
@@ -604,5 +137,551 @@ object SceneFilterTypeParceler : Parceler<SceneFilterType?> {
             writeTimestampCriterionInput(parcel, created_at.getOrNull())
             writeTimestampCriterionInput(parcel, updated_at.getOrNull())
         }
+    }
+}
+
+@Parcelize
+@TypeParceler<PerformerFilterType?, PerformerFilterTypeParceler>()
+data class PerformerFilterTypeHolder(override val value: PerformerFilterType?) :
+    FilterHolder<PerformerFilterType>
+
+object PerformerFilterTypeParceler : Parceler<PerformerFilterType?> {
+    override fun create(parcel: Parcel): PerformerFilterType? {
+        if (parcel.readByte() == ABSENT) {
+            return null
+        } else {
+            return PerformerFilterType(
+                AND = Optional.presentIfNotNull(create(parcel)),
+                OR = Optional.presentIfNotNull(create(parcel)),
+                NOT = Optional.presentIfNotNull(create(parcel)),
+                name = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                disambiguation = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                details = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                filter_favorites = Optional.presentIfNotNull(readBoolean(parcel)),
+                birth_year = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                age = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                ethnicity = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                country = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                eye_color = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                height_cm = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                measurements = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                fake_tits = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                penis_length = Optional.presentIfNotNull(readFloatCriterionInput(parcel)),
+                circumcised = Optional.presentIfNotNull(readCircumcisionCriterionInput(parcel)),
+                career_length = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                tattoos = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                piercings = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                aliases = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                gender = Optional.presentIfNotNull(readGenderCriterionInput(parcel)),
+                is_missing = Optional.presentIfNotNull(readString(parcel)),
+                tags = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                tag_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                scene_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                image_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                gallery_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                play_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                o_counter = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                stash_id_endpoint = Optional.presentIfNotNull(readStashIDCriterionInput(parcel)),
+                rating100 = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                url = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                hair_color = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                weight = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                death_year = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                studios = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                performers = Optional.presentIfNotNull(readMultiCriterionInput(parcel)),
+                ignore_auto_tag = Optional.presentIfNotNull(readBoolean(parcel)),
+                birthdate = Optional.presentIfNotNull(readDateCriterionInput(parcel)),
+                death_date = Optional.presentIfNotNull(readDateCriterionInput(parcel)),
+                created_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                updated_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+            )
+        }
+    }
+
+    override fun PerformerFilterType?.write(
+        parcel: Parcel,
+        flags: Int,
+    ) {
+        if (this == null) {
+            parcel.writeByte(ABSENT)
+        } else {
+            parcel.writeByte(PRESENT)
+
+            AND.getOrNull().write(parcel, flags)
+            OR.getOrNull().write(parcel, flags)
+            NOT.getOrNull().write(parcel, flags)
+            writeStringCriterionInput(parcel, name.getOrNull())
+            writeStringCriterionInput(parcel, disambiguation.getOrNull())
+            writeStringCriterionInput(parcel, details.getOrNull())
+            writeBoolean(parcel, filter_favorites.getOrNull())
+            writeIntCriterionInput(parcel, birth_year.getOrNull())
+            writeIntCriterionInput(parcel, age.getOrNull())
+            writeStringCriterionInput(parcel, ethnicity.getOrNull())
+            writeStringCriterionInput(parcel, country.getOrNull())
+            writeStringCriterionInput(parcel, eye_color.getOrNull())
+            writeIntCriterionInput(parcel, height_cm.getOrNull())
+            writeStringCriterionInput(parcel, measurements.getOrNull())
+            writeStringCriterionInput(parcel, fake_tits.getOrNull())
+            writeFloatCriterionInput(parcel, penis_length.getOrNull())
+            writeCircumcisionCriterionInput(parcel, circumcised.getOrNull())
+            writeStringCriterionInput(parcel, career_length.getOrNull())
+            writeStringCriterionInput(parcel, tattoos.getOrNull())
+            writeStringCriterionInput(parcel, piercings.getOrNull())
+            writeStringCriterionInput(parcel, aliases.getOrNull())
+            writeGenderCriterionInput(parcel, gender.getOrNull())
+            writeString(parcel, is_missing.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, tags.getOrNull())
+            writeIntCriterionInput(parcel, tag_count.getOrNull())
+            writeIntCriterionInput(parcel, scene_count.getOrNull())
+            writeIntCriterionInput(parcel, image_count.getOrNull())
+            writeIntCriterionInput(parcel, gallery_count.getOrNull())
+            writeIntCriterionInput(parcel, play_count.getOrNull())
+            writeIntCriterionInput(parcel, o_counter.getOrNull())
+            writeStashIDCriterionInput(parcel, stash_id_endpoint.getOrNull())
+            writeIntCriterionInput(parcel, rating100.getOrNull())
+            writeStringCriterionInput(parcel, url.getOrNull())
+            writeStringCriterionInput(parcel, hair_color.getOrNull())
+            writeIntCriterionInput(parcel, weight.getOrNull())
+            writeIntCriterionInput(parcel, death_year.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, studios.getOrNull())
+            writeMultiCriterionInput(parcel, performers.getOrNull())
+            writeBoolean(parcel, ignore_auto_tag.getOrNull())
+            writeDateCriterionInput(parcel, birthdate.getOrNull())
+            writeDateCriterionInput(parcel, death_date.getOrNull())
+            writeTimestampCriterionInput(parcel, created_at.getOrNull())
+            writeTimestampCriterionInput(parcel, updated_at.getOrNull())
+        }
+    }
+}
+
+@Parcelize
+@TypeParceler<StudioFilterType?, StudioFilterTypeParceler>()
+data class StudioFilterTypeHolder(override val value: StudioFilterType?) :
+    FilterHolder<StudioFilterType>
+
+object StudioFilterTypeParceler : Parceler<StudioFilterType?> {
+    override fun create(parcel: Parcel): StudioFilterType? {
+        if (parcel.readByte() == ABSENT) {
+            return null
+        } else {
+            return StudioFilterType(
+                AND = Optional.presentIfNotNull(create(parcel)),
+                OR = Optional.presentIfNotNull(create(parcel)),
+                NOT = Optional.presentIfNotNull(create(parcel)),
+                name = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                details = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                parents = Optional.presentIfNotNull(readMultiCriterionInput(parcel)),
+                stash_id_endpoint = Optional.presentIfNotNull(readStashIDCriterionInput(parcel)),
+                is_missing = Optional.presentIfNotNull(readString(parcel)),
+                rating100 = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                favorite = Optional.presentIfNotNull(readBoolean(parcel)),
+                scene_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                image_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                gallery_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                url = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                aliases = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                child_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                ignore_auto_tag = Optional.presentIfNotNull(readBoolean(parcel)),
+                created_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                updated_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+            )
+        }
+    }
+
+    override fun StudioFilterType?.write(
+        parcel: Parcel,
+        flags: Int,
+    ) {
+        if (this == null) {
+            parcel.writeByte(ABSENT)
+        } else {
+            parcel.writeByte(PRESENT)
+
+            AND.getOrNull().write(parcel, flags)
+            OR.getOrNull().write(parcel, flags)
+            NOT.getOrNull().write(parcel, flags)
+            writeStringCriterionInput(parcel, name.getOrNull())
+            writeStringCriterionInput(parcel, details.getOrNull())
+            writeMultiCriterionInput(parcel, parents.getOrNull())
+            writeStashIDCriterionInput(parcel, stash_id_endpoint.getOrNull())
+            writeString(parcel, is_missing.getOrNull())
+            writeIntCriterionInput(parcel, rating100.getOrNull())
+            writeBoolean(parcel, favorite.getOrNull())
+            writeIntCriterionInput(parcel, scene_count.getOrNull())
+            writeIntCriterionInput(parcel, image_count.getOrNull())
+            writeIntCriterionInput(parcel, gallery_count.getOrNull())
+            writeStringCriterionInput(parcel, url.getOrNull())
+            writeStringCriterionInput(parcel, aliases.getOrNull())
+            writeIntCriterionInput(parcel, child_count.getOrNull())
+            writeBoolean(parcel, ignore_auto_tag.getOrNull())
+            writeTimestampCriterionInput(parcel, created_at.getOrNull())
+            writeTimestampCriterionInput(parcel, updated_at.getOrNull())
+        }
+    }
+}
+
+@Parcelize
+@TypeParceler<TagFilterType?, TagFilterTypeParceler>()
+data class TagFilterTypeHolder(override val value: TagFilterType?) :
+    FilterHolder<TagFilterType>
+
+object TagFilterTypeParceler : Parceler<TagFilterType?> {
+    override fun create(parcel: Parcel): TagFilterType? {
+        if (parcel.readByte() == ABSENT) {
+            return null
+        } else {
+            return TagFilterType(
+                AND = Optional.presentIfNotNull(create(parcel)),
+                OR = Optional.presentIfNotNull(create(parcel)),
+                NOT = Optional.presentIfNotNull(create(parcel)),
+                name = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                aliases = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                favorite = Optional.presentIfNotNull(readBoolean(parcel)),
+                description = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                is_missing = Optional.presentIfNotNull(readString(parcel)),
+                scene_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                image_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                gallery_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                performer_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                marker_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                parents = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                children = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                parent_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                child_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                ignore_auto_tag = Optional.presentIfNotNull(readBoolean(parcel)),
+                created_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                updated_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+            )
+        }
+    }
+
+    override fun TagFilterType?.write(
+        parcel: Parcel,
+        flags: Int,
+    ) {
+        if (this == null) {
+            parcel.writeByte(ABSENT)
+        } else {
+            parcel.writeByte(PRESENT)
+
+            AND.getOrNull().write(parcel, flags)
+            OR.getOrNull().write(parcel, flags)
+            NOT.getOrNull().write(parcel, flags)
+            writeStringCriterionInput(parcel, name.getOrNull())
+            writeStringCriterionInput(parcel, aliases.getOrNull())
+            writeBoolean(parcel, favorite.getOrNull())
+            writeStringCriterionInput(parcel, description.getOrNull())
+            writeString(parcel, is_missing.getOrNull())
+            writeIntCriterionInput(parcel, scene_count.getOrNull())
+            writeIntCriterionInput(parcel, image_count.getOrNull())
+            writeIntCriterionInput(parcel, gallery_count.getOrNull())
+            writeIntCriterionInput(parcel, performer_count.getOrNull())
+            writeIntCriterionInput(parcel, marker_count.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, parents.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, children.getOrNull())
+            writeIntCriterionInput(parcel, parent_count.getOrNull())
+            writeIntCriterionInput(parcel, child_count.getOrNull())
+            writeBoolean(parcel, ignore_auto_tag.getOrNull())
+            writeTimestampCriterionInput(parcel, created_at.getOrNull())
+            writeTimestampCriterionInput(parcel, updated_at.getOrNull())
+        }
+    }
+}
+
+@Parcelize
+@TypeParceler<SceneMarkerFilterType?, SceneMarkerFilterTypeParceler>()
+data class SceneMarkerFilterTypeHolder(override val value: SceneMarkerFilterType?) :
+    FilterHolder<SceneMarkerFilterType>
+
+object SceneMarkerFilterTypeParceler : Parceler<SceneMarkerFilterType?> {
+    override fun create(parcel: Parcel): SceneMarkerFilterType? {
+        if (parcel.readByte() == ABSENT) {
+            return null
+        } else {
+            return SceneMarkerFilterType(
+                tags = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                scene_tags = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                performers = Optional.presentIfNotNull(readMultiCriterionInput(parcel)),
+                created_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                updated_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                scene_date = Optional.presentIfNotNull(readDateCriterionInput(parcel)),
+                scene_created_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                scene_updated_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+            )
+        }
+    }
+
+    override fun SceneMarkerFilterType?.write(
+        parcel: Parcel,
+        flags: Int,
+    ) {
+        if (this == null) {
+            parcel.writeByte(ABSENT)
+        } else {
+            parcel.writeByte(PRESENT)
+
+            writeHierarchicalMultiCriterionInput(parcel, tags.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, scene_tags.getOrNull())
+            writeMultiCriterionInput(parcel, performers.getOrNull())
+            writeTimestampCriterionInput(parcel, created_at.getOrNull())
+            writeTimestampCriterionInput(parcel, updated_at.getOrNull())
+            writeDateCriterionInput(parcel, scene_date.getOrNull())
+            writeTimestampCriterionInput(parcel, scene_created_at.getOrNull())
+            writeTimestampCriterionInput(parcel, scene_updated_at.getOrNull())
+        }
+    }
+}
+
+@Parcelize
+@TypeParceler<ImageFilterType?, ImageFilterTypeParceler>()
+data class ImageFilterTypeHolder(override val value: ImageFilterType?) :
+    FilterHolder<ImageFilterType>
+
+object ImageFilterTypeParceler : Parceler<ImageFilterType?> {
+    override fun create(parcel: Parcel): ImageFilterType? {
+        if (parcel.readByte() == ABSENT) {
+            return null
+        } else {
+            return ImageFilterType(
+                AND = Optional.presentIfNotNull(create(parcel)),
+                OR = Optional.presentIfNotNull(create(parcel)),
+                NOT = Optional.presentIfNotNull(create(parcel)),
+                title = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                details = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                id = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                checksum = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                path = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                file_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                rating100 = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                date = Optional.presentIfNotNull(readDateCriterionInput(parcel)),
+                url = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                organized = Optional.presentIfNotNull(readBoolean(parcel)),
+                o_counter = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                resolution = Optional.presentIfNotNull(readResolutionCriterionInput(parcel)),
+                orientation = Optional.presentIfNotNull(readOrientationCriterionInput(parcel)),
+                is_missing = Optional.presentIfNotNull(readString(parcel)),
+                studios = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                tags = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                tag_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                performer_tags =
+                    Optional.presentIfNotNull(
+                        readHierarchicalMultiCriterionInput(
+                            parcel,
+                        ),
+                    ),
+                performers = Optional.presentIfNotNull(readMultiCriterionInput(parcel)),
+                performer_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                performer_favorite = Optional.presentIfNotNull(readBoolean(parcel)),
+                performer_age = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                galleries = Optional.presentIfNotNull(readMultiCriterionInput(parcel)),
+                created_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                updated_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                code = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                photographer = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+            )
+        }
+    }
+
+    override fun ImageFilterType?.write(
+        parcel: Parcel,
+        flags: Int,
+    ) {
+        if (this == null) {
+            parcel.writeByte(ABSENT)
+        } else {
+            parcel.writeByte(PRESENT)
+
+            AND.getOrNull().write(parcel, flags)
+            OR.getOrNull().write(parcel, flags)
+            NOT.getOrNull().write(parcel, flags)
+            writeStringCriterionInput(parcel, title.getOrNull())
+            writeStringCriterionInput(parcel, details.getOrNull())
+            writeIntCriterionInput(parcel, id.getOrNull())
+            writeStringCriterionInput(parcel, checksum.getOrNull())
+            writeStringCriterionInput(parcel, path.getOrNull())
+            writeIntCriterionInput(parcel, file_count.getOrNull())
+            writeIntCriterionInput(parcel, rating100.getOrNull())
+            writeDateCriterionInput(parcel, date.getOrNull())
+            writeStringCriterionInput(parcel, url.getOrNull())
+            writeBoolean(parcel, organized.getOrNull())
+            writeIntCriterionInput(parcel, o_counter.getOrNull())
+            writeResolutionCriterionInput(parcel, resolution.getOrNull())
+            writeOrientationCriterionInput(parcel, orientation.getOrNull())
+            writeString(parcel, is_missing.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, studios.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, tags.getOrNull())
+            writeIntCriterionInput(parcel, tag_count.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, performer_tags.getOrNull())
+            writeMultiCriterionInput(parcel, performers.getOrNull())
+            writeIntCriterionInput(parcel, performer_count.getOrNull())
+            writeBoolean(parcel, performer_favorite.getOrNull())
+            writeIntCriterionInput(parcel, performer_age.getOrNull())
+            writeMultiCriterionInput(parcel, galleries.getOrNull())
+            writeTimestampCriterionInput(parcel, created_at.getOrNull())
+            writeTimestampCriterionInput(parcel, updated_at.getOrNull())
+            writeStringCriterionInput(parcel, code.getOrNull())
+            writeStringCriterionInput(parcel, photographer.getOrNull())
+        }
+    }
+}
+
+@Parcelize
+@TypeParceler<GalleryFilterType?, GalleryFilterTypeParceler>()
+data class GalleryFilterTypeHolder(override val value: GalleryFilterType?) :
+    FilterHolder<GalleryFilterType>
+
+object GalleryFilterTypeParceler : Parceler<GalleryFilterType?> {
+    override fun create(parcel: Parcel): GalleryFilterType? {
+        if (parcel.readByte() == ABSENT) {
+            return null
+        } else {
+            return GalleryFilterType(
+                AND = Optional.presentIfNotNull(create(parcel)),
+                OR = Optional.presentIfNotNull(create(parcel)),
+                NOT = Optional.presentIfNotNull(create(parcel)),
+                id = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                title = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                details = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                checksum = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                path = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                file_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                is_missing = Optional.presentIfNotNull(readString(parcel)),
+                is_zip = Optional.presentIfNotNull(readBoolean(parcel)),
+                rating100 = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                organized = Optional.presentIfNotNull(readBoolean(parcel)),
+                average_resolution = Optional.presentIfNotNull(readResolutionCriterionInput(parcel)),
+                has_chapters = Optional.presentIfNotNull(readString(parcel)),
+                scenes = Optional.presentIfNotNull(readMultiCriterionInput(parcel)),
+                studios = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                tags = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                tag_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                performer_tags =
+                    Optional.presentIfNotNull(
+                        readHierarchicalMultiCriterionInput(
+                            parcel,
+                        ),
+                    ),
+                performers = Optional.presentIfNotNull(readMultiCriterionInput(parcel)),
+                performer_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                performer_favorite = Optional.presentIfNotNull(readBoolean(parcel)),
+                performer_age = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                image_count = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                url = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                date = Optional.presentIfNotNull(readDateCriterionInput(parcel)),
+                created_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                updated_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                code = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                photographer = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+            )
+        }
+    }
+
+    override fun GalleryFilterType?.write(
+        parcel: Parcel,
+        flags: Int,
+    ) {
+        if (this == null) {
+            parcel.writeByte(ABSENT)
+        } else {
+            parcel.writeByte(PRESENT)
+
+            AND.getOrNull().write(parcel, flags)
+            OR.getOrNull().write(parcel, flags)
+            NOT.getOrNull().write(parcel, flags)
+            writeIntCriterionInput(parcel, id.getOrNull())
+            writeStringCriterionInput(parcel, title.getOrNull())
+            writeStringCriterionInput(parcel, details.getOrNull())
+            writeStringCriterionInput(parcel, checksum.getOrNull())
+            writeStringCriterionInput(parcel, path.getOrNull())
+            writeIntCriterionInput(parcel, file_count.getOrNull())
+            writeString(parcel, is_missing.getOrNull())
+            writeBoolean(parcel, is_zip.getOrNull())
+            writeIntCriterionInput(parcel, rating100.getOrNull())
+            writeBoolean(parcel, organized.getOrNull())
+            writeResolutionCriterionInput(parcel, average_resolution.getOrNull())
+            writeString(parcel, has_chapters.getOrNull())
+            writeMultiCriterionInput(parcel, scenes.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, studios.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, tags.getOrNull())
+            writeIntCriterionInput(parcel, tag_count.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, performer_tags.getOrNull())
+            writeMultiCriterionInput(parcel, performers.getOrNull())
+            writeIntCriterionInput(parcel, performer_count.getOrNull())
+            writeBoolean(parcel, performer_favorite.getOrNull())
+            writeIntCriterionInput(parcel, performer_age.getOrNull())
+            writeIntCriterionInput(parcel, image_count.getOrNull())
+            writeStringCriterionInput(parcel, url.getOrNull())
+            writeDateCriterionInput(parcel, date.getOrNull())
+            writeTimestampCriterionInput(parcel, created_at.getOrNull())
+            writeTimestampCriterionInput(parcel, updated_at.getOrNull())
+            writeStringCriterionInput(parcel, code.getOrNull())
+            writeStringCriterionInput(parcel, photographer.getOrNull())
+        }
+    }
+}
+
+@Parcelize
+@TypeParceler<MovieFilterType?, MovieFilterTypeParceler>()
+data class MovieFilterTypeHolder(override val value: MovieFilterType?) :
+    FilterHolder<MovieFilterType>
+
+object MovieFilterTypeParceler : Parceler<MovieFilterType?> {
+    override fun create(parcel: Parcel): MovieFilterType? {
+        if (parcel.readByte() == ABSENT) {
+            return null
+        } else {
+            return MovieFilterType(
+                name = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                director = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                synopsis = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                duration = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                rating100 = Optional.presentIfNotNull(readIntCriterionInput(parcel)),
+                studios = Optional.presentIfNotNull(readHierarchicalMultiCriterionInput(parcel)),
+                is_missing = Optional.presentIfNotNull(readString(parcel)),
+                url = Optional.presentIfNotNull(readStringCriterionInput(parcel)),
+                performers = Optional.presentIfNotNull(readMultiCriterionInput(parcel)),
+                date = Optional.presentIfNotNull(readDateCriterionInput(parcel)),
+                created_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+                updated_at = Optional.presentIfNotNull(readTimestampCriterionInput(parcel)),
+            )
+        }
+    }
+
+    override fun MovieFilterType?.write(
+        parcel: Parcel,
+        flags: Int,
+    ) {
+        if (this == null) {
+            parcel.writeByte(ABSENT)
+        } else {
+            parcel.writeByte(PRESENT)
+
+            writeStringCriterionInput(parcel, name.getOrNull())
+            writeStringCriterionInput(parcel, director.getOrNull())
+            writeStringCriterionInput(parcel, synopsis.getOrNull())
+            writeIntCriterionInput(parcel, duration.getOrNull())
+            writeIntCriterionInput(parcel, rating100.getOrNull())
+            writeHierarchicalMultiCriterionInput(parcel, studios.getOrNull())
+            writeString(parcel, is_missing.getOrNull())
+            writeStringCriterionInput(parcel, url.getOrNull())
+            writeMultiCriterionInput(parcel, performers.getOrNull())
+            writeDateCriterionInput(parcel, date.getOrNull())
+            writeTimestampCriterionInput(parcel, created_at.getOrNull())
+            writeTimestampCriterionInput(parcel, updated_at.getOrNull())
+        }
+    }
+}
+
+fun <T> createFilterHolder(objectFilter: T): FilterHolder<out Any> {
+    return when (objectFilter) {
+        is SceneFilterType -> SceneFilterTypeHolder(objectFilter)
+        is PerformerFilterType -> PerformerFilterTypeHolder(objectFilter)
+        is StudioFilterType -> StudioFilterTypeHolder(objectFilter)
+        is TagFilterType -> TagFilterTypeHolder(objectFilter)
+        is SceneMarkerFilterType -> SceneMarkerFilterTypeHolder(objectFilter)
+        is ImageFilterType -> ImageFilterTypeHolder(objectFilter)
+        is GalleryFilterType -> GalleryFilterTypeHolder(objectFilter)
+        is MovieFilterType -> MovieFilterTypeHolder(objectFilter)
+        else -> throw IllegalArgumentException("Unknown filter type")
     }
 }
