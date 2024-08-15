@@ -201,6 +201,7 @@ class StashGridFragment2() : Fragment() {
             refresh(filterArgs.sortAndDirection)
         } else {
             filterArgs = savedInstanceState.getParcelable("filterArgs")!!
+            Log.v(TAG, "sortAndDirection=${filterArgs.sortAndDirection}")
             val previousPosition = savedInstanceState.getInt("mSelectedPosition")
             Log.v(TAG, "previousPosition=$previousPosition")
 
@@ -218,7 +219,7 @@ class StashGridFragment2() : Fragment() {
         super.onSaveInstanceState(outState)
         outState.putInt("mSelectedPosition", mSelectedPosition)
         cardSize?.let { outState.putInt("cardSize", it) }
-        outState.putParcelable("filterArgs", filterArgs)
+        outState.putParcelable("filterArgs", filterArgs.with(currentSortAndDirection))
     }
 
     private fun setGridPresenter(gridPresenter: VerticalGridPresenter) {

@@ -3,12 +3,11 @@ package com.github.damontecres.stashapp.suppliers
 import android.os.Parcel
 import android.os.Parcelable
 import com.apollographql.apollo3.api.Query
-import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.FilterHolder
-import com.github.damontecres.stashapp.data.SceneFilterTypeHolder
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.data.createFilterHolder
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.Version
 
@@ -109,10 +108,7 @@ data class FilterArgs(
     ) {
         parcel.writeInt(dataType.ordinal)
         parcel.writeParcelable(findFilter, flags)
-        when (objectFilter) {
-            is SceneFilterType -> parcel.writeParcelable(SceneFilterTypeHolder(objectFilter), flags)
-            else -> TODO()
-        }
+        parcel.writeParcelable(createFilterHolder(objectFilter), flags)
         parcel.writeInt(override?.ordinal ?: -1)
     }
 

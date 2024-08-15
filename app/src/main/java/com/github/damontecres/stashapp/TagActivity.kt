@@ -24,14 +24,14 @@ class TagActivity : TabbedGridFragmentActivity() {
         val tabs =
             mutableListOf(
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
-//                StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY),
-//                StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE),
-//                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER),
-//                StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER),
-//                StashFragmentPagerAdapter.PagerEntry(
-//                    getString(R.string.stashapp_sub_tags),
-//                    DataType.TAG,
-//                ),
+                StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY),
+                StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE),
+                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER),
+                StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER),
+                StashFragmentPagerAdapter.PagerEntry(
+                    getString(R.string.stashapp_sub_tags),
+                    DataType.TAG,
+                ),
             )
 
         return TabPageAdapter(tabs, tagId, includeSubTags, supportFragmentManager)
