@@ -11,6 +11,36 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 
+object StashComparator : DiffUtil.ItemCallback<Any>() {
+    override fun areItemsTheSame(
+        oldItem: Any,
+        newItem: Any,
+    ): Boolean {
+        if (oldItem.javaClass != newItem.javaClass) {
+            return false
+        } else {
+            return when (oldItem) {
+                is SlimSceneData -> (oldItem as SlimSceneData).id == (newItem as SlimSceneData).id
+                else -> TODO()
+            }
+        }
+    }
+
+    override fun areContentsTheSame(
+        oldItem: Any,
+        newItem: Any,
+    ): Boolean {
+        if (oldItem.javaClass != newItem.javaClass) {
+            return false
+        } else {
+            return when (oldItem) {
+                is SlimSceneData -> (oldItem as SlimSceneData) == (newItem as SlimSceneData)
+                else -> TODO()
+            }
+        }
+    }
+}
+
 object SceneComparator : DiffUtil.ItemCallback<SlimSceneData>() {
     override fun areItemsTheSame(
         oldItem: SlimSceneData,

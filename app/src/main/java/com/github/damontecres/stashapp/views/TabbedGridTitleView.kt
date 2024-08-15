@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -14,10 +13,6 @@ class TabbedGridTitleView(context: Context, attrs: AttributeSet? = null) : Const
         return object : TitleViewAdapter() {
             override fun getSearchAffordanceView(): View {
                 return findViewById<Button>(R.id.sort_button)
-            }
-
-            override fun updateComponentsVisibility(flags: Int) {
-                Log.v("TabbedGridTitleView", "updateComponentsVisibility: flags=$flags")
             }
         }
     }

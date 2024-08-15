@@ -55,7 +55,7 @@ abstract class TabbedGridFragmentActivity : FragmentActivity(R.layout.tabbed_gri
                 fragment.lifecycle.addObserver(
                     object : DefaultLifecycleObserver {
                         override fun onStart(owner: LifecycleOwner) {
-                            fragment.titleView = titleView
+                            fragment.setTitleView(titleView)
                         }
                     },
                 )

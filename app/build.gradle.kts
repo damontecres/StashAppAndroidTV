@@ -49,6 +49,7 @@ android {
         applicationId = "com.github.damontecres.stashapp"
         minSdk = 23
         targetSdk = 34
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = getVersionCode()
         versionName = getAppVersion()
         vectorDrawables.useSupportLibrary = true
@@ -151,6 +152,7 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     kapt("com.github.bumptech.glide:compiler:$glideVersion")
     implementation("com.caverock:androidsvg-aar:1.4")
+    implementation(kotlin("reflect"))
 
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
@@ -188,4 +190,10 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.9.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+
+    androidTestImplementation("androidx.test:core:1.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.1")
+    androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.ext:truth:1.6.0")
 }
