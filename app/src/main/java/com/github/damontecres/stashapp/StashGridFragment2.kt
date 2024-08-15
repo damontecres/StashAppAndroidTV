@@ -30,9 +30,11 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashComparator
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
@@ -43,14 +45,21 @@ import kotlinx.coroutines.launch
 class StashGridFragment2() : Fragment() {
     private lateinit var filterArgs: FilterArgs
     private var cardSize: Int? = null
+    private var scrollToNextPage = false
 
     val dataType: DataType
         get() = filterArgs.dataType
 
-    constructor(filterArgs: FilterArgs, cardSize: Int? = null) : this() {
-        this.filterArgs = filterArgs
+    constructor(
+        filterArgs: FilterArgs,
+        cardSize: Int? = null,
+        scrollToNextPage: Boolean = false,
+    ) : this() {
+        this.filterArgs =
+            filterArgs.ensureParsed(FilterParser(StashServer.getCurrentServerVersion()))
         this.cardSize = cardSize
         this._currentSortAndDirection = filterArgs.sortAndDirection
+        this.scrollToNextPage = scrollToNextPage
     }
 
     constructor(
@@ -58,7 +67,8 @@ class StashGridFragment2() : Fragment() {
         findFilter: StashFindFilter? = null,
         objectFilter: Any? = null,
         cardSize: Int? = null,
-    ) : this(FilterArgs(dataType, findFilter, objectFilter), cardSize)
+        scrollToNextPage: Boolean = false,
+    ) : this(FilterArgs(dataType, findFilter, objectFilter), cardSize, scrollToNextPage)
 
     private lateinit var mAdapter: ObjectAdapter
     private lateinit var mGridPresenter: VerticalGridPresenter
@@ -92,6 +102,8 @@ class StashGridFragment2() : Fragment() {
     private lateinit var totalCountTextView: TextView
 
     var requestFocus: Boolean = false
+
+    var name: String? = null
 
     private val mViewSelectedListener =
         OnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
@@ -163,6 +175,10 @@ class StashGridFragment2() : Fragment() {
 
         gridPresenter.numberOfColumns = columns
         setGridPresenter(gridPresenter)
+
+        if (savedInstanceState != null) {
+            name = savedInstanceState.getString("name")
+        }
     }
 
     override fun onCreateView(
@@ -182,7 +198,9 @@ class StashGridFragment2() : Fragment() {
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         gridDock.addView(mGridViewHolder.view)
         mGridViewHolder.gridView.setOnChildLaidOutListener(mChildLaidOutListener)
-
+        if (name == null) {
+            name = getString(dataType.pluralStringId)
+        }
         return root
     }
 
@@ -198,7 +216,13 @@ class StashGridFragment2() : Fragment() {
         onItemViewClickedListener = StashItemViewClickListener(requireContext())
 
         if (savedInstanceState == null) {
-            refresh(filterArgs.sortAndDirection)
+            refresh(filterArgs.sortAndDirection) {
+                if (scrollToNextPage) {
+                    currentSelectedPosition =
+                        PreferenceManager.getDefaultSharedPreferences(requireContext())
+                            .getInt("maxSearchResults", 25)
+                }
+            }
         } else {
             filterArgs = savedInstanceState.getParcelable("filterArgs")!!
             Log.v(TAG, "sortAndDirection=${filterArgs.sortAndDirection}")
@@ -220,6 +244,7 @@ class StashGridFragment2() : Fragment() {
         outState.putInt("mSelectedPosition", mSelectedPosition)
         cardSize?.let { outState.putInt("cardSize", it) }
         outState.putParcelable("filterArgs", filterArgs.with(currentSortAndDirection))
+        outState.putString("name", name)
     }
 
     private fun setGridPresenter(gridPresenter: VerticalGridPresenter) {

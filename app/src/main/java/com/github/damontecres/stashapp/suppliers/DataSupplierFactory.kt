@@ -102,6 +102,21 @@ data class FilterArgs(
                     ?: StashFindFilter(sortAndDirection = newSortAndDirection),
         )
 
+    fun ensureParsed(filterParser: FilterParser): FilterArgs {
+        val objectFilter =
+            when (dataType) {
+                DataType.TAG -> filterParser.convertTagObjectFilter(this.objectFilter)
+                DataType.STUDIO -> filterParser.convertStudioObjectFilter(this.objectFilter)
+                DataType.MOVIE -> filterParser.convertMovieObjectFilter(this.objectFilter)
+                DataType.SCENE -> filterParser.convertSceneObjectFilter(this.objectFilter)
+                DataType.IMAGE -> filterParser.convertImageObjectFilter(this.objectFilter)
+                DataType.GALLERY -> filterParser.convertGalleryObjectFilter(this.objectFilter)
+                DataType.MARKER -> filterParser.convertMarkerObjectFilter(this.objectFilter)
+                DataType.PERFORMER -> filterParser.convertPerformerObjectFilter(this.objectFilter)
+            }
+        return this.copy(objectFilter = objectFilter)
+    }
+
     override fun writeToParcel(
         parcel: Parcel,
         flags: Int,
