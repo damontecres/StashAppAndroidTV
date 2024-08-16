@@ -177,7 +177,7 @@ class FilterListActivity : FragmentActivity() {
                             }
 
                             FilterType.APP_FILTER -> {
-                                intent.getParcelableExtra("filter")
+                                filter
                             }
                         }
                     setupFragment(filterData, true)
@@ -403,11 +403,12 @@ class FilterListActivity : FragmentActivity() {
 
     private suspend fun getStartingFilter(): Pair<FilterType, SavedFilterData?> =
         withContext(Dispatchers.IO) {
-            if (filter is AppFilter) {
+            val appFilter: StashFilter? = intent.getParcelableExtra("filter")
+            if (appFilter != null && appFilter is AppFilter) {
                 Log.v(TAG, "getStartingFilter: filter is AppFilter=$filter")
                 return@withContext Pair(
                     FilterType.APP_FILTER,
-                    (filter as AppFilter).toSavedFilterData(this@FilterListActivity),
+                    appFilter.toSavedFilterData(this@FilterListActivity),
                 )
             }
             val savedFilterId = intent.getStringExtra("savedFilterId")

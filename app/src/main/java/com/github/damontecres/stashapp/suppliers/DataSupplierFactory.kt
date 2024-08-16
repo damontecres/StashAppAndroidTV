@@ -140,11 +140,11 @@ data class FilterArgs(
             val dataType = DataType.entries[parcel.readInt()]
             val findFilter: StashFindFilter? =
                 parcel.readParcelable(StashFindFilter::class.java.classLoader)
-            val objectFilterHolder: FilterHolder<Any?> =
-                parcel.readParcelable(FilterHolder::class.java.classLoader)!!
+            val objectFilterHolder: FilterHolder<Any?>? =
+                parcel.readParcelable(FilterHolder::class.java.classLoader)
             val override: DataSupplierOverride? =
                 parcel.readParcelable(DataSupplierOverride::class.java.classLoader)
-            return FilterArgs(dataType, findFilter, objectFilterHolder.value, override)
+            return FilterArgs(dataType, findFilter, objectFilterHolder?.value, override)
         }
 
         override fun newArray(size: Int): Array<FilterArgs?> {

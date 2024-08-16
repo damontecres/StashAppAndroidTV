@@ -90,74 +90,77 @@ class PerformerActivity : FragmentActivity() {
                     ),
                 )
 
-            return if (position == 0) {
-                StashGridFragment2(
-                    dataType = DataType.SCENE,
-                    objectFilter = SceneFilterType(performers = performers),
-                    cardSize = getColumns(DataType.SCENE),
-                )
-            } else if (position == 1) {
-                StashGridFragment2(
-                    dataType = DataType.GALLERY,
-                    objectFilter = GalleryFilterType(performers = performers),
-                    cardSize = getColumns(DataType.GALLERY),
-                )
-            } else if (position == 2) {
-                StashGridFragment2(
-                    dataType = DataType.IMAGE,
-                    objectFilter = ImageFilterType(performers = performers),
-                    cardSize = getColumns(DataType.IMAGE),
-                )
-            } else if (position == 3) {
-                StashGridFragment2(
-                    dataType = DataType.MOVIE,
-                    objectFilter = MovieFilterType(performers = performers),
-                    cardSize = getColumns(DataType.MOVIE),
-                )
-            } else if (position == 4) {
-                val presenter =
-                    ClassPresenterSelector()
-                        .addClassPresenter(
-                            TagData::class.java,
-                            TagPresenter(PerformersWithTagLongClickCallback()),
-                        )
-                val fragment =
+            val fragment =
+                if (position == 0) {
                     StashGridFragment2(
-                        FilterArgs(
-                            dataType = DataType.TAG,
-                            override = DataSupplierOverride.PerformerTags(performer.id),
-                        ),
-                        cardSize = getColumns(DataType.TAG),
+                        dataType = DataType.SCENE,
+                        objectFilter = SceneFilterType(performers = performers),
+                        cardSize = getColumns(DataType.SCENE),
                     )
-                fragment.presenterSelector = presenter
-                fragment
-            } else if (position == 5) {
-                val presenter =
-                    ClassPresenterSelector()
-                        .addClassPresenter(
-                            PerformerData::class.java,
-                            PerformerPresenter(PerformTogetherLongClickCallback(performer)),
-                        )
-                val fragment =
+                } else if (position == 1) {
+                    StashGridFragment2(
+                        dataType = DataType.GALLERY,
+                        objectFilter = GalleryFilterType(performers = performers),
+                        cardSize = getColumns(DataType.GALLERY),
+                    )
+                } else if (position == 2) {
+                    StashGridFragment2(
+                        dataType = DataType.IMAGE,
+                        objectFilter = ImageFilterType(performers = performers),
+                        cardSize = getColumns(DataType.IMAGE),
+                    )
+                } else if (position == 3) {
                     StashGridFragment2(
                         dataType = DataType.MOVIE,
-                        objectFilter =
-                            PerformerFilterType(
-                                performers =
-                                    Optional.present(
-                                        MultiCriterionInput(
-                                            value = Optional.present(listOf(performer.id)),
-                                            modifier = CriterionModifier.INCLUDES_ALL,
-                                        ),
-                                    ),
-                            ),
+                        objectFilter = MovieFilterType(performers = performers),
                         cardSize = getColumns(DataType.MOVIE),
                     )
-                fragment.presenterSelector = presenter
-                fragment
-            } else {
-                throw IllegalStateException()
-            }
+                } else if (position == 4) {
+                    val presenter =
+                        ClassPresenterSelector()
+                            .addClassPresenter(
+                                TagData::class.java,
+                                TagPresenter(PerformersWithTagLongClickCallback()),
+                            )
+                    val fragment =
+                        StashGridFragment2(
+                            FilterArgs(
+                                dataType = DataType.TAG,
+                                override = DataSupplierOverride.PerformerTags(performer.id),
+                            ),
+                            cardSize = getColumns(DataType.TAG),
+                        )
+                    fragment.presenterSelector = presenter
+                    fragment
+                } else if (position == 5) {
+                    val presenter =
+                        ClassPresenterSelector()
+                            .addClassPresenter(
+                                PerformerData::class.java,
+                                PerformerPresenter(PerformTogetherLongClickCallback(performer)),
+                            )
+                    val fragment =
+                        StashGridFragment2(
+                            dataType = DataType.PERFORMER,
+                            objectFilter =
+                                PerformerFilterType(
+                                    performers =
+                                        Optional.present(
+                                            MultiCriterionInput(
+                                                value = Optional.present(listOf(performer.id)),
+                                                modifier = CriterionModifier.INCLUDES_ALL,
+                                            ),
+                                        ),
+                                ),
+                            cardSize = getColumns(DataType.PERFORMER),
+                        )
+                    fragment.presenterSelector = presenter
+                    fragment
+                } else {
+                    throw IllegalStateException()
+                }
+            fragment.sortButtonEnabled = true
+            return fragment
         }
     }
 

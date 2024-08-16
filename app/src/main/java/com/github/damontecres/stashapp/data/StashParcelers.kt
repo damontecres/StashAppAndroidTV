@@ -672,7 +672,7 @@ object MovieFilterTypeParceler : Parceler<MovieFilterType?> {
     }
 }
 
-fun <T> createFilterHolder(objectFilter: T): FilterHolder<out Any> {
+fun <T> createFilterHolder(objectFilter: T?): FilterHolder<out Any>? {
     return when (objectFilter) {
         is SceneFilterType -> SceneFilterTypeHolder(objectFilter)
         is PerformerFilterType -> PerformerFilterTypeHolder(objectFilter)
@@ -682,6 +682,7 @@ fun <T> createFilterHolder(objectFilter: T): FilterHolder<out Any> {
         is ImageFilterType -> ImageFilterTypeHolder(objectFilter)
         is GalleryFilterType -> GalleryFilterTypeHolder(objectFilter)
         is MovieFilterType -> MovieFilterTypeHolder(objectFilter)
+        null -> null
         else -> throw IllegalArgumentException("Unknown filter type: $objectFilter")
     }
 }
