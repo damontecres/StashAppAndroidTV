@@ -28,8 +28,6 @@ class SortButtonManager(val newSortCallback: (SortAndDirection) -> Unit) {
     ) {
         val context = sortButton.context
 
-        setSortButtonText(sortButton, sortAndDirection)
-
         val listPopUp =
             ListPopupWindow(
                 context,
@@ -56,6 +54,10 @@ class SortButtonManager(val newSortCallback: (SortAndDirection) -> Unit) {
             } else {
                 sortOptions.map { it.first }.indexOf(sortAndDirection.sort)
             }
+
+        val resolvedName = resolvedNames[index]
+        setSortButtonText(sortButton, resolvedName, sortAndDirection)
+
         val adapter =
             SortByArrayAdapter(
                 context,
@@ -109,10 +111,10 @@ class SortButtonManager(val newSortCallback: (SortAndDirection) -> Unit) {
 
     private fun setSortButtonText(
         sortButton: Button,
+        sortByStr: String,
         sortAndDirection: SortAndDirection,
     ) {
         val context = sortButton.context
-        val sortBy = sortAndDirection.sort
         val directionString =
             when (sortAndDirection.direction) {
                 SortDirectionEnum.ASC -> context.getString(R.string.fa_caret_up)
@@ -122,7 +124,7 @@ class SortButtonManager(val newSortCallback: (SortAndDirection) -> Unit) {
         if (sortAndDirection.isRandom) {
             sortButton.text = context.getString(R.string.stashapp_random)
         } else if (directionString != null) {
-            SpannableString("$directionString $sortBy").apply {
+            SpannableString("$directionString $sortByStr").apply {
                 val start = 0
                 val end = 1
                 setSpan(
@@ -134,7 +136,7 @@ class SortButtonManager(val newSortCallback: (SortAndDirection) -> Unit) {
                 sortButton.text = this
             }
         } else {
-            sortButton.text = sortBy
+            sortButton.text = sortByStr
         }
     }
 
