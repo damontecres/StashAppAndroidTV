@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@Deprecated("Use StashGridFragment2 instead")
 class StashGridFragment<T : Query.Data, D : Any, C : Query.Data>(
     presenter: PresenterSelector,
     comparator: DiffUtil.ItemCallback<D>,
