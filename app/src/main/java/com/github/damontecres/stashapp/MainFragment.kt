@@ -85,9 +85,7 @@ class MainFragment : BrowseSupportFragment() {
                     null
                 }
             }
-        if (savedInstanceState == null) {
-            setupObservers()
-        }
+        setupObservers()
     }
 
     override fun onResume() {

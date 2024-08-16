@@ -73,6 +73,7 @@ class StashExoPlayer private constructor() {
             if (instance != null) {
                 synchronized(this) { // synchronized to avoid concurrency problem
                     if (instance != null) {
+                        listeners.clear()
                         instance!!.release()
                         instance = null
                     }

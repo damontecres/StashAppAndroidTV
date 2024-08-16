@@ -50,7 +50,7 @@ class FilterParcelTests {
         val holder = SceneFilterTypeHolder(filter)
         val result = parcelizeAndDeparcelize(holder)
         Assert.assertNotNull(result)
-        Assert.assertEquals(filter.file_count.getOrNull(), result.value.file_count.getOrNull())
+        Assert.assertEquals(filter.file_count.getOrNull(), result.value?.file_count?.getOrNull())
     }
 
 //    @Test
