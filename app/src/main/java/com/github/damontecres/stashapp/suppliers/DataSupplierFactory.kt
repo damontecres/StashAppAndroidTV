@@ -18,6 +18,8 @@ class DataSupplierFactory(val serverVersion: Version) {
         if (args.override != null) {
             return when (args.override) {
                 is DataSupplierOverride.PerformerTags -> PerformerTagDataSupplier(args.override.performerId)
+                is DataSupplierOverride.GalleryPerformer -> GalleryPerformerDataSupplier(args.override.galleryId)
+                is DataSupplierOverride.GalleryTag -> GalleryTagDataSupplier(args.override.galleryId)
             } as StashPagingSource.DataSupplier<T, D, C>
         } else {
             return when (args.dataType) {
@@ -76,6 +78,10 @@ class DataSupplierFactory(val serverVersion: Version) {
 @Parcelize
 sealed class DataSupplierOverride : Parcelable {
     data class PerformerTags(val performerId: String) : DataSupplierOverride()
+
+    data class GalleryPerformer(val galleryId: String) : DataSupplierOverride()
+
+    data class GalleryTag(val galleryId: String) : DataSupplierOverride()
 }
 
 data class FilterArgs(
