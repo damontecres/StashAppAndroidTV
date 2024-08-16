@@ -103,10 +103,13 @@ class StashGridFragment2() : Fragment() {
      */
     var currentSelectedPosition: Int
         get() = mSelectedPosition
+
+        @SuppressLint("SetTextI18n")
         set(position) {
             mSelectedPosition = position
             if (mGridViewHolder.gridView.adapter != null) {
                 mGridViewHolder.gridView.setSelectedPositionSmooth(position)
+                positionTextView.text = (position + 1).toString()
             }
         }
 
@@ -266,6 +269,7 @@ class StashGridFragment2() : Fragment() {
         if (savedInstanceState == null) {
             refresh(_filterArgs.sortAndDirection) {
                 if (scrollToNextPage) {
+                    Log.v(TAG, "scrolling to next page")
                     currentSelectedPosition =
                         PreferenceManager.getDefaultSharedPreferences(requireContext())
                             .getInt("maxSearchResults", 25)
@@ -349,14 +353,12 @@ class StashGridFragment2() : Fragment() {
                 sortByOverride = null,
             )
         if (firstPageListener != null) {
-            pagingSource.addListener(
-                object : StashPagingSource.Listener<Any> {
-                    override fun onPageFetch(
-                        pageNum: Int,
-                        page: List<Any>,
-                    ) {
+            pagingAdapter.registerObserver(
+                object : ObjectAdapter.DataObserver() {
+                    override fun onChanged() {
+                        Log.v(TAG, "calling firstPageListener")
                         firstPageListener()
-                        pagingSource.removeListener(this)
+                        pagingAdapter.unregisterObserver(this)
                     }
                 },
             )
