@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.text.Spannable
-import android.text.SpannableString
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -26,6 +24,7 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.AppFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.FilterType
+import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
@@ -34,13 +33,12 @@ import com.github.damontecres.stashapp.playback.PlaybackMarkersActivity
 import com.github.damontecres.stashapp.playback.PlaybackMarkersFragment
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.getRandomSort
 import com.github.damontecres.stashapp.util.toFindFilterType
-import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
+import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -55,6 +53,7 @@ class FilterListActivity : FragmentActivity() {
     private lateinit var queryEngine: QueryEngine
     private lateinit var dataType: DataType
     private lateinit var sortOptions: List<Pair<String, String>>
+    private lateinit var sortButtonManager: SortButtonManager
 
     private var filter: StashFilter? = null
         set(newFilter) {
@@ -129,6 +128,30 @@ class FilterListActivity : FragmentActivity() {
         if (experimentalEnabled && dataType == DataType.MARKER) {
             playMarkersButton.visibility = View.VISIBLE
         }
+        sortButtonManager =
+            SortButtonManager { sortAndDirection ->
+                val newFilter =
+                    filterData!!.copy(
+                        find_filter =
+                            SavedFilterData.Find_filter(
+                                q = null,
+                                page = null,
+                                per_page = null,
+                                sort = sortAndDirection.sort,
+                                direction = sortAndDirection.direction,
+                                __typename = "",
+                            ),
+                    )
+                this@FilterListActivity.filterData = newFilter
+                filter =
+                    copyFilter(
+                        filter,
+                        newFilter.find_filter?.sort,
+                        newFilter.find_filter?.direction,
+                    )
+                setupFragment(newFilter, false, false)
+                filterData = newFilter
+            }
 
         titleTextView = findViewById(R.id.list_title)
         supportFragmentManager.addFragmentOnAttachListener { _, fragment ->
@@ -140,7 +163,8 @@ class FilterListActivity : FragmentActivity() {
                 supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment2?
             titleTextView.text = fragment?.name
             filterData = filterDataByName[fragment?.name]
-            setUpSortButton()
+
+            sortButtonManager.setUpSortButton(sortButton, dataType, getSortAndDirection(filterData))
         }
         val exHandler =
             CoroutineExceptionHandler { _, ex: Throwable ->
@@ -262,141 +286,6 @@ class FilterListActivity : FragmentActivity() {
                 )
 
             else -> filter
-        }
-    }
-
-    private fun setUpSortButton() {
-        val listPopUp =
-            ListPopupWindow(
-                this@FilterListActivity,
-                null,
-                android.R.attr.listPopupWindowStyle,
-            )
-        val serverVersion = ServerPreferences(this).serverVersion
-        // Resolve the strings, then sort
-        val sortOptions =
-            dataType.sortOptions
-                .filter { serverVersion.isAtLeast(it.requiresVersion) }
-                .map {
-                    Pair(
-                        it.key,
-                        this@FilterListActivity.getString(it.nameStringId),
-                    )
-                }.sortedBy { it.second }
-        val resolvedNames = sortOptions.map { it.second }
-
-        val currentDirection = filterData?.find_filter?.direction
-        val currentKey = filterData?.find_filter?.sort
-        val isRandom = currentKey?.startsWith("random") ?: false
-        val index =
-            if (isRandom) {
-                sortOptions.map { it.first }.indexOf("random")
-            } else {
-                sortOptions.map { it.first }.indexOf(currentKey)
-            }
-        setSortButtonText(
-            currentDirection,
-            if (index >= 0) sortOptions[index].second else null,
-            isRandom,
-        )
-        Log.v(TAG, "index=$index, currentKey=$currentKey, currentDirection=$currentDirection")
-        val adapter =
-            SortByArrayAdapter(
-                this@FilterListActivity,
-                resolvedNames,
-                index,
-                currentDirection,
-            )
-        listPopUp.setAdapter(adapter)
-        listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
-        listPopUp.anchorView = sortButton
-
-        listPopUp.width = getMaxMeasuredWidth(this@FilterListActivity, adapter)
-        listPopUp.isModal = true
-
-        listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
-            val newSortBy = sortOptions[position].first
-            listPopUp.dismiss()
-            if (filterData == null) {
-                return@setOnItemClickListener
-            }
-
-            val currentDirection = filterData?.find_filter?.direction
-            val currentKey = filterData?.find_filter?.sort
-            val newDirection =
-                if (newSortBy == currentKey && currentDirection != null) {
-                    if (currentDirection == SortDirectionEnum.ASC) SortDirectionEnum.DESC else SortDirectionEnum.ASC
-                } else {
-                    currentDirection ?: SortDirectionEnum.DESC
-                }
-            val resolvedNewSortBy =
-                if (newSortBy.startsWith("random")) {
-                    getRandomSort()
-                } else {
-                    newSortBy
-                }
-            Log.v(TAG, "New sort: resolvedNewSortBy=$resolvedNewSortBy, newDirection=$newDirection")
-            val newFilter =
-                filterData!!.copy(
-                    find_filter =
-                        SavedFilterData.Find_filter(
-                            q = null,
-                            page = null,
-                            per_page = null,
-                            sort = resolvedNewSortBy,
-                            direction = newDirection,
-                            __typename = "",
-                        ),
-                )
-            this@FilterListActivity.filterData = newFilter
-            filter =
-                copyFilter(filter, newFilter.find_filter?.sort, newFilter.find_filter?.direction)
-            setupFragment(newFilter, false, false)
-            filterData = newFilter
-        }
-
-        sortButton.setOnClickListener {
-            val currentDirection = filterData?.find_filter?.direction
-            val currentKey = filterData?.find_filter?.sort
-            val index = sortOptions.map { it.first }.indexOf(currentKey)
-            adapter.currentIndex = index
-            adapter.currentDirection = currentDirection
-
-            listPopUp.show()
-            listPopUp.listView?.requestFocus()
-        }
-    }
-
-    private fun setSortButtonText(
-        currentDirection: SortDirectionEnum?,
-        sortBy: CharSequence?,
-        isRandom: Boolean,
-    ) {
-        val directionString =
-            when (currentDirection) {
-                SortDirectionEnum.ASC -> getString(R.string.fa_caret_up)
-                SortDirectionEnum.DESC -> getString(R.string.fa_caret_down)
-                SortDirectionEnum.UNKNOWN__ -> null
-                null -> null
-            }
-        if (isRandom) {
-            sortButton.text = getString(R.string.stashapp_random)
-        } else if (directionString != null && sortBy != null) {
-            SpannableString(directionString + " " + sortBy).apply {
-                val start = 0
-                val end = 1
-                setSpan(
-                    FontSpan(StashApplication.getFont(R.font.fa_solid_900)),
-                    start,
-                    end,
-                    Spannable.SPAN_INCLUSIVE_INCLUSIVE,
-                )
-                sortButton.text = this
-            }
-        } else if (sortBy != null) {
-            sortButton.text = sortBy
-        } else {
-            sortButton.text = getString(R.string.sort_by)
         }
     }
 
@@ -537,7 +426,9 @@ class FilterListActivity : FragmentActivity() {
             fragment.onItemViewClickedListener = ImageGridClickedListener(fragment)
         }
         filterDataByName[name] = filter
-        setUpSortButton()
+
+        sortButtonManager.setUpSortButton(sortButton, dataType, getSortAndDirection(filter))
+
         var transaction =
             supportFragmentManager.beginTransaction()
                 .replace(
@@ -605,6 +496,18 @@ class FilterListActivity : FragmentActivity() {
                     null
                 }
             return view
+        }
+    }
+
+    fun getSortAndDirection(filter: SavedFilterData?): SortAndDirection {
+        val sort = filter?.find_filter?.sort
+        val direction = filter?.find_filter?.direction
+        return if (sort != null && direction != null) {
+            SortAndDirection(sort, direction)
+        } else if (sort != null) {
+            SortAndDirection(sort, SortDirectionEnum.ASC)
+        } else {
+            dataType.defaultSort
         }
     }
 }
