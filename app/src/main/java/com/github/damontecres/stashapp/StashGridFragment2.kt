@@ -338,9 +338,7 @@ class StashGridFragment2() : Fragment() {
         val pagingAdapter = PagingDataAdapter(presenterSelector, StashComparator)
         mAdapter = pagingAdapter
         updateAdapter()
-        val pageSize =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("maxSearchResults", 50)
+        val pageSize = mGridPresenter.numberOfColumns * 5 // 5 rows
         val factory = DataSupplierFactory(ServerPreferences(requireContext()).serverVersion)
         val dataSupplier =
             factory.create<Query.Data, Any, Query.Data>(_filterArgs.with(newSortAndDirection))
@@ -386,6 +384,7 @@ class StashGridFragment2() : Fragment() {
                     pageSize = pageSize,
                     prefetchDistance = pageSize * 2,
                     initialLoadSize = pageSize * 2,
+                    maxSize = pageSize * 6,
                 ),
             ) {
                 pagingSource
