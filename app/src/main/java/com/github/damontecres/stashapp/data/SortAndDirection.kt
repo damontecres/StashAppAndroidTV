@@ -10,6 +10,8 @@ import kotlinx.parcelize.Parcelize
 data class SortAndDirection(val sort: String, val direction: SortDirectionEnum) : Parcelable {
     val asFindFilterType get() = FindFilterType(sort = Optional.present(sort), direction = Optional.present(direction))
 
+    val isRandom get() = sort.startsWith("random")
+
     companion object {
         val NAME_ASC = SortAndDirection("name", SortDirectionEnum.ASC)
         val PATH_ASC = SortAndDirection("path", SortDirectionEnum.ASC)

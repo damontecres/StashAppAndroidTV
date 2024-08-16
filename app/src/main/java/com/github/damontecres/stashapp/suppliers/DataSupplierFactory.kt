@@ -10,68 +10,72 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.data.createFilterHolder
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.Version
+import kotlinx.parcelize.Parcelize
 
 class DataSupplierFactory(val serverVersion: Version) {
     fun <T : Query.Data, D : Any, C : Query.Data> create(args: FilterArgs): StashPagingSource.DataSupplier<T, D, C> {
+        val filterParser = FilterParser(serverVersion)
         if (args.override != null) {
-            TODO()
+            return when (args.override) {
+                is DataSupplierOverride.PerformerTags -> PerformerTagDataSupplier(args.override.performerId)
+            } as StashPagingSource.DataSupplier<T, D, C>
         } else {
-            val filterParser = FilterParser(serverVersion)
             return when (args.dataType) {
                 DataType.SCENE ->
                     SceneDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertSceneObjectFilter(args.objectFilter),
-                    ) as StashPagingSource.DataSupplier<T, D, C>
+                    )
 
                 DataType.TAG ->
                     TagDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertTagObjectFilter(args.objectFilter),
-                    ) as StashPagingSource.DataSupplier<T, D, C>
+                    )
 
                 DataType.STUDIO ->
                     StudioDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertStudioObjectFilter(args.objectFilter),
-                    ) as StashPagingSource.DataSupplier<T, D, C>
+                    )
 
                 DataType.MARKER ->
                     MarkerDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertMarkerObjectFilter(args.objectFilter),
-                    ) as StashPagingSource.DataSupplier<T, D, C>
+                    )
 
                 DataType.IMAGE ->
                     ImageDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertImageObjectFilter(args.objectFilter),
-                    ) as StashPagingSource.DataSupplier<T, D, C>
+                    )
 
                 DataType.GALLERY ->
                     GalleryDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertGalleryObjectFilter(args.objectFilter),
-                    ) as StashPagingSource.DataSupplier<T, D, C>
+                    )
 
                 DataType.PERFORMER ->
                     PerformerDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertPerformerObjectFilter(args.objectFilter),
-                    ) as StashPagingSource.DataSupplier<T, D, C>
+                    )
 
                 DataType.MOVIE ->
                     MovieDataSupplier(
                         args.findFilter?.toFindFilterType(),
                         filterParser.convertMovieObjectFilter(args.objectFilter),
-                    ) as StashPagingSource.DataSupplier<T, D, C>
-            }
+                    )
+            } as StashPagingSource.DataSupplier<T, D, C>
         }
     }
 }
 
-enum class DataSupplierOverride {
-    PERFORMER_TAGS,
+@Parcelize
+sealed class DataSupplierOverride : Parcelable {
+    data class PerformerTags(val performerId: String) : DataSupplierOverride()
 }
 
 data class FilterArgs(
@@ -124,7 +128,7 @@ data class FilterArgs(
         parcel.writeInt(dataType.ordinal)
         parcel.writeParcelable(findFilter, flags)
         parcel.writeParcelable(createFilterHolder(objectFilter), flags)
-        parcel.writeInt(override?.ordinal ?: -1)
+        parcel.writeParcelable(override, flags)
     }
 
     override fun describeContents(): Int {
@@ -138,13 +142,8 @@ data class FilterArgs(
                 parcel.readParcelable(StashFindFilter::class.java.classLoader)
             val objectFilterHolder: FilterHolder<Any?> =
                 parcel.readParcelable(FilterHolder::class.java.classLoader)!!
-            val overrideIndex = parcel.readInt()
-            val override =
-                if (overrideIndex >= 0) {
-                    DataSupplierOverride.entries[overrideIndex]
-                } else {
-                    null
-                }
+            val override: DataSupplierOverride? =
+                parcel.readParcelable(DataSupplierOverride::class.java.classLoader)
             return FilterArgs(dataType, findFilter, objectFilterHolder.value, override)
         }
 

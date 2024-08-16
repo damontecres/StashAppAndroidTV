@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -16,6 +17,7 @@ import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.OnChildLaidOutListener
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.OnItemViewSelectedListener
+import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.Pager
@@ -37,12 +39,18 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class StashGridFragment2() : Fragment() {
+    private lateinit var sortButton: Button
+    var sortButtonEnabled = false
+
+    var presenterSelector: PresenterSelector = StashPresenter.SELECTOR
+
     private lateinit var filterArgs: FilterArgs
     private var cardSize: Int? = null
     private var scrollToNextPage = false
@@ -178,6 +186,7 @@ class StashGridFragment2() : Fragment() {
 
         if (savedInstanceState != null) {
             name = savedInstanceState.getString("name")
+            sortButtonEnabled = savedInstanceState.getBoolean("sortButtonEnabled")
         }
     }
 
@@ -188,12 +197,12 @@ class StashGridFragment2() : Fragment() {
     ): View? {
         val root =
             inflater.inflate(
-                androidx.leanback.R.layout.lb_vertical_grid_fragment,
+                R.layout.stash_grid_fragment2,
                 container,
                 false,
             ) as ViewGroup
         val gridFrame = root.findViewById<View>(androidx.leanback.R.id.grid_frame) as ViewGroup
-
+        sortButton = root.findViewById(R.id.sort_button)
         val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         gridDock.addView(mGridViewHolder.view)
@@ -237,6 +246,12 @@ class StashGridFragment2() : Fragment() {
                 }
             }
         }
+        if (sortButtonEnabled) {
+            sortButton.visibility = View.VISIBLE
+            SortButtonManager {
+                refresh(it)
+            }.setUpSortButton(sortButton, dataType, filterArgs.sortAndDirection)
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -245,6 +260,7 @@ class StashGridFragment2() : Fragment() {
         cardSize?.let { outState.putInt("cardSize", it) }
         outState.putParcelable("filterArgs", filterArgs.with(currentSortAndDirection))
         outState.putString("name", name)
+        outState.putBoolean("sortButtonEnabled", sortButtonEnabled)
     }
 
     private fun setGridPresenter(gridPresenter: VerticalGridPresenter) {
@@ -277,7 +293,7 @@ class StashGridFragment2() : Fragment() {
             TAG,
             "refresh: dataType=${filterArgs.dataType}, newSortAndDirection=$newSortAndDirection",
         )
-        val pagingAdapter = PagingDataAdapter(StashPresenter.SELECTOR, StashComparator)
+        val pagingAdapter = PagingDataAdapter(presenterSelector, StashComparator)
         mAdapter = pagingAdapter
         updateAdapter()
         val pageSize =

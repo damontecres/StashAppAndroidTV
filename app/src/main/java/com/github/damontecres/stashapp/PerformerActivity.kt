@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.core.view.children
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.leanback.tab.LeanbackTabLayout
@@ -28,19 +27,9 @@ import com.github.damontecres.stashapp.data.PerformerWithTagAppFilter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
-import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
-import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
-import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
-import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
-import com.github.damontecres.stashapp.suppliers.PerformerTagDataSupplier
-import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
-import com.github.damontecres.stashapp.util.GalleryComparator
-import com.github.damontecres.stashapp.util.ImageComparator
-import com.github.damontecres.stashapp.util.ListFragmentPagerAdapter
-import com.github.damontecres.stashapp.util.MovieComparator
-import com.github.damontecres.stashapp.util.PerformerComparator
-import com.github.damontecres.stashapp.util.SceneComparator
-import com.github.damontecres.stashapp.util.TagComparator
+import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
@@ -77,14 +66,14 @@ class PerformerActivity : FragmentActivity() {
         private val columns: Double,
         fm: FragmentManager,
     ) :
-        ListFragmentPagerAdapter(
+        StashFragmentPagerAdapter(
                 listOf(
-                    "Scenes",
-                    "Galleries",
-                    "Images",
-                    "Movies",
-                    "Tags",
-                    "Appears With",
+                    PagerEntry(DataType.SCENE),
+                    PagerEntry(DataType.GALLERY),
+                    PagerEntry(DataType.IMAGE),
+                    PagerEntry(DataType.MOVIE),
+                    PagerEntry(DataType.TAG),
+                    PagerEntry("Appears With", DataType.PERFORMER),
                 ),
                 fm,
             ) {
@@ -92,70 +81,38 @@ class PerformerActivity : FragmentActivity() {
             return (columns * dataType.defaultCardRatio).toInt()
         }
 
-        override fun getItem(position: Int): Fragment {
-            return if (position == 0) {
-                StashGridFragment(
-                    SceneComparator,
-                    SceneDataSupplier(
-                        SceneFilterType(
-                            performers =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(performer.id)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                    ),
-                                ),
-                        ),
+        override fun getFragment(position: Int): StashGridFragment2 {
+            val performers =
+                Optional.present(
+                    MultiCriterionInput(
+                        value = Optional.present(listOf(performer.id)),
+                        modifier = CriterionModifier.INCLUDES_ALL,
                     ),
-                    getColumns(DataType.SCENE),
+                )
+
+            return if (position == 0) {
+                StashGridFragment2(
+                    dataType = DataType.SCENE,
+                    objectFilter = SceneFilterType(performers = performers),
+                    cardSize = getColumns(DataType.SCENE),
                 )
             } else if (position == 1) {
-                StashGridFragment(
-                    GalleryComparator,
-                    GalleryDataSupplier(
-                        GalleryFilterType(
-                            performers =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(performer.id)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                    ),
-                                ),
-                        ),
-                    ),
-                    getColumns(DataType.GALLERY),
+                StashGridFragment2(
+                    dataType = DataType.GALLERY,
+                    objectFilter = GalleryFilterType(performers = performers),
+                    cardSize = getColumns(DataType.GALLERY),
                 )
             } else if (position == 2) {
-                StashGridFragment(
-                    ImageComparator,
-                    ImageDataSupplier(
-                        ImageFilterType(
-                            performers =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(performer.id)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                    ),
-                                ),
-                        ),
-                    ),
-                    getColumns(DataType.IMAGE),
+                StashGridFragment2(
+                    dataType = DataType.IMAGE,
+                    objectFilter = ImageFilterType(performers = performers),
+                    cardSize = getColumns(DataType.IMAGE),
                 )
             } else if (position == 3) {
-                StashGridFragment(
-                    MovieComparator,
-                    MovieDataSupplier(
-                        MovieFilterType(
-                            performers =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(performer.id)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                    ),
-                                ),
-                        ),
-                    ),
-                    getColumns(DataType.MOVIE),
+                StashGridFragment2(
+                    dataType = DataType.MOVIE,
+                    objectFilter = MovieFilterType(performers = performers),
+                    cardSize = getColumns(DataType.MOVIE),
                 )
             } else if (position == 4) {
                 val presenter =
@@ -164,12 +121,16 @@ class PerformerActivity : FragmentActivity() {
                             TagData::class.java,
                             TagPresenter(PerformersWithTagLongClickCallback()),
                         )
-                StashGridFragment(
-                    presenter,
-                    TagComparator,
-                    PerformerTagDataSupplier(performer.id),
-                    getColumns(DataType.TAG),
-                )
+                val fragment =
+                    StashGridFragment2(
+                        FilterArgs(
+                            dataType = DataType.TAG,
+                            override = DataSupplierOverride.PerformerTags(performer.id),
+                        ),
+                        cardSize = getColumns(DataType.TAG),
+                    )
+                fragment.presenterSelector = presenter
+                fragment
             } else if (position == 5) {
                 val presenter =
                     ClassPresenterSelector()
@@ -177,22 +138,23 @@ class PerformerActivity : FragmentActivity() {
                             PerformerData::class.java,
                             PerformerPresenter(PerformTogetherLongClickCallback(performer)),
                         )
-                StashGridFragment(
-                    presenter,
-                    PerformerComparator,
-                    PerformerDataSupplier(
-                        PerformerFilterType(
-                            performers =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(performer.id)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
+                val fragment =
+                    StashGridFragment2(
+                        dataType = DataType.MOVIE,
+                        objectFilter =
+                            PerformerFilterType(
+                                performers =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(listOf(performer.id)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                        ),
                                     ),
-                                ),
-                        ),
-                    ),
-                    getColumns(DataType.PERFORMER),
-                )
+                            ),
+                        cardSize = getColumns(DataType.MOVIE),
+                    )
+                fragment.presenterSelector = presenter
+                fragment
             } else {
                 throw IllegalStateException()
             }

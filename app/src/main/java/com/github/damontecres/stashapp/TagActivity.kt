@@ -12,6 +12,7 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter.PagerEntry
 
 class TagActivity : TabbedGridFragmentActivity() {
     override fun getTitleText(): CharSequence? {
@@ -22,23 +23,20 @@ class TagActivity : TabbedGridFragmentActivity() {
         val tagId = intent.getStringExtra("tagId")!!
         val includeSubTags = intent.getBooleanExtra("includeSubTags", false)
         val tabs =
-            mutableListOf(
-                StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
-                StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY),
-                StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE),
-                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER),
-                StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER),
-                StashFragmentPagerAdapter.PagerEntry(
-                    getString(R.string.stashapp_sub_tags),
-                    DataType.TAG,
-                ),
+            listOf(
+                PagerEntry(DataType.SCENE),
+                PagerEntry(DataType.GALLERY),
+                PagerEntry(DataType.IMAGE),
+                PagerEntry(DataType.MARKER),
+                PagerEntry(DataType.PERFORMER),
+                PagerEntry(getString(R.string.stashapp_sub_tags), DataType.TAG),
             )
 
         return TabPageAdapter(tabs, tagId, includeSubTags, supportFragmentManager)
     }
 
     class TabPageAdapter(
-        tabs: MutableList<PagerEntry>,
+        tabs: List<PagerEntry>,
         private val tagId: String,
         private val includeSubTags: Boolean,
         fm: FragmentManager,

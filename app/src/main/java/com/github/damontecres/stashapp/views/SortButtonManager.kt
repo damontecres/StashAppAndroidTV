@@ -1,0 +1,146 @@
+package com.github.damontecres.stashapp.views
+
+import android.text.Spannable
+import android.text.SpannableString
+import android.util.Log
+import android.view.View
+import android.widget.AdapterView
+import android.widget.Button
+import androidx.appcompat.widget.ListPopupWindow
+import com.github.damontecres.stashapp.FilterListActivity.SortByArrayAdapter
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
+import com.github.damontecres.stashapp.util.getRandomSort
+
+/**
+ * Manages a button for sorting items. It will setup the list popup with the right sort options for the given [DataType].
+ */
+class SortButtonManager(val newSortCallback: (SortAndDirection) -> Unit) {
+    fun setUpSortButton(
+        sortButton: Button,
+        dataType: DataType,
+        sortAndDirection: SortAndDirection,
+    ) {
+        val context = sortButton.context
+
+        setSortButtonText(sortButton, sortAndDirection)
+
+        val listPopUp =
+            ListPopupWindow(
+                context,
+                null,
+                android.R.attr.listPopupWindowStyle,
+            )
+        val serverVersion = ServerPreferences(context).serverVersion
+        // Resolve the strings, then sort
+        val sortOptions =
+            dataType.sortOptions
+                .filter { serverVersion.isAtLeast(it.requiresVersion) }
+                .map {
+                    Pair(
+                        it.key,
+                        context.getString(it.nameStringId),
+                    )
+                }.sortedBy { it.second }
+        val resolvedNames = sortOptions.map { it.second }
+
+        val isRandom = sortAndDirection.sort.startsWith("random")
+        val index =
+            if (isRandom) {
+                sortOptions.map { it.first }.indexOf("random")
+            } else {
+                sortOptions.map { it.first }.indexOf(sortAndDirection.sort)
+            }
+        val adapter =
+            SortByArrayAdapter(
+                context,
+                resolvedNames,
+                index,
+                sortAndDirection.direction,
+            )
+        listPopUp.setAdapter(adapter)
+        listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
+        listPopUp.anchorView = sortButton
+
+        listPopUp.width = getMaxMeasuredWidth(context, adapter)
+        listPopUp.isModal = true
+
+        listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
+            val newSortBy = sortOptions[position].first
+            listPopUp.dismiss()
+
+            val currentDirection = sortAndDirection.direction
+            val currentKey = sortAndDirection.sort
+            val newDirection =
+                if (newSortBy == currentKey) {
+                    currentDirection.toggle()
+                } else {
+                    currentDirection
+                }
+            val resolvedNewSortBy =
+                if (newSortBy.startsWith("random")) {
+                    getRandomSort()
+                } else {
+                    newSortBy
+                }
+
+            val newSortAndDirection = SortAndDirection(resolvedNewSortBy, newDirection)
+            Log.v(TAG, "newSortAndDirection=$newSortAndDirection")
+            newSortCallback(newSortAndDirection)
+            setUpSortButton(sortButton, dataType, newSortAndDirection)
+        }
+
+        sortButton.setOnClickListener {
+            val currentDirection = sortAndDirection.direction
+            val currentKey = sortAndDirection.sort
+            val currentIndex = sortOptions.map { it.first }.indexOf(currentKey)
+            adapter.currentIndex = currentIndex
+            adapter.currentDirection = currentDirection
+
+            listPopUp.show()
+            listPopUp.listView?.requestFocus()
+        }
+    }
+
+    private fun setSortButtonText(
+        sortButton: Button,
+        sortAndDirection: SortAndDirection,
+    ) {
+        val context = sortButton.context
+        val sortBy = sortAndDirection.sort
+        val directionString =
+            when (sortAndDirection.direction) {
+                SortDirectionEnum.ASC -> context.getString(R.string.fa_caret_up)
+                SortDirectionEnum.DESC -> context.getString(R.string.fa_caret_down)
+                SortDirectionEnum.UNKNOWN__ -> null
+            }
+        if (sortAndDirection.isRandom) {
+            sortButton.text = context.getString(R.string.stashapp_random)
+        } else if (directionString != null) {
+            SpannableString("$directionString $sortBy").apply {
+                val start = 0
+                val end = 1
+                setSpan(
+                    FontSpan(StashApplication.getFont(R.font.fa_solid_900)),
+                    start,
+                    end,
+                    Spannable.SPAN_INCLUSIVE_INCLUSIVE,
+                )
+                sortButton.text = this
+            }
+        } else {
+            sortButton.text = sortBy
+        }
+    }
+
+    fun SortDirectionEnum.toggle(): SortDirectionEnum = if (this == SortDirectionEnum.ASC) SortDirectionEnum.DESC else SortDirectionEnum.ASC
+
+    companion object {
+        private val TAG = SortButtonManager::class.java.simpleName
+    }
+}
