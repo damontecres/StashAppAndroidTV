@@ -55,7 +55,7 @@ class StashGridFragment2() : Fragment() {
     private lateinit var mAdapter: ObjectAdapter
 
     // Arguments
-    private lateinit var filterArgs: FilterArgs
+    private lateinit var _filterArgs: FilterArgs
     private lateinit var _currentSortAndDirection: SortAndDirection
 
     // State
@@ -72,10 +72,6 @@ class StashGridFragment2() : Fragment() {
     var sortButtonEnabled = false
     var presenterSelector: PresenterSelector = StashPresenter.SELECTOR
     var onItemViewClickedListener: OnItemViewClickedListener? = null
-        set(value) {
-            field = value
-            mGridPresenter.onItemViewClickedListener = value
-        }
     var currentSelectedPosition: Int
         get() = mSelectedPosition
         set(position) {
@@ -87,9 +83,11 @@ class StashGridFragment2() : Fragment() {
 
     // Unmodifiable properties, current state
     val dataType: DataType
-        get() = filterArgs.dataType
+        get() = _filterArgs.dataType
     val currentSortAndDirection: SortAndDirection
         get() = _currentSortAndDirection
+    val filterArgs: FilterArgs
+        get() = _filterArgs.with(currentSortAndDirection)
 
     private val mViewSelectedListener =
         OnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
@@ -117,10 +115,10 @@ class StashGridFragment2() : Fragment() {
         cardSize: Int? = null,
         scrollToNextPage: Boolean = false,
     ) : this() {
-        this.filterArgs =
+        this._filterArgs =
             filterArgs.ensureParsed(FilterParser(StashServer.getCurrentServerVersion()))
         this.cardSize = cardSize
-        this._currentSortAndDirection = filterArgs.sortAndDirection
+        this._currentSortAndDirection = _filterArgs.sortAndDirection
         this.scrollToNextPage = scrollToNextPage
     }
 
@@ -221,10 +219,11 @@ class StashGridFragment2() : Fragment() {
         positionTextView = view.findViewById(R.id.position_text)
         totalCountTextView = view.findViewById(R.id.total_count_text)
 
-        onItemViewClickedListener = StashItemViewClickListener(requireContext())
+        mGridPresenter.onItemViewClickedListener =
+            onItemViewClickedListener ?: StashItemViewClickListener(requireContext())
 
         if (savedInstanceState == null) {
-            refresh(filterArgs.sortAndDirection) {
+            refresh(_filterArgs.sortAndDirection) {
                 if (scrollToNextPage) {
                     currentSelectedPosition =
                         PreferenceManager.getDefaultSharedPreferences(requireContext())
@@ -232,12 +231,12 @@ class StashGridFragment2() : Fragment() {
                 }
             }
         } else {
-            filterArgs = savedInstanceState.getParcelable("filterArgs")!!
-            Log.v(TAG, "sortAndDirection=${filterArgs.sortAndDirection}")
+            _filterArgs = savedInstanceState.getParcelable("_filterArgs")!!
+            Log.v(TAG, "sortAndDirection=${_filterArgs.sortAndDirection}")
             val previousPosition = savedInstanceState.getInt("mSelectedPosition")
             Log.v(TAG, "previousPosition=$previousPosition")
 
-            refresh(filterArgs.sortAndDirection) {
+            refresh(_filterArgs.sortAndDirection) {
                 if (previousPosition > 0) {
                     positionTextView.text = (previousPosition + 1).toString()
                     mGridViewHolder.gridView.requestFocus()
@@ -250,7 +249,7 @@ class StashGridFragment2() : Fragment() {
             sortButtonTransitionHelper = TitleTransitionHelper(view as ViewGroup, sortButton)
             SortButtonManager {
                 refresh(it)
-            }.setUpSortButton(sortButton, dataType, filterArgs.sortAndDirection)
+            }.setUpSortButton(sortButton, dataType, _filterArgs.sortAndDirection)
         }
     }
 
@@ -258,7 +257,7 @@ class StashGridFragment2() : Fragment() {
         super.onSaveInstanceState(outState)
         outState.putInt("mSelectedPosition", mSelectedPosition)
         cardSize?.let { outState.putInt("cardSize", it) }
-        outState.putParcelable("filterArgs", filterArgs.with(currentSortAndDirection))
+        outState.putParcelable("_filterArgs", _filterArgs.with(currentSortAndDirection))
         outState.putString("name", name)
         outState.putBoolean("sortButtonEnabled", sortButtonEnabled)
     }
@@ -289,7 +288,7 @@ class StashGridFragment2() : Fragment() {
     ) {
         Log.v(
             TAG,
-            "refresh: dataType=${filterArgs.dataType}, newSortAndDirection=$newSortAndDirection",
+            "refresh: dataType=${_filterArgs.dataType}, newSortAndDirection=$newSortAndDirection",
         )
         val pagingAdapter = PagingDataAdapter(presenterSelector, StashComparator)
         mAdapter = pagingAdapter
@@ -299,7 +298,7 @@ class StashGridFragment2() : Fragment() {
                 .getInt("maxSearchResults", 50)
         val factory = DataSupplierFactory(ServerPreferences(requireContext()).serverVersion)
         val dataSupplier =
-            factory.create<Query.Data, Any, Query.Data>(filterArgs.with(newSortAndDirection))
+            factory.create<Query.Data, Any, Query.Data>(_filterArgs.with(newSortAndDirection))
         val pagingSource =
             StashPagingSource(
                 requireContext(),

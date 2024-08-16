@@ -20,7 +20,6 @@ import androidx.core.view.get
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -535,15 +534,7 @@ class FilterListActivity : FragmentActivity() {
             }
         fragment.requestFocus = true
         if (dataType == DataType.IMAGE) {
-            fragment.onItemViewClickedListener =
-                ImageGridClickedListener(this, fragment as StashGridFragment<*, ImageData, *>) {
-                    Log.v(TAG, "Image click with filter=${this@FilterListActivity.filter}")
-                    it.putExtra(ImageActivity.INTENT_FILTER, this@FilterListActivity.filter)
-                    it.putExtra(
-                        ImageActivity.INTENT_FILTER_TYPE,
-                        this@FilterListActivity.filter?.filterType?.name,
-                    )
-                }
+            fragment.onItemViewClickedListener = ImageGridClickedListener(fragment)
         }
         filterDataByName[name] = filter
         setUpSortButton()

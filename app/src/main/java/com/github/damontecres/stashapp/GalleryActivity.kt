@@ -19,7 +19,6 @@ import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.bumptech.glide.request.target.Target
 import com.github.damontecres.stashapp.api.fragment.GalleryData
-import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.ImageFilterType
@@ -38,7 +37,7 @@ import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
-import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
+import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import kotlinx.coroutines.launch
 
 class GalleryActivity : FragmentActivity() {
@@ -111,13 +110,7 @@ class GalleryActivity : FragmentActivity() {
                                 objectFilter = ImageFilterType(galleries = galleries),
                                 cardSize = getColumns(DataType.IMAGE),
                             )
-                        fragment.onItemViewClickedListener =
-                            ClassOnItemViewClickedListener.SimpleOnItemViewClickedListener<ImageData> {
-                                TODO()
-//                                ImageGridClickedListener(this@GalleryActivity, fragment) {
-//                                    it.putExtra(ImageActivity.INTENT_GALLERY_ID, gallery.id)
-//                                }
-                            }
+                        fragment.onItemViewClickedListener = ImageGridClickedListener(fragment)
                         fragment
                     }
 
