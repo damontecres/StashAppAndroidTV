@@ -46,72 +46,49 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class StashGridFragment2() : Fragment() {
+    // Views
     private lateinit var sortButton: Button
-    var sortButtonEnabled = false
+    private lateinit var positionTextView: TextView
+    private lateinit var totalCountTextView: TextView
+    private lateinit var mGridPresenter: VerticalGridPresenter
+    private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
+    private lateinit var mAdapter: ObjectAdapter
 
-    var presenterSelector: PresenterSelector = StashPresenter.SELECTOR
-
+    // Arguments
     private lateinit var filterArgs: FilterArgs
+    private lateinit var _currentSortAndDirection: SortAndDirection
+
+    // State
+    private var mOnItemViewSelectedListener: OnItemViewSelectedListener? = null
+    private var mSelectedPosition = -1
+    private var titleTransitionHelper: TitleTransitionHelper? = null
     private var cardSize: Int? = null
     private var scrollToNextPage = false
 
-    val dataType: DataType
-        get() = filterArgs.dataType
-
-    constructor(
-        filterArgs: FilterArgs,
-        cardSize: Int? = null,
-        scrollToNextPage: Boolean = false,
-    ) : this() {
-        this.filterArgs =
-            filterArgs.ensureParsed(FilterParser(StashServer.getCurrentServerVersion()))
-        this.cardSize = cardSize
-        this._currentSortAndDirection = filterArgs.sortAndDirection
-        this.scrollToNextPage = scrollToNextPage
-    }
-
-    constructor(
-        dataType: DataType,
-        findFilter: StashFindFilter? = null,
-        objectFilter: Any? = null,
-        cardSize: Int? = null,
-        scrollToNextPage: Boolean = false,
-    ) : this(FilterArgs(dataType, findFilter, objectFilter), cardSize, scrollToNextPage)
-
-    private lateinit var mAdapter: ObjectAdapter
-    private lateinit var mGridPresenter: VerticalGridPresenter
-    private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
-    private var mOnItemViewSelectedListener: OnItemViewSelectedListener? = null
-
+    // Modifiable properties
+    var requestFocus: Boolean = false
+    var name: String? = null
+    var sortButtonEnabled = false
+    var presenterSelector: PresenterSelector = StashPresenter.SELECTOR
     var onItemViewClickedListener: OnItemViewClickedListener? = null
         set(value) {
             field = value
             mGridPresenter.onItemViewClickedListener = value
         }
-
-    private var mSelectedPosition = -1
-
     var currentSelectedPosition: Int
         get() = mSelectedPosition
         set(position) {
             mSelectedPosition = position
-            if (mGridViewHolder != null && mGridViewHolder.gridView.adapter != null) {
+            if (mGridViewHolder.gridView.adapter != null) {
                 mGridViewHolder.gridView.setSelectedPositionSmooth(position)
             }
         }
 
-    private var titleTransitionHelper: TitleTransitionHelper? = null
-
-    private lateinit var _currentSortAndDirection: SortAndDirection
+    // Unmodifiable properties, current state
+    val dataType: DataType
+        get() = filterArgs.dataType
     val currentSortAndDirection: SortAndDirection
         get() = _currentSortAndDirection
-
-    private lateinit var positionTextView: TextView
-    private lateinit var totalCountTextView: TextView
-
-    var requestFocus: Boolean = false
-
-    var name: String? = null
 
     private val mViewSelectedListener =
         OnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
@@ -133,6 +110,26 @@ class StashGridFragment2() : Fragment() {
                 showOrHideTitle()
             }
         }
+
+    constructor(
+        filterArgs: FilterArgs,
+        cardSize: Int? = null,
+        scrollToNextPage: Boolean = false,
+    ) : this() {
+        this.filterArgs =
+            filterArgs.ensureParsed(FilterParser(StashServer.getCurrentServerVersion()))
+        this.cardSize = cardSize
+        this._currentSortAndDirection = filterArgs.sortAndDirection
+        this.scrollToNextPage = scrollToNextPage
+    }
+
+    constructor(
+        dataType: DataType,
+        findFilter: StashFindFilter? = null,
+        objectFilter: Any? = null,
+        cardSize: Int? = null,
+        scrollToNextPage: Boolean = false,
+    ) : this(FilterArgs(dataType, findFilter, objectFilter), cardSize, scrollToNextPage)
 
     @SuppressLint("SetTextI18n")
     private fun gridOnItemSelected(position: Int) {
@@ -213,6 +210,7 @@ class StashGridFragment2() : Fragment() {
         return root
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -272,11 +270,9 @@ class StashGridFragment2() : Fragment() {
     }
 
     private fun updateAdapter() {
-        if (mGridViewHolder != null) {
-            mGridPresenter.onBindViewHolder(mGridViewHolder, mAdapter)
-            if (mSelectedPosition != -1) {
-                mGridViewHolder.gridView.selectedPosition = mSelectedPosition
-            }
+        mGridPresenter.onBindViewHolder(mGridViewHolder, mAdapter)
+        if (mSelectedPosition != -1) {
+            mGridViewHolder.gridView.selectedPosition = mSelectedPosition
         }
     }
 
