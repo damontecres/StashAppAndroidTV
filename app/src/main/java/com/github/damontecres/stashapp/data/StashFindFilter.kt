@@ -11,6 +11,8 @@ data class StashFindFilter(
     val q: String? = null,
     val sortAndDirection: SortAndDirection? = null,
 ) : Parcelable {
+    constructor(sortAndDirection: SortAndDirection) : this(null, sortAndDirection)
+
     fun toFindFilterType(): FindFilterType =
         FindFilterType(
             q = Optional.presentIfNotNull(q),
