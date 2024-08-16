@@ -62,6 +62,7 @@ class StashGridFragment2() : Fragment() {
     private var mOnItemViewSelectedListener: OnItemViewSelectedListener? = null
     private var mSelectedPosition = -1
     private var titleTransitionHelper: TitleTransitionHelper? = null
+    private var sortButtonTransitionHelper: TitleTransitionHelper? = null
     private var cardSize: Int? = null
     private var scrollToNextPage = false
 
@@ -246,6 +247,7 @@ class StashGridFragment2() : Fragment() {
         }
         if (sortButtonEnabled) {
             sortButton.visibility = View.VISIBLE
+            sortButtonTransitionHelper = TitleTransitionHelper(view as ViewGroup, sortButton)
             SortButtonManager {
                 refresh(it)
             }.setUpSortButton(sortButton, dataType, filterArgs.sortAndDirection)
@@ -394,6 +396,7 @@ class StashGridFragment2() : Fragment() {
     }
 
     fun showTitle(show: Boolean) {
+        sortButtonTransitionHelper?.showTitle(show)
         titleTransitionHelper?.showTitle(show)
     }
 
