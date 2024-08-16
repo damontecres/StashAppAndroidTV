@@ -12,7 +12,15 @@ import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.Version
 import kotlinx.parcelize.Parcelize
 
+/**
+ * A factory to create [StashPagingSource.DataSupplier]s
+ */
 class DataSupplierFactory(val serverVersion: Version) {
+    /**
+     * Create a [StashPagingSource.DataSupplier] for the given [FilterArgs]
+     *
+     * If the [FilterArgs] has an override, that is always used.
+     */
     fun <T : Query.Data, D : Any, C : Query.Data> create(args: FilterArgs): StashPagingSource.DataSupplier<T, D, C> {
         val filterParser = FilterParser(serverVersion)
         if (args.override != null) {
@@ -75,6 +83,11 @@ class DataSupplierFactory(val serverVersion: Version) {
     }
 }
 
+/**
+ * Represents a [StashPagingSource.DataSupplier] that is atypical.
+ *
+ * This usually means filtering based on the ID of one [DataType] but querying for a different [DataType] such as the tags on a performer.
+ */
 @Parcelize
 sealed class DataSupplierOverride : Parcelable {
     data class PerformerTags(val performerId: String) : DataSupplierOverride()
@@ -84,6 +97,13 @@ sealed class DataSupplierOverride : Parcelable {
     data class GalleryTag(val galleryId: String) : DataSupplierOverride()
 }
 
+/**
+ * Represents a filter that can be used to create a [StashPagingSource.DataSupplier].
+ *
+ * Optionally, a find filter and/or object filter can be provided, otherwise they will default the data supplier's implementation.
+ *
+ * Optionally, a [DataSupplierOverride] can be provided which always overrides which data supplier to use.
+ */
 data class FilterArgs(
     val dataType: DataType,
     val findFilter: StashFindFilter? = null,
@@ -112,6 +132,11 @@ data class FilterArgs(
                     ?: StashFindFilter(sortAndDirection = newSortAndDirection),
         )
 
+    /**
+     * Returns a copy of this object which guarantees that the object filter is a FilterType object and not a Map<String, *>
+     *
+     * This means that the returned [FilterArgs] is parcelable
+     */
     fun ensureParsed(filterParser: FilterParser): FilterArgs {
         val objectFilter =
             when (dataType) {

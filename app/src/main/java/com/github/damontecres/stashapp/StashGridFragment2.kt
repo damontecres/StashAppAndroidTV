@@ -45,6 +45,11 @@ import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+/**
+ * A [Fragment] that shows a grid of items of the same [DataType].
+ *
+ * The items are derived from a [FilterArgs] and queried via [DataSupplierFactory].
+ */
 class StashGridFragment2() : Fragment() {
     // Views
     private lateinit var sortButton: Button
@@ -67,11 +72,35 @@ class StashGridFragment2() : Fragment() {
     private var scrollToNextPage = false
 
     // Modifiable properties
+
+    /**
+     * Request that the grid receive focus in [onStart]
+     */
     var requestFocus: Boolean = false
+
+    /**
+     * An optional name for this fragment, not used in this View
+     */
     var name: String? = null
+
+    /**
+     * Whether to enable the built-in sort button, defaults to false
+     */
     var sortButtonEnabled = false
+
+    /**
+     * The presenter for the items, defaults to [StashPresenter.SELECTOR]
+     */
     var presenterSelector: PresenterSelector = StashPresenter.SELECTOR
+
+    /**
+     * The item clicked listener, will default to [StashItemViewClickListener] in [onViewCreated] if not specified before
+     */
     var onItemViewClickedListener: OnItemViewClickedListener? = null
+
+    /**
+     * Get or set the currently selected item
+     */
     var currentSelectedPosition: Int
         get() = mSelectedPosition
         set(position) {
@@ -82,10 +111,22 @@ class StashGridFragment2() : Fragment() {
         }
 
     // Unmodifiable properties, current state
+
+    /**
+     * Type of items being displayed
+     */
     val dataType: DataType
         get() = _filterArgs.dataType
+
+    /**
+     * The current [SortAndDirection] of the items
+     */
     val currentSortAndDirection: SortAndDirection
         get() = _currentSortAndDirection
+
+    /**
+     * The current [FilterArgs] which may not be the original provided in the constructor!
+     */
     val filterArgs: FilterArgs
         get() = _filterArgs.with(currentSortAndDirection)
 

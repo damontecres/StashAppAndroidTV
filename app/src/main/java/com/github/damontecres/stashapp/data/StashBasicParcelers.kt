@@ -23,9 +23,25 @@ import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 
+// This file contains the parcelize implementation for "primitive" object filter types (int, float, gender, etc)
+
+/**
+ * Represents that the next object is null
+ */
 const val ABSENT = 0.toByte()
+
+/**
+ * Represents that the next object is not null
+ */
 const val PRESENT = 1.toByte()
 
+/**
+ * The generated FilterType objects cannot be directly parcelized and must be held in another object.
+ *
+ * This interface is the parent for those other objects.
+ *
+ * See [createFilterHolder]
+ */
 interface FilterHolder<T> : Parcelable {
     val value: T?
 }
