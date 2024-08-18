@@ -378,7 +378,7 @@ class QueryEngine(
         useRandom: Boolean = true,
     ): FindFilterType? {
         return if (filter != null) {
-            if (useRandom && filter.sort.getOrNull()?.startsWith("random_") == true) {
+            if (useRandom && filter.sort.getOrNull()?.startsWith("random") == true) {
                 Log.v(TAG, "Updating random filter")
                 filter.copy(sort = Optional.present(getRandomSort()))
             } else {

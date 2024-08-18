@@ -314,9 +314,33 @@ class FilterListActivity : FragmentActivity() {
             if (savedFilterId != null) {
                 Log.v(TAG, "getStartingFilter: filter is a saved filter id=$savedFilterId")
                 // Load a saved filter
+                val savedFilter = queryEngine.getSavedFilter(savedFilterId.toString())
+                if (savedFilter == null) {
+                    return@withContext Pair(FilterType.SAVED_FILTER, null)
+                }
+                // If the caller gave a sort/direction/etc, use them to override the saved filter's
+                val findFilter =
+                    if (savedFilter.find_filter == null) {
+                        SavedFilterData.Find_filter(
+                            query,
+                            null,
+                            null,
+                            sort = sortBy,
+                            direction = direction?.let { SortDirectionEnum.safeValueOf(it) },
+                            "",
+                        )
+                    } else {
+                        savedFilter.find_filter.copy(
+                            q = query ?: savedFilter.find_filter.q,
+                            sort = sortBy ?: savedFilter.find_filter.sort,
+                            direction =
+                                direction?.let { SortDirectionEnum.safeValueOf(it) }
+                                    ?: savedFilter.find_filter.direction,
+                        )
+                    }
                 return@withContext Pair(
                     FilterType.SAVED_FILTER,
-                    queryEngine.getSavedFilter(savedFilterId.toString()),
+                    savedFilter.copy(find_filter = findFilter),
                 )
             } else if (direction != null || sortBy != null || query != null) {
                 Log.v(
