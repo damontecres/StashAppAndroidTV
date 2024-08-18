@@ -235,23 +235,25 @@ class MutationEngine(
         return result.data?.sceneUpdate
     }
 
+    suspend fun updateMarker(input: SceneMarkerUpdateInput): MarkerData? {
+        val mutation = UpdateMarkerMutation(input = input)
+        val result = executeMutation(mutation)
+        return result.data?.sceneMarkerUpdate?.markerData
+    }
+
     suspend fun setTagsOnMarker(
         markerId: String,
         primaryTagId: String,
         tagIds: List<String>,
     ): MarkerData? {
         Log.v(TAG, "setTagsOnMarker markerId=$markerId, primaryTagId=$primaryTagId, tagIds=$tagIds")
-        val mutation =
-            UpdateMarkerMutation(
-                input =
-                    SceneMarkerUpdateInput(
-                        id = markerId,
-                        primary_tag_id = Optional.present(primaryTagId),
-                        tag_ids = Optional.present(tagIds),
-                    ),
-            )
-        val result = executeMutation(mutation)
-        return result.data?.sceneMarkerUpdate?.markerData
+        return updateMarker(
+            SceneMarkerUpdateInput(
+                id = markerId,
+                primary_tag_id = Optional.present(primaryTagId),
+                tag_ids = Optional.present(tagIds),
+            ),
+        )
     }
 
     suspend fun setPerformersOnScene(
