@@ -237,7 +237,7 @@ class StashGridFragment() : Fragment() {
     ): View? {
         val root =
             inflater.inflate(
-                R.layout.stash_grid_fragment2,
+                R.layout.stash_grid_fragment,
                 container,
                 false,
             ) as ViewGroup

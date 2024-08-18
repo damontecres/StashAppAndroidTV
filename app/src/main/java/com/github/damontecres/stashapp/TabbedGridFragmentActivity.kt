@@ -14,7 +14,7 @@ import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.TabbedGridTitleView
 import com.google.android.material.tabs.TabLayout
 
-abstract class TabbedGridFragmentActivity : FragmentActivity(R.layout.tabbed_grid_view2) {
+abstract class TabbedGridFragmentActivity : FragmentActivity(R.layout.tabbed_grid_view) {
     private lateinit var titleView: TabbedGridTitleView
     private lateinit var adapter: StashFragmentPagerAdapter
     private lateinit var sortButton: Button
