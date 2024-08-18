@@ -1,5 +1,8 @@
 package com.github.damontecres.stashapp
 
+import com.apollographql.apollo3.api.CustomScalarAdapters
+import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo3.api.json.BufferedSinkJsonWriter
 import com.apollographql.apollo3.api.json.BufferedSourceJsonReader
 import com.apollographql.apollo3.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
@@ -7,15 +10,23 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.GenderEnum
+import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.adapter.SceneFilterType_InputAdapter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.Version
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import okio.FileSystem
 import okio.Path.Companion.toPath
+import okio.buffer
+import okio.sink
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.junit.MockitoJUnitRunner
+import java.io.ByteArrayOutputStream
 
 @RunWith(MockitoJUnitRunner::class)
 class ObjectFilterParsingTests {
@@ -23,16 +34,46 @@ class ObjectFilterParsingTests {
     fun init() {
     }
 
-    /**
-     * Get the SavedFilterData from a json file resource
-     */
-    private fun getSavedFilterData(file: String): SavedFilterData {
-        val path = file.toPath()
-        FileSystem.RESOURCES.read(path) {
-            val jsonReader = BufferedSourceJsonReader(this)
-            val response = FindSavedFilterQuery("1").parseJsonResponse(jsonReader)
-            return response.data!!.findSavedFilter!!.savedFilterData
+    companion object {
+        /**
+         * Get the SavedFilterData from a json file resource
+         */
+        fun getSavedFilterData(file: String): SavedFilterData {
+            val path = file.toPath()
+            FileSystem.RESOURCES.read(path) {
+                val jsonReader = BufferedSourceJsonReader(this)
+                val response = FindSavedFilterQuery("1").parseJsonResponse(jsonReader)
+                return response.data!!.findSavedFilter!!.savedFilterData
+            }
         }
+    }
+
+    @Test
+    fun testJson() {
+        val filter =
+            SceneFilterType(
+                file_count =
+                    Optional.present(
+                        IntCriterionInput(
+                            100,
+                            Optional.absent(),
+                            CriterionModifier.INCLUDES_ALL,
+                        ),
+                    ),
+            )
+        val baos = ByteArrayOutputStream()
+        val sink = baos.sink().buffer()
+        val writer = BufferedSinkJsonWriter(sink)
+        writer.beginObject()
+        SceneFilterType_InputAdapter.toJson(
+            writer,
+            CustomScalarAdapters.Empty,
+            filter,
+        )
+        writer.endObject()
+        sink.flush()
+        val json = baos.toByteArray().toString(Charsets.UTF_8)
+        val map = Json.parseToJsonElement(json).jsonObject.toMap()
     }
 
     @Test

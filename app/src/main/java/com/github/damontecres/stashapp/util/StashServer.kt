@@ -5,10 +5,15 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.SettingsFragment
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 
 data class StashServer(val url: String, val apiKey: String?) {
     companion object {
+        fun getCurrentServerVersion(): Version {
+            return ServerPreferences(StashApplication.getApplication()).serverVersion
+        }
+
         fun getCurrentStashServer(context: Context): StashServer? {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
             val url = manager.getString(SettingsFragment.PREF_STASH_URL, null)

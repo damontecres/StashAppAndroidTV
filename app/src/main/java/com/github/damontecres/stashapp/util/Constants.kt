@@ -255,12 +255,18 @@ suspend fun testStashConnection(
     return TestResult(TestResultStatus.ERROR)
 }
 
-fun SavedFilterData.Find_filter.toFindFilterType(): FindFilterType {
+fun SavedFilterData.Find_filter.toFindFilterType(resolveRandom: Boolean = false): FindFilterType {
+    val newSort =
+        if (sort != null && resolveRandom && sort.startsWith("random")) {
+            getRandomSort()
+        } else {
+            sort
+        }
     return FindFilterType(
         q = Optional.presentIfNotNull(this.q),
         page = Optional.presentIfNotNull(this.page),
         per_page = Optional.presentIfNotNull(this.per_page),
-        sort = Optional.presentIfNotNull(this.sort),
+        sort = Optional.presentIfNotNull(newSort),
         direction = Optional.presentIfNotNull(this.direction),
     )
 }

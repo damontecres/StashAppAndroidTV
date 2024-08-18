@@ -28,6 +28,7 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.github.damontecres.stashapp.api.CountImagesQuery
 import com.github.damontecres.stashapp.api.FindImagesQuery
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -39,6 +40,8 @@ import com.github.damontecres.stashapp.data.FilterType
 import com.github.damontecres.stashapp.data.StashCustomFilter
 import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
+import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.StashSparseFilterFetcher
@@ -48,6 +51,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isGif
@@ -118,9 +122,18 @@ class ImageActivity : FragmentActivity() {
     private suspend fun createDataSupplier(): ImageDataSupplier? {
         val pageSize =
             PreferenceManager.getDefaultSharedPreferences(this).getInt("maxSearchResults", 25)
+
+        val filterArgs: FilterArgs? = intent.getParcelableExtra(INTENT_FILTER_ARGS)
+
         val galleryId = intent.getStringExtra(INTENT_GALLERY_ID)
         val filterType = FilterType.safeValueOf(intent.getStringExtra(INTENT_FILTER_TYPE))
-        if (galleryId != null && currentPosition >= 0) {
+        if (filterArgs != null) {
+            return DataSupplierFactory(
+                StashServer.getCurrentServerVersion(),
+            ).create<FindImagesQuery.Data, ImageData, CountImagesQuery.Data>(
+                filterArgs,
+            ) as ImageDataSupplier
+        } else if (galleryId != null && currentPosition >= 0) {
             return ImageDataSupplier(
                 DataType.IMAGE.asDefaultFindFilterType,
                 ImageFilterType(
@@ -255,6 +268,8 @@ class ImageActivity : FragmentActivity() {
         const val INTENT_GALLERY_ID = "gallery.id"
         const val INTENT_FILTER = "filter"
         const val INTENT_FILTER_TYPE = "filter.type"
+
+        const val INTENT_FILTER_ARGS = "filterArgs"
 
         fun isDpadKey(keyCode: Int): Boolean {
             return isDirectionalDpadKey(keyCode) ||

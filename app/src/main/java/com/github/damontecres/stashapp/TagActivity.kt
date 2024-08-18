@@ -1,8 +1,6 @@
 package com.github.damontecres.stashapp
 
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.viewpager.widget.PagerAdapter
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -13,54 +11,43 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
-import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
-import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
-import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
-import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
-import com.github.damontecres.stashapp.suppliers.TagDataSupplier
-import com.github.damontecres.stashapp.util.GalleryComparator
-import com.github.damontecres.stashapp.util.ImageComparator
-import com.github.damontecres.stashapp.util.ListFragmentPagerAdapter
-import com.github.damontecres.stashapp.util.MarkerComparator
-import com.github.damontecres.stashapp.util.PerformerComparator
-import com.github.damontecres.stashapp.util.SceneComparator
-import com.github.damontecres.stashapp.util.TagComparator
+import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter.PagerEntry
 
 class TagActivity : TabbedGridFragmentActivity() {
     override fun getTitleText(): CharSequence? {
         return intent.getStringExtra("tagName")
     }
 
-    override fun getPagerAdapter(): PagerAdapter {
+    override fun getPagerAdapter(): StashFragmentPagerAdapter {
         val tagId = intent.getStringExtra("tagId")!!
         val includeSubTags = intent.getBooleanExtra("includeSubTags", false)
         val tabs =
             listOf(
-                getString(DataType.SCENE.pluralStringId),
-                getString(DataType.GALLERY.pluralStringId),
-                getString(DataType.IMAGE.pluralStringId),
-                getString(DataType.MARKER.pluralStringId),
-                getString(DataType.PERFORMER.pluralStringId),
-                getString(R.string.stashapp_sub_tags),
+                PagerEntry(DataType.SCENE),
+                PagerEntry(DataType.GALLERY),
+                PagerEntry(DataType.IMAGE),
+                PagerEntry(DataType.MARKER),
+                PagerEntry(DataType.PERFORMER),
+                PagerEntry(getString(R.string.stashapp_sub_tags), DataType.TAG),
             )
 
         return TabPageAdapter(tabs, tagId, includeSubTags, supportFragmentManager)
     }
 
     class TabPageAdapter(
-        tabs: List<String>,
+        tabs: List<PagerEntry>,
         private val tagId: String,
         private val includeSubTags: Boolean,
         fm: FragmentManager,
     ) :
-        ListFragmentPagerAdapter(tabs, fm) {
-        override fun getItem(position: Int): Fragment {
+        StashFragmentPagerAdapter(tabs, fm) {
+        override fun getFragment(position: Int): StashGridFragment {
             val depth = Optional.present(if (includeSubTags) -1 else 0)
             return if (position == 0) {
                 StashGridFragment(
-                    SceneComparator,
-                    SceneDataSupplier(
+                    dataType = DataType.SCENE,
+                    objectFilter =
                         SceneFilterType(
                             tags =
                                 Optional.present(
@@ -71,12 +58,11 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     ),
                                 ),
                         ),
-                    ),
                 )
             } else if (position == 1) {
                 StashGridFragment(
-                    GalleryComparator,
-                    GalleryDataSupplier(
+                    dataType = DataType.GALLERY,
+                    objectFilter =
                         GalleryFilterType(
                             tags =
                                 Optional.present(
@@ -87,12 +73,11 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     ),
                                 ),
                         ),
-                    ),
                 )
             } else if (position == 2) {
                 StashGridFragment(
-                    ImageComparator,
-                    ImageDataSupplier(
+                    dataType = DataType.IMAGE,
+                    objectFilter =
                         ImageFilterType(
                             tags =
                                 Optional.present(
@@ -103,12 +88,11 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     ),
                                 ),
                         ),
-                    ),
                 )
             } else if (position == 3) {
                 StashGridFragment(
-                    MarkerComparator,
-                    MarkerDataSupplier(
+                    dataType = DataType.MARKER,
+                    objectFilter =
                         SceneMarkerFilterType(
                             tags =
                                 Optional.present(
@@ -119,12 +103,11 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     ),
                                 ),
                         ),
-                    ),
                 )
             } else if (position == 4) {
                 StashGridFragment(
-                    PerformerComparator,
-                    PerformerDataSupplier(
+                    dataType = DataType.PERFORMER,
+                    objectFilter =
                         PerformerFilterType(
                             tags =
                                 Optional.present(
@@ -135,13 +118,11 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     ),
                                 ),
                         ),
-                    ),
                 )
             } else if (position == 5) {
                 StashGridFragment(
-                    TagComparator,
-                    TagDataSupplier(
-                        DataType.TAG.asDefaultFindFilterType,
+                    dataType = DataType.TAG,
+                    objectFilter =
                         TagFilterType(
                             parents =
                                 Optional.present(
@@ -152,7 +133,6 @@ class TagActivity : TabbedGridFragmentActivity() {
                                     ),
                                 ),
                         ),
-                    ),
                 )
             } else {
                 throw IllegalStateException()

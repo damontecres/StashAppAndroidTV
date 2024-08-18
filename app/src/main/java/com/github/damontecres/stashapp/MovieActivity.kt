@@ -2,17 +2,16 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
-import androidx.leanback.widget.ObjectAdapter
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Movie
-import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
-import com.github.damontecres.stashapp.util.SceneComparator
+import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.getInt
 
 class MovieActivity : FragmentActivity() {
@@ -29,12 +28,10 @@ class MovieActivity : FragmentActivity() {
 
             val sceneFragment =
                 StashGridFragment(
-                    SceneComparator,
-                    SceneDataSupplier(
-                        FindFilterType(
-                            sort = Optional.present("movie_scene_number"),
-                            direction = Optional.present(SortDirectionEnum.ASC),
-                        ),
+                    dataType = DataType.SCENE,
+                    findFilter =
+                        StashFindFilter(SortAndDirection("movie_scene_number", SortDirectionEnum.ASC)),
+                    objectFilter =
                         SceneFilterType(
                             movies =
                                 Optional.present(
@@ -44,22 +41,15 @@ class MovieActivity : FragmentActivity() {
                                     ),
                                 ),
                         ),
-                    ),
-                    columns,
+                    cardSize = columns,
                 )
+            sceneFragment.sortButtonEnabled = true
+            sceneFragment.requestFocus = true
 
             supportFragmentManager.beginTransaction()
                 .replace(R.id.movie_fragment, MovieFragment())
                 .replace(R.id.movie_list_fragment, sceneFragment)
                 .commitNow()
-            sceneFragment.pagingAdapter.registerObserver(
-                object : ObjectAdapter.DataObserver() {
-                    override fun onChanged() {
-                        sceneFragment.view!!.requestFocus()
-                        sceneFragment.pagingAdapter.unregisterObserver(this)
-                    }
-                },
-            )
         }
     }
 }
