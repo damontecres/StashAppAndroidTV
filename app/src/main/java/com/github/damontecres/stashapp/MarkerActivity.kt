@@ -13,8 +13,10 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
@@ -28,6 +30,8 @@ import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SparseArrayObjectAdapter
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -50,6 +54,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.convertDpToPixel
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.views.MarkerPickerFragment
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
@@ -58,15 +63,21 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class MarkerActivity : FragmentActivity() {
+    private val viewModel by viewModels<MarkerDetailsViewModel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_details)
         if (savedInstanceState == null) {
             val marker = intent.getParcelableExtra<Marker>("marker")!!
             supportFragmentManager.beginTransaction()
-                .replace(android.R.id.content, MarkerDetailsFragment(marker))
-                .commitNow()
+                .add(android.R.id.content, MarkerDetailsFragment(marker))
+                .commit()
         }
+    }
+
+    class MarkerDetailsViewModel : ViewModel() {
+        val seconds = MutableLiveData<Double>()
     }
 
     class MarkerDetailsFragment(private var marker: Marker) : DetailsSupportFragment() {
@@ -81,6 +92,9 @@ class MarkerActivity : FragmentActivity() {
             private const val ACTIONS_POS = TAG_POS + 1
         }
 
+        private val viewModel by activityViewModels<MarkerDetailsViewModel>()
+
+        private val mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         private val mPresenterSelector = ClassPresenterSelector().addClassPresenter(ListRow::class.java, ListRowPresenter())
         private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
 
@@ -130,6 +144,11 @@ class MarkerActivity : FragmentActivity() {
                         intent.putExtra("dataType", dataType.name)
                         intent.putExtra(SearchForFragment.ID_KEY, action.id)
                         resultLauncher.launch(intent)
+                    } else if (action == StashAction.SHIFT_MARKERS) {
+                        requireActivity().supportFragmentManager.beginTransaction()
+                            .addToBackStack("picker")
+                            .replace(android.R.id.content, MarkerPickerFragment::class.java, null)
+                            .commit()
                     }
                 }
 
@@ -188,6 +207,7 @@ class MarkerActivity : FragmentActivity() {
                 StashItemViewClickListener(requireContext(), actionClickListener)
 
             sceneActionsAdapter.set(1, StashAction.ADD_TAG)
+            sceneActionsAdapter.set(2, StashAction.SHIFT_MARKERS)
             mAdapter.set(
                 ACTIONS_POS,
                 ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
@@ -209,7 +229,7 @@ class MarkerActivity : FragmentActivity() {
                         )
                         intent.putExtra(
                             SceneDetailsFragment.POSITION_ARG,
-                            (marker.seconds * 1000).toLong(),
+                            (viewModel.seconds.value!! * 1000).toLong(),
                         )
 
                         requireContext().startActivity(intent)
@@ -261,15 +281,26 @@ class MarkerActivity : FragmentActivity() {
                     )
             }
 
-            val playActionsAdapter = ArrayObjectAdapter()
-            playActionsAdapter.add(Action(1L, resources.getString(R.string.play_scene), durationToString(marker.seconds)))
-            row.actionsAdapter = playActionsAdapter
+            viewModel.seconds.observe(viewLifecycleOwner) { newSeconds ->
+                Log.v(TAG, "Marker newSeconds=$newSeconds")
+                val playActionsAdapter = ArrayObjectAdapter()
+                playActionsAdapter.add(
+                    Action(
+                        1L,
+                        resources.getString(R.string.play_scene),
+                        durationToString(newSeconds),
+                    ),
+                )
+                row.actionsAdapter = playActionsAdapter
+            }
+            if (!viewModel.seconds.isInitialized) {
+                viewModel.seconds.value = marker.seconds
+            }
 
             mAdapter.set(1, row)
         }
 
         private fun initializeBackground() {
-            val mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
             if (mDetailsBackground.coverBitmap == null) {
                 mDetailsBackground.enableParallax()
 
