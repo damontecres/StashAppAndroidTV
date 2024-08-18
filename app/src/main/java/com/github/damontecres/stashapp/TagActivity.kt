@@ -42,10 +42,10 @@ class TagActivity : TabbedGridFragmentActivity() {
         fm: FragmentManager,
     ) :
         StashFragmentPagerAdapter(tabs, fm) {
-        override fun getFragment(position: Int): StashGridFragment2 {
+        override fun getFragment(position: Int): StashGridFragment {
             val depth = Optional.present(if (includeSubTags) -1 else 0)
             return if (position == 0) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.SCENE,
                     objectFilter =
                         SceneFilterType(
@@ -60,7 +60,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                         ),
                 )
             } else if (position == 1) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.GALLERY,
                     objectFilter =
                         GalleryFilterType(
@@ -75,7 +75,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                         ),
                 )
             } else if (position == 2) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.IMAGE,
                     objectFilter =
                         ImageFilterType(
@@ -90,7 +90,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                         ),
                 )
             } else if (position == 3) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.MARKER,
                     objectFilter =
                         SceneMarkerFilterType(
@@ -105,7 +105,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                         ),
                 )
             } else if (position == 4) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.PERFORMER,
                     objectFilter =
                         PerformerFilterType(
@@ -120,7 +120,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                         ),
                 )
             } else if (position == 5) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.TAG,
                     objectFilter =
                         TagFilterType(

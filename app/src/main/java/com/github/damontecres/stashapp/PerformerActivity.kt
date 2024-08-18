@@ -81,7 +81,7 @@ class PerformerActivity : FragmentActivity() {
             return (columns * dataType.defaultCardRatio).toInt()
         }
 
-        override fun getFragment(position: Int): StashGridFragment2 {
+        override fun getFragment(position: Int): StashGridFragment {
             val performers =
                 Optional.present(
                     MultiCriterionInput(
@@ -92,25 +92,25 @@ class PerformerActivity : FragmentActivity() {
 
             val fragment =
                 if (position == 0) {
-                    StashGridFragment2(
+                    StashGridFragment(
                         dataType = DataType.SCENE,
                         objectFilter = SceneFilterType(performers = performers),
                         cardSize = getColumns(DataType.SCENE),
                     )
                 } else if (position == 1) {
-                    StashGridFragment2(
+                    StashGridFragment(
                         dataType = DataType.GALLERY,
                         objectFilter = GalleryFilterType(performers = performers),
                         cardSize = getColumns(DataType.GALLERY),
                     )
                 } else if (position == 2) {
-                    StashGridFragment2(
+                    StashGridFragment(
                         dataType = DataType.IMAGE,
                         objectFilter = ImageFilterType(performers = performers),
                         cardSize = getColumns(DataType.IMAGE),
                     )
                 } else if (position == 3) {
-                    StashGridFragment2(
+                    StashGridFragment(
                         dataType = DataType.MOVIE,
                         objectFilter = MovieFilterType(performers = performers),
                         cardSize = getColumns(DataType.MOVIE),
@@ -123,7 +123,7 @@ class PerformerActivity : FragmentActivity() {
                                 TagPresenter(PerformersWithTagLongClickCallback()),
                             )
                     val fragment =
-                        StashGridFragment2(
+                        StashGridFragment(
                             FilterArgs(
                                 dataType = DataType.TAG,
                                 override = DataSupplierOverride.PerformerTags(performer.id),
@@ -140,7 +140,7 @@ class PerformerActivity : FragmentActivity() {
                                 PerformerPresenter(PerformTogetherLongClickCallback(performer)),
                             )
                     val fragment =
-                        StashGridFragment2(
+                        StashGridFragment(
                             dataType = DataType.PERFORMER,
                             objectFilter =
                                 PerformerFilterType(

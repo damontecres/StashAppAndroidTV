@@ -40,7 +40,7 @@ abstract class TabbedGridFragmentActivity : FragmentActivity(R.layout.tabbed_gri
         }
 
         for (i in 0..<adapter.count) {
-            val fragment = adapter.getItem(i) as StashGridFragment2
+            val fragment = adapter.getItem(i) as StashGridFragment
 
             fragment.sortButtonEnabled = true
 
@@ -60,7 +60,7 @@ abstract class TabbedGridFragmentActivity : FragmentActivity(R.layout.tabbed_gri
                         if (tab == tabLayout.getTabAt(i)) {
                             currentTabPosition = i
                             val fragment =
-                                adapter.getItem(i) as StashGridFragment2
+                                adapter.getItem(i) as StashGridFragment
 
                             Log.v(
                                 TAG,
@@ -88,10 +88,10 @@ abstract class TabbedGridFragmentActivity : FragmentActivity(R.layout.tabbed_gri
         sortButton = findViewById<Button>(R.id.sort_button)
         sortButtonManager =
             SortButtonManager {
-                val fragment = adapter.getItem(currentTabPosition) as StashGridFragment2
+                val fragment = adapter.getItem(currentTabPosition) as StashGridFragment
                 fragment.refresh(it)
             }
-        val startFragment = adapter.getItem(0) as StashGridFragment2
+        val startFragment = adapter.getItem(0) as StashGridFragment
         sortButtonManager.setUpSortButton(
             sortButton,
             startFragment.dataType,

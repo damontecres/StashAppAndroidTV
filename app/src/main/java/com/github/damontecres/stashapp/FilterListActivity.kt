@@ -155,12 +155,12 @@ class FilterListActivity : FragmentActivity() {
 
         titleTextView = findViewById(R.id.list_title)
         supportFragmentManager.addFragmentOnAttachListener { _, fragment ->
-            val name = (fragment as StashGridFragment2).name
+            val name = (fragment as StashGridFragment).name
             titleTextView.text = name
         }
         supportFragmentManager.addOnBackStackChangedListener {
             val fragment =
-                supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment2?
+                supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
             titleTextView.text = fragment?.name
             filterData = filterDataByName[fragment?.name]
 
@@ -471,7 +471,7 @@ class FilterListActivity : FragmentActivity() {
         findFilter: FindFilterType?,
         objectFilter: Any?,
         scrollToNextPage: Boolean,
-    ): StashGridFragment2 {
+    ): StashGridFragment {
         val cardSize =
             PreferenceManager.getDefaultSharedPreferences(this)
                 .getInt("cardSize", getString(R.string.card_size_default))
@@ -479,7 +479,7 @@ class FilterListActivity : FragmentActivity() {
             (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
 
         val fragment =
-            StashGridFragment2(
+            StashGridFragment(
                 dataType = dataType,
                 findFilter = findFilter?.toStashFindFilter(),
                 objectFilter = objectFilter,

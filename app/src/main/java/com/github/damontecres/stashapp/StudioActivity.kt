@@ -42,7 +42,7 @@ class StudioActivity : TabbedGridFragmentActivity() {
         fm: FragmentManager,
     ) :
         StashFragmentPagerAdapter(tabs, fm) {
-        override fun getFragment(position: Int): StashGridFragment2 {
+        override fun getFragment(position: Int): StashGridFragment {
             val studios =
                 Optional.present(
                     HierarchicalMultiCriterionInput(
@@ -51,32 +51,32 @@ class StudioActivity : TabbedGridFragmentActivity() {
                     ),
                 )
             return if (position == 0) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.SCENE,
                     objectFilter = SceneFilterType(studios = studios),
                 )
             } else if (position == 1) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.GALLERY,
                     objectFilter = GalleryFilterType(studios = studios),
                 )
             } else if (position == 2) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.IMAGE,
                     objectFilter = ImageFilterType(studios = studios),
                 )
             } else if (position == 3) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.PERFORMER,
                     objectFilter = PerformerFilterType(studios = studios),
                 )
             } else if (position == 4) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.MOVIE,
                     objectFilter = MovieFilterType(studios = studios),
                 )
             } else if (position == 5) {
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.STUDIO,
                     objectFilter =
                         StudioFilterType(

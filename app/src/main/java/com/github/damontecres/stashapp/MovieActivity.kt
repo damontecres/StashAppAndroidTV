@@ -27,7 +27,7 @@ class MovieActivity : FragmentActivity() {
             val columns = cardSize * 3 / 5
 
             val sceneFragment =
-                StashGridFragment2(
+                StashGridFragment(
                     dataType = DataType.SCENE,
                     findFilter =
                         StashFindFilter(SortAndDirection("movie_scene_number", SortDirectionEnum.ASC)),

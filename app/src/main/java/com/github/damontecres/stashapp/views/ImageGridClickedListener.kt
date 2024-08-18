@@ -3,12 +3,12 @@ package com.github.damontecres.stashapp.views
 import android.content.Intent
 import android.util.Log
 import com.github.damontecres.stashapp.ImageActivity
-import com.github.damontecres.stashapp.StashGridFragment2
+import com.github.damontecres.stashapp.StashGridFragment
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener.SimpleOnItemViewClickedListener
 
-class ImageGridClickedListener(val fragment: StashGridFragment2) :
+class ImageGridClickedListener(val fragment: StashGridFragment) :
     SimpleOnItemViewClickedListener<ImageData> {
     override fun onItemClicked(item: ImageData) {
         val position = fragment.currentSelectedPosition

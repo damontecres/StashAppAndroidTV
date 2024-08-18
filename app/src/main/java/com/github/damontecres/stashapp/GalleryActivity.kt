@@ -92,7 +92,7 @@ class GalleryActivity : FragmentActivity() {
             return (columns * dataType.defaultCardRatio).toInt()
         }
 
-        override fun getFragment(position: Int): StashGridFragment2 {
+        override fun getFragment(position: Int): StashGridFragment {
             val galleries =
                 Optional.present(
                     MultiCriterionInput(
@@ -105,7 +105,7 @@ class GalleryActivity : FragmentActivity() {
                 when (position) {
                     0 -> {
                         val fragment =
-                            StashGridFragment2(
+                            StashGridFragment(
                                 dataType = DataType.IMAGE,
                                 objectFilter = ImageFilterType(galleries = galleries),
                                 cardSize = getColumns(DataType.IMAGE),
@@ -115,7 +115,7 @@ class GalleryActivity : FragmentActivity() {
                     }
 
                     1 ->
-                        StashGridFragment2(
+                        StashGridFragment(
                             dataType = DataType.SCENE,
                             objectFilter = SceneFilterType(galleries = galleries),
                             cardSize = getColumns(DataType.SCENE),
@@ -128,7 +128,7 @@ class GalleryActivity : FragmentActivity() {
                                 PerformerInScenePresenter(gallery.date),
                             )
                         val fragment =
-                            StashGridFragment2(
+                            StashGridFragment(
                                 filterArgs =
                                     FilterArgs(
                                         DataType.PERFORMER,
@@ -141,7 +141,7 @@ class GalleryActivity : FragmentActivity() {
                     }
 
                     3 ->
-                        StashGridFragment2(
+                        StashGridFragment(
                             filterArgs =
                                 FilterArgs(
                                     DataType.TAG,
