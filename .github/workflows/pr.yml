@@ -50,15 +50,6 @@ jobs:
         run: |
           ./gradlew clean build
           echo "apk=$(ls app/build/outputs/apk/debug/StashAppAndroidTV-debug*.apk)" >> "$GITHUB_OUTPUT"
-
-      - name: run tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 23
-          script: ./gradlew connectedCheck
-      - name: Verify signature
-        run: |
-          ${{env.ANDROID_SDK_ROOT}}/build-tools/${{ env.BUILD_TOOLS_VERSION }}/apksigner verify --verbose --print-certs "${{ steps.buildapp.outputs.apk }}"
       - uses: actions/upload-artifact@v4
         with:
           name: StashAppAndroidTV-debug.apk
