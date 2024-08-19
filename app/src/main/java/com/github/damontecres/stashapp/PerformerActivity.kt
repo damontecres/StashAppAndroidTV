@@ -2,7 +2,11 @@ package com.github.damontecres.stashapp
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.leanback.widget.ClassPresenterSelector
@@ -34,9 +38,13 @@ class PerformerActivity : TabbedGridFragmentActivity(R.layout.performer_activity
     override fun onCreate(savedInstanceState: Bundle?) {
         performer = this.intent.getParcelableExtra("performer")!!
         super.onCreate(savedInstanceState)
-        if (savedInstanceState == null) {
-            viewModel.title.value = performer.name
-        }
+        viewModel.title.value =
+            SpannableString("${performer.name} ${performer.disambiguation}").apply {
+                val start = performer.name.length + 1
+                val end = length
+                setSpan(RelativeSizeSpan(.60f), start, end, 0)
+                setSpan(ForegroundColorSpan(Color.GRAY), start, end, 0)
+            }
     }
 
     override fun getPagerAdapter(): StashFragmentPagerAdapter {

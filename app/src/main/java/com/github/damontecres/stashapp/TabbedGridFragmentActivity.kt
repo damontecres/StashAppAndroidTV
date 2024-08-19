@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.TabbedGridTitleView
 import com.github.damontecres.stashapp.views.models.TabbedGridViewModel
 import com.google.android.material.tabs.TabLayout
@@ -29,7 +30,10 @@ abstract class TabbedGridFragmentActivity(
         viewModel.title.observe(this) {
             gridTitle.text = it
         }
-        viewModel.title.value = getTitleText()
+        val title = getTitleText()
+        if (title.isNotNullOrBlank()) {
+            viewModel.title.value = getTitleText()
+        }
 
         val viewPager = findViewById<LeanbackViewPager>(R.id.view_pager)
         val tabLayout = findViewById<LeanbackTabLayout>(R.id.tab_layout)

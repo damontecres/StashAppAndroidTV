@@ -5,5 +5,5 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 
 class TabbedGridViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
-    val title: MutableLiveData<String?> = savedStateHandle.getLiveData("title", null)
+    val title: MutableLiveData<CharSequence?> = savedStateHandle.getLiveData("title", null)
 }
