@@ -25,6 +25,7 @@ jobs:
         python-version: '3.10'
     - name: Run pre-commit
       uses: pre-commit/action@v3.0.0
+
   build:
     runs-on: ubuntu-latest
     needs: pre-commit
@@ -34,10 +35,6 @@ jobs:
         with:
           fetch-depth: 0 # Need the tags to build
           submodules: true # Need the submodules to build
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
@@ -53,6 +50,12 @@ jobs:
         run: |
           ./gradlew clean build
           echo "apk=$(ls app/build/outputs/apk/debug/StashAppAndroidTV-debug*.apk)" >> "$GITHUB_OUTPUT"
+
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 23
+          script: ./gradlew connectedCheck
       - name: Verify signature
         run: |
           ${{env.ANDROID_SDK_ROOT}}/build-tools/${{ env.BUILD_TOOLS_VERSION }}/apksigner verify --verbose --print-certs "${{ steps.buildapp.outputs.apk }}"
@@ -61,3 +64,49 @@ jobs:
           name: StashAppAndroidTV-debug.apk
           path: "${{ steps.buildapp.outputs.apk }}"
           compression-level: 0
+
+  instrument-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        api-level: [23, 34]
+    needs: [pre-commit, build]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+          cache: 'gradle'
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ matrix.api-level }}
+      - name: create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: ./gradlew connectedCheck
