@@ -45,11 +45,11 @@ class FilterParcelTests {
             }
         }
 
-        fun <T : Parcelable> parcelizeAndDeparcelize(obj: T): T {
+        fun <T : Parcelable> parcelizeAndDeparcelize(obj: T): T? {
             val parcel = Parcel.obtain()
             parcel.writeParcelable(obj, 0)
             parcel.setDataPosition(0)
-            return parcel.readParcelable(obj.javaClass.classLoader, obj.javaClass) as T
+            return parcel.readParcelable(obj.javaClass.classLoader)
         }
     }
 
@@ -60,6 +60,7 @@ class FilterParcelTests {
         val holder = SceneFilterTypeHolder(filter)
         val result = parcelizeAndDeparcelize(holder)
         Assert.assertNotNull(result)
+        result!!
         Assert.assertNotNull(result.value)
         Assert.assertEquals(filter.file_count.getOrNull(), result.value?.file_count?.getOrNull())
         Assert.assertEquals(filter, result.value)
@@ -152,6 +153,7 @@ class FilterParcelTests {
         val holder = SceneFilterTypeHolder(filter)
         val result = parcelizeAndDeparcelize(holder)
         Assert.assertNotNull(result)
+        result!!
         Assert.assertNotNull(result.value)
         Assert.assertEquals(filter, result.value)
     }
