@@ -2,14 +2,14 @@ package com.github.damontecres.stashapp
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
-import androidx.core.view.children
-import androidx.fragment.app.FragmentActivity
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
-import androidx.leanback.tab.LeanbackTabLayout
-import androidx.leanback.tab.LeanbackViewPager
 import androidx.leanback.widget.ClassPresenterSelector
-import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
@@ -30,44 +30,34 @@ import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
-import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
-class PerformerActivity : FragmentActivity() {
+class PerformerActivity : TabbedGridFragmentActivity(R.layout.performer_activity) {
     private lateinit var performer: Performer
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        performer = this.intent.getParcelableExtra("performer")!!
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_performer)
-        if (savedInstanceState == null) {
-            performer = this.intent.getParcelableExtra("performer")!!
-
-            val cardSize =
-                PreferenceManager.getDefaultSharedPreferences(this)
-                    .getInt("cardSize", getString(R.string.card_size_default))
-            // At medium size, 3 scenes fit in the space vs 5 normally
-            val columns = cardSize * 3.0 / 5
-
-            val tabLayout = findViewById<LeanbackTabLayout>(R.id.performer_tab_layout)
-            val viewPager = findViewById<LeanbackViewPager>(R.id.performer_view_pager)
-            viewPager.adapter = PagerAdapter(columns, supportFragmentManager)
-            tabLayout.setupWithViewPager(viewPager)
-
-            tabLayout.nextFocusDownId = R.id.performer_view_pager
-            tabLayout.children.forEach { it.nextFocusDownId = R.id.performer_view_pager }
-
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.performer_details, PerformerFragment())
-                .commitNow()
-        }
+        viewModel.title.value =
+            SpannableString("${performer.name} ${performer.disambiguation}").apply {
+                val start = performer.name.length + 1
+                val end = length
+                setSpan(RelativeSizeSpan(.60f), start, end, 0)
+                setSpan(ForegroundColorSpan(Color.GRAY), start, end, 0)
+            }
     }
 
-    inner class PagerAdapter(
-        private val columns: Double,
+    override fun getPagerAdapter(): StashFragmentPagerAdapter {
+        return PagerAdapter(performer, supportFragmentManager)
+    }
+
+    private class PagerAdapter(
+        private val performer: Performer,
         fm: FragmentManager,
     ) :
         StashFragmentPagerAdapter(
                 listOf(
+                    PagerEntry("Details", null),
                     PagerEntry(DataType.SCENE),
                     PagerEntry(DataType.GALLERY),
                     PagerEntry(DataType.IMAGE),
@@ -77,11 +67,7 @@ class PerformerActivity : FragmentActivity() {
                 ),
                 fm,
             ) {
-        private fun getColumns(dataType: DataType): Int {
-            return (columns * dataType.defaultCardRatio).toInt()
-        }
-
-        override fun getFragment(position: Int): StashGridFragment {
+        override fun getFragment(position: Int): Fragment {
             val performers =
                 Optional.present(
                     MultiCriterionInput(
@@ -91,78 +77,86 @@ class PerformerActivity : FragmentActivity() {
                 )
 
             val fragment =
-                if (position == 0) {
-                    StashGridFragment(
-                        dataType = DataType.SCENE,
-                        objectFilter = SceneFilterType(performers = performers),
-                        cardSize = getColumns(DataType.SCENE),
-                    )
-                } else if (position == 1) {
-                    StashGridFragment(
-                        dataType = DataType.GALLERY,
-                        objectFilter = GalleryFilterType(performers = performers),
-                        cardSize = getColumns(DataType.GALLERY),
-                    )
-                } else if (position == 2) {
-                    val fragment =
+                when (position) {
+                    0 -> {
+                        PerformerFragment(performer)
+                    }
+
+                    1 -> {
+                        StashGridFragment(
+                            dataType = DataType.SCENE,
+                            objectFilter = SceneFilterType(performers = performers),
+                        )
+                    }
+
+                    2 -> {
+                        StashGridFragment(
+                            dataType = DataType.GALLERY,
+                            objectFilter = GalleryFilterType(performers = performers),
+                        )
+                    }
+
+                    3 -> {
                         StashGridFragment(
                             dataType = DataType.IMAGE,
                             objectFilter = ImageFilterType(performers = performers),
-                            cardSize = getColumns(DataType.IMAGE),
-                        )
-                    fragment.withImageGridClickListener()
-                    fragment
-                } else if (position == 3) {
-                    StashGridFragment(
-                        dataType = DataType.MOVIE,
-                        objectFilter = MovieFilterType(performers = performers),
-                        cardSize = getColumns(DataType.MOVIE),
-                    )
-                } else if (position == 4) {
-                    val presenter =
-                        ClassPresenterSelector()
-                            .addClassPresenter(
-                                TagData::class.java,
-                                TagPresenter(PerformersWithTagLongClickCallback()),
-                            )
-                    val fragment =
+                        ).withImageGridClickListener()
+                    }
+
+                    4 -> {
                         StashGridFragment(
-                            FilterArgs(
-                                dataType = DataType.TAG,
-                                override = DataSupplierOverride.PerformerTags(performer.id),
-                            ),
-                            cardSize = getColumns(DataType.TAG),
+                            dataType = DataType.MOVIE,
+                            objectFilter = MovieFilterType(performers = performers),
                         )
-                    fragment.presenterSelector = presenter
-                    fragment
-                } else if (position == 5) {
-                    val presenter =
-                        ClassPresenterSelector()
-                            .addClassPresenter(
-                                PerformerData::class.java,
-                                PerformerPresenter(PerformTogetherLongClickCallback(performer)),
-                            )
-                    val fragment =
-                        StashGridFragment(
-                            dataType = DataType.PERFORMER,
-                            objectFilter =
-                                PerformerFilterType(
-                                    performers =
-                                        Optional.present(
-                                            MultiCriterionInput(
-                                                value = Optional.present(listOf(performer.id)),
-                                                modifier = CriterionModifier.INCLUDES_ALL,
-                                            ),
-                                        ),
+                    }
+
+                    5 -> {
+                        val presenter =
+                            ClassPresenterSelector()
+                                .addClassPresenter(
+                                    TagData::class.java,
+                                    TagPresenter(PerformersWithTagLongClickCallback()),
+                                )
+                        val fragment =
+                            StashGridFragment(
+                                FilterArgs(
+                                    dataType = DataType.TAG,
+                                    override = DataSupplierOverride.PerformerTags(performer.id),
                                 ),
-                            cardSize = getColumns(DataType.PERFORMER),
-                        )
-                    fragment.presenterSelector = presenter
-                    fragment
-                } else {
-                    throw IllegalStateException()
+                            )
+                        fragment.presenterSelector = presenter
+                        fragment
+                    }
+
+                    6 -> {
+                        val presenter =
+                            ClassPresenterSelector()
+                                .addClassPresenter(
+                                    PerformerData::class.java,
+                                    PerformerPresenter(PerformTogetherLongClickCallback(performer)),
+                                )
+                        val fragment =
+                            StashGridFragment(
+                                dataType = DataType.PERFORMER,
+                                objectFilter =
+                                    PerformerFilterType(
+                                        performers =
+                                            Optional.present(
+                                                MultiCriterionInput(
+                                                    value = Optional.present(listOf(performer.id)),
+                                                    modifier = CriterionModifier.INCLUDES_ALL,
+                                                ),
+                                            ),
+                                    ),
+                            )
+                        fragment.presenterSelector = presenter
+                        fragment
+                    }
+
+                    else -> {
+                        throw IllegalStateException()
+                    }
                 }
-            fragment.sortButtonEnabled = true
             return fragment
         }
     }

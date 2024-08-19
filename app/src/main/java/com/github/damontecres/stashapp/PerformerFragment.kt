@@ -1,9 +1,9 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
@@ -17,7 +17,6 @@ import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.data.Performer
-import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -33,10 +32,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
-class PerformerFragment : Fragment(R.layout.performer_view) {
+class PerformerFragment() : Fragment(R.layout.performer_view) {
+    constructor(performer: Performer) : this() {
+        this.performer = performer
+    }
+
+    private lateinit var performer: Performer
+
     private lateinit var mPerformerImage: ImageView
-    private lateinit var mPerformerName: TextView
-    private lateinit var mPerformerDisambiguation: TextView
     private lateinit var table: TableLayout
     private lateinit var favoriteButton: Button
 
@@ -49,25 +52,17 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
+        if (savedInstanceState != null) {
+            performer = savedInstanceState.getParcelable("performer")!!
+        }
+
         mPerformerImage = view.findViewById(R.id.performer_image)
-        val lp = mPerformerImage.layoutParams
-        val scale = 1.33
-        lp.width = (PerformerPresenter.CARD_WIDTH * scale).toInt()
-        lp.height = (PerformerPresenter.CARD_HEIGHT * scale).toInt()
-        mPerformerImage.layoutParams = lp
-
-        mPerformerName = view.findViewById(R.id.performer_name)
-        mPerformerDisambiguation = view.findViewById(R.id.performer_disambiguation)
-
         table = view.findViewById(R.id.performer_table)
         favoriteButton = view.findViewById(R.id.favorite_button)
         favoriteButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
 
         val performer = requireActivity().intent.getParcelableExtra<Performer>("performer")
         if (performer != null) {
-            mPerformerName.text = performer.name
-            mPerformerDisambiguation.text = performer.disambiguation
-
             val lock = ReentrantReadWriteLock()
             queryEngine = QueryEngine(requireContext(), true, lock)
             mutationEngine = MutationEngine(requireContext(), true, lock)
@@ -94,9 +89,6 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                     updateUi(perf)
                 }
             }
-        } else {
-            val intent = Intent(requireActivity(), MainActivity::class.java)
-            startActivity(intent)
         }
     }
 
@@ -135,7 +127,7 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         }
         if (perf.image_path != null) {
             StashGlide.with(requireContext(), perf.image_path)
-                .optionalCenterCrop()
+                .optionalFitCenter()
                 .error(StashPresenter.glideError(requireContext()))
                 .into(mPerformerImage)
         }
@@ -208,11 +200,24 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
 
         val keyView = row.findViewById<TextView>(R.id.table_row_key)
         keyView.text = keyString
+        keyView.setTextSize(
+            TypedValue.COMPLEX_UNIT_PX,
+            resources.getDimension(R.dimen.table_text_size_large),
+        )
 
         val valueView = row.findViewById<TextView>(R.id.table_row_value)
         valueView.text = value
+        valueView.setTextSize(
+            TypedValue.COMPLEX_UNIT_PX,
+            resources.getDimension(R.dimen.table_text_size_large),
+        )
 
         table.addView(row)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable("performer", performer)
     }
 
     companion object {
