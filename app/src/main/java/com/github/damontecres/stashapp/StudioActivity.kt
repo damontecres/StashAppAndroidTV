@@ -64,7 +64,7 @@ class StudioActivity : TabbedGridFragmentActivity() {
                 StashGridFragment(
                     dataType = DataType.IMAGE,
                     objectFilter = ImageFilterType(studios = studios),
-                )
+                ).withImageGridClickListener()
             } else if (position == 3) {
                 StashGridFragment(
                     dataType = DataType.PERFORMER,

@@ -37,7 +37,6 @@ import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.getRandomSort
 import com.github.damontecres.stashapp.util.toFindFilterType
-import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
@@ -447,7 +446,7 @@ class FilterListActivity : FragmentActivity() {
             }
         fragment.requestFocus = true
         if (dataType == DataType.IMAGE) {
-            fragment.onItemViewClickedListener = ImageGridClickedListener(fragment)
+            fragment.withImageGridClickListener()
         }
         filterDataByName[name] = filter
 

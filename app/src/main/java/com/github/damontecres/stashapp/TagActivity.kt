@@ -44,95 +44,44 @@ class TagActivity : TabbedGridFragmentActivity() {
         StashFragmentPagerAdapter(tabs, fm) {
         override fun getFragment(position: Int): StashGridFragment {
             val depth = Optional.present(if (includeSubTags) -1 else 0)
+            val tags =
+                Optional.present(
+                    HierarchicalMultiCriterionInput(
+                        value = Optional.present(listOf(tagId)),
+                        modifier = CriterionModifier.INCLUDES_ALL,
+                        depth = depth,
+                    ),
+                )
+
             return if (position == 0) {
                 StashGridFragment(
                     dataType = DataType.SCENE,
-                    objectFilter =
-                        SceneFilterType(
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                        depth = depth,
-                                    ),
-                                ),
-                        ),
+                    objectFilter = SceneFilterType(tags = tags),
                 )
             } else if (position == 1) {
                 StashGridFragment(
                     dataType = DataType.GALLERY,
-                    objectFilter =
-                        GalleryFilterType(
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES,
-                                        depth = depth,
-                                    ),
-                                ),
-                        ),
+                    objectFilter = GalleryFilterType(tags = tags),
                 )
             } else if (position == 2) {
                 StashGridFragment(
                     dataType = DataType.IMAGE,
-                    objectFilter =
-                        ImageFilterType(
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES,
-                                        depth = depth,
-                                    ),
-                                ),
-                        ),
-                )
+                    objectFilter = ImageFilterType(tags = tags),
+                ).withImageGridClickListener()
             } else if (position == 3) {
                 StashGridFragment(
                     dataType = DataType.MARKER,
-                    objectFilter =
-                        SceneMarkerFilterType(
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                        depth = depth,
-                                    ),
-                                ),
-                        ),
+                    objectFilter = SceneMarkerFilterType(tags = tags),
                 )
             } else if (position == 4) {
                 StashGridFragment(
                     dataType = DataType.PERFORMER,
-                    objectFilter =
-                        PerformerFilterType(
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                        depth = depth,
-                                    ),
-                                ),
-                        ),
+                    objectFilter = PerformerFilterType(tags = tags),
                 )
             } else if (position == 5) {
                 StashGridFragment(
                     dataType = DataType.TAG,
-                    objectFilter =
-                        TagFilterType(
-                            parents =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(tagId)),
-                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                        depth = depth,
-                                    ),
-                                ),
-                        ),
+                    objectFilter = TagFilterType(parents = tags),
                 )
             } else {
                 throw IllegalStateException()
