@@ -15,7 +15,7 @@ import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter.PagerEntry
 
 class TagActivity : TabbedGridFragmentActivity() {
-    override fun getTitleText(): CharSequence? {
+    override fun getTitleText(): String? {
         return intent.getStringExtra("tagName")
     }
 

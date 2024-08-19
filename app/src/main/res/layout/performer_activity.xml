@@ -11,36 +11,39 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <com.github.damontecres.stashapp.views.HomeImageButton
+        <ImageView
             android:id="@+id/icon"
-            android:layout_width="@dimen/title_bar_icon_size"
-            android:layout_height="@dimen/title_bar_icon_size"
-            android:layout_margin="@dimen/title_bar_margin"
+            android:layout_width="80dp"
+            android:layout_height="60dp"
+            android:src="@mipmap/stash_logo"
+            android:contentDescription="@string/stashapp_image"
+            android:layout_alignParentStart="true"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:layout_alignParentStart="true" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/grid_title"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            app:layout_constraintStart_toEndOf="@id/icon"
-            app:layout_constraintEnd_toStartOf="@id/tab_layout"
+            android:paddingStart="80dp"
+            android:paddingEnd="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Test Title"
             style="@style/GridTitleText" />
 
-        <androidx.leanback.tab.LeanbackTabLayout
-            android:id="@+id/tab_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_alignParentEnd="true"
-            app:tabGravity="center"
-            app:tabIndicatorColor="@color/selected_background"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
     </com.github.damontecres.stashapp.views.TabbedGridTitleView>
 
+    <androidx.leanback.tab.LeanbackTabLayout
+        android:id="@+id/tab_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:tabGravity="center"
+        app:tabIndicatorColor="@color/selected_background"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.leanback.tab.LeanbackViewPager
         android:id="@+id/view_pager"

@@ -7,6 +7,7 @@
     <dimen name="title_bar_margin">10dp</dimen>
     <dimen name="title_bar_start_end_margin">5dp</dimen>
     <dimen name="table_text_size">13sp</dimen>
+    <dimen name="table_text_size_large">16sp</dimen>
     <dimen name="scene_extra_spacing">5dp</dimen>
     <dimen tools:override="true" name="lb_browse_rows_margin_top">120dp</dimen>
     <dimen tools:override="true" name="lb_browse_padding_start">35dp</dimen>
