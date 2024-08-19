@@ -104,11 +104,14 @@ class PerformerActivity : FragmentActivity() {
                         cardSize = getColumns(DataType.GALLERY),
                     )
                 } else if (position == 2) {
-                    StashGridFragment(
-                        dataType = DataType.IMAGE,
-                        objectFilter = ImageFilterType(performers = performers),
-                        cardSize = getColumns(DataType.IMAGE),
-                    )
+                    val fragment =
+                        StashGridFragment(
+                            dataType = DataType.IMAGE,
+                            objectFilter = ImageFilterType(performers = performers),
+                            cardSize = getColumns(DataType.IMAGE),
+                        )
+                    fragment.withImageGridClickListener()
+                    fragment
                 } else if (position == 3) {
                     StashGridFragment(
                         dataType = DataType.MOVIE,

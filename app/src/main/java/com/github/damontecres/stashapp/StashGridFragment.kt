@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
@@ -439,6 +440,21 @@ class StashGridFragment() : Fragment() {
     fun showTitle(show: Boolean) {
         sortButtonTransitionHelper?.showTitle(show)
         titleTransitionHelper?.showTitle(show)
+    }
+
+    /**
+     * Use a [ImageGridClickedListener] for the [onItemViewClickedListener] which will supply the [ImageActivity] with the filter info to scroll images
+     *
+     * The [dataType] must be [DataType.IMAGE] or an exception will be thrown
+     *
+     * @return this for chaining
+     */
+    fun withImageGridClickListener(): StashGridFragment {
+        if (dataType != DataType.IMAGE) {
+            throw IllegalStateException("Cannot setup ${ImageGridClickedListener::class.java.simpleName} for dataType=$dataType")
+        }
+        onItemViewClickedListener = ImageGridClickedListener(this)
+        return this
     }
 
     companion object {

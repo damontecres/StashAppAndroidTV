@@ -37,7 +37,6 @@ import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
-import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import kotlinx.coroutines.launch
 
 class GalleryActivity : FragmentActivity() {
@@ -104,14 +103,11 @@ class GalleryActivity : FragmentActivity() {
             val fragment =
                 when (position) {
                     0 -> {
-                        val fragment =
-                            StashGridFragment(
-                                dataType = DataType.IMAGE,
-                                objectFilter = ImageFilterType(galleries = galleries),
-                                cardSize = getColumns(DataType.IMAGE),
-                            )
-                        fragment.onItemViewClickedListener = ImageGridClickedListener(fragment)
-                        fragment
+                        StashGridFragment(
+                            dataType = DataType.IMAGE,
+                            objectFilter = ImageFilterType(galleries = galleries),
+                            cardSize = getColumns(DataType.IMAGE),
+                        ).withImageGridClickListener()
                     }
 
                     1 ->
