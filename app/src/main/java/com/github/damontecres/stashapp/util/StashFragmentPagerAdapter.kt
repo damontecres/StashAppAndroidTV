@@ -5,7 +5,6 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.StashGridFragment
 import com.github.damontecres.stashapp.data.DataType
 
 abstract class StashFragmentPagerAdapter(private val items: List<PagerEntry>, fm: FragmentManager) :
@@ -31,9 +30,9 @@ abstract class StashFragmentPagerAdapter(private val items: List<PagerEntry>, fm
         return items[position].title
     }
 
-    abstract fun getFragment(position: Int): StashGridFragment
+    abstract fun getFragment(position: Int): Fragment
 
-    data class PagerEntry(val title: String, val dataType: DataType) {
+    data class PagerEntry(val title: String, val dataType: DataType?) {
         constructor(dataType: DataType) : this(StashApplication.getApplication().getString(dataType.pluralStringId), dataType)
     }
 }

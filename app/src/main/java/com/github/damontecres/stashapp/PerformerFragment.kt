@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -33,7 +32,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
-class PerformerFragment : Fragment(R.layout.performer_view) {
+class PerformerFragment() : Fragment(R.layout.performer_view) {
+    constructor(performer: Performer) : this() {
+        this.performer = performer
+    }
+
+    private lateinit var performer: Performer
+
     private lateinit var mPerformerImage: ImageView
     private lateinit var mPerformerName: TextView
     private lateinit var mPerformerDisambiguation: TextView
@@ -48,6 +53,10 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        if (savedInstanceState != null) {
+            performer = savedInstanceState.getParcelable("performer")!!
+        }
 
         mPerformerImage = view.findViewById(R.id.performer_image)
         val lp = mPerformerImage.layoutParams
@@ -94,9 +103,6 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
                     updateUi(perf)
                 }
             }
-        } else {
-            val intent = Intent(requireActivity(), MainActivity::class.java)
-            startActivity(intent)
         }
     }
 
@@ -213,6 +219,11 @@ class PerformerFragment : Fragment(R.layout.performer_view) {
         valueView.text = value
 
         table.addView(row)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable("performer", performer)
     }
 
     companion object {

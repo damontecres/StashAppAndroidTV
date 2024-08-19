@@ -15,7 +15,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 
 class StudioActivity : TabbedGridFragmentActivity() {
-    override fun getTitleText(): CharSequence? {
+    override fun getTitleText(): String? {
         return intent.getStringExtra("studioName")
     }
 
