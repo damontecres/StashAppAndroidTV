@@ -181,6 +181,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     buildMediaItem(requireContext(), streamDecision, scene),
                     if (position > 0) position else C.TIME_UNSET,
                 )
+
                 Log.v(TAG, "Preparing playback")
                 exoPlayer.prepare()
                 // Unless the video was paused before called the result launcher, play immediately

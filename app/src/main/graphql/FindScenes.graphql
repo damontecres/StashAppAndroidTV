@@ -40,11 +40,16 @@ fragment SlimSceneData on Scene {
     preview
     stream
     sprite
+    caption
   }
   sceneStreams {
     url
     mime_type
     label
+  }
+  captions {
+    language_code
+    caption_type
   }
   scene_markers {
     id
@@ -114,6 +119,10 @@ fragment FullSceneData on Scene {
     url
     mime_type
     label
+  }
+  captions {
+    language_code
+    caption_type
   }
   scene_markers {
     id
