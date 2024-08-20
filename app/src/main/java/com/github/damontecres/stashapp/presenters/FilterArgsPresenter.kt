@@ -1,90 +1,69 @@
 package com.github.damontecres.stashapp.presenters
 
-import android.util.Log
 import androidx.appcompat.content.res.AppCompatResources
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.type.FilterMode
-import com.github.damontecres.stashapp.data.StashCustomFilter
-import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 
-class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
-    StashPresenter<Any>(callback) {
+class FilterArgsPresenter(callback: LongClickCallBack<FilterArgs>? = null) :
+    StashPresenter<FilterArgs>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
-        item: Any,
+        item: FilterArgs,
     ) {
         cardView.titleText = cardView.context.getString(R.string.stashapp_view_all)
 
-        val mode: FilterMode =
-            when (item) {
-                is StashSavedFilter -> {
-                    item.mode
-                }
-
-                is StashCustomFilter -> {
-                    item.mode
-                }
-
-                else -> {
-                    throw RuntimeException("Unsupported item $item")
-                }
-            }
-
-        when (mode) {
-            FilterMode.SCENES ->
+        when (item.dataType) {
+            DataType.SCENE ->
                 cardView.setMainImageDimensions(
                     ScenePresenter.CARD_WIDTH,
                     ScenePresenter.CARD_HEIGHT,
                 )
 
-            FilterMode.STUDIOS ->
+            DataType.STUDIO ->
                 cardView.setMainImageDimensions(
                     StudioPresenter.CARD_WIDTH,
                     StudioPresenter.CARD_HEIGHT,
                 )
 
-            FilterMode.PERFORMERS ->
+            DataType.PERFORMER ->
                 cardView.setMainImageDimensions(
                     PerformerPresenter.CARD_WIDTH,
                     PerformerPresenter.CARD_HEIGHT,
                 )
 
-            FilterMode.TAGS ->
+            DataType.TAG ->
                 cardView.setMainImageDimensions(
                     TagPresenter.CARD_WIDTH,
                     TagPresenter.CARD_HEIGHT,
                 )
 
-            FilterMode.MOVIES -> {
+            DataType.MOVIE -> {
                 cardView.setMainImageDimensions(
                     MoviePresenter.CARD_WIDTH,
                     MoviePresenter.CARD_HEIGHT,
                 )
             }
 
-            FilterMode.SCENE_MARKERS -> {
+            DataType.MARKER -> {
                 cardView.setMainImageDimensions(
                     MarkerPresenter.CARD_WIDTH,
                     MarkerPresenter.CARD_HEIGHT,
                 )
             }
 
-            FilterMode.IMAGES -> {
+            DataType.IMAGE -> {
                 cardView.setMainImageDimensions(
                     ImagePresenter.CARD_WIDTH,
                     ImagePresenter.CARD_HEIGHT,
                 )
             }
 
-            FilterMode.GALLERIES -> {
+            DataType.GALLERY -> {
                 cardView.setMainImageDimensions(
                     GalleryPresenter.CARD_WIDTH,
                     GalleryPresenter.CARD_HEIGHT,
                 )
-            }
-
-            else -> {
-                Log.w(TAG, "Unsupported FilterMode=$mode")
             }
         }
 
@@ -97,6 +76,6 @@ class StashFilterPresenter(callback: LongClickCallBack<Any>? = null) :
     }
 
     companion object {
-        const val TAG = "StashFilterPresenter"
+        const val TAG = "FilterArgsPresenter"
     }
 }

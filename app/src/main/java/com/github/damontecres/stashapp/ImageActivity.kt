@@ -34,21 +34,15 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.FilterType
-import com.github.damontecres.stashapp.data.StashCustomFilter
-import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.StashSparseFilterFetcher
-import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
@@ -58,7 +52,6 @@ import com.github.damontecres.stashapp.util.isGif
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.showSetRatingToast
-import com.github.damontecres.stashapp.util.toFindFilterType
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
@@ -120,13 +113,8 @@ class ImageActivity : FragmentActivity() {
     }
 
     private suspend fun createDataSupplier(): ImageDataSupplier? {
-        val pageSize =
-            PreferenceManager.getDefaultSharedPreferences(this).getInt("maxSearchResults", 25)
-
         val filterArgs: FilterArgs? = intent.getParcelableExtra(INTENT_FILTER_ARGS)
-
         val galleryId = intent.getStringExtra(INTENT_GALLERY_ID)
-        val filterType = FilterType.safeValueOf(intent.getStringExtra(INTENT_FILTER_TYPE))
         if (filterArgs != null) {
             return DataSupplierFactory(
                 StashServer.getCurrentServerVersion(),
@@ -146,53 +134,6 @@ class ImageActivity : FragmentActivity() {
                         ),
                 ),
             )
-        } else if (filterType != null) {
-            Log.v(TAG, "Got a $filterType")
-            val queryEngine = QueryEngine(this)
-            if (filterType == FilterType.SAVED_FILTER) {
-                val filter = intent.getParcelableExtra<StashSavedFilter>(INTENT_FILTER)!!
-                val savedFilter = queryEngine.getSavedFilter(filter.savedFilterId)
-                if (savedFilter != null) {
-                    val newSort = filter.sortBy ?: savedFilter.find_filter?.sort
-                    val newDirection =
-                        if (filter.direction != null) {
-                            SortDirectionEnum.valueOf(filter.direction)
-                        } else {
-                            savedFilter.find_filter?.direction
-                        }
-                    val findFilter =
-                        queryEngine.updateFilter(
-                            savedFilter.find_filter?.toFindFilterType(),
-                            useRandom = false,
-                        )?.copy(
-                            per_page = Optional.present(pageSize),
-                            sort = Optional.presentIfNotNull(newSort),
-                            direction = Optional.presentIfNotNull(newDirection),
-                        )
-                            ?: DataType.IMAGE.asDefaultFindFilterType
-                    Log.v(
-                        TAG,
-                        "newSort=$newSort, newDirection=$newDirection, findFilter=$findFilter",
-                    )
-                    val filterParser =
-                        FilterParser(ServerPreferences(this@ImageActivity).serverVersion)
-                    val imageFilter =
-                        filterParser.convertImageObjectFilter(savedFilter.object_filter)
-                    return ImageDataSupplier(findFilter, imageFilter)
-                } else {
-                    Log.w(TAG, "Unknown filter id=${filter.savedFilterId}")
-                    return null
-                }
-            } else {
-                // CustomFilter
-                val filter = intent.getParcelableExtra<StashCustomFilter>(INTENT_FILTER)!!
-                val findFilter =
-                    queryEngine.updateFilter(
-                        filter.asFindFilterType()
-                            .copy(per_page = Optional.present(pageSize)),
-                    )
-                return ImageDataSupplier(findFilter, null)
-            }
         } else {
             return null
         }
@@ -266,8 +207,6 @@ class ImageActivity : FragmentActivity() {
 
         const val INTENT_POSITION = "position"
         const val INTENT_GALLERY_ID = "gallery.id"
-        const val INTENT_FILTER = "filter"
-        const val INTENT_FILTER_TYPE = "filter.type"
 
         const val INTENT_FILTER_ARGS = "filterArgs"
 

@@ -683,6 +683,6 @@ fun <T> createFilterHolder(objectFilter: T?): FilterHolder<out Any>? {
         is GalleryFilterType -> GalleryFilterTypeHolder(objectFilter)
         is MovieFilterType -> MovieFilterTypeHolder(objectFilter)
         null -> null
-        else -> throw IllegalArgumentException("Unknown filter type: $objectFilter")
+        else -> throw IllegalArgumentException("Unknown filter type: ${objectFilter!!::class.java}")
     }
 }

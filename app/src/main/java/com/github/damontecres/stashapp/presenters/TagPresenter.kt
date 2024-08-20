@@ -2,13 +2,16 @@ package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
 import android.content.Intent
+import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.TagActivity
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.GetParentTagsFilter
-import com.github.damontecres.stashapp.data.GetSubTagsFilter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import java.util.EnumMap
 
 class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
@@ -103,17 +106,51 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
 
                 POPUP_PARENTS_ID -> {
                     val name = context.getString(R.string.stashapp_parent_of, item.name)
-                    val appFilter = GetParentTagsFilter(name, item.id)
-                    val intent = Intent(context, FilterListActivity::class.java)
-                    intent.putExtra("filter", appFilter)
+                    val intent =
+                        Intent(context, FilterListActivity::class.java)
+                            .putExtra(
+                                FilterListActivity.INTENT_FILTER_ARGS,
+                                FilterArgs(
+                                    dataType = DataType.TAG,
+                                    name = name,
+                                    objectFilter =
+                                        TagFilterType(
+                                            children =
+                                                Optional.present(
+                                                    HierarchicalMultiCriterionInput(
+                                                        value = Optional.present(listOf(item.id)),
+                                                        modifier = CriterionModifier.INCLUDES,
+                                                        depth = Optional.present(-1),
+                                                    ),
+                                                ),
+                                        ),
+                                ),
+                            )
                     context.startActivity(intent)
                 }
 
                 POPUP_CHILDREN_ID -> {
                     val name = context.getString(R.string.stashapp_sub_tag_of, item.name)
-                    val appFilter = GetSubTagsFilter(name, item.id)
-                    val intent = Intent(context, FilterListActivity::class.java)
-                    intent.putExtra("filter", appFilter)
+                    val intent =
+                        Intent(context, FilterListActivity::class.java)
+                            .putExtra(
+                                FilterListActivity.INTENT_SCROLL_NEXT_PAGE,
+                                FilterArgs(
+                                    dataType = DataType.TAG,
+                                    name = name,
+                                    objectFilter =
+                                        TagFilterType(
+                                            parents =
+                                                Optional.present(
+                                                    HierarchicalMultiCriterionInput(
+                                                        value = Optional.present(listOf(item.id)),
+                                                        modifier = CriterionModifier.INCLUDES,
+                                                        depth = Optional.present(-1),
+                                                    ),
+                                                ),
+                                        ),
+                                ),
+                            )
                     context.startActivity(intent)
                 }
             }

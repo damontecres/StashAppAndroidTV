@@ -173,7 +173,7 @@ class StashGridFragment() : Fragment() {
         objectFilter: Any? = null,
         cardSize: Int? = null,
         scrollToNextPage: Boolean = false,
-    ) : this(FilterArgs(dataType, findFilter, objectFilter), cardSize, scrollToNextPage)
+    ) : this(FilterArgs(dataType, null, findFilter, objectFilter), cardSize, scrollToNextPage)
 
     @SuppressLint("SetTextI18n")
     private fun gridOnItemSelected(position: Int) {
@@ -362,6 +362,18 @@ class StashGridFragment() : Fragment() {
                 },
             )
         }
+        if (requestFocus) {
+            pagingAdapter.registerObserver(
+                object : ObjectAdapter.DataObserver() {
+                    override fun onChanged() {
+                        requireView()
+                            .findViewById<View>(androidx.leanback.R.id.grid_frame)
+                            .requestFocus()
+                        pagingAdapter.unregisterObserver(this)
+                    }
+                },
+            )
+        }
 
         val showFooter =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
@@ -424,9 +436,6 @@ class StashGridFragment() : Fragment() {
                     null
                 }
             }
-        if (requestFocus) {
-            browseFrameLayout.requestFocus()
-        }
     }
 
     fun setTitleView(titleView: View?) {

@@ -3,6 +3,8 @@ package com.github.damontecres.stashapp.suppliers
 import android.os.Parcel
 import android.os.Parcelable
 import com.apollographql.apollo3.api.Query
+import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.FilterHolder
 import com.github.damontecres.stashapp.data.SortAndDirection
@@ -10,6 +12,7 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.data.createFilterHolder
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.Version
+import com.github.damontecres.stashapp.util.getRandomSort
 import kotlinx.parcelize.Parcelize
 
 /**
@@ -106,6 +109,7 @@ sealed class DataSupplierOverride : Parcelable {
  */
 data class FilterArgs(
     val dataType: DataType,
+    val name: String? = null,
     val findFilter: StashFindFilter? = null,
     val objectFilter: Any? = null,
     val override: DataSupplierOverride? = null,
@@ -133,6 +137,17 @@ data class FilterArgs(
         )
 
     /**
+     * If the [sortAndDirection] is random, resolve it and return an updated [FilterArgs]
+     */
+    fun withResolvedRandom(): FilterArgs {
+        return if (sortAndDirection.isRandom) {
+            with(sortAndDirection.copy(sort = getRandomSort()))
+        } else {
+            this
+        }
+    }
+
+    /**
      * Returns a copy of this object which guarantees that the object filter is a FilterType object and not a Map<String, *>
      *
      * This means that the returned [FilterArgs] is parcelable
@@ -157,6 +172,7 @@ data class FilterArgs(
         flags: Int,
     ) {
         parcel.writeInt(dataType.ordinal)
+        parcel.writeString(name)
         parcel.writeParcelable(findFilter, flags)
         parcel.writeParcelable(createFilterHolder(objectFilter), flags)
         parcel.writeParcelable(override, flags)
@@ -169,17 +185,40 @@ data class FilterArgs(
     companion object CREATOR : Parcelable.Creator<FilterArgs> {
         override fun createFromParcel(parcel: Parcel): FilterArgs {
             val dataType = DataType.entries[parcel.readInt()]
+            val name = parcel.readString()
             val findFilter: StashFindFilter? =
                 parcel.readParcelable(StashFindFilter::class.java.classLoader)
             val objectFilterHolder: FilterHolder<Any?>? =
                 parcel.readParcelable(FilterHolder::class.java.classLoader)
             val override: DataSupplierOverride? =
                 parcel.readParcelable(DataSupplierOverride::class.java.classLoader)
-            return FilterArgs(dataType, findFilter, objectFilterHolder?.value, override)
+            return FilterArgs(dataType, name, findFilter, objectFilterHolder?.value, override)
         }
 
         override fun newArray(size: Int): Array<FilterArgs?> {
             return arrayOfNulls(size)
         }
     }
+}
+
+fun SavedFilterData.Find_filter.toStashFindFilter(): StashFindFilter {
+    return if (sort != null) {
+        StashFindFilter(q, SortAndDirection(sort, direction ?: SortDirectionEnum.ASC))
+    } else {
+        StashFindFilter(q, null)
+    }
+}
+
+fun SavedFilterData.toFilterArgs(): FilterArgs {
+    val dataType = DataType.fromFilterMode(mode)!!
+    val findFilter =
+        if (find_filter != null) {
+            StashFindFilter(
+                find_filter.q,
+                SortAndDirection.create(dataType, find_filter.sort, find_filter.direction),
+            )
+        } else {
+            StashFindFilter(null, dataType.defaultSort)
+        }
+    return FilterArgs(dataType, name, findFilter, object_filter)
 }

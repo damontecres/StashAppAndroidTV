@@ -15,8 +15,9 @@ import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashCustomFilter
+import com.github.damontecres.stashapp.data.toStashFindFilter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
@@ -95,12 +96,9 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                     if (results.isNotEmpty()) {
                         adapter.addAll(0, results)
                         val viewAll =
-                            StashCustomFilter(
-                                mode = it.filterMode,
-                                direction = null,
-                                sortBy = null,
-                                description = "'$query' ${getString(it.pluralStringId)}",
-                                query = query,
+                            FilterArgs(
+                                dataType = it,
+                                findFilter = filter.toStashFindFilter(),
                             )
                         adapter.add(viewAll)
                     } else {
