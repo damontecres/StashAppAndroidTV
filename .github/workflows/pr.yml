@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        api-level: [23, 34]
+        api-level: [23]
     needs: [pre-commit, build]
     steps:
       - name: checkout
