@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.views
 import android.content.Context
 import android.content.Intent
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
@@ -13,15 +14,24 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.suppliers.toFilterArgs
+import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import kotlinx.coroutines.launch
 
 class MainTitleView(context: Context, attrs: AttributeSet) :
     RelativeLayout(context, attrs),
@@ -70,78 +80,35 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         mPreferencesView.onFocusChangeListener = onFocusChangeListener
 
         scenesButton = root.findViewById(R.id.scenes_button)
-        scenesButton.setOnClickListener {
-            val intent =
-                Intent(context, FilterListActivity::class.java)
-                    .putExtra(FilterListActivity.INTENT_FILTER_ARGS, FilterArgs(DataType.SCENE))
-            startActivity(context, intent, null)
-        }
+        scenesButton.setOnClickListener(ClickListener(DataType.SCENE))
         scenesButton.onFocusChangeListener = onFocusChangeListener
 
         imagesButton = root.findViewById(R.id.images_button)
-        imagesButton.setOnClickListener {
-            val intent =
-                Intent(context, FilterListActivity::class.java)
-                    .putExtra(FilterListActivity.INTENT_FILTER_ARGS, FilterArgs(DataType.IMAGE))
-            startActivity(context, intent, null)
-        }
+        imagesButton.setOnClickListener(ClickListener(DataType.IMAGE))
         imagesButton.onFocusChangeListener = onFocusChangeListener
 
         performersButton = root.findViewById(R.id.performers_button)
-        performersButton.setOnClickListener {
-            val intent =
-                Intent(context, FilterListActivity::class.java)
-                    .putExtra(
-                        FilterListActivity.INTENT_FILTER_ARGS,
-                        FilterArgs(DataType.PERFORMER),
-                    )
-            startActivity(context, intent, null)
-        }
+        performersButton.setOnClickListener(ClickListener(DataType.PERFORMER))
         performersButton.onFocusChangeListener = onFocusChangeListener
 
         studiosButton = root.findViewById(R.id.studios_button)
-        studiosButton.setOnClickListener {
-            val intent =
-                Intent(context, FilterListActivity::class.java)
-                    .putExtra(FilterListActivity.INTENT_FILTER_ARGS, FilterArgs(DataType.STUDIO))
-            startActivity(context, intent, null)
-        }
+        studiosButton.setOnClickListener(ClickListener(DataType.STUDIO))
         studiosButton.onFocusChangeListener = onFocusChangeListener
 
         tagsButton = root.findViewById(R.id.tags_button)
-        tagsButton.setOnClickListener {
-            val intent =
-                Intent(context, FilterListActivity::class.java)
-                    .putExtra(FilterListActivity.INTENT_FILTER_ARGS, FilterArgs(DataType.TAG))
-            startActivity(context, intent, null)
-        }
+        tagsButton.setOnClickListener(ClickListener(DataType.TAG))
         tagsButton.onFocusChangeListener = onFocusChangeListener
 
         moviesButton = root.findViewById(R.id.movies_button)
-        moviesButton.setOnClickListener {
-            val intent =
-                Intent(context, FilterListActivity::class.java)
-                    .putExtra(FilterListActivity.INTENT_FILTER_ARGS, FilterArgs(DataType.MOVIE))
-            startActivity(context, intent, null)
-        }
+        moviesButton.setOnClickListener(ClickListener(DataType.MOVIE))
         moviesButton.onFocusChangeListener = onFocusChangeListener
 
         markersButton = root.findViewById(R.id.markers_button)
-        markersButton.setOnClickListener {
-            val intent =
-                Intent(context, FilterListActivity::class.java)
-                    .putExtra(FilterListActivity.INTENT_FILTER_ARGS, FilterArgs(DataType.MARKER))
-            startActivity(context, intent, null)
-        }
+        markersButton.setOnClickListener(ClickListener(DataType.MARKER))
         markersButton.onFocusChangeListener = onFocusChangeListener
 
         galleriesButton = root.findViewById(R.id.galleries_button)
-        galleriesButton.setOnClickListener {
-            val intent =
-                Intent(context, FilterListActivity::class.java)
-                    .putExtra(FilterListActivity.INTENT_FILTER_ARGS, FilterArgs(DataType.GALLERY))
-            startActivity(context, intent, null)
-        }
+        galleriesButton.setOnClickListener(ClickListener(DataType.GALLERY))
         galleriesButton.onFocusChangeListener = onFocusChangeListener
 
         refreshMenuItems()
@@ -182,5 +149,33 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         moviesButton.visibility = getVis("movies")
         markersButton.visibility = getVis("markers")
         galleriesButton.visibility = getVis("galleries")
+    }
+
+    private class ClickListener(private val dataType: DataType) : OnClickListener {
+        override fun onClick(v: View) {
+            v.findViewTreeLifecycleOwner()?.lifecycleScope?.launch(
+                StashCoroutineExceptionHandler(true),
+            ) {
+                val queryEngine = QueryEngine(v.context)
+                val filterParser = FilterParser(StashServer.getCurrentServerVersion())
+                val defaultFilter =
+                    queryEngine.getDefaultFilter(dataType)?.toFilterArgs()
+                        ?.withResolvedRandom()?.ensureParsed(filterParser)
+                Log.v(TAG, "Got default filter for $dataType: ${defaultFilter != null}")
+                val filterArgs =
+                    defaultFilter ?: FilterArgs(
+                        dataType = dataType,
+                        findFilter = StashFindFilter(dataType.defaultSort),
+                    )
+                val intent =
+                    Intent(v.context, FilterListActivity::class.java)
+                        .putExtra(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
+                startActivity(v.context, intent, null)
+            }
+        }
+    }
+
+    companion object {
+        private const val TAG = "MainTitleView"
     }
 }
