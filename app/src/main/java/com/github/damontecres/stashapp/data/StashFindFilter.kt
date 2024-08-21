@@ -13,11 +13,16 @@ data class StashFindFilter(
 ) : Parcelable {
     constructor(sortAndDirection: SortAndDirection) : this(null, sortAndDirection)
 
-    fun toFindFilterType(): FindFilterType =
+    fun toFindFilterType(
+        page: Int? = null,
+        perPage: Int? = null,
+    ): FindFilterType =
         FindFilterType(
             q = Optional.presentIfNotNull(q),
             sort = Optional.presentIfNotNull(sortAndDirection?.sort),
             direction = Optional.presentIfNotNull(sortAndDirection?.direction),
+            page = Optional.presentIfNotNull(page),
+            per_page = Optional.presentIfNotNull(perPage),
         )
 }
 

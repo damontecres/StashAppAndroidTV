@@ -312,16 +312,17 @@ class QueryEngine(
     suspend fun find(
         type: DataType,
         findFilter: FindFilterType,
+        useRandom: Boolean = true,
     ): List<*> {
         return when (type) {
-            DataType.SCENE -> findScenes(findFilter)
-            DataType.PERFORMER -> findPerformers(findFilter)
-            DataType.TAG -> findTags(findFilter)
-            DataType.STUDIO -> findStudios(findFilter)
-            DataType.MOVIE -> findMovies(findFilter)
-            DataType.MARKER -> findMarkers(findFilter)
-            DataType.IMAGE -> findImages(findFilter)
-            DataType.GALLERY -> findGalleries(findFilter)
+            DataType.SCENE -> findScenes(findFilter, useRandom = useRandom)
+            DataType.PERFORMER -> findPerformers(findFilter, useRandom = useRandom)
+            DataType.TAG -> findTags(findFilter, useRandom = useRandom)
+            DataType.STUDIO -> findStudios(findFilter, useRandom = useRandom)
+            DataType.MOVIE -> findMovies(findFilter, useRandom = useRandom)
+            DataType.MARKER -> findMarkers(findFilter, useRandom = useRandom)
+            DataType.IMAGE -> findImages(findFilter, useRandom = useRandom)
+            DataType.GALLERY -> findGalleries(findFilter, useRandom = useRandom)
         }
     }
 

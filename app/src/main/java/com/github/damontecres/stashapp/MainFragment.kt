@@ -19,8 +19,8 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.fragment.ImageData
-import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -50,7 +50,7 @@ class MainFragment : BrowseSupportFragment() {
 
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()
-    private val filterList = SparseArray<StashFilter>()
+    private val filterList = SparseArray<FilterArgs>()
     private lateinit var mBackgroundManager: BackgroundManager
 
     @Volatile
@@ -269,7 +269,7 @@ class MainFragment : BrowseSupportFragment() {
                             PreferenceManager.getDefaultSharedPreferences(requireContext())
                                 .getInt(getString(R.string.pref_key_page_size), 25)
                         val frontPageParser =
-                            FrontPageParser(queryEngine, filterParser, pageSize)
+                            FrontPageParser(requireContext(), queryEngine, filterParser, pageSize)
                         val jobs = frontPageParser.parse(frontPageContent)
                         jobs.forEachIndexed { index, job ->
                             job.await().let { row ->

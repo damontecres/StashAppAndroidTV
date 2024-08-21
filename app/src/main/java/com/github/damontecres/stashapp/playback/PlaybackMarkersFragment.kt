@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.playback
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -14,31 +13,25 @@ import androidx.media3.common.Player
 import androidx.media3.common.Player.Listener
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
-import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.CountMarkersQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
-import com.github.damontecres.stashapp.data.AppFilter
-import com.github.damontecres.stashapp.data.FilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.data.StashCustomFilter
-import com.github.damontecres.stashapp.data.StashFilter
-import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.toFindFilterType
 import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlinx.coroutines.launch
 
 @OptIn(UnstableApi::class)
 class PlaybackMarkersFragment : PlaybackFragment() {
-    private lateinit var sourceFilter: StashFilter
+    private lateinit var sourceFilter: FilterArgs
     private lateinit var queryEngine: QueryEngine
     private lateinit var pagingSource: StashPagingSource<FindMarkersQuery.Data, MarkerData, CountMarkersQuery.Data>
     override val previewsEnabled: Boolean
@@ -100,55 +93,22 @@ class PlaybackMarkersFragment : PlaybackFragment() {
     }
 
     private suspend fun buildPlaylist() {
-        val filter = sourceFilter
-        val savedFilter =
-            when (filter.filterType) {
-                FilterType.APP_FILTER -> {
-                    filter as AppFilter
-                    filter.toSavedFilterData(requireContext())
-                }
+        val filterParser = FilterParser(ServerPreferences(requireContext()).serverVersion)
+        val filter = sourceFilter.ensureParsed(filterParser)
 
-                FilterType.SAVED_FILTER -> {
-                    filter as StashSavedFilter
-                    queryEngine.getSavedFilter(filter.savedFilterId)
-                }
-
-                FilterType.CUSTOM_FILTER -> {
-                    filter as StashCustomFilter
-                    filter.toSavedFilterData()
-                }
-            }
-        if (savedFilter != null) {
-            val newSort = filter.sortBy ?: savedFilter.find_filter?.sort
-            val newDirection =
-                if (filter.direction != null) {
-                    SortDirectionEnum.valueOf(filter.direction!!)
-                } else {
-                    savedFilter.find_filter?.direction
-                }
-
-            val duration = requireActivity().intent.getLongExtra(INTENT_DURATION_ID, 15_000L)
-            val filterParser = FilterParser(ServerPreferences(requireContext()).serverVersion)
-            val findFilter =
-                savedFilter.find_filter?.toFindFilterType()
-                    ?.copy(
-                        sort = Optional.presentIfNotNull(newSort),
-                        direction = Optional.presentIfNotNull(newDirection),
-                    )
-            val objectFilter = filterParser.convertMarkerObjectFilter(savedFilter.object_filter)
-            val dataSupplier =
-                MarkerDataSupplier(findFilter, objectFilter)
-            pagingSource = StashPagingSource(requireContext(), 25, dataSupplier, useRandom = false)
-            addPageToPlaylist(1, duration)
-            player!!.seekBackIncrement
-            player!!.addListener(PlaylistListener(duration))
-            player!!.prepare()
-            player!!.volume = 1f
-            player!!.playWhenReady = true
-        } else {
-            Log.w(TAG, "savedFilter is null")
-            Toast.makeText(requireContext(), "Could not determine filter", Toast.LENGTH_LONG).show()
-        }
+        val duration = requireActivity().intent.getLongExtra(INTENT_DURATION_ID, 15_000L)
+        val dataSupplier =
+            MarkerDataSupplier(
+                filter.findFilter?.toFindFilterType(),
+                filter.objectFilter as SceneMarkerFilterType?,
+            )
+        pagingSource = StashPagingSource(requireContext(), 25, dataSupplier, useRandom = false)
+        addPageToPlaylist(1, duration)
+        player!!.seekBackIncrement
+        player!!.addListener(PlaylistListener(duration))
+        player!!.prepare()
+        player!!.volume = 1f
+        player!!.playWhenReady = true
     }
 
     private data class MediaItemTag(val marker: MarkerData, val streamDecision: StreamDecision)

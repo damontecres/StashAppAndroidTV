@@ -26,13 +26,11 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
-import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Performer
-import com.github.damontecres.stashapp.data.StashCustomFilter
-import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.playback.PlaybackActivity
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.addToIntent
 import com.github.damontecres.stashapp.util.name
 
@@ -89,25 +87,11 @@ class StashItemViewClickListener(
             intent.putExtra(GalleryActivity.INTENT_GALLERY_ID, item.id)
             intent.putExtra(GalleryActivity.INTENT_GALLERY_NAME, item.name)
             context.startActivity(intent)
-        } else if (item is StashSavedFilter) {
-            val intent = Intent(context, FilterListActivity::class.java)
-            intent.putExtra("savedFilterId", item.savedFilterId)
-            intent.putExtra("dataType", DataType.fromFilterMode(item.mode)!!.name)
-            intent.putExtra("useRandom", false)
-            intent.putExtra("sortBy", item.sortBy)
-            intent.putExtra("filter", item)
-            intent.putExtra("moveOnePage", true)
-            context.startActivity(intent)
-        } else if (item is StashCustomFilter) {
-            val intent = Intent(context, FilterListActivity::class.java)
-            intent.putExtra("direction", item.direction)
-            intent.putExtra("sortBy", item.sortBy)
-            intent.putExtra("dataType", DataType.fromFilterMode(item.mode)!!.name)
-            intent.putExtra("description", item.description)
-            intent.putExtra("useRandom", false)
-            intent.putExtra("moveOnePage", true)
-            intent.putExtra("query", item.query)
-            intent.putExtra("filter", item)
+        } else if (item is FilterArgs) {
+            val intent =
+                Intent(context, FilterListActivity::class.java)
+                    .putExtra(FilterListActivity.INTENT_FILTER_ARGS, item)
+                    .putExtra(FilterListActivity.INTENT_SCROLL_NEXT_PAGE, true)
             context.startActivity(intent)
         } else if (item is StashAction) {
             if (actionListener != null) {

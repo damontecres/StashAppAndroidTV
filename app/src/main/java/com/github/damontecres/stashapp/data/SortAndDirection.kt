@@ -15,5 +15,29 @@ data class SortAndDirection(val sort: String, val direction: SortDirectionEnum) 
     companion object {
         val NAME_ASC = SortAndDirection("name", SortDirectionEnum.ASC)
         val PATH_ASC = SortAndDirection("path", SortDirectionEnum.ASC)
+
+        fun create(
+            dataType: DataType,
+            sort: String?,
+            direction: String?,
+        ): SortAndDirection {
+            return create(
+                dataType,
+                sort,
+                SortDirectionEnum.entries.firstOrNull { it.rawValue == direction },
+            )
+        }
+
+        fun create(
+            dataType: DataType,
+            sort: String?,
+            direction: SortDirectionEnum?,
+        ): SortAndDirection {
+            return if (sort != null) {
+                SortAndDirection(sort, direction ?: SortDirectionEnum.ASC)
+            } else {
+                dataType.defaultSort
+            }
+        }
     }
 }

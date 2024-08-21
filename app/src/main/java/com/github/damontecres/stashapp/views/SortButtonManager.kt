@@ -1,13 +1,18 @@
 package com.github.damontecres.stashapp.views
 
+import android.content.Context
 import android.text.Spannable
 import android.text.SpannableString
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.widget.ListPopupWindow
-import com.github.damontecres.stashapp.FilterListActivity.SortByArrayAdapter
+import androidx.core.view.get
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -141,6 +146,35 @@ class SortButtonManager(val newSortCallback: (SortAndDirection) -> Unit) {
     }
 
     fun SortDirectionEnum.toggle(): SortDirectionEnum = if (this == SortDirectionEnum.ASC) SortDirectionEnum.DESC else SortDirectionEnum.ASC
+
+    private class SortByArrayAdapter(
+        context: Context,
+        items: List<String>,
+        var currentIndex: Int,
+        var currentDirection: SortDirectionEnum?,
+    ) :
+        ArrayAdapter<String>(context, R.layout.sort_popup_item, R.id.popup_item_text, items) {
+        override fun getView(
+            position: Int,
+            convertView: View?,
+            parent: ViewGroup,
+        ): View {
+            val view = super.getView(position, convertView, parent)
+            view as LinearLayout
+            (view.get(0) as TextView).text =
+                if (position == currentIndex) {
+                    when (currentDirection) {
+                        SortDirectionEnum.ASC -> context.getString(R.string.fa_caret_up)
+                        SortDirectionEnum.DESC -> context.getString(R.string.fa_caret_down)
+                        SortDirectionEnum.UNKNOWN__ -> null
+                        null -> null
+                    }
+                } else {
+                    null
+                }
+            return view
+        }
+    }
 
     companion object {
         private val TAG = SortButtonManager::class.java.simpleName

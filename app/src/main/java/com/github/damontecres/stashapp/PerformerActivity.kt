@@ -15,15 +15,14 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.PerformTogetherAppFilter
 import com.github.damontecres.stashapp.data.Performer
-import com.github.damontecres.stashapp.data.PerformerWithTagAppFilter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
@@ -186,9 +185,25 @@ class PerformerActivity : TabbedGridFragmentActivity(R.layout.performer_activity
                 1L -> {
                     val performerIds = listOf(performer.id, item.id)
                     val name = "${performer.name} & ${item.name}"
-                    val appFilter = PerformTogetherAppFilter(name, performerIds)
-                    val intent = Intent(context, FilterListActivity::class.java)
-                    intent.putExtra("filter", appFilter)
+                    val intent =
+                        Intent(context, FilterListActivity::class.java)
+                            .putExtra(
+                                FilterListActivity.INTENT_FILTER_ARGS,
+                                FilterArgs(
+                                    dataType = DataType.SCENE,
+                                    name = name,
+                                    objectFilter =
+                                        SceneFilterType(
+                                            performers =
+                                                Optional.present(
+                                                    MultiCriterionInput(
+                                                        value = Optional.present(performerIds),
+                                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                                    ),
+                                                ),
+                                        ),
+                                ),
+                            )
                     context.startActivity(intent)
                 }
             }
@@ -219,9 +234,26 @@ class PerformerActivity : TabbedGridFragmentActivity(R.layout.performer_activity
 
                 1L -> {
                     val name = "Performers with ${item.name}"
-                    val appFilter = PerformerWithTagAppFilter(name, item.id)
-                    val intent = Intent(context, FilterListActivity::class.java)
-                    intent.putExtra("filter", appFilter)
+                    val intent =
+                        Intent(context, FilterListActivity::class.java)
+                            .putExtra(
+                                FilterListActivity.INTENT_FILTER_ARGS,
+                                FilterArgs(
+                                    dataType = DataType.PERFORMER,
+                                    name = name,
+                                    objectFilter =
+                                        PerformerFilterType(
+                                            tags =
+                                                Optional.present(
+                                                    HierarchicalMultiCriterionInput(
+                                                        value = Optional.present(listOf(item.id)),
+                                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                                        depth = Optional.absent(),
+                                                    ),
+                                                ),
+                                        ),
+                                ),
+                            )
                     context.startActivity(intent)
                 }
             }

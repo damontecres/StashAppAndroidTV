@@ -24,8 +24,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.OCounter
-import com.github.damontecres.stashapp.data.StashCustomFilter
-import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
 import kotlin.properties.Delegates
@@ -144,8 +143,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 .addClassPresenter(StudioData::class.java, StudioPresenter())
                 .addClassPresenter(TagData::class.java, TagPresenter())
                 .addClassPresenter(MovieData::class.java, MoviePresenter())
-                .addClassPresenter(StashSavedFilter::class.java, StashFilterPresenter())
-                .addClassPresenter(StashCustomFilter::class.java, StashFilterPresenter())
+                .addClassPresenter(FilterArgs::class.java, FilterArgsPresenter())
                 .addClassPresenter(StashAction::class.java, ActionPresenter())
                 .addClassPresenter(MarkerData::class.java, MarkerPresenter())
                 .addClassPresenter(ImageData::class.java, ImagePresenter())
