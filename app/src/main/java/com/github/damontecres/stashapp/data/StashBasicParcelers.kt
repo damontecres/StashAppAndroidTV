@@ -82,7 +82,7 @@ fun <T> readList(
 fun <T> readOptionalList(
     parcel: Parcel,
     mapFun: (Parcel) -> T,
-): Optional<List<T>?> {
+): Optional<List<T>> {
     if (parcel.readByte() == PRESENT) {
         return Optional.present(readList(parcel, mapFun))
     } else {
@@ -113,7 +113,7 @@ fun writeOptionalInt(
     }
 }
 
-fun readOptionalInt(parcel: Parcel): Optional<Int?> {
+fun readOptionalInt(parcel: Parcel): Optional<Int> {
     if (parcel.readByte() == PRESENT) {
         return Optional.present(parcel.readInt())
     } else {
@@ -137,7 +137,7 @@ fun writeOptionalBoolean(
     }
 }
 
-fun readOptionalBoolean(parcel: Parcel): Optional<Boolean?> {
+fun readOptionalBoolean(parcel: Parcel): Optional<Boolean> {
     if (parcel.readByte() == PRESENT) {
         return Optional.present(parcel.readByte() == PRESENT)
     } else {
