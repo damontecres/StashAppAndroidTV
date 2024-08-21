@@ -399,6 +399,7 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                     preview = this.paths.preview,
                     stream = this.paths.stream,
                     sprite = this.paths.sprite,
+                    caption = this.paths.caption,
                 ),
             sceneStreams =
                 this.sceneStreams.map {
@@ -431,6 +432,13 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                 },
             tags = this.tags.map { SlimSceneData.Tag("", it.tagData.asSlimTagData) },
             performers = this.performers.map { SlimSceneData.Performer(it.id, it.name) },
+            captions =
+                this.captions?.map {
+                    SlimSceneData.Caption(
+                        it.language_code,
+                        it.caption_type,
+                    )
+                },
         )
 
 val FullSceneData.File.asVideoSceneDataFile: VideoSceneData.File
