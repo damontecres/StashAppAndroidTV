@@ -220,5 +220,5 @@ fun SavedFilterData.toFilterArgs(): FilterArgs {
         } else {
             StashFindFilter(null, dataType.defaultSort)
         }
-    return FilterArgs(dataType, name, findFilter, object_filter)
+    return FilterArgs(dataType, name.ifBlank { null }, findFilter, object_filter)
 }

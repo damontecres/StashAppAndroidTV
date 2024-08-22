@@ -292,6 +292,7 @@ class StashGridFragment() : Fragment() {
         }
         if (sortButtonEnabled) {
             sortButton.visibility = View.VISIBLE
+            sortButton.nextFocusUpId = R.id.tab_layout
             sortButtonTransitionHelper = TitleTransitionHelper(view as ViewGroup, sortButton)
             SortButtonManager {
                 refresh(it)

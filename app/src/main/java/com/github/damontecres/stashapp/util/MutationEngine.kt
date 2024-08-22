@@ -25,12 +25,14 @@ import com.github.damontecres.stashapp.api.SceneDeleteOMutation
 import com.github.damontecres.stashapp.api.SceneResetOMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
+import com.github.damontecres.stashapp.api.UpdateGalleryMutation
 import com.github.damontecres.stashapp.api.UpdateImageMutation
 import com.github.damontecres.stashapp.api.UpdateMarkerMutation
 import com.github.damontecres.stashapp.api.UpdatePerformerMutation
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.GalleryUpdateInput
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
 import com.github.damontecres.stashapp.api.type.ImageUpdateInput
 import com.github.damontecres.stashapp.api.type.PackageSpecInput
@@ -413,6 +415,21 @@ class MutationEngine(
         val mutation = CreatePerformerMutation(input)
         val result = executeMutation(mutation)
         return result.data?.performerCreate?.performerData
+    }
+
+    suspend fun updateGallery(
+        galleryId: String,
+        rating100: Int,
+    ): UpdateGalleryMutation.GalleryUpdate? {
+        val mutation =
+            UpdateGalleryMutation(
+                GalleryUpdateInput(
+                    id = galleryId,
+                    rating100 = Optional.present(rating100),
+                ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.galleryUpdate
     }
 
     suspend fun installPackage(

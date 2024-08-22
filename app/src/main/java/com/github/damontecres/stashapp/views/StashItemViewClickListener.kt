@@ -29,10 +29,10 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Performer
+import com.github.damontecres.stashapp.data.toGallery
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.addToIntent
-import com.github.damontecres.stashapp.util.name
 
 /**
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc
@@ -83,9 +83,9 @@ class StashItemViewClickListener(
             item.addToIntent(intent)
             context.startActivity(intent)
         } else if (item is GalleryData) {
-            val intent = Intent(context, GalleryActivity::class.java)
-            intent.putExtra(GalleryActivity.INTENT_GALLERY_ID, item.id)
-            intent.putExtra(GalleryActivity.INTENT_GALLERY_NAME, item.name)
+            val intent =
+                Intent(context, GalleryActivity::class.java)
+                    .putExtra(GalleryActivity.INTENT_GALLERY_OBJ, item.toGallery())
             context.startActivity(intent)
         } else if (item is FilterArgs) {
             val intent =
