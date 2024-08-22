@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <ripple android:color="@color/selected_background"/>
+    </item>
+    <item android:state_focused="true" android:color="@color/fastlane_background" />
+    <item android:color="@color/popup_selected_background" />
+</selector>

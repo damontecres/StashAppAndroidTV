@@ -1,85 +1,63 @@
 package com.github.damontecres.stashapp
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.View
 import android.widget.ImageView
-import android.widget.ScrollView
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
-import androidx.core.view.children
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
-import androidx.leanback.tab.LeanbackTabLayout
-import androidx.leanback.tab.LeanbackViewPager
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
-import com.bumptech.glide.request.target.Target
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.Gallery
 import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.StashGlide
-import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.name
-import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
+import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
+import com.github.damontecres.stashapp.views.StashRatingBar
 import kotlinx.coroutines.launch
 
-class GalleryActivity : FragmentActivity() {
+class GalleryActivity : TabbedGridFragmentActivity(R.layout.gallery_activity) {
+    private lateinit var gallery: Gallery
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        gallery = intent.getParcelableExtra(INTENT_GALLERY_OBJ)!!
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_gallery)
-        if (savedInstanceState == null) {
-            val galleryId = intent.getStringExtra(INTENT_GALLERY_ID)!!
-            val galleryName = intent.getStringExtra(INTENT_GALLERY_NAME)
-
-            val cardSize =
-                PreferenceManager.getDefaultSharedPreferences(this)
-                    .getInt("cardSize", getString(R.string.card_size_default))
-            // At medium size, 3 scenes fit in the space vs 5 normally
-            val columns = cardSize * 3.0 / 5
-
-            val tabLayout = findViewById<LeanbackTabLayout>(R.id.gallery_tab_layout)
-            val viewPager = findViewById<LeanbackViewPager>(R.id.gallery_view_pager)
-
-            val queryEngine = QueryEngine(this)
-            lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val gallery = queryEngine.getGalleries(listOf(galleryId)).first()
-                viewPager.adapter = PagerAdapter(gallery, columns, supportFragmentManager)
-                tabLayout.setupWithViewPager(viewPager)
-
-                tabLayout.nextFocusDownId = R.id.gallery_view_pager
-                tabLayout.children.forEach { it.nextFocusDownId = R.id.gallery_view_pager }
-                tabLayout.children.first().requestFocus()
-
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.gallery_details, GalleryFragment(gallery))
-                    .commitNow()
-            }
-        }
+        viewModel.title.value = gallery.name
     }
 
-    inner class PagerAdapter(
-        private val gallery: GalleryData,
-        private val columns: Double,
+    override fun getPagerAdapter(): StashFragmentPagerAdapter {
+        return PagerAdapter(gallery, supportFragmentManager)
+    }
+
+    private class PagerAdapter(
+        private val gallery: Gallery,
         fm: FragmentManager,
     ) :
         StashFragmentPagerAdapter(
                 listOf(
+                    PagerEntry("Details", null),
                     PagerEntry(DataType.IMAGE),
                     PagerEntry(DataType.SCENE),
                     PagerEntry(DataType.PERFORMER),
@@ -87,11 +65,7 @@ class GalleryActivity : FragmentActivity() {
                 ),
                 fm,
             ) {
-        private fun getColumns(dataType: DataType): Int {
-            return (columns * dataType.defaultCardRatio).toInt()
-        }
-
-        override fun getFragment(position: Int): StashGridFragment {
+        override fun getFragment(position: Int): Fragment {
             val galleries =
                 Optional.present(
                     MultiCriterionInput(
@@ -103,21 +77,23 @@ class GalleryActivity : FragmentActivity() {
             val fragment =
                 when (position) {
                     0 -> {
+                        GalleryFragment(gallery)
+                    }
+
+                    1 -> {
                         StashGridFragment(
                             dataType = DataType.IMAGE,
                             objectFilter = ImageFilterType(galleries = galleries),
-                            cardSize = getColumns(DataType.IMAGE),
                         ).withImageGridClickListener()
                     }
 
-                    1 ->
+                    2 ->
                         StashGridFragment(
                             dataType = DataType.SCENE,
                             objectFilter = SceneFilterType(galleries = galleries),
-                            cardSize = getColumns(DataType.SCENE),
                         )
 
-                    2 -> {
+                    3 -> {
                         val presenter =
                             ClassPresenterSelector().addClassPresenter(
                                 PerformerData::class.java,
@@ -130,58 +106,77 @@ class GalleryActivity : FragmentActivity() {
                                         DataType.PERFORMER,
                                         override = DataSupplierOverride.GalleryPerformer(gallery.id),
                                     ),
-                                cardSize = getColumns(DataType.PERFORMER),
                             )
                         fragment.presenterSelector = presenter
                         fragment
                     }
 
-                    3 ->
+                    4 ->
                         StashGridFragment(
                             filterArgs =
                                 FilterArgs(
                                     DataType.TAG,
                                     override = DataSupplierOverride.GalleryTag(gallery.id),
                                 ),
-                            cardSize = getColumns(DataType.TAG),
                         )
 
                     else -> throw IllegalArgumentException()
                 }
-            fragment.sortButtonEnabled = true
             return fragment
         }
     }
 
-    class GalleryFragment(val gallery: GalleryData) : Fragment(R.layout.gallery_view) {
+    class GalleryFragment() : Fragment(R.layout.gallery_view) {
+        private lateinit var gallery: Gallery
+        private lateinit var galleryData: GalleryData
+
+        private lateinit var studioImage: ImageView
+        private lateinit var ratingBar: StashRatingBar
+        private lateinit var table: TableLayout
+
+        constructor(gallery: Gallery) : this() {
+            this.gallery = gallery
+        }
+
         override fun onViewCreated(
             view: View,
             savedInstanceState: Bundle?,
         ) {
             super.onViewCreated(view, savedInstanceState)
-            val gallerySidebar = view.findViewById<View>(R.id.gallery_sidebar)
-            val titleTextView = view.findViewById<TextView>(R.id.gallery_name)
-            val studioImage = view.findViewById<ImageView>(R.id.studio_image)
-            val descriptionTextView = view.findViewById<TextView>(R.id.gallery_description)
-            val table = view.findViewById<TableLayout>(R.id.gallery_table)
 
-            titleTextView.text = gallery.name
-            descriptionTextView.text = gallery.details
+            studioImage = view.findViewById(R.id.studio_image)
+            ratingBar = view.findViewById(R.id.gallery_rating_bar)
+            table = view.findViewById(R.id.gallery_table)
 
-            addRow(table, R.string.stashapp_date, gallery.date)
-            addRow(table, R.string.stashapp_scene_code, gallery.code)
-            addRow(table, R.string.stashapp_photographer, gallery.photographer)
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
+                val queryEngine = QueryEngine(requireContext())
+                galleryData = queryEngine.getGalleries(listOf(gallery.id)).first()
 
-            view.findViewById<ScrollView>(R.id.gallery_scrollview).onlyScrollIfNeeded()
+                addRow(table, R.string.stashapp_details, galleryData.details)
+                addRow(table, R.string.stashapp_date, galleryData.date)
+                addRow(table, R.string.stashapp_scene_code, galleryData.code)
+                addRow(table, R.string.stashapp_photographer, galleryData.photographer)
 
-            if (gallery.studio?.image_path.isNotNullOrBlank()) {
-                StashGlide.with(requireContext(), gallery.studio!!.image_path!!)
-                    .override(gallerySidebar.width, Target.SIZE_ORIGINAL)
-                    .optionalFitCenter()
-                    .error(StashPresenter.glideError(requireContext()))
-                    .into(studioImage)
-            } else {
-                studioImage.visibility = View.GONE
+                if (galleryData.studio?.image_path.isNotNullOrBlank()) {
+                    StashGlide.with(requireContext(), galleryData.studio!!.image_path!!)
+                        .optionalFitCenter()
+                        .error(StashPresenter.glideError(requireContext()))
+                        .into(studioImage)
+                } else {
+                    studioImage.visibility = View.GONE
+                }
+
+                ratingBar.rating100 = galleryData.rating100 ?: 0
+                ratingBar.setRatingCallback { rating100 ->
+                    val mutationEngine = MutationEngine(requireContext(), true)
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
+                        val result = mutationEngine.updateGallery(galleryData.id, rating100)
+                        if (result != null) {
+                            ratingBar.rating100 = result.rating100 ?: 0
+                            showSetRatingToast(requireContext(), rating100, ratingBar.ratingAsStars)
+                        }
+                    }
+                }
             }
         }
 
@@ -195,25 +190,64 @@ class GalleryActivity : FragmentActivity() {
             }
             val keyString = getString(key) + ":"
 
+            val layoutId =
+                if (key == R.string.stashapp_photographer) {
+                    R.layout.table_row_photographer
+                } else {
+                    R.layout.table_row
+                }
+
             val row =
                 requireActivity().layoutInflater.inflate(
-                    R.layout.table_row,
+                    layoutId,
                     table,
                     false,
                 ) as TableRow
 
             val keyView = row.findViewById<TextView>(R.id.table_row_key)
             keyView.text = keyString
+            keyView.setTextSize(
+                TypedValue.COMPLEX_UNIT_PX,
+                resources.getDimension(R.dimen.table_text_size_large),
+            )
 
             val valueView = row.findViewById<TextView>(R.id.table_row_value)
             valueView.text = value
+            valueView.setTextSize(
+                TypedValue.COMPLEX_UNIT_PX,
+                resources.getDimension(R.dimen.table_text_size_large),
+            )
+            if (key == R.string.stashapp_photographer) {
+                valueView.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+                valueView.setOnClickListener {
+                    val objectFilter =
+                        GalleryFilterType(
+                            photographer =
+                                Optional.present(
+                                    StringCriterionInput(
+                                        galleryData.photographer!!,
+                                        CriterionModifier.EQUALS,
+                                    ),
+                                ),
+                        )
+                    val filterArgs =
+                        FilterArgs(
+                            dataType = DataType.GALLERY,
+                            name = galleryData.photographer,
+                            objectFilter = objectFilter,
+                        )
+                    val intent =
+                        Intent(requireContext(), FilterListActivity::class.java)
+                            .putExtra(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
+                    requireContext().startActivity(intent)
+                }
+            }
 
             table.addView(row)
         }
     }
 
     companion object {
-        const val INTENT_GALLERY_ID = "gallery.id"
-        const val INTENT_GALLERY_NAME = "gallery.name"
+        const val INTENT_GALLERY_OBJ = "gallery"
     }
 }
