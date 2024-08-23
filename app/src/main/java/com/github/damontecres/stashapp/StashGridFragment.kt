@@ -28,6 +28,7 @@ import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -69,7 +70,7 @@ class StashGridFragment() : Fragment() {
     private var mSelectedPosition = -1
     private var titleTransitionHelper: TitleTransitionHelper? = null
     private var sortButtonTransitionHelper: TitleTransitionHelper? = null
-    private var cardSize: Int? = null
+    private var columns: Int? = null
     private var scrollToNextPage = false
 
     // Modifiable properties
@@ -157,12 +158,12 @@ class StashGridFragment() : Fragment() {
 
     constructor(
         filterArgs: FilterArgs,
-        cardSize: Int? = null,
+        columns: Int? = null,
         scrollToNextPage: Boolean = false,
     ) : this() {
         this._filterArgs =
             filterArgs.ensureParsed(FilterParser(StashServer.getCurrentServerVersion()))
-        this.cardSize = cardSize
+        this.columns = columns
         this._currentSortAndDirection = _filterArgs.sortAndDirection
         this.scrollToNextPage = scrollToNextPage
     }
@@ -171,9 +172,9 @@ class StashGridFragment() : Fragment() {
         dataType: DataType,
         findFilter: StashFindFilter? = null,
         objectFilter: Any? = null,
-        cardSize: Int? = null,
+        columns: Int? = null,
         scrollToNextPage: Boolean = false,
-    ) : this(FilterArgs(dataType, null, findFilter, objectFilter), cardSize, scrollToNextPage)
+    ) : this(FilterArgs(dataType, null, findFilter, objectFilter), columns, scrollToNextPage)
 
     @SuppressLint("SetTextI18n")
     private fun gridOnItemSelected(position: Int) {
@@ -205,11 +206,11 @@ class StashGridFragment() : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val cardSize =
+        val columns =
             if (savedInstanceState == null) {
-                this.cardSize
+                this.columns
             } else {
-                val temp = savedInstanceState.getInt("cardSize")
+                val temp = savedInstanceState.getInt("columns")
                 if (temp > 0) {
                     temp
                 } else {
@@ -217,12 +218,18 @@ class StashGridFragment() : Fragment() {
                 }
             }
 
-        val gridPresenter = StashGridPresenter()
-        val columns =
-            cardSize ?: PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getInt("cardSize", requireContext().getString(R.string.card_size_default))
+        val calculatedColumns =
+            if (columns != null) {
+                columns
+            } else {
+                val cardSize =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        .getInt("cardSize", requireContext().getString(R.string.card_size_default))
+                (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
+            }
 
-        gridPresenter.numberOfColumns = columns
+        val gridPresenter = StashGridPresenter()
+        gridPresenter.numberOfColumns = calculatedColumns
         setGridPresenter(gridPresenter)
 
         if (savedInstanceState != null) {
@@ -303,7 +310,7 @@ class StashGridFragment() : Fragment() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("mSelectedPosition", mSelectedPosition)
-        cardSize?.let { outState.putInt("cardSize", it) }
+        columns?.let { outState.putInt("columns", it) }
         outState.putParcelable("_filterArgs", _filterArgs.with(currentSortAndDirection))
         outState.putString("name", name)
         outState.putBoolean("sortButtonEnabled", sortButtonEnabled)
