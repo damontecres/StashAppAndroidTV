@@ -63,11 +63,11 @@ data class Version(
 
     companion object {
         private val VERSION_REGEX = Regex("v?(\\d+)\\.(\\d+)\\.(\\d+)(-(\\d+)-g([a-zA-Z0-9]+))?")
-        val V0_25_0 = fromString("v0.25.0")
         val V0_26_0 = fromString("v0.26.0")
+        val V0_26_2 = fromString("v0.26.2")
         val V0_27_0 = fromString("v0.27.0")
 
-        val MINIMUM_STASH_VERSION = V0_25_0
+        val MINIMUM_STASH_VERSION = V0_26_0
 
         fun fromString(version: String): Version {
             val v = tryFromString(version)
