@@ -41,7 +41,7 @@ class MovieActivity : FragmentActivity() {
                                     ),
                                 ),
                         ),
-                    cardSize = columns,
+                    columns = columns,
                 )
             sceneFragment.sortButtonEnabled = true
             sceneFragment.requestFocus = true

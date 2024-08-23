@@ -34,8 +34,8 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.toMilliseconds
+import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
 import com.github.damontecres.stashapp.views.durationToString
-import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -227,6 +227,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
         )
 
         moreOptionsButton.setOnClickListener {
+            val previousControllerShowTimeoutMs = videoView.controllerShowTimeoutMs
             val debugToggleText =
                 if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
             val applyFiltersText =
@@ -239,7 +240,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 } else {
                     null
                 }
-            showSimpleListPopupWindow(
+            ListPopupWindowBuilder(
                 moreOptionsButton,
                 listOfNotNull(
                     "Create Marker",
@@ -273,7 +274,14 @@ class PlaybackSceneFragment : PlaybackFragment() {
                         )
                         .commitNow()
                 }
-            }
+            }.onShowListener {
+                // Prevent the controller from hiding
+                videoView.controllerShowTimeoutMs = -1
+            }.onDismissListener {
+                // Restore previous controller timeout
+                videoView.controllerShowTimeoutMs = previousControllerShowTimeoutMs
+            }.build()
+                .show()
         }
     }
 
