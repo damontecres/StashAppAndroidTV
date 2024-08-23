@@ -268,6 +268,7 @@ class StashGridFragment() : Fragment() {
             onItemViewClickedListener ?: StashItemViewClickListener(requireContext())
 
         if (savedInstanceState == null) {
+            Log.v(TAG, "onViewCreated first time")
             refresh(_filterArgs.sortAndDirection) {
                 if (scrollToNextPage) {
                     Log.v(TAG, "scrolling to next page")
@@ -277,6 +278,7 @@ class StashGridFragment() : Fragment() {
                 }
             }
         } else {
+            Log.v(TAG, "onViewCreated restoring")
             _filterArgs = savedInstanceState.getParcelable("_filterArgs")!!
             Log.v(TAG, "sortAndDirection=${_filterArgs.sortAndDirection}")
             val previousPosition = savedInstanceState.getInt("mSelectedPosition")

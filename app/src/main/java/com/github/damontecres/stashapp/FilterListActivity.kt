@@ -65,23 +65,21 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                 fragment.refresh(sortAndDirection)
             }
 
-        fun setTitle(filterArgs: FilterArgs) {
-            titleTextView.text = filterArgs.name ?: getString(filterArgs.dataType.pluralStringId)
-        }
-
         supportFragmentManager.addFragmentOnAttachListener { _, fragment ->
-            setTitle((fragment as StashGridFragment).filterArgs)
+            setTitleText((fragment as StashGridFragment).filterArgs)
         }
         supportFragmentManager.addOnBackStackChangedListener {
             val fragment =
                 supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
             if (fragment != null) {
-                setTitle(fragment.filterArgs)
+                setTitleText(fragment.filterArgs)
             }
         }
 
         val startingFilter = intent.getParcelableExtra<FilterArgs>(INTENT_FILTER_ARGS)!!
-        setup(startingFilter, first = true)
+        if (savedInstanceState == null) {
+            setup(startingFilter, first = true)
+        }
 
         val experimentalEnabled =
             preferences.getBoolean(getString(R.string.pref_key_experimental_features), false)
@@ -94,11 +92,22 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         }
     }
 
+    private fun setTitleText(filterArgs: FilterArgs) {
+        titleTextView.text = filterArgs.name ?: getString(filterArgs.dataType.pluralStringId)
+    }
+
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
         super.onRestoreInstanceState(savedInstanceState)
         val fragment =
             supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
-        titleTextView.text = fragment?.filterArgs?.name
+        if (fragment != null) {
+            setTitleText(fragment.filterArgs)
+            sortButtonManager.setUpSortButton(
+                sortButton,
+                fragment.dataType,
+                fragment.filterArgs.sortAndDirection,
+            )
+        }
     }
 
     private suspend fun populateSavedFilters(dataType: DataType) {
