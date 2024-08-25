@@ -16,6 +16,8 @@ class AppUpgradeHandler(
     }
 
     override fun run() {
+        UpdateChecker.cleanup(context)
+
         // Add mpegts as a default force direct play format
         if (previousVersion.isEqualOrBefore(Version.fromString("0.2.9")) &&
             installedVersion.isAtLeast(Version.fromString("0.2.7"))
