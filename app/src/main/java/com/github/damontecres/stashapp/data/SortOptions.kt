@@ -99,6 +99,9 @@ val PERFORMER_SORT_OPTIONS =
         SortOption("rating", R.string.stashapp_rating),
         SortOption("scenes_count", R.string.stashapp_scene_count),
         SortOption("tag_count", R.string.stashapp_tag_count),
+        SortOption("career_length", R.string.stashapp_career_length, Version.V0_27_0),
+        SortOption("measurements", R.string.stashapp_measurements, Version.V0_27_0),
+        SortOption("weight", R.string.stashapp_weight, Version.V0_27_0),
     )
 
 val MARKER_SORT_OPTIONS =
