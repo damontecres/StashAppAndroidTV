@@ -67,6 +67,7 @@ class FilterArgsPresenter(callback: LongClickCallBack<FilterArgs>? = null) :
             }
         }
 
+        cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.transparent))
         cardView.mainImageView.setImageDrawable(
             AppCompatResources.getDrawable(
                 cardView.context,

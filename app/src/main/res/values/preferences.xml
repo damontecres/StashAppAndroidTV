@@ -15,4 +15,5 @@
     <string name="pref_key_show_playback_debug_info" translatable="false">playback.showDebugInfo</string>
     <string name="pref_key_experimental_features" translatable="false">playback.experimentalFeatures</string>
     <string name="pref_key_playback_save_effects" translatable="false">playback.saveEffects</string>
+    <string name="pref_key_crop_card_images" translatable="false">card.cropImages</string>
 </resources>

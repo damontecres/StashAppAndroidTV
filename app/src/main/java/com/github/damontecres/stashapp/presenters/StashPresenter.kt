@@ -5,10 +5,12 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.PictureDrawable
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
+import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -74,9 +76,26 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         cardView: ImageCardView,
         url: String,
     ) {
-        StashGlide.with(cardView.context, url)
-            .error(glideError(cardView.context))
-            .into(cardView.mainImageView!!)
+        val cropImages =
+            PreferenceManager.getDefaultSharedPreferences(cardView.context)
+                .getBoolean(cardView.context.getString(R.string.pref_key_crop_card_images), true)
+        if (url.contains("default=true")) {
+            cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.transparent))
+        } else {
+            cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.black))
+        }
+        if (cropImages) {
+            cardView.mainImageView.scaleType = ImageView.ScaleType.CENTER_CROP
+            StashGlide.with(cardView.context, url)
+                .optionalCenterCrop()
+                .error(glideError(cardView.context))
+                .into(cardView.mainImageView!!)
+        } else {
+            cardView.mainImageView.scaleType = ImageView.ScaleType.FIT_CENTER
+            StashGlide.with(cardView.context, url)
+                .error(glideError(cardView.context))
+                .into(cardView.mainImageView!!)
+        }
     }
 
     abstract fun doOnBindViewHolder(
