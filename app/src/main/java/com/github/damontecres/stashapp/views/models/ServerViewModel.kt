@@ -29,7 +29,9 @@ class ServerViewModel : ViewModel() {
         val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
         val columns = manager.getInt("cardSize", context.getString(R.string.card_size_default))
         val showRatings = manager.getBoolean(context.getString(R.string.pref_key_show_rating), true)
-        return Objects.hash(maxSearchResults, playVideoPreviews, columns, showRatings)
+        val imageCrop =
+            manager.getBoolean(context.getString(R.string.pref_key_crop_card_images), true)
+        return Objects.hash(maxSearchResults, playVideoPreviews, columns, showRatings, imageCrop)
     }
 
     fun refresh() {
