@@ -205,6 +205,48 @@ class UpdateChecker {
                 }
             }
         }
+
+        /**
+         * Delete previously downloaded APKs
+         */
+        fun cleanup(context: Context) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    context.contentResolver.query(
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                        arrayOf(
+                            MediaStore.MediaColumns._ID,
+                            MediaStore.Files.FileColumns.DISPLAY_NAME,
+                        ),
+                        "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ? AND ${MediaStore.MediaColumns.MIME_TYPE} = ?",
+                        arrayOf(context.getString(R.string.app_name) + "%", APK_MIME_TYPE),
+                        null,
+                    )?.use { cursor ->
+                        while (cursor.moveToNext()) {
+                            val id = cursor.getString(0)
+                            val displayName = cursor.getString(1)
+                            Log.v(TAG, "id=$id, displayName=$displayName")
+                        }
+                    }
+                    val deletedRows =
+                        context.contentResolver.delete(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ? AND ${MediaStore.MediaColumns.MIME_TYPE} = ?",
+                            arrayOf(context.getString(R.string.app_name) + "%", APK_MIME_TYPE),
+                        )
+                    Log.i(TAG, "Deleted $deletedRows rows")
+                } else {
+                    val downloadDir =
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    val targetFile = File(downloadDir, ASSET_NAME)
+                    if (targetFile.exists()) {
+                        targetFile.delete()
+                    }
+                }
+            } catch (ex: Exception) {
+                Log.e(TAG, "Exception during cleanup", ex)
+            }
+        }
     }
 
     data class Release(
