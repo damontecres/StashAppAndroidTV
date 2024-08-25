@@ -206,6 +206,13 @@ class StashGridFragment() : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (savedInstanceState != null) {
+            name = savedInstanceState.getString("name")
+            sortButtonEnabled = savedInstanceState.getBoolean("sortButtonEnabled")
+            _filterArgs = savedInstanceState.getParcelable("_filterArgs")!!
+            Log.v(TAG, "sortAndDirection=${_filterArgs.sortAndDirection}")
+        }
+
         val columns =
             if (savedInstanceState == null) {
                 this.columns
@@ -231,11 +238,6 @@ class StashGridFragment() : Fragment() {
         val gridPresenter = StashGridPresenter()
         gridPresenter.numberOfColumns = calculatedColumns
         setGridPresenter(gridPresenter)
-
-        if (savedInstanceState != null) {
-            name = savedInstanceState.getString("name")
-            sortButtonEnabled = savedInstanceState.getBoolean("sortButtonEnabled")
-        }
     }
 
     override fun onCreateView(
@@ -286,8 +288,6 @@ class StashGridFragment() : Fragment() {
             }
         } else {
             Log.v(TAG, "onViewCreated restoring")
-            _filterArgs = savedInstanceState.getParcelable("_filterArgs")!!
-            Log.v(TAG, "sortAndDirection=${_filterArgs.sortAndDirection}")
             val previousPosition = savedInstanceState.getInt("mSelectedPosition")
             Log.v(TAG, "previousPosition=$previousPosition")
 
