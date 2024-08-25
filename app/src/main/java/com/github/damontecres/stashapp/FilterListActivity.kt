@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -81,9 +80,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             setup(startingFilter, first = true)
         }
 
-        val experimentalEnabled =
-            preferences.getBoolean(getString(R.string.pref_key_experimental_features), false)
-        if (experimentalEnabled && startingFilter.dataType == DataType.MARKER) {
+        if (startingFilter.dataType == DataType.MARKER) {
             playMarkersButton.visibility = View.VISIBLE
         }
 
@@ -180,17 +177,16 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             playMarkersButton.setOnClickListener {
                 showSimpleListPopupWindow(
                     playMarkersButton,
-                    listOf("3 seconds", "15 seconds", "20 seconds", "30 seconds"),
+                    listOf("15 seconds", "20 seconds", "30 seconds", "60 seconds"),
                 ) {
                     val duration =
                         when (it) {
-                            0 -> 3000L
-                            1 -> 15_000L
-                            2 -> 20_000L
-                            3 -> 30_000L
+                            0 -> 15_000L
+                            1 -> 20_000L
+                            2 -> 30_000L
+                            3 -> 60_000L
                             else -> 30_000L
                         }
-                    Log.v(TAG, "playMarkersButton clicked: newFilter=$filter")
                     val intent = Intent(this, PlaybackMarkersActivity::class.java)
                     intent.putExtra(PlaybackMarkersFragment.INTENT_FILTER_ID, filter)
                     intent.putExtra(PlaybackMarkersFragment.INTENT_DURATION_ID, duration)
