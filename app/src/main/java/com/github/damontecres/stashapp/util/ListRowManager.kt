@@ -132,6 +132,10 @@ class ListRowManager<T>(
         }
     }
 
+    fun clear() {
+        setItems(listOf())
+    }
+
     /**
      * Set the ids for something on a parent object.
      *

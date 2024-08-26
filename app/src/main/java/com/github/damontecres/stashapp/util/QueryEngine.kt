@@ -26,7 +26,9 @@ import com.github.damontecres.stashapp.api.FindSavedFiltersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
+import com.github.damontecres.stashapp.api.GetExtraImageQuery
 import com.github.damontecres.stashapp.api.GetSceneQuery
+import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -278,6 +280,11 @@ class QueryEngine(
     suspend fun getImage(imageId: String): ImageData? {
         val query = client.query(FindImageQuery(imageId))
         return executeQuery(query).data?.findImage?.imageData
+    }
+
+    suspend fun getImageExtra(imageId: String): ExtraImageData? {
+        val query = client.query(GetExtraImageQuery(imageId))
+        return executeQuery(query).data?.findImage?.extraImageData
     }
 
     suspend fun findGalleries(
