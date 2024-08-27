@@ -37,6 +37,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.REMOVE_POPUP_ITEM
 import com.github.damontecres.stashapp.SearchForActivity
 import com.github.damontecres.stashapp.SearchForFragment
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -186,6 +187,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_plus.toLong()))
         detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_minus.toLong()))
         detailsActionsAdapter.add(Action(R.string.fa_arrow_right_arrow_left.toLong()))
+        detailsActionsAdapter.add(Action(R.string.stashapp_effect_filters_reset_transforms.toLong()))
 
         detailsPresenter.onActionClickedListener =
             OnActionClickedListener { action ->
@@ -197,6 +199,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                         R.string.fa_magnifying_glass_plus -> controller.zoomIn()
                         R.string.fa_magnifying_glass_minus -> controller.zoomOut()
                         R.string.fa_arrow_right_arrow_left -> controller.flip()
+                        R.string.stashapp_effect_filters_reset_transforms -> controller.reset()
                     }
                 }
             }
@@ -342,6 +345,11 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             val action = item as Action
             val vh = viewHolder as ActionViewHolder
             vh.mAction = action.id
+            if (action.id.toInt() == R.string.stashapp_effect_filters_reset_transforms) {
+                vh.mButton.typeface = null
+            } else if (vh.mButton.typeface == null) {
+                vh.mButton.typeface = StashApplication.getFont(R.font.fa_solid_900)
+            }
             vh.mButton.text = vh.view.context.getString(action.id.toInt())
             if (action.id.toInt() == R.string.fa_rotate_left) {
                 firstButton = vh.mButton
