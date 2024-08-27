@@ -185,8 +185,8 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
     private fun rotate(rotation: Float) {
         if (!duringAnimation) {
             duringAnimation = true
-
             val scale = if (isImageRotated()) 1f else calculateRotationScale()
+            Log.v(TAG, "scale=$scale")
             val flipY = if (mainImage.scaleY < 0) -1f else 1f
             val flipX = if (mainImage.scaleX < 0) -1f else 1f
 
@@ -210,41 +210,44 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
     private fun calculateRotationScale(): Float {
         val image = viewModel.image.value!!
 
-        // TODO the view height/width are half what they should be
-        val viewHeight = mainImage.height.toFloat()
-        val viewWidth = mainImage.width.toFloat()
-        val imageHeight = image.visual_files.first().height!!.toFloat()
+        // Adapted from https://github.com/stashapp/stash/blob/v0.26.2/ui/v2.5/src/components/Scenes/SceneDetails/SceneVideoFilterPanel.tsx#L529
         val imageWidth = image.visual_files.first().width!!.toFloat()
-        val imageHeightPx = mainImage.drawable.intrinsicHeight
-        val imageWidthPx = mainImage.drawable.intrinsicWidth
+        val imageHeight = image.visual_files.first().height!!.toFloat()
+        val imageAspectRatio = imageWidth / imageHeight
+        val imageNewAspectRatio = imageHeight / imageWidth
 
-        Log.v(
-            TAG,
-            "viewWidth=$viewWidth, viewHeight=$viewHeight\n" +
-                "imageWidth=$imageWidth, imageHeight=$imageHeight\n" +
-                "imageWidthPx=$imageWidthPx, imageHeightPx=$imageHeightPx\n",
-        )
+        val viewWidth = mainImage.width.toFloat()
+        val viewHeight = mainImage.height.toFloat()
+        val viewAspectRation = viewWidth / viewHeight
 
-        return if (imageWidthPx >= viewHeight) {
-            // Need to scale the image width down
-            Log.v(TAG, "Scaling image width down to view height")
-            viewHeight / imageWidthPx
-        } else if (imageHeightPx >= viewWidth) {
-            // Need to scale the image height down
-            Log.v(TAG, "Scaling image height down to view width")
-            viewWidth / imageHeightPx
+        // rs > ri ? (wi * hs/hi, hs) : (ws, hi * ws/wi)
+        // Determine if video is currently constrained by view height or width.
+        val scaledImageHeight: Float
+        val scaledImageWidth: Float
+        if (viewAspectRation > imageAspectRatio) {
+            // Image has it's width scaled
+            // Image is constrained by it's height
+            scaledImageHeight = viewHeight
+            scaledImageWidth = (viewHeight / imageHeight) * imageWidth
         } else {
-            // Need to scale the image up
-            val ratio = viewHeight / imageWidthPx
-            val ratio2 = viewWidth / imageHeightPx
-            if (ratio > ratio2) {
-                Log.v(TAG, "Scaling image width up to view height")
-                ratio2
-            } else {
-                Log.v(TAG, "Scaling image height up to view width")
-                ratio
-            }
+            // Image has it's height scaled
+            // Image is constrained by it's width
+            scaledImageWidth = viewWidth
+            scaledImageHeight = (viewWidth / imageWidth) * imageHeight
         }
+
+        // but now the image is rotated
+        val scaleFactor =
+            if (viewAspectRation > imageNewAspectRatio) {
+                // Rotated image will be constrained by it's height
+                // so we need to scaledImageWidth to match the view height
+                viewHeight / scaledImageWidth
+            } else {
+                // Rotated image will be constrained by it's width
+                // so we need to scaledImageHeight to match the view width
+                viewWidth / scaledImageHeight
+            }
+        return scaleFactor
     }
 
     override fun isImageZoomedIn(): Boolean {
@@ -281,8 +284,8 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
                 mainImage.animate()
                     .rotation(0f)
                     .setDuration(duration)
-                    .scaleX(abs(mainImage.scaleX))
-                    .scaleY(abs(mainImage.scaleY))
+                    .scaleX(1f)
+                    .scaleY(1f)
                     .withEndAction {
                         duringAnimation = false
                     }
@@ -290,13 +293,10 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
             }
         } else {
             mainImage.cancelAnimations()
-//            mainImage.zoomTo(1.0f, false)
-//            mainImage.moveToCenter(1.0f, false)
             mainImage.moveTo(1f, 0f, 0f, false)
-//            mainImage.realZoomTo(1.0f, false)
             mainImage.rotation = 0f
-            mainImage.scaleX = abs(mainImage.scaleX)
-            mainImage.scaleY = abs(mainImage.scaleY)
+            mainImage.scaleX = 1f
+            mainImage.scaleY = 1f
         }
     }
 }
