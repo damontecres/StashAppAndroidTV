@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.image
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -8,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.DetailsSupportFragment
@@ -47,6 +49,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
+import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
@@ -69,6 +72,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
 
     private lateinit var ratingBar: StashRatingBar
+    private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
     private val mPerformersAdapter =
         ArrayObjectAdapter(PerformerPresenter(PerformerLongClickCallBack()))
@@ -204,7 +208,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private class ImageDetailsRowPresenter : AbstractDetailsDescriptionPresenter() {
+    private inner class ImageDetailsRowPresenter : AbstractDetailsDescriptionPresenter() {
         override fun onBindDescription(
             vh: ViewHolder,
             item: Any,
@@ -217,7 +221,13 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             // Need to override the background
             // TODO: maybe use a theme/style instead?
             val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
+            ratingBar.rating100 = image.rating100 ?: 0
             ratingBar.setRatingCallback { rating100 ->
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
+                    val result = mutationEngine.updateImage(image.id, rating100 = rating100)
+                    ratingBar.rating100 = result?.rating100 ?: 0
+                    showSetRatingToast(requireContext(), rating100)
+                }
             }
 
             val body =
