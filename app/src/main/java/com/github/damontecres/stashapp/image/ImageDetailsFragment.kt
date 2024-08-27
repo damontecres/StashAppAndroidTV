@@ -62,6 +62,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.width
@@ -181,13 +182,19 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         adapter = mAdapter
 
         detailsPresenter.actionsBackgroundColor =
-            ContextCompat.getColor(requireActivity(), android.R.color.transparent)
+            ContextCompat.getColor(
+                requireActivity(),
+                R.color.transparent_default_card_background_25,
+            )
         detailsPresenter.backgroundColor =
-            ContextCompat.getColor(requireActivity(), R.color.transparent_black_50)
+            ContextCompat.getColor(
+                requireActivity(),
+                R.color.transparent_default_card_background_50,
+            )
 
         val detailsBackground = DetailsSupportFragmentBackgroundController(this)
-        detailsBackground.solidColor =
-            ContextCompat.getColor(requireActivity(), R.color.transparent_black_75)
+//        detailsBackground.solidColor =
+//            ContextCompat.getColor(requireActivity(), R.color.transparent_black_75)
         detailsBackground.enableParallax()
 
         val detailsActionsAdapter = ArrayObjectAdapter(DetailsActionsPresenter())
@@ -311,7 +318,22 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             val context = vh.view.context
             val image = item as ImageData
             vh.title.text = image.title
-            vh.subtitle.text = image.date
+            vh.subtitle.text =
+                listOf(
+                    image.date,
+                    if (image.visual_files.isNotEmpty()) {
+                        val imageFile = image.visual_files.first()
+                        val imageHeight = imageFile.height
+                        val imageWidth = imageFile.width
+                        if (imageHeight != null && imageWidth != null) {
+                            "${context.getString(R.string.stashapp_dimensions)}: ${imageWidth}x$imageHeight"
+                        } else {
+                            null
+                        }
+                    } else {
+                        null
+                    },
+                ).joinNotNullOrBlank(" - ")
 
             val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
             ratingBar.rating100 = image.rating100 ?: 0
@@ -325,14 +347,6 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
             val body =
                 buildList {
-                    if (image.visual_files.isNotEmpty()) {
-                        val imageFile = image.visual_files.first()
-                        val imageHeight = imageFile.height
-                        val imageWidth = imageFile.width
-                        if (imageHeight != null && imageWidth != null) {
-                            add("${context.getString(R.string.stashapp_dimensions)}: ${imageWidth}x$imageHeight")
-                        }
-                    }
                     if (image.photographer.isNotNullOrBlank()) {
                         add("${context.getString(R.string.stashapp_photographer)}: ${image.photographer}")
                     }
