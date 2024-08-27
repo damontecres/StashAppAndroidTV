@@ -9,9 +9,11 @@ enum class StashAction(val id: Long, val actionName: String) {
     CREATE_NEW(6L, "Create new"),
     SET_STUDIO(7L, "Set Studio"),
     SHIFT_MARKERS(8L, "Shift marker timestamp"),
+    ADD_GALLERY(9L, "Add Gallery"),
     ;
 
     companion object {
-        val SEARCH_FOR_ACTIONS = setOf(ADD_TAG, ADD_PERFORMER, CREATE_MARKER, SET_STUDIO)
+        val SEARCH_FOR_ACTIONS =
+            setOf(ADD_TAG, ADD_PERFORMER, CREATE_MARKER, SET_STUDIO, ADD_GALLERY)
     }
 }
