@@ -59,6 +59,9 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
     private fun loadImage(image: ImageData) {
         mainImage.setImageDrawable(null)
         reset()
+
+        // TODO gifs don't display on first view
+        // TODO gifs display along left side if scrolled to
         if (image.isGif) {
             Log.v(TAG, "Image ${image.id} is a gif")
             mainImage.post {
@@ -206,6 +209,7 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
     private fun calculateRotationScale(): Float {
         val image = viewModel.image.value!!
 
+        // TODO the view height/width are half what they should be
         val viewHeight = mainImage.height.toFloat()
         val viewWidth = mainImage.width.toFloat()
         val imageHeight = image.visual_files.first().height!!.toFloat()
