@@ -14,6 +14,9 @@ import com.github.damontecres.stashapp.views.TabbedGridTitleView
 import com.github.damontecres.stashapp.views.models.TabbedGridViewModel
 import com.google.android.material.tabs.TabLayout
 
+/**
+ * A [Fragment]-only equivalent to [TabbedGridFragmentActivity]
+ */
 abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
     protected val viewModel by activityViewModels<TabbedGridViewModel>()
 

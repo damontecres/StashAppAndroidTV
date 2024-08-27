@@ -19,6 +19,9 @@ interface ImageController {
     fun isImageZoomedIn(): Boolean
 }
 
+/**
+ * Interface to expose controls for a video
+ */
 interface VideoController {
     fun play()
 

@@ -7,6 +7,9 @@ import android.util.Log
 import androidx.annotation.AttrRes
 import com.otaliastudios.zoom.ZoomImageView
 
+/**
+ * A small wrapper around [ZoomImageView] to ensure when replacing the image the zoom is reset
+ */
 class StashZoomImageView private constructor(
     context: Context,
     attrs: AttributeSet? = null,

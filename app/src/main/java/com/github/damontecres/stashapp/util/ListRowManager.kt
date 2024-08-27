@@ -132,6 +132,9 @@ class ListRowManager<T>(
         }
     }
 
+    /**
+     * Remove all items
+     */
     fun clear() {
         setItems(listOf())
     }
