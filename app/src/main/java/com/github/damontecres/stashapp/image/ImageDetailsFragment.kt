@@ -1,10 +1,13 @@
 package com.github.damontecres.stashapp.image
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.DetailsSupportFragment
@@ -24,6 +27,7 @@ import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.REMOVE_POPUP_ITEM
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -33,6 +37,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
 import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.ListRowManager
@@ -41,9 +46,11 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -63,35 +70,42 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
     private lateinit var ratingBar: StashRatingBar
 
-    private val mPerformersAdapter = ArrayObjectAdapter(PerformerPresenter())
+    private val mPerformersAdapter =
+        ArrayObjectAdapter(PerformerPresenter(PerformerLongClickCallBack()))
     private val performersRowManager =
         ListRowManager<PerformerData>(
             DataType.PERFORMER,
             ListRowManager.SparseArrayRowModifier(mAdapter, PERFORMER_POS),
             mPerformersAdapter,
         ) { performerIds ->
-            TODO()
+            val imageId = viewModel.image.value!!.id
+            val result = mutationEngine.updateImage(imageId, performerIds = performerIds)
+            result?.performers?.map { it.performerData }.orEmpty()
         }
 
     private val tagsRowManager =
         ListRowManager<TagData>(
             DataType.TAG,
             ListRowManager.SparseArrayRowModifier(mAdapter, TAG_POS),
-            ArrayObjectAdapter(TagPresenter()),
+            ArrayObjectAdapter(TagPresenter(TagLongClickCallBack())),
         ) { tagIds ->
-            TODO()
+            val imageId = viewModel.image.value!!.id
+            val result = mutationEngine.updateImage(imageId, tagIds = tagIds)
+            result?.tags?.map { it.tagData }.orEmpty()
         }
 
     private val galleriesRowManager =
         ListRowManager<GalleryData>(
             DataType.GALLERY,
             ListRowManager.SparseArrayRowModifier(mAdapter, GALLERY_POS),
-            ArrayObjectAdapter(GalleryPresenter()),
+            ArrayObjectAdapter(GalleryPresenter(GalleryLongClickCallBack())),
         ) { galleryIds ->
-            TODO()
+            val imageId = viewModel.image.value!!.id
+            val result = mutationEngine.updateImage(imageId, galleryIds = galleryIds)
+            result?.galleries?.map { it.galleryData }.orEmpty()
         }
 
-    private val mStudioAdapter = ArrayObjectAdapter(StudioPresenter())
+    private val mStudioAdapter = ArrayObjectAdapter(StudioPresenter(StudioLongClickCallBack()))
     private val studioAdapter =
         ListRowManager<StudioData>(
             DataType.STUDIO,
@@ -106,14 +120,15 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 } else {
                     studioIds.last()
                 }
-            TODO()
-//            val result = mutationEngine.setStudioOnScene(mSelectedMovie!!.id, newStudioId)
-//            val newStudio = result?.studio?.studioData
-//            if (newStudio != null) {
-//                listOf(newStudio)
-//            } else {
-//                listOf()
-//            }
+
+            val result =
+                mutationEngine.updateImage(viewModel.image.value!!.id, studioId = newStudioId)
+            val newStudio = result?.studio?.studioData
+            if (newStudio != null) {
+                listOf(newStudio)
+            } else {
+                listOf()
+            }
         }
 
     override fun onViewCreated(
@@ -128,11 +143,6 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
         adapter = mAdapter
 
-//        val fragment = requireActivity().supportFragmentManager.findFragmentByTag(ImageTabbedFragment::class.java.simpleName)
-//        val titleBar = fragment?.view?.findViewById<View>(R.id.browse_title_group)
-//        Log.v(TAG, "Got titleBar: ${titleBar != null}")
-//        titleView = titleBar
-
         detailsPresenter.actionsBackgroundColor =
             ContextCompat.getColor(requireActivity(), android.R.color.transparent)
         detailsPresenter.backgroundColor =
@@ -140,7 +150,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
         val detailsBackground = DetailsSupportFragmentBackgroundController(this)
         detailsBackground.solidColor =
-            ContextCompat.getColor(requireActivity(), R.color.transparent_black_50)
+            ContextCompat.getColor(requireActivity(), R.color.transparent_black_75)
         detailsBackground.enableParallax()
 
         val detailsActionsAdapter = ArrayObjectAdapter(DetailsActionsPresenter())
@@ -271,6 +281,138 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             val vh = viewHolder as ActionViewHolder
             vh.mAction = null
             vh.mButton.text = null
+        }
+    }
+
+    /**
+     * Just a convenience interface for tags, performers, & markers since they all use the same popup items
+     */
+    private interface DetailsLongClickCallBack<T> : StashPresenter.LongClickCallBack<T> {
+        override fun getPopUpItems(
+            context: Context,
+            item: T,
+        ): List<StashPresenter.PopUpItem> {
+            return listOf(REMOVE_POPUP_ITEM)
+        }
+    }
+
+    private inner class TagLongClickCallBack : DetailsLongClickCallBack<TagData> {
+        override fun onItemLongClick(
+            context: Context,
+            item: TagData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            if (popUpItem == REMOVE_POPUP_ITEM) {
+                viewLifecycleOwner.lifecycleScope.launch(
+                    CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception setting tags", ex)
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to remove tag: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    },
+                ) {
+                    if (tagsRowManager.remove(item)) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Removed tag '${item.name}' from image",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private inner class PerformerLongClickCallBack : DetailsLongClickCallBack<PerformerData> {
+        override fun onItemLongClick(
+            context: Context,
+            item: PerformerData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            if (popUpItem == REMOVE_POPUP_ITEM) {
+                val performerId = item.id
+                Log.d(TAG, "Removing performer $performerId")
+                viewLifecycleOwner.lifecycleScope.launch(
+                    CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception setting performers", ex)
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to remove performer: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    },
+                ) {
+                    if (performersRowManager.remove(item)) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Removed performer '${item.name}' from image",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private inner class StudioLongClickCallBack : DetailsLongClickCallBack<StudioData> {
+        override fun onItemLongClick(
+            context: Context,
+            item: StudioData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            if (popUpItem == REMOVE_POPUP_ITEM) {
+                viewLifecycleOwner.lifecycleScope.launch(
+                    CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception setting studio", ex)
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to remove studio: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    },
+                ) {
+                    if (studioAdapter.remove(item)) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Removed studio from image",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private inner class GalleryLongClickCallBack : DetailsLongClickCallBack<GalleryData> {
+        override fun onItemLongClick(
+            context: Context,
+            item: GalleryData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            if (popUpItem == REMOVE_POPUP_ITEM) {
+                val performerId = item.id
+                Log.d(TAG, "Removing performer $performerId")
+                viewLifecycleOwner.lifecycleScope.launch(
+                    CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception setting galleries", ex)
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to remove gallery: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    },
+                ) {
+                    if (galleriesRowManager.remove(item)) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Removed gallery '${item.name}' from image",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            }
         }
     }
 }

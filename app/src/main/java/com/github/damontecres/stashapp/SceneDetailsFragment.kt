@@ -968,7 +968,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val FORCE_TRANSCODE_POS = SET_STUDIO_POS + 1
         private const val FORCE_DIRECT_PLAY_POS = FORCE_TRANSCODE_POS + 1
 
-        private val REMOVE_POPUP_ITEM =
+        val REMOVE_POPUP_ITEM =
             StashPresenter.PopUpItem(
                 0L,
                 StashApplication.getApplication().getString(R.string.stashapp_actions_remove),

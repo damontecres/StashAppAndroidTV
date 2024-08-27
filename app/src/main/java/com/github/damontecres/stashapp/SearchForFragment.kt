@@ -173,11 +173,16 @@ class SearchForFragment(
             ) {
                 val results = ArrayObjectAdapter(StashPresenter.SELECTOR)
                 val queryEngine = QueryEngine(requireContext(), false)
+                val sortBy =
+                    when (dataType) {
+                        DataType.GALLERY -> "images_count"
+                        else -> "scenes_count"
+                    }
                 val filter =
                     FindFilterType(
                         direction = Optional.present(SortDirectionEnum.DESC),
                         per_page = Optional.present(perPage),
-                        sort = Optional.present("scenes_count"),
+                        sort = Optional.present(sortBy),
                     )
                 results.addAll(0, queryEngine.find(dataType, filter))
                 adapter.set(
@@ -328,7 +333,8 @@ class SearchForFragment(
         private const val RECENT_POS = SUGGESTIONS_POS + 1
 
         // List of data types that support querying for suggestions
-        val DATA_TYPE_SUGGESTIONS = setOf(DataType.TAG, DataType.PERFORMER, DataType.STUDIO)
+        val DATA_TYPE_SUGGESTIONS =
+            setOf(DataType.TAG, DataType.PERFORMER, DataType.STUDIO, DataType.GALLERY)
 
         // List of data types that support creating a new one
         val DATA_TYPE_ALLOW_CREATE = setOf(DataType.TAG, DataType.PERFORMER)
