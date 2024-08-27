@@ -31,6 +31,9 @@ import com.github.damontecres.stashapp.util.width
 import com.otaliastudios.zoom.ZoomImageView
 import kotlin.math.abs
 
+/**
+ * Display an image
+ */
 class ImageFragment : Fragment(R.layout.image_layout), ImageController {
     private val viewModel: ImageViewModel by activityViewModels<ImageViewModel>()
 

@@ -15,8 +15,11 @@ import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackFragment
 import com.github.damontecres.stashapp.util.isImageClip
 
+/**
+ * Playback for an image clip (a video)
+ */
 @OptIn(UnstableApi::class)
-class ImageClipFragment() : PlaybackFragment() {
+class ImageClipFragment : PlaybackFragment() {
     private val viewModel: ImageViewModel by activityViewModels<ImageViewModel>()
 
     override val previewsEnabled: Boolean
@@ -58,7 +61,10 @@ class ImageClipFragment() : PlaybackFragment() {
                         .setUri(imageData.paths.image)
                         .build()
                 player?.setMediaItem(mediaItem)
+                player?.prepare()
                 player?.play()
+            } else {
+                player?.stop()
             }
         }
     }

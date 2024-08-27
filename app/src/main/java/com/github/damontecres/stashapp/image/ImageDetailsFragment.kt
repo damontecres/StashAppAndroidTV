@@ -67,11 +67,15 @@ import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
+import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
+/**
+ * An overlay for details about an image
+ */
 class ImageDetailsFragment : DetailsSupportFragment() {
     private val viewModel: ImageViewModel by activityViewModels<ImageViewModel>()
 
@@ -87,6 +91,10 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
     private lateinit var firstButton: Button
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
+
+    /**
+     * The bottom row of actions that can be performed on the image (add tags, etc)
+     */
     private val itemActionsAdapter =
         SparseArrayObjectAdapter(
             ClassPresenterSelector().addClassPresenter(
@@ -232,9 +240,16 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             mAdapter.set(1, detailsRow)
 
             if (newImage.date.isNotNullOrBlank()) {
-                mPerformersAdapter.presenterSelector = SinglePresenterSelector(PerformerInScenePresenter(newImage.date))
+                mPerformersAdapter.presenterSelector =
+                    SinglePresenterSelector(
+                        PerformerInScenePresenter(
+                            newImage.date,
+                            PerformerLongClickCallBack(),
+                        ),
+                    )
             } else {
-                mPerformersAdapter.presenterSelector = SinglePresenterSelector(PerformerPresenter())
+                mPerformersAdapter.presenterSelector =
+                    SinglePresenterSelector(PerformerPresenter(PerformerLongClickCallBack()))
             }
 
             itemActionsAdapter.set(
@@ -256,6 +271,9 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         }
     }
 
+    /**
+     * Focus on the top button in the fragment, ie scroll to the top
+     */
     fun requestFocus() {
         // TODO this is not very reliable
         if (this::firstButton.isInitialized) {
@@ -301,6 +319,19 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     if (image.details != null) {
                         add(image.details)
                     }
+                    add("")
+                    val createdAt =
+                        context.getString(R.string.stashapp_created_at) + ": " +
+                            parseTimeToString(
+                                image.created_at,
+                            )
+                    add(createdAt)
+                    val updatedAt =
+                        context.getString(R.string.stashapp_updated_at) + ": " +
+                            parseTimeToString(
+                                image.updated_at,
+                            )
+                    add(updatedAt)
                 }.joinToString("\n")
             vh.body.text = body
         }

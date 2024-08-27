@@ -1,5 +1,8 @@
 package com.github.damontecres.stashapp.image
 
+/**
+ * Interface to expose making modifications to an image
+ */
 interface ImageController {
     fun zoomIn()
 
