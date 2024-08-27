@@ -370,16 +370,20 @@ class MutationEngine(
 
     suspend fun updateImage(
         imageId: String,
+        studioId: String? = null,
         performerIds: List<String>? = null,
         tagIds: List<String>? = null,
+        galleryIds: List<String>? = null,
         rating100: Int? = null,
     ): UpdateImageMutation.ImageUpdate? {
         val mutation =
             UpdateImageMutation(
                 ImageUpdateInput(
                     id = imageId,
+                    studio_id = Optional.presentIfNotNull(studioId),
                     performer_ids = Optional.presentIfNotNull(performerIds),
                     tag_ids = Optional.presentIfNotNull(tagIds),
+                    gallery_ids = Optional.presentIfNotNull(galleryIds),
                     rating100 = Optional.presentIfNotNull(rating100),
                 ),
             )

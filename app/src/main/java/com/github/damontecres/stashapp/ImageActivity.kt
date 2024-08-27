@@ -20,8 +20,8 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.image.ImageClipFragment
+import com.github.damontecres.stashapp.image.ImageDetailsFragment
 import com.github.damontecres.stashapp.image.ImageFragment
-import com.github.damontecres.stashapp.image.ImageTabbedFragment
 import com.github.damontecres.stashapp.image.ImageViewModel
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -46,7 +46,11 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
 
     private val imageFragment = ImageFragment()
     private val imageClipFragment = ImageClipFragment()
-    private val imageTabbedFragment = ImageTabbedFragment()
+    private val imageDetailsFragment = ImageDetailsFragment()
+
+    private val overlayFragment = imageDetailsFragment
+
+//    private val imageTabbedFragment = ImageTabbedFragment()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,7 +85,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
         }
 
         supportFragmentManager.commit {
-            listOf(imageFragment, imageClipFragment, imageTabbedFragment).forEach {
+            listOf(imageFragment, imageClipFragment, imageDetailsFragment).forEach {
                 add(android.R.id.content, it, it::class.java.simpleName)
                 hide(it)
             }
@@ -97,7 +101,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                     hide(imageClipFragment)
                     show(imageFragment)
                 }
-                hide(imageTabbedFragment)
+                hide(overlayFragment)
             }
         }
     }
@@ -130,7 +134,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
     }
 
     private val overlayIsVisible: Boolean
-        get() = !imageTabbedFragment.isHidden
+        get() = !overlayFragment.isHidden
 
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -138,7 +142,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
             if (event.keyCode == KeyEvent.KEYCODE_BACK) {
                 if (overlayIsVisible) {
                     supportFragmentManager.commit {
-                        hide(imageTabbedFragment)
+                        hide(overlayFragment)
                     }
                     return true
                 } else if (imageFragment.isImageZoomedIn()) {
@@ -162,7 +166,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
             }
             if (event.keyCode != KeyEvent.KEYCODE_BACK && !overlayIsVisible) {
                 supportFragmentManager.commit {
-                    show(imageTabbedFragment)
+                    show(overlayFragment)
                 }
                 return true
             }
