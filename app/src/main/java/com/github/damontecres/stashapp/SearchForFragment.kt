@@ -28,9 +28,12 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
@@ -171,7 +174,7 @@ class SearchForFragment(
                     )
                 },
             ) {
-                val results = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                val resultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
                 val queryEngine = QueryEngine(requireContext(), false)
                 val sortBy =
                     when (dataType) {
@@ -184,10 +187,29 @@ class SearchForFragment(
                         per_page = Optional.present(perPage),
                         sort = Optional.present(sortBy),
                     )
-                results.addAll(0, queryEngine.find(dataType, filter))
+                val results =
+                    when (dataType) {
+                        DataType.GALLERY ->
+                            // Cannot add an image to a zip/folder gallery, so exclude them
+                            queryEngine.findGalleries(
+                                filter,
+                                GalleryFilterType(
+                                    path =
+                                        Optional.present(
+                                            StringCriterionInput(
+                                                value = "",
+                                                modifier = CriterionModifier.IS_NULL,
+                                            ),
+                                        ),
+                                ),
+                            )
+
+                        else -> queryEngine.find(dataType, filter)
+                    }
+                resultsAdapter.addAll(0, results)
                 adapter.set(
                     SUGGESTIONS_POS,
-                    ListRow(HeaderItem(getString(R.string.suggestions)), results),
+                    ListRow(HeaderItem(getString(R.string.suggestions)), resultsAdapter),
                 )
             }
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
@@ -204,6 +226,7 @@ class SearchForFragment(
                                 DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
                                 DataType.TAG -> queryEngine.getTags(mostRecentIds)
                                 DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
+                                DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
                                 else -> {
                                     listOf()
                                 }
@@ -275,7 +298,25 @@ class SearchForFragment(
                 )
             val queryEngine = QueryEngine(requireContext(), true)
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                val results = queryEngine.find(dataType, filter)
+                val results =
+                    when (dataType) {
+                        DataType.GALLERY ->
+                            // Cannot add an image to a zip gallery, so exclude them
+                            queryEngine.findGalleries(
+                                filter,
+                                GalleryFilterType(
+                                    path =
+                                        Optional.present(
+                                            StringCriterionInput(
+                                                value = "",
+                                                modifier = CriterionModifier.IS_NULL,
+                                            ),
+                                        ),
+                                ),
+                            )
+
+                        else -> queryEngine.find(dataType, filter)
+                    }
                 if (results.isNotEmpty()) {
                     searchResultsAdapter.addAll(0, results)
                     adapter.set(

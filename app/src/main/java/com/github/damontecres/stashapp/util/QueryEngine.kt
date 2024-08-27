@@ -290,6 +290,7 @@ class QueryEngine(
     suspend fun findGalleries(
         findFilter: FindFilterType? = null,
         galleryFilter: GalleryFilterType? = null,
+        galleryIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<GalleryData> {
         val query =
@@ -297,7 +298,7 @@ class QueryEngine(
                 FindGalleriesQuery(
                     updateFilter(findFilter, useRandom),
                     galleryFilter,
-                    null,
+                    ids = galleryIds,
                 ),
             )
         return executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
