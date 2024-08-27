@@ -51,8 +51,6 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
 
     private val overlayFragment = imageDetailsFragment
 
-//    private val imageTabbedFragment = ImageTabbedFragment()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) {
