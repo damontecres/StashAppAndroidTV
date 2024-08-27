@@ -19,7 +19,7 @@ import com.github.damontecres.stashapp.util.isImageClip
  * Playback for an image clip (a video)
  */
 @OptIn(UnstableApi::class)
-class ImageClipFragment : PlaybackFragment() {
+class ImageClipFragment : PlaybackFragment(), VideoController {
     private val viewModel: ImageViewModel by activityViewModels<ImageViewModel>()
 
     override val previewsEnabled: Boolean
@@ -32,6 +32,11 @@ class ImageClipFragment : PlaybackFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         moreOptionsButton.visibility = View.GONE
+
+        videoView.useController = false
+        hideControlsIfVisible()
+
+        viewModel.videoController = this
 
         viewModel.image.observe(viewLifecycleOwner) { imageData ->
             if (imageData.isImageClip) {
@@ -85,5 +90,13 @@ class ImageClipFragment : PlaybackFragment() {
             exoPlayer.prepare()
             exoPlayer.play()
         }
+    }
+
+    override fun play() {
+        player?.play()
+    }
+
+    override fun pause() {
+        player?.pause()
     }
 }

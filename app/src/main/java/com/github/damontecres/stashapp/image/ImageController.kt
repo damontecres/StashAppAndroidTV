@@ -18,3 +18,9 @@ interface ImageController {
 
     fun isImageZoomedIn(): Boolean
 }
+
+interface VideoController {
+    fun play()
+
+    fun pause()
+}

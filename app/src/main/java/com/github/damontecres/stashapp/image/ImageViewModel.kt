@@ -7,6 +7,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 
 class ImageViewModel : ViewModel() {
     var imageController: ImageController? = null
+    var videoController: VideoController? = null
 
     private val _image = MutableLiveData<ImageData>()
     val image: LiveData<ImageData> = _image

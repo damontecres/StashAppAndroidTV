@@ -60,6 +60,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.height
+import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -190,12 +191,6 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         detailsBackground.enableParallax()
 
         val detailsActionsAdapter = ArrayObjectAdapter(DetailsActionsPresenter())
-        detailsActionsAdapter.add(Action(R.string.fa_rotate_left.toLong()))
-        detailsActionsAdapter.add(Action(R.string.fa_rotate_right.toLong()))
-        detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_plus.toLong()))
-        detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_minus.toLong()))
-        detailsActionsAdapter.add(Action(R.string.fa_arrow_right_arrow_left.toLong()))
-        detailsActionsAdapter.add(Action(R.string.stashapp_effect_filters_reset_transforms.toLong()))
 
         detailsPresenter.onActionClickedListener =
             OnActionClickedListener { action ->
@@ -208,6 +203,20 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                         R.string.fa_magnifying_glass_minus -> controller.zoomOut()
                         R.string.fa_arrow_right_arrow_left -> controller.flip()
                         R.string.stashapp_effect_filters_reset_transforms -> controller.reset()
+                    }
+                }
+                val videoController = viewModel.videoController
+                if (videoController != null) {
+                    when (action.id.toInt()) {
+                        R.string.fa_play -> {
+                            videoController.play()
+                            detailsActionsAdapter.replace(0, Action(R.string.fa_pause.toLong()))
+                        }
+
+                        R.string.fa_pause -> {
+                            videoController.pause()
+                            detailsActionsAdapter.replace(0, Action(R.string.fa_play.toLong()))
+                        }
                     }
                 }
             }
@@ -235,6 +244,18 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             queryJob?.cancel()
 
             val detailsRow = DetailsOverviewRow(newImage)
+
+            detailsActionsAdapter.clear()
+            if (newImage.isImageClip) {
+                detailsActionsAdapter.add(Action(R.string.fa_pause.toLong()))
+            } else {
+                detailsActionsAdapter.add(Action(R.string.fa_rotate_left.toLong()))
+                detailsActionsAdapter.add(Action(R.string.fa_rotate_right.toLong()))
+                detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_plus.toLong()))
+                detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_minus.toLong()))
+                detailsActionsAdapter.add(Action(R.string.fa_arrow_right_arrow_left.toLong()))
+                detailsActionsAdapter.add(Action(R.string.stashapp_effect_filters_reset_transforms.toLong()))
+            }
             detailsRow.actionsAdapter = detailsActionsAdapter
 
             mAdapter.set(1, detailsRow)

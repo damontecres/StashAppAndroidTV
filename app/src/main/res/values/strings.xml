@@ -21,6 +21,8 @@
     <string name="fa_caret_down" translatable="false">&#xf0d7;</string>
     <string name="fa_heart" translatable="false">&#xf004;</string>
     <string name="fa_video" translatable="false">&#xf03d;</string>
+    <string name="fa_play" translatable="false">&#xf04b;</string>
+    <string name="fa_pause" translatable="false">&#xf04c;</string>
 
     <string name="go_to">Go to</string>
     <string name="go_to_scene">Go to scene</string>
