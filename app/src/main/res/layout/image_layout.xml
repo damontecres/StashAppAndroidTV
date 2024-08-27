@@ -7,21 +7,22 @@
     android:background="@android:color/black"
     tools:background="@android:color/darker_gray">
 
-    <com.otaliastudios.zoom.ZoomImageView
+    <com.github.damontecres.stashapp.views.StashZoomImageView
         android:id="@+id/image_view_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scrollbars="vertical|horizontal"
+        android:background="@android:color/black"
         app:transformation="centerInside"
         app:transformationGravity="auto"
         app:alignment="center"
         app:overScrollHorizontal="true"
         app:overScrollVertical="true"
-        app:overPinchable="true"
+        app:overPinchable="false"
         app:horizontalPanEnabled="true"
         app:verticalPanEnabled="true"
         app:zoomEnabled="true"
-        app:flingEnabled="true"
+        app:flingEnabled="false"
         app:scrollEnabled="true"
         app:oneFingerScrollEnabled="true"
         app:twoFingersScrollEnabled="true"

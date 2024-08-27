@@ -14,7 +14,7 @@ interface ImageController {
 
     fun flip()
 
-    fun reset()
+    fun reset(animate: Boolean = true)
 
     fun isImageZoomedIn(): Boolean
 }

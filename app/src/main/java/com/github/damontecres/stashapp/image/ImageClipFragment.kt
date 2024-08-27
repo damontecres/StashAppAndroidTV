@@ -76,7 +76,6 @@ class ImageClipFragment : PlaybackFragment() {
         val skipBack =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("skip_back_time", 10)
-        // TODO maybe refactor so the player is tied to the context's (Activity) lifecycle, not the fragment's?
         return StashExoPlayer.createInstance(
             requireContext(),
             skipForward * 1000L,
