@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
+import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo3.api.Optional
@@ -165,9 +166,10 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                 }
             }
             if (event.keyCode != KeyEvent.KEYCODE_BACK && !overlayIsVisible) {
-                supportFragmentManager.commit {
+                supportFragmentManager.commitNow {
                     show(overlayFragment)
                 }
+                overlayFragment.requestFocus()
                 return true
             }
         }

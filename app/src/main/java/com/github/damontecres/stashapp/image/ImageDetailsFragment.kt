@@ -84,7 +84,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             .addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
 
-    private lateinit var ratingBar: StashRatingBar
+    private lateinit var firstButton: Button
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
     private val itemActionsAdapter =
         SparseArrayObjectAdapter(
@@ -253,6 +253,14 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         }
     }
 
+    fun requestFocus() {
+        // TODO this is not very reliable
+        if (this::firstButton.isInitialized) {
+            firstButton.requestFocus()
+        }
+        showTitle(true)
+    }
+
     private inner class ImageDetailsRowPresenter : AbstractDetailsDescriptionPresenter() {
         override fun onBindDescription(
             vh: ViewHolder,
@@ -335,6 +343,9 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             val vh = viewHolder as ActionViewHolder
             vh.mAction = action.id
             vh.mButton.text = vh.view.context.getString(action.id.toInt())
+            if (action.id.toInt() == R.string.fa_rotate_left) {
+                firstButton = vh.mButton
+            }
         }
 
         override fun onUnbindViewHolder(viewHolder: ViewHolder) {
