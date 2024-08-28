@@ -4,6 +4,7 @@ import android.os.Parcelable
 import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.util.getRandomSort
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -15,6 +16,8 @@ data class SortAndDirection(val sort: String, val direction: SortDirectionEnum) 
     companion object {
         val NAME_ASC = SortAndDirection("name", SortDirectionEnum.ASC)
         val PATH_ASC = SortAndDirection("path", SortDirectionEnum.ASC)
+
+        fun random() = SortAndDirection(getRandomSort(), SortDirectionEnum.ASC)
 
         fun create(
             dataType: DataType,

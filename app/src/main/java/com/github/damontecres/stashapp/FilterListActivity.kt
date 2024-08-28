@@ -14,6 +14,7 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.playback.PlaylistActivity
 import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -37,7 +38,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
     private lateinit var titleTextView: TextView
     private lateinit var filterButton: Button
     private lateinit var sortButton: Button
-    private lateinit var playMarkersButton: Button
+    private lateinit var playAllButton: Button
 
     private lateinit var sortButtonManager: SortButtonManager
 
@@ -54,7 +55,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         filterButton.onFocusChangeListener = onFocusChangeListener
 
         sortButton = findViewById(R.id.sort_button)
-        playMarkersButton = findViewById(R.id.play_makers_button)
+        playAllButton = findViewById(R.id.play_all_button)
         titleTextView = findViewById(R.id.list_title)
 
         sortButtonManager =
@@ -81,14 +82,14 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         }
 
         if (startingFilter.dataType == DataType.MARKER || startingFilter.dataType == DataType.SCENE) {
-            playMarkersButton.visibility = View.VISIBLE
+            playAllButton.visibility = View.VISIBLE
         }
         if (startingFilter.dataType == DataType.MARKER) {
-            playMarkersButton.setOnClickListener {
+            playAllButton.setOnClickListener {
                 val fragment =
                     supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
                 showSimpleListPopupWindow(
-                    playMarkersButton,
+                    playAllButton,
                     listOf("15 seconds", "20 seconds", "30 seconds", "60 seconds"),
                 ) {
                     val duration =
@@ -106,12 +107,23 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                 }
             }
         } else if (startingFilter.dataType == DataType.SCENE) {
-            playMarkersButton.setOnClickListener {
-                val fragment =
-                    supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
-                val intent = Intent(this, PlaylistActivity::class.java)
-                intent.putExtra(PlaylistActivity.INTENT_FILTER, fragment.filterArgs)
-                startActivity(intent)
+            playAllButton.setOnClickListener {
+                showSimpleListPopupWindow(
+                    playAllButton,
+                    listOf("In order", "Shuffle"),
+                ) {
+                    val fragment =
+                        supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
+                    val filter =
+                        when (it) {
+                            0 -> fragment.filterArgs
+                            1 -> fragment.filterArgs.with(SortAndDirection.random())
+                            else -> throw IllegalStateException("$it")
+                        }
+                    val intent = Intent(this, PlaylistActivity::class.java)
+                    intent.putExtra(PlaylistActivity.INTENT_FILTER, filter)
+                    startActivity(intent)
+                }
             }
         }
 
