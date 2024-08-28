@@ -14,8 +14,8 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.playback.PlaybackMarkersActivity
-import com.github.damontecres.stashapp.playback.PlaybackMarkersFragment
+import com.github.damontecres.stashapp.playback.PlaylistActivity
+import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
@@ -80,8 +80,39 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             setup(startingFilter, first = true)
         }
 
-        if (startingFilter.dataType == DataType.MARKER) {
+        if (startingFilter.dataType == DataType.MARKER || startingFilter.dataType == DataType.SCENE) {
             playMarkersButton.visibility = View.VISIBLE
+        }
+        if (startingFilter.dataType == DataType.MARKER) {
+            playMarkersButton.setOnClickListener {
+                val fragment =
+                    supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
+                showSimpleListPopupWindow(
+                    playMarkersButton,
+                    listOf("15 seconds", "20 seconds", "30 seconds", "60 seconds"),
+                ) {
+                    val duration =
+                        when (it) {
+                            0 -> 15_000L
+                            1 -> 20_000L
+                            2 -> 30_000L
+                            3 -> 60_000L
+                            else -> 30_000L
+                        }
+                    val intent = Intent(this, PlaylistActivity::class.java)
+                    intent.putExtra(PlaylistActivity.INTENT_FILTER, fragment.filterArgs)
+                    intent.putExtra(PlaylistMarkersFragment.INTENT_DURATION_ID, duration)
+                    startActivity(intent)
+                }
+            }
+        } else if (startingFilter.dataType == DataType.SCENE) {
+            playMarkersButton.setOnClickListener {
+                val fragment =
+                    supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
+                val intent = Intent(this, PlaylistActivity::class.java)
+                intent.putExtra(PlaylistActivity.INTENT_FILTER, fragment.filterArgs)
+                startActivity(intent)
+            }
         }
 
         lifecycleScope.launch(StashCoroutineExceptionHandler()) {
@@ -173,27 +204,6 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             replace(R.id.list_fragment, fragment)
         }
         sortButtonManager.setUpSortButton(sortButton, filter.dataType, filter.sortAndDirection)
-        if (filter.dataType == DataType.MARKER) {
-            playMarkersButton.setOnClickListener {
-                showSimpleListPopupWindow(
-                    playMarkersButton,
-                    listOf("15 seconds", "20 seconds", "30 seconds", "60 seconds"),
-                ) {
-                    val duration =
-                        when (it) {
-                            0 -> 15_000L
-                            1 -> 20_000L
-                            2 -> 30_000L
-                            3 -> 60_000L
-                            else -> 30_000L
-                        }
-                    val intent = Intent(this, PlaybackMarkersActivity::class.java)
-                    intent.putExtra(PlaybackMarkersFragment.INTENT_FILTER_ID, filter)
-                    intent.putExtra(PlaybackMarkersFragment.INTENT_DURATION_ID, duration)
-                    startActivity(intent)
-                }
-            }
-        }
     }
 
     companion object {

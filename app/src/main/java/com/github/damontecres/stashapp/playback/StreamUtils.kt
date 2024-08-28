@@ -40,7 +40,7 @@ fun buildMediaItem(
     context: Context,
     streamDecision: StreamDecision,
     scene: Scene,
-    builderCallback: ((MediaItem.Builder) -> Unit)? = null,
+    builderCallback: (MediaItem.Builder.() -> Unit)? = null,
 ): MediaItem {
     if (streamDecision.sceneId != scene.id) {
         throw IllegalArgumentException("Scene IDs do not match: streamSupport.sceneId=${streamDecision.sceneId}, scene.id=${scene.id}")
@@ -78,6 +78,8 @@ fun buildMediaItem(
         MediaItem.Builder()
             .setUri(url)
             .setMimeType(mimeType)
+            .setMediaId(scene.id)
+
     if (scene.hasCaptions) {
         val baseUrl = Uri.parse(scene.captionUrl)
         val subtitles =

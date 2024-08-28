@@ -7,6 +7,7 @@ import com.apollographql.apollo3.api.Optional
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.StashPagingSource.DataTransform
 import com.github.damontecres.stashapp.util.QueryEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,18 +19,36 @@ import kotlinx.coroutines.withContext
  * @property pageSize how many items per page
  * @property dataSupplier how to query and parse data
  */
-class StashPagingSource<T : Query.Data, D : Any, C : Query.Data>(
+class StashPagingSource<T : Query.Data, D : Any, S : Any, C : Query.Data>(
     private val context: Context,
     private val pageSize: Int,
     private val dataSupplier: DataSupplier<T, D, C>,
     showToasts: Boolean = false,
     private val useRandom: Boolean = true,
     private val sortByOverride: String? = null,
+    private val transform: DataTransform<D, S>,
 ) :
-    PagingSource<Int, D>() {
+    PagingSource<Int, S>() {
+    constructor(
+        context: Context,
+        pageSize: Int,
+        dataSupplier: DataSupplier<T, D, C>,
+        showToasts: Boolean = false,
+        useRandom: Boolean = true,
+        sortByOverride: String? = null,
+    ) : this(
+        context,
+        pageSize,
+        dataSupplier,
+        showToasts,
+        useRandom,
+        sortByOverride,
+        DataTransform { page, index, item -> item as S },
+    )
+
     private val queryEngine = QueryEngine(context, showToasts)
 
-    private var listeners = mutableListOf<Listener<D>>()
+    private var listeners = mutableListOf<Listener<S>>()
 
     interface DataSupplier<T : Query.Data, D : Any, C : Query.Data> {
         val dataType: DataType
@@ -73,7 +92,7 @@ class StashPagingSource<T : Query.Data, D : Any, C : Query.Data>(
     suspend fun fetchPage(
         page: Int,
         loadSize: Int,
-    ): List<D> =
+    ): List<S> =
         withContext(Dispatchers.IO) {
             val filter =
                 createFindFilter().copy(
@@ -83,7 +102,11 @@ class StashPagingSource<T : Query.Data, D : Any, C : Query.Data>(
             val query = dataSupplier.createQuery(filter)
             val queryResult = queryEngine.executeQuery(query)
             if (queryResult.data != null) {
-                val data = dataSupplier.parseQuery(queryResult.data!!)
+                val data =
+                    dataSupplier.parseQuery(queryResult.data!!)
+                        .mapIndexed { index, item ->
+                            transform.transform(page, index, item)
+                        }
                 withContext(Dispatchers.Main) {
                     listeners.forEach { it.onPageFetch(page, data) }
                 }
@@ -93,7 +116,7 @@ class StashPagingSource<T : Query.Data, D : Any, C : Query.Data>(
             }
         }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, D> =
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, S> =
         withContext(Dispatchers.IO) {
             try {
                 // Start refresh at page 1 if undefined.
@@ -122,7 +145,7 @@ class StashPagingSource<T : Query.Data, D : Any, C : Query.Data>(
             }
         }
 
-    override fun getRefreshKey(state: PagingState<Int, D>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, S>): Int? {
         // Try to find the page key of the closest page to anchorPosition from
         // either the prevKey or the nextKey; you need to handle nullability
         // here.
@@ -147,11 +170,11 @@ class StashPagingSource<T : Query.Data, D : Any, C : Query.Data>(
             }
         }
 
-    fun addListener(listener: Listener<D>) {
+    fun addListener(listener: Listener<S>) {
         listeners.add(listener)
     }
 
-    fun removeListener(listener: Listener<D>) {
+    fun removeListener(listener: Listener<S>) {
         listeners.remove(listener)
     }
 
@@ -168,5 +191,13 @@ class StashPagingSource<T : Query.Data, D : Any, C : Query.Data>(
     companion object {
         const val INVALID_COUNT = -1
         const val UNSUPPORTED_COUNT = -2
+    }
+
+    fun interface DataTransform<D, S> {
+        fun transform(
+            page: Int,
+            index: Int,
+            item: D,
+        ): S
     }
 }

@@ -9,7 +9,7 @@ import com.apollographql.apollo3.api.Query
  * This class keeps one page of data available in memory and then only fetches a different page if required
  */
 class StashSparseFilterFetcher<T : Query.Data, D : Any>(
-    val source: StashPagingSource<T, D, *>,
+    val source: StashPagingSource<T, D, D, *>,
     val pageSize: Int = 25,
 ) {
     private var firstPage = true

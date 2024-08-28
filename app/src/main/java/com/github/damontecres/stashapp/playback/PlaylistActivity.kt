@@ -4,17 +4,36 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.WindowManager
+import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.fragment.app.FragmentActivity
 import androidx.media3.common.util.UnstableApi
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.ServerPreferences
 
-class PlaybackMarkersActivity : FragmentActivity() {
-    private var fragment: PlaybackMarkersFragment? = null
+class PlaylistActivity : FragmentActivity() {
+    private val viewModel: PlaylistViewModel by viewModels()
+
+    private var fragment: PlaylistFragment<*, *, *>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val filterParser = FilterParser(ServerPreferences(this).serverVersion)
+        val filter =
+            intent.getParcelableExtra<FilterArgs>(INTENT_FILTER)!!
+                .ensureParsed(filterParser)
+
+        viewModel.filterArgs.value = filter
+
         if (savedInstanceState == null) {
-            fragment = PlaybackMarkersFragment()
+            fragment =
+                when (filter.dataType) {
+                    DataType.MARKER -> PlaylistMarkersFragment()
+                    DataType.SCENE -> PlaylistScenesFragment()
+                    else -> throw UnsupportedOperationException("${filter.dataType} not supported")
+                }
             supportFragmentManager.beginTransaction()
                 .replace(android.R.id.content, fragment!!)
                 .commit()
@@ -44,6 +63,7 @@ class PlaybackMarkersActivity : FragmentActivity() {
     }
 
     companion object {
-        const val TAG = "PlaybackActivity"
+        const val TAG = "PlaylistActivity"
+        const val INTENT_FILTER = "$TAG.filter"
     }
 }

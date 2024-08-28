@@ -70,7 +70,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                 val dataSupplier = createDataSupplier()
                 if (dataSupplier != null) {
                     val pagingSource =
-                        StashPagingSource(
+                        StashPagingSource<FindImagesQuery.Data, ImageData, ImageData, CountImagesQuery.Data>(
                             this@ImageActivity,
                             pageSize,
                             dataSupplier,
