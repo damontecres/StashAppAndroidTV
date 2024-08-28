@@ -50,7 +50,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
     lateinit var scene: Scene
 
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
-    private var trackActivityListener: PlaybackListener? = null
+    private var trackActivityListener: TrackActivityPlaybackListener? = null
 
     // Track whether the video is playing before calling the resultLauncher
     private var wasPlayingBeforeResultLauncher: Boolean? = null
@@ -108,7 +108,16 @@ class PlaybackSceneFragment : PlaybackFragment() {
         return StashExoPlayer.getInstance(requireContext())
             .also { exoPlayer ->
                 if (ServerPreferences(requireContext()).trackActivity) {
-                    trackActivityListener = PlaybackListener()
+                    trackActivityListener =
+                        TrackActivityPlaybackListener(
+                            requireContext(),
+                            viewLifecycleOwner.lifecycleScope,
+                        ) {
+                            TrackActivityPlaybackListener.CurrentSceneAndPosition(
+                                scene,
+                                currentVideoPosition,
+                            )
+                        }
                     exoPlayer.addListener(trackActivityListener!!)
                 }
             }.also { exoPlayer ->
