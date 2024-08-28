@@ -29,13 +29,14 @@
             tools:text="Test Title" />
 
         <Button
-            android:id="@+id/play_makers_button"
+            android:id="@+id/play_all_button"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="0"
             android:text="@string/play_all"
             android:visibility="gone"
-            style="@style/TitleBarButton" />
+            style="@style/TitleBarButton"
+            tools:visibility="visible" />
 
         <Button
             android:id="@+id/sort_button"

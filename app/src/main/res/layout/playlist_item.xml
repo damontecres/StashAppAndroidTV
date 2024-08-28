@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="400dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:padding="4dp"
+    android:focusable="true"
+    android:clickable="true"
+    android:background="@drawable/button_selector">
+
+    <TextView
+        android:id="@+id/index"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:gravity="center"
+        tools:text="1"
+        />
+
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_margin="4dp"
+        android:gravity="center"
+        android:background="@android:color/black"
+        tools:src="@drawable/baseline_camera_indoor_48"
+        tools:layout_width="175dp"
+        tools:layout_height="100dp"
+        />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginStart="8dp"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            tools:text="Scene title"/>
+
+        <TextView
+            android:id="@+id/subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            tools:text="Studio" />
+
+        <TextView
+            android:id="@+id/details_1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            tools:text="Actor 1, Actor 2" />
+
+        <TextView
+            android:id="@+id/details_2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            tools:text="2024-01-01"/>
+
+        </LinearLayout>
+
+</LinearLayout>

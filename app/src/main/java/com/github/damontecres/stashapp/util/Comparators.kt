@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.data.PlaylistItem
 
 object StashComparator : DiffUtil.ItemCallback<Any>() {
     override fun areItemsTheSame(
@@ -292,6 +293,22 @@ object ImageDiffCallback : DiffCallback<ImageData>() {
     override fun areContentsTheSame(
         oldItem: ImageData,
         newItem: ImageData,
+    ): Boolean {
+        return oldItem == newItem
+    }
+}
+
+object PlaylistItemComparator : DiffUtil.ItemCallback<PlaylistItem>() {
+    override fun areItemsTheSame(
+        oldItem: PlaylistItem,
+        newItem: PlaylistItem,
+    ): Boolean {
+        return oldItem == newItem
+    }
+
+    override fun areContentsTheSame(
+        oldItem: PlaylistItem,
+        newItem: PlaylistItem,
     ): Boolean {
         return oldItem == newItem
     }
