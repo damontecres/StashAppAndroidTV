@@ -24,7 +24,7 @@ class ListRowManager<T>(
     rowModifier: SparseArrayRowModifier,
     private val adapter: ArrayObjectAdapter,
     rowHeaderName: String? = null,
-    private val setItemsCallback: SetIdsForItemCallback,
+    private val setItemsCallback: SetIdsForItemCallback<T>,
 ) {
     var name: String =
         rowHeaderName ?: StashApplication.getApplication().getString(dataType.pluralStringId)
@@ -133,6 +133,13 @@ class ListRowManager<T>(
     }
 
     /**
+     * Remove all items
+     */
+    fun clear() {
+        setItems(listOf())
+    }
+
+    /**
      * Set the ids for something on a parent object.
      *
      * Returns the items on the parent object, typically the items represented by the IDs.
@@ -141,8 +148,8 @@ class ListRowManager<T>(
      *
      * @return the items from the parent object
      */
-    fun interface SetIdsForItemCallback {
-        suspend fun setIds(ids: List<String>): List<Any>
+    fun interface SetIdsForItemCallback<T> {
+        suspend fun setIds(ids: List<String>): List<T>
     }
 
     fun interface RowAdder {

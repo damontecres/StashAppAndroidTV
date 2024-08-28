@@ -7,7 +7,7 @@
     android:orientation="vertical">
 
     <com.github.damontecres.stashapp.views.TabbedGridTitleView
-        android:id="@id/browse_title_group"
+        android:id="@+id/browse_title_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
