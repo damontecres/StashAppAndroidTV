@@ -80,7 +80,7 @@ class ObjectFilterParsingTests {
     fun testSceneFilter() {
         val savedFilterData = getSavedFilterData("scene_savedfilter.json")
         val sceneFilter =
-            FilterParser(Version.V0_25_0).convertSceneObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertSceneObjectFilter(savedFilterData.object_filter)
         Assert.assertNotNull(sceneFilter!!)
         Assert.assertEquals(FilterMode.SCENES, savedFilterData.mode)
         Assert.assertEquals(
@@ -125,7 +125,7 @@ class ObjectFilterParsingTests {
     fun testPerformerFilter() {
         val savedFilterData = getSavedFilterData("performer_savedfilter.json")
         val performerFilter =
-            FilterParser(Version.V0_25_0).convertPerformerObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertPerformerObjectFilter(savedFilterData.object_filter)
         Assert.assertNotNull(performerFilter!!)
         Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
 
@@ -147,7 +147,7 @@ class ObjectFilterParsingTests {
     fun testGenderFilter() {
         val savedFilterData = getSavedFilterData("gender_savedfilter.json")
         val performerFilter =
-            FilterParser(Version.V0_25_0).convertPerformerObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertPerformerObjectFilter(savedFilterData.object_filter)
         Assert.assertNotNull(performerFilter!!)
         Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
 
@@ -167,7 +167,7 @@ class ObjectFilterParsingTests {
     fun testStudioChildrenFilter() {
         val savedFilterData = getSavedFilterData("studio_children_savedfilter.json")
         val studioFilter =
-            FilterParser(Version.V0_25_0).convertStudioObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertStudioObjectFilter(savedFilterData.object_filter)
         Assert.assertNotNull(studioFilter!!)
         Assert.assertEquals(FilterMode.STUDIOS, savedFilterData.mode)
 

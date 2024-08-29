@@ -90,7 +90,11 @@ class FrontPageFilterTests {
                 } doReturn listOf<PerformerData>()
             }
         val frontPageParser =
-            FrontPageParser(mockedContext, mockedQueryEngine, FilterParser(Version.V0_25_0))
+            FrontPageParser(
+                mockedContext,
+                mockedQueryEngine,
+                FilterParser(Version.MINIMUM_STASH_VERSION),
+            )
         val result =
             runBlocking { frontPageParser.parse(parseFileToFrontPageContent("front_page_basic.json")) }
         val rows = result.map { runBlocking { it.await() } }
@@ -106,7 +110,11 @@ class FrontPageFilterTests {
     fun unsupportedTest() {
         val mockedQueryEngine = mock<QueryEngine>()
         val frontPageParser =
-            FrontPageParser(mockedContext, mockedQueryEngine, FilterParser(Version.V0_25_0))
+            FrontPageParser(
+                mockedContext,
+                mockedQueryEngine,
+                FilterParser(Version.MINIMUM_STASH_VERSION),
+            )
         val result = runBlocking { frontPageParser.parse(parseFileToFrontPageContent("front_page_unsupported.json")) }
         val rows = result.map { runBlocking { it.await() } }
         Assert.assertEquals(2, rows.size)
