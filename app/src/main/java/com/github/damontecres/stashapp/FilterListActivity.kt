@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -14,9 +13,6 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.SortAndDirection
-import com.github.damontecres.stashapp.playback.PlaylistActivity
-import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
@@ -24,9 +20,9 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
+import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
-import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlinx.coroutines.launch
 
 /**
@@ -81,50 +77,18 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             setup(startingFilter, first = true)
         }
 
-        if (startingFilter.dataType == DataType.MARKER || startingFilter.dataType == DataType.SCENE) {
+        if (startingFilter.dataType.supportsPlaylists) {
             playAllButton.visibility = View.VISIBLE
-        }
-        if (startingFilter.dataType == DataType.MARKER) {
-            playAllButton.setOnClickListener {
-                val fragment =
-                    supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
-                showSimpleListPopupWindow(
-                    playAllButton,
-                    listOf("15 seconds", "20 seconds", "30 seconds", "60 seconds"),
-                ) {
-                    val duration =
-                        when (it) {
-                            0 -> 15_000L
-                            1 -> 20_000L
-                            2 -> 30_000L
-                            3 -> 60_000L
-                            else -> 30_000L
-                        }
-                    val intent = Intent(this, PlaylistActivity::class.java)
-                    intent.putExtra(PlaylistActivity.INTENT_FILTER, fragment.filterArgs)
-                    intent.putExtra(PlaylistMarkersFragment.INTENT_DURATION_ID, duration)
-                    startActivity(intent)
-                }
-            }
-        } else if (startingFilter.dataType == DataType.SCENE) {
-            playAllButton.setOnClickListener {
-                showSimpleListPopupWindow(
-                    playAllButton,
-                    listOf("In order", "Shuffle"),
+            playAllButton.setOnClickListener(
+                PlayAllOnClickListener(
+                    this,
+                    startingFilter.dataType,
                 ) {
                     val fragment =
                         supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
-                    val filter =
-                        when (it) {
-                            0 -> fragment.filterArgs
-                            1 -> fragment.filterArgs.with(SortAndDirection.random())
-                            else -> throw IllegalStateException("$it")
-                        }
-                    val intent = Intent(this, PlaylistActivity::class.java)
-                    intent.putExtra(PlaylistActivity.INTENT_FILTER, filter)
-                    startActivity(intent)
-                }
-            }
+                    fragment.filterArgs
+                },
+            )
         }
 
         lifecycleScope.launch(StashCoroutineExceptionHandler()) {
@@ -208,6 +172,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         }
         fragment.name = filter.name
         fragment.sortButtonEnabled = false
+        fragment.playAllButtonEnabled = false
         fragment.requestFocus = true
         supportFragmentManager.commit {
             if (!first) {

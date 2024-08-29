@@ -106,6 +106,8 @@ enum class DataType(
         get() =
             ScenePresenter.CARD_WIDTH.toDouble() / defaultCardWidth
 
+    val supportsPlaylists get() = this == SCENE || this == MARKER
+
     companion object {
         fun fromFilterMode(mode: FilterMode): DataType? {
             return DataType.entries.firstOrNull {
