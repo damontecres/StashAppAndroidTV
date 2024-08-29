@@ -43,7 +43,6 @@ class PlaylistScenesFragment :
                 moreOptionsButton,
                 listOf(debugToggleText, "Show playlist"),
             ) { position ->
-
                 if (position == 0) {
                     if (debugView.isVisible) {
                         debugView.visibility = View.GONE

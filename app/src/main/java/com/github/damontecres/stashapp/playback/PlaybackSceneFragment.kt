@@ -30,27 +30,17 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
 import com.github.damontecres.stashapp.views.durationToString
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.Timer
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
 
 @OptIn(UnstableApi::class)
 class PlaybackSceneFragment : PlaybackFragment() {
     lateinit var scene: Scene
 
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
-    private var trackActivityListener: PlaybackListener? = null
 
     // Track whether the video is playing before calling the resultLauncher
     private var wasPlayingBeforeResultLauncher: Boolean? = null
@@ -107,10 +97,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
         updateDebugInfo(streamDecision, scene)
         return StashExoPlayer.getInstance(requireContext())
             .also { exoPlayer ->
-                if (ServerPreferences(requireContext()).trackActivity) {
-                    trackActivityListener = PlaybackListener()
-                    exoPlayer.addListener(trackActivityListener!!)
-                }
+                maybeAddActivityTracking(exoPlayer)
             }.also { exoPlayer ->
                 val finishedBehavior =
                     PreferenceManager.getDefaultSharedPreferences(requireContext())
@@ -282,135 +269,6 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 videoView.controllerShowTimeoutMs = previousControllerShowTimeoutMs
             }.build()
                 .show()
-        }
-    }
-
-    override fun releasePlayer() {
-        super.releasePlayer()
-        trackActivityListener?.release(playbackPosition)
-        trackActivityListener = null
-    }
-
-    private inner class PlaybackListener : Player.Listener {
-        val timer: Timer
-        private val mutationEngine = MutationEngine(requireContext())
-        private val minimumPlayPercent = ServerPreferences(requireContext()).minimumPlayPercent
-        private val maxPlayPercent: Int
-
-        private var totalPlayDurationSeconds = AtomicInteger(0)
-        private var currentDurationSeconds = AtomicInteger(0)
-        private var isPlaying = AtomicBoolean(false)
-        private var incrementedPlayCount = AtomicBoolean(false)
-
-        init {
-            val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            val playbackDurationInterval = manager.getInt("playbackDurationInterval", 1)
-            val saveActivityInterval = manager.getInt("saveActivityInterval", 10)
-            maxPlayPercent = manager.getInt("maxPlayPercent", 98)
-
-            val delay =
-                playbackDurationInterval.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
-            // Every x seconds, check if the video is playing
-            timer =
-                kotlin.concurrent.timer(
-                    name = "playbackTrackerTimer",
-                    initialDelay = delay,
-                    period = delay,
-                ) {
-                    try {
-                        if (isPlaying.get()) {
-                            // If it is playing, add the interval to currently tracked duration
-                            val current = currentDurationSeconds.addAndGet(playbackDurationInterval)
-                            // TODO currentDuration.getAndUpdate would be better, but requires API 24+
-                            if (current >= saveActivityInterval) {
-                                // If the accumulated currently tracked duration > threshold, reset it and save activity
-                                currentDurationSeconds.set(0)
-                                totalPlayDurationSeconds.addAndGet(current)
-                                saveSceneActivity(-1L, current)
-                            }
-                        }
-                    } catch (ex: Exception) {
-                        Log.w(TAG, "Exception during track activity timer", ex)
-                    }
-                }
-        }
-
-        fun release(position: Long) {
-            timer.cancel()
-            saveSceneActivity(position)
-        }
-
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            this.isPlaying.set(isPlaying)
-            if (!isPlaying) {
-                val diff = currentDurationSeconds.getAndSet(0)
-                if (diff > 0) {
-                    totalPlayDurationSeconds.addAndGet(diff)
-                    saveSceneActivity(currentVideoPosition, diff)
-                }
-            }
-        }
-
-        override fun onPlaybackStateChanged(playbackState: Int) {
-            if (playbackState == Player.STATE_ENDED) {
-                Log.v(TAG, "onPlaybackStateChanged STATE_ENDED")
-                val sceneDuration = scene.durationPosition
-                val diff = currentDurationSeconds.getAndSet(0)
-                totalPlayDurationSeconds.addAndGet(diff)
-                if (sceneDuration != null) {
-                    saveSceneActivity(sceneDuration, diff)
-                }
-            }
-        }
-
-        fun saveSceneActivity(position: Long) {
-            val duration = currentDurationSeconds.getAndSet(0)
-            saveSceneActivity(position, duration)
-        }
-
-        fun saveSceneActivity(
-            position: Long,
-            duration: Int,
-        ) {
-            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main + StashCoroutineExceptionHandler()) {
-                val sceneDuration = scene.duration
-                val totalDuration = totalPlayDurationSeconds.get()
-                val calcPosition = if (position >= 0) position else currentVideoPosition
-                Log.v(
-                    TAG,
-                    "saveSceneActivity: position=$position, duration=$duration, calcPosition=$calcPosition, totalDuration=$totalDuration",
-                )
-                if (sceneDuration != null) {
-                    val playedPercent = (calcPosition.toMilliseconds / sceneDuration) * 100
-                    val positionToSave =
-                        if (playedPercent >= maxPlayPercent) {
-                            Log.v(
-                                TAG,
-                                "Setting position to 0 since $playedPercent >= $maxPlayPercent",
-                            )
-                            0L
-                        } else {
-                            calcPosition
-                        }
-                    mutationEngine.saveSceneActivity(scene.id, positionToSave, duration)
-                    val totalPlayPercent = (totalDuration / sceneDuration) * 100
-                    Log.v(
-                        TAG,
-                        "totalPlayPercent=$totalPlayPercent, minimumPlayPercent=$minimumPlayPercent",
-                    )
-                    if (totalPlayPercent >= minimumPlayPercent) {
-                        // If the current session hasn't incremented the play count yet, do it
-                        val shouldIncrement = !incrementedPlayCount.getAndSet(true)
-                        if (shouldIncrement) {
-                            Log.v(TAG, "Incrementing play count for ${scene.id}")
-                            mutationEngine.incrementPlayCount(scene.id)
-                        }
-                    }
-                } else {
-                    // No scene duration
-                    mutationEngine.saveSceneActivity(scene.id, calcPosition, duration)
-                }
-            }
         }
     }
 
