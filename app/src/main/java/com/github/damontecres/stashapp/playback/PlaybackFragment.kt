@@ -28,6 +28,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
@@ -47,8 +48,9 @@ import java.time.format.DateTimeParseException
 @UnstableApi
 abstract class PlaybackFragment(
     @LayoutRes layoutId: Int = R.layout.video_playback,
-) :
-    Fragment(layoutId) {
+) : Fragment(layoutId) {
+    protected var trackActivityListener: TrackActivityPlaybackListener? = null
+
     /**
      * Whether to show video previews when scrubbing
      */
@@ -78,7 +80,7 @@ abstract class PlaybackFragment(
 
     protected var playbackPosition = -1L
     val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
-    protected var currentScene: Scene? = null
+    var currentScene: Scene? = null
         set(newScene) {
             field = newScene
             if (newScene != null) {
@@ -99,6 +101,8 @@ abstract class PlaybackFragment(
     }
 
     protected open fun releasePlayer() {
+        trackActivityListener?.release(playbackPosition)
+        trackActivityListener = null
         player?.let { exoPlayer ->
             playbackPosition = exoPlayer.currentPosition
             exoPlayer.release()
@@ -427,6 +431,14 @@ abstract class PlaybackFragment(
             } else {
                 requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
+        }
+    }
+
+    protected fun maybeAddActivityTracking(exoPlayer: ExoPlayer) {
+        if (ServerPreferences(requireContext()).trackActivity) {
+            Log.v(TAG, "Adding TrackActivityPlaybackListener")
+            trackActivityListener = TrackActivityPlaybackListener(this)
+            exoPlayer.addListener(trackActivityListener!!)
         }
     }
 

@@ -16,6 +16,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -81,6 +82,10 @@ abstract class PlaylistFragment<T : Query.Data, D : Any, C : Query.Data> :
                 },
             )
             exoPlayer.addListener(PlaylistListener())
+            if (viewModel.filterArgs.value?.dataType == DataType.SCENE) {
+                // Only track activity for scene playback
+                maybeAddActivityTracking(exoPlayer)
+            }
         }.also { exoPlayer ->
             exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
             if (videoView.controllerShowTimeoutMs > 0) {
@@ -176,6 +181,13 @@ abstract class PlaylistFragment<T : Query.Data, D : Any, C : Query.Data> :
                 Log.v(TAG, "Starting playback of ${scene.id}")
                 currentScene = scene
                 updateDebugInfo(tag.streamDecision, scene)
+
+                // Replace activity tracker
+                if (trackActivityListener != null) {
+                    trackActivityListener?.release()
+                    player!!.removeListener(trackActivityListener!!)
+                }
+                maybeAddActivityTracking(player!!)
             }
             if (hasMorePages) {
                 val count = player!!.mediaItemCount
