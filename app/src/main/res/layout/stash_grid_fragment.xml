@@ -6,20 +6,39 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <Button
-        android:id="@+id/sort_button"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="start"
-        android:layout_margin="8dp"
-        android:minWidth="0dp"
-        android:padding="8dp"
-        android:visibility="gone"
-        android:textSize="14sp"
-        android:background="@drawable/button_selector"
-        tools:visibility="visible"
-        tools:text="Sort By"
-        />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/sort_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_margin="8dp"
+            android:minWidth="0dp"
+            android:padding="8dp"
+            android:visibility="gone"
+            android:textSize="14sp"
+            android:background="@drawable/button_selector"
+            tools:visibility="visible"
+            tools:text="Sort By" />
+
+        <Button
+            android:id="@+id/play_all_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_margin="8dp"
+            android:minWidth="0dp"
+            android:padding="8dp"
+            android:visibility="gone"
+            android:textSize="14sp"
+            android:background="@drawable/button_selector"
+            android:text="Play All"
+            tools:visibility="visible" />
+    </LinearLayout>
 
     <androidx.leanback.widget.BrowseFrameLayout
         android:id="@+id/grid_frame"

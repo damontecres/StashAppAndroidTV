@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
+import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
@@ -55,6 +56,7 @@ import kotlinx.coroutines.launch
 class StashGridFragment() : Fragment() {
     // Views
     private lateinit var sortButton: Button
+    private lateinit var playAllButton: Button
     private lateinit var positionTextView: TextView
     private lateinit var totalCountTextView: TextView
     private lateinit var mGridPresenter: VerticalGridPresenter
@@ -86,9 +88,14 @@ class StashGridFragment() : Fragment() {
     var name: String? = null
 
     /**
-     * Whether to enable the built-in sort button, defaults to false
+     * Whether to enable the built-in sort button, defaults to true
      */
-    var sortButtonEnabled = false
+    var sortButtonEnabled = true
+
+    /**
+     * Whether to enable the built-in play all button, defaults to true
+     */
+    var playAllButtonEnabled = true
 
     /**
      * The presenter for the items, defaults to [StashPresenter.SELECTOR]
@@ -253,6 +260,7 @@ class StashGridFragment() : Fragment() {
             ) as ViewGroup
         val gridFrame = root.findViewById<View>(androidx.leanback.R.id.grid_frame) as ViewGroup
         sortButton = root.findViewById(R.id.sort_button)
+        playAllButton = root.findViewById(R.id.play_all_button)
         val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         gridDock.addView(mGridViewHolder.view)
@@ -306,6 +314,15 @@ class StashGridFragment() : Fragment() {
             SortButtonManager {
                 refresh(it)
             }.setUpSortButton(sortButton, dataType, _filterArgs.sortAndDirection)
+        }
+        if (playAllButtonEnabled && dataType.supportsPlaylists) {
+            playAllButton.visibility = View.VISIBLE
+            playAllButton.nextFocusUpId = R.id.tab_layout
+            playAllButton.setOnClickListener(
+                PlayAllOnClickListener(requireContext(), dataType) {
+                    filterArgs
+                },
+            )
         }
     }
 
