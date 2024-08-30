@@ -65,6 +65,8 @@ class StashGridFragment() : Fragment() {
     private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
     private lateinit var mAdapter: ObjectAdapter
 
+    private var titleView: View? = null
+
     // Arguments
     private lateinit var _filterArgs: FilterArgs
     private lateinit var _currentSortAndDirection: SortAndDirection
@@ -73,7 +75,7 @@ class StashGridFragment() : Fragment() {
     private var mOnItemViewSelectedListener: OnItemViewSelectedListener? = null
     private var mSelectedPosition = -1
     private var titleTransitionHelper: TitleTransitionHelper? = null
-    private var sortButtonTransitionHelper: TitleTransitionHelper? = null
+    private var gridHeaderTransitionHelper: TitleTransitionHelper? = null
     private var columns: Int? = null
     private var scrollToNextPage = false
     private var onBackPressedCallback: OnBackPressedCallback? = null
@@ -318,10 +320,14 @@ class StashGridFragment() : Fragment() {
                 }
             }
         }
+
+        val gridHeader = view.findViewById<View>(R.id.grid_header)
+        gridHeaderTransitionHelper = TitleTransitionHelper(view as ViewGroup, gridHeader)
+        setTitleView(this.titleView)
+
         if (sortButtonEnabled) {
             sortButton.visibility = View.VISIBLE
             sortButton.nextFocusUpId = R.id.tab_layout
-            sortButtonTransitionHelper = TitleTransitionHelper(view as ViewGroup, sortButton)
             SortButtonManager {
                 refresh(it)
             }.setUpSortButton(sortButton, dataType, _filterArgs.sortAndDirection)
@@ -428,10 +434,11 @@ class StashGridFragment() : Fragment() {
         if (showFooter) {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val count = pagingSource.getCount()
-                if (count > 0) {
-                    totalCountTextView.text = count.toString()
-                    footerLayout.animateToVisible()
+                if (count == 0) {
+                    positionTextView.text = getString(R.string.zero)
                 }
+                totalCountTextView.text = count.toString()
+                footerLayout.animateToVisible()
             }
         } else {
             footerLayout.visibility = View.GONE
@@ -486,14 +493,16 @@ class StashGridFragment() : Fragment() {
 
     fun setTitleView(titleView: View?) {
         if (view is ViewGroup && titleView != null) {
+            Log.v(TAG, "setTitleView")
             titleTransitionHelper = TitleTransitionHelper(requireView() as ViewGroup, titleView)
         } else {
+            this.titleView = titleView
             titleTransitionHelper = null
         }
     }
 
     fun showTitle(show: Boolean) {
-        sortButtonTransitionHelper?.showTitle(show)
+        gridHeaderTransitionHelper?.showTitle(show)
         titleTransitionHelper?.showTitle(show)
     }
 
