@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -38,41 +37,36 @@ class MovieFragment : Fragment(R.layout.movie_view) {
 
         table = view.findViewById(R.id.movie_table)
 
-        val movie = requireActivity().intent.getParcelableExtra<Movie>("movie")
-        if (movie != null) {
-            titleText.text = movie.name
-            if (movie.frontImagePath != null) {
-                configureLayout(frontImage)
-                StashGlide.with(requireActivity(), movie.frontImagePath)
-                    .optionalCenterCrop()
-                    .error(StashPresenter.glideError(requireContext()))
-                    .into(frontImage)
-            }
-            if (movie.backImagePath != null) {
-                configureLayout(backImage)
-                StashGlide.with(requireActivity(), movie.backImagePath)
-                    .optionalCenterCrop()
-                    .error(StashPresenter.glideError(requireContext()))
-                    .into(backImage)
-            }
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val queryEngine = QueryEngine(requireContext())
-                val movie = queryEngine.getMovie(movie.id)
-                addRow(
-                    R.string.stashapp_duration,
-                    movie?.duration?.toDuration(DurationUnit.MINUTES)?.toString(),
-                )
-                addRow(R.string.stashapp_date, movie?.date)
-                addRow(R.string.stashapp_studio, movie?.studio?.name)
-                addRow(R.string.stashapp_director, movie?.director)
-                addRow(R.string.stashapp_synopsis, movie?.synopsis)
-                addRow(R.string.stashapp_created_at, parseTimeToString(movie?.created_at))
-                addRow(R.string.stashapp_updated_at, parseTimeToString(movie?.updated_at))
-                table.setColumnShrinkable(1, true)
-            }
-        } else {
-            val intent = Intent(requireActivity(), MainActivity::class.java)
-            startActivity(intent)
+        val movie = requireActivity().intent.getParcelableExtra<Movie>("movie")!!
+        titleText.text = movie.name
+        if (movie.frontImagePath != null) {
+            configureLayout(frontImage)
+            StashGlide.with(requireActivity(), movie.frontImagePath)
+                .optionalCenterCrop()
+                .error(StashPresenter.glideError(requireContext()))
+                .into(frontImage)
+        }
+        if (movie.backImagePath != null) {
+            configureLayout(backImage)
+            StashGlide.with(requireActivity(), movie.backImagePath)
+                .optionalCenterCrop()
+                .error(StashPresenter.glideError(requireContext()))
+                .into(backImage)
+        }
+        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            val queryEngine = QueryEngine(requireContext())
+            val movieData = queryEngine.getMovie(movie.id)
+            addRow(
+                R.string.stashapp_duration,
+                movieData?.duration?.toDuration(DurationUnit.MINUTES)?.toString(),
+            )
+            addRow(R.string.stashapp_date, movieData?.date)
+            addRow(R.string.stashapp_studio, movieData?.studio?.name)
+            addRow(R.string.stashapp_director, movieData?.director)
+            addRow(R.string.stashapp_synopsis, movieData?.synopsis)
+            addRow(R.string.stashapp_created_at, parseTimeToString(movieData?.created_at))
+            addRow(R.string.stashapp_updated_at, parseTimeToString(movieData?.updated_at))
+            table.setColumnShrinkable(1, true)
         }
     }
 

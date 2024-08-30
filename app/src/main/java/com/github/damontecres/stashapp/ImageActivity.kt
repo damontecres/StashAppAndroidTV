@@ -53,33 +53,31 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState == null) {
-            lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val imageId = intent.getStringExtra(INTENT_IMAGE_ID)!!
+        lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            val imageId = intent.getStringExtra(INTENT_IMAGE_ID)!!
 
-                val queryEngine = QueryEngine(this@ImageActivity)
-                val image = queryEngine.getImage(imageId)!!
-                viewModel.setImage(image)
+            val queryEngine = QueryEngine(this@ImageActivity)
+            val image = queryEngine.getImage(imageId)!!
+            viewModel.setImage(image)
 
-                val pageSize =
-                    PreferenceManager.getDefaultSharedPreferences(this@ImageActivity)
-                        .getInt("maxSearchResults", 25)
+            val pageSize =
+                PreferenceManager.getDefaultSharedPreferences(this@ImageActivity)
+                    .getInt("maxSearchResults", 25)
 
-                currentPosition = intent.getIntExtra(INTENT_POSITION, -1)
+            currentPosition = intent.getIntExtra(INTENT_POSITION, -1)
 
-                val dataSupplier = createDataSupplier()
-                if (dataSupplier != null) {
-                    val pagingSource =
-                        StashPagingSource<FindImagesQuery.Data, ImageData, ImageData, CountImagesQuery.Data>(
-                            this@ImageActivity,
-                            pageSize,
-                            dataSupplier,
-                            useRandom = false,
-                        )
-                    pager = StashSparseFilterFetcher(pagingSource, pageSize)
-                    totalCount = pagingSource.getCount()
-                    canScrollImages = true
-                }
+            val dataSupplier = createDataSupplier()
+            if (dataSupplier != null) {
+                val pagingSource =
+                    StashPagingSource<FindImagesQuery.Data, ImageData, ImageData, CountImagesQuery.Data>(
+                        this@ImageActivity,
+                        pageSize,
+                        dataSupplier,
+                        useRandom = false,
+                    )
+                pager = StashSparseFilterFetcher(pagingSource, pageSize)
+                totalCount = pagingSource.getCount()
+                canScrollImages = true
             }
         }
 

@@ -144,6 +144,10 @@ class GalleryActivity : TabbedGridFragmentActivity(R.layout.gallery_activity) {
         ) {
             super.onViewCreated(view, savedInstanceState)
 
+            if (savedInstanceState != null) {
+                gallery = savedInstanceState.getParcelable("gallery")!!
+            }
+
             studioImage = view.findViewById(R.id.studio_image)
             ratingBar = view.findViewById(R.id.gallery_rating_bar)
             table = view.findViewById(R.id.gallery_table)
@@ -225,8 +229,8 @@ class GalleryActivity : TabbedGridFragmentActivity(R.layout.gallery_activity) {
                             photographer =
                                 Optional.present(
                                     StringCriterionInput(
-                                        galleryData.photographer!!,
-                                        CriterionModifier.EQUALS,
+                                        value = galleryData.photographer!!,
+                                        modifier = CriterionModifier.EQUALS,
                                     ),
                                 ),
                         )
@@ -245,6 +249,11 @@ class GalleryActivity : TabbedGridFragmentActivity(R.layout.gallery_activity) {
 
             table.addView(row)
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable("gallery", gallery)
     }
 
     companion object {
