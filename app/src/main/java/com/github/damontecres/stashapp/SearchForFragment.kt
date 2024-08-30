@@ -56,11 +56,7 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.properties.Delegates
 
-class SearchForFragment(
-    private val dataType: DataType,
-) :
-    SearchSupportFragment(),
-        SearchSupportFragment.SearchResultProvider {
+class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
     private var query: String? = null
 
@@ -77,8 +73,11 @@ class SearchForFragment(
                 .show()
         }
 
+    private lateinit var dataType: DataType
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        dataType = DataType.valueOf(requireActivity().intent.getStringExtra("dataType")!!)
         perPage =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 25)

@@ -117,7 +117,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             ListRowManager.SparseArrayRowModifier(mAdapter, PERFORMER_POS),
             mPerformersAdapter,
         ) { performerIds ->
-            val imageId = viewModel.image.value!!.id
+            val imageId = viewModel.imageId.value!!
             val result = mutationEngine.updateImage(imageId, performerIds = performerIds)
             result?.performers?.map { it.performerData }.orEmpty()
         }
@@ -128,7 +128,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             ListRowManager.SparseArrayRowModifier(mAdapter, TAG_POS),
             ArrayObjectAdapter(TagPresenter(TagLongClickCallBack())),
         ) { tagIds ->
-            val imageId = viewModel.image.value!!.id
+            val imageId = viewModel.imageId.value!!
             val result = mutationEngine.updateImage(imageId, tagIds = tagIds)
             result?.tags?.map { it.tagData }.orEmpty()
         }
@@ -139,7 +139,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             ListRowManager.SparseArrayRowModifier(mAdapter, GALLERY_POS),
             ArrayObjectAdapter(GalleryPresenter(GalleryLongClickCallBack())),
         ) { galleryIds ->
-            val imageId = viewModel.image.value!!.id
+            val imageId = viewModel.imageId.value!!
             val result = mutationEngine.updateImage(imageId, galleryIds = galleryIds)
             result?.galleries?.map { it.galleryData }.orEmpty()
         }
@@ -160,8 +160,9 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     studioIds.last()
                 }
 
+            val imageId = viewModel.imageId.value!!
             val result =
-                mutationEngine.updateImage(viewModel.image.value!!.id, studioId = newStudioId)
+                mutationEngine.updateImage(imageId, studioId = newStudioId)
             val newStudio = result?.studio?.studioData
             if (newStudio != null) {
                 listOf(newStudio)

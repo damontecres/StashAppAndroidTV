@@ -30,7 +30,9 @@ import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SparseArrayObjectAdapter
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.request.target.CustomTarget
@@ -69,18 +71,23 @@ class MarkerActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_details)
         if (savedInstanceState == null) {
-            val marker = intent.getParcelableExtra<Marker>("marker")!!
             supportFragmentManager.beginTransaction()
-                .add(android.R.id.content, MarkerDetailsFragment(marker))
+                .add(android.R.id.content, MarkerDetailsFragment())
                 .commit()
         }
     }
 
-    class MarkerDetailsViewModel : ViewModel() {
+    class MarkerDetailsViewModel(private val state: SavedStateHandle) : ViewModel() {
         val seconds = MutableLiveData<Double>()
+
+        val marker: LiveData<Marker> = state.getLiveData("marker")
+
+        fun setMarker(newMarker: Marker) {
+            state["marker"] = newMarker
+        }
     }
 
-    class MarkerDetailsFragment(private var marker: Marker) : DetailsSupportFragment() {
+    class MarkerDetailsFragment : DetailsSupportFragment() {
         companion object {
             private const val TAG = "MarkerDetailsFragment"
 
@@ -105,8 +112,9 @@ class MarkerActivity : FragmentActivity() {
                 ArrayObjectAdapter(TagPresenter(PrimaryTagLongClickListener())),
             ) { tagIds ->
                 // Kind of hacky
+                val marker = viewModel.marker.value!!
                 val result = mutationEngine.setTagsOnMarker(marker.id, tagIds[1], marker.tagIds)
-                marker = marker.copy(primaryTagId = tagIds[1])
+                viewModel.setMarker(marker.copy(primaryTagId = tagIds[1]))
                 listOfNotNull(result?.primary_tag?.tagData)
             }
 
@@ -116,8 +124,9 @@ class MarkerActivity : FragmentActivity() {
                 ListRowManager.SparseArrayRowModifier(mAdapter, TAG_POS),
                 ArrayObjectAdapter(TagPresenter(TagLongClickListener())),
             ) { tagIds ->
+                val marker = viewModel.marker.value!!
                 val result = mutationEngine.setTagsOnMarker(marker.id, marker.primaryTagId, tagIds)
-                marker = marker.copy(tagIds = tagIds)
+                viewModel.setMarker(marker.copy(tagIds = tagIds))
                 result?.tags?.map { it.tagData }.orEmpty()
             }
 
@@ -160,6 +169,9 @@ class MarkerActivity : FragmentActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
 
+            val marker = requireActivity().intent.getParcelableExtra<Marker>("marker")!!
+            viewModel.setMarker(marker)
+
             primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
 
             val lock = ReentrantReadWriteLock()
@@ -199,9 +211,10 @@ class MarkerActivity : FragmentActivity() {
         ) {
             super.onViewCreated(view, savedInstanceState)
             adapter = mAdapter
-            initializeBackground()
+            val marker = viewModel.marker.value!!
+            initializeBackground(marker)
             setupDetailsOverviewRowPresenter()
-            setupDetailsOverviewRow()
+            setupDetailsOverviewRow(marker)
 
             onItemViewClickedListener =
                 StashItemViewClickListener(requireContext(), actionClickListener)
@@ -214,6 +227,7 @@ class MarkerActivity : FragmentActivity() {
             )
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val marker = viewModel.marker.value!!
                 val sceneData = queryEngine.getScene(marker.sceneId)!!
                 val markerData = sceneData.scene_markers.first { it.id == marker.id }
 
@@ -245,7 +259,7 @@ class MarkerActivity : FragmentActivity() {
             mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
         }
 
-        private fun setupDetailsOverviewRow() {
+        private fun setupDetailsOverviewRow(marker: Marker) {
             val row = DetailsOverviewRow(marker)
 
             val screenshotUrl = marker.screenshot
@@ -300,7 +314,7 @@ class MarkerActivity : FragmentActivity() {
             mAdapter.set(1, row)
         }
 
-        private fun initializeBackground() {
+        private fun initializeBackground(marker: Marker) {
             if (mDetailsBackground.coverBitmap == null) {
                 mDetailsBackground.enableParallax()
 
@@ -336,7 +350,7 @@ class MarkerActivity : FragmentActivity() {
                     val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
                     if (id == StashAction.ADD_TAG.id) {
                         val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
-                        Log.d(TAG, "Adding tag $tagId to scene marker ${marker.id}")
+                        Log.d(TAG, "Adding tag $tagId to scene marker")
                         viewLifecycleOwner.lifecycleScope.launch(
                             StashCoroutineExceptionHandler { ex ->
                                 Toast.makeText(
@@ -357,7 +371,7 @@ class MarkerActivity : FragmentActivity() {
                         }
                     } else if (id == REPLACE_PRIMARY_ID) {
                         val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
-                        Log.d(TAG, "Setting primary tag to $tagId to scene marker ${marker.id}")
+                        Log.d(TAG, "Setting primary tag to $tagId to scene marker")
                         if (tagId != null) {
                             viewLifecycleOwner.lifecycleScope.launch(
                                 StashCoroutineExceptionHandler { ex ->
