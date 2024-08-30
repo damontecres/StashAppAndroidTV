@@ -70,6 +70,7 @@ abstract class PlaybackFragment(
     protected lateinit var titleText: TextView
     protected lateinit var dateText: TextView
     protected lateinit var debugView: View
+    protected lateinit var debugSceneId: TextView
     protected lateinit var debugPlaybackTextView: TextView
     protected lateinit var debugVideoTextView: TextView
     protected lateinit var debugAudioTextView: TextView
@@ -101,7 +102,7 @@ abstract class PlaybackFragment(
     }
 
     protected open fun releasePlayer() {
-        trackActivityListener?.release(playbackPosition)
+        trackActivityListener?.release(currentVideoPosition)
         trackActivityListener = null
         player?.let { exoPlayer ->
             playbackPosition = exoPlayer.currentPosition
@@ -143,6 +144,7 @@ abstract class PlaybackFragment(
         streamDecision: StreamDecision,
         scene: Scene,
     ) {
+        debugSceneId.text = scene.id
         when (streamDecision.transcodeDecision) {
             TranscodeDecision.TRANSCODE ->
                 debugPlaybackTextView.text =
@@ -274,6 +276,7 @@ abstract class PlaybackFragment(
         exoCenterControls = view.findViewById(androidx.media3.ui.R.id.exo_center_controls)
 
         debugView = view.findViewById(R.id.playback_debug_info)
+        debugSceneId = view.findViewById(R.id.debug_scene_id)
         debugPlaybackTextView = view.findViewById(R.id.debug_playback)
         debugVideoTextView = view.findViewById(R.id.debug_video)
         debugAudioTextView = view.findViewById(R.id.debug_audio)
@@ -435,9 +438,14 @@ abstract class PlaybackFragment(
     }
 
     protected fun maybeAddActivityTracking(exoPlayer: ExoPlayer) {
-        if (ServerPreferences(requireContext()).trackActivity) {
+        if (ServerPreferences(requireContext()).trackActivity && currentScene != null) {
             Log.v(TAG, "Adding TrackActivityPlaybackListener")
-            trackActivityListener = TrackActivityPlaybackListener(this)
+            trackActivityListener =
+                TrackActivityPlaybackListener(
+                    context = requireContext(),
+                    scene = currentScene!!,
+                    getCurrentPosition = ::currentVideoPosition,
+                )
             exoPlayer.addListener(trackActivityListener!!)
         }
     }

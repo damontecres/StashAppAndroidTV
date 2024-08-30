@@ -33,6 +33,7 @@ import androidx.leanback.widget.Presenter.ViewHolder
 import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.REMOVE_POPUP_ITEM
 import com.github.damontecres.stashapp.SearchForActivity
@@ -345,8 +346,16 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 }
             }
 
+            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+            val showDebug =
+                preferences.getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)
+
             val body =
                 buildList {
+                    if (showDebug) {
+                        add("Image ID: ${image.id}")
+                        add("")
+                    }
                     if (image.photographer.isNotNullOrBlank()) {
                         add("${context.getString(R.string.stashapp_photographer)}: ${image.photographer}")
                     }

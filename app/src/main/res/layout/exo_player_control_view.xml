@@ -25,10 +25,23 @@
         android:layout_height="wrap_content"
         android:background="@color/transparent_black_50"
         android:layout_margin="4dp"
+        android:padding="4dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:visibility="gone"
         tools:visibility="visible">
+
+        <TableRow>
+
+            <TextView
+                style="@style/DebugInfoOverlayText"
+                android:text="@string/stashapp_scene_id" />
+
+            <TextView
+                android:id="@+id/debug_scene_id"
+                style="@style/DebugInfoOverlayText"
+                tools:text="1234" />
+        </TableRow>
 
         <TableRow>
 
