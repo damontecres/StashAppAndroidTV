@@ -141,6 +141,10 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
             if (event.keyCode == KeyEvent.KEYCODE_BACK) {
                 if (overlayIsVisible) {
                     supportFragmentManager.commit {
+                        setCustomAnimations(
+                            androidx.leanback.R.anim.abc_slide_in_bottom,
+                            androidx.leanback.R.anim.abc_slide_out_bottom,
+                        )
                         hide(overlayFragment)
                     }
                     return true
@@ -165,6 +169,10 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
             }
             if (event.keyCode != KeyEvent.KEYCODE_BACK && !overlayIsVisible) {
                 supportFragmentManager.commitNow {
+                    setCustomAnimations(
+                        androidx.leanback.R.anim.abc_slide_in_bottom,
+                        androidx.leanback.R.anim.abc_slide_out_bottom,
+                    )
                     show(overlayFragment)
                 }
                 overlayFragment.requestFocus()

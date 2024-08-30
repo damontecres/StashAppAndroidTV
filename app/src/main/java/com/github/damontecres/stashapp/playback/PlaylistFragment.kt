@@ -87,7 +87,7 @@ abstract class PlaylistFragment<T : Query.Data, D : Any, C : Query.Data> :
                 maybeAddActivityTracking(exoPlayer)
             }
         }.also { exoPlayer ->
-            exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
+            exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
             if (videoView.controllerShowTimeoutMs > 0) {
                 videoView.hideController()
             }
@@ -138,7 +138,7 @@ abstract class PlaylistFragment<T : Query.Data, D : Any, C : Query.Data> :
                 val streamDecision = getStreamDecision(requireContext(), scene)
                 buildMediaItem(requireContext(), streamDecision, scene) {
                     builderCallback(item)?.invoke(this)
-                    setTag(MediaItemTag(item, streamDecision))
+                    setTag(MediaItemTag(scene, streamDecision))
                 }
             }
         Log.v(TAG, "Got ${mediaItems.size} media items")
@@ -177,7 +177,7 @@ abstract class PlaylistFragment<T : Query.Data, D : Any, C : Query.Data> :
             if (mediaItem != null) {
                 // Update the UI
                 val tag = mediaItem.localConfiguration!!.tag!! as MediaItemTag
-                val scene = convertToScene(tag.item as D)
+                val scene = tag.item
                 Log.v(TAG, "Starting playback of ${scene.id}")
                 currentScene = scene
                 updateDebugInfo(tag.streamDecision, scene)
@@ -247,7 +247,7 @@ abstract class PlaylistFragment<T : Query.Data, D : Any, C : Query.Data> :
      *
      * This will added as a tag to the [MediaItem]s
      */
-    data class MediaItemTag(val item: Any, val streamDecision: StreamDecision)
+    data class MediaItemTag(val item: Scene, val streamDecision: StreamDecision)
 
     companion object {
         private const val TAG = "PlaylistFragment"

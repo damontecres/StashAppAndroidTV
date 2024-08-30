@@ -1,15 +1,18 @@
 package com.github.damontecres.stashapp.playback
 
+import android.content.Context
 import android.util.Log
 import androidx.annotation.OptIn
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.toMilliseconds
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Timer
@@ -23,11 +26,15 @@ import kotlin.time.toDuration
  */
 @OptIn(UnstableApi::class)
 class TrackActivityPlaybackListener(
-    private val fragment: PlaybackFragment,
+    context: Context,
+    dispatcher: CoroutineDispatcher = Dispatchers.Main,
+    private val scene: Scene,
+    private val getCurrentPosition: () -> Long,
 ) : Player.Listener {
+    private val coroutineScope = CoroutineScope(dispatcher)
     private val timer: Timer
-    private val mutationEngine = MutationEngine(fragment.requireContext())
-    private val minimumPlayPercent = ServerPreferences(fragment.requireContext()).minimumPlayPercent
+    private val mutationEngine = MutationEngine(context)
+    private val minimumPlayPercent = ServerPreferences(context).minimumPlayPercent
     private val maxPlayPercent: Int
 
     private var totalPlayDurationSeconds = AtomicInteger(0)
@@ -36,7 +43,7 @@ class TrackActivityPlaybackListener(
     private var incrementedPlayCount = AtomicBoolean(false)
 
     init {
-        val manager = PreferenceManager.getDefaultSharedPreferences(fragment.requireContext())
+        val manager = PreferenceManager.getDefaultSharedPreferences(context)
         val playbackDurationInterval = manager.getInt("playbackDurationInterval", 1)
         val saveActivityInterval = manager.getInt("saveActivityInterval", 10)
         maxPlayPercent = manager.getInt("maxPlayPercent", 98)
@@ -73,6 +80,7 @@ class TrackActivityPlaybackListener(
     }
 
     fun release(position: Long) {
+        Log.v(TAG, "release: position=$position")
         timer.cancel()
         if (position >= 0) {
             saveSceneActivity(position, currentDurationSeconds.getAndSet(0))
@@ -93,14 +101,11 @@ class TrackActivityPlaybackListener(
     override fun onPlaybackStateChanged(playbackState: Int) {
         if (playbackState == Player.STATE_ENDED) {
             Log.v(TAG, "onPlaybackStateChanged STATE_ENDED")
-            val scene = fragment.currentScene
-            if (scene != null) {
-                val sceneDuration = scene.durationPosition
-                val diff = currentDurationSeconds.getAndSet(0)
-                totalPlayDurationSeconds.addAndGet(diff)
-                if (sceneDuration != null) {
-                    saveSceneActivity(sceneDuration, diff)
-                }
+            val sceneDuration = scene.durationPosition
+            val diff = currentDurationSeconds.getAndSet(0)
+            totalPlayDurationSeconds.addAndGet(diff)
+            if (sceneDuration != null) {
+                saveSceneActivity(sceneDuration, diff)
             }
         }
     }
@@ -109,47 +114,44 @@ class TrackActivityPlaybackListener(
         position: Long,
         duration: Int,
     ) {
-        fragment.viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main + StashCoroutineExceptionHandler()) {
-            val scene = fragment.currentScene
-            if (scene != null) {
-                val sceneDuration = scene.duration
-                val totalDuration = totalPlayDurationSeconds.get()
-                val calcPosition = if (position >= 0) position else fragment.currentVideoPosition
+        coroutineScope.launch(StashCoroutineExceptionHandler()) {
+            val sceneDuration = scene.duration
+            val totalDuration = totalPlayDurationSeconds.get()
+            val calcPosition = if (position >= 0) position else getCurrentPosition()
+            Log.v(
+                TAG,
+                "saveSceneActivity: scene=${scene.id}, position=$position, duration=$duration, " +
+                    "calcPosition=$calcPosition, totalDuration=$totalDuration",
+            )
+            if (sceneDuration != null) {
+                val playedPercent = (calcPosition.toMilliseconds / sceneDuration) * 100
+                val positionToSave =
+                    if (playedPercent >= maxPlayPercent) {
+                        Log.v(
+                            TAG,
+                            "Setting position to 0 since $playedPercent >= $maxPlayPercent",
+                        )
+                        0L
+                    } else {
+                        calcPosition
+                    }
+                mutationEngine.saveSceneActivity(scene.id, positionToSave, duration)
+                val totalPlayPercent = (totalDuration / sceneDuration) * 100
                 Log.v(
                     TAG,
-                    "saveSceneActivity: scene=${scene.id}, position=$position, duration=$duration, " +
-                        "calcPosition=$calcPosition, totalDuration=$totalDuration",
+                    "totalPlayPercent=$totalPlayPercent, minimumPlayPercent=$minimumPlayPercent",
                 )
-                if (sceneDuration != null) {
-                    val playedPercent = (calcPosition.toMilliseconds / sceneDuration) * 100
-                    val positionToSave =
-                        if (playedPercent >= maxPlayPercent) {
-                            Log.v(
-                                TAG,
-                                "Setting position to 0 since $playedPercent >= $maxPlayPercent",
-                            )
-                            0L
-                        } else {
-                            calcPosition
-                        }
-                    mutationEngine.saveSceneActivity(scene.id, positionToSave, duration)
-                    val totalPlayPercent = (totalDuration / sceneDuration) * 100
-                    Log.v(
-                        TAG,
-                        "totalPlayPercent=$totalPlayPercent, minimumPlayPercent=$minimumPlayPercent",
-                    )
-                    if (totalPlayPercent >= minimumPlayPercent) {
-                        // If the current session hasn't incremented the play count yet, do it
-                        val shouldIncrement = !incrementedPlayCount.getAndSet(true)
-                        if (shouldIncrement) {
-                            Log.v(TAG, "Incrementing play count for ${scene.id}")
-                            mutationEngine.incrementPlayCount(scene.id)
-                        }
+                if (totalPlayPercent >= minimumPlayPercent) {
+                    // If the current session hasn't incremented the play count yet, do it
+                    val shouldIncrement = !incrementedPlayCount.getAndSet(true)
+                    if (shouldIncrement) {
+                        Log.v(TAG, "Incrementing play count for ${scene.id}")
+                        mutationEngine.incrementPlayCount(scene.id)
                     }
-                } else {
-                    // No scene duration
-                    mutationEngine.saveSceneActivity(scene.id, calcPosition, duration)
                 }
+            } else {
+                // No scene duration
+                mutationEngine.saveSceneActivity(scene.id, calcPosition, duration)
             }
         }
     }
