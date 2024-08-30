@@ -30,6 +30,7 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.PlaylistItemComparator
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -71,7 +72,12 @@ class PlaylistListFragment<T : Query.Data, D : Any, Count : Query.Data> : Fragme
         val filter = viewModel.filterArgs.value!!
 
         val playlistTitleView = view.findViewById<TextView>(R.id.playlist_title)
-        playlistTitleView.text = filter.name
+        playlistTitleView.text =
+            if (filter.name.isNotNullOrBlank()) {
+                filter.name
+            } else {
+                getString(filter.dataType.pluralStringId)
+            }
 
         val dataSupplier = DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, Count>(filter)
         val pagingAdapter = PagingDataAdapter(PlaylistItemPresenter(), PlaylistItemComparator)

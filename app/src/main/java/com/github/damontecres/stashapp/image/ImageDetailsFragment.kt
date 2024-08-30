@@ -267,7 +267,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             }
             detailsRow.actionsAdapter = detailsActionsAdapter
 
-            mAdapter.set(1, detailsRow)
+            mAdapter.set(DETAILS_POS, detailsRow)
 
             if (newImage.date.isNotNullOrBlank()) {
                 mPerformersAdapter.presenterSelector =

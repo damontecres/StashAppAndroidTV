@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.leanback.paging.PagingDataAdapter
 import androidx.leanback.widget.BrowseFrameLayout
@@ -74,6 +76,7 @@ class StashGridFragment() : Fragment() {
     private var sortButtonTransitionHelper: TitleTransitionHelper? = null
     private var columns: Int? = null
     private var scrollToNextPage = false
+    private var onBackPressedCallback: OnBackPressedCallback? = null
 
     // Modifiable properties
 
@@ -96,6 +99,11 @@ class StashGridFragment() : Fragment() {
      * Whether to enable the built-in play all button, defaults to true
      */
     var playAllButtonEnabled = true
+
+    /**
+     * Whether to enable scrolling to the top on a back press, defaults to true
+     */
+    var backPressScrollEnabled = true
 
     /**
      * The presenter for the items, defaults to [StashPresenter.SELECTOR]
@@ -190,6 +198,9 @@ class StashGridFragment() : Fragment() {
             mSelectedPosition = position
             showOrHideTitle()
             positionTextView.text = (position + 1).toString()
+
+            // If on the second row & the back callback exists, enable it
+            onBackPressedCallback?.isEnabled = mSelectedPosition >= mGridPresenter.numberOfColumns
         }
     }
 
@@ -323,6 +334,14 @@ class StashGridFragment() : Fragment() {
                     filterArgs
                 },
             )
+        }
+
+        if (backPressScrollEnabled) {
+            onBackPressedCallback =
+                requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, false) {
+                    currentSelectedPosition = 0
+                    isEnabled = false
+                }
         }
     }
 
