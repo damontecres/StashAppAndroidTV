@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.ImageView
@@ -145,7 +146,12 @@ class GalleryActivity : TabbedGridFragmentActivity(R.layout.gallery_activity) {
             super.onViewCreated(view, savedInstanceState)
 
             if (savedInstanceState != null) {
-                gallery = savedInstanceState.getParcelable("gallery")!!
+                val gallery = savedInstanceState.getParcelable<Gallery>("gallery")
+                if (gallery != null) {
+                    this.gallery = gallery
+                } else {
+                    Log.w(TAG, "savedInstanceState != null but gallery was null")
+                }
             }
 
             studioImage = view.findViewById(R.id.studio_image)
@@ -257,6 +263,7 @@ class GalleryActivity : TabbedGridFragmentActivity(R.layout.gallery_activity) {
     }
 
     companion object {
+        private const val TAG = "GalleryFragment"
         const val INTENT_GALLERY_OBJ = "gallery"
     }
 }

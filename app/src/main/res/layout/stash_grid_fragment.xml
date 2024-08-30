@@ -7,15 +7,16 @@
     android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/grid_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_gravity="center_vertical">
 
         <Button
             android:id="@+id/sort_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="start"
             android:layout_margin="8dp"
             android:minWidth="0dp"
             android:padding="8dp"
@@ -29,14 +30,13 @@
             android:id="@+id/play_all_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="start"
             android:layout_margin="8dp"
             android:minWidth="0dp"
             android:padding="8dp"
             android:visibility="gone"
             android:textSize="14sp"
             android:background="@drawable/button_selector"
-            android:text="Play All"
+            android:text="@string/play_all"
             tools:visibility="visible" />
     </LinearLayout>
 

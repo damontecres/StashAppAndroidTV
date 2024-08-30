@@ -68,7 +68,9 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             val fragment =
                 supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
             if (fragment != null) {
-                setTitleText(fragment.filterArgs)
+                val fa = fragment.filterArgs
+                setTitleText(fa)
+                sortButtonManager.setUpSortButton(sortButton, fa.dataType, fa.sortAndDirection)
             }
         }
 
