@@ -25,19 +25,21 @@ class PlaylistItemPresenter : Presenter() {
     @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(
         viewHolder: ViewHolder,
-        item: Any,
+        item: Any?,
     ) {
         val vh = viewHolder as PlaylistItemViewHolder
-        item as PlaylistItem
-        vh.indexView.text = (item.index + 1).toString()
-        vh.titleView.text = item.title
-        vh.subtitleView.text = item.subtitle
-        vh.details1View.text = item.details1
-        vh.details2View.text = item.details2
+        if (item != null) {
+            item as PlaylistItem
+            vh.indexView.text = (item.index + 1).toString()
+            vh.titleView.text = item.title
+            vh.subtitleView.text = item.subtitle
+            vh.details1View.text = item.details1
+            vh.details2View.text = item.details2
 
-        if (item.imageUrl.isNotNullOrBlank()) {
-            StashGlide.with(vh.view.context, item.imageUrl)
-                .into(vh.imageView)
+            if (item.imageUrl.isNotNullOrBlank()) {
+                StashGlide.with(vh.view.context, item.imageUrl)
+                    .into(vh.imageView)
+            }
         }
     }
 

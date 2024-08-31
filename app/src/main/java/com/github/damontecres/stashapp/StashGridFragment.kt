@@ -30,6 +30,7 @@ import com.apollographql.apollo3.api.Query
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
@@ -125,11 +126,18 @@ class StashGridFragment() : Fragment() {
 
         @SuppressLint("SetTextI18n")
         set(position) {
-            mSelectedPosition = position
             if (mGridViewHolder.gridView.adapter != null) {
-                mGridViewHolder.gridView.setSelectedPositionSmooth(position)
+                if (Math.abs(mSelectedPosition - position) < mGridPresenter.numberOfColumns * 10) {
+                    // If new position is close to the current, smooth scroll
+                    mGridViewHolder.gridView.setSelectedPositionSmooth(position)
+                } else {
+                    // If not, just jump without smooth scrolling
+                    mGridViewHolder.gridView.selectedPosition = position
+                }
+
                 positionTextView.text = (position + 1).toString()
             }
+            mSelectedPosition = position
         }
 
     // Unmodifiable properties, current state
@@ -388,10 +396,11 @@ class StashGridFragment() : Fragment() {
             TAG,
             "refresh: dataType=${_filterArgs.dataType}, newSortAndDirection=$newSortAndDirection",
         )
-        val pagingAdapter = PagingDataAdapter(presenterSelector, StashComparator)
+        val pagingAdapter =
+            PagingDataAdapter(NullPresenterSelector(presenterSelector), StashComparator)
         mAdapter = pagingAdapter
         updateAdapter()
-        val pageSize = mGridPresenter.numberOfColumns * 5 // 5 rows
+        val pageSize = mGridPresenter.numberOfColumns * 10
         val factory = DataSupplierFactory(ServerPreferences(requireContext()).serverVersion)
         val dataSupplier =
             factory.create<Query.Data, Any, Query.Data>(_filterArgs.with(newSortAndDirection))
@@ -444,13 +453,16 @@ class StashGridFragment() : Fragment() {
             footerLayout.visibility = View.GONE
         }
 
+//        val pagerSize = mGridPresenter.numberOfColumns * 10
         val flow =
             Pager(
                 PagingConfig(
                     pageSize = pageSize,
-                    prefetchDistance = pageSize * 2,
+                    prefetchDistance = pageSize,
                     initialLoadSize = pageSize * 2,
                     maxSize = pageSize * 6,
+                    jumpThreshold = pageSize * 6,
+                    enablePlaceholders = true,
                 ),
             ) {
                 pagingSource

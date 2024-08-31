@@ -145,6 +145,9 @@ class StashPagingSource<T : Query.Data, D : Any, S : Any, C : Query.Data>(
             }
         }
 
+    override val jumpingSupported: Boolean
+        get() = true
+
     override fun getRefreshKey(state: PagingState<Int, S>): Int? {
         // Try to find the page key of the closest page to anchorPosition from
         // either the prevKey or the nextKey; you need to handle nullability
