@@ -10,7 +10,9 @@ import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.UpdateChangelogActivity.Companion.INTENT_CHANGELOG
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
+import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import kotlinx.coroutines.launch
@@ -18,9 +20,13 @@ import kotlinx.coroutines.launch
 class UpdateAppFragment(private val release: UpdateChecker.Release) : GuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
+        val serverVersion = StashServer.getCurrentServerVersion()
         val description =
             buildList {
                 add("${getString(R.string.stashapp_package_manager_installed_version)}: $installedVersion")
+                if (!Version.isServerSupportedByAppVersion(serverVersion, release.version)) {
+                    add("Warning!! This update does not support the current server's version $serverVersion!!")
+                }
                 addAll(release.notes)
             }.joinNotNullOrBlank("\n\n")
 
