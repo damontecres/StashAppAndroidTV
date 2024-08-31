@@ -101,7 +101,7 @@ class PlaylistListFragment<T : Query.Data, D : Any, Count : Query.Data> : Fragme
         pagingAdapter.registerObserver(
             object : ObjectAdapter.DataObserver() {
                 override fun onChanged() {
-                    mGridViewHolder.gridView.scrollToPosition(player.currentMediaItemIndex)
+                    mGridViewHolder.gridView.selectedPosition = player.currentMediaItemIndex
                     pagingAdapter.unregisterObserver(this)
                 }
             },
