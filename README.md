@@ -94,8 +94,14 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 
 ## Additional screenshots
 
-### Scene list, filters, & sorting
-![0_2_10_scenes](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/092e0a87-e097-44c2-a605-e1ba93443e89)
+### Scene list with sorting & filters
+
+![0_4_0_scenes](https://github.com/user-attachments/assets/a3207445-448a-455a-ac2e-7c739b0b7133)
 
 ### Performer page
-![0_2_10_performer](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/83eefe0d-800c-4a0c-bcc5-4176372d296d)
+![0_4_0_performer](https://github.com/user-attachments/assets/16ae2514-6b00-425a-82a2-9db0f4de51d6)
+![0_4_0_performer_scenes_sort](https://github.com/user-attachments/assets/c5b4e89b-b4de-4499-88a1-828eeda1b550)
+
+### Playlist
+![0_4_0_playlist](https://github.com/user-attachments/assets/f06b0ce3-82fe-4cbd-a8b5-c2213d8c33f7)
+
