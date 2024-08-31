@@ -102,5 +102,14 @@ data class Version(
             }
             return version.isAtLeast(MINIMUM_STASH_VERSION)
         }
+
+        fun isServerSupportedByAppVersion(
+            serverVersion: Version,
+            appVersion: Version,
+        ): Boolean {
+            // Versions are offset by 22: https://github.com/damontecres/StashAppAndroidTV/discussions/308
+            val minServerVer = appVersion.copy(minor = appVersion.minor + 22, patch = 0)
+            return serverVersion.isAtLeast(minServerVer)
+        }
     }
 }
