@@ -461,7 +461,7 @@ val FullSceneData.asVideoSceneData: VideoSceneData
         )
 
 val TagData.asSlimTagData: SlimTagData
-    get() = SlimTagData(id, name, description, image_path)
+    get() = SlimTagData(id, name, description, favorite, image_path)
 
 val PerformerData.ageInYears: Int?
     @RequiresApi(Build.VERSION_CODES.O)

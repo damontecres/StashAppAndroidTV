@@ -52,6 +52,10 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         if (item.image_path != null) {
             loadImage(cardView, item.image_path)
         }
+
+        if (item.favorite) {
+            cardView.setIsFavorite()
+        }
     }
 
     override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<TagData> {
