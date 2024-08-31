@@ -9,6 +9,11 @@
             app:summary="Automatically scroll down to the 'next' results when clicking View All on main page"
             app:defaultValue="true" />
         <SwitchPreference
+            app:key="@string/pref_key_back_button_scroll"
+            app:title="Scroll to top on back"
+            app:summary="Scroll to the top of page when pressing the back button"
+            app:defaultValue="true" />
+        <SwitchPreference
             app:key="scrollSceneDetails"
             app:title="Long scene details behavior"
             app:summaryOn="Scroll if needed"

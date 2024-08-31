@@ -350,7 +350,11 @@ class StashGridFragment() : Fragment() {
             )
         }
 
-        if (backPressScrollEnabled) {
+        val prefBackPressScrollEnabled =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_back_button_scroll), true)
+
+        if (prefBackPressScrollEnabled && backPressScrollEnabled) {
             onBackPressedCallback =
                 requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, false) {
                     currentSelectedPosition = 0
