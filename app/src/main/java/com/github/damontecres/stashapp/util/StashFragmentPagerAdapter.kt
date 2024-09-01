@@ -30,6 +30,10 @@ abstract class StashFragmentPagerAdapter(private val items: List<PagerEntry>, fm
         return items[position].title
     }
 
+    fun getItems(): List<Fragment> {
+        return (0..<count).map(::getItem)
+    }
+
     abstract fun getFragment(position: Int): Fragment
 
     data class PagerEntry(val title: String, val dataType: DataType?) {

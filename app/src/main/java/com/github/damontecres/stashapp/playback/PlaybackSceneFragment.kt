@@ -31,6 +31,8 @@ import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.animateToInvisible
+import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
 import com.github.damontecres.stashapp.views.durationToString
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -248,9 +250,9 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     resultLauncher.launch(intent)
                 } else if (position == 1) {
                     if (debugView.isVisible) {
-                        debugView.visibility = View.GONE
+                        debugView.animateToInvisible(View.GONE)
                     } else {
-                        debugView.visibility = View.VISIBLE
+                        debugView.animateToVisible()
                     }
                 } else if (position == 2) {
                     requireActivity().supportFragmentManager.beginTransaction()
