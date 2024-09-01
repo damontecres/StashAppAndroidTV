@@ -14,14 +14,14 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter.PagerEntry
 
-class TagActivity : TabbedGridFragmentActivity() {
+class TagFragment : TabbedFragment() {
     override fun getTitleText(): String? {
-        return intent.getStringExtra("tagName")
+        return requireActivity().intent.getStringExtra("tagName")
     }
 
-    override fun getPagerAdapter(): StashFragmentPagerAdapter {
-        val tagId = intent.getStringExtra("tagId")!!
-        val includeSubTags = intent.getBooleanExtra("includeSubTags", false)
+    override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
+        val tagId = requireActivity().intent.getStringExtra("tagId")!!
+        val includeSubTags = requireActivity().intent.getBooleanExtra("includeSubTags", false)
         val tabs =
             listOf(
                 PagerEntry(DataType.SCENE),
@@ -32,7 +32,7 @@ class TagActivity : TabbedGridFragmentActivity() {
                 PagerEntry(getString(R.string.stashapp_sub_tags), DataType.TAG),
             )
 
-        return TabPageAdapter(tabs, tagId, includeSubTags, supportFragmentManager)
+        return TabPageAdapter(tabs, tagId, includeSubTags, fm)
     }
 
     class TabPageAdapter(

@@ -65,15 +65,7 @@
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".PerformerActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".TagActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".StudioActivity"
+            android:name=".DataTypeActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
@@ -85,15 +77,7 @@
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".MovieActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
             android:name=".ImageActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".GalleryActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity

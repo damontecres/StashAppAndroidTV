@@ -1,226 +1,262 @@
 package com.github.damontecres.stashapp
 
-import android.os.Build
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
-import android.util.TypedValue
-import android.view.View
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.ScrollView
-import android.widget.TableLayout
-import android.widget.TableRow
-import android.widget.TextView
-import android.widget.Toast
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.FragmentManager
+import androidx.leanback.widget.ClassPresenterSelector
+import com.apollographql.apollo3.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.type.CircumisedEnum
+import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.ImageFilterType
+import com.github.damontecres.stashapp.api.type.MovieFilterType
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
+import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Performer
+import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashGlide
-import com.github.damontecres.stashapp.util.ageInYears
-import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
-import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
-import com.github.damontecres.stashapp.views.parseTimeToString
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.launch
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.math.floor
-import kotlin.math.roundToInt
+import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
-class PerformerFragment() : Fragment(R.layout.performer_view) {
-    constructor(performer: Performer) : this() {
-        this.performer = performer
-    }
-
+class PerformerFragment : TabbedFragment() {
     private lateinit var performer: Performer
 
-    private lateinit var mPerformerImage: ImageView
-    private lateinit var table: TableLayout
-    private lateinit var favoriteButton: Button
-
-    private lateinit var queryEngine: QueryEngine
-    private lateinit var mutationEngine: MutationEngine
-
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-    ) {
-        super.onViewCreated(view, savedInstanceState)
-
-        if (savedInstanceState != null) {
-            performer = savedInstanceState.getParcelable("performer")!!
-        }
-
-        mPerformerImage = view.findViewById(R.id.performer_image)
-        table = view.findViewById(R.id.performer_table)
-        favoriteButton = view.findViewById(R.id.favorite_button)
-        favoriteButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
-
-        val performer = requireActivity().intent.getParcelableExtra<Performer>("performer")
-        if (performer != null) {
-            val lock = ReentrantReadWriteLock()
-            queryEngine = QueryEngine(requireContext(), true, lock)
-            mutationEngine = MutationEngine(requireContext(), true, lock)
-
-            val exceptionHandler =
-                CoroutineExceptionHandler { _, ex ->
-                    Log.e(TAG, "Error fetching data", ex)
-                    Toast.makeText(
-                        requireContext(),
-                        "Error fetching data: ${ex.message}",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-            viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                val perf = queryEngine.getPerformer(performer.id)
-                if (perf == null) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Performer not found: ${performer.id}",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                    return@launch
-                } else {
-                    updateUi(perf)
-                }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        performer = requireActivity().intent.getParcelableExtra("performer")!!
+        super.onCreate(savedInstanceState)
+        viewModel.title.value =
+            SpannableString("${performer.name} ${performer.disambiguation}").apply {
+                val start = performer.name.length + 1
+                val end = length
+                setSpan(RelativeSizeSpan(.60f), start, end, 0)
+                setSpan(ForegroundColorSpan(Color.GRAY), start, end, 0)
             }
-        }
     }
 
-    private fun updateUi(perf: PerformerData) {
-        favoriteButton.isFocusable = true
-        if (perf.favorite) {
-            favoriteButton.setTextColor(
-                resources.getColor(
-                    android.R.color.holo_red_light,
-                    requireActivity().theme,
-                ),
-            )
-        } else {
-            favoriteButton.setTextColor(
-                resources.getColor(
-                    R.color.transparent_grey_25,
-                    requireActivity().theme,
-                ),
-            )
-        }
+    override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
+        return PagerAdapter(performer, fm)
+    }
 
-        favoriteButton.setOnClickListener {
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val newPerformer = mutationEngine.setPerformerFavorite(perf.id, !perf.favorite)
-                if (newPerformer != null) {
-                    if (newPerformer.favorite) {
-                        Toast.makeText(
-                            requireContext(),
-                            getString(R.string.stashapp_performer_favorite),
-                            Toast.LENGTH_LONG,
-                        ).show()
+    private class PagerAdapter(
+        private val performer: Performer,
+        fm: FragmentManager,
+    ) :
+        StashFragmentPagerAdapter(
+                listOf(
+                    PagerEntry("Details", null),
+                    PagerEntry(DataType.SCENE),
+                    PagerEntry(DataType.GALLERY),
+                    PagerEntry(DataType.IMAGE),
+                    PagerEntry(DataType.MOVIE),
+                    PagerEntry(DataType.TAG),
+                    PagerEntry("Appears With", DataType.PERFORMER),
+                ),
+                fm,
+            ) {
+        override fun getFragment(position: Int): Fragment {
+            val performers =
+                Optional.present(
+                    MultiCriterionInput(
+                        value = Optional.present(listOf(performer.id)),
+                        modifier = CriterionModifier.INCLUDES_ALL,
+                    ),
+                )
+
+            val fragment =
+                when (position) {
+                    0 -> {
+                        PerformerDetailsFragment(performer)
                     }
-                    updateUi(newPerformer)
+
+                    1 -> {
+                        StashGridFragment(
+                            dataType = DataType.SCENE,
+                            objectFilter = SceneFilterType(performers = performers),
+                        )
+                    }
+
+                    2 -> {
+                        StashGridFragment(
+                            dataType = DataType.GALLERY,
+                            objectFilter = GalleryFilterType(performers = performers),
+                        )
+                    }
+
+                    3 -> {
+                        StashGridFragment(
+                            dataType = DataType.IMAGE,
+                            objectFilter = ImageFilterType(performers = performers),
+                        ).withImageGridClickListener()
+                    }
+
+                    4 -> {
+                        StashGridFragment(
+                            dataType = DataType.MOVIE,
+                            objectFilter = MovieFilterType(performers = performers),
+                        )
+                    }
+
+                    5 -> {
+                        val presenter =
+                            ClassPresenterSelector()
+                                .addClassPresenter(
+                                    TagData::class.java,
+                                    TagPresenter(PerformersWithTagLongClickCallback()),
+                                )
+                        val fragment =
+                            StashGridFragment(
+                                FilterArgs(
+                                    dataType = DataType.TAG,
+                                    override = DataSupplierOverride.PerformerTags(performer.id),
+                                ),
+                            )
+                        fragment.presenterSelector = presenter
+                        fragment
+                    }
+
+                    6 -> {
+                        val presenter =
+                            ClassPresenterSelector()
+                                .addClassPresenter(
+                                    PerformerData::class.java,
+                                    PerformerPresenter(PerformTogetherLongClickCallback(performer)),
+                                )
+                        val fragment =
+                            StashGridFragment(
+                                dataType = DataType.PERFORMER,
+                                objectFilter =
+                                    PerformerFilterType(
+                                        performers =
+                                            Optional.present(
+                                                MultiCriterionInput(
+                                                    value = Optional.present(listOf(performer.id)),
+                                                    modifier = CriterionModifier.INCLUDES_ALL,
+                                                ),
+                                            ),
+                                    ),
+                            )
+                        fragment.presenterSelector = presenter
+                        fragment
+                    }
+
+                    else -> {
+                        throw IllegalStateException()
+                    }
                 }
-            }
+            return fragment
         }
-        if (perf.image_path != null) {
-            StashGlide.with(requireContext(), perf.image_path)
-                .optionalFitCenter()
-                .error(StashPresenter.glideError(requireContext()))
-                .into(mPerformerImage)
-        }
+    }
 
-        table.removeAllViews()
-
-        if (perf.alias_list.isNotEmpty()) {
-            addRow(
-                R.string.stashapp_aliases,
-                perf.alias_list.joinToString(", "),
+    private class PerformTogetherLongClickCallback(val performer: Performer) :
+        StashPresenter.LongClickCallBack<PerformerData> {
+        override fun getPopUpItems(
+            context: Context,
+            item: PerformerData,
+        ): List<StashPresenter.PopUpItem> {
+            return listOf(
+                StashPresenter.PopUpItem.getDefault(context),
+                StashPresenter.PopUpItem(1, "View scenes together"),
             )
         }
-        if (!perf.birthdate.isNullOrBlank()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val age = perf.ageInYears.toString()
-                addRow(R.string.stashapp_age, "$age (${perf.birthdate})")
+
+        override fun onItemLongClick(
+            context: Context,
+            item: PerformerData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            when (popUpItem.id) {
+                0L -> {
+                    StashItemViewClickListener(context).onItemClicked(item)
+                }
+
+                1L -> {
+                    val performerIds = listOf(performer.id, item.id)
+                    val name = "${performer.name} & ${item.name}"
+                    val intent =
+                        Intent(context, FilterListActivity::class.java)
+                            .putExtra(
+                                FilterListActivity.INTENT_FILTER_ARGS,
+                                FilterArgs(
+                                    dataType = DataType.SCENE,
+                                    name = name,
+                                    objectFilter =
+                                        SceneFilterType(
+                                            performers =
+                                                Optional.present(
+                                                    MultiCriterionInput(
+                                                        value = Optional.present(performerIds),
+                                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                                    ),
+                                                ),
+                                        ),
+                                ),
+                            )
+                    context.startActivity(intent)
+                }
             }
         }
-        addRow(R.string.stashapp_country, perf.country)
-        addRow(R.string.stashapp_ethnicity, perf.ethnicity)
-        addRow(R.string.stashapp_hair_color, perf.hair_color)
-        addRow(R.string.stashapp_eye_color, perf.eye_color)
-        if (perf.height_cm != null) {
-            val feet = floor(perf.height_cm / 30.48).toInt()
-            val inches = (perf.height_cm / 2.54 - feet * 12).roundToInt()
-            addRow(R.string.stashapp_height, "${perf.height_cm} cm ($feet'$inches\")")
+    }
+
+    private class PerformersWithTagLongClickCallback :
+        StashPresenter.LongClickCallBack<TagData> {
+        override fun getPopUpItems(
+            context: Context,
+            item: TagData,
+        ): List<StashPresenter.PopUpItem> {
+            return listOf(
+                StashPresenter.PopUpItem.getDefault(context),
+                StashPresenter.PopUpItem(1, "View performers with this tag"),
+            )
         }
-        if (perf.weight != null) {
-            val pounds = (perf.weight * 2.2).roundToInt()
-            addRow(R.string.stashapp_weight, "${perf.weight} kg ($pounds lbs)")
-        }
-        if (perf.penis_length != null) {
-            val inches = kotlin.math.round(perf.penis_length / 2.54 * 100) / 100
-            addRow(R.string.stashapp_penis_length, "${perf.penis_length} cm ($inches\")")
-        }
-        if (perf.circumcised != null) {
-            val string =
-                when (perf.circumcised) {
-                    CircumisedEnum.CUT -> getString(R.string.stashapp_circumcised_types_CUT)
-                    CircumisedEnum.UNCUT -> getString(R.string.stashapp_circumcised_types_UNCUT)
-                    CircumisedEnum.UNKNOWN__ -> null
+
+        override fun onItemLongClick(
+            context: Context,
+            item: TagData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            when (popUpItem.id) {
+                StashPresenter.PopUpItem.DEFAULT_ID -> {
+                    StashItemViewClickListener(context).onItemClicked(item)
                 }
-            addRow(R.string.stashapp_circumcised, string)
+
+                1L -> {
+                    val name = "Performers with ${item.name}"
+                    val intent =
+                        Intent(context, FilterListActivity::class.java)
+                            .putExtra(
+                                FilterListActivity.INTENT_FILTER_ARGS,
+                                FilterArgs(
+                                    dataType = DataType.PERFORMER,
+                                    name = name,
+                                    objectFilter =
+                                        PerformerFilterType(
+                                            tags =
+                                                Optional.present(
+                                                    HierarchicalMultiCriterionInput(
+                                                        value = Optional.present(listOf(item.id)),
+                                                        modifier = CriterionModifier.INCLUDES_ALL,
+                                                        depth = Optional.absent(),
+                                                    ),
+                                                ),
+                                        ),
+                                ),
+                            )
+                    context.startActivity(intent)
+                }
+            }
         }
-        addRow(R.string.stashapp_tattoos, perf.tattoos)
-        addRow(R.string.stashapp_piercings, perf.piercings)
-        addRow(R.string.stashapp_career_length, perf.career_length)
-        addRow(R.string.stashapp_created_at, parseTimeToString(perf.created_at))
-        addRow(R.string.stashapp_updated_at, parseTimeToString(perf.updated_at))
-        table.setColumnShrinkable(1, true)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val scrollView = requireView().findViewById<ScrollView>(R.id.performer_scrollview)
-        scrollView.onlyScrollIfNeeded()
-    }
-
-    private fun addRow(
-        key: Int,
-        value: String?,
-    ) {
-        if (value.isNullOrBlank()) {
-            return
-        }
-        val keyString = getString(key) + ":"
-
-        val row =
-            requireActivity().layoutInflater.inflate(R.layout.table_row, table, false) as TableRow
-
-        val keyView = row.findViewById<TextView>(R.id.table_row_key)
-        keyView.text = keyString
-        keyView.setTextSize(
-            TypedValue.COMPLEX_UNIT_PX,
-            resources.getDimension(R.dimen.table_text_size_large),
-        )
-
-        val valueView = row.findViewById<TextView>(R.id.table_row_value)
-        valueView.text = value
-        valueView.setTextSize(
-            TypedValue.COMPLEX_UNIT_PX,
-            resources.getDimension(R.dimen.table_text_size_large),
-        )
-
-        table.addView(row)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putParcelable("performer", performer)
-    }
-
-    companion object {
-        private const val TAG = "PerformerFragment"
     }
 }

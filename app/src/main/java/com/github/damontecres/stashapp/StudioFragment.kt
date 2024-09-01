@@ -14,13 +14,13 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 
-class StudioActivity : TabbedGridFragmentActivity() {
+class StudioFragment : TabbedFragment() {
     override fun getTitleText(): String? {
-        return intent.getStringExtra("studioName")
+        return requireActivity().intent.getStringExtra("studioName")
     }
 
-    override fun getPagerAdapter(): StashFragmentPagerAdapter {
-        val studioId = this.intent.getIntExtra("studioId", -1)
+    override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
+        val studioId = requireActivity().intent.getIntExtra("studioId", -1)
         val tabTitles =
             mutableListOf(
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
@@ -33,7 +33,7 @@ class StudioActivity : TabbedGridFragmentActivity() {
                     DataType.STUDIO,
                 ),
             )
-        return StudioPagerAdapter(tabTitles, studioId.toString(), supportFragmentManager)
+        return StudioPagerAdapter(tabTitles, studioId.toString(), fm)
     }
 
     class StudioPagerAdapter(

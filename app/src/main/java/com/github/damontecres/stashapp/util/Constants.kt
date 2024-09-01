@@ -713,3 +713,11 @@ fun CoroutineScope.launchIO(
         launch(Dispatchers.IO + exceptionHandler, block = block)
     }
 }
+
+fun Intent.putDataType(dataType: DataType) {
+    this.putExtra("dataType", dataType.name)
+}
+
+fun Intent.getDataType(): DataType {
+    return DataType.valueOf(getStringExtra("dataType")!!)
+}
