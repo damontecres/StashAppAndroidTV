@@ -39,17 +39,17 @@ import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import kotlinx.coroutines.launch
 
-class GalleryActivity : TabbedGridFragmentActivity(R.layout.gallery_activity) {
+class GalleryFragment : TabbedFragment() {
     private lateinit var gallery: Gallery
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        gallery = intent.getParcelableExtra(INTENT_GALLERY_OBJ)!!
+        gallery = requireActivity().intent.getParcelableExtra(INTENT_GALLERY_OBJ)!!
         super.onCreate(savedInstanceState)
         viewModel.title.value = gallery.name
     }
 
-    override fun getPagerAdapter(): StashFragmentPagerAdapter {
-        return PagerAdapter(gallery, supportFragmentManager)
+    override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
+        return PagerAdapter(gallery, fm)
     }
 
     private class PagerAdapter(

@@ -15,7 +15,7 @@ import com.github.damontecres.stashapp.views.models.TabbedGridViewModel
 import com.google.android.material.tabs.TabLayout
 
 /**
- * A [Fragment]-only equivalent to [TabbedGridFragmentActivity]
+ * A [Fragment] that displays multiple tabs
  */
 abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
     protected val viewModel by activityViewModels<TabbedGridViewModel>()
@@ -46,6 +46,14 @@ abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
         adapter = getPagerAdapter(childFragmentManager)
         viewPager.adapter = adapter
         tabLayout.setupWithViewPager(viewPager)
+        if (tabLayout.childCount > 0) {
+            tabLayout.getChildAt(0).requestFocus()
+        }
+        adapter.getItems().forEach {
+            if (it is StashGridFragment) {
+                it.titleView = tabLayout
+            }
+        }
 
         tabLayout.addOnTabSelectedListener(
             object : TabLayout.OnTabSelectedListener {

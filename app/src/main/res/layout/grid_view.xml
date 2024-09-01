@@ -30,7 +30,7 @@
         android:id="@+id/grid_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".TagActivity"
+        tools:context=".TagFragment"
         tools:deviceIds="tv"
         tools:ignore="MergeRootFrame" />
 </LinearLayout>

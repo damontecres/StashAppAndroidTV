@@ -3,15 +3,16 @@ package com.github.damontecres.stashapp.presenters
 import android.content.Context
 import android.content.Intent
 import com.apollographql.apollo3.api.Optional
+import com.github.damontecres.stashapp.DataTypeActivity
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.TagActivity
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.putDataType
 import java.util.EnumMap
 
 class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
@@ -93,7 +94,8 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         ) {
             when (popUpItem.id) {
                 PopUpItem.DEFAULT_ID -> {
-                    val intent = Intent(context, TagActivity::class.java)
+                    val intent = Intent(context, DataTypeActivity::class.java)
+                    intent.putDataType(DataType.TAG)
                     intent.putExtra("tagId", item.id)
                     intent.putExtra("tagName", item.name)
                     intent.putExtra("includeSubTags", false)
@@ -101,7 +103,8 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
                 }
 
                 POPUP_GOTO_WITH_SUB_ID -> {
-                    val intent = Intent(context, TagActivity::class.java)
+                    val intent = Intent(context, DataTypeActivity::class.java)
+                    intent.putDataType(DataType.TAG)
                     intent.putExtra("tagId", item.id)
                     intent.putExtra("tagName", item.name)
                     intent.putExtra("includeSubTags", true)
