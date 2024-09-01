@@ -52,8 +52,6 @@
             android:id="@+id/browse_grid_dock"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-
-        <include layout="@layout/lb_browse_title" />
         <include
             layout="@layout/grid_footer_layout"
             android:id="@+id/footer_layout"

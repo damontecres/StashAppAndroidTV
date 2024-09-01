@@ -10,6 +10,8 @@ import com.github.damontecres.stashapp.api.CountMarkersQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.util.animateToInvisible
+import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlin.properties.Delegates
 
@@ -61,17 +63,16 @@ class PlaylistMarkersFragment :
                 if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
             showSimpleListPopupWindow(
                 moreOptionsButton,
-                listOf(debugToggleText, "Show playlist"),
+                listOf("Show playlist", debugToggleText),
             ) { position ->
-
                 if (position == 0) {
-                    if (debugView.isVisible) {
-                        debugView.visibility = View.GONE
-                    } else {
-                        debugView.visibility = View.VISIBLE
-                    }
-                } else if (position == 1) {
                     showPlaylist()
+                } else if (position == 1) {
+                    if (debugView.isVisible) {
+                        debugView.animateToInvisible(View.GONE)
+                    } else {
+                        debugView.animateToVisible()
+                    }
                 }
             }
         }

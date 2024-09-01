@@ -41,6 +41,7 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashComparator
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
@@ -66,7 +67,7 @@ class StashGridFragment() : Fragment() {
     private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
     private lateinit var mAdapter: ObjectAdapter
 
-    private var titleView: View? = null
+    var titleView: View? = null
 
     // Arguments
     private lateinit var _filterArgs: FilterArgs
@@ -75,7 +76,6 @@ class StashGridFragment() : Fragment() {
     // State
     private var mOnItemViewSelectedListener: OnItemViewSelectedListener? = null
     private var mSelectedPosition = -1
-    private var titleTransitionHelper: TitleTransitionHelper? = null
     private var gridHeaderTransitionHelper: TitleTransitionHelper? = null
     private var columns: Int? = null
     private var scrollToNextPage = false
@@ -331,7 +331,6 @@ class StashGridFragment() : Fragment() {
 
         val gridHeader = view.findViewById<View>(R.id.grid_header)
         gridHeaderTransitionHelper = TitleTransitionHelper(view as ViewGroup, gridHeader)
-        setTitleView(this.titleView)
 
         if (sortButtonEnabled) {
             sortButton.visibility = View.VISIBLE
@@ -507,19 +506,15 @@ class StashGridFragment() : Fragment() {
             }
     }
 
-    fun setTitleView(titleView: View?) {
-        if (view is ViewGroup && titleView != null) {
-            Log.v(TAG, "setTitleView")
-            titleTransitionHelper = TitleTransitionHelper(requireView() as ViewGroup, titleView)
-        } else {
-            this.titleView = titleView
-            titleTransitionHelper = null
-        }
-    }
-
     fun showTitle(show: Boolean) {
         gridHeaderTransitionHelper?.showTitle(show)
-        titleTransitionHelper?.showTitle(show)
+
+        // TODO: this animation would be nicer if both the grid header & title slide up together
+        if (show) {
+            titleView?.animateToVisible()
+        } else {
+            titleView?.animateToInvisible(View.GONE)
+        }
     }
 
     /**
@@ -538,7 +533,7 @@ class StashGridFragment() : Fragment() {
     }
 
     companion object {
-        private const val TAG = "StashGridFragment2"
+        private const val TAG = "StashGridFragment"
     }
 
     private class StashGridPresenter :

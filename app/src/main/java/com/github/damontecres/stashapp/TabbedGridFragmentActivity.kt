@@ -51,6 +51,11 @@ abstract class TabbedGridFragmentActivity(
                 fragment.sortButtonEnabled = true
             }
         }
+        adapter.getItems().forEach {
+            if (it is StashGridFragment) {
+                it.titleView = tabLayout
+            }
+        }
 
         tabLayout.addOnTabSelectedListener(
             object : TabLayout.OnTabSelectedListener {
