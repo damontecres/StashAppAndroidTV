@@ -122,6 +122,7 @@ apollo {
             // See: https://community.apollographql.com/t/android-warning-duplicate-content-roots-detected-after-just-adding-apollo3-kotlin-client/4529/6
             connectToKotlinSourceSet("main")
         }
+        plugin(project(":apollo-compiler"))
     }
 }
 
