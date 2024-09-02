@@ -11,6 +11,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
 import androidx.core.view.isVisible
@@ -286,13 +287,26 @@ abstract class PlaybackFragment(
             debugView.visibility = View.VISIBLE
         }
 
+        val backCallback =
+            requireActivity().onBackPressedDispatcher.addCallback(
+                viewLifecycleOwner,
+                enabled = false,
+            ) {
+                hideControlsIfVisible()
+            }
+
         videoView = view.findViewById(R.id.video_view)
         videoView.controllerShowTimeoutMs =
             manager.getInt("controllerShowTimeoutMs", PlayerControlView.DEFAULT_SHOW_TIMEOUT_MS)
         videoView.setControllerVisibilityListener(
-            PlayerView.ControllerVisibilityListener {
+            PlayerView.ControllerVisibilityListener { vis ->
                 if (!exoCenterControls.isVisible) {
                     hideControlsIfVisible()
+                }
+                if (vis == View.VISIBLE) {
+                    backCallback.isEnabled = true
+                } else {
+                    backCallback.isEnabled = false
                 }
             },
         )
