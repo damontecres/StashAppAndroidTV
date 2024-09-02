@@ -63,18 +63,6 @@ class PlaybackActivity : FragmentActivity() {
     }
 
     @OptIn(UnstableApi::class)
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        // TODO: deprecated, so use https://stackoverflow.com/a/72634975/608317 eventually
-        if (fragment == null) {
-            super.onBackPressed()
-        } else if (!fragment!!.hideControlsIfVisible()) {
-            returnPosition()
-            super.onBackPressed()
-        }
-    }
-
-    @OptIn(UnstableApi::class)
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         return if (fragment != null) {
@@ -84,10 +72,10 @@ class PlaybackActivity : FragmentActivity() {
         }
     }
 
-    /**
-     * Return the video's current position to the previous Activity
-     */
-    private fun returnPosition() {
+    override fun onStop() {
+        super.onStop()
+
+        // Return the video's current position to the previous Activity
         val sceneDuration = scene.duration ?: Double.MIN_VALUE
         val position = fragment!!.currentVideoPosition
 

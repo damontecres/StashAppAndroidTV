@@ -42,17 +42,6 @@ class PlaylistActivity : FragmentActivity() {
     }
 
     @OptIn(UnstableApi::class)
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        // TODO: deprecated, so use https://stackoverflow.com/a/72634975/608317 eventually
-        if (fragment == null) {
-            super.onBackPressed()
-        } else if (!fragment!!.hideControlsIfVisible()) {
-            super.onBackPressed()
-        }
-    }
-
-    @OptIn(UnstableApi::class)
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         return if (fragment != null) {
