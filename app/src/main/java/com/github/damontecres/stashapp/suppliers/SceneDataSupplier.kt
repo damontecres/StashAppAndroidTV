@@ -1,6 +1,6 @@
 package com.github.damontecres.stashapp.suppliers
 
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.CountScenesQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData

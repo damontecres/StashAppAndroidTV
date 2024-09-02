@@ -2,7 +2,7 @@ package com.github.damontecres.stashapp.data
 
 import android.os.Parcel
 import android.os.Parcelable
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier

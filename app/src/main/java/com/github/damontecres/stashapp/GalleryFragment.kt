@@ -13,7 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.lifecycle.lifecycleScope
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CriterionModifier

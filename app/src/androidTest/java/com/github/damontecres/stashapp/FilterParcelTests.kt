@@ -4,7 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -120,7 +120,7 @@ class FilterParcelTests {
             reader = { readOptionalList(this) { this.readString()!! } },
         )
         parcelAssertEqual(
-            Optional.absent<List<String>>(),
+            Optional.absent(),
             writer = { writeList(this, it) { s -> this.writeString(s) } },
             reader = { readOptionalList(this) { this.readString()!! } },
         )
@@ -140,7 +140,7 @@ class FilterParcelTests {
         )
 
         parcelAssertEqual(
-            Optional.absent<Int>(),
+            Optional.absent(),
             writer = { writeOptionalInt(this, it) },
             reader = { readOptionalInt(this) },
         )

@@ -3,14 +3,14 @@ package com.github.damontecres.stashapp.util
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.apollographql.apollo3.ApolloCall
-import com.apollographql.apollo3.api.ApolloResponse
-import com.apollographql.apollo3.api.Operation
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.api.Query
-import com.apollographql.apollo3.exception.ApolloException
-import com.apollographql.apollo3.exception.ApolloHttpException
-import com.apollographql.apollo3.exception.ApolloNetworkException
+import com.apollographql.apollo.ApolloCall
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.Operation
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.api.Query
+import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.exception.ApolloHttpException
+import com.apollographql.apollo.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
@@ -85,7 +85,7 @@ class QueryEngine(
             Log.v(TAG, "executeQuery $id $queryName")
             try {
                 readLock?.lock()
-                val response = query.execute()
+                val response = query.executeV3()
                 if (response.errors.isNullOrEmpty()) {
                     Log.v(TAG, "executeQuery $id $queryName successful")
                     return@withContext response
@@ -243,7 +243,7 @@ class QueryEngine(
 
     suspend fun getMovie(movieId: String): MovieData? {
         val query = client.query(FindMovieQuery(movieId))
-        return query.execute().data?.findMovie?.movieData
+        return query.executeV3().data?.findMovie?.movieData
     }
 
     suspend fun findMarkers(

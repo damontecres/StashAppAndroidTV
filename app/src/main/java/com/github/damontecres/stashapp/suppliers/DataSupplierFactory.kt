@@ -2,7 +2,7 @@ package com.github.damontecres.stashapp.suppliers
 
 import android.os.Parcel
 import android.os.Parcelable
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType

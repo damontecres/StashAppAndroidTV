@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.data
 
 import android.os.Parcelable
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.util.getRandomSort

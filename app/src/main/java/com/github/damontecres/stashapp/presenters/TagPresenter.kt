@@ -2,7 +2,7 @@ package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
 import android.content.Intent
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.DataTypeActivity
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R

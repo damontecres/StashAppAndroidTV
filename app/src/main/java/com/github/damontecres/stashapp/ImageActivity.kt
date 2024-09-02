@@ -12,7 +12,7 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.CountImagesQuery
 import com.github.damontecres.stashapp.api.FindImagesQuery
 import com.github.damontecres.stashapp.api.fragment.ImageData

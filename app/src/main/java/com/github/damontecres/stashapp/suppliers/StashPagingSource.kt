@@ -3,8 +3,8 @@ package com.github.damontecres.stashapp.suppliers
 import android.content.Context
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.StashPagingSource.DataTransform

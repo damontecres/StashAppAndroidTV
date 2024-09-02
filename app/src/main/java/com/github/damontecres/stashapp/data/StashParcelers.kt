@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.data
 
 import android.os.Parcel
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType

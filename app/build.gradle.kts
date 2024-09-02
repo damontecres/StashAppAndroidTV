@@ -9,7 +9,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("kotlin-parcelize")
-    id("com.apollographql.apollo3") version "3.8.4"
+    id("com.apollographql.apollo") version "4.0.0"
     id("kotlin-kapt")
 }
 
@@ -159,7 +159,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    implementation("com.apollographql.apollo3:apollo-runtime:3.8.4")
+    implementation("com.apollographql.apollo:apollo-runtime:4.0.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.media3:media3-exoplayer:$mediaVersion")
     implementation("androidx.media3:media3-ui:$mediaVersion")

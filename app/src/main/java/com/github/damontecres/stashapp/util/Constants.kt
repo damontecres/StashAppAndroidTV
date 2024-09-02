@@ -20,10 +20,10 @@ import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.Visibility
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.exception.ApolloException
-import com.apollographql.apollo3.exception.ApolloHttpException
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.github.damontecres.stashapp.ImageActivity
@@ -154,7 +154,7 @@ suspend fun testStashConnection(
         try {
             val info =
                 withContext(Dispatchers.IO) {
-                    client.query(ServerInfoQuery()).execute()
+                    client.query(ServerInfoQuery()).executeV3()
                 }
             if (info.hasErrors()) {
                 if (showToast) {

@@ -3,12 +3,12 @@ package com.github.damontecres.stashapp.util
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.apollographql.apollo3.api.ApolloResponse
-import com.apollographql.apollo3.api.Mutation
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.exception.ApolloException
-import com.apollographql.apollo3.exception.ApolloHttpException
-import com.apollographql.apollo3.exception.ApolloNetworkException
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.Mutation
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.exception.ApolloHttpException
+import com.apollographql.apollo.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.CreateMarkerMutation
 import com.github.damontecres.stashapp.api.CreatePerformerMutation
 import com.github.damontecres.stashapp.api.CreateTagMutation
@@ -77,7 +77,7 @@ class MutationEngine(
                 withContext(Dispatchers.IO) {
                     try {
                         writeLock?.lock()
-                        client.mutation(mutation).execute()
+                        client.mutation(mutation).executeV3()
                     } finally {
                         writeLock?.unlock()
                     }

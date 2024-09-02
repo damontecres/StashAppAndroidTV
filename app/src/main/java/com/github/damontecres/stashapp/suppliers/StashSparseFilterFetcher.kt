@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.suppliers
 
 import android.util.Log
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Query
 
 /**
  * Wraps a StashPagingSource to allow for accessing any item position in the backing filter

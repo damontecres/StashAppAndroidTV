@@ -1,8 +1,8 @@
 package com.github.damontecres.stashapp
 
 import android.content.Context
-import com.apollographql.apollo3.api.json.BufferedSourceJsonReader
-import com.apollographql.apollo3.api.parseJsonResponse
+import com.apollographql.apollo.api.json.BufferedSourceJsonReader
+import com.apollographql.apollo.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.ConfigurationUIQuery
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
