@@ -7,11 +7,13 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.DelicateKotlinPoetApi
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.ParameterizedTypeName
+import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 class StashApolloCompilerPlugin : ApolloCompilerPlugin {
-    @OptIn(DelicateKotlinPoetApi::class)
     override fun kotlinOutputTransform(): Transform<KotlinOutput> {
         return object : Transform<KotlinOutput> {
             override fun transform(input: KotlinOutput): KotlinOutput {
@@ -30,42 +32,9 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                 val newFileSpecs =
                     input.fileSpecs.map { file ->
                         if (file.name.endsWith("FilterType") || file.name.endsWith("CriterionInput")) {
-                            val builder = file.toBuilder()
-                            builder.members.replaceAll { member ->
-                                if (member is TypeSpec) {
-                                    member.toBuilder()
-                                        .addAnnotation(Serializable::class.java)
-                                        .build()
-                                } else {
-                                    member
-                                }
-                            }
-
-                            builder.build()
+                            handleFilterInput(file)
                         } else if (file.name.endsWith("Data")) {
-                            val builder = file.toBuilder()
-                            builder.members.replaceAll { member ->
-                                if (member is TypeSpec && member.propertySpecs.find { it.name == "id" } != null) {
-                                    val idBuilder =
-                                        member.toBuilder()
-                                            .addSuperinterface(stashDataInterface)
-                                            .addAnnotation(Serializable::class.java)
-                                    idBuilder.propertySpecs.replaceAll {
-                                        if (it.name == "id") {
-                                            it.toBuilder()
-                                                .addModifiers(KModifier.OVERRIDE)
-                                                .build()
-                                        } else {
-                                            it
-                                        }
-                                    }
-                                    idBuilder.build()
-                                } else {
-                                    member
-                                }
-                            }
-
-                            builder.build()
+                            handleData(file, stashDataInterface)
                         } else {
                             file
                         }
@@ -73,5 +42,79 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                 return KotlinOutput(newFileSpecs + stashDataFileSpec, input.codegenMetadata)
             }
         }
+    }
+
+    @OptIn(DelicateKotlinPoetApi::class)
+    private fun handleFilterInput(file: FileSpec): FileSpec {
+        val builder = file.toBuilder()
+        builder.members.replaceAll { member ->
+            if (member is TypeSpec) {
+                val typeBuilder =
+                    member.toBuilder()
+                        .addAnnotation(Serializable::class.java)
+                typeBuilder.propertySpecs.replaceAll { prop ->
+                    if (prop.type is ParameterizedTypeName &&
+                        (prop.type as ParameterizedTypeName).rawType.canonicalName == "com.apollographql.apollo.api.Optional"
+                    ) {
+                        prop.toBuilder()
+                            .addAnnotation(Contextual::class)
+                            .build()
+                    } else {
+                        prop
+                    }
+                }
+
+                typeBuilder.build()
+            } else if (member is PropertySpec) {
+            } else {
+                member
+            }
+        }
+        return builder.build()
+    }
+
+    @OptIn(DelicateKotlinPoetApi::class)
+    private fun handleData(
+        file: FileSpec,
+        stashDataInterface: ClassName,
+    ): FileSpec {
+        val builder = file.toBuilder()
+        builder.members.replaceAll { member ->
+            if (member is TypeSpec && member.propertySpecs.find { it.name == "id" } != null) {
+                val memberBuilder =
+                    member.toBuilder()
+                        .addSuperinterface(stashDataInterface)
+                // TODO: adding Serializable i
+//                        .addAnnotation(Serializable::class)
+                memberBuilder.propertySpecs.replaceAll {
+                    if (it.name == "id") {
+                        it.toBuilder()
+                            .addModifiers(KModifier.OVERRIDE)
+                            .build()
+                    } else if (it.name == "updated_at" || it.name == "created_at") {
+                        it.toBuilder()
+//                            .addAnnotation(Contextual::class)
+                            .build()
+                    } else {
+                        it
+                    }
+                }
+                memberBuilder.typeSpecs.replaceAll { innerType ->
+                    if (innerType.modifiers.contains(KModifier.DATA)) {
+                        // Inner data class
+                        innerType.toBuilder()
+//                            .addAnnotation(Serializable::class)
+                            .build()
+                    } else {
+                        innerType
+                    }
+                }
+                memberBuilder.build()
+            } else {
+                member
+            }
+        }
+
+        return builder.build()
     }
 }

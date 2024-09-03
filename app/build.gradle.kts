@@ -11,6 +11,7 @@ plugins {
     id("kotlin-parcelize")
     id("com.apollographql.apollo") version "4.0.0"
     id("kotlin-kapt")
+    kotlin("plugin.serialization") version "1.9.23"
 }
 
 fun getVersionCode(): Int {
@@ -174,7 +175,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-process:2.8.4")
     implementation("com.otaliastudios:zoomlayout:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("io.noties.markwon:core:4.6.2")
 
     implementation("ch.acra:acra-http:$acraVersion")

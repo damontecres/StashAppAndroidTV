@@ -1,8 +1,6 @@
 package com.github.damontecres.stashapp
 
-import com.apollographql.apollo.api.CustomScalarAdapters
 import com.apollographql.apollo.api.Optional
-import com.apollographql.apollo.api.json.BufferedSinkJsonWriter
 import com.apollographql.apollo.api.json.BufferedSourceJsonReader
 import com.apollographql.apollo.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
@@ -12,21 +10,17 @@ import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.api.type.adapter.SceneFilterType_InputAdapter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.Version
+import com.github.damontecres.stashapp.util.optionalSerializerModule
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonObject
 import okio.FileSystem
 import okio.Path.Companion.toPath
-import okio.buffer
-import okio.sink
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.junit.MockitoJUnitRunner
-import java.io.ByteArrayOutputStream
 
 @RunWith(MockitoJUnitRunner::class)
 class ObjectFilterParsingTests {
@@ -61,19 +55,10 @@ class ObjectFilterParsingTests {
                         ),
                     ),
             )
-        val baos = ByteArrayOutputStream()
-        val sink = baos.sink().buffer()
-        val writer = BufferedSinkJsonWriter(sink)
-        writer.beginObject()
-        SceneFilterType_InputAdapter.toJson(
-            writer,
-            CustomScalarAdapters.Empty,
-            filter,
-        )
-        writer.endObject()
-        sink.flush()
-        val json = baos.toByteArray().toString(Charsets.UTF_8)
-        val map = Json.parseToJsonElement(json).jsonObject.toMap()
+        val format = Json { serializersModule = optionalSerializerModule }
+        val json = format.encodeToString(SceneFilterType.serializer(), filter)
+        val result = format.decodeFromString<SceneFilterType>(json)
+        Assert.assertEquals(filter, result)
     }
 
     @Test
