@@ -10,5 +10,5 @@ java {
 
 dependencies {
     implementation("com.apollographql.apollo:apollo-compiler:4.0.0")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.2")
 }

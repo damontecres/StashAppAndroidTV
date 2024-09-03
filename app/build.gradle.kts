@@ -135,7 +135,7 @@ tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrin
 // tasks.preBuild.dependsOn("generateStrings")
 tasks.preBuild.dependsOn("generateStrings")
 
-val mediaVersion = "1.4.0"
+val mediaVersion = "1.4.1"
 val glideVersion = "4.16.0"
 val acraVersion = "5.11.3"
 val roomVersion = "2.6.1"
@@ -175,9 +175,9 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-process:2.8.4")
     implementation("com.otaliastudios:zoomlayout:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
     implementation("io.noties.markwon:core:4.6.2")
-    implementation("com.chrynan.parcelable:parcelable-core:0.8.0")
+    implementation("com.chrynan.parcelable:parcelable-core:0.9.0")
 
     implementation("ch.acra:acra-http:$acraVersion")
     implementation("ch.acra:acra-dialog:$acraVersion")
@@ -195,7 +195,7 @@ dependencies {
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 
     androidTestImplementation("androidx.test:core:1.6.1")
-    androidTestImplementation("androidx.test:runner:1.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:rules:1.6.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.ext:truth:1.6.0")
