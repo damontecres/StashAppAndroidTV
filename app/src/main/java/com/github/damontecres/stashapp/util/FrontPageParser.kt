@@ -175,8 +175,7 @@ class FrontPageParser(
                     val result = queryEngine.getSavedFilter(filterId.toString())
                     if (result != null) {
                         val filter =
-                            result.toFilterArgs()
-                                .ensureParsed(filterParser)
+                            result.toFilterArgs(filterParser)
                                 .withResolvedRandom()
                         val findFilter =
                             filter.findFilter?.toFindFilterType(page = 1, perPage = pageSize)

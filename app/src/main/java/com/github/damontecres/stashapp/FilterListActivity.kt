@@ -124,7 +124,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         val filterParser = FilterParser(ServerPreferences(context).serverVersion)
         val savedFilters =
             QueryEngine(this).getSavedFilters(dataType)
-                .map { it.toFilterArgs().ensureParsed(filterParser) }
+                .map { it.toFilterArgs(filterParser) }
         if (savedFilters.isEmpty()) {
             filterButton.setOnClickListener {
                 Toast.makeText(

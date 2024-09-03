@@ -29,23 +29,40 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                         )
                         .build()
 
+                val stashFilterInterface = ClassName("$packageName.type", "StashDataFilter")
+                val stashFilterFileSpec =
+                    FileSpec.builder(stashFilterInterface)
+                        .addType(
+                            TypeSpec.interfaceBuilder(stashFilterInterface)
+                                .addModifiers(KModifier.SEALED)
+                                .addAnnotation(Serializable::class)
+                                .build(),
+                        )
+                        .build()
+
                 val newFileSpecs =
                     input.fileSpecs.map { file ->
                         if (file.name.endsWith("FilterType") || file.name.endsWith("CriterionInput")) {
-                            handleFilterInput(file)
+                            handleFilterInput(file, stashFilterInterface)
                         } else if (file.name.endsWith("Data")) {
                             handleData(file, stashDataInterface)
                         } else {
                             file
                         }
                     }
-                return KotlinOutput(newFileSpecs + stashDataFileSpec, input.codegenMetadata)
+                return KotlinOutput(
+                    newFileSpecs + stashDataFileSpec + stashFilterFileSpec,
+                    input.codegenMetadata,
+                )
             }
         }
     }
 
     @OptIn(DelicateKotlinPoetApi::class)
-    private fun handleFilterInput(file: FileSpec): FileSpec {
+    private fun handleFilterInput(
+        file: FileSpec,
+        stashFilterInterface: ClassName,
+    ): FileSpec {
         val builder = file.toBuilder()
         builder.members.replaceAll { member ->
             if (member is TypeSpec) {
@@ -62,6 +79,10 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                     } else {
                         prop
                     }
+                }
+
+                if (member.name!!.endsWith("FilterType")) {
+                    typeBuilder.addSuperinterface(stashFilterInterface)
                 }
 
                 typeBuilder.build()

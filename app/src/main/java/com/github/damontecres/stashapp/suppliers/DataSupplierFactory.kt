@@ -3,13 +3,13 @@ package com.github.damontecres.stashapp.suppliers
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getRandomSort
-import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 /**
@@ -109,8 +109,7 @@ data class FilterArgs(
     val dataType: DataType,
     val name: String? = null,
     val findFilter: StashFindFilter? = null,
-    @Contextual
-    val objectFilter: Any? = null,
+    val objectFilter: StashDataFilter? = null,
     val override: DataSupplierOverride? = null,
 ) {
     val sortAndDirection: SortAndDirection
@@ -145,59 +144,6 @@ data class FilterArgs(
             this
         }
     }
-
-    /**
-     * Returns a copy of this object which guarantees that the object filter is a FilterType object and not a Map<String, *>
-     *
-     * This means that the returned [FilterArgs] is parcelable
-     */
-    fun ensureParsed(filterParser: FilterParser): FilterArgs {
-        val objectFilter =
-            when (dataType) {
-                DataType.TAG -> filterParser.convertTagObjectFilter(this.objectFilter)
-                DataType.STUDIO -> filterParser.convertStudioObjectFilter(this.objectFilter)
-                DataType.MOVIE -> filterParser.convertMovieObjectFilter(this.objectFilter)
-                DataType.SCENE -> filterParser.convertSceneObjectFilter(this.objectFilter)
-                DataType.IMAGE -> filterParser.convertImageObjectFilter(this.objectFilter)
-                DataType.GALLERY -> filterParser.convertGalleryObjectFilter(this.objectFilter)
-                DataType.MARKER -> filterParser.convertMarkerObjectFilter(this.objectFilter)
-                DataType.PERFORMER -> filterParser.convertPerformerObjectFilter(this.objectFilter)
-            }
-        return this.copy(objectFilter = objectFilter)
-    }
-
-//    override fun writeToParcel(
-//        parcel: Parcel,
-//        flags: Int,
-//    ) {
-//        parcel.writeInt(dataType.ordinal)
-//        parcel.writeString(name)
-//        parcel.writeParcelable(findFilter, flags)
-//        parcel.writeParcelable(createFilterHolder(objectFilter), flags)
-//        parcel.writeParcelable(override, flags)
-//    }
-//
-//    override fun describeContents(): Int {
-//        return 0
-//    }
-//
-//    companion object CREATOR : Parcelable.Creator<FilterArgs> {
-//        override fun createFromParcel(parcel: Parcel): FilterArgs {
-//            val dataType = DataType.entries[parcel.readInt()]
-//            val name = parcel.readString()
-//            val findFilter: StashFindFilter? =
-//                parcel.readParcelable(StashFindFilter::class.java.classLoader)
-//            val objectFilterHolder: FilterHolder<Any?>? =
-//                parcel.readParcelable(FilterHolder::class.java.classLoader)
-//            val override: DataSupplierOverride? =
-//                parcel.readParcelable(DataSupplierOverride::class.java.classLoader)
-//            return FilterArgs(dataType, name, findFilter, objectFilterHolder?.value, override)
-//        }
-//
-//        override fun newArray(size: Int): Array<FilterArgs?> {
-//            return arrayOfNulls(size)
-//        }
-//    }
 }
 
 fun SavedFilterData.Find_filter.toStashFindFilter(): StashFindFilter {
@@ -208,7 +154,7 @@ fun SavedFilterData.Find_filter.toStashFindFilter(): StashFindFilter {
     }
 }
 
-fun SavedFilterData.toFilterArgs(): FilterArgs {
+fun SavedFilterData.toFilterArgs(filterParser: FilterParser): FilterArgs {
     val dataType = DataType.fromFilterMode(mode)!!
     val findFilter =
         if (find_filter != null) {
@@ -219,5 +165,16 @@ fun SavedFilterData.toFilterArgs(): FilterArgs {
         } else {
             StashFindFilter(null, dataType.defaultSort)
         }
-    return FilterArgs(dataType, name.ifBlank { null }, findFilter, object_filter)
+    val objectFilter =
+        when (dataType) {
+            DataType.TAG -> filterParser.convertTagObjectFilter(object_filter)
+            DataType.STUDIO -> filterParser.convertStudioObjectFilter(object_filter)
+            DataType.MOVIE -> filterParser.convertMovieObjectFilter(object_filter)
+            DataType.SCENE -> filterParser.convertSceneObjectFilter(object_filter)
+            DataType.IMAGE -> filterParser.convertImageObjectFilter(object_filter)
+            DataType.GALLERY -> filterParser.convertGalleryObjectFilter(object_filter)
+            DataType.MARKER -> filterParser.convertMarkerObjectFilter(object_filter)
+            DataType.PERFORMER -> filterParser.convertPerformerObjectFilter(object_filter)
+        }
+    return FilterArgs(dataType, name.ifBlank { null }, findFilter, objectFilter)
 }

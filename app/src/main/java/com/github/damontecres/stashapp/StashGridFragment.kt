@@ -29,6 +29,7 @@ import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
 import com.chrynan.parcelable.core.getParcelable
 import com.chrynan.parcelable.core.putParcelable
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
@@ -38,11 +39,9 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
-import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashComparator
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
@@ -189,8 +188,7 @@ class StashGridFragment() : Fragment() {
         columns: Int? = null,
         scrollToNextPage: Boolean = false,
     ) : this() {
-        this._filterArgs =
-            filterArgs.ensureParsed(FilterParser(StashServer.getCurrentServerVersion()))
+        this._filterArgs = filterArgs
         this.columns = columns
         this._currentSortAndDirection = _filterArgs.sortAndDirection
         this.scrollToNextPage = scrollToNextPage
@@ -199,7 +197,7 @@ class StashGridFragment() : Fragment() {
     constructor(
         dataType: DataType,
         findFilter: StashFindFilter? = null,
-        objectFilter: Any? = null,
+        objectFilter: StashDataFilter? = null,
         columns: Int? = null,
         scrollToNextPage: Boolean = false,
     ) : this(FilterArgs(dataType, null, findFilter, objectFilter), columns, scrollToNextPage)

@@ -160,8 +160,9 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
                 val queryEngine = QueryEngine(v.context)
                 val filterParser = FilterParser(StashServer.getCurrentServerVersion())
                 val defaultFilter =
-                    queryEngine.getDefaultFilter(dataType)?.toFilterArgs()
-                        ?.withResolvedRandom()?.ensureParsed(filterParser)
+                    queryEngine.getDefaultFilter(dataType)
+                        ?.toFilterArgs(filterParser)
+                        ?.withResolvedRandom()
                 Log.v(TAG, "Got default filter for $dataType: ${defaultFilter != null}")
                 val filterArgs =
                     defaultFilter ?: FilterArgs(
