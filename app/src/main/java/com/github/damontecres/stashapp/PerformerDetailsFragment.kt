@@ -28,7 +28,6 @@ import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
-import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
@@ -63,9 +62,8 @@ class PerformerDetailsFragment() : Fragment(R.layout.performer_view) {
 
         val performer = requireActivity().intent.getParcelableExtra<Performer>("performer")
         if (performer != null) {
-            val lock = ReentrantReadWriteLock()
-            queryEngine = QueryEngine(requireContext(), true, lock)
-            mutationEngine = MutationEngine(requireContext(), true, lock)
+            queryEngine = QueryEngine(requireContext(), true)
+            mutationEngine = MutationEngine(requireContext(), true)
 
             val exceptionHandler =
                 CoroutineExceptionHandler { _, ex ->

@@ -72,9 +72,7 @@ import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.concurrent.locks.ReentrantReadWriteLock
 
 /**
  * An overlay for details about an image
@@ -177,9 +175,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val lock = ReentrantReadWriteLock()
-        queryEngine = QueryEngine(requireContext(), false, lock)
-        mutationEngine = MutationEngine(requireContext(), false, lock)
+        queryEngine = QueryEngine(requireContext(), false)
+        mutationEngine = MutationEngine(requireContext(), false)
 
         adapter = mAdapter
 
@@ -247,10 +244,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         val actionListener = ItemActionListener()
         onItemViewClickedListener = StashItemViewClickListener(requireContext(), actionListener)
 
-        val queryJob: Job? = null
-
         viewModel.image.observe(viewLifecycleOwner) { newImage ->
-            queryJob?.cancel()
 
             val detailsRow = DetailsOverviewRow(newImage)
 

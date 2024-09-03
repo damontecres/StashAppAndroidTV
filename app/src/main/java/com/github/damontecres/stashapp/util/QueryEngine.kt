@@ -56,7 +56,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReadWriteLock
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -71,12 +70,9 @@ import kotlin.time.toDuration
 class QueryEngine(
     private val context: Context,
     private val showToasts: Boolean = false,
-    lock: ReadWriteLock? = null,
 ) {
     private val serverVersion = ServerPreferences(context).serverVersion
     private val client = StashClient.getApolloClient(context)
-
-    private val readLock = lock?.readLock()
 
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
@@ -84,7 +80,6 @@ class QueryEngine(
             val id = QUERY_ID.getAndIncrement()
             Log.v(TAG, "executeQuery $id $queryName")
             try {
-                readLock?.lock()
                 val response = query.executeV3()
                 if (response.errors.isNullOrEmpty()) {
                     Log.v(TAG, "executeQuery $id $queryName successful")
@@ -110,8 +105,6 @@ class QueryEngine(
                 showToast("Server query error ($queryName). Msg=${ex.message}, ${ex.cause?.message}")
                 Log.e(TAG, "ApolloException in $id $queryName", ex)
                 throw QueryException(id, "Apollo exception ($queryName)", ex)
-            } finally {
-                readLock?.unlock()
             }
         }
 
