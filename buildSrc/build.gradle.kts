@@ -4,7 +4,7 @@ repositories {
 
 plugins {
 //    `kotlin-dsl`
-    kotlin("jvm") version "1.9.23"
+    kotlin("jvm") version "2.0.0"
 }
 
 java {

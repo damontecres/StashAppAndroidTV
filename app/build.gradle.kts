@@ -8,10 +8,10 @@ val shouldSign = isCI && System.getenv("KEY_ALIAS") != null
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
     id("kotlin-parcelize")
     id("com.apollographql.apollo") version "4.0.0"
-    id("kotlin-kapt")
-    kotlin("plugin.serialization") version "1.9.23"
+    kotlin("plugin.serialization") version "2.0.0"
 }
 
 fun getVersionCode(): Int {
@@ -152,7 +152,7 @@ dependencies {
     implementation("androidx.test.ext:junit-ktx:1.2.1")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
-    kapt("com.github.bumptech.glide:compiler:$glideVersion")
+    ksp("com.github.bumptech.glide:ksp:$glideVersion")
     implementation("com.caverock:androidsvg-aar:1.4")
     implementation(kotlin("reflect"))
 
@@ -183,10 +183,10 @@ dependencies {
     implementation("ch.acra:acra-dialog:$acraVersion")
     implementation("ch.acra:acra-limiter:$acraVersion")
     compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
-    kapt("com.google.auto.service:auto-service:1.1.1")
+    ksp("com.google.auto.service:auto-service:1.1.1")
 
     implementation("androidx.room:room-runtime:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
 
     testImplementation("androidx.test:core-ktx:1.6.1")
