@@ -5,6 +5,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.StashPagingSource.DataTransform
@@ -19,7 +20,7 @@ import kotlinx.coroutines.withContext
  * @property pageSize how many items per page
  * @property dataSupplier how to query and parse data
  */
-class StashPagingSource<T : Query.Data, D : Any, S : Any, C : Query.Data>(
+class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
     private val context: Context,
     private val pageSize: Int,
     private val dataSupplier: DataSupplier<T, D, C>,
@@ -50,7 +51,7 @@ class StashPagingSource<T : Query.Data, D : Any, S : Any, C : Query.Data>(
 
     private var listeners = mutableListOf<Listener<S>>()
 
-    interface DataSupplier<T : Query.Data, D : Any, C : Query.Data> {
+    interface DataSupplier<T : Query.Data, D : StashData, C : Query.Data> {
         val dataType: DataType
 
         /**

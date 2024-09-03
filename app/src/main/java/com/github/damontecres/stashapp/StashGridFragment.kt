@@ -29,6 +29,7 @@ import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
 import com.chrynan.parcelable.core.getParcelable
 import com.chrynan.parcelable.core.putParcelable
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
@@ -408,9 +409,9 @@ class StashGridFragment() : Fragment() {
         val pageSize = mGridPresenter.numberOfColumns * 10
         val factory = DataSupplierFactory(ServerPreferences(requireContext()).serverVersion)
         val dataSupplier =
-            factory.create<Query.Data, Any, Query.Data>(_filterArgs.with(newSortAndDirection))
+            factory.create<Query.Data, StashData, Query.Data>(_filterArgs.with(newSortAndDirection))
         val pagingSource =
-            StashPagingSource<Query.Data, Any, Any, Query.Data>(
+            StashPagingSource<Query.Data, StashData, StashData, Query.Data>(
                 requireContext(),
                 pageSize,
                 dataSupplier = dataSupplier,

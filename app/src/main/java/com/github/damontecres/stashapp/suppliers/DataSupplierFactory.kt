@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.suppliers
 
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
@@ -21,7 +22,7 @@ class DataSupplierFactory(val serverVersion: Version) {
      *
      * If the [FilterArgs] has an override, that is always used.
      */
-    fun <T : Query.Data, D : Any, C : Query.Data> create(args: FilterArgs): StashPagingSource.DataSupplier<T, D, C> {
+    fun <T : Query.Data, D : StashData, C : Query.Data> create(args: FilterArgs): StashPagingSource.DataSupplier<T, D, C> {
         val filterParser = FilterParser(serverVersion)
         if (args.override != null) {
             return when (args.override) {

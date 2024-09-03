@@ -19,11 +19,12 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
             override fun transform(input: KotlinOutput): KotlinOutput {
                 val sampleFileSpec = input.fileSpecs.first()
                 val packageName = "com.github.damontecres.stashapp.api"
-                val stashDataInterface = ClassName(packageName, "StashData")
+                val stashDataInterface = ClassName("$packageName.fragment", "StashData")
                 val stashDataFileSpec =
                     FileSpec.builder(stashDataInterface)
                         .addType(
                             TypeSpec.interfaceBuilder(stashDataInterface)
+                                .addModifiers(KModifier.SEALED)
                                 .addProperty("id", String::class)
                                 .build(),
                         )
