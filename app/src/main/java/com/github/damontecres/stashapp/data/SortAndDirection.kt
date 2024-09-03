@@ -1,14 +1,13 @@
 package com.github.damontecres.stashapp.data
 
-import android.os.Parcelable
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.util.getRandomSort
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
-@Parcelize
-data class SortAndDirection(val sort: String, val direction: SortDirectionEnum) : Parcelable {
+@Serializable
+data class SortAndDirection(val sort: String, val direction: SortDirectionEnum) {
     val asFindFilterType get() = FindFilterType(sort = Optional.present(sort), direction = Optional.present(direction))
 
     val isRandom get() = sort.startsWith("random")

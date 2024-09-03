@@ -27,6 +27,8 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
+import com.chrynan.parcelable.core.getParcelable
+import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
@@ -44,6 +46,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.parcelable
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
@@ -237,7 +240,8 @@ class StashGridFragment() : Fragment() {
         if (savedInstanceState != null) {
             name = savedInstanceState.getString("name")
             sortButtonEnabled = savedInstanceState.getBoolean("sortButtonEnabled")
-            _filterArgs = savedInstanceState.getParcelable("_filterArgs")!!
+            _filterArgs =
+                savedInstanceState.getParcelable("_filterArgs", FilterArgs::class, 0, parcelable)!!
             Log.v(TAG, "sortAndDirection=${_filterArgs.sortAndDirection}")
         }
 
@@ -366,7 +370,7 @@ class StashGridFragment() : Fragment() {
         super.onSaveInstanceState(outState)
         outState.putInt("mSelectedPosition", mSelectedPosition)
         columns?.let { outState.putInt("columns", it) }
-        outState.putParcelable("_filterArgs", _filterArgs.with(currentSortAndDirection))
+        outState.putParcelable("_filterArgs", _filterArgs.with(currentSortAndDirection), parcelable)
         outState.putString("name", name)
         outState.putBoolean("sortButtonEnabled", sortButtonEnabled)
     }

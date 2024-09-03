@@ -31,6 +31,7 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.putExtra
 import kotlinx.coroutines.launch
 
 class MainTitleView(context: Context, attrs: AttributeSet) :

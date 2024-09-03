@@ -13,6 +13,7 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.putDataType
+import com.github.damontecres.stashapp.util.putExtra
 import java.util.EnumMap
 
 class TagPresenter(callback: LongClickCallBack<TagData>? = null) :

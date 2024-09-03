@@ -1,19 +1,16 @@
 package com.github.damontecres.stashapp.suppliers
 
-import android.os.Parcel
-import android.os.Parcelable
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.FilterHolder
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
-import com.github.damontecres.stashapp.data.createFilterHolder
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getRandomSort
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Contextual
+import kotlinx.serialization.Serializable
 
 /**
  * A factory to create [StashPagingSource.DataSupplier]s
@@ -91,8 +88,8 @@ class DataSupplierFactory(val serverVersion: Version) {
  *
  * This usually means filtering based on the ID of one [DataType] but querying for a different [DataType] such as the tags on a performer.
  */
-@Parcelize
-sealed class DataSupplierOverride : Parcelable {
+@Serializable
+sealed class DataSupplierOverride {
     data class PerformerTags(val performerId: String) : DataSupplierOverride()
 
     data class GalleryPerformer(val galleryId: String) : DataSupplierOverride()
@@ -107,13 +104,15 @@ sealed class DataSupplierOverride : Parcelable {
  *
  * Optionally, a [DataSupplierOverride] can be provided which always overrides which data supplier to use.
  */
+@Serializable
 data class FilterArgs(
     val dataType: DataType,
     val name: String? = null,
     val findFilter: StashFindFilter? = null,
+    @Contextual
     val objectFilter: Any? = null,
     val override: DataSupplierOverride? = null,
-) : Parcelable {
+) {
     val sortAndDirection: SortAndDirection
         get() {
             return if (findFilter?.sortAndDirection != null) {
@@ -167,38 +166,38 @@ data class FilterArgs(
         return this.copy(objectFilter = objectFilter)
     }
 
-    override fun writeToParcel(
-        parcel: Parcel,
-        flags: Int,
-    ) {
-        parcel.writeInt(dataType.ordinal)
-        parcel.writeString(name)
-        parcel.writeParcelable(findFilter, flags)
-        parcel.writeParcelable(createFilterHolder(objectFilter), flags)
-        parcel.writeParcelable(override, flags)
-    }
-
-    override fun describeContents(): Int {
-        return 0
-    }
-
-    companion object CREATOR : Parcelable.Creator<FilterArgs> {
-        override fun createFromParcel(parcel: Parcel): FilterArgs {
-            val dataType = DataType.entries[parcel.readInt()]
-            val name = parcel.readString()
-            val findFilter: StashFindFilter? =
-                parcel.readParcelable(StashFindFilter::class.java.classLoader)
-            val objectFilterHolder: FilterHolder<Any?>? =
-                parcel.readParcelable(FilterHolder::class.java.classLoader)
-            val override: DataSupplierOverride? =
-                parcel.readParcelable(DataSupplierOverride::class.java.classLoader)
-            return FilterArgs(dataType, name, findFilter, objectFilterHolder?.value, override)
-        }
-
-        override fun newArray(size: Int): Array<FilterArgs?> {
-            return arrayOfNulls(size)
-        }
-    }
+//    override fun writeToParcel(
+//        parcel: Parcel,
+//        flags: Int,
+//    ) {
+//        parcel.writeInt(dataType.ordinal)
+//        parcel.writeString(name)
+//        parcel.writeParcelable(findFilter, flags)
+//        parcel.writeParcelable(createFilterHolder(objectFilter), flags)
+//        parcel.writeParcelable(override, flags)
+//    }
+//
+//    override fun describeContents(): Int {
+//        return 0
+//    }
+//
+//    companion object CREATOR : Parcelable.Creator<FilterArgs> {
+//        override fun createFromParcel(parcel: Parcel): FilterArgs {
+//            val dataType = DataType.entries[parcel.readInt()]
+//            val name = parcel.readString()
+//            val findFilter: StashFindFilter? =
+//                parcel.readParcelable(StashFindFilter::class.java.classLoader)
+//            val objectFilterHolder: FilterHolder<Any?>? =
+//                parcel.readParcelable(FilterHolder::class.java.classLoader)
+//            val override: DataSupplierOverride? =
+//                parcel.readParcelable(DataSupplierOverride::class.java.classLoader)
+//            return FilterArgs(dataType, name, findFilter, objectFilterHolder?.value, override)
+//        }
+//
+//        override fun newArray(size: Int): Array<FilterArgs?> {
+//            return arrayOfNulls(size)
+//        }
+//    }
 }
 
 fun SavedFilterData.Find_filter.toStashFindFilter(): StashFindFilter {

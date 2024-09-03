@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.util
 
 import com.apollographql.apollo.api.Optional
+import com.chrynan.parcelable.core.Parcelable
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -10,6 +12,12 @@ import kotlinx.serialization.modules.SerializersModule
 val optionalSerializerModule =
     SerializersModule {
         contextual(Optional::class) { args -> OptionalSerializer(args[0]) }
+    }
+
+@OptIn(ExperimentalSerializationApi::class)
+val parcelable =
+    Parcelable {
+        serializersModule = optionalSerializerModule
     }
 
 class OptionalSerializer<T>(private val dataSerializer: KSerializer<T>) : KSerializer<Optional<T>> {

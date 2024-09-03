@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.util.putExtra
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
 class PerformerFragment : TabbedFragment() {

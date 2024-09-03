@@ -32,6 +32,7 @@ import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.addToIntent
 import com.github.damontecres.stashapp.util.putDataType
+import com.github.damontecres.stashapp.util.putExtra
 
 /**
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc

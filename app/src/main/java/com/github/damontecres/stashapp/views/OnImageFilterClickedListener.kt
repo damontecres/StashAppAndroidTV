@@ -6,6 +6,7 @@ import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
+import com.chrynan.parcelable.core.putExtra
 import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.suppliers.FilterArgs
