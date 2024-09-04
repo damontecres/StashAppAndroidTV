@@ -50,13 +50,9 @@ fragment GalleryData on Gallery {
   scenes {
     id
   }
-  cover {
-    id
-    paths {
-      thumbnail
-      image
-      preview
-    }
+  paths {
+    cover
+    preview
   }
 }
 
