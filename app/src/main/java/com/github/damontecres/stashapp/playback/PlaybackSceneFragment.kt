@@ -166,18 +166,27 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 }
             }.also { exoPlayer ->
                 applyEffects(exoPlayer)
-                exoPlayer.setMediaItem(
-                    buildMediaItem(requireContext(), streamDecision, scene),
-                    if (position > 0) position else C.TIME_UNSET,
-                )
+                if (scene.streams.isNotEmpty()) {
+                    exoPlayer.setMediaItem(
+                        buildMediaItem(requireContext(), streamDecision, scene),
+                        if (position > 0) position else C.TIME_UNSET,
+                    )
 
-                Log.v(TAG, "Preparing playback")
-                exoPlayer.prepare()
-                // Unless the video was paused before called the result launcher, play immediately
-                exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
-                exoPlayer.volume = 1f
-                if (videoView.controllerShowTimeoutMs > 0) {
-                    videoView.hideController()
+                    Log.v(TAG, "Preparing playback")
+                    exoPlayer.prepare()
+                    // Unless the video was paused before called the result launcher, play immediately
+                    exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
+                    exoPlayer.volume = 1f
+                    if (videoView.controllerShowTimeoutMs > 0) {
+                        videoView.hideController()
+                    }
+                } else {
+                    videoView.useController = false
+                    Toast.makeText(
+                        requireContext(),
+                        "This scene has no video files to play",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 }
             }
     }

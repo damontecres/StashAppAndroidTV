@@ -298,8 +298,13 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
             sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
             sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
-            sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
-            sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
+            if (mSelectedMovie!!.files.isNotEmpty()) {
+                sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
+                sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
+            } else {
+                sceneActionsAdapter.clear(FORCE_TRANSCODE_POS)
+                sceneActionsAdapter.clear(FORCE_DIRECT_PLAY_POS)
+            }
 
             if (mSelectedMovie!!.studio?.studioData != null) {
                 studioAdapter.setItems(listOf(mSelectedMovie!!.studio!!.studioData))
@@ -336,7 +341,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     mAdapter.set(
                         MOVIE_POS,
                         ListRow(
-                            HeaderItem(getString(R.string.stashapp_movies)),
+                            HeaderItem(getString(R.string.stashapp_groups)),
                             moviesAdapter,
                         ),
                     )
@@ -544,18 +549,22 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupPlayActionsAdapter() {
-        val serverPreferences = ServerPreferences(requireContext())
-        if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
-            playActionsAdapter.set(
-                0,
-                Action(ACTION_PLAY_SCENE, resources.getString(R.string.play_scene)),
-            )
-            playActionsAdapter.clear(1)
+        if (mSelectedMovie!!.files.isNotEmpty()) {
+            val serverPreferences = ServerPreferences(requireContext())
+            if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
+                playActionsAdapter.set(
+                    0,
+                    Action(ACTION_PLAY_SCENE, resources.getString(R.string.play_scene)),
+                )
+                playActionsAdapter.clear(1)
+            } else {
+                playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, getString(R.string.resume)))
+                // Force focus to move to Resume
+                playActionsAdapter.clear(1)
+                playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, getString(R.string.restart)))
+            }
         } else {
-            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, getString(R.string.resume)))
-            // Force focus to move to Resume
-            playActionsAdapter.clear(1)
-            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, getString(R.string.restart)))
+            playActionsAdapter.clear()
         }
     }
 
