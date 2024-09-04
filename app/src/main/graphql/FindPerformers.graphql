@@ -53,10 +53,7 @@ fragment PerformerData on Performer {
   id
   name
   disambiguation
-  url
   gender
-  twitter
-  instagram
   birthdate
   ethnicity
   country
@@ -71,7 +68,6 @@ fragment PerformerData on Performer {
   piercings
   alias_list
   favorite
-  ignore_auto_tag
   image_path
   scene_count
   image_count

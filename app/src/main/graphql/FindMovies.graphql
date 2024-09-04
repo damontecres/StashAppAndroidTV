@@ -27,7 +27,6 @@ fragment MovieData on Movie {
   rating100
   synopsis
   director
-  url
   studio {
     id
     name
