@@ -12,6 +12,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 
 class MovieFragment : TabbedFragment() {
@@ -27,6 +29,7 @@ class MovieFragment : TabbedFragment() {
             listOf(
                 StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details), null),
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
+                StashFragmentPagerAdapter.PagerEntry(DataType.TAG),
             )
         return object : StashFragmentPagerAdapter(pages, fm) {
             override fun getFragment(position: Int): Fragment {
@@ -53,7 +56,13 @@ class MovieFragment : TabbedFragment() {
                                         ),
                                 ),
                         )
-
+                    2 ->
+                        StashGridFragment(
+                            FilterArgs(
+                                DataType.TAG,
+                                override = DataSupplierOverride.MovieTags(movie.id),
+                            ),
+                        )
                     else -> throw IllegalArgumentException()
                 }
             }

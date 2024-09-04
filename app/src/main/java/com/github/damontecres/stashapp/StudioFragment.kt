@@ -12,6 +12,8 @@ import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 
 class StudioFragment : TabbedFragment() {
@@ -28,6 +30,7 @@ class StudioFragment : TabbedFragment() {
                 StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE),
                 StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER),
                 StashFragmentPagerAdapter.PagerEntry(DataType.MOVIE),
+                StashFragmentPagerAdapter.PagerEntry(DataType.TAG),
                 StashFragmentPagerAdapter.PagerEntry(
                     getString(R.string.stashapp_subsidiary_studios),
                     DataType.STUDIO,
@@ -76,6 +79,13 @@ class StudioFragment : TabbedFragment() {
                     objectFilter = MovieFilterType(studios = studios),
                 )
             } else if (position == 5) {
+                StashGridFragment(
+                    FilterArgs(
+                        DataType.TAG,
+                        override = DataSupplierOverride.StudioTags(studioId),
+                    ),
+                )
+            } else if (position == 6) {
                 StashGridFragment(
                     dataType = DataType.STUDIO,
                     objectFilter =

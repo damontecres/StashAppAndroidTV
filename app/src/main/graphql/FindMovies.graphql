@@ -18,6 +18,15 @@ query FindMovie($id: ID!) {
   }
 }
 
+query FindMovieTags($id: ID!) {
+  findMovie(id: $id) {
+    id
+    tags {
+      ...TagData
+    }
+  }
+}
+
 fragment MovieData on Movie {
   id
   name
@@ -30,6 +39,10 @@ fragment MovieData on Movie {
   studio {
     id
     name
+  }
+  tags {
+    ...SlimTagData
+    __typename
   }
   scene_count
   front_image_path

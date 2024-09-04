@@ -29,6 +29,8 @@ class DataSupplierFactory(val serverVersion: Version) {
                 is DataSupplierOverride.PerformerTags -> PerformerTagDataSupplier(args.override.performerId)
                 is DataSupplierOverride.GalleryPerformer -> GalleryPerformerDataSupplier(args.override.galleryId)
                 is DataSupplierOverride.GalleryTag -> GalleryTagDataSupplier(args.override.galleryId)
+                is DataSupplierOverride.MovieTags -> MovieTagDataSupplier(args.override.movieId)
+                is DataSupplierOverride.StudioTags -> StudioTagDataSupplier(args.override.studioId)
             } as StashPagingSource.DataSupplier<T, D, C>
         } else {
             return when (args.dataType) {
@@ -90,12 +92,21 @@ class DataSupplierFactory(val serverVersion: Version) {
  * This usually means filtering based on the ID of one [DataType] but querying for a different [DataType] such as the tags on a performer.
  */
 @Serializable
-sealed class DataSupplierOverride {
-    data class PerformerTags(val performerId: String) : DataSupplierOverride()
+sealed interface DataSupplierOverride {
+    @Serializable
+    data class PerformerTags(val performerId: String) : DataSupplierOverride
 
-    data class GalleryPerformer(val galleryId: String) : DataSupplierOverride()
+    @Serializable
+    data class MovieTags(val movieId: String) : DataSupplierOverride
 
-    data class GalleryTag(val galleryId: String) : DataSupplierOverride()
+    @Serializable
+    data class StudioTags(val studioId: String) : DataSupplierOverride
+
+    @Serializable
+    data class GalleryPerformer(val galleryId: String) : DataSupplierOverride
+
+    @Serializable
+    data class GalleryTag(val galleryId: String) : DataSupplierOverride
 }
 
 /**
