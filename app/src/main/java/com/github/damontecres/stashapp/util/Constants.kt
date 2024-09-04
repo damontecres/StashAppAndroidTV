@@ -20,12 +20,13 @@ import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.Visibility
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.exception.ApolloException
-import com.apollographql.apollo3.exception.ApolloHttpException
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.chrynan.parcelable.core.putExtra
 import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -40,6 +41,7 @@ import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -48,6 +50,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import okhttp3.Cache
 import java.io.File
 import java.io.IOException
@@ -154,7 +157,7 @@ suspend fun testStashConnection(
         try {
             val info =
                 withContext(Dispatchers.IO) {
-                    client.query(ServerInfoQuery()).execute()
+                    client.query(ServerInfoQuery()).executeV3()
                 }
             if (info.hasErrors()) {
                 if (showToast) {
@@ -720,4 +723,12 @@ fun Intent.putDataType(dataType: DataType) {
 
 fun Intent.getDataType(): DataType {
     return DataType.valueOf(getStringExtra("dataType")!!)
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun Intent.putExtra(
+    name: String,
+    filterArgs: FilterArgs,
+): Intent {
+    return putExtra(name, filterArgs, parcelable)
 }

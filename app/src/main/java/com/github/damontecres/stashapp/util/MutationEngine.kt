@@ -3,12 +3,12 @@ package com.github.damontecres.stashapp.util
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.apollographql.apollo3.api.ApolloResponse
-import com.apollographql.apollo3.api.Mutation
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.exception.ApolloException
-import com.apollographql.apollo3.exception.ApolloHttpException
-import com.apollographql.apollo3.exception.ApolloNetworkException
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.Mutation
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.exception.ApolloHttpException
+import com.apollographql.apollo.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.CreateMarkerMutation
 import com.github.damontecres.stashapp.api.CreatePerformerMutation
 import com.github.damontecres.stashapp.api.CreateTagMutation
@@ -48,7 +48,6 @@ import com.github.damontecres.stashapp.data.OCounter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReadWriteLock
 
 /**
  * Class for sending graphql mutations
@@ -60,13 +59,10 @@ import java.util.concurrent.locks.ReadWriteLock
 class MutationEngine(
     private val context: Context,
     private val showToasts: Boolean = false,
-    lock: ReadWriteLock? = null,
 ) {
     private val client = StashClient.getApolloClient(context)
 
     private val serverPreferences = ServerPreferences(context)
-
-    private val writeLock = lock?.writeLock()
 
     suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> {
         val mutationName = mutation.name()
@@ -75,12 +71,7 @@ class MutationEngine(
             Log.v(TAG, "executeMutation $id $mutationName start")
             val response =
                 withContext(Dispatchers.IO) {
-                    try {
-                        writeLock?.lock()
-                        client.mutation(mutation).execute()
-                    } finally {
-                        writeLock?.unlock()
-                    }
+                    client.mutation(mutation).executeV3()
                 }
             if (response.errors.isNullOrEmpty()) {
                 Log.v(TAG, "executeMutation $id $mutationName successful")

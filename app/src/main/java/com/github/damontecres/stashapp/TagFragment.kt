@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp
 
 import androidx.fragment.app.FragmentManager
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput

@@ -8,9 +8,10 @@ val shouldSign = isCI && System.getenv("KEY_ALIAS") != null
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
     id("kotlin-parcelize")
-    id("com.apollographql.apollo3") version "3.8.4"
-    id("kotlin-kapt")
+    id("com.apollographql.apollo") version "4.0.0"
+    kotlin("plugin.serialization") version "2.0.0"
 }
 
 fun getVersionCode(): Int {
@@ -122,6 +123,7 @@ apollo {
             // See: https://community.apollographql.com/t/android-warning-duplicate-content-roots-detected-after-just-adding-apollo3-kotlin-client/4529/6
             connectToKotlinSourceSet("main")
         }
+        plugin(project(":apollo-compiler"))
     }
 }
 
@@ -133,7 +135,7 @@ tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrin
 // tasks.preBuild.dependsOn("generateStrings")
 tasks.preBuild.dependsOn("generateStrings")
 
-val mediaVersion = "1.4.0"
+val mediaVersion = "1.4.1"
 val glideVersion = "4.16.0"
 val acraVersion = "5.11.3"
 val roomVersion = "2.6.1"
@@ -150,7 +152,7 @@ dependencies {
     implementation("androidx.test.ext:junit-ktx:1.2.1")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
-    kapt("com.github.bumptech.glide:compiler:$glideVersion")
+    ksp("com.github.bumptech.glide:ksp:$glideVersion")
     implementation("com.caverock:androidsvg-aar:1.4")
     implementation(kotlin("reflect"))
 
@@ -159,7 +161,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    implementation("com.apollographql.apollo3:apollo-runtime:3.8.4")
+    implementation("com.apollographql.apollo:apollo-runtime:4.0.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.media3:media3-exoplayer:$mediaVersion")
     implementation("androidx.media3:media3-ui:$mediaVersion")
@@ -173,17 +175,18 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-process:2.8.4")
     implementation("com.otaliastudios:zoomlayout:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
     implementation("io.noties.markwon:core:4.6.2")
+    implementation("com.chrynan.parcelable:parcelable-core:0.9.0")
 
     implementation("ch.acra:acra-http:$acraVersion")
     implementation("ch.acra:acra-dialog:$acraVersion")
     implementation("ch.acra:acra-limiter:$acraVersion")
     compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
-    kapt("com.google.auto.service:auto-service:1.1.1")
+    ksp("com.google.auto.service:auto-service:1.1.1")
 
     implementation("androidx.room:room-runtime:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
 
     testImplementation("androidx.test:core-ktx:1.6.1")
@@ -192,7 +195,7 @@ dependencies {
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 
     androidTestImplementation("androidx.test:core:1.6.1")
-    androidTestImplementation("androidx.test:runner:1.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:rules:1.6.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.ext:truth:1.6.0")

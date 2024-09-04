@@ -3,14 +3,14 @@ package com.github.damontecres.stashapp.util
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.apollographql.apollo3.ApolloCall
-import com.apollographql.apollo3.api.ApolloResponse
-import com.apollographql.apollo3.api.Operation
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.api.Query
-import com.apollographql.apollo3.exception.ApolloException
-import com.apollographql.apollo3.exception.ApolloHttpException
-import com.apollographql.apollo3.exception.ApolloNetworkException
+import com.apollographql.apollo.ApolloCall
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.Operation
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.api.Query
+import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.exception.ApolloHttpException
+import com.apollographql.apollo.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
@@ -56,7 +56,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReadWriteLock
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -71,12 +70,9 @@ import kotlin.time.toDuration
 class QueryEngine(
     private val context: Context,
     private val showToasts: Boolean = false,
-    lock: ReadWriteLock? = null,
 ) {
     private val serverVersion = ServerPreferences(context).serverVersion
     private val client = StashClient.getApolloClient(context)
-
-    private val readLock = lock?.readLock()
 
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
@@ -84,8 +80,7 @@ class QueryEngine(
             val id = QUERY_ID.getAndIncrement()
             Log.v(TAG, "executeQuery $id $queryName")
             try {
-                readLock?.lock()
-                val response = query.execute()
+                val response = query.executeV3()
                 if (response.errors.isNullOrEmpty()) {
                     Log.v(TAG, "executeQuery $id $queryName successful")
                     return@withContext response
@@ -110,8 +105,6 @@ class QueryEngine(
                 showToast("Server query error ($queryName). Msg=${ex.message}, ${ex.cause?.message}")
                 Log.e(TAG, "ApolloException in $id $queryName", ex)
                 throw QueryException(id, "Apollo exception ($queryName)", ex)
-            } finally {
-                readLock?.unlock()
             }
         }
 
@@ -243,7 +236,7 @@ class QueryEngine(
 
     suspend fun getMovie(movieId: String): MovieData? {
         val query = client.query(FindMovieQuery(movieId))
-        return query.execute().data?.findMovie?.movieData
+        return query.executeV3().data?.findMovie?.movieData
     }
 
     suspend fun findMarkers(

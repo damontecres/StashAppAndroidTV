@@ -26,7 +26,11 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Query
+import com.chrynan.parcelable.core.getParcelable
+import com.chrynan.parcelable.core.putParcelable
+import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
@@ -36,14 +40,13 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
-import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashComparator
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.parcelable
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
@@ -186,8 +189,7 @@ class StashGridFragment() : Fragment() {
         columns: Int? = null,
         scrollToNextPage: Boolean = false,
     ) : this() {
-        this._filterArgs =
-            filterArgs.ensureParsed(FilterParser(StashServer.getCurrentServerVersion()))
+        this._filterArgs = filterArgs
         this.columns = columns
         this._currentSortAndDirection = _filterArgs.sortAndDirection
         this.scrollToNextPage = scrollToNextPage
@@ -196,7 +198,7 @@ class StashGridFragment() : Fragment() {
     constructor(
         dataType: DataType,
         findFilter: StashFindFilter? = null,
-        objectFilter: Any? = null,
+        objectFilter: StashDataFilter? = null,
         columns: Int? = null,
         scrollToNextPage: Boolean = false,
     ) : this(FilterArgs(dataType, null, findFilter, objectFilter), columns, scrollToNextPage)
@@ -237,7 +239,8 @@ class StashGridFragment() : Fragment() {
         if (savedInstanceState != null) {
             name = savedInstanceState.getString("name")
             sortButtonEnabled = savedInstanceState.getBoolean("sortButtonEnabled")
-            _filterArgs = savedInstanceState.getParcelable("_filterArgs")!!
+            _filterArgs =
+                savedInstanceState.getParcelable("_filterArgs", FilterArgs::class, 0, parcelable)!!
             Log.v(TAG, "sortAndDirection=${_filterArgs.sortAndDirection}")
         }
 
@@ -366,7 +369,7 @@ class StashGridFragment() : Fragment() {
         super.onSaveInstanceState(outState)
         outState.putInt("mSelectedPosition", mSelectedPosition)
         columns?.let { outState.putInt("columns", it) }
-        outState.putParcelable("_filterArgs", _filterArgs.with(currentSortAndDirection))
+        outState.putParcelable("_filterArgs", _filterArgs.with(currentSortAndDirection), parcelable)
         outState.putString("name", name)
         outState.putBoolean("sortButtonEnabled", sortButtonEnabled)
     }
@@ -406,9 +409,9 @@ class StashGridFragment() : Fragment() {
         val pageSize = mGridPresenter.numberOfColumns * 10
         val factory = DataSupplierFactory(ServerPreferences(requireContext()).serverVersion)
         val dataSupplier =
-            factory.create<Query.Data, Any, Query.Data>(_filterArgs.with(newSortAndDirection))
+            factory.create<Query.Data, StashData, Query.Data>(_filterArgs.with(newSortAndDirection))
         val pagingSource =
-            StashPagingSource<Query.Data, Any, Any, Query.Data>(
+            StashPagingSource<Query.Data, StashData, StashData, Query.Data>(
                 requireContext(),
                 pageSize,
                 dataSupplier = dataSupplier,

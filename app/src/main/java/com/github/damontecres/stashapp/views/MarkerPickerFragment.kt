@@ -11,7 +11,7 @@ import androidx.leanback.widget.picker.Picker
 import androidx.leanback.widget.picker.PickerColumn
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.MarkerActivity.MarkerDetailsViewModel
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput

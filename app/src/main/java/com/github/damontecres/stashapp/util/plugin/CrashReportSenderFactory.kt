@@ -40,7 +40,7 @@ class CrashReportSenderFactory : ReportSenderFactory {
                         args_map = mapOf(CompanionPlugin.CRASH_TASK_NAME to errorContent.toJSON()),
                     )
                 runBlocking {
-                    val response = client.mutation(mutation).execute()
+                    val response = client.mutation(mutation).executeV3()
                     if (response.hasErrors()) {
                         throw ReportSenderException(response.errors.toString())
                     }

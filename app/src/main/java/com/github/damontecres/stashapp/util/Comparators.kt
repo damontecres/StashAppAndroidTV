@@ -1,63 +1,31 @@
 package com.github.damontecres.stashapp.util
 
-import android.util.Log
 import androidx.leanback.widget.DiffCallback
 import androidx.recyclerview.widget.DiffUtil
-import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.PlaylistItem
 
-object StashComparator : DiffUtil.ItemCallback<Any>() {
+object StashComparator : DiffUtil.ItemCallback<StashData>() {
     override fun areItemsTheSame(
-        oldItem: Any,
-        newItem: Any,
+        oldItem: StashData,
+        newItem: StashData,
     ): Boolean {
-        Log.v("StashComparator", "areItemsTheSame")
-        if (oldItem.javaClass != newItem.javaClass) {
-            return false
-        } else {
-            return when (oldItem) {
-                is GalleryData -> (oldItem as GalleryData).id == (newItem as GalleryData).id
-                is ImageData -> (oldItem as ImageData).id == (newItem as ImageData).id
-                is MarkerData -> (oldItem as MarkerData).id == (newItem as MarkerData).id
-                is MovieData -> (oldItem as MovieData).id == (newItem as MovieData).id
-                is PerformerData -> (oldItem as PerformerData).id == (newItem as PerformerData).id
-                is SlimSceneData -> (oldItem as SlimSceneData).id == (newItem as SlimSceneData).id
-                is FullSceneData -> (oldItem as FullSceneData).id == (newItem as FullSceneData).id
-                is StudioData -> (oldItem as StudioData).id == (newItem as StudioData).id
-                is TagData -> (oldItem as TagData).id == (newItem as TagData).id
-                else -> throw IllegalStateException("Cannot compare ${oldItem::class.java.name} and ${newItem::class.java.name}")
-            }
-        }
+        return oldItem::class == newItem::class && oldItem.id == newItem.id
     }
 
     override fun areContentsTheSame(
-        oldItem: Any,
-        newItem: Any,
+        oldItem: StashData,
+        newItem: StashData,
     ): Boolean {
-        if (oldItem.javaClass != newItem.javaClass) {
-            return false
-        } else {
-            return when (oldItem) {
-                is GalleryData -> (oldItem as GalleryData) == (newItem as GalleryData)
-                is ImageData -> (oldItem as ImageData) == (newItem as ImageData)
-                is MarkerData -> (oldItem as MarkerData) == (newItem as MarkerData)
-                is MovieData -> (oldItem as MovieData) == (newItem as MovieData)
-                is PerformerData -> (oldItem as PerformerData) == (newItem as PerformerData)
-                is SlimSceneData -> (oldItem as SlimSceneData) == (newItem as SlimSceneData)
-                is FullSceneData -> (oldItem as FullSceneData) == (newItem as FullSceneData)
-                is StudioData -> (oldItem as StudioData) == (newItem as StudioData)
-                is TagData -> (oldItem as TagData) == (newItem as TagData)
-                else -> throw IllegalStateException("Cannot compare ${oldItem::class.java.name} and ${newItem::class.java.name}")
-            }
-        }
+        return oldItem::class == newItem::class && oldItem == newItem
     }
 }
 
@@ -314,6 +282,22 @@ object ImageDiffCallback : DiffCallback<ImageData>() {
         newItem: ImageData,
     ): Boolean {
         return oldItem == newItem
+    }
+}
+
+object StashDiffCallback : DiffCallback<StashData>() {
+    override fun areItemsTheSame(
+        oldItem: StashData,
+        newItem: StashData,
+    ): Boolean {
+        return StashComparator.areItemsTheSame(oldItem, newItem)
+    }
+
+    override fun areContentsTheSame(
+        oldItem: StashData,
+        newItem: StashData,
+    ): Boolean {
+        return StashComparator.areContentsTheSame(oldItem, newItem)
     }
 }
 

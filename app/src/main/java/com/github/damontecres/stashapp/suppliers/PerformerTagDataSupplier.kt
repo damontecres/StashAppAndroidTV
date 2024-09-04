@@ -1,6 +1,6 @@
 package com.github.damontecres.stashapp.suppliers
 
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.FindPerformerTagsQuery
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType

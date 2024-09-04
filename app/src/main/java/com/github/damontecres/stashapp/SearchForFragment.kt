@@ -18,16 +18,9 @@ import androidx.leanback.widget.RowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.actions.StashAction
-import com.github.damontecres.stashapp.api.fragment.GalleryData
-import com.github.damontecres.stashapp.api.fragment.ImageData
-import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
-import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.api.fragment.StudioData
-import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -100,8 +93,10 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     handleCreate(query)
                 }
-            } else {
+            } else if (item is StashData) {
                 returnId(item)
+            } else {
+                throw IllegalStateException("Unknown item: $item")
             }
         }
     }
@@ -133,28 +128,17 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
         }
     }
 
-    private fun returnId(item: Any?) {
+    private fun returnId(item: StashData?) {
         if (item != null) {
             val result = Intent()
-            val resultId =
-                when (dataType) {
-                    DataType.TAG -> (item as TagData).id
-                    DataType.SCENE -> (item as SlimSceneData).id
-                    DataType.MOVIE -> (item as MovieData).id
-                    DataType.STUDIO -> (item as StudioData).id
-                    DataType.PERFORMER -> (item as PerformerData).id
-                    DataType.MARKER -> (item as MarkerData).id
-                    DataType.IMAGE -> (item as ImageData).id
-                    DataType.GALLERY -> (item as GalleryData).id
-                }
             val currentServer = StashServer.getCurrentStashServer(requireContext())
             if (dataType in DATA_TYPE_SUGGESTIONS && currentServer != null) {
                 viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                     StashApplication.getDatabase().recentSearchItemsDao()
-                        .insert(RecentSearchItem(currentServer.url, resultId, dataType))
+                        .insert(RecentSearchItem(currentServer.url, item.id, dataType))
                 }
             }
-            result.putExtra(RESULT_ID_KEY, resultId)
+            result.putExtra(RESULT_ID_KEY, item.id)
             result.putExtra(ID_KEY, requireActivity().intent.getLongExtra("id", -1))
             requireActivity().setResult(Activity.RESULT_OK, result)
             requireActivity().finish()

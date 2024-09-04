@@ -52,5 +52,7 @@ google-services.json
 .externalNativeBuild
 .cxx
 
+.kotlin/
+
 # Local scripts
 local_scripts/

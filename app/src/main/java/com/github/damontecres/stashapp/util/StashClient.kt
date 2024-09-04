@@ -6,8 +6,8 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.network.http.DefaultHttpEngine
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.network.http.DefaultHttpEngine
 import com.github.damontecres.stashapp.R
 import okhttp3.CacheControl
 import okhttp3.Call

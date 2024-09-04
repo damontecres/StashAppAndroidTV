@@ -12,6 +12,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import com.chrynan.parcelable.core.getParcelableExtra
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
@@ -20,6 +21,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
+import com.github.damontecres.stashapp.util.parcelable
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -74,7 +76,8 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             }
         }
 
-        val startingFilter = intent.getParcelableExtra<FilterArgs>(INTENT_FILTER_ARGS)!!
+        val startingFilter =
+            intent.getParcelableExtra(INTENT_FILTER_ARGS, FilterArgs::class, 0, parcelable)!!
         if (savedInstanceState == null) {
             setup(startingFilter, first = true)
         }
@@ -121,7 +124,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         val filterParser = FilterParser(ServerPreferences(context).serverVersion)
         val savedFilters =
             QueryEngine(this).getSavedFilters(dataType)
-                .map { it.toFilterArgs().ensureParsed(filterParser) }
+                .map { it.toFilterArgs(filterParser) }
         if (savedFilters.isEmpty()) {
             filterButton.setOnClickListener {
                 Toast.makeText(

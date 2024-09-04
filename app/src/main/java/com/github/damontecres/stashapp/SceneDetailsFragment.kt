@@ -74,8 +74,8 @@ import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.math.roundToInt
 
 /**
@@ -83,6 +83,8 @@ import kotlin.math.roundToInt
  * It shows a detailed view of video and its metadata plus related videos.
  */
 class SceneDetailsFragment : DetailsSupportFragment() {
+    private var pendingJob: Job? = null
+
     private var mSelectedMovie: FullSceneData? = null
 
     private lateinit var queryEngine: QueryEngine
@@ -187,9 +189,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
-        val lock = ReentrantReadWriteLock()
-        queryEngine = QueryEngine(requireContext(), lock = lock)
-        mutationEngine = MutationEngine(requireContext(), lock = lock)
+        queryEngine = QueryEngine(requireContext())
+        mutationEngine = MutationEngine(requireContext())
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         resultLauncher =
@@ -257,6 +258,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 ),
             ),
         ) {
+            pendingJob?.join()
+            pendingJob = null
             mSelectedMovie = queryEngine.getScene(sceneId)
             if (mSelectedMovie != null) {
                 mPerformersAdapter.presenterSelector =
@@ -564,112 +567,116 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 if (id == StashAction.ADD_TAG.id) {
                     val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
                     Log.d(TAG, "Adding tag $tagId to scene ${mSelectedMovie?.id}")
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception setting tags", ex)
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to add tag: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                        },
-                    ) {
-                        val newTag = tagsRowManager.add(tagId)
-                        if (newTag != null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Added tag '${newTag.name}' to scene",
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                    pendingJob =
+                        viewLifecycleOwner.lifecycleScope.launch(
+                            CoroutineExceptionHandler { _, ex ->
+                                Log.e(TAG, "Exception setting tags", ex)
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to add tag: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            },
+                        ) {
+                            val newTag = tagsRowManager.add(tagId)
+                            if (newTag != null) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Added tag '${newTag.name}' to scene",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
                         }
-                    }
                 } else if (id == StashAction.ADD_PERFORMER.id) {
                     val performerId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
                     Log.d(TAG, "Adding performer $performerId to scene ${mSelectedMovie?.id}")
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception setting performers", ex)
+                    pendingJob =
+                        viewLifecycleOwner.lifecycleScope.launch(
+                            CoroutineExceptionHandler { _, ex ->
+                                Log.e(TAG, "Exception setting performers", ex)
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to add performer: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            },
+                        ) {
+                            val newPerformer = performersRowManager.add(performerId)
+                            if (newPerformer != null) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Added performer '${newPerformer.name}' to scene",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        }
+                } else if (id == StashAction.CREATE_MARKER.id) {
+                    pendingJob =
+                        viewLifecycleOwner.lifecycleScope.launch(
+                            CoroutineExceptionHandler { _, ex ->
+                                Log.e(TAG, "Exception creating marker", ex)
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to create marker: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            },
+                        ) {
+                            val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
+                            Log.d(
+                                TAG,
+                                "Adding marker at $position with tagId=$tagId to scene ${mSelectedMovie?.id}",
+                            )
+                            val newMarker =
+                                MutationEngine(requireContext()).createMarker(
+                                    mSelectedMovie!!.id,
+                                    position,
+                                    tagId,
+                                )!!
+                            val index =
+                                markersAdapter.unmodifiableList<MarkerData>()
+                                    .indexOfFirst {
+                                        newMarker.seconds < it.seconds
+                                    }.coerceAtLeast(0)
+                            markersAdapter.add(index, newMarker)
+                            if (mAdapter.lookup(MARKER_POS) == null) {
+                                mAdapter.set(
+                                    MARKER_POS,
+                                    ListRow(
+                                        HeaderItem(getString(R.string.stashapp_markers)),
+                                        markersAdapter,
+                                    ),
+                                )
+                            }
                             Toast.makeText(
                                 requireContext(),
-                                "Failed to add performer: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                        },
-                    ) {
-                        val newPerformer = performersRowManager.add(performerId)
-                        if (newPerformer != null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Added performer '${newPerformer.name}' to scene",
+                                "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
                                 Toast.LENGTH_SHORT,
                             ).show()
                         }
-                    }
-                } else if (id == StashAction.CREATE_MARKER.id) {
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception creating marker", ex)
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to create marker: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                        },
-                    ) {
-                        val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
-                        Log.d(
-                            TAG,
-                            "Adding marker at $position with tagId=$tagId to scene ${mSelectedMovie?.id}",
-                        )
-                        val newMarker =
-                            MutationEngine(requireContext()).createMarker(
-                                mSelectedMovie!!.id,
-                                position,
-                                tagId,
-                            )!!
-                        val index =
-                            markersAdapter.unmodifiableList<MarkerData>()
-                                .indexOfFirst {
-                                    newMarker.seconds < it.seconds
-                                }.coerceAtLeast(0)
-                        markersAdapter.add(index, newMarker)
-                        if (mAdapter.lookup(MARKER_POS) == null) {
-                            mAdapter.set(
-                                MARKER_POS,
-                                ListRow(
-                                    HeaderItem(getString(R.string.stashapp_markers)),
-                                    markersAdapter,
-                                ),
-                            )
-                        }
-                        Toast.makeText(
-                            requireContext(),
-                            "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    }
                 } else if (id == StashAction.SET_STUDIO.id) {
                     val studioId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
                     Log.d(TAG, "Setting studio to $studioId to scene ${mSelectedMovie?.id}")
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception setting studio", ex)
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to set studio: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                        },
-                    ) {
-                        val newStudio = studioAdapter.add(studioId)
-                        if (newStudio != null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Set studio to '${newStudio.name}'",
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                    pendingJob =
+                        viewLifecycleOwner.lifecycleScope.launch(
+                            CoroutineExceptionHandler { _, ex ->
+                                Log.e(TAG, "Exception setting studio", ex)
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Failed to set studio: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            },
+                        ) {
+                            val newStudio = studioAdapter.add(studioId)
+                            if (newStudio != null) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Set studio to '${newStudio.name}'",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
                         }
-                    }
                 } else {
                     val localPosition = data.getLongExtra(POSITION_RESULT_ARG, -1)
                     if (localPosition >= 0) {

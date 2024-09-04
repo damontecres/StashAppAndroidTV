@@ -4,7 +4,7 @@ repositories {
 
 plugins {
 //    `kotlin-dsl`
-    kotlin("jvm") version "1.9.23"
+    kotlin("jvm") version "2.0.0"
 }
 
 java {
@@ -17,5 +17,5 @@ kotlin {
 
 dependencies {
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
 }

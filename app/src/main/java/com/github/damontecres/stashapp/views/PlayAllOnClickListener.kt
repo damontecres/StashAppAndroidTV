@@ -9,6 +9,7 @@ import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.playback.PlaylistActivity
 import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.putExtra
 
 class PlayAllOnClickListener(
     private val context: Context,

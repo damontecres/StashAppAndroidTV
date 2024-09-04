@@ -61,8 +61,8 @@ import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.concurrent.locks.ReentrantReadWriteLock
 
 class MarkerActivity : FragmentActivity() {
     private val viewModel by viewModels<MarkerDetailsViewModel>()
@@ -98,6 +98,8 @@ class MarkerActivity : FragmentActivity() {
             private const val TAG_POS = PRIMARY_TAG_POS + 1
             private const val ACTIONS_POS = TAG_POS + 1
         }
+
+        private var pendingJob: Job? = null
 
         private val viewModel by activityViewModels<MarkerDetailsViewModel>()
 
@@ -174,9 +176,8 @@ class MarkerActivity : FragmentActivity() {
 
             primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
 
-            val lock = ReentrantReadWriteLock()
-            queryEngine = QueryEngine(requireContext(), lock = lock)
-            mutationEngine = MutationEngine(requireContext(), lock = lock)
+            queryEngine = QueryEngine(requireContext())
+            mutationEngine = MutationEngine(requireContext())
 
             resultLauncher =
                 registerForActivityResult(
@@ -227,6 +228,8 @@ class MarkerActivity : FragmentActivity() {
             )
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                pendingJob?.join()
+                pendingJob = null
                 val marker = viewModel.marker.value!!
                 val sceneData = queryEngine.getScene(marker.sceneId)!!
                 val markerData = sceneData.scene_markers.first { it.id == marker.id }
@@ -351,46 +354,48 @@ class MarkerActivity : FragmentActivity() {
                     if (id == StashAction.ADD_TAG.id) {
                         val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
                         Log.d(TAG, "Adding tag $tagId to scene marker")
-                        viewLifecycleOwner.lifecycleScope.launch(
-                            StashCoroutineExceptionHandler { ex ->
-                                Toast.makeText(
-                                    requireContext(),
-                                    "Failed to add tag: ${ex.message}",
-                                    Toast.LENGTH_LONG,
-                                )
-                            },
-                        ) {
-                            val newTagData = tagsRowManager.add(tagId)
-                            if (newTagData != null) {
-                                Toast.makeText(
-                                    requireContext(),
-                                    "Added tag '${newTagData.name}' to marker",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
-                        }
-                    } else if (id == REPLACE_PRIMARY_ID) {
-                        val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
-                        Log.d(TAG, "Setting primary tag to $tagId to scene marker")
-                        if (tagId != null) {
+                        pendingJob =
                             viewLifecycleOwner.lifecycleScope.launch(
                                 StashCoroutineExceptionHandler { ex ->
                                     Toast.makeText(
                                         requireContext(),
-                                        "Failed to set primary tag: ${ex.message}",
+                                        "Failed to add tag: ${ex.message}",
                                         Toast.LENGTH_LONG,
                                     )
                                 },
                             ) {
-                                val newPrimaryTag = primaryTagRowManager.add(tagId)
-                                if (newPrimaryTag != null) {
+                                val newTagData = tagsRowManager.add(tagId)
+                                if (newTagData != null) {
                                     Toast.makeText(
                                         requireContext(),
-                                        "Changed primary tag to '${newPrimaryTag.name}'",
-                                        Toast.LENGTH_LONG,
+                                        "Added tag '${newTagData.name}' to marker",
+                                        Toast.LENGTH_SHORT,
                                     ).show()
                                 }
                             }
+                    } else if (id == REPLACE_PRIMARY_ID) {
+                        val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
+                        Log.d(TAG, "Setting primary tag to $tagId to scene marker")
+                        if (tagId != null) {
+                            pendingJob =
+                                viewLifecycleOwner.lifecycleScope.launch(
+                                    StashCoroutineExceptionHandler { ex ->
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Failed to set primary tag: ${ex.message}",
+                                            Toast.LENGTH_LONG,
+                                        )
+                                    },
+                                ) {
+                                    val newPrimaryTag = primaryTagRowManager.add(tagId)
+                                    if (newPrimaryTag != null) {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Changed primary tag to '${newPrimaryTag.name}'",
+                                            Toast.LENGTH_LONG,
+                                        ).show()
+                                    }
+                                }
                         }
                     }
                 }

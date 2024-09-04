@@ -1,14 +1,15 @@
 package com.github.damontecres.stashapp.suppliers
 
 import android.util.Log
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.api.fragment.StashData
 
 /**
  * Wraps a StashPagingSource to allow for accessing any item position in the backing filter
  *
  * This class keeps one page of data available in memory and then only fetches a different page if required
  */
-class StashSparseFilterFetcher<T : Query.Data, D : Any>(
+class StashSparseFilterFetcher<T : Query.Data, D : StashData>(
     val source: StashPagingSource<T, D, D, *>,
     val pageSize: Int = 25,
 ) {

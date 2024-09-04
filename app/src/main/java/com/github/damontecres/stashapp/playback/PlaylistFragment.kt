@@ -13,9 +13,10 @@ import androidx.media3.common.Player.Listener
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
@@ -28,7 +29,7 @@ import kotlinx.coroutines.launch
  * A [PlaybackFragment] that manages and plays a playlist/queue of videos
  */
 @OptIn(UnstableApi::class)
-abstract class PlaylistFragment<T : Query.Data, D : Any, C : Query.Data> :
+abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
     PlaybackFragment() {
     private val viewModel: PlaylistViewModel by activityViewModels()
 

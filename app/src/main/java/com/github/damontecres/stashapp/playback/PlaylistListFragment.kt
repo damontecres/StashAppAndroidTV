@@ -17,11 +17,12 @@ import androidx.media3.common.C
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.PlaylistItem
 import com.github.damontecres.stashapp.data.toPlayListItem
 import com.github.damontecres.stashapp.presenters.PlaylistItemPresenter
@@ -37,7 +38,8 @@ import kotlinx.coroutines.launch
 /**
  * Shows a playlist as a scrollable list of [PlaylistItem]s
  */
-class PlaylistListFragment<T : Query.Data, D : Any, Count : Query.Data> : Fragment(R.layout.playlist_list) {
+class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
+    Fragment(R.layout.playlist_list) {
     private val viewModel: PlaylistViewModel by activityViewModels()
 
     private val mGridPresenter: VerticalGridPresenter = VerticalGridPresenter()
