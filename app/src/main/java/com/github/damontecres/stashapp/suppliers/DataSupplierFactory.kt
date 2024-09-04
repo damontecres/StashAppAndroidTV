@@ -35,49 +35,49 @@ class DataSupplierFactory(val serverVersion: Version) {
                 DataType.SCENE ->
                     SceneDataSupplier(
                         args.findFilter?.toFindFilterType(),
-                        filterParser.convertSceneObjectFilter(args.objectFilter),
+                        filterParser.convertSceneFilterType(args.objectFilter),
                     )
 
                 DataType.TAG ->
                     TagDataSupplier(
                         args.findFilter?.toFindFilterType(),
-                        filterParser.convertTagObjectFilter(args.objectFilter),
+                        filterParser.convertTagFilterType(args.objectFilter),
                     )
 
                 DataType.STUDIO ->
                     StudioDataSupplier(
                         args.findFilter?.toFindFilterType(),
-                        filterParser.convertStudioObjectFilter(args.objectFilter),
+                        filterParser.convertStudioFilterType(args.objectFilter),
                     )
 
                 DataType.MARKER ->
                     MarkerDataSupplier(
                         args.findFilter?.toFindFilterType(),
-                        filterParser.convertMarkerObjectFilter(args.objectFilter),
+                        filterParser.convertSceneMarkerFilterType(args.objectFilter),
                     )
 
                 DataType.IMAGE ->
                     ImageDataSupplier(
                         args.findFilter?.toFindFilterType(),
-                        filterParser.convertImageObjectFilter(args.objectFilter),
+                        filterParser.convertImageFilterType(args.objectFilter),
                     )
 
                 DataType.GALLERY ->
                     GalleryDataSupplier(
                         args.findFilter?.toFindFilterType(),
-                        filterParser.convertGalleryObjectFilter(args.objectFilter),
+                        filterParser.convertGalleryFilterType(args.objectFilter),
                     )
 
                 DataType.PERFORMER ->
                     PerformerDataSupplier(
                         args.findFilter?.toFindFilterType(),
-                        filterParser.convertPerformerObjectFilter(args.objectFilter),
+                        filterParser.convertPerformerFilterType(args.objectFilter),
                     )
 
                 DataType.MOVIE ->
                     MovieDataSupplier(
                         args.findFilter?.toFindFilterType(),
-                        filterParser.convertMovieObjectFilter(args.objectFilter),
+                        filterParser.convertMovieFilterType(args.objectFilter),
                     )
             } as StashPagingSource.DataSupplier<T, D, C>
         }
@@ -168,14 +168,14 @@ fun SavedFilterData.toFilterArgs(filterParser: FilterParser): FilterArgs {
         }
     val objectFilter =
         when (dataType) {
-            DataType.TAG -> filterParser.convertTagObjectFilter(object_filter)
-            DataType.STUDIO -> filterParser.convertStudioObjectFilter(object_filter)
-            DataType.MOVIE -> filterParser.convertMovieObjectFilter(object_filter)
-            DataType.SCENE -> filterParser.convertSceneObjectFilter(object_filter)
-            DataType.IMAGE -> filterParser.convertImageObjectFilter(object_filter)
-            DataType.GALLERY -> filterParser.convertGalleryObjectFilter(object_filter)
-            DataType.MARKER -> filterParser.convertMarkerObjectFilter(object_filter)
-            DataType.PERFORMER -> filterParser.convertPerformerObjectFilter(object_filter)
+            DataType.TAG -> filterParser.convertTagFilterType(object_filter)
+            DataType.STUDIO -> filterParser.convertStudioFilterType(object_filter)
+            DataType.MOVIE -> filterParser.convertMovieFilterType(object_filter)
+            DataType.SCENE -> filterParser.convertSceneFilterType(object_filter)
+            DataType.IMAGE -> filterParser.convertImageFilterType(object_filter)
+            DataType.GALLERY -> filterParser.convertGalleryFilterType(object_filter)
+            DataType.MARKER -> filterParser.convertSceneMarkerFilterType(object_filter)
+            DataType.PERFORMER -> filterParser.convertPerformerFilterType(object_filter)
         }
     return FilterArgs(dataType, name.ifBlank { null }, findFilter, objectFilter)
 }

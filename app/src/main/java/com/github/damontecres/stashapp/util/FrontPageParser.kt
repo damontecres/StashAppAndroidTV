@@ -185,7 +185,7 @@ class FrontPageParser(
                             when (filter.dataType) {
                                 DataType.SCENE -> {
                                     val sceneFilter =
-                                        filterParser.convertSceneObjectFilter(objectFilter)
+                                        filterParser.convertSceneFilterType(objectFilter)
                                     queryEngine.findScenes(
                                         findFilter,
                                         sceneFilter,
@@ -195,7 +195,7 @@ class FrontPageParser(
 
                                 DataType.STUDIO -> {
                                     val studioFilter =
-                                        filterParser.convertStudioObjectFilter(objectFilter)
+                                        filterParser.convertStudioFilterType(objectFilter)
                                     queryEngine.findStudios(
                                         findFilter,
                                         studioFilter,
@@ -205,7 +205,7 @@ class FrontPageParser(
 
                                 DataType.PERFORMER -> {
                                     val performerFilter =
-                                        filterParser.convertPerformerObjectFilter(objectFilter)
+                                        filterParser.convertPerformerFilterType(objectFilter)
 
                                     queryEngine.findPerformers(
                                         findFilter,
@@ -216,14 +216,14 @@ class FrontPageParser(
 
                                 DataType.TAG -> {
                                     val tagFilter =
-                                        filterParser.convertTagObjectFilter(objectFilter)
+                                        filterParser.convertTagFilterType(objectFilter)
 
                                     queryEngine.findTags(findFilter, tagFilter, useRandom = false)
                                 }
 
                                 DataType.IMAGE -> {
                                     val imageFilter =
-                                        filterParser.convertImageObjectFilter(objectFilter)
+                                        filterParser.convertImageFilterType(objectFilter)
                                     queryEngine.findImages(
                                         findFilter,
                                         imageFilter,
@@ -233,7 +233,7 @@ class FrontPageParser(
 
                                 DataType.GALLERY -> {
                                     val galleryFilter =
-                                        filterParser.convertGalleryObjectFilter(objectFilter)
+                                        filterParser.convertGalleryFilterType(objectFilter)
                                     queryEngine.findGalleries(
                                         findFilter,
                                         galleryFilter,
@@ -243,7 +243,7 @@ class FrontPageParser(
 
                                 DataType.MOVIE -> {
                                     val movieFilter =
-                                        filterParser.convertMovieObjectFilter(objectFilter)
+                                        filterParser.convertMovieFilterType(objectFilter)
                                     queryEngine.findMovies(
                                         findFilter,
                                         movieFilter,
@@ -253,7 +253,7 @@ class FrontPageParser(
 
                                 DataType.MARKER -> {
                                     val markerFilter =
-                                        filterParser.convertMarkerObjectFilter(objectFilter)
+                                        filterParser.convertSceneMarkerFilterType(objectFilter)
                                     queryEngine.findMarkers(
                                         findFilter,
                                         markerFilter,
