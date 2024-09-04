@@ -31,8 +31,8 @@ enum class DataType(
     ),
     MOVIE(
         FilterMode.MOVIES,
-        R.string.stashapp_movie,
-        R.string.stashapp_movies,
+        R.string.stashapp_group,
+        R.string.stashapp_groups,
         R.string.fa_film,
         SortAndDirection.NAME_ASC,
         MOVIE_SORT_OPTIONS,

@@ -50,7 +50,7 @@
 
         <Button
             android:id="@+id/movies_button"
-            android:text="@string/stashapp_movies"
+            android:text="@string/stashapp_groups"
             style="@style/TitleBarButton" />
 
         <Button

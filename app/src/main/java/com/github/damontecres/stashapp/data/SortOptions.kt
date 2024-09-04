@@ -30,7 +30,7 @@ val SCENE_SORT_OPTIONS =
         SortOption("interactive_speed", R.string.stashapp_interactive_speed),
         SortOption("last_o_at", R.string.stashapp_last_o_at, Version.V0_26_0),
         SortOption("last_played_at", R.string.stashapp_last_played_at),
-        SortOption("movie_scene_number", R.string.stashapp_movie_scene_number),
+        SortOption("movie_scene_number", R.string.stashapp_group_scene_number),
         SortOption("o_counter", R.string.stashapp_o_count),
         SortOption("organized", R.string.stashapp_organized),
         SortOption("path", R.string.stashapp_path),
