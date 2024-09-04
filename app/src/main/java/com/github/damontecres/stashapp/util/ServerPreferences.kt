@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import com.github.damontecres.stashapp.api.ConfigurationQuery
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 
 /**
@@ -167,7 +169,29 @@ class ServerPreferences(private val context: Context) {
                     PREF_INTERFACE_STUDIOS_AS_TEXT,
                     config.configuration.`interface`.showStudioAsText ?: false,
                 )
+
+                val defaultFilters = ui.getCaseInsensitive("defaultFilters")
+                defaultFilters?.let { refreshDefaultFilters(it as Map<String, *>) }
             }
+        }
+    }
+
+    private fun refreshDefaultFilters(defaultFilters: Map<String, *>) {
+        val filterParser = FilterParser(serverVersion)
+        DataType.entries.forEach { dataType ->
+            val filterMap =
+                defaultFilters.getCaseInsensitive(context.getString(dataType.pluralStringId)) as Map<String, *>?
+            val filter =
+                if (filterMap != null) {
+                    val findFilterMap = filterMap.getCaseInsensitive("find_filter")
+                    val objectFilterMap = filterMap.getCaseInsensitive("object_filter")
+                    val findFilter = filterParser.convertFindFilter(findFilterMap)
+                    val objectFilter = filterParser.convertFilter(dataType, objectFilterMap)
+                    FilterArgs(dataType, findFilter = findFilter, objectFilter = objectFilter)
+                } else {
+                    FilterArgs(dataType)
+                }
+            DEFAULT_FILTERS[dataType] = filter
         }
     }
 
@@ -219,5 +243,7 @@ class ServerPreferences(private val context: Context) {
 
         const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
         const val PREF_INTERFACE_STUDIOS_AS_TEXT = "interface.showStudioAsText"
+
+        val DEFAULT_FILTERS = mutableMapOf<DataType, FilterArgs>()
     }
 }

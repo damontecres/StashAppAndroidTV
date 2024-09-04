@@ -9,30 +9,22 @@ import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RelativeLayout
+import android.widget.Toast
 import androidx.core.content.ContextCompat.startActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
-import androidx.lifecycle.findViewTreeLifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.suppliers.toFilterArgs
-import com.github.damontecres.stashapp.util.FilterParser
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putExtra
-import kotlinx.coroutines.launch
 
 class MainTitleView(context: Context, attrs: AttributeSet) :
     RelativeLayout(context, attrs),
@@ -56,6 +48,8 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
                 return searchButton
             }
         }
+
+    private val defaultFilters = mutableMapOf<DataType, FilterArgs>()
 
     init {
         val onFocusChangeListener = StashOnFocusChangeListener(context)
@@ -154,25 +148,19 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
 
     private class ClickListener(private val dataType: DataType) : OnClickListener {
         override fun onClick(v: View) {
-            v.findViewTreeLifecycleOwner()?.lifecycleScope?.launch(
-                StashCoroutineExceptionHandler(true),
-            ) {
-                val queryEngine = QueryEngine(v.context)
-                val filterParser = FilterParser(StashServer.getCurrentServerVersion())
-                val defaultFilter =
-                    queryEngine.getDefaultFilter(dataType)
-                        ?.toFilterArgs(filterParser)
-                        ?.withResolvedRandom()
-                Log.v(TAG, "Got default filter for $dataType: ${defaultFilter != null}")
-                val filterArgs =
-                    defaultFilter ?: FilterArgs(
-                        dataType = dataType,
-                        findFilter = StashFindFilter(dataType.defaultSort),
-                    )
+            val filter = ServerPreferences.DEFAULT_FILTERS[dataType]
+            if (filter != null) {
                 val intent =
                     Intent(v.context, FilterListActivity::class.java)
-                        .putExtra(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
+                        .putExtra(FilterListActivity.INTENT_FILTER_ARGS, filter)
                 startActivity(v.context, intent, null)
+            } else {
+                Log.w(TAG, "ServerPreferences.DEFAULT_FILTERS is missing $dataType")
+                Toast.makeText(
+                    v.context,
+                    "Default filter not found for $dataType",
+                    Toast.LENGTH_LONG,
+                ).show()
             }
         }
     }

@@ -23,11 +23,16 @@ import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.StashFindFilter
 
 class FilterParser(private val serverVersion: Version) {
     companion object {
@@ -303,6 +308,43 @@ class FilterParser(private val serverVersion: Version) {
             }
         } else {
             null
+        }
+    }
+
+    fun convertFindFilter(f: Any?): StashFindFilter? {
+        return if (f is StashFindFilter) {
+            f
+        } else if (f == null) {
+            null
+        } else {
+            val filter = f as Map<String, String>
+            val sort = filter.getCaseInsensitive("sort")
+            val direction =
+                SortDirectionEnum.entries.find { it.name == (filter.getCaseInsensitive("direction")) }
+                    ?: SortDirectionEnum.ASC
+            val sortAndDirection =
+                if (sort.isNotNullOrBlank()) {
+                    SortAndDirection(sort, direction)
+                } else {
+                    null
+                }
+            StashFindFilter(filter.getCaseInsensitive("q"), sortAndDirection)
+        }
+    }
+
+    fun convertFilter(
+        dataType: DataType,
+        f: Any?,
+    ): StashDataFilter? {
+        return when (dataType) {
+            DataType.TAG -> convertTagFilterType(f)
+            DataType.STUDIO -> convertStudioFilterType(f)
+            DataType.MOVIE -> convertMovieFilterType(f)
+            DataType.SCENE -> convertSceneFilterType(f)
+            DataType.IMAGE -> convertImageFilterType(f)
+            DataType.GALLERY -> convertGalleryFilterType(f)
+            DataType.MARKER -> convertSceneMarkerFilterType(f)
+            DataType.PERFORMER -> convertPerformerFilterType(f)
         }
     }
 

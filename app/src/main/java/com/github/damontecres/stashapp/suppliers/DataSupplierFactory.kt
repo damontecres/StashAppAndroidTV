@@ -166,16 +166,6 @@ fun SavedFilterData.toFilterArgs(filterParser: FilterParser): FilterArgs {
         } else {
             StashFindFilter(null, dataType.defaultSort)
         }
-    val objectFilter =
-        when (dataType) {
-            DataType.TAG -> filterParser.convertTagFilterType(object_filter)
-            DataType.STUDIO -> filterParser.convertStudioFilterType(object_filter)
-            DataType.MOVIE -> filterParser.convertMovieFilterType(object_filter)
-            DataType.SCENE -> filterParser.convertSceneFilterType(object_filter)
-            DataType.IMAGE -> filterParser.convertImageFilterType(object_filter)
-            DataType.GALLERY -> filterParser.convertGalleryFilterType(object_filter)
-            DataType.MARKER -> filterParser.convertSceneMarkerFilterType(object_filter)
-            DataType.PERFORMER -> filterParser.convertPerformerFilterType(object_filter)
-        }
+    val objectFilter = filterParser.convertFilter(dataType, object_filter)
     return FilterArgs(dataType, name.ifBlank { null }, findFilter, objectFilter)
 }
