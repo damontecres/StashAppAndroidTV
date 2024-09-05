@@ -91,10 +91,13 @@ class DataSupplierFactory(val serverVersion: Version) {
  */
 @Serializable
 sealed class DataSupplierOverride {
+    @Serializable
     data class PerformerTags(val performerId: String) : DataSupplierOverride()
 
+    @Serializable
     data class GalleryPerformer(val galleryId: String) : DataSupplierOverride()
 
+    @Serializable
     data class GalleryTag(val galleryId: String) : DataSupplierOverride()
 }
 
