@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.WindowManager
+import androidx.activity.addCallback
 import androidx.annotation.OptIn
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
@@ -60,6 +61,9 @@ class PlaybackActivity : FragmentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         maxPlayPercent =
             PreferenceManager.getDefaultSharedPreferences(this).getInt("maxPlayPercent", 98)
+        onBackPressedDispatcher.addCallback(this, true) {
+            setResultAndFinish()
+        }
     }
 
     @OptIn(UnstableApi::class)
@@ -72,24 +76,22 @@ class PlaybackActivity : FragmentActivity() {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-
+    private fun setResultAndFinish() {
         // Return the video's current position to the previous Activity
-        val sceneDuration = scene.duration ?: Double.MIN_VALUE
+        val sceneDuration = scene.duration
         val position = fragment!!.currentVideoPosition
 
-        val playedPercent = (position.toMilliseconds / sceneDuration) * 100
         val positionToSave =
-            if (playedPercent >= maxPlayPercent) {
+            if (sceneDuration == null || (position.toMilliseconds / sceneDuration) * 100 < maxPlayPercent) {
+                position
+            } else {
                 Log.v(
                     PlaybackSceneFragment.TAG,
-                    "Setting position to 0 since $playedPercent >= $maxPlayPercent",
+                    "Setting position to 0 since played percent (${(position.toMilliseconds / sceneDuration) * 100} >= $maxPlayPercent",
                 )
                 0L
-            } else {
-                position
             }
+
         Log.d(
             TAG,
             "Video playback ending, currentVideoPosition=$position, positionToSave=$positionToSave",
