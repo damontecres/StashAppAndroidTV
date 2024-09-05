@@ -15,9 +15,9 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
-import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
@@ -61,7 +61,7 @@ class PerformerFragment : TabbedFragment() {
                     PagerEntry(DataType.SCENE),
                     PagerEntry(DataType.GALLERY),
                     PagerEntry(DataType.IMAGE),
-                    PagerEntry(DataType.MOVIE),
+                    PagerEntry(DataType.GROUP),
                     PagerEntry(DataType.TAG),
                     PagerEntry("Appears With", DataType.PERFORMER),
                 ),
@@ -105,8 +105,8 @@ class PerformerFragment : TabbedFragment() {
 
                     4 -> {
                         StashGridFragment(
-                            dataType = DataType.MOVIE,
-                            objectFilter = MovieFilterType(performers = performers),
+                            dataType = DataType.GROUP,
+                            objectFilter = GroupFilterType(performers = performers),
                         )
                     }
 

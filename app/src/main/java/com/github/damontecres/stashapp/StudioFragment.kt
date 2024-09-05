@@ -4,9 +4,9 @@ import androidx.fragment.app.FragmentManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
-import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
@@ -29,7 +29,7 @@ class StudioFragment : TabbedFragment() {
                 StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY),
                 StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE),
                 StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER),
-                StashFragmentPagerAdapter.PagerEntry(DataType.MOVIE),
+                StashFragmentPagerAdapter.PagerEntry(DataType.GROUP),
                 StashFragmentPagerAdapter.PagerEntry(DataType.TAG),
                 StashFragmentPagerAdapter.PagerEntry(
                     getString(R.string.stashapp_subsidiary_studios),
@@ -75,8 +75,8 @@ class StudioFragment : TabbedFragment() {
                 )
             } else if (position == 4) {
                 StashGridFragment(
-                    dataType = DataType.MOVIE,
-                    objectFilter = MovieFilterType(studios = studios),
+                    dataType = DataType.GROUP,
+                    objectFilter = GroupFilterType(studios = studios),
                 )
             } else if (position == 5) {
                 StashGridFragment(

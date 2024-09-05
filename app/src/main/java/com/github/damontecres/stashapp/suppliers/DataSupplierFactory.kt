@@ -29,7 +29,7 @@ class DataSupplierFactory(val serverVersion: Version) {
                 is DataSupplierOverride.PerformerTags -> PerformerTagDataSupplier(args.override.performerId)
                 is DataSupplierOverride.GalleryPerformer -> GalleryPerformerDataSupplier(args.override.galleryId)
                 is DataSupplierOverride.GalleryTag -> GalleryTagDataSupplier(args.override.galleryId)
-                is DataSupplierOverride.MovieTags -> MovieTagDataSupplier(args.override.movieId)
+                is DataSupplierOverride.GroupTags -> GroupTagDataSupplier(args.override.groupId)
                 is DataSupplierOverride.StudioTags -> StudioTagDataSupplier(args.override.studioId)
             } as StashPagingSource.DataSupplier<T, D, C>
         } else {
@@ -76,10 +76,10 @@ class DataSupplierFactory(val serverVersion: Version) {
                         filterParser.convertPerformerFilterType(args.objectFilter),
                     )
 
-                DataType.MOVIE ->
-                    MovieDataSupplier(
+                DataType.GROUP ->
+                    GroupDataSupplier(
                         args.findFilter?.toFindFilterType(),
-                        filterParser.convertMovieFilterType(args.objectFilter),
+                        filterParser.convertGroupFilterType(args.objectFilter),
                     )
             } as StashPagingSource.DataSupplier<T, D, C>
         }
@@ -97,7 +97,7 @@ sealed interface DataSupplierOverride {
     data class PerformerTags(val performerId: String) : DataSupplierOverride
 
     @Serializable
-    data class MovieTags(val movieId: String) : DataSupplierOverride
+    data class GroupTags(val groupId: String) : DataSupplierOverride
 
     @Serializable
     data class StudioTags(val studioId: String) : DataSupplierOverride

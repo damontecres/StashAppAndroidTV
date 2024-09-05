@@ -18,9 +18,9 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
@@ -163,7 +163,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 .addClassPresenter(SlimSceneData::class.java, ScenePresenter())
                 .addClassPresenter(StudioData::class.java, StudioPresenter())
                 .addClassPresenter(TagData::class.java, TagPresenter())
-                .addClassPresenter(MovieData::class.java, MoviePresenter())
+                .addClassPresenter(GroupData::class.java, GroupPresenter())
                 .addClassPresenter(FilterArgs::class.java, FilterArgsPresenter())
                 .addClassPresenter(StashAction::class.java, ActionPresenter())
                 .addClassPresenter(MarkerData::class.java, MarkerPresenter())

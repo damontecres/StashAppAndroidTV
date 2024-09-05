@@ -89,9 +89,9 @@
         },
         "is_missing": {
           "modifier": "EQUALS",
-          "value": "movie"
+          "value": "group"
         },
-        "movies": {
+        "groups": {
           "modifier": "NOT_NULL",
           "value": []
         },

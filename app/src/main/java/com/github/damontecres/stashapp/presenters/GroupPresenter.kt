@@ -4,17 +4,17 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation
-import com.github.damontecres.stashapp.api.fragment.MovieData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.StashGlide
 import java.security.MessageDigest
 import java.util.EnumMap
 
-class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
-    StashPresenter<MovieData>(callback) {
+class GroupPresenter(callback: LongClickCallBack<GroupData>? = null) :
+    StashPresenter<GroupData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
-        item: MovieData,
+        item: GroupData,
     ) {
         if (item.front_image_path != null) {
             cardView.titleText = item.name
@@ -29,7 +29,7 @@ class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
             cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 
             StashGlide.with(cardView.context, item.front_image_path)
-                .transform(MoviePosterScale())
+                .transform(GroupPosterScale())
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
         }
@@ -40,7 +40,7 @@ class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
     /**
      * Scales an image by width while maintaining the aspect ratio
      */
-    private class MoviePosterScale : BitmapTransformation() {
+    private class GroupPosterScale : BitmapTransformation() {
         override fun updateDiskCacheKey(messageDigest: MessageDigest) {
             messageDigest.update(ID)
         }
@@ -61,7 +61,7 @@ class MoviePresenter(callback: LongClickCallBack<MovieData>? = null) :
         }
 
         companion object {
-            private val ID = MoviePresenter::class.qualifiedName!!.toByteArray()
+            private val ID = GroupPresenter::class.qualifiedName!!.toByteArray()
         }
     }
 

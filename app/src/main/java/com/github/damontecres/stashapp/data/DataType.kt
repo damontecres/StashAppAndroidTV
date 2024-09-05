@@ -5,9 +5,9 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
+import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.presenters.ImagePresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
-import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
@@ -29,8 +29,8 @@ enum class DataType(
         SortAndDirection("date", SortDirectionEnum.DESC),
         SCENE_SORT_OPTIONS,
     ),
-    MOVIE(
-        FilterMode.MOVIES,
+    GROUP(
+        FilterMode.GROUPS,
         R.string.stashapp_group,
         R.string.stashapp_groups,
         R.string.fa_film,
@@ -93,7 +93,7 @@ enum class DataType(
         get() =
             when (this) {
                 SCENE -> ScenePresenter.CARD_WIDTH
-                MOVIE -> MoviePresenter.CARD_WIDTH
+                GROUP -> GroupPresenter.CARD_WIDTH
                 MARKER -> MarkerPresenter.CARD_WIDTH
                 PERFORMER -> PerformerPresenter.CARD_WIDTH
                 STUDIO -> StudioPresenter.CARD_WIDTH

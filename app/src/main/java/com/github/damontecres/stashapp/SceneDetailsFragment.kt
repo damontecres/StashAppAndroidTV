@@ -50,8 +50,8 @@ import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
+import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
-import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
@@ -59,9 +59,9 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.GalleryDiffCallback
+import com.github.damontecres.stashapp.util.GroupDiffCallback
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MarkerDiffCallback
-import com.github.damontecres.stashapp.util.MovieDiffCallback
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
@@ -85,7 +85,7 @@ import kotlin.math.roundToInt
 class SceneDetailsFragment : DetailsSupportFragment() {
     private var pendingJob: Job? = null
 
-    private var mSelectedMovie: FullSceneData? = null
+    private var mSelectedGroup: FullSceneData? = null
 
     private lateinit var queryEngine: QueryEngine
     private lateinit var mutationEngine: MutationEngine
@@ -109,7 +109,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     studioIds.last()
                 }
 
-            val result = mutationEngine.setStudioOnScene(mSelectedMovie!!.id, newStudioId)
+            val result = mutationEngine.setStudioOnScene(mSelectedGroup!!.id, newStudioId)
             val newStudio = result?.studio?.studioData
             if (newStudio != null) {
                 listOf(newStudio)
@@ -118,7 +118,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             }
         }
 
-    // Presenter is set in fetchData because it requires mSelectedMovie
+    // Presenter is set in fetchData because it requires mSelectedGroup
     private val mPerformersAdapter = ArrayObjectAdapter()
     private val performersRowManager =
         ListRowManager<PerformerData>(
@@ -126,7 +126,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             ListRowManager.SparseArrayRowModifier(mAdapter, PERFORMER_POS),
             mPerformersAdapter,
         ) { performerIds ->
-            val result = mutationEngine.setPerformersOnScene(mSelectedMovie!!.id, performerIds)
+            val result = mutationEngine.setPerformersOnScene(mSelectedGroup!!.id, performerIds)
             result?.performers?.map { it.performerData }.orEmpty()
         }
 
@@ -136,12 +136,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             ListRowManager.SparseArrayRowModifier(mAdapter, TAG_POS),
             ArrayObjectAdapter(TagPresenter(TagLongClickCallBack())),
         ) { tagIds ->
-            val result = mutationEngine.setTagsOnScene(mSelectedMovie!!.id, tagIds)
+            val result = mutationEngine.setTagsOnScene(mSelectedGroup!!.id, tagIds)
             result?.tags?.map { it.tagData }.orEmpty()
         }
 
     private val markersAdapter = ArrayObjectAdapter(MarkerPresenter(MarkerLongClickCallBack()))
-    private val moviesAdapter = ArrayObjectAdapter(MoviePresenter())
+    private val groupsAdapter = ArrayObjectAdapter(GroupPresenter())
     private val galleriesAdapter = ArrayObjectAdapter(GalleryPresenter())
     private val sceneActionsAdapter =
         SparseArrayObjectAdapter(
@@ -177,7 +177,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     ),
                 ) {
                     MutationEngine(requireContext()).setRating(
-                        mSelectedMovie!!.id,
+                        mSelectedGroup!!.id,
                         rating100,
                     )
                     showSetRatingToast(requireContext(), rating100)
@@ -243,8 +243,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
     override fun onResume() {
         super.onResume()
-        if (mSelectedMovie != null) {
-            fetchData(mSelectedMovie!!.id)
+        if (mSelectedGroup != null) {
+            fetchData(mSelectedGroup!!.id)
         }
     }
 
@@ -260,12 +260,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         ) {
             pendingJob?.join()
             pendingJob = null
-            mSelectedMovie = queryEngine.getScene(sceneId)
-            if (mSelectedMovie != null) {
+            mSelectedGroup = queryEngine.getScene(sceneId)
+            if (mSelectedGroup != null) {
                 mPerformersAdapter.presenterSelector =
                     SinglePresenterSelector(
                         PerformerInScenePresenter(
-                            mSelectedMovie!!.date,
+                            mSelectedGroup!!.date,
                             PerformerLongClickCallBack(),
                         ),
                     )
@@ -275,10 +275,10 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             // Need to check position because the activity result callback happens before onResume
             if (position <= 0 &&
                 serverPreferences.trackActivity &&
-                mSelectedMovie?.resume_time != null &&
-                mSelectedMovie?.resume_time!! > 0
+                mSelectedGroup?.resume_time != null &&
+                mSelectedGroup?.resume_time!! > 0
             ) {
-                position = (mSelectedMovie?.resume_time!! * 1000).toLong()
+                position = (mSelectedGroup?.resume_time!! * 1000).toLong()
             }
             setupPlayActionsAdapter()
 
@@ -290,15 +290,15 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             sceneActionsAdapter.set(
                 O_COUNTER_POS,
                 OCounter(
-                    mSelectedMovie!!.id,
-                    mSelectedMovie?.o_counter ?: 0,
+                    mSelectedGroup!!.id,
+                    mSelectedGroup?.o_counter ?: 0,
                 ),
             )
             sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
             sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
             sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
             sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
-            if (mSelectedMovie!!.files.isNotEmpty()) {
+            if (mSelectedGroup!!.files.isNotEmpty()) {
                 sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
                 sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
             } else {
@@ -306,13 +306,13 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 sceneActionsAdapter.clear(FORCE_DIRECT_PLAY_POS)
             }
 
-            if (mSelectedMovie!!.studio?.studioData != null) {
-                studioAdapter.setItems(listOf(mSelectedMovie!!.studio!!.studioData))
+            if (mSelectedGroup!!.studio?.studioData != null) {
+                studioAdapter.setItems(listOf(mSelectedGroup!!.studio!!.studioData))
             }
 
-            tagsRowManager.setItems(mSelectedMovie!!.tags.map { it.tagData })
+            tagsRowManager.setItems(mSelectedGroup!!.tags.map { it.tagData })
 
-            if (mSelectedMovie!!.scene_markers.isNotEmpty()) {
+            if (mSelectedGroup!!.scene_markers.isNotEmpty()) {
                 if (mAdapter.lookup(MARKER_POS) == null) {
                     mAdapter.set(
                         MARKER_POS,
@@ -320,14 +320,14 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     )
                 }
                 markersAdapter.setItems(
-                    mSelectedMovie!!.scene_markers.map(::convertMarker),
+                    mSelectedGroup!!.scene_markers.map(::convertMarker),
                     MarkerDiffCallback,
                 )
             } else {
                 mAdapter.clear(MARKER_POS)
             }
 
-            val performerIds = mSelectedMovie!!.performers.map { it.id }
+            val performerIds = mSelectedGroup!!.performers.map { it.id }
             Log.v(TAG, "fetchData performerIds=$performerIds")
             if (performerIds.isNotEmpty()) {
                 val perfs = queryEngine.findPerformers(performerIds = performerIds)
@@ -336,23 +336,23 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 performersRowManager.setItems(listOf())
             }
 
-            if (mSelectedMovie!!.movies.isNotEmpty()) {
+            if (mSelectedGroup!!.groups.isNotEmpty()) {
                 if (mAdapter.lookup(MOVIE_POS) == null) {
                     mAdapter.set(
                         MOVIE_POS,
                         ListRow(
                             HeaderItem(getString(R.string.stashapp_groups)),
-                            moviesAdapter,
+                            groupsAdapter,
                         ),
                     )
                 }
-                val movies = mSelectedMovie!!.movies.map { it.movie.movieData }
-                moviesAdapter.setItems(movies, MovieDiffCallback)
+                val groups = mSelectedGroup!!.groups.map { it.group.groupData }
+                groupsAdapter.setItems(groups, GroupDiffCallback)
             } else {
                 mAdapter.clear(MOVIE_POS)
             }
 
-            if (mSelectedMovie!!.galleries.isNotEmpty()) {
+            if (mSelectedGroup!!.galleries.isNotEmpty()) {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     if (mAdapter.lookup(GALLERY_POS) == null) {
                         mAdapter.set(
@@ -364,7 +364,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         )
                     }
                     val galleries =
-                        queryEngine.getGalleries(mSelectedMovie!!.galleries.map { it.id })
+                        queryEngine.getGalleries(mSelectedGroup!!.galleries.map { it.id })
                     galleriesAdapter.setItems(galleries, GalleryDiffCallback)
                 }
             } else {
@@ -377,7 +377,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         if (mDetailsBackground.coverBitmap == null) {
             mDetailsBackground.enableParallax()
 
-            val screenshotUrl = mSelectedMovie!!.paths.screenshot
+            val screenshotUrl = mSelectedGroup!!.paths.screenshot
 
             if (screenshotUrl.isNotNullOrBlank()) {
                 StashGlide.withBitmap(requireActivity(), screenshotUrl)
@@ -403,11 +403,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupDetailsOverviewRow() {
-        val row = detailsOverviewRow ?: DetailsOverviewRow(mSelectedMovie)
+        val row = detailsOverviewRow ?: DetailsOverviewRow(mSelectedGroup)
 
-        val screenshotUrl = mSelectedMovie?.paths?.screenshot
-        if ((detailsOverviewRow == null || mSelectedMovie != row.item) && !screenshotUrl.isNullOrBlank()) {
-            row.item = mSelectedMovie
+        val screenshotUrl = mSelectedGroup?.paths?.screenshot
+        if ((detailsOverviewRow == null || mSelectedGroup != row.item) && !screenshotUrl.isNullOrBlank()) {
+            row.item = mSelectedGroup
             val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
             val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
             StashGlide.with(requireActivity(), screenshotUrl)
@@ -452,7 +452,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
         detailsPresenter.onActionClickedListener =
             OnActionClickedListener { action ->
-                if (mSelectedMovie != null) {
+                if (mSelectedGroup != null) {
                     if (action.id in
                         longArrayOf(
                             ACTION_PLAY_SCENE,
@@ -464,7 +464,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
                         intent.putExtra(
                             SceneDetailsActivity.MOVIE,
-                            Scene.fromFullSceneData(mSelectedMovie!!),
+                            Scene.fromFullSceneData(mSelectedGroup!!),
                         )
                         if (action.id == ACTION_RESUME_SCENE ||
                             action.id == ACTION_TRANSCODE_RESUME_SCENE ||
@@ -542,14 +542,14 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 ),
             ) {
                 val newCounter = mutationEngine.incrementOCounter(counter.id)
-                mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCounter.count)
+                mSelectedGroup = mSelectedGroup!!.copy(o_counter = newCounter.count)
                 sceneActionsAdapter.set(O_COUNTER_POS, newCounter)
             }
         }
     }
 
     private fun setupPlayActionsAdapter() {
-        if (mSelectedMovie!!.files.isNotEmpty()) {
+        if (mSelectedGroup!!.files.isNotEmpty()) {
             val serverPreferences = ServerPreferences(requireContext())
             if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
                 playActionsAdapter.set(
@@ -575,7 +575,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
                 if (id == StashAction.ADD_TAG.id) {
                     val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
-                    Log.d(TAG, "Adding tag $tagId to scene ${mSelectedMovie?.id}")
+                    Log.d(TAG, "Adding tag $tagId to scene ${mSelectedGroup?.id}")
                     pendingJob =
                         viewLifecycleOwner.lifecycleScope.launch(
                             CoroutineExceptionHandler { _, ex ->
@@ -598,7 +598,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         }
                 } else if (id == StashAction.ADD_PERFORMER.id) {
                     val performerId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
-                    Log.d(TAG, "Adding performer $performerId to scene ${mSelectedMovie?.id}")
+                    Log.d(TAG, "Adding performer $performerId to scene ${mSelectedGroup?.id}")
                     pendingJob =
                         viewLifecycleOwner.lifecycleScope.launch(
                             CoroutineExceptionHandler { _, ex ->
@@ -634,11 +634,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
                             Log.d(
                                 TAG,
-                                "Adding marker at $position with tagId=$tagId to scene ${mSelectedMovie?.id}",
+                                "Adding marker at $position with tagId=$tagId to scene ${mSelectedGroup?.id}",
                             )
                             val newMarker =
                                 MutationEngine(requireContext()).createMarker(
-                                    mSelectedMovie!!.id,
+                                    mSelectedGroup!!.id,
                                     position,
                                     tagId,
                                 )!!
@@ -665,7 +665,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         }
                 } else if (id == StashAction.SET_STUDIO.id) {
                     val studioId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
-                    Log.d(TAG, "Setting studio to $studioId to scene ${mSelectedMovie?.id}")
+                    Log.d(TAG, "Setting studio to $studioId to scene ${mSelectedGroup?.id}")
                     pendingJob =
                         viewLifecycleOwner.lifecycleScope.launch(
                             CoroutineExceptionHandler { _, ex ->
@@ -700,7 +700,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         if (serverPreferences.trackActivity) {
                             Log.v(TAG, "ResultCallback saveSceneActivity start")
                             MutationEngine(requireContext(), false).saveSceneActivity(
-                                mSelectedMovie!!.id,
+                                mSelectedGroup!!.id,
                                 localPosition,
                             )
                         }
@@ -724,7 +724,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             seconds = it.seconds,
             preview = "",
             primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData),
-            scene = MarkerData.Scene(mSelectedMovie!!.id, mSelectedMovie!!.asVideoSceneData),
+            scene = MarkerData.Scene(mSelectedGroup!!.id, mSelectedGroup!!.asVideoSceneData),
             tags = it.tags.map { MarkerData.Tag("", it.tagData) },
             __typename = "",
         )
@@ -759,22 +759,22 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 when (popUpItem.id) {
                     0L -> {
                         // Increment
-                        val newCount = mutationEngine.incrementOCounter(mSelectedMovie!!.id)
+                        val newCount = mutationEngine.incrementOCounter(mSelectedGroup!!.id)
                         sceneActionsAdapter.set(O_COUNTER_POS, newCount)
-                        mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCount.count)
+                        mSelectedGroup = mSelectedGroup!!.copy(o_counter = newCount.count)
                     }
 
                     1L -> {
                         // Decrement
-                        val newCount = mutationEngine.decrementOCounter(mSelectedMovie!!.id)
+                        val newCount = mutationEngine.decrementOCounter(mSelectedGroup!!.id)
                         sceneActionsAdapter.set(O_COUNTER_POS, newCount)
-                        mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCount.count)
+                        mSelectedGroup = mSelectedGroup!!.copy(o_counter = newCount.count)
                     }
 
                     2L -> {
                         // Reset
-                        val newCount = mutationEngine.resetOCounter(mSelectedMovie!!.id)
-                        mSelectedMovie = mSelectedMovie!!.copy(o_counter = newCount.count)
+                        val newCount = mutationEngine.resetOCounter(mSelectedGroup!!.id)
+                        mSelectedGroup = mSelectedGroup!!.copy(o_counter = newCount.count)
                         sceneActionsAdapter.set(O_COUNTER_POS, newCount)
                     }
 
@@ -896,7 +896,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 val performerId = item.id
                 Log.d(
                     TAG,
-                    "Removing performer $performerId to scene ${mSelectedMovie?.id}",
+                    "Removing performer $performerId to scene ${mSelectedGroup?.id}",
                 )
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->

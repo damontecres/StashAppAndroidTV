@@ -37,7 +37,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
     private val performersButton: Button
     private val studiosButton: Button
     private val tagsButton: Button
-    private val moviesButton: Button
+    private val groupsButton: Button
     private val markersButton: Button
     private val imagesButton: Button
     private val galleriesButton: Button
@@ -94,9 +94,9 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         tagsButton.setOnClickListener(ClickListener(DataType.TAG))
         tagsButton.onFocusChangeListener = onFocusChangeListener
 
-        moviesButton = root.findViewById(R.id.movies_button)
-        moviesButton.setOnClickListener(ClickListener(DataType.MOVIE))
-        moviesButton.onFocusChangeListener = onFocusChangeListener
+        groupsButton = root.findViewById(R.id.groups_button)
+        groupsButton.setOnClickListener(ClickListener(DataType.GROUP))
+        groupsButton.onFocusChangeListener = onFocusChangeListener
 
         markersButton = root.findViewById(R.id.markers_button)
         markersButton.setOnClickListener(ClickListener(DataType.MARKER))
@@ -141,7 +141,13 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         performersButton.visibility = getVis("performers")
         studiosButton.visibility = getVis("studios")
         tagsButton.visibility = getVis("tags")
-        moviesButton.visibility = getVis("movies")
+        // TODO: Workaround for potential bug https://github.com/stashapp/stash/issues/5220
+        groupsButton.visibility =
+            if ("groups" in menuItems || "movies" in menuItems) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
         markersButton.visibility = getVis("markers")
         galleriesButton.visibility = getVis("galleries")
     }

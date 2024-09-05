@@ -241,12 +241,12 @@ class FrontPageParser(
                                     )
                                 }
 
-                                DataType.MOVIE -> {
-                                    val movieFilter =
-                                        filterParser.convertMovieFilterType(objectFilter)
-                                    queryEngine.findMovies(
+                                DataType.GROUP -> {
+                                    val groupFilter =
+                                        filterParser.convertGroupFilterType(objectFilter)
+                                    queryEngine.findGroups(
                                         findFilter,
-                                        movieFilter,
+                                        groupFilter,
                                         useRandom = false,
                                     )
                                 }

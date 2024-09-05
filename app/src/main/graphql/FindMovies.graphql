@@ -1,25 +1,25 @@
-query FindMovies($filter: FindFilterType, $movie_filter: MovieFilterType){
-  findMovies(filter: $filter, movie_filter: $movie_filter){
-    movies{
-      ...MovieData
+query FindGroups($filter: FindFilterType, $group_filter: GroupFilterType){
+    findGroups(filter: $filter, group_filter: $group_filter){
+        groups{
+            ...GroupData
     }
   }
 }
 
-query CountMovies($filter: FindFilterType, $movie_filter: MovieFilterType){
-  findMovies(filter: $filter, movie_filter: $movie_filter){
+query CountGroups($filter: FindFilterType, $group_filter: GroupFilterType){
+    findGroups(filter: $filter, group_filter: $group_filter){
     count
   }
 }
 
-query FindMovie($id: ID!) {
-  findMovie(id: $id) {
-    ...MovieData
+query FindGroup($id: ID!) {
+    findGroup(id: $id) {
+        ...GroupData
   }
 }
 
-query FindMovieTags($id: ID!) {
-  findMovie(id: $id) {
+query FindGroupTags($id: ID!) {
+    findGroup(id: $id) {
     id
     tags {
       ...TagData
@@ -27,7 +27,7 @@ query FindMovieTags($id: ID!) {
   }
 }
 
-fragment MovieData on Movie {
+fragment GroupData on Group {
   id
   name
   aliases

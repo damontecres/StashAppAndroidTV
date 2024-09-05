@@ -16,7 +16,7 @@ class DataTypeActivity : FragmentActivity(R.layout.activity_main) {
         val fragment =
             when (dataType) {
                 DataType.TAG -> TagFragment()
-                DataType.MOVIE -> MovieFragment()
+                DataType.GROUP -> GroupFragment()
                 DataType.PERFORMER -> PerformerFragment()
                 DataType.STUDIO -> StudioFragment()
                 DataType.GALLERY -> GalleryFragment()

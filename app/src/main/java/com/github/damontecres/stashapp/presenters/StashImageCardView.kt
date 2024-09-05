@@ -54,7 +54,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         private val ICON_ORDER =
             listOf(
                 DataType.SCENE,
-                DataType.MOVIE,
+                DataType.GROUP,
                 DataType.IMAGE,
                 DataType.GALLERY,
                 DataType.TAG,

@@ -424,12 +424,12 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                 } else {
                     null
                 },
-            movies =
-                this.movies.map {
-                    SlimSceneData.Movie(
-                        SlimSceneData.Movie1(
-                            it.movie.movieData.id,
-                            it.movie.movieData.name,
+            groups =
+                this.groups.map {
+                    SlimSceneData.Group(
+                        SlimSceneData.Group1(
+                            it.group.groupData.id,
+                            it.group.groupData.name,
                         ),
                     )
                 },

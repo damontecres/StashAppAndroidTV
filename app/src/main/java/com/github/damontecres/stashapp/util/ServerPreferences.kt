@@ -201,7 +201,7 @@ class ServerPreferences(private val context: Context) {
             setOf(
                 "scenes",
                 "images",
-                "movies",
+                "groups",
                 "markers",
                 "galleries",
                 "performers",

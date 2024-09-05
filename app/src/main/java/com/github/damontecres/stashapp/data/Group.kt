@@ -1,11 +1,11 @@
 package com.github.damontecres.stashapp.data
 
 import android.os.Parcelable
-import com.github.damontecres.stashapp.api.fragment.MovieData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class Movie(
+data class Group(
     val id: String,
     val name: String,
     val aliases: String?,
@@ -13,12 +13,12 @@ data class Movie(
     val frontImagePath: String?,
     val backImagePath: String?,
 ) : Parcelable {
-    constructor(movie: MovieData) : this(
-        movie.id,
-        movie.name,
-        movie.aliases,
-        movie.studio?.id,
-        movie.front_image_path,
-        movie.back_image_path,
+    constructor(group: GroupData) : this(
+        group.id,
+        group.name,
+        group.aliases,
+        group.studio?.id,
+        group.front_image_path,
+        group.back_image_path,
     )
 }

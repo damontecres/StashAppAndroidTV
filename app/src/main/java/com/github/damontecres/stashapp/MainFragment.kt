@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Loads a grid of cards with movies to browse.
+ * Loads a grid of cards with groups to browse.
  */
 class MainFragment : BrowseSupportFragment() {
     private val viewModel: ServerViewModel by activityViewModels()

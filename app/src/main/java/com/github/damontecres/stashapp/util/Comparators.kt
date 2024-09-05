@@ -3,9 +3,9 @@ package com.github.damontecres.stashapp.util
 import androidx.leanback.widget.DiffCallback
 import androidx.recyclerview.widget.DiffUtil
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -93,17 +93,17 @@ object TagComparator : DiffUtil.ItemCallback<TagData>() {
     }
 }
 
-object MovieComparator : DiffUtil.ItemCallback<MovieData>() {
+object GroupComparator : DiffUtil.ItemCallback<GroupData>() {
     override fun areItemsTheSame(
-        oldItem: MovieData,
-        newItem: MovieData,
+        oldItem: GroupData,
+        newItem: GroupData,
     ): Boolean {
         return oldItem.id == newItem.id
     }
 
     override fun areContentsTheSame(
-        oldItem: MovieData,
-        newItem: MovieData,
+        oldItem: GroupData,
+        newItem: GroupData,
     ): Boolean {
         return oldItem == newItem
     }
@@ -205,17 +205,17 @@ object PerformerDiffCallback : DiffCallback<PerformerData>() {
     }
 }
 
-object MovieDiffCallback : DiffCallback<MovieData>() {
+object GroupDiffCallback : DiffCallback<GroupData>() {
     override fun areItemsTheSame(
-        oldItem: MovieData,
-        newItem: MovieData,
+        oldItem: GroupData,
+        newItem: GroupData,
     ): Boolean {
         return oldItem.id == newItem.id
     }
 
     override fun areContentsTheSame(
-        oldItem: MovieData,
-        newItem: MovieData,
+        oldItem: GroupData,
+        newItem: GroupData,
     ): Boolean {
         return oldItem == newItem
     }

@@ -38,10 +38,10 @@ class FilterArgsPresenter(callback: LongClickCallBack<FilterArgs>? = null) :
                     TagPresenter.CARD_HEIGHT,
                 )
 
-            DataType.MOVIE -> {
+            DataType.GROUP -> {
                 cardView.setMainImageDimensions(
-                    MoviePresenter.CARD_WIDTH,
-                    MoviePresenter.CARD_HEIGHT,
+                    GroupPresenter.CARD_WIDTH,
+                    GroupPresenter.CARD_HEIGHT,
                 )
             }
 

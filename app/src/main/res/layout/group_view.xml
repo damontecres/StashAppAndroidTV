@@ -14,7 +14,7 @@
         android:layout_height="wrap_content">
 
         <LinearLayout
-            android:id="@+id/movie_images"
+            android:id="@+id/group_images"
             android:layout_width="match_parent"
             android:layout_height="350dp"
             android:layout_margin="8dp"
@@ -27,7 +27,7 @@
             app:layout_constraintEnd_toEndOf="parent">
 
             <ImageView
-                android:id="@+id/movie_front_image"
+                android:id="@+id/group_front_image"
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -39,7 +39,7 @@
                 tools:minHeight="200dp" />
 
             <ImageView
-                android:id="@+id/movie_back_image"
+                android:id="@+id/group_back_image"
                 android:layout_weight="1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -52,13 +52,13 @@
         </LinearLayout>
 
         <TableLayout
-            android:id="@+id/movie_table"
+            android:id="@+id/group_table"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="18dp"
             android:padding="8dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/movie_images" />
+            app:layout_constraintTop_toBottomOf="@id/group_images" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

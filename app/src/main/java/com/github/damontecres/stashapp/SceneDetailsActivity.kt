@@ -19,7 +19,7 @@ class SceneDetailsActivity : FragmentActivity() {
 
     companion object {
         const val SHARED_ELEMENT_NAME = "hero"
-        const val MOVIE = "Movie"
-        const val MOVIE_ID = "MovieID"
+        const val MOVIE = "Group"
+        const val MOVIE_ID = "GroupID"
     }
 }

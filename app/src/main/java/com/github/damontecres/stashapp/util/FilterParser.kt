@@ -9,10 +9,10 @@ import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderEnum
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
-import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationEnum
@@ -339,7 +339,7 @@ class FilterParser(private val serverVersion: Version) {
         return when (dataType) {
             DataType.TAG -> convertTagFilterType(f)
             DataType.STUDIO -> convertStudioFilterType(f)
-            DataType.MOVIE -> convertMovieFilterType(f)
+            DataType.GROUP -> convertGroupFilterType(f)
             DataType.SCENE -> convertSceneFilterType(f)
             DataType.IMAGE -> convertImageFilterType(f)
             DataType.GALLERY -> convertGalleryFilterType(f)
@@ -441,7 +441,6 @@ class FilterParser(private val serverVersion: Version) {
                 has_markers = Optional.presentIfNotNull(convertString(filter["has_markers"])),
                 is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
                 studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
-                movies = Optional.presentIfNotNull(convertMultiCriterionInput(filter["movies"])),
                 groups = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["groups"])),
                 galleries = Optional.presentIfNotNull(convertMultiCriterionInput(filter["galleries"])),
                 tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
@@ -472,8 +471,8 @@ class FilterParser(private val serverVersion: Version) {
                 performers_filter = Optional.presentIfNotNull(convertPerformerFilterType(filter["performers_filter"])),
                 studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
                 tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
-                movies_filter = Optional.presentIfNotNull(convertMovieFilterType(filter["movies_filter"])),
-                // TODO movie->group
+                groups_filter = Optional.presentIfNotNull(convertGroupFilterType(filter["groups_filter"])),
+                // TODO group->group
 //                groups_filter = Optional.presentIfNotNull(convertGroupFilterType(filter["groups_filter"])),
                 markers_filter = Optional.presentIfNotNull(convertSceneMarkerFilterType(filter["markers_filter"])),
             )
@@ -537,7 +536,6 @@ class FilterParser(private val serverVersion: Version) {
                 gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
                 performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_count"])),
                 studio_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["studio_count"])),
-                movie_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["movie_count"])),
                 group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["group_count"])),
                 marker_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["marker_count"])),
                 parents = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["parents"])),
@@ -556,15 +554,15 @@ class FilterParser(private val serverVersion: Version) {
         }
     }
 
-    fun convertMovieFilterType(f: Any?): MovieFilterType? {
-        return if (f != null && f is MovieFilterType) {
+    fun convertGroupFilterType(f: Any?): GroupFilterType? {
+        return if (f != null && f is GroupFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
-            MovieFilterType(
-                AND = Optional.presentIfNotNull(convertMovieFilterType(filter["AND"])),
-                OR = Optional.presentIfNotNull(convertMovieFilterType(filter["OR"])),
-                NOT = Optional.presentIfNotNull(convertMovieFilterType(filter["NOT"])),
+            GroupFilterType(
+                AND = Optional.presentIfNotNull(convertGroupFilterType(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertGroupFilterType(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertGroupFilterType(filter["NOT"])),
                 name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
                 director = Optional.presentIfNotNull(convertStringCriterionInput(filter["director"])),
                 synopsis = Optional.presentIfNotNull(convertStringCriterionInput(filter["synopsis"])),
