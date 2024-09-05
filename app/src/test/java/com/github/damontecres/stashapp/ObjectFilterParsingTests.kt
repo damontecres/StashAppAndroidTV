@@ -97,11 +97,11 @@ class ObjectFilterParsingTests {
             sceneFilter.performers.getOrThrow()!!.value.getOrThrow()!!,
         )
         Assert.assertEquals(
-            listOf<String>(),
+            listOf<String>("1"),
             sceneFilter.groups.getOrThrow()!!.value.getOrThrow()!!,
         )
         Assert.assertEquals(
-            CriterionModifier.NOT_NULL,
+            CriterionModifier.INCLUDES,
             sceneFilter.groups.getOrThrow()!!.modifier,
         )
     }

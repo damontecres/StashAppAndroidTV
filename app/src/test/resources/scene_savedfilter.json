@@ -92,8 +92,17 @@
           "value": "group"
         },
         "groups": {
-          "modifier": "NOT_NULL",
-          "value": []
+          "modifier": "INCLUDES",
+          "value": {
+            "depth": 0,
+            "excluded": [],
+            "items": [
+              {
+                "id": "1",
+                "label": "Label"
+              }
+            ]
+          }
         },
         "o_counter": {
           "modifier": "GREATER_THAN",
