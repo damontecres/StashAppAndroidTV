@@ -28,6 +28,7 @@ class PlaybackActivity : FragmentActivity() {
 
     private lateinit var scene: Scene
 
+    @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -62,7 +63,11 @@ class PlaybackActivity : FragmentActivity() {
         maxPlayPercent =
             PreferenceManager.getDefaultSharedPreferences(this).getInt("maxPlayPercent", 98)
         onBackPressedDispatcher.addCallback(this, true) {
-            setResultAndFinish()
+            if (fragment?.isControllerVisible == true) {
+                fragment?.hideControlsIfVisible()
+            } else {
+                setResultAndFinish()
+            }
         }
     }
 
