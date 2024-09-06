@@ -24,7 +24,7 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                     FileSpec.builder(stashDataInterface)
                         .addType(
                             TypeSpec.interfaceBuilder(stashDataInterface)
-                                .addModifiers(KModifier.SEALED)
+//                                .addModifiers(KModifier.SEALED)
                                 .addProperty("id", String::class)
                                 .build(),
                         )

@@ -47,9 +47,9 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     companion object {
         private const val TAG = "StashImageCardView"
 
-        private const val ICON_SPACING = "  "
+        const val ICON_SPACING = "  "
 
-        private val FA_FONT = StashApplication.getFont(R.font.fa_solid_900)
+        val FA_FONT = StashApplication.getFont(R.font.fa_solid_900)
 
         private val ICON_ORDER =
             listOf(
@@ -217,6 +217,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     fun setUpExtraRow(
         iconMap: EnumMap<DataType, Int>,
         oCounter: Int?,
+        stringBuilder: (SpannableStringBuilder.() -> Unit)? = null,
     ) {
         val countStrings =
             ICON_ORDER.mapNotNull {
@@ -243,6 +244,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                         Spannable.SPAN_INCLUSIVE_INCLUSIVE,
                     )
                 }
+                stringBuilder?.invoke(this)
                 if (oCounter != null && oCounter > 0) {
                     if (countStrings.isNotEmpty()) {
                         // Add space after previous icons

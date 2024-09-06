@@ -26,6 +26,7 @@ class GroupDataSupplier(
         return FindGroupsQuery(
             filter = filter,
             group_filter = groupFilter,
+            ids = null,
         )
     }
 

@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -30,11 +31,21 @@ class GroupFragment : TabbedFragment() {
                 StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details), null),
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
                 StashFragmentPagerAdapter.PagerEntry(DataType.TAG),
+                StashFragmentPagerAdapter.PagerEntry(
+                    getString(R.string.stashapp_containing_groups),
+                    DataType.GROUP,
+                ),
+                StashFragmentPagerAdapter.PagerEntry(
+                    getString(R.string.stashapp_sub_groups),
+                    DataType.GROUP,
+                ),
             )
         return object : StashFragmentPagerAdapter(pages, fm) {
             override fun getFragment(position: Int): Fragment {
                 return when (position) {
+                    // Details
                     0 -> GroupDetailsFragment()
+                    // Scenes
                     1 ->
                         StashGridFragment(
                             dataType = DataType.SCENE,
@@ -56,11 +67,46 @@ class GroupFragment : TabbedFragment() {
                                         ),
                                 ),
                         )
+                    // Tags
                     2 ->
                         StashGridFragment(
                             FilterArgs(
                                 DataType.TAG,
                                 override = DataSupplierOverride.GroupTags(group.id),
+                            ),
+                        )
+                    // containing groups aka groups for which this one is a subgroup
+                    3 ->
+                        StashGridFragment(
+                            FilterArgs(
+                                DataType.GROUP,
+                                objectFilter =
+                                    GroupFilterType(
+                                        sub_groups =
+                                            Optional.present(
+                                                HierarchicalMultiCriterionInput(
+                                                    value = Optional.present(listOf(group.id)),
+                                                    modifier = CriterionModifier.INCLUDES,
+                                                ),
+                                            ),
+                                    ),
+                            ),
+                        )
+                    // sub groups aka groups for which this one is their containing group
+                    4 ->
+                        StashGridFragment(
+                            FilterArgs(
+                                DataType.GROUP,
+                                objectFilter =
+                                    GroupFilterType(
+                                        containing_groups =
+                                            Optional.present(
+                                                HierarchicalMultiCriterionInput(
+                                                    value = Optional.present(listOf(group.id)),
+                                                    modifier = CriterionModifier.INCLUDES,
+                                                ),
+                                            ),
+                                    ),
                             ),
                         )
                     else -> throw IllegalArgumentException()
