@@ -6,8 +6,8 @@ query FindGroups($filter: FindFilterType, $group_filter: GroupFilterType, $ids: 
   }
 }
 
-query CountGroups($filter: FindFilterType, $group_filter: GroupFilterType) {
-    findGroups(filter: $filter, group_filter: $group_filter) {
+query CountGroups($filter: FindFilterType, $group_filter: GroupFilterType, $ids: [ID!]) {
+  findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
     count
   }
 }
@@ -24,6 +24,27 @@ query FindGroupTags($id: ID!) {
     tags {
       ...TagData
     }
+  }
+}
+
+query FindGroupRelationships($filter: FindFilterType, $group_filter: GroupFilterType, $ids: [ID!]) {
+  findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
+    groups {
+      id
+      sub_groups {
+        ...GroupDescriptionData
+      }
+      containing_groups {
+        ...GroupDescriptionData
+      }
+    }
+  }
+}
+
+fragment GroupDescriptionData on GroupDescription {
+  description
+  group {
+    ...GroupData
   }
 }
 

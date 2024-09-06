@@ -25,6 +25,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.data.GroupRelationshipData
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
@@ -171,6 +172,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 .addClassPresenter(GalleryData::class.java, GalleryPresenter())
                 .addClassPresenter(OCounter::class.java, OCounterPresenter())
                 .addClassPresenter(CreateMarkerAction::class.java, CreateMarkerActionPresenter())
+                .addClassPresenter(GroupRelationshipData::class.java, GroupRelationshipPresenter())
 
         fun glideError(context: Context): RequestBuilder<PictureDrawable> {
             return Glide.with(context).`as`(PictureDrawable::class.java)

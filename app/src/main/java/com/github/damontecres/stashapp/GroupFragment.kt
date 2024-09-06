@@ -5,12 +5,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Group
+import com.github.damontecres.stashapp.data.GroupRelationshipType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
@@ -75,37 +75,27 @@ class GroupFragment : TabbedFragment() {
                                 override = DataSupplierOverride.GroupTags(group.id),
                             ),
                         )
-                    // containing groups aka groups for which this one is a subgroup
+                    // containing groups
                     3 ->
                         StashGridFragment(
                             FilterArgs(
                                 DataType.GROUP,
-                                objectFilter =
-                                    GroupFilterType(
-                                        sub_groups =
-                                            Optional.present(
-                                                HierarchicalMultiCriterionInput(
-                                                    value = Optional.present(listOf(group.id)),
-                                                    modifier = CriterionModifier.INCLUDES,
-                                                ),
-                                            ),
+                                override =
+                                    DataSupplierOverride.GroupRelationship(
+                                        group.id,
+                                        GroupRelationshipType.CONTAINING,
                                     ),
                             ),
                         )
-                    // sub groups aka groups for which this one is their containing group
+                    // sub groups
                     4 ->
                         StashGridFragment(
                             FilterArgs(
                                 DataType.GROUP,
-                                objectFilter =
-                                    GroupFilterType(
-                                        containing_groups =
-                                            Optional.present(
-                                                HierarchicalMultiCriterionInput(
-                                                    value = Optional.present(listOf(group.id)),
-                                                    modifier = CriterionModifier.INCLUDES,
-                                                ),
-                                            ),
+                                override =
+                                    DataSupplierOverride.GroupRelationship(
+                                        group.id,
+                                        GroupRelationshipType.SUB,
                                     ),
                             ),
                         )

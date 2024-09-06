@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.GroupRelationshipType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.FilterParser
@@ -31,6 +32,11 @@ class DataSupplierFactory(val serverVersion: Version) {
                 is DataSupplierOverride.GalleryTag -> GalleryTagDataSupplier(args.override.galleryId)
                 is DataSupplierOverride.GroupTags -> GroupTagDataSupplier(args.override.groupId)
                 is DataSupplierOverride.StudioTags -> StudioTagDataSupplier(args.override.studioId)
+                is DataSupplierOverride.GroupRelationship ->
+                    GroupRelationshipDataSupplier(
+                        args.override.groupId,
+                        args.override.type,
+                    )
             } as StashPagingSource.DataSupplier<T, D, C>
         } else {
             return when (args.dataType) {
@@ -107,6 +113,10 @@ sealed interface DataSupplierOverride {
 
     @Serializable
     data class GalleryTag(val galleryId: String) : DataSupplierOverride
+
+    @Serializable
+    data class GroupRelationship(val groupId: String, val type: GroupRelationshipType) :
+        DataSupplierOverride
 }
 
 /**

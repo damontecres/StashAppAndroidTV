@@ -15,12 +15,7 @@ class GroupDataSupplier(
     private val groupFilter: GroupFilterType?,
 ) :
     StashPagingSource.DataSupplier<FindGroupsQuery.Data, GroupData, CountGroupsQuery.Data> {
-    constructor(groupFilter: GroupFilterType? = null) : this(
-        DataType.GROUP.asDefaultFindFilterType,
-        groupFilter,
-    )
-
-    override val dataType: DataType get() = DataType.PERFORMER
+    override val dataType: DataType get() = DataType.GROUP
 
     override fun createQuery(filter: FindFilterType?): Query<FindGroupsQuery.Data> {
         return FindGroupsQuery(
@@ -35,7 +30,7 @@ class GroupDataSupplier(
     }
 
     override fun createCountQuery(filter: FindFilterType?): Query<CountGroupsQuery.Data> {
-        return CountGroupsQuery(filter, groupFilter)
+        return CountGroupsQuery(filter, groupFilter, null)
     }
 
     override fun parseCountQuery(data: CountGroupsQuery.Data): Int {
