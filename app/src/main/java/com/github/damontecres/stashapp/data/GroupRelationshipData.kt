@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.data
 
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.GroupDescriptionData
-import com.github.damontecres.stashapp.api.fragment.StashData
 
 enum class GroupRelationshipType {
     CONTAINING,

@@ -59,13 +59,12 @@ import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
-import com.github.damontecres.stashapp.util.GalleryDiffCallback
 import com.github.damontecres.stashapp.util.ListRowManager
-import com.github.damontecres.stashapp.util.MarkerDiffCallback
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.asVideoSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -332,7 +331,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 }
                 markersAdapter.setItems(
                     sceneData!!.scene_markers.map(::convertMarker),
-                    MarkerDiffCallback,
+                    StashDiffCallback,
                 )
             } else {
                 mAdapter.clear(MARKER_POS)
@@ -362,7 +361,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     }
                     val galleries =
                         queryEngine.getGalleries(sceneData!!.galleries.map { it.id })
-                    galleriesAdapter.setItems(galleries, GalleryDiffCallback)
+                    galleriesAdapter.setItems(galleries, StashDiffCallback)
                 }
             } else {
                 mAdapter.clear(GALLERY_POS)

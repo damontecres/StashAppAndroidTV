@@ -2,7 +2,7 @@ package com.github.damontecres.stashapp.suppliers
 
 import android.util.Log
 import com.apollographql.apollo.api.Query
-import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.data.StashData
 
 /**
  * Wraps a StashPagingSource to allow for accessing any item position in the backing filter
