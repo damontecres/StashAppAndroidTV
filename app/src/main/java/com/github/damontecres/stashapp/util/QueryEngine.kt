@@ -221,6 +221,7 @@ class QueryEngine(
     suspend fun findGroups(
         findFilter: FindFilterType? = null,
         groupFilter: GroupFilterType? = null,
+        groupIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<GroupData> {
         val query =
@@ -228,6 +229,7 @@ class QueryEngine(
                 FindGroupsQuery(
                     filter = updateFilter(findFilter, useRandom),
                     group_filter = groupFilter,
+                    ids = groupIds,
                 ),
             )
         val tags = executeQuery(query).data?.findGroups?.groups?.map { it.groupData }
@@ -236,7 +238,7 @@ class QueryEngine(
 
     suspend fun getGroup(groupId: String): GroupData? {
         val query = client.query(FindGroupQuery(groupId))
-        return query.executeV3().data?.findGroup?.groupData
+        return executeQuery(query).data?.findGroup?.groupData
     }
 
     suspend fun findMarkers(

@@ -24,6 +24,7 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GroupCreateInput
 import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
@@ -39,6 +40,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.SingleItemObjectAdapter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -70,7 +72,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        dataType = DataType.valueOf(requireActivity().intent.getStringExtra("dataType")!!)
+        dataType = requireActivity().intent.getDataType()
         perPage =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 25)
@@ -113,6 +115,10 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
 
                     DataType.PERFORMER -> {
                         mutationEngine.createPerformer(PerformerCreateInput(name = name))
+                    }
+
+                    DataType.GROUP -> {
+                        mutationEngine.createGroup(GroupCreateInput(name = name))
                     }
 
                     else -> throw IllegalArgumentException("Unsupported datatype $dataType")
@@ -210,6 +216,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                                 DataType.TAG -> queryEngine.getTags(mostRecentIds)
                                 DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
                                 DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
+                                DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
                                 else -> {
                                     listOf()
                                 }
@@ -358,7 +365,13 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
 
         // List of data types that support querying for suggestions
         val DATA_TYPE_SUGGESTIONS =
-            setOf(DataType.TAG, DataType.PERFORMER, DataType.STUDIO, DataType.GALLERY)
+            setOf(
+                DataType.TAG,
+                DataType.PERFORMER,
+                DataType.STUDIO,
+                DataType.GALLERY,
+                DataType.GROUP,
+            )
 
         // List of data types that support creating a new one
         val DATA_TYPE_ALLOW_CREATE = setOf(DataType.TAG, DataType.PERFORMER)
