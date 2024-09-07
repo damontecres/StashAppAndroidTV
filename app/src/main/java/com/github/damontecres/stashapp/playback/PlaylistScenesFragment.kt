@@ -9,6 +9,7 @@ import androidx.media3.common.util.UnstableApi
 import com.github.damontecres.stashapp.api.CountScenesQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
@@ -22,6 +23,9 @@ class PlaylistScenesFragment :
     PlaylistFragment<FindScenesQuery.Data, SlimSceneData, CountScenesQuery.Data>() {
     override val previewsEnabled: Boolean
         get() = true
+
+    override val optionsButtonOptions: OptionsButtonOptions
+        get() = OptionsButtonOptions(DataType.SCENE, true)
 
     override fun builderCallback(item: SlimSceneData): (MediaItem.Builder.() -> Unit)? {
         return null

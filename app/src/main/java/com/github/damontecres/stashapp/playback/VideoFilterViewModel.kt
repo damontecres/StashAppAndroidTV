@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.data.room.VideoFilter
@@ -16,19 +18,17 @@ import kotlinx.coroutines.withContext
 class VideoFilterViewModel : ViewModel() {
     val videoFilter = MutableLiveData<VideoFilter?>()
 
-    private lateinit var serverUrl: String
+    private val serverUrl = StashServer.getCurrentStashServer()?.url
     private lateinit var sceneId: String
-    private var saveVideoFilter = true
+    private val saveVideoFilter =
+        PreferenceManager.getDefaultSharedPreferences(StashApplication.getApplication()).getBoolean(
+            StashApplication.getApplication().getString(R.string.pref_key_playback_save_effects),
+            true,
+        )
 
-    fun initialize(
-        server: StashServer,
-        sceneId: String,
-        saveVideoFilter: Boolean,
-    ) {
-        serverUrl = server.url
+    fun maybeGetSavedFilter(sceneId: String) {
         this.sceneId = sceneId
-        this.saveVideoFilter = saveVideoFilter
-        if (saveVideoFilter) {
+        if (saveVideoFilter && serverUrl != null) {
             viewModelScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 val vf =
                     StashApplication.getDatabase().playbackEffectsDao()
@@ -47,7 +47,7 @@ class VideoFilterViewModel : ViewModel() {
      * If saving video effects is enabled, save the current one to the database
      */
     fun maybeSaveFilter() {
-        if (saveVideoFilter) {
+        if (saveVideoFilter && serverUrl != null) {
             viewModelScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 val vf = videoFilter.value
                 if (vf != null) {

@@ -9,6 +9,7 @@ import androidx.media3.common.util.UnstableApi
 import com.github.damontecres.stashapp.api.CountMarkersQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
@@ -22,6 +23,9 @@ import kotlin.properties.Delegates
 class PlaylistMarkersFragment :
     PlaylistFragment<FindMarkersQuery.Data, MarkerData, CountMarkersQuery.Data>() {
     private var duration by Delegates.notNull<Long>()
+
+    override val optionsButtonOptions: OptionsButtonOptions
+        get() = OptionsButtonOptions(DataType.MARKER, true)
 
     override val previewsEnabled: Boolean
         get() = false

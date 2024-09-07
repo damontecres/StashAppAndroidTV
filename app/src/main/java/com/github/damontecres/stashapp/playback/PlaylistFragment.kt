@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 @OptIn(UnstableApi::class)
 abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
     PlaybackFragment() {
-    private val viewModel: PlaylistViewModel by activityViewModels()
+    private val playlistViewModel: PlaylistViewModel by activityViewModels()
 
     protected lateinit var pagingSource: StashPagingSource<T, D, D, C>
 
@@ -83,7 +83,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 },
             )
             exoPlayer.addListener(PlaylistListener())
-            if (viewModel.filterArgs.value?.dataType == DataType.SCENE) {
+            if (playlistViewModel.filterArgs.value?.dataType == DataType.SCENE) {
                 // Only track activity for scene playback
                 maybeAddActivityTracking(exoPlayer)
             }
@@ -99,11 +99,12 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      * Build the initial playlist
      */
     private suspend fun buildPlaylist() {
-        val filter = viewModel.filterArgs.value!!
+        val filter = playlistViewModel.filterArgs.value!!
         val dataSupplier = DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, C>(filter)
         pagingSource =
             StashPagingSource(requireContext(), PAGE_SIZE, dataSupplier, useRandom = false)
         addNextPageToPlaylist()
+        maybeSetupVideoEffects(player!!)
         player!!.prepare()
         player!!.play()
 

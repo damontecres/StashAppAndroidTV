@@ -38,8 +38,7 @@ class PlaybackActivity : FragmentActivity() {
         if (scene != null) {
             this.scene = scene
             if (savedInstanceState == null) {
-                fragment = PlaybackSceneFragment()
-                fragment!!.scene = scene
+                fragment = PlaybackSceneFragment(scene)
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.playback_container, fragment!!)
                     .commit()
@@ -51,8 +50,7 @@ class PlaybackActivity : FragmentActivity() {
                 val scene = Scene.fromFullSceneData(fullScene)
                 this@PlaybackActivity.scene = scene
                 if (savedInstanceState == null) {
-                    fragment = PlaybackSceneFragment()
-                    fragment!!.scene = scene
+                    fragment = PlaybackSceneFragment(scene)
                     supportFragmentManager.beginTransaction()
                         .replace(R.id.playback_container, fragment!!)
                         .commit()

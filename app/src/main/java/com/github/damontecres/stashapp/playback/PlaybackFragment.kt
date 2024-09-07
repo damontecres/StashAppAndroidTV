@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp.playback
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -12,10 +14,15 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -26,15 +33,25 @@ import androidx.media3.ui.PlayerControlView
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.SearchForActivity
+import com.github.damontecres.stashapp.SearchForFragment
+import com.github.damontecres.stashapp.actions.StashAction
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
+import com.github.damontecres.stashapp.util.animateToInvisible
+import com.github.damontecres.stashapp.util.animateToVisible
+import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
+import com.github.damontecres.stashapp.views.durationToString
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -50,12 +67,19 @@ import java.time.format.DateTimeParseException
 abstract class PlaybackFragment(
     @LayoutRes layoutId: Int = R.layout.video_playback,
 ) : Fragment(layoutId) {
+    protected val filterViewModel: VideoFilterViewModel by activityViewModels()
+
     protected var trackActivityListener: TrackActivityPlaybackListener? = null
 
     /**
      * Whether to show video previews when scrubbing
      */
     protected abstract val previewsEnabled: Boolean
+
+    /**
+     * Configuration for what options to show for the [moreOptionsButton]
+     */
+    abstract val optionsButtonOptions: OptionsButtonOptions
 
     /**
      * Initialize an [ExoPlayer]. Users should start with [StashExoPlayer]!
@@ -79,6 +103,10 @@ abstract class PlaybackFragment(
     protected lateinit var oCounterButton: ImageButton
     protected lateinit var oCounterText: TextView
     protected lateinit var moreOptionsButton: ImageButton
+
+    // Track whether the video is playing before calling the resultLauncher
+    protected var wasPlayingBeforeResultLauncher: Boolean? = null
+    private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
     protected var playbackPosition = -1L
     val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
@@ -262,6 +290,46 @@ abstract class PlaybackFragment(
         )
 
         updatePreviewLoader(scene)
+        filterViewModel.maybeGetSavedFilter(scene.id)
+    }
+
+    /**
+     * If video filter preference is enabled, this will setup for applying effects
+     *
+     * Should be called before [Player.prepare]
+     */
+    protected fun maybeSetupVideoEffects(exoPlayer: ExoPlayer) {
+        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_video_filters), false)
+        ) {
+            Log.v(PlaybackSceneFragment.TAG, "Initializing video effects")
+            exoPlayer.setVideoEffects(listOf())
+
+            val filterContainer = requireActivity().findViewById<View>(R.id.video_filter_container)
+            videoView.setControllerVisibilityListener(
+                PlayerView.ControllerVisibilityListener {
+                    filterContainer.visibility = it
+                },
+            )
+
+            ThrottledLiveData(filterViewModel.videoFilter, 500L).observe(
+                viewLifecycleOwner,
+            ) { vf ->
+                Log.v(PlaybackSceneFragment.TAG, "Got new VideoFilter: $vf")
+                val effectList = vf?.createEffectList().orEmpty()
+                Log.d(PlaybackSceneFragment.TAG, "Applying ${effectList.size} effects")
+                player?.setVideoEffects(effectList)
+            }
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        resultLauncher =
+            registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult(),
+                ResultCallback(),
+            )
     }
 
     @OptIn(UnstableApi::class)
@@ -370,6 +438,68 @@ abstract class PlaybackFragment(
         moreOptionsButton.onFocusChangeListener = onFocusChangeListener
     }
 
+    private fun setupMoreOptions() {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+
+        moreOptionsButton.setOnClickListener {
+            val previousControllerShowTimeoutMs = videoView.controllerShowTimeoutMs
+            val debugToggleText =
+                if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
+            val applyFiltersText =
+                if (preferences.getBoolean(
+                        getString(R.string.pref_key_video_filters),
+                        false,
+                    )
+                ) {
+                    "Apply Video Filters"
+                } else {
+                    null
+                }
+            ListPopupWindowBuilder(
+                moreOptionsButton,
+                listOfNotNull(
+                    "Create Marker",
+                    debugToggleText,
+                    applyFiltersText,
+                ),
+            ) { position ->
+                if (position == 0) {
+                    // Save current playback state
+                    player?.let { exoPlayer ->
+                        playbackPosition = exoPlayer.currentPosition
+                        wasPlayingBeforeResultLauncher = exoPlayer.isPlaying
+                    }
+                    val intent = Intent(requireActivity(), SearchForActivity::class.java)
+                    intent.putExtra(SearchForFragment.TITLE_KEY, "for primary tag for scene marker")
+                    intent.putExtra("dataType", DataType.TAG.name)
+                    intent.putExtra(SearchForFragment.ID_KEY, StashAction.CREATE_MARKER.id)
+                    resultLauncher.launch(intent)
+                } else if (position == 1) {
+                    if (debugView.isVisible) {
+                        debugView.animateToInvisible(View.GONE)
+                    } else {
+                        debugView.animateToVisible()
+                    }
+                } else if (position == 2) {
+                    requireActivity().supportFragmentManager.beginTransaction()
+                        .replace(
+                            R.id.video_filter_container,
+                            PlaybackFilterFragment(),
+                            PlaybackFilterFragment.TAG,
+                        )
+                        .commitNow()
+                }
+            }.onShowListener {
+                // Prevent the controller from hiding
+                videoView.controllerShowTimeoutMs = -1
+            }.onDismissListener {
+                // Restore previous controller timeout
+                videoView.controllerShowTimeoutMs = previousControllerShowTimeoutMs
+            }.build()
+                .show()
+        }
+    }
+
     private fun updatePreviewLoader(scene: Scene) {
         if (previewsEnabled && scene.spriteUrl != null) {
             // Usually even if not null, there may not be sprites and the server will return a 404
@@ -461,6 +591,50 @@ abstract class PlaybackFragment(
                     getCurrentPosition = ::currentVideoPosition,
                 )
             exoPlayer.addListener(trackActivityListener!!)
+        }
+    }
+
+    data class OptionsButtonOptions(val dataType: DataType, val playList: Boolean)
+
+    private inner class ResultCallback : ActivityResultCallback<ActivityResult> {
+        override fun onActivityResult(result: ActivityResult) {
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data: Intent? = result.data
+                val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
+                if (id == StashAction.CREATE_MARKER.id) {
+                    val videoPos = currentVideoPosition
+                    playbackPosition = videoPos
+                    viewLifecycleOwner.lifecycleScope.launch(
+                        CoroutineExceptionHandler { _, ex ->
+                            Log.e(PlaybackSceneFragment.TAG, "Exception creating marker", ex)
+                            Toast.makeText(
+                                requireContext(),
+                                "Failed to create marker: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        },
+                    ) {
+                        val tagId =
+                            data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
+                        Log.d(
+                            PlaybackSceneFragment.TAG,
+                            "Adding marker at $videoPos with tagId=$tagId to scene ${currentScene!!.id}",
+                        )
+                        val newMarker =
+                            MutationEngine(requireContext()).createMarker(
+                                currentScene!!.id,
+                                videoPos,
+                                tagId,
+                            )!!
+                        val dur = durationToString(newMarker.seconds)
+                        Toast.makeText(
+                            requireContext(),
+                            "Created a new marker at $dur with primary tag '${newMarker.primary_tag.tagData.name}'",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            }
         }
     }
 
