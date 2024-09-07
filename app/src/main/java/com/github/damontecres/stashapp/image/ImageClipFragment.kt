@@ -35,8 +35,6 @@ class ImageClipFragment : PlaybackFragment(), VideoController {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        moreOptionsButton.visibility = View.GONE
-
         videoView.useController = false
         hideControlsIfVisible()
 

@@ -104,7 +104,7 @@ abstract class PlaybackFragment(
     protected lateinit var debugContainerTextView: TextView
     protected lateinit var oCounterButton: ImageButton
     protected lateinit var oCounterText: TextView
-    protected lateinit var moreOptionsButton: ImageButton
+    private lateinit var moreOptionsButton: ImageButton
 
     // Track whether the video is playing before calling the resultLauncher
     protected var wasPlayingBeforeResultLauncher: Boolean? = null
@@ -467,12 +467,15 @@ abstract class PlaybackFragment(
             val options =
                 buildList {
                     if (optionsButtonOptions.isPlayList) {
-                        // Kind of hacky
-                        this as PlaylistFragment<*, *, *>
-                        this.showPlaylist()
+                        add("Show Playlist")
+                        callbacks[size - 1] = {
+                            // Kind of hacky
+                            val fragment = this@PlaybackFragment as PlaylistFragment<*, *, *>
+                            fragment.showPlaylist()
+                        }
                     }
 
-                    if (optionsButtonOptions.dataType == DataType.SCENE) {
+                    if (optionsButtonOptions.dataType == DataType.SCENE && !optionsButtonOptions.isPlayList) {
                         add("Create Marker")
                         callbacks[size - 1] = {
                             // Save current playback state
@@ -607,7 +610,7 @@ abstract class PlaybackFragment(
         previewTimeBar.requestFocus()
     }
 
-    open fun dispatchKeyEvent(event: KeyEvent): Boolean {
+    fun dispatchKeyEvent(event: KeyEvent): Boolean {
         return videoView.dispatchKeyEvent(event)
     }
 
