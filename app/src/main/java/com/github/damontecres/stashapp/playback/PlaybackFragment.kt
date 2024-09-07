@@ -32,7 +32,6 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
-import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SearchForActivity
@@ -72,6 +71,7 @@ abstract class PlaybackFragment(
     protected val filterViewModel: VideoFilterViewModel by activityViewModels()
 
     protected var trackActivityListener: TrackActivityPlaybackListener? = null
+    protected val controllerVisibilityListener = ControllerVisibilityListenerList()
 
     /**
      * Whether to show video previews when scrubbing
@@ -308,15 +308,13 @@ abstract class PlaybackFragment(
             Log.v(PlaybackSceneFragment.TAG, "Initializing video effects")
             exoPlayer.setVideoEffects(listOf())
 
-            videoView.setControllerVisibilityListener(
-                PlayerView.ControllerVisibilityListener {
-                    if (it == View.VISIBLE) {
-                        showVideoFilterFragment()
-                    } else {
-                        hideVideoFilterFragment()
-                    }
-                },
-            )
+            controllerVisibilityListener.addListener {
+                if (it == View.VISIBLE) {
+                    showVideoFilterFragment()
+                } else {
+                    hideVideoFilterFragment()
+                }
+            }
 
             ThrottledLiveData(filterViewModel.videoFilter, 500L).observe(
                 viewLifecycleOwner,
@@ -373,29 +371,25 @@ abstract class PlaybackFragment(
             debugView.visibility = View.VISIBLE
         }
 
-        val backCallback =
-            requireActivity().onBackPressedDispatcher.addCallback(
-                viewLifecycleOwner,
-                enabled = false,
-            ) {
-                hideControlsIfVisible()
-            }
-
         videoView = view.findViewById(R.id.video_view)
         videoView.controllerShowTimeoutMs =
             manager.getInt("controllerShowTimeoutMs", PlayerControlView.DEFAULT_SHOW_TIMEOUT_MS)
-        videoView.setControllerVisibilityListener(
-            PlayerView.ControllerVisibilityListener { vis ->
+        videoView.setControllerVisibilityListener(controllerVisibilityListener)
+
+        val backCallback =
+            requireActivity().onBackPressedDispatcher.addCallback(requireActivity(), false) {
+                hideControlsIfVisible()
+            }
+        controllerVisibilityListener.addListener { vis ->
+            if (vis == View.VISIBLE) {
+                backCallback.isEnabled = true
+            } else {
+                backCallback.isEnabled = false
                 if (!exoCenterControls.isVisible) {
                     hideControlsIfVisible()
                 }
-                if (vis == View.VISIBLE) {
-                    backCallback.isEnabled = true
-                } else {
-                    backCallback.isEnabled = false
-                }
-            },
-        )
+            }
+        }
 
         val mFocusedZoom =
             requireContext().resources.getFraction(

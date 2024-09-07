@@ -34,6 +34,10 @@ class PlaybackActivity : FragmentActivity() {
 
         setContentView(R.layout.activity_playback)
 
+        onBackPressedDispatcher.addCallback(this, true) {
+            setResultAndFinish()
+        }
+
         val scene = intent.getParcelableExtra(SceneDetailsActivity.MOVIE) as Scene?
         if (scene != null) {
             this.scene = scene
@@ -60,13 +64,6 @@ class PlaybackActivity : FragmentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         maxPlayPercent =
             PreferenceManager.getDefaultSharedPreferences(this).getInt("maxPlayPercent", 98)
-        onBackPressedDispatcher.addCallback(this, true) {
-            if (fragment?.isControllerVisible == true) {
-                fragment?.hideControlsIfVisible()
-            } else {
-                setResultAndFinish()
-            }
-        }
     }
 
     @OptIn(UnstableApi::class)
