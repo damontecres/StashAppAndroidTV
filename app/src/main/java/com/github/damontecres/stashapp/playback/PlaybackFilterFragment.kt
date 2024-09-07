@@ -8,6 +8,7 @@ import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.room.VideoFilter
 
@@ -102,12 +103,20 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
             val vf = getOrCreateVideoFilter()
             viewModel.videoFilter.value = vf.copy(rotation = vf.rotation - 90)
         }
-        val submitButton = view.findViewById<Button>(R.id.apply_button)
-        submitButton.setOnClickListener {
+        val saveButton = view.findViewById<Button>(R.id.save_button)
+        saveButton.setOnClickListener {
             viewModel.maybeSaveFilter()
             requireActivity().supportFragmentManager.beginTransaction()
                 .remove(this@PlaybackFilterFragment)
                 .commitNow()
+        }
+        val saveFilters =
+            PreferenceManager.getDefaultSharedPreferences(requireContext()).getBoolean(
+                getString(R.string.pref_key_playback_save_effects),
+                true,
+            )
+        if (!saveFilters) {
+            saveButton.visibility = View.GONE
         }
 
         val resetButton = view.findViewById<Button>(R.id.reset_button)
@@ -117,7 +126,7 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
             setUi(vf)
         }
 
-        submitButton.requestFocus()
+        saveButton.requestFocus()
     }
 
     private fun getOrCreateVideoFilter(): VideoFilter {

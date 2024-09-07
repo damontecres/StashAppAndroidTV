@@ -17,4 +17,5 @@
     <string name="pref_key_playback_save_effects" translatable="false">playback.saveEffects</string>
     <string name="pref_key_crop_card_images" translatable="false">card.cropImages</string>
     <string name="pref_key_back_button_scroll" translatable="false">grid_back_button_scroll</string>
+    <string name="pref_key_video_filters" translatable="false">playback.videoFilters</string>
 </resources>
