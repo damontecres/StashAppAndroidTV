@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
@@ -42,6 +43,7 @@ import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import com.github.damontecres.stashapp.util.testStashConnection
+import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -450,6 +452,21 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     }
                 }
                 true
+            }
+
+            val videoEffectsPref =
+                findPreference<SwitchPreference>(getString(R.string.pref_key_video_filters))!!
+            videoEffectsPref.setOnPreferenceChangeListener { _, newValue ->
+                if (newValue == true) {
+                    ConfirmationDialogFragment(
+                        "Some device do not support video filters!\n\nWould you like to enable it?",
+                    ) { _, which ->
+                        if (which == DialogInterface.BUTTON_POSITIVE) {
+                            videoEffectsPref.isChecked = true
+                        }
+                    }.show(childFragmentManager, null)
+                }
+                newValue == false
             }
         }
 

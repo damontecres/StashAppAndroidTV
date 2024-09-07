@@ -232,7 +232,7 @@
             android:text="@string/fa_rotate_right" />
 
         <Button
-            android:id="@+id/apply_button"
+            android:id="@+id/save_button"
             style="?android:attr/buttonBarButtonStyle"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"

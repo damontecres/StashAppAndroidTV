@@ -102,6 +102,15 @@
             app:summaryOn="Show title &amp; date"
             app:summaryOff="Hide title &amp; date"
             app:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Scene Video Filters">
+        <SwitchPreference
+            app:key="@string/pref_key_video_filters"
+            app:title="Enable video filters"
+            app:summaryOn="Enabled"
+            app:summaryOff="Disabled"
+            app:defaultValue="false" />
         <SwitchPreference
             app:key="@string/pref_key_playback_save_effects"
             app:title="Persist scene filters"
