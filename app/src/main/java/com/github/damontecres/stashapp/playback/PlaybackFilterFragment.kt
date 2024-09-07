@@ -106,9 +106,6 @@ class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
         val saveButton = view.findViewById<Button>(R.id.save_button)
         saveButton.setOnClickListener {
             viewModel.maybeSaveFilter()
-            requireActivity().supportFragmentManager.beginTransaction()
-                .remove(this@PlaybackFilterFragment)
-                .commitNow()
         }
         val saveFilters =
             PreferenceManager.getDefaultSharedPreferences(requireContext()).getBoolean(

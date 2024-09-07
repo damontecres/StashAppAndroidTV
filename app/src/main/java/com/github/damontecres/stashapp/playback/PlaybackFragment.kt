@@ -23,6 +23,8 @@ import androidx.annotation.OptIn
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
+import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -107,6 +109,7 @@ abstract class PlaybackFragment(
     // Track whether the video is playing before calling the resultLauncher
     protected var wasPlayingBeforeResultLauncher: Boolean? = null
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
+    private val videoFilterFragment = PlaybackFilterFragment()
 
     protected var playbackPosition = -1L
     val currentVideoPosition get() = player?.currentPosition ?: playbackPosition
@@ -305,21 +308,36 @@ abstract class PlaybackFragment(
             Log.v(PlaybackSceneFragment.TAG, "Initializing video effects")
             exoPlayer.setVideoEffects(listOf())
 
-            val filterContainer = requireActivity().findViewById<View>(R.id.video_filter_container)
             videoView.setControllerVisibilityListener(
                 PlayerView.ControllerVisibilityListener {
-                    filterContainer.visibility = it
+                    if (it == View.VISIBLE) {
+                        showVideoFilterFragment()
+                    } else {
+                        hideVideoFilterFragment()
+                    }
                 },
             )
 
             ThrottledLiveData(filterViewModel.videoFilter, 500L).observe(
                 viewLifecycleOwner,
             ) { vf ->
-                Log.v(PlaybackSceneFragment.TAG, "Got new VideoFilter: $vf")
+                Log.v(TAG, "Got new VideoFilter: $vf")
                 val effectList = vf?.createEffectList().orEmpty()
-                Log.d(PlaybackSceneFragment.TAG, "Applying ${effectList.size} effects")
+                Log.d(TAG, "Applying ${effectList.size} effects")
                 player?.setVideoEffects(effectList)
             }
+        }
+    }
+
+    private fun hideVideoFilterFragment() {
+        childFragmentManager.commit {
+            hide(videoFilterFragment)
+        }
+    }
+
+    private fun showVideoFilterFragment() {
+        childFragmentManager.commit {
+            show(videoFilterFragment)
         }
     }
 
@@ -436,59 +454,82 @@ abstract class PlaybackFragment(
 
         moreOptionsButton = view.findViewById(R.id.more_options_button)
         moreOptionsButton.onFocusChangeListener = onFocusChangeListener
+
+        setupMoreOptions()
     }
 
     private fun setupMoreOptions() {
         val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        var addedVideoFilter = false
 
         moreOptionsButton.setOnClickListener {
-            val previousControllerShowTimeoutMs = videoView.controllerShowTimeoutMs
-            val debugToggleText =
-                if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
-            val applyFiltersText =
-                if (preferences.getBoolean(
-                        getString(R.string.pref_key_video_filters),
-                        false,
-                    )
-                ) {
-                    "Apply Video Filters"
-                } else {
-                    null
+            val callbacks = mutableMapOf<Int, () -> Unit>()
+            val options =
+                buildList {
+                    if (optionsButtonOptions.isPlayList) {
+                        // Kind of hacky
+                        this as PlaylistFragment<*, *, *>
+                        this.showPlaylist()
+                    }
+
+                    if (optionsButtonOptions.dataType == DataType.SCENE) {
+                        add("Create Marker")
+                        callbacks[size - 1] = {
+                            // Save current playback state
+                            player?.let { exoPlayer ->
+                                playbackPosition = exoPlayer.currentPosition
+                                wasPlayingBeforeResultLauncher = exoPlayer.isPlaying
+                            }
+                            val intent = Intent(requireActivity(), SearchForActivity::class.java)
+                            intent.putExtra(
+                                SearchForFragment.TITLE_KEY,
+                                "for primary tag for scene marker",
+                            )
+                            intent.putExtra("dataType", DataType.TAG.name)
+                            intent.putExtra(SearchForFragment.ID_KEY, StashAction.CREATE_MARKER.id)
+                            resultLauncher.launch(intent)
+                        }
+                    }
+
+                    if (preferences.getBoolean(getString(R.string.pref_key_video_filters), false)) {
+                        if (addedVideoFilter) {
+                            add("Hide Video Filters")
+                            callbacks[size - 1] = {
+                                childFragmentManager.commitNow {
+                                    remove(videoFilterFragment)
+                                }
+                                addedVideoFilter = !addedVideoFilter
+                            }
+                        } else {
+                            add("Show Video Filters")
+                            callbacks[size - 1] = {
+                                videoView.showController()
+                                childFragmentManager.commitNow {
+                                    add(R.id.video_overlay, videoFilterFragment)
+                                }
+                                videoFilterFragment.requireView().requestFocus()
+                                addedVideoFilter = !addedVideoFilter
+                            }
+                        }
+                    }
+
+                    val debugToggleText =
+                        if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
+                    add(debugToggleText)
+                    callbacks[size - 1] = {
+                        if (debugView.isVisible) {
+                            debugView.animateToInvisible(View.GONE)
+                        } else {
+                            debugView.animateToVisible()
+                        }
+                    }
                 }
+            val previousControllerShowTimeoutMs = videoView.controllerShowTimeoutMs
             ListPopupWindowBuilder(
                 moreOptionsButton,
-                listOfNotNull(
-                    "Create Marker",
-                    debugToggleText,
-                    applyFiltersText,
-                ),
+                options,
             ) { position ->
-                if (position == 0) {
-                    // Save current playback state
-                    player?.let { exoPlayer ->
-                        playbackPosition = exoPlayer.currentPosition
-                        wasPlayingBeforeResultLauncher = exoPlayer.isPlaying
-                    }
-                    val intent = Intent(requireActivity(), SearchForActivity::class.java)
-                    intent.putExtra(SearchForFragment.TITLE_KEY, "for primary tag for scene marker")
-                    intent.putExtra("dataType", DataType.TAG.name)
-                    intent.putExtra(SearchForFragment.ID_KEY, StashAction.CREATE_MARKER.id)
-                    resultLauncher.launch(intent)
-                } else if (position == 1) {
-                    if (debugView.isVisible) {
-                        debugView.animateToInvisible(View.GONE)
-                    } else {
-                        debugView.animateToVisible()
-                    }
-                } else if (position == 2) {
-                    requireActivity().supportFragmentManager.beginTransaction()
-                        .replace(
-                            R.id.video_filter_container,
-                            PlaybackFilterFragment(),
-                            PlaybackFilterFragment.TAG,
-                        )
-                        .commitNow()
-                }
+                callbacks[position]?.let { it() }
             }.onShowListener {
                 // Prevent the controller from hiding
                 videoView.controllerShowTimeoutMs = -1
@@ -594,7 +635,7 @@ abstract class PlaybackFragment(
         }
     }
 
-    data class OptionsButtonOptions(val dataType: DataType, val playList: Boolean)
+    data class OptionsButtonOptions(val dataType: DataType, val isPlayList: Boolean)
 
     private inner class ResultCallback : ActivityResultCallback<ActivityResult> {
         override fun onActivityResult(result: ActivityResult) {

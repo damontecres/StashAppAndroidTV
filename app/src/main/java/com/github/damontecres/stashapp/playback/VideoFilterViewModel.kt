@@ -35,11 +35,14 @@ class VideoFilterViewModel : ViewModel() {
                         .getPlaybackEffect(serverUrl, sceneId)
                 if (vf != null) {
                     Log.d(TAG, "Loaded VideoFilter for scene $sceneId")
-                    withContext(Dispatchers.Main) {
-                        videoFilter.value = vf.videoFilter
-                    }
+                }
+                withContext(Dispatchers.Main) {
+                    videoFilter.value = vf?.videoFilter
                 }
             }
+        } else {
+            Log.d(TAG, "No saving video filters")
+            videoFilter.value = null
         }
     }
 
