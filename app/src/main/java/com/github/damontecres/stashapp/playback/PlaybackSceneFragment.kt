@@ -53,7 +53,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
 
     private fun applyEffects(exoPlayer: ExoPlayer) {
         if (PreferenceManager.getDefaultSharedPreferences(requireContext())
-                .getBoolean(getString(R.string.pref_key_experimental_features), false)
+                .getBoolean(getString(R.string.pref_key_video_filters), false)
         ) {
             Log.v(TAG, "Initializing video effects")
             exoPlayer.setVideoEffects(listOf())
@@ -208,7 +208,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
             preferences.getBoolean(
                 getString(R.string.pref_key_playback_save_effects),
                 true,
-            ) && preferences.getBoolean(getString(R.string.pref_key_experimental_features), false)
+            ) && preferences.getBoolean(getString(R.string.pref_key_video_filters), false)
         viewModel.initialize(
             StashServer.getCurrentStashServer(requireContext())!!,
             scene.id,
@@ -221,11 +221,11 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 if (debugView.isVisible) "Hide transcode info" else "Show transcode info"
             val applyFiltersText =
                 if (preferences.getBoolean(
-                        getString(R.string.pref_key_experimental_features),
+                        getString(R.string.pref_key_video_filters),
                         false,
                     )
                 ) {
-                    "Apply Filters"
+                    "Apply Video Filters"
                 } else {
                     null
                 }
