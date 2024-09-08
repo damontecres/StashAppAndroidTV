@@ -102,6 +102,7 @@
                 android:id="@+id/button_test_saved_filters"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="@drawable/button_selector"
                 android:text="Test saved filters" />
 
             <TableLayout
