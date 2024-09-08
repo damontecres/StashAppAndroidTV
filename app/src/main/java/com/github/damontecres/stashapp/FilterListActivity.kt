@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -18,8 +19,8 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.parcelable
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
@@ -121,10 +122,8 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
 
     private suspend fun populateSavedFilters(dataType: DataType) {
         val context = this@FilterListActivity
-        val filterParser = FilterParser(ServerPreferences(context).serverVersion)
         val savedFilters =
             QueryEngine(this).getSavedFilters(dataType)
-                .map { it.toFilterArgs(filterParser) }
         if (savedFilters.isEmpty()) {
             filterButton.setOnClickListener {
                 Toast.makeText(
@@ -144,7 +143,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                 ArrayAdapter(
                     context,
                     R.layout.popup_item,
-                    savedFilters.map { it.name ?: getString(it.dataType.pluralStringId) },
+                    savedFilters.map { it.name.ifBlank { getString(dataType.pluralStringId) } },
                 )
             listPopUp.setAdapter(adapter)
             listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
@@ -153,10 +152,25 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             listPopUp.width = getMaxMeasuredWidth(context, adapter)
             listPopUp.isModal = true
 
+            val filterParser = FilterParser(StashServer.getCurrentServerVersion())
             listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                 listPopUp.dismiss()
-                val savedFilter = savedFilters[position].withResolvedRandom()
-                setup(savedFilter)
+                val savedFilter =
+                    savedFilters[position]
+                try {
+                    val filterArgs =
+                        savedFilter
+                            .toFilterArgs(filterParser)
+                            .withResolvedRandom()
+                    setup(filterArgs)
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Exception parsing filter ${savedFilter.id}", ex)
+                    Toast.makeText(
+                        this@FilterListActivity,
+                        "Error with filter ${savedFilter.id}! Probably a bug: ${ex.message}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
             }
 
             filterButton.setOnClickListener {
