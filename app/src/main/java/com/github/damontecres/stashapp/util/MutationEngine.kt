@@ -2,13 +2,9 @@ package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Mutation
 import com.apollographql.apollo.api.Optional
-import com.apollographql.apollo.exception.ApolloException
-import com.apollographql.apollo.exception.ApolloHttpException
-import com.apollographql.apollo.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.CreateMarkerMutation
 import com.github.damontecres.stashapp.api.CreatePerformerMutation
 import com.github.damontecres.stashapp.api.CreateTagMutation
@@ -54,75 +50,35 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * @param context
  * @param showToasts show a toast when errors occur
- * @param lock an optional lock, when if shared with [QueryEngine], can prevent race conditions
  */
 class MutationEngine(
-    private val context: Context,
-    private val showToasts: Boolean = false,
-) {
-    private val client = StashClient.getApolloClient(context)
+    context: Context,
+    showToasts: Boolean = false,
+) : StashEngine(context, showToasts) {
+    suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> =
+        withContext(Dispatchers.IO) {
+            val mutationName = mutation.name()
+            val id = MUTATION_ID.getAndIncrement()
 
-    private val serverPreferences = ServerPreferences(context)
-
-    suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> {
-        val mutationName = mutation.name()
-        val id = MUTATION_ID.getAndIncrement()
-        try {
             Log.v(TAG, "executeMutation $id $mutationName start")
-            val response =
-                withContext(Dispatchers.IO) {
-                    client.mutation(mutation).executeV3()
-                }
-            if (response.errors.isNullOrEmpty()) {
+            val response = client.mutation(mutation).execute()
+            if (response.data != null) {
                 Log.v(TAG, "executeMutation $id $mutationName successful")
-                return response
+                return@withContext response
+            } else if (response.exception != null) {
+                throw createException(id, mutationName, response.exception!!) { id, msg, ex ->
+                    MutationException(id, msg, ex)
+                }
             } else {
                 val errorMsgs = response.errors!!.joinToString("\n") { it.message }
-                if (showToasts) {
-                    Toast.makeText(
-                        context,
-                        "${response.errors!!.size} errors in response ($mutationName)\n$errorMsgs",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
+                showToast("${response.errors!!.size} errors in response ($mutationName)\n$errorMsgs")
                 Log.e(TAG, "Errors in $id $mutationName: ${response.errors}")
                 throw MutationException(
                     id,
                     "($mutationName), ${response.errors!!.size} errors in graphql response",
                 )
             }
-        } catch (ex: ApolloNetworkException) {
-            if (showToasts) {
-                Toast.makeText(
-                    context,
-                    "Network error ($id $mutationName). Message: ${ex.message}, ${ex.cause?.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-            Log.e(TAG, "Network error in $id $mutationName", ex)
-            throw MutationException(id, "Network error ($mutationName)", ex)
-        } catch (ex: ApolloHttpException) {
-            if (showToasts) {
-                Toast.makeText(
-                    context,
-                    "HTTP error ($mutationName). Status=${ex.statusCode}, Msg=${ex.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-            Log.e(TAG, "HTTP ${ex.statusCode} error in $id $mutationName", ex)
-            throw MutationException(id, "HTTP ${ex.statusCode} ($mutationName)", ex)
-        } catch (ex: ApolloException) {
-            if (showToasts) {
-                Toast.makeText(
-                    context,
-                    "Server query error ($id $mutationName). Msg=${ex.message}, ${ex.cause?.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-            Log.e(TAG, "ApolloException in $id $mutationName", ex)
-            throw MutationException(id, "Apollo exception ($mutationName)", ex)
         }
-    }
 
     /**
      * Saves the resume time for a given scene
@@ -442,6 +398,6 @@ class MutationEngine(
         private val MUTATION_ID = AtomicInteger(0)
     }
 
-    open class MutationException(val id: Int, msg: String? = null, cause: ApolloException? = null) :
+    open class MutationException(val id: Int, msg: String? = null, cause: Exception? = null) :
         RuntimeException(msg, cause)
 }
