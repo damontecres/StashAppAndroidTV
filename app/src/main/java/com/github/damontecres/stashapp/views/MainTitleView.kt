@@ -147,7 +147,12 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         performersButton.visibility = getVis("performers")
         studiosButton.visibility = getVis("studios")
         tagsButton.visibility = getVis("tags")
-        moviesButton.visibility = getVis("movies")
+        moviesButton.visibility =
+            if ("groups" in menuItems || "movies" in menuItems) {
+                View.VISIBLE
+            } else {
+                View.GONE
+            }
         markersButton.visibility = getVis("markers")
         galleriesButton.visibility = getVis("galleries")
     }

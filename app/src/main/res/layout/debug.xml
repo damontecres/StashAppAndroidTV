@@ -94,6 +94,32 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="@string/debug_tests"
+                android:textAlignment="textStart"
+                android:textSize="22sp" />
+
+            <Button
+                android:id="@+id/button_test_saved_filters"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_selector"
+                android:text="Test saved filters" />
+
+            <TableLayout
+                android:id="@+id/debug_test_table"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:text="@string/logcat"
                 android:textAlignment="textStart"
                 android:textSize="22sp" />
