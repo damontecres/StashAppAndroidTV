@@ -7,6 +7,7 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Group
@@ -30,6 +31,7 @@ class GroupFragment : TabbedFragment() {
             listOf(
                 StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details), null),
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
+                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER),
                 StashFragmentPagerAdapter.PagerEntry(DataType.TAG),
                 StashFragmentPagerAdapter.PagerEntry(
                     getString(R.string.stashapp_containing_groups),
@@ -67,8 +69,28 @@ class GroupFragment : TabbedFragment() {
                                         ),
                                 ),
                         )
+                    2 -> {
+                        StashGridFragment(
+                            dataType = DataType.MARKER,
+                            objectFilter =
+                                SceneMarkerFilterType(
+                                    scene_filter =
+                                        Optional.present(
+                                            SceneFilterType(
+                                                groups =
+                                                    Optional.present(
+                                                        HierarchicalMultiCriterionInput(
+                                                            value = Optional.present(listOf(group.id)),
+                                                            modifier = CriterionModifier.INCLUDES,
+                                                        ),
+                                                    ),
+                                            ),
+                                        ),
+                                ),
+                        )
+                    }
                     // Tags
-                    2 ->
+                    3 ->
                         StashGridFragment(
                             FilterArgs(
                                 DataType.TAG,
@@ -76,7 +98,7 @@ class GroupFragment : TabbedFragment() {
                             ),
                         )
                     // containing groups
-                    3 ->
+                    4 ->
                         StashGridFragment(
                             FilterArgs(
                                 DataType.GROUP,
@@ -88,7 +110,7 @@ class GroupFragment : TabbedFragment() {
                             ),
                         )
                     // sub groups
-                    4 ->
+                    5 ->
                         StashGridFragment(
                             FilterArgs(
                                 DataType.GROUP,
