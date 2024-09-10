@@ -110,7 +110,7 @@ class ObjectFilterParsingTests {
     fun testScene2Filter() {
         val savedFilterData = getSavedFilterData("scene_savedfilter2.json")
         val sceneFilter =
-            FilterParser(Version.MINIMUM_STASH_VERSION).convertSceneObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertSceneFilterType(savedFilterData.object_filter)
         Assert.assertNotNull(sceneFilter!!)
         Assert.assertEquals(FilterMode.SCENES, savedFilterData.mode)
     }
