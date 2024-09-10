@@ -223,7 +223,7 @@ class FilterParser(private val serverVersion: Version) {
             val values = it["value"] as Map<String, String?>?
             StashIDCriterionInput(
                 Optional.presentIfNotNull(values?.get("endpoint")),
-                Optional.presentIfNotNull(values?.get("stash_id")),
+                Optional.presentIfNotNull(values?.get("stashID")),
                 CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {

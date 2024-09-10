@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.playback
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.viewModels
@@ -20,12 +21,11 @@ class PlaylistActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val filter =
-            intent.getParcelableExtra(INTENT_FILTER, FilterArgs::class, 0, parcelable)!!
-
-        viewModel.filterArgs.value = filter
-
         if (savedInstanceState == null) {
+            val filter =
+                intent.getParcelableExtra(INTENT_FILTER, FilterArgs::class, 0, parcelable)!!
+            Log.v(TAG, "filter=${filter.sortAndDirection}")
+            viewModel.filterArgs.value = filter
             fragment =
                 when (filter.dataType) {
                     DataType.MARKER -> PlaylistMarkersFragment()

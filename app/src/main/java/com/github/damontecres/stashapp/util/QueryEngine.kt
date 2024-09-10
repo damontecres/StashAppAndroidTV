@@ -2,15 +2,11 @@ package com.github.damontecres.stashapp.util
 
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import com.apollographql.apollo.ApolloCall
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Operation
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
-import com.apollographql.apollo.exception.ApolloException
-import com.apollographql.apollo.exception.ApolloHttpException
-import com.apollographql.apollo.exception.ApolloNetworkException
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
@@ -65,46 +61,33 @@ import kotlin.time.toDuration
  *
  * @param context
  * @param showToasts show a toast when errors occur
- * @param lock an optional lock, when if shared with [MutationEngine], can prevent race conditions
  */
 class QueryEngine(
-    private val context: Context,
-    private val showToasts: Boolean = false,
-) {
-    private val serverVersion = ServerPreferences(context).serverVersion
-    private val client = StashClient.getApolloClient(context)
-
+    context: Context,
+    showToasts: Boolean = false,
+) : StashEngine(context, showToasts) {
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val queryName = query.operation.name()
             val id = QUERY_ID.getAndIncrement()
             Log.v(TAG, "executeQuery $id $queryName")
-            try {
-                val response = query.executeV3()
-                if (response.errors.isNullOrEmpty()) {
-                    Log.v(TAG, "executeQuery $id $queryName successful")
-                    return@withContext response
-                } else {
-                    val errorMsgs = response.errors!!.joinToString("\n") { it.message }
-                    showToast("${response.errors!!.size} errors in response ($queryName)\n$errorMsgs")
-                    Log.e(TAG, "Errors in $id $queryName: ${response.errors}")
-                    throw QueryException(
-                        id,
-                        "($queryName), ${response.errors!!.size} errors in graphql response",
-                    )
+
+            val response = query.execute()
+            if (response.data != null) {
+                Log.v(TAG, "executeQuery $id $queryName successful")
+                return@withContext response
+            } else if (response.exception != null) {
+                throw createException(id, queryName, response.exception!!) { id, msg, ex ->
+                    QueryException(id, msg, ex)
                 }
-            } catch (ex: ApolloNetworkException) {
-                showToast("Network error ($queryName). Message: ${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "Network error in $id $queryName", ex)
-                throw QueryException(id, "Network error ($queryName)", ex)
-            } catch (ex: ApolloHttpException) {
-                showToast("HTTP error ($queryName). Status=${ex.statusCode}, Msg=${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "HTTP ${ex.statusCode} error in $id $queryName", ex)
-                throw QueryException(id, "HTTP ${ex.statusCode} ($queryName)", ex)
-            } catch (ex: ApolloException) {
-                showToast("Server query error ($queryName). Msg=${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "ApolloException in $id $queryName", ex)
-                throw QueryException(id, "Apollo exception ($queryName)", ex)
+            } else {
+                val errorMsgs = response.errors!!.joinToString("\n") { it.message }
+                showToast("${response.errors!!.size} errors in response ($queryName)\n$errorMsgs")
+                Log.e(TAG, "Errors in $id $queryName: ${response.errors}")
+                throw QueryException(
+                    id,
+                    "($queryName), ${response.errors!!.size} errors in graphql response",
+                )
             }
         }
 
@@ -393,21 +376,13 @@ class QueryEngine(
         }
     }
 
-    private suspend fun showToast(message: String) {
-        if (showToasts) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
     companion object {
-        const val TAG = "QueryEngine"
+        private const val TAG = "QueryEngine"
 
         private val QUERY_ID = AtomicInteger(0)
     }
 
-    open class QueryException(val id: Int, msg: String? = null, cause: ApolloException? = null) :
+    open class QueryException(val id: Int, msg: String? = null, cause: Exception? = null) :
         RuntimeException(msg, cause)
 
     class StashNotConfiguredException : RuntimeException()

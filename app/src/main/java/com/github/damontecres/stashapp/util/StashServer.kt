@@ -14,6 +14,10 @@ data class StashServer(val url: String, val apiKey: String?) {
             return ServerPreferences(StashApplication.getApplication()).serverVersion
         }
 
+        fun getCurrentStashServer(): StashServer? {
+            return getCurrentStashServer(StashApplication.getApplication())
+        }
+
         fun getCurrentStashServer(context: Context): StashServer? {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
             val url = manager.getString(SettingsFragment.PREF_STASH_URL, null)

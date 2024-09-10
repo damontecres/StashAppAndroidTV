@@ -1,7 +1,9 @@
 package com.github.damontecres.stashapp.playback
 
+import android.os.Bundle
 import android.util.Log
-import android.view.KeyEvent
+import android.view.View
+import androidx.activity.addCallback
 import androidx.annotation.OptIn
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
@@ -31,7 +33,7 @@ import kotlinx.coroutines.launch
 @OptIn(UnstableApi::class)
 abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
     PlaybackFragment() {
-    private val viewModel: PlaylistViewModel by activityViewModels()
+    private val playlistViewModel: PlaylistViewModel by activityViewModels()
 
     protected lateinit var pagingSource: StashPagingSource<T, D, D, C>
 
@@ -42,6 +44,20 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
     protected var skipBackOverride = -1L
 
     private val playlistListFragment = PlaylistListFragment<T, D, C>()
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        if (savedInstanceState == null) {
+            // Add the playlist list fragment, but keep it hidden
+            childFragmentManager.commit {
+                add(R.id.video_overlay, playlistListFragment)
+                hide(playlistListFragment)
+            }
+        }
+    }
 
     @OptIn(UnstableApi::class)
     override fun onStart() {
@@ -83,7 +99,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 },
             )
             exoPlayer.addListener(PlaylistListener())
-            if (viewModel.filterArgs.value?.dataType == DataType.SCENE) {
+            if (playlistViewModel.filterArgs.value?.dataType == DataType.SCENE) {
                 // Only track activity for scene playback
                 maybeAddActivityTracking(exoPlayer)
             }
@@ -99,19 +115,14 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      * Build the initial playlist
      */
     private suspend fun buildPlaylist() {
-        val filter = viewModel.filterArgs.value!!
+        val filter = playlistViewModel.filterArgs.value!!
         val dataSupplier = DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, C>(filter)
         pagingSource =
             StashPagingSource(requireContext(), PAGE_SIZE, dataSupplier, useRandom = false)
         addNextPageToPlaylist()
+        maybeSetupVideoEffects(player!!)
         player!!.prepare()
         player!!.play()
-
-        // Add the playlist list fragment, but keep it hidden
-        childFragmentManager.commit {
-            add(R.id.video_overlay, playlistListFragment)
-            hide(playlistListFragment)
-        }
     }
 
     /**
@@ -134,12 +145,16 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         Log.v(TAG, "Fetching page #$page")
         val newItems = pagingSource.fetchPage(page, PAGE_SIZE)
         val mediaItems =
-            newItems.map { item ->
+            newItems.mapNotNull { item ->
                 val scene = convertToScene(item)
-                val streamDecision = getStreamDecision(requireContext(), scene)
-                buildMediaItem(requireContext(), streamDecision, scene) {
-                    builderCallback(item)?.invoke(this)
-                    setTag(MediaItemTag(scene, streamDecision))
+                if (scene.streams.isEmpty()) {
+                    null
+                } else {
+                    val streamDecision = getStreamDecision(requireContext(), scene)
+                    buildMediaItem(requireContext(), streamDecision, scene) {
+                        builderCallback(item)?.invoke(this)
+                        setTag(MediaItemTag(scene, streamDecision))
+                    }
                 }
             }
         Log.v(TAG, "Got ${mediaItems.size} media items")
@@ -208,22 +223,14 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         }
     }
 
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN &&
-            event.keyCode == KeyEvent.KEYCODE_BACK &&
-            !playlistListFragment.isHidden
-        ) {
-            // If showing the playlist and user hits back, hide it
-            hidePlaylist()
-            return true
-        }
-        return super.dispatchKeyEvent(event)
-    }
-
     /**
      * Show the playlist list. This will disable the video controls.
      */
     fun showPlaylist() {
+        requireActivity().onBackPressedDispatcher.addCallback {
+            hidePlaylist()
+            remove()
+        }
         hideControlsIfVisible()
         videoView.useController = false
         childFragmentManager.commit {

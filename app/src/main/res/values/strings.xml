@@ -64,6 +64,7 @@
     <string name="reset">Reset</string>
     <string name="replace">Replace</string>
     <string name="format_recently_used">Recently used %1$s</string>
+    <string name="debug_tests">Debugging Tests</string>
 
     <string name="format_percent" formatted="true">%1$d\%%</string>
     <string name="format_pixels" formatted="true">%1$.1fpx</string>

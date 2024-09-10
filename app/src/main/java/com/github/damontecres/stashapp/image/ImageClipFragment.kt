@@ -11,6 +11,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackFragment
 import com.github.damontecres.stashapp.util.isImageClip
@@ -25,13 +26,14 @@ class ImageClipFragment : PlaybackFragment(), VideoController {
     override val previewsEnabled: Boolean
         get() = false
 
+    override val optionsButtonOptions: OptionsButtonOptions
+        get() = OptionsButtonOptions(DataType.IMAGE, false)
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-
-        moreOptionsButton.visibility = View.GONE
 
         videoView.useController = false
         hideControlsIfVisible()

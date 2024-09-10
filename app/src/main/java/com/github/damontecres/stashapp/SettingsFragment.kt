@@ -221,6 +221,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<Preference>("triggerScan")!!
                 .setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
+                        ServerPreferences(requireContext()).updatePreferences()
                         MutationEngine(requireContext()).triggerScan()
                         Toast.makeText(
                             requireContext(),
@@ -234,6 +235,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<Preference>("triggerGenerate")!!
                 .setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
+                        ServerPreferences(requireContext()).updatePreferences()
                         MutationEngine(requireContext()).triggerGenerate()
                         Toast.makeText(
                             requireContext(),
