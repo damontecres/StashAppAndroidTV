@@ -92,6 +92,9 @@
           "modifier": "NOT_MATCHES_REGEX",
           "value": "gfdesbfdgs"
         },
+        "phash_distance": {
+          "modifier": "IS_NULL"
+        },
         "tags": {
           "modifier": "INCLUDES",
           "value": {

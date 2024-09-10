@@ -36,10 +36,10 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, *>
+            val values = it["value"] as Map<String, *>?
             IntCriterionInput(
-                values["value"]?.toString()?.toInt() ?: 0,
-                Optional.presentIfNotNull(values["value2"]?.toString()?.toInt()),
+                values?.get("value")?.toString()?.toInt() ?: 0,
+                Optional.presentIfNotNull(values?.get("value2")?.toString()?.toInt()),
                 CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
@@ -49,10 +49,10 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertFloatCriterionInput(it: Map<String, *>?): FloatCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, *> // Might be an int or double
+            val values = it["value"] as Map<String, *>? // Might be an int or double
             FloatCriterionInput(
-                values["value"]?.toString()?.toDouble() ?: 0.0,
-                Optional.presentIfNotNull(values["value2"]?.toString()?.toDouble()),
+                values?.get("value")?.toString()?.toDouble() ?: 0.0,
+                Optional.presentIfNotNull(values?.get("value2")?.toString()?.toDouble()),
                 CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
@@ -140,10 +140,10 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertDateCriterionInput(it: Map<String, *>?): DateCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, String?>
+            val values = it["value"] as Map<String, String?>?
             DateCriterionInput(
-                values["value"]!!,
-                Optional.presentIfNotNull(values["value2"]),
+                values?.get("value") ?: "",
+                Optional.presentIfNotNull(values?.get("value2")),
                 CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
@@ -153,10 +153,10 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertTimestampCriterionInput(it: Map<String, *>?): TimestampCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, String?>
+            val values = it["value"] as Map<String, String?>?
             TimestampCriterionInput(
-                values["value"]!!,
-                Optional.presentIfNotNull(values["value2"]),
+                values?.get("value") ?: "",
+                Optional.presentIfNotNull(values?.get("value2")),
                 CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
@@ -193,7 +193,12 @@ class FilterParser(private val serverVersion: Version) {
                     val v = emptyList<String>()
                     v
                 }
-            values = values.map { it.uppercase().replace(" ", "_") }
+            values =
+                values.map {
+                    it.uppercase()
+                        .replace(" ", "_")
+                        .replace("-", "_")
+                }
 
             GenderCriterionInput(
                 Optional.absent(),
@@ -228,11 +233,11 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertPhashDistanceCriterionInput(it: Map<String, *>?): PhashDistanceCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, *>
+            val values = it["value"] as Map<String, *>?
             PhashDistanceCriterionInput(
-                values["value"]!! as String,
+                values?.get("value") as String? ?: "",
                 CriterionModifier.valueOf(it["modifier"]!!.toString()),
-                Optional.presentIfNotNull(values["distance"]?.toString()?.toInt()),
+                Optional.presentIfNotNull(values?.get("distance")?.toString()?.toInt()),
             )
         } else {
             null

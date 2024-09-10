@@ -143,7 +143,7 @@ class DebugActivity : FragmentActivity() {
         private fun testSavedFilters() {
             val table = requireView().findViewById<TableLayout>(R.id.debug_test_table)
             table.removeAllViews()
-            table.addView(createRow("Data Type", "ID", "Name", ""))
+            table.addView(createRow("Data Type", "ID", "Name", "Result"))
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 try {
@@ -169,7 +169,7 @@ class DebugActivity : FragmentActivity() {
                                         dataType.name,
                                         filter.id,
                                         filter.name,
-                                        ex.message,
+                                        ex.message?.ifBlank { ex.cause?.message },
                                     ),
                                 )
                             }

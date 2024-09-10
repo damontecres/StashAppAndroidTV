@@ -9,7 +9,8 @@
           "modifier": "INCLUDES",
           "value": [
             "Male",
-            "Female"
+            "Female",
+            "Non-Binary"
           ]
         }
       },
