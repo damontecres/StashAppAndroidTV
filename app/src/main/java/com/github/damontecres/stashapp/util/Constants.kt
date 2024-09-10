@@ -157,18 +157,10 @@ suspend fun testStashConnection(
         try {
             val info =
                 withContext(Dispatchers.IO) {
-                    client.query(ServerInfoQuery()).executeV3()
+                    client.query(ServerInfoQuery()).execute()
                 }
-            if (info.hasErrors()) {
-                if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Connected to Stash, but server returned an error: ${info.errors}",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-                Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
-            } else {
+
+            if (info.data != null) {
                 val serverVersion = Version.tryFromString(info.data?.version?.version)
                 if (!Version.isStashVersionSupported(serverVersion)) {
                     if (showToast) {
@@ -192,67 +184,104 @@ suspend fun testStashConnection(
                     }
                     return TestResult(TestResultStatus.SUCCESS, info.data)
                 }
-            }
-        } catch (ex: ApolloHttpException) {
-            Log.e(Constants.TAG, "ApolloHttpException", ex)
-            if (ex.statusCode == 400) {
-                // Server returns 400 with body "Client sent an HTTP request to an HTTPS server.", but apollo doesn't record the body
-                if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Connected to server, but server may require using HTTPS.",
-                        Toast.LENGTH_LONG,
-                    ).show()
+            } else if (info.exception != null) {
+                when (val ex = info.exception) {
+                    is ApolloHttpException -> {
+                        Log.e(Constants.TAG, "ApolloHttpException", ex)
+                        if (ex.statusCode == 400) {
+                            // Server returns 400 with body "Client sent an HTTP request to an HTTPS server.", but apollo doesn't record the body
+                            if (showToast) {
+                                Toast.makeText(
+                                    context,
+                                    "Connected to server, but server may require using HTTPS.",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                            return TestResult(TestResultStatus.SSL_REQUIRED)
+                        } else if (ex.statusCode == 401 || ex.statusCode == 403) {
+                            if (showToast) {
+                                Toast.makeText(
+                                    context,
+                                    "Connected to server, but an API key is required.",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                            return TestResult(TestResultStatus.AUTH_REQUIRED)
+                        } else if (ex.statusCode == 500) {
+                            // In server <0.26.0, the server may return a 500 for incorrect API keys
+                            if (showToast) {
+                                Toast.makeText(
+                                    context,
+                                    "Connected to server, but the API key may be incorrect.",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                            return TestResult(TestResultStatus.AUTH_REQUIRED)
+                        } else {
+                            if (showToast) {
+                                Toast.makeText(
+                                    context,
+                                    "Connected to Stash, but got HTTP ${ex.statusCode}: '${ex.message}'",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                            return TestResult(TestResultStatus.ERROR)
+                        }
+                    }
+
+                    is ApolloException -> {
+                        Log.e(Constants.TAG, "ApolloException", ex)
+                        if (showToast) {
+                            val message =
+                                when (val cause = ex.cause) {
+                                    is UnknownHostException, is ConnectException -> cause.localizedMessage
+                                    is SSLHandshakeException -> "server may be using a self-signed certificate"
+                                    is IOException -> cause.localizedMessage
+                                    else -> ex.localizedMessage
+                                }
+                            Toast.makeText(
+                                context,
+                                "Failed to connect to Stash: $message",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+                        if (ex.cause is SSLHandshakeException) {
+                            return TestResult(TestResultStatus.SELF_SIGNED_REQUIRED)
+                        }
+                    }
+
+                    else -> {
+                        Log.e(Constants.TAG, "Exception", ex)
+                        if (showToast) {
+                            Toast.makeText(
+                                context,
+                                "Failed to connect to Stash: ${ex?.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+                        return TestResult(TestResultStatus.ERROR)
+                    }
                 }
-                return TestResult(TestResultStatus.SSL_REQUIRED)
-            } else if (ex.statusCode == 401 || ex.statusCode == 403) {
-                if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Connected to server, but an API key is required.",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-                return TestResult(TestResultStatus.AUTH_REQUIRED)
-            } else if (ex.statusCode == 500) {
-                // In server <0.26.0, the server may return a 500 for incorrect API keys
-                if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Connected to server, but the API key may be incorrect.",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-                return TestResult(TestResultStatus.AUTH_REQUIRED)
             } else {
                 if (showToast) {
                     Toast.makeText(
                         context,
-                        "Connected to Stash, but got HTTP ${ex.statusCode}: '${ex.message}'",
+                        "Connected to Stash, but server returned an error: ${info.errors}",
                         Toast.LENGTH_LONG,
                     ).show()
                 }
-                return TestResult(TestResultStatus.ERROR)
+                Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
             }
-        } catch (ex: ApolloException) {
-            Log.e(Constants.TAG, "ApolloException", ex)
+        } catch (ex: Exception) {
+            Log.e(Constants.TAG, "Exception", ex)
             if (showToast) {
-                val message =
-                    when (val cause = ex.cause) {
-                        is UnknownHostException, is ConnectException -> cause.localizedMessage
-                        is SSLHandshakeException -> "server may be using a self-signed certificate"
-                        is IOException -> cause.localizedMessage
-                        else -> ex.localizedMessage
-                    }
                 Toast.makeText(
                     context,
-                    "Failed to connect to Stash: $message",
+                    "Failed to connect to Stash: ${ex.message}",
                     Toast.LENGTH_LONG,
                 ).show()
             }
-            if (ex.cause is SSLHandshakeException) {
-                return TestResult(TestResultStatus.SELF_SIGNED_REQUIRED)
-            }
+            return TestResult(TestResultStatus.ERROR)
         }
     }
     return TestResult(TestResultStatus.ERROR)
