@@ -36,11 +36,11 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, *>
+            val values = it["value"] as Map<String, *>?
             IntCriterionInput(
-                values["value"]?.toString()?.toInt() ?: 0,
-                Optional.presentIfNotNull(values["value2"]?.toString()?.toInt()),
-                CriterionModifier.valueOf(it["modifier"]!! as String),
+                value = values?.get("value")?.toString()?.toInt() ?: 0,
+                value2 = Optional.presentIfNotNull(values?.get("value2")?.toString()?.toInt()),
+                modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
             null
@@ -49,11 +49,11 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertFloatCriterionInput(it: Map<String, *>?): FloatCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, *> // Might be an int or double
+            val values = it["value"] as Map<String, *>? // Might be an int or double
             FloatCriterionInput(
-                values["value"]?.toString()?.toDouble() ?: 0.0,
-                Optional.presentIfNotNull(values["value2"]?.toString()?.toDouble()),
-                CriterionModifier.valueOf(it["modifier"]!! as String),
+                value = values?.get("value")?.toString()?.toDouble() ?: 0.0,
+                value2 = Optional.presentIfNotNull(values?.get("value2")?.toString()?.toDouble()),
+                modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
             null
@@ -63,8 +63,8 @@ class FilterParser(private val serverVersion: Version) {
     private fun convertStringCriterionInput(it: Map<String, *>?): StringCriterionInput? {
         return if (it != null) {
             StringCriterionInput(
-                it["value"]?.toString() ?: "",
-                CriterionModifier.valueOf(it["modifier"]!!.toString()),
+                value = it["value"]?.toString() ?: "",
+                modifier = CriterionModifier.valueOf(it["modifier"]!!.toString()),
             )
         } else {
             null
@@ -85,10 +85,10 @@ class FilterParser(private val serverVersion: Version) {
             val items = mapToIds(values["items"])
             val excludes = mapToIds(values["excluded"])
             HierarchicalMultiCriterionInput(
-                Optional.presentIfNotNull(items),
-                CriterionModifier.valueOf(it["modifier"]!!.toString()),
-                Optional.presentIfNotNull(values["depth"] as Int?),
-                Optional.presentIfNotNull(excludes),
+                value = Optional.presentIfNotNull(items),
+                modifier = CriterionModifier.valueOf(it["modifier"]!!.toString()),
+                depth = Optional.presentIfNotNull(values["depth"] as Int?),
+                excludes = Optional.presentIfNotNull(excludes),
             )
         } else {
             null
@@ -102,22 +102,22 @@ class FilterParser(private val serverVersion: Version) {
                 val items = mapToIds(values["items"])
                 val excludes = mapToIds(values["excluded"])
                 MultiCriterionInput(
-                    Optional.presentIfNotNull(items),
-                    CriterionModifier.valueOf(it["modifier"]!!.toString()),
-                    Optional.presentIfNotNull(excludes),
+                    value = Optional.presentIfNotNull(items),
+                    modifier = CriterionModifier.valueOf(it["modifier"]!!.toString()),
+                    excludes = Optional.presentIfNotNull(excludes),
                 )
             } else if (it["value"] != null && it["value"] is List<*>) {
                 val items = (it["value"] as List<*>).map { it.toString() }
                 MultiCriterionInput(
-                    Optional.presentIfNotNull(items),
-                    CriterionModifier.valueOf(it["modifier"]!!.toString()),
-                    Optional.absent(),
+                    value = Optional.presentIfNotNull(items),
+                    modifier = CriterionModifier.valueOf(it["modifier"]!!.toString()),
+                    excludes = Optional.absent(),
                 )
             } else {
                 MultiCriterionInput(
-                    Optional.absent(),
-                    CriterionModifier.valueOf(it["modifier"]!!.toString()),
-                    Optional.absent(),
+                    value = Optional.absent(),
+                    modifier = CriterionModifier.valueOf(it["modifier"]!!.toString()),
+                    excludes = Optional.absent(),
                 )
             }
         } else {
@@ -140,11 +140,11 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertDateCriterionInput(it: Map<String, *>?): DateCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, String?>
+            val values = it["value"] as Map<String, String?>?
             DateCriterionInput(
-                values["value"]!!,
-                Optional.presentIfNotNull(values["value2"]),
-                CriterionModifier.valueOf(it["modifier"]!! as String),
+                value = values?.get("value") ?: "",
+                value2 = Optional.presentIfNotNull(values?.get("value2")),
+                modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
             null
@@ -153,11 +153,11 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertTimestampCriterionInput(it: Map<String, *>?): TimestampCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, String?>
+            val values = it["value"] as Map<String, String?>?
             TimestampCriterionInput(
-                values["value"]!!,
-                Optional.presentIfNotNull(values["value2"]),
-                CriterionModifier.valueOf(it["modifier"]!! as String),
+                value = values?.get("value") ?: "",
+                value2 = Optional.presentIfNotNull(values?.get("value2")),
+                modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
             null
@@ -168,11 +168,12 @@ class FilterParser(private val serverVersion: Version) {
         return if (it != null) {
             val valueList = (it["value"] as List<String>?)
             CircumcisionCriterionInput(
-                Optional.presentIfNotNull(
-                    valueList?.map { CircumisedEnum.valueOf(it.uppercase()) }
-                        ?.toList(),
-                ),
-                CriterionModifier.valueOf(it["modifier"]!! as String),
+                value =
+                    Optional.presentIfNotNull(
+                        valueList?.map { CircumisedEnum.valueOf(it.uppercase()) }
+                            ?.toList(),
+                    ),
+                modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
             null
@@ -193,12 +194,17 @@ class FilterParser(private val serverVersion: Version) {
                     val v = emptyList<String>()
                     v
                 }
-            values = values.map { it.uppercase().replace(" ", "_") }
+            values =
+                values.map {
+                    it.uppercase()
+                        .replace(" ", "_")
+                        .replace("-", "_")
+                }
 
             GenderCriterionInput(
-                Optional.absent(),
-                Optional.present(values.map(GenderEnum::valueOf)),
-                CriterionModifier.valueOf(it["modifier"]!! as String),
+                value = Optional.absent(),
+                value_list = Optional.present(values.map(GenderEnum::valueOf)),
+                modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
             null
@@ -217,9 +223,9 @@ class FilterParser(private val serverVersion: Version) {
         return if (it != null) {
             val values = it["value"] as Map<String, String?>?
             StashIDCriterionInput(
-                Optional.presentIfNotNull(values?.get("endpoint")),
-                Optional.presentIfNotNull(values?.get("stashID")),
-                CriterionModifier.valueOf(it["modifier"]!! as String),
+                endpoint = Optional.presentIfNotNull(values?.get("endpoint")),
+                stash_id = Optional.presentIfNotNull(values?.get("stashID")),
+                modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
             null
@@ -228,11 +234,11 @@ class FilterParser(private val serverVersion: Version) {
 
     private fun convertPhashDistanceCriterionInput(it: Map<String, *>?): PhashDistanceCriterionInput? {
         return if (it != null) {
-            val values = it["value"]!! as Map<String, *>
+            val values = it["value"] as Map<String, *>?
             PhashDistanceCriterionInput(
-                values["value"]!! as String,
-                CriterionModifier.valueOf(it["modifier"]!!.toString()),
-                Optional.presentIfNotNull(values["distance"]?.toString()?.toInt()),
+                value = values?.get("value") as String? ?: "",
+                modifier = CriterionModifier.valueOf(it["modifier"]!!.toString()),
+                distance = Optional.presentIfNotNull(values?.get("distance")?.toString()?.toInt()),
             )
         } else {
             null
@@ -242,8 +248,8 @@ class FilterParser(private val serverVersion: Version) {
     private fun convertPHashDuplicationCriterionInput(it: Map<String, *>?): PHashDuplicationCriterionInput? {
         return if (it != null) {
             PHashDuplicationCriterionInput(
-                Optional.presentIfNotNull(it["duplicated"]?.toString()?.toBoolean()),
-                Optional.presentIfNotNull(it["distance"]?.toString()?.toInt()),
+                duplicated = Optional.presentIfNotNull(it["duplicated"]?.toString()?.toBoolean()),
+                distance = Optional.presentIfNotNull(it["distance"]?.toString()?.toInt()),
             )
         } else {
             null
@@ -273,8 +279,8 @@ class FilterParser(private val serverVersion: Version) {
     private fun convertResolutionCriterionInput(it: Map<String, *>?): ResolutionCriterionInput? {
         return if (it != null) {
             ResolutionCriterionInput(
-                convertToResolutionEnum(it["value"].toString()),
-                CriterionModifier.valueOf(it["modifier"]!! as String),
+                value = convertToResolutionEnum(it["value"].toString()),
+                modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
             )
         } else {
             null

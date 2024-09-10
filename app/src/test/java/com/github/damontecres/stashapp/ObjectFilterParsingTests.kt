@@ -146,7 +146,7 @@ class ObjectFilterParsingTests {
         Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
 
         Assert.assertNull(performerFilter.gender.getOrThrow()!!.value.getOrNull())
-        Assert.assertEquals(2, performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!.size)
+        Assert.assertEquals(3, performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!.size)
         Assert.assertTrue(
             performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!
                 .contains(GenderEnum.MALE),
@@ -154,6 +154,10 @@ class ObjectFilterParsingTests {
         Assert.assertTrue(
             performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!
                 .contains(GenderEnum.FEMALE),
+        )
+        Assert.assertTrue(
+            performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!
+                .contains(GenderEnum.NON_BINARY),
         )
     }
 
