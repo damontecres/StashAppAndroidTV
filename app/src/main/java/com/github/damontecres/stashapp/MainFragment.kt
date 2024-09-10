@@ -146,12 +146,24 @@ class MainFragment : BrowseSupportFragment() {
                             requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                         mainTitleView.refreshMenuItems()
                         fetchData(Version.tryFromString(serverInfo.version.version))
+                    } else if (result.status == TestResultStatus.UNSUPPORTED_VERSION) {
+                        clearData()
+                        Log.w(
+                            TAG,
+                            "Server version is not supported: ${result.serverInfo?.version?.version}",
+                        )
+                        Toast.makeText(
+                            requireContext(),
+                            "Server version ${result.serverInfo?.version?.version} is not supported!",
+                            Toast.LENGTH_LONG,
+                        ).show()
                     } else {
+                        Log.w(TAG, "testStashConnection returned $result")
                         clearData()
                         requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                         Toast.makeText(
                             requireContext(),
-                            "Connection to Stash failed.",
+                            "Connection to Stash failed: ${result.status}",
                             Toast.LENGTH_LONG,
                         ).show()
                     }
