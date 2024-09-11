@@ -381,13 +381,11 @@ abstract class PlaybackFragment(
                 hideControlsIfVisible()
             }
         controllerVisibilityListener.addListener { vis ->
-            if (vis == View.VISIBLE) {
-                backCallback.isEnabled = true
-            } else {
-                backCallback.isEnabled = false
-                if (!exoCenterControls.isVisible) {
-                    hideControlsIfVisible()
-                }
+            backCallback.isEnabled = vis == View.VISIBLE
+        }
+        controllerVisibilityListener.addListener { _ ->
+            if (!exoCenterControls.isVisible) {
+                hideControlsIfVisible()
             }
         }
 
