@@ -150,7 +150,6 @@ dependencies {
     implementation("androidx.leanback:leanback-tab:1.1.0-beta01")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.test.ext:junit-ktx:1.2.1")
-    implementation("androidx.viewpager2:viewpager2:1.1.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     ksp("com.github.bumptech.glide:ksp:$glideVersion")
     implementation("com.caverock:androidsvg-aar:1.4")

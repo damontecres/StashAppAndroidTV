@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -21,6 +22,7 @@ abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
     protected val viewModel by activityViewModels<TabbedGridViewModel>()
 
     private lateinit var titleView: TabbedGridTitleView
+    private lateinit var tabLayout: LeanbackTabLayout
     private lateinit var adapter: StashFragmentPagerAdapter
     private var currentTabPosition = 0
 
@@ -41,18 +43,18 @@ abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
         }
 
         val viewPager = view.findViewById<LeanbackViewPager>(R.id.view_pager)
-        val tabLayout = view.findViewById<LeanbackTabLayout>(R.id.tab_layout)
+        tabLayout = view.findViewById<LeanbackTabLayout>(R.id.tab_layout)
 
         adapter = getPagerAdapter(childFragmentManager)
+        adapter.fragmentCreatedListener = { fragment, position ->
+            if (fragment is StashGridFragment) {
+                fragment.titleView = tabLayout
+            }
+        }
         viewPager.adapter = adapter
         tabLayout.setupWithViewPager(viewPager)
-        if (tabLayout.childCount > 0) {
+        if (savedInstanceState == null && tabLayout.childCount > 0) {
             tabLayout.getChildAt(0).requestFocus()
-        }
-        adapter.getItems().forEach {
-            if (it is StashGridFragment) {
-                it.titleView = tabLayout
-            }
         }
 
         tabLayout.addOnTabSelectedListener(
@@ -60,6 +62,7 @@ abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
                 override fun onTabSelected(tab: TabLayout.Tab) {
                     for (i in 0..<tabLayout.tabCount) {
                         if (tab == tabLayout.getTabAt(i)) {
+                            Log.v(TAG, "onTabSelected: currentTabPosition=$i")
                             currentTabPosition = i
                         }
                     }
@@ -76,9 +79,20 @@ abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
         )
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (tabLayout.selectedTabPosition >= 0) {
+            tabLayout.getChildAt(tabLayout.selectedTabPosition)?.requestFocus()
+        }
+    }
+
     open fun getTitleText(): String? {
         return null
     }
 
     abstract fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter
+
+    companion object {
+        private const val TAG = "TabbedFragment"
+    }
 }
