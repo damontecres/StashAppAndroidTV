@@ -161,7 +161,7 @@ class GalleryFragment : TabbedFragment() {
             table = view.findViewById(R.id.gallery_table)
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
-                val queryEngine = QueryEngine(requireContext(), StashServer.requireCurrentServer())
+                val queryEngine = QueryEngine(StashServer.requireCurrentServer())
                 galleryData = queryEngine.getGalleries(listOf(gallery.id)).first()
 
                 addRow(table, R.string.stashapp_details, galleryData.details)
@@ -181,7 +181,7 @@ class GalleryFragment : TabbedFragment() {
                 ratingBar.rating100 = galleryData.rating100 ?: 0
                 ratingBar.setRatingCallback { rating100 ->
                     val mutationEngine =
-                        MutationEngine(requireContext(), StashServer.requireCurrentServer(), true)
+                        MutationEngine(StashServer.requireCurrentServer())
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
                         val result = mutationEngine.updateGallery(galleryData.id, rating100)
                         if (result != null) {

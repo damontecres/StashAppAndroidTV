@@ -177,8 +177,8 @@ class MarkerActivity : FragmentActivity() {
 
             primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
             val server = StashServer.requireCurrentServer()
-            queryEngine = QueryEngine(requireContext(), server)
-            mutationEngine = MutationEngine(requireContext(), server)
+            queryEngine = QueryEngine(server)
+            mutationEngine = MutationEngine(server)
 
             resultLauncher =
                 registerForActivityResult(

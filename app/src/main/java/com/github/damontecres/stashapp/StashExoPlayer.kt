@@ -61,7 +61,7 @@ class StashExoPlayer private constructor() {
             skipBack: Long,
         ): ExoPlayer {
             val dataSourceFactory =
-                OkHttpDataSource.Factory(StashClient.getStreamHttpClient(context, server))
+                OkHttpDataSource.Factory(StashClient.getStreamHttpClient(server))
                     .setCacheControl(CacheControl.FORCE_NETWORK)
 
             return ExoPlayer.Builder(context)

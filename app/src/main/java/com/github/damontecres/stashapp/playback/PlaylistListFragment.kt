@@ -88,7 +88,7 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
         val pageSize = 10
         val pagingSource =
             StashPagingSource(
-                QueryEngine(requireContext(), server),
+                QueryEngine(server),
                 pageSize,
                 dataSupplier = dataSupplier,
                 useRandom = false,

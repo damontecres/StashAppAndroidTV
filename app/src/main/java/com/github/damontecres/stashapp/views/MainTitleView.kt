@@ -159,7 +159,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
                 StashCoroutineExceptionHandler(true),
             ) {
                 val server = StashServer.requireCurrentServer()
-                val queryEngine = QueryEngine(v.context, server)
+                val queryEngine = QueryEngine(server)
                 val filterParser = FilterParser(server.serverPreferences.serverVersion)
                 val defaultFilter =
                     queryEngine.getDefaultFilter(dataType)

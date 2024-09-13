@@ -204,6 +204,7 @@ abstract class PlaybackFragment(
     }
 
     protected open fun updateUI(scene: Scene) {
+        val mutationEngine = MutationEngine(server)
         val showTitle =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getBoolean("exoShowTitle", true)
@@ -245,8 +246,7 @@ abstract class PlaybackFragment(
                     ),
                 ),
             ) {
-                val newCounter =
-                    MutationEngine(requireContext(), server).incrementOCounter(scene.id)
+                val newCounter = mutationEngine.incrementOCounter(scene.id)
                 oCounterText.text = newCounter.count.toString()
             }
         }
@@ -257,7 +257,6 @@ abstract class PlaybackFragment(
                     "Reset",
                 ),
             ) { _: AdapterView<*>, _: View, popUpItemPosition: Int, id: Long ->
-                val mutationEngine = MutationEngine(requireContext(), server)
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(
                         Toast.makeText(
@@ -543,7 +542,7 @@ abstract class PlaybackFragment(
             // Usually even if not null, there may not be sprites and the server will return a 404
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 withContext(Dispatchers.IO) {
-                    val client = StashClient.getHttpClient(requireContext(), server)
+                    val client = StashClient.getHttpClient(server)
                     val request = Request.Builder().url(scene.spriteUrl).get().build()
                     client.newCall(request).execute().use {
                         Log.d(
@@ -626,7 +625,7 @@ abstract class PlaybackFragment(
             trackActivityListener =
                 TrackActivityPlaybackListener(
                     context = requireContext(),
-                    mutationEngine = MutationEngine(requireContext(), server, false),
+                    mutationEngine = MutationEngine(server),
                     scene = currentScene!!,
                     getCurrentPosition = ::currentVideoPosition,
                 )
@@ -661,7 +660,7 @@ abstract class PlaybackFragment(
                             "Adding marker at $videoPos with tagId=$tagId to scene ${currentScene!!.id}",
                         )
                         val newMarker =
-                            MutationEngine(requireContext(), server).createMarker(
+                            MutationEngine(server).createMarker(
                                 currentScene!!.id,
                                 videoPos,
                                 tagId,
