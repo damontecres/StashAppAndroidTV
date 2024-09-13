@@ -334,6 +334,7 @@ class QueryEngine(
     suspend fun waitForJob(
         jobId: String,
         delay: Duration = 1.toDuration(DurationUnit.SECONDS),
+        callback: ((FindJobQuery.FindJob) -> Unit)? = null,
     ): JobResult {
         val query = FindJobQuery(FindJobInput((jobId)))
         var job: FindJobQuery.FindJob? =
@@ -342,10 +343,12 @@ class QueryEngine(
             setOf(
                 JobStatus.FINISHED,
                 JobStatus.FAILED,
+                JobStatus.CANCELLED,
             )
         ) {
             delay(delay)
             job = executeQuery(query).data?.findJob ?: return JobResult.NotFound
+            callback?.invoke(job)
         }
         if (job?.status == JobStatus.FAILED) {
             return JobResult.Failure(job.error)

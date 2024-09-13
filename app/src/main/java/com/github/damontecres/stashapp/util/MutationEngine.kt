@@ -120,14 +120,14 @@ class MutationEngine(
         defValue: Boolean = false,
     ): Optional<Boolean> {
         return Optional.presentIfNotNull(
-            serverPreferences?.preferences?.getBoolean(
+            serverPreferences.preferences.getBoolean(
                 preferenceKey,
                 defValue,
             ),
         )
     }
 
-    suspend fun triggerScan() {
+    suspend fun triggerScan(): String {
         val mutation =
             MetadataScanMutation(
                 ScanMetadataInput(
@@ -144,10 +144,10 @@ class MutationEngine(
                     scanGenerateImagePreviews = getServerBoolean(ServerPreferences.PREF_SCAN_GENERATE_IMAGE_PREVIEWS),
                 ),
             )
-        executeMutation(mutation)
+        return executeMutation(mutation).data!!.metadataScan
     }
 
-    suspend fun triggerGenerate() {
+    suspend fun triggerGenerate(): String {
         val mutation =
             MetadataGenerateMutation(
                 GenerateMetadataInput(
@@ -165,7 +165,7 @@ class MutationEngine(
                     imageThumbnails = getServerBoolean(ServerPreferences.PREF_GEN_IMAGE_THUMBNAILS),
                 ),
             )
-        executeMutation(mutation)
+        return executeMutation(mutation).data!!.metadataGenerate
     }
 
     suspend fun setTagsOnScene(

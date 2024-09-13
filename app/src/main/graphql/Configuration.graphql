@@ -65,6 +65,8 @@ query FindJob($input: FindJobInput!) {
   findJob(input: $input) {
     id
     status
+    description
+    subTasks
     progress
     startTime
     endTime

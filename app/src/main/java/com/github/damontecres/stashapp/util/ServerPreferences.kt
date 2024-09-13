@@ -302,5 +302,8 @@ class ServerPreferences(val server: StashServer) {
 
         const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
         const val PREF_INTERFACE_STUDIOS_AS_TEXT = "interface.showStudioAsText"
+
+        const val PREF_JOB_SCAN = "app.job.scan"
+        const val PREF_JOB_GENERATE = "app.job.generate"
     }
 }

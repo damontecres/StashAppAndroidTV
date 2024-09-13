@@ -11,6 +11,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
+import androidx.annotation.StringRes
+import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
@@ -28,17 +30,21 @@ import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
+import com.github.damontecres.stashapp.api.FindJobQuery
+import com.github.damontecres.stashapp.api.type.JobStatus
 import com.github.damontecres.stashapp.data.JobResult
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import com.github.damontecres.stashapp.util.testStashConnection
@@ -219,40 +225,73 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         Toast.LENGTH_LONG,
                     ).show()
                 }
+            val server = StashServer.requireCurrentServer()
+            val queryEngine = QueryEngine(requireContext(), server)
+            val prefs = server.serverPreferences.preferences
 
-            findPreference<Preference>("triggerScan")!!
-                .setOnPreferenceClickListener {
-                    viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
-                        StashServer.requireCurrentServer().updateServerPrefs(requireContext())
+            val triggerScan = findPreference<Preference>("triggerScan")!!
+            triggerScan.setOnPreferenceClickListener {
+                viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
+                    triggerScan.isEnabled = false
+                    server.updateServerPrefs(requireContext())
+                    val jobId =
                         MutationEngine(
                             requireContext(),
                             viewModel.currentServer.value!!,
                         ).triggerScan()
-                        Toast.makeText(
-                            requireContext(),
-                            "Triggered a default library scan",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Triggered a default library scan",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    prefs.edit {
+                        putString(ServerPreferences.PREF_JOB_SCAN, jobId)
                     }
-                    true
+                    queryEngine.waitForJob(
+                        jobId,
+                        callback =
+                            createCallback(
+                                server,
+                                triggerScan,
+                                ServerPreferences.PREF_JOB_SCAN,
+                                R.string.stashapp_config_tasks_scan_for_content_desc,
+                            ),
+                    )
                 }
+                true
+            }
 
-            findPreference<Preference>("triggerGenerate")!!
-                .setOnPreferenceClickListener {
-                    viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
-                        StashServer.requireCurrentServer().updateServerPrefs(requireContext())
+            val generatePref = findPreference<Preference>("triggerGenerate")!!
+            generatePref.setOnPreferenceClickListener {
+                viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
+                    StashServer.requireCurrentServer().updateServerPrefs(requireContext())
+                    generatePref.isEnabled = false
+                    val jobId =
                         MutationEngine(
                             requireContext(),
                             viewModel.currentServer.value!!,
                         ).triggerGenerate()
-                        Toast.makeText(
-                            requireContext(),
-                            "Triggered a default generate",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                    Toast.makeText(
+                        requireContext(),
+                        "Triggered a default generate",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    prefs.edit {
+                        putString(ServerPreferences.PREF_JOB_GENERATE, jobId)
                     }
-                    true
+                    queryEngine.waitForJob(
+                        jobId,
+                        callback =
+                            createCallback(
+                                server,
+                                generatePref,
+                                ServerPreferences.PREF_JOB_GENERATE,
+                                R.string.stashapp_config_tasks_generate_desc,
+                            ),
+                    )
                 }
+                true
+            }
 
             findPreference<SeekBarPreference>("skip_back_time")!!.min = 5
             findPreference<SeekBarPreference>("skip_forward_time")!!.min = 5
@@ -302,6 +341,92 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                             updateCategory?.isVisible = false
                         }
                     }
+                }
+            }
+
+            val server = StashServer.requireCurrentServer()
+            val queryEngine = QueryEngine(requireContext(), server)
+            val prefs = server.serverPreferences.preferences
+
+            val triggerScan = findPreference<Preference>("triggerScan")!!
+            val pendingScanJobId =
+                prefs.getString(
+                    ServerPreferences.PREF_JOB_SCAN,
+                    null,
+                )
+            if (pendingScanJobId != null) {
+                triggerScan.isEnabled = false
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    queryEngine.waitForJob(
+                        pendingScanJobId,
+                        callback =
+                            createCallback(
+                                server,
+                                triggerScan,
+                                ServerPreferences.PREF_JOB_SCAN,
+                                R.string.stashapp_config_tasks_scan_for_content_desc,
+                            ),
+                    )
+                    prefs.edit {
+                        remove(ServerPreferences.PREF_JOB_SCAN)
+                    }
+                    triggerScan.isEnabled = true
+                }
+            }
+
+            val generatePref = findPreference<Preference>("triggerGenerate")!!
+            val pendingGenJobId =
+                server.serverPreferences.preferences.getString(
+                    ServerPreferences.PREF_JOB_GENERATE,
+                    null,
+                )
+            if (pendingGenJobId != null) {
+                generatePref.isEnabled = false
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    queryEngine.waitForJob(
+                        pendingGenJobId,
+                        callback =
+                            createCallback(
+                                server,
+                                generatePref,
+                                ServerPreferences.PREF_JOB_GENERATE,
+                                R.string.stashapp_config_tasks_generate_desc,
+                            ),
+                    )
+                    prefs.edit {
+                        remove(ServerPreferences.PREF_JOB_GENERATE)
+                    }
+                    generatePref.isEnabled = true
+                }
+            }
+        }
+
+        private fun createCallback(
+            server: StashServer,
+            pref: Preference,
+            key: String,
+            @StringRes summaryId: Int,
+        ): ((FindJobQuery.FindJob) -> Unit) {
+            val prefs = server.serverPreferences.preferences
+            return { status ->
+                if (status.status == JobStatus.FAILED || status.status == JobStatus.FINISHED || status.status == JobStatus.CANCELLED) {
+                    prefs.edit {
+                        remove(key)
+                    }
+                    pref.isEnabled = true
+                    pref.summary = getString(summaryId)
+                } else if (status.progress != null) {
+                    val progress = (status.progress * 1000).toInt() / 10.0
+                    if (!status.subTasks.isNullOrEmpty() &&
+                        status.subTasks.first().isNotNullOrBlank()
+                    ) {
+                        pref.summary =
+                            "${status.description} $progress%\n${status.subTasks.first()}"
+                    } else {
+                        pref.summary = "${status.description} $progress%"
+                    }
+                } else {
+                    pref.summary = status.description
                 }
             }
         }
