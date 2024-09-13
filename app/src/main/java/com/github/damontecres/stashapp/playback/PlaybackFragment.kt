@@ -123,6 +123,8 @@ abstract class PlaybackFragment(
 
     val isControllerVisible get() = videoView.isControllerFullyVisible || previewTimeBar.isShown
 
+    protected val server = StashServer.requireCurrentServer()
+
     fun hideControlsIfVisible(): Boolean {
         if (isControllerVisible) {
             videoView.hideController()
@@ -244,7 +246,7 @@ abstract class PlaybackFragment(
                 ),
             ) {
                 val newCounter =
-                    MutationEngine(requireContext()).incrementOCounter(scene.id)
+                    MutationEngine(requireContext(), server).incrementOCounter(scene.id)
                 oCounterText.text = newCounter.count.toString()
             }
         }
@@ -255,7 +257,7 @@ abstract class PlaybackFragment(
                     "Reset",
                 ),
             ) { _: AdapterView<*>, _: View, popUpItemPosition: Int, id: Long ->
-                val mutationEngine = MutationEngine(requireContext())
+                val mutationEngine = MutationEngine(requireContext(), server)
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(
                         Toast.makeText(
@@ -541,7 +543,7 @@ abstract class PlaybackFragment(
             // Usually even if not null, there may not be sprites and the server will return a 404
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 withContext(Dispatchers.IO) {
-                    val client = StashClient.getHttpClient(requireContext())
+                    val client = StashClient.getHttpClient(requireContext(), server)
                     val request = Request.Builder().url(scene.spriteUrl).get().build()
                     client.newCall(request).execute().use {
                         Log.d(
@@ -618,11 +620,13 @@ abstract class PlaybackFragment(
     }
 
     protected fun maybeAddActivityTracking(exoPlayer: ExoPlayer) {
-        if (StashServer.requireCurrentServer().serverPreferences.trackActivity && currentScene != null) {
+        val server = StashServer.requireCurrentServer()
+        if (server.serverPreferences.trackActivity && currentScene != null) {
             Log.v(TAG, "Adding TrackActivityPlaybackListener")
             trackActivityListener =
                 TrackActivityPlaybackListener(
                     context = requireContext(),
+                    mutationEngine = MutationEngine(requireContext(), server, false),
                     scene = currentScene!!,
                     getCurrentPosition = ::currentVideoPosition,
                 )
@@ -657,7 +661,7 @@ abstract class PlaybackFragment(
                             "Adding marker at $videoPos with tagId=$tagId to scene ${currentScene!!.id}",
                         )
                         val newMarker =
-                            MutationEngine(requireContext()).createMarker(
+                            MutationEngine(requireContext(), server).createMarker(
                                 currentScene!!.id,
                                 videoPos,
                                 tagId,

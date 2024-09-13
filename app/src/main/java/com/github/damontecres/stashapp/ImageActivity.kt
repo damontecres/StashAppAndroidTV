@@ -58,7 +58,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
         lifecycleScope.launch(StashCoroutineExceptionHandler()) {
             val imageId = intent.getStringExtra(INTENT_IMAGE_ID)!!
 
-            val queryEngine = QueryEngine(this@ImageActivity)
+            val queryEngine = QueryEngine(this@ImageActivity, StashServer.requireCurrentServer())
             val image = queryEngine.getImage(imageId)!!
             viewModel.setImage(image)
 
@@ -72,7 +72,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
             if (dataSupplier != null) {
                 val pagingSource =
                     StashPagingSource<FindImagesQuery.Data, ImageData, ImageData, CountImagesQuery.Data>(
-                        this@ImageActivity,
+                        queryEngine,
                         pageSize,
                         dataSupplier,
                         useRandom = false,

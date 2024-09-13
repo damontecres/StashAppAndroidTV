@@ -146,8 +146,9 @@ class DebugActivity : FragmentActivity() {
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 try {
-                    val queryEngine = QueryEngine(requireContext())
-                    val filterParser = FilterParser(StashServer.getCurrentServerVersion())
+                    val server = StashServer.requireCurrentServer()
+                    val queryEngine = QueryEngine(requireContext(), server)
+                    val filterParser = FilterParser(server.serverPreferences.serverVersion)
                     DataType.entries.forEach { dataType ->
                         val filters = queryEngine.getSavedFilters(dataType)
                         filters.forEach { filter ->

@@ -27,13 +27,13 @@ import kotlin.time.toDuration
 @OptIn(UnstableApi::class)
 class TrackActivityPlaybackListener(
     context: Context,
+    private val mutationEngine: MutationEngine,
     dispatcher: CoroutineDispatcher = Dispatchers.Main,
     private val scene: Scene,
     private val getCurrentPosition: () -> Long,
 ) : Player.Listener {
     private val coroutineScope = CoroutineScope(dispatcher)
     private val timer: Timer
-    private val mutationEngine = MutationEngine(context)
     private val minimumPlayPercent =
         StashServer.getCurrentStashServer(context)?.serverPreferences?.minimumPlayPercent ?: 98
     private val maxPlayPercent: Int

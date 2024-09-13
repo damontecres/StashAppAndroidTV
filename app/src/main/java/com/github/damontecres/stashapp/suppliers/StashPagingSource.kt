@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.suppliers
 
-import android.content.Context
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.apollographql.apollo.api.Optional
@@ -21,7 +20,7 @@ import kotlinx.coroutines.withContext
  * @property dataSupplier how to query and parse data
  */
 class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
-    private val context: Context,
+    private val queryEngine: QueryEngine,
     private val pageSize: Int,
     private val dataSupplier: DataSupplier<T, D, C>,
     showToasts: Boolean = false,
@@ -31,14 +30,14 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
 ) :
     PagingSource<Int, S>() {
     constructor(
-        context: Context,
+        queryEngine: QueryEngine,
         pageSize: Int,
         dataSupplier: DataSupplier<T, D, C>,
         showToasts: Boolean = false,
         useRandom: Boolean = true,
         sortByOverride: String? = null,
     ) : this(
-        context,
+        queryEngine,
         pageSize,
         dataSupplier,
         showToasts,
@@ -46,8 +45,6 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
         sortByOverride,
         DataTransform { page, index, item -> item as S },
     )
-
-    private val queryEngine = QueryEngine(context, showToasts)
 
     private var listeners = mutableListOf<Listener<S>>()
 

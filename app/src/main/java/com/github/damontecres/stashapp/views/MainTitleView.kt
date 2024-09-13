@@ -158,8 +158,9 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             v.findViewTreeLifecycleOwner()?.lifecycleScope?.launch(
                 StashCoroutineExceptionHandler(true),
             ) {
-                val queryEngine = QueryEngine(v.context)
-                val filterParser = FilterParser(StashServer.getCurrentServerVersion())
+                val server = StashServer.requireCurrentServer()
+                val queryEngine = QueryEngine(v.context, server)
+                val filterParser = FilterParser(server.serverPreferences.serverVersion)
                 val defaultFilter =
                     queryEngine.getDefaultFilter(dataType)
                         ?.toFilterArgs(filterParser)

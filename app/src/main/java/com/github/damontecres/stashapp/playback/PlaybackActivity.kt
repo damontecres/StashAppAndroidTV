@@ -19,6 +19,7 @@ import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.toMilliseconds
 import kotlinx.coroutines.launch
 
@@ -50,7 +51,9 @@ class PlaybackActivity : FragmentActivity() {
         } else {
             lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val sceneId = intent.getStringExtra(SceneDetailsActivity.MOVIE_ID)!!
-                val fullScene = QueryEngine(this@PlaybackActivity).getScene(sceneId)!!
+                val fullScene =
+                    QueryEngine(this@PlaybackActivity, StashServer.requireCurrentServer())
+                        .getScene(sceneId)!!
                 val scene = Scene.fromFullSceneData(fullScene)
                 this@PlaybackActivity.scene = scene
                 if (savedInstanceState == null) {

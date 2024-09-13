@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 import kotlin.time.DurationUnit
@@ -50,7 +51,7 @@ class MovieDetailsFragment : Fragment(R.layout.movie_view) {
                 .into(backImage)
         }
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            val queryEngine = QueryEngine(requireContext())
+            val queryEngine = QueryEngine(requireContext(), StashServer.requireCurrentServer())
             movieData = queryEngine.getMovie(movie.id)!!
             addRow(
                 R.string.stashapp_duration,

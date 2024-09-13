@@ -64,8 +64,9 @@ import kotlin.time.toDuration
  */
 class QueryEngine(
     context: Context,
+    server: StashServer,
     showToasts: Boolean = false,
-) : StashEngine(context, showToasts) {
+) : StashEngine(context, server, showToasts) {
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val queryName = query.operation.name()

@@ -176,7 +176,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         ),
                     ),
                 ) {
-                    MutationEngine(requireContext()).setRating(
+                    MutationEngine(requireContext(), server).setRating(
                         mSelectedMovie!!.id,
                         rating100,
                     )
@@ -185,14 +185,15 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             },
         )
 
-    private val serverPreferences = StashServer.requireCurrentServer().serverPreferences
+    private val server = StashServer.requireCurrentServer()
+    private val serverPreferences = server.serverPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
-        queryEngine = QueryEngine(requireContext())
-        mutationEngine = MutationEngine(requireContext())
+        queryEngine = QueryEngine(requireContext(), server)
+        mutationEngine = MutationEngine(requireContext(), server)
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         resultLauncher =
@@ -628,7 +629,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                 "Adding marker at $position with tagId=$tagId to scene ${mSelectedMovie?.id}",
                             )
                             val newMarker =
-                                MutationEngine(requireContext()).createMarker(
+                                MutationEngine(requireContext(), server).createMarker(
                                     mSelectedMovie!!.id,
                                     position,
                                     tagId,
@@ -689,7 +690,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                         if (serverPreferences.trackActivity) {
                             Log.v(TAG, "ResultCallback saveSceneActivity start")
-                            MutationEngine(requireContext(), false).saveSceneActivity(
+                            MutationEngine(requireContext(), server, false).saveSceneActivity(
                                 mSelectedMovie!!.id,
                                 localPosition,
                             )
@@ -854,7 +855,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         },
                     ) {
                         val mutResult =
-                            MutationEngine(requireContext()).deleteMarker(item.id)
+                            MutationEngine(requireContext(), server).deleteMarker(item.id)
                         if (mutResult) {
                             markersAdapter.remove(item)
                             if (markersAdapter.size() == 0) {

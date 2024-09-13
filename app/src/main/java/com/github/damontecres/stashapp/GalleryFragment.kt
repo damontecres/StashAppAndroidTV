@@ -33,6 +33,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putExtra
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -160,7 +161,7 @@ class GalleryFragment : TabbedFragment() {
             table = view.findViewById(R.id.gallery_table)
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
-                val queryEngine = QueryEngine(requireContext())
+                val queryEngine = QueryEngine(requireContext(), StashServer.requireCurrentServer())
                 galleryData = queryEngine.getGalleries(listOf(gallery.id)).first()
 
                 addRow(table, R.string.stashapp_details, galleryData.details)
@@ -179,7 +180,8 @@ class GalleryFragment : TabbedFragment() {
 
                 ratingBar.rating100 = galleryData.rating100 ?: 0
                 ratingBar.setRatingCallback { rating100 ->
-                    val mutationEngine = MutationEngine(requireContext(), true)
+                    val mutationEngine =
+                        MutationEngine(requireContext(), StashServer.requireCurrentServer(), true)
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
                         val result = mutationEngine.updateGallery(galleryData.id, rating100)
                         if (result != null) {

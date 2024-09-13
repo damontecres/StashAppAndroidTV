@@ -190,7 +190,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                 .setUri(Uri.parse(videoUrl))
                 .setMimeType(MimeTypes.VIDEO_MP4)
                 .build()
-        val player = StashExoPlayer.getInstance(context)
+        val player = StashExoPlayer.getInstance(context, StashServer.requireCurrentServer())
         StashExoPlayer.addListener(listener)
 
         if (videoView == null) {

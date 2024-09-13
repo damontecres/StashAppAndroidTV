@@ -49,13 +49,6 @@ class ServerPreferences(val server: StashServer) {
     val companionPluginInstalled
         get() = companionPluginVersion != null
 
-    suspend fun updatePreferences(context: Context): ServerPreferences {
-        val queryEngine = QueryEngine(context)
-        val result = queryEngine.getServerConfiguration()
-        updatePreferences(result)
-        return this
-    }
-
     /**
      * Update the local preferences from the server configuration
      */

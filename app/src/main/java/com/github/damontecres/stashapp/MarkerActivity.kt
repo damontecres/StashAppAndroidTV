@@ -54,6 +54,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.convertDpToPixel
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
@@ -175,9 +176,9 @@ class MarkerActivity : FragmentActivity() {
             viewModel.setMarker(marker)
 
             primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
-
-            queryEngine = QueryEngine(requireContext())
-            mutationEngine = MutationEngine(requireContext())
+            val server = StashServer.requireCurrentServer()
+            queryEngine = QueryEngine(requireContext(), server)
+            mutationEngine = MutationEngine(requireContext(), server)
 
             resultLauncher =
                 registerForActivityResult(

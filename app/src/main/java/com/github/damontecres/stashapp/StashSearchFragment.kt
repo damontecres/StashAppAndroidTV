@@ -20,6 +20,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -75,7 +76,8 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                     per_page = Optional.present(perPage),
                     page = Optional.present(1),
                 )
-            val queryEngine = QueryEngine(requireContext(), true)
+            val queryEngine =
+                QueryEngine(requireContext(), StashServer.requireCurrentServer(), true)
             DataType.entries.forEach {
                 val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
                 rowsAdapter.set(

@@ -40,6 +40,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashComparator
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -407,12 +408,13 @@ class StashGridFragment() : Fragment() {
         mAdapter = pagingAdapter
         updateAdapter()
         val pageSize = mGridPresenter.numberOfColumns * 10
-        val factory = DataSupplierFactory(StashServer.getCurrentServerVersion())
+        val server = StashServer.requireCurrentServer()
+        val factory = DataSupplierFactory(server.serverPreferences.serverVersion)
         val dataSupplier =
             factory.create<Query.Data, StashData, Query.Data>(_filterArgs.with(newSortAndDirection))
         val pagingSource =
             StashPagingSource<Query.Data, StashData, StashData, Query.Data>(
-                requireContext(),
+                QueryEngine(requireContext(), server),
                 pageSize,
                 dataSupplier = dataSupplier,
                 useRandom = false,
