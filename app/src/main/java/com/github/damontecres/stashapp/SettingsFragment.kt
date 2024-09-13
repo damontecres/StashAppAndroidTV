@@ -34,7 +34,6 @@ import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -120,7 +119,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     testStashConnection(
                         requireContext(),
                         true,
-                        StashClient.getApolloClient(requireContext()),
+                        StashClient.getApolloClient(
+                            requireContext(),
+                            viewModel.currentServer.value!!,
+                        ),
                     )
                 }
                 true
@@ -221,8 +223,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<Preference>("triggerScan")!!
                 .setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
-                        ServerPreferences(requireContext()).updatePreferences()
-                        MutationEngine(requireContext()).triggerScan()
+                        StashServer.requireCurrentServer().updateServerPrefs(requireContext())
+                        MutationEngine(
+                            requireContext(),
+                            viewModel.currentServer.value!!,
+                        ).triggerScan()
                         Toast.makeText(
                             requireContext(),
                             "Triggered a default library scan",
@@ -235,8 +240,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<Preference>("triggerGenerate")!!
                 .setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
-                        ServerPreferences(requireContext()).updatePreferences()
-                        MutationEngine(requireContext()).triggerGenerate()
+                        StashServer.requireCurrentServer().updateServerPrefs(requireContext())
+                        MutationEngine(
+                            requireContext(),
+                            viewModel.currentServer.value!!,
+                        ).triggerGenerate()
                         Toast.makeText(
                             requireContext(),
                             "Triggered a default generate",
@@ -324,7 +332,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val serverPrefs = ServerPreferences(requireContext()).updatePreferences()
+                val serverPrefs =
+                    StashServer.requireCurrentServer()
+                        .updateServerPrefs(requireContext())
                 if (serverPrefs.companionPluginInstalled) {
                     setupSendLogsPref()
                 } else {
@@ -334,8 +344,14 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     sendLogsPref.setOnPreferenceClickListener {
                         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                             val jobId =
-                                CompanionPlugin.installPlugin(MutationEngine(requireContext()))
-                            val queryEngine = QueryEngine(requireContext())
+                                CompanionPlugin.installPlugin(
+                                    MutationEngine(
+                                        requireContext(),
+                                        viewModel.currentServer.value!!,
+                                    ),
+                                )
+                            val queryEngine =
+                                QueryEngine(requireContext(), viewModel.currentServer.value!!)
                             val result = queryEngine.waitForJob(jobId)
                             withContext(Dispatchers.Main) {
                                 if (result is JobResult.Failure) {
@@ -352,7 +368,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                                     ).show()
                                 } else {
                                     val serverPrefs =
-                                        ServerPreferences(requireContext()).updatePreferences()
+                                        StashServer.requireCurrentServer()
+                                            .updateServerPrefs(requireContext())
                                     if (serverPrefs.companionPluginInstalled) {
                                         Toast.makeText(
                                             requireContext(),
@@ -429,7 +446,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     testStashConnection(
                         requireContext(),
                         true,
-                        StashClient.getApolloClient(requireContext()),
+                        StashClient.getApolloClient(
+                            requireContext(),
+                            StashServer.requireCurrentServer(),
+                        ),
                     )
                 }
                 true

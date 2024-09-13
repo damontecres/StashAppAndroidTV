@@ -11,11 +11,12 @@ import kotlinx.coroutines.withContext
 
 abstract class StashEngine(
     private val context: Context,
+    private val server: StashServer,
     private val showToasts: Boolean = false,
 ) {
-    protected val serverPreferences = ServerPreferences(context)
+    protected val serverPreferences = server.serverPreferences
     protected val serverVersion = serverPreferences.serverVersion
-    protected val client = StashClient.getApolloClient(context)
+    protected val client = StashClient.getApolloClient(context, server)
 
     protected suspend fun <T : Exception> createException(
         id: Int,

@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 
 class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
@@ -61,7 +62,8 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
             ) {
                 if (column.currentValue != 0) {
                     val seconds = (viewModel.seconds.value!! + column.currentValue).coerceAtLeast(0.0)
-                    val mutationEngine = MutationEngine(requireContext(), true)
+                    val mutationEngine =
+                        MutationEngine(requireContext(), StashServer.requireCurrentServer(), true)
                     val result =
                         mutationEngine.updateMarker(
                             SceneMarkerUpdateInput(

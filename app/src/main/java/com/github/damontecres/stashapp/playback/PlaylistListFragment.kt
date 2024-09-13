@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.presenters.PlaylistItemPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.PlaylistItemComparator
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -69,8 +70,9 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
     ) {
         super.onViewCreated(view, savedInstanceState)
 
+        val server = StashServer.requireCurrentServer()
         // Kind of hacky, but this will always return the same instance
-        val player = StashExoPlayer.getInstance(requireContext())
+        val player = StashExoPlayer.getInstance(requireContext(), server)
         val filter = viewModel.filterArgs.value!!
 
         val playlistTitleView = view.findViewById<TextView>(R.id.playlist_title)
@@ -86,7 +88,7 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
         val pageSize = 10
         val pagingSource =
             StashPagingSource(
-                requireContext(),
+                QueryEngine(requireContext(), server),
                 pageSize,
                 dataSupplier = dataSupplier,
                 useRandom = false,
@@ -174,7 +176,12 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {
-            mGridViewHolder.gridView.scrollToPosition(StashExoPlayer.getInstance(requireContext()).currentMediaItemIndex)
+            mGridViewHolder.gridView.scrollToPosition(
+                StashExoPlayer.getInstance(
+                    requireContext(),
+                    StashServer.requireCurrentServer(),
+                ).currentMediaItemIndex,
+            )
         }
     }
 

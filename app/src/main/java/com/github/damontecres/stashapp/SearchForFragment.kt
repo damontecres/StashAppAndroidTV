@@ -66,6 +66,8 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                 .show()
         }
 
+    private val server = StashServer.requireCurrentServer()
+
     private lateinit var dataType: DataType
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,7 +106,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
     private suspend fun handleCreate(query: String?) {
         if (query.isNotNullOrBlank()) {
             val name = query.replaceFirstChar(Char::titlecase)
-            val mutationEngine = MutationEngine(requireContext())
+            val mutationEngine = MutationEngine(requireContext(), server)
             val item =
                 when (dataType) {
                     DataType.TAG -> {
@@ -158,7 +160,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                 },
             ) {
                 val resultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
-                val queryEngine = QueryEngine(requireContext(), false)
+                val queryEngine = QueryEngine(requireContext(), server, false)
                 val sortBy =
                     when (dataType) {
                         DataType.GALLERY -> "images_count"
@@ -197,7 +199,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
             }
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 val currentServer = StashServer.getCurrentStashServer(requireContext())
-                val queryEngine = QueryEngine(requireContext(), false)
+                val queryEngine = QueryEngine(requireContext(), server, false)
                 if (currentServer != null) {
                     val mostRecentIds =
                         StashApplication.getDatabase().recentSearchItemsDao()
@@ -279,7 +281,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                     q = Optional.present(query),
                     per_page = Optional.present(perPage),
                 )
-            val queryEngine = QueryEngine(requireContext(), true)
+            val queryEngine = QueryEngine(requireContext(), server, true)
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val results =
                     when (dataType) {

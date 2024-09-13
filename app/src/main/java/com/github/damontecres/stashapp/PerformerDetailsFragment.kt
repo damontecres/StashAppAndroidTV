@@ -22,6 +22,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -62,8 +63,9 @@ class PerformerDetailsFragment() : Fragment(R.layout.performer_view) {
 
         val performer = requireActivity().intent.getParcelableExtra<Performer>("performer")
         if (performer != null) {
-            queryEngine = QueryEngine(requireContext(), true)
-            mutationEngine = MutationEngine(requireContext(), true)
+            val server = StashServer.requireCurrentServer()
+            queryEngine = QueryEngine(requireContext(), server, true)
+            mutationEngine = MutationEngine(requireContext(), server, true)
 
             val exceptionHandler =
                 CoroutineExceptionHandler { _, ex ->

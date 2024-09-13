@@ -18,14 +18,17 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
-import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.getRandomSort
 
 /**
  * Manages a button for sorting items. It will setup the list popup with the right sort options for the given [DataType].
  */
-class SortButtonManager(val newSortCallback: (SortAndDirection) -> Unit) {
+class SortButtonManager(
+    val serverVersion: Version,
+    val newSortCallback: (SortAndDirection) -> Unit,
+) {
     fun setUpSortButton(
         sortButton: Button,
         dataType: DataType,
@@ -39,7 +42,6 @@ class SortButtonManager(val newSortCallback: (SortAndDirection) -> Unit) {
                 null,
                 android.R.attr.listPopupWindowStyle,
             )
-        val serverVersion = ServerPreferences(context).serverVersion
         // Resolve the strings, then sort
         val sortOptions =
             dataType.sortOptions

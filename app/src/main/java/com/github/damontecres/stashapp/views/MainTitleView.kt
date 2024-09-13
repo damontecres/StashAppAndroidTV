@@ -16,7 +16,6 @@ import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
@@ -30,7 +29,6 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putExtra
 import kotlinx.coroutines.launch
 
@@ -120,11 +118,9 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
     }
 
     private fun getMenuItems(): Set<String> {
-        val serverConfigured =
-            PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
-                .isNotNullOrBlank()
-        if (serverConfigured) {
-            return ServerPreferences(context).preferences.getStringSet(
+        val server = StashServer.getCurrentStashServer()
+        if (server != null) {
+            return server.serverPreferences.preferences.getStringSet(
                 ServerPreferences.PREF_INTERFACE_MENU_ITEMS,
                 ServerPreferences.DEFAULT_MENU_ITEMS,
             )!!
@@ -162,8 +158,9 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             v.findViewTreeLifecycleOwner()?.lifecycleScope?.launch(
                 StashCoroutineExceptionHandler(true),
             ) {
-                val queryEngine = QueryEngine(v.context)
-                val filterParser = FilterParser(StashServer.getCurrentServerVersion())
+                val server = StashServer.requireCurrentServer()
+                val queryEngine = QueryEngine(v.context, server)
+                val filterParser = FilterParser(server.serverPreferences.serverVersion)
                 val defaultFilter =
                     queryEngine.getDefaultFilter(dataType)
                         ?.toFilterArgs(filterParser)

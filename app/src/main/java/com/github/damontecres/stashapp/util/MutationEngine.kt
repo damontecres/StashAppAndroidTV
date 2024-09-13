@@ -53,8 +53,9 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class MutationEngine(
     context: Context,
+    server: StashServer,
     showToasts: Boolean = false,
-) : StashEngine(context, showToasts) {
+) : StashEngine(context, server, showToasts) {
     suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val mutationName = mutation.name()
@@ -118,8 +119,8 @@ class MutationEngine(
         preferenceKey: String,
         defValue: Boolean = false,
     ): Optional<Boolean> {
-        return Optional.present(
-            serverPreferences.preferences.getBoolean(
+        return Optional.presentIfNotNull(
+            serverPreferences?.preferences?.getBoolean(
                 preferenceKey,
                 defValue,
             ),

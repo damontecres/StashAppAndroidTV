@@ -64,9 +64,9 @@ import com.github.damontecres.stashapp.util.MarkerDiffCallback
 import com.github.damontecres.stashapp.util.MovieDiffCallback
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asVideoSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -176,7 +176,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         ),
                     ),
                 ) {
-                    MutationEngine(requireContext()).setRating(
+                    MutationEngine(requireContext(), server).setRating(
                         mSelectedMovie!!.id,
                         rating100,
                     )
@@ -185,12 +185,15 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             },
         )
 
+    private val server = StashServer.requireCurrentServer()
+    private val serverPreferences = server.serverPreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
-        queryEngine = QueryEngine(requireContext())
-        mutationEngine = MutationEngine(requireContext())
+        queryEngine = QueryEngine(requireContext(), server)
+        mutationEngine = MutationEngine(requireContext(), server)
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         resultLauncher =
@@ -271,7 +274,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     )
             }
 
-            val serverPreferences = ServerPreferences(requireContext())
             // Need to check position because the activity result callback happens before onResume
             if (position <= 0 &&
                 serverPreferences.trackActivity &&
@@ -544,7 +546,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupPlayActionsAdapter() {
-        val serverPreferences = ServerPreferences(requireContext())
         if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
             playActionsAdapter.set(
                 0,
@@ -628,7 +629,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                 "Adding marker at $position with tagId=$tagId to scene ${mSelectedMovie?.id}",
                             )
                             val newMarker =
-                                MutationEngine(requireContext()).createMarker(
+                                MutationEngine(requireContext(), server).createMarker(
                                     mSelectedMovie!!.id,
                                     position,
                                     tagId,
@@ -687,10 +688,9 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     }
 
                     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                        val serverPreferences = ServerPreferences(requireContext())
                         if (serverPreferences.trackActivity) {
                             Log.v(TAG, "ResultCallback saveSceneActivity start")
-                            MutationEngine(requireContext(), false).saveSceneActivity(
+                            MutationEngine(requireContext(), server, false).saveSceneActivity(
                                 mSelectedMovie!!.id,
                                 localPosition,
                             )
@@ -855,7 +855,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         },
                     ) {
                         val mutResult =
-                            MutationEngine(requireContext()).deleteMarker(item.id)
+                            MutationEngine(requireContext(), server).deleteMarker(item.id)
                         if (mutResult) {
                             markersAdapter.remove(item)
                             if (markersAdapter.size() == 0) {

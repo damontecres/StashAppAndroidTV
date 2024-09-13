@@ -58,7 +58,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         titleTextView = findViewById(R.id.list_title)
 
         sortButtonManager =
-            SortButtonManager { sortAndDirection ->
+            SortButtonManager(StashServer.getCurrentServerVersion()) { sortAndDirection ->
                 val fragment =
                     supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
                 fragment.refresh(sortAndDirection)
@@ -122,8 +122,9 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
 
     private suspend fun populateSavedFilters(dataType: DataType) {
         val context = this@FilterListActivity
+        val server = StashServer.requireCurrentServer()
         val savedFilters =
-            QueryEngine(this).getSavedFilters(dataType)
+            QueryEngine(this, server).getSavedFilters(dataType)
         if (savedFilters.isEmpty()) {
             filterButton.setOnClickListener {
                 Toast.makeText(
@@ -152,7 +153,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             listPopUp.width = getMaxMeasuredWidth(context, adapter)
             listPopUp.isModal = true
 
-            val filterParser = FilterParser(StashServer.getCurrentServerVersion())
+            val filterParser = FilterParser(server.serverPreferences.serverVersion)
             listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                 listPopUp.dismiss()
                 val savedFilter =

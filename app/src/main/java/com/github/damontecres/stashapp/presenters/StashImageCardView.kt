@@ -34,6 +34,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.enableMarquee
@@ -189,7 +190,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                 .setUri(Uri.parse(videoUrl))
                 .setMimeType(MimeTypes.VIDEO_MP4)
                 .build()
-        val player = StashExoPlayer.getInstance(context)
+        val player = StashExoPlayer.getInstance(context, StashServer.requireCurrentServer())
         StashExoPlayer.addListener(listener)
 
         if (videoView == null) {
@@ -303,7 +304,9 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             PreferenceManager.getDefaultSharedPreferences(context)
                 .getBoolean(context.getString(R.string.pref_key_show_rating), true)
         if (rating100 != null && rating100 > 0 && showRatings) {
-            val ratingText = getRatingAsDecimalString(context, rating100)
+            val serverPrefs = StashServer.requireCurrentServer().serverPreferences
+            val ratingText =
+                getRatingAsDecimalString(rating100, serverPrefs.ratingsAsStars)
             val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
             val overlay = getTextOverlay(OverlayPosition.TOP_LEFT)
 
