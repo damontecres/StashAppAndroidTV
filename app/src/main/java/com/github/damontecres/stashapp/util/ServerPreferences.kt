@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 
@@ -12,10 +13,10 @@ import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
  *
  * Configuration is loaded into a SharedPreferences and made available throughout the app
  */
-class ServerPreferences(private val context: Context) {
+class ServerPreferences(val server: StashServer) {
     val preferences: SharedPreferences =
-        context.getSharedPreferences(
-            context.packageName + "_server_preferences",
+        StashApplication.getApplication().getSharedPreferences(
+            server.url.replace(Regex("[^\\w.]"), "_"),
             Context.MODE_PRIVATE,
         )
 
@@ -48,7 +49,7 @@ class ServerPreferences(private val context: Context) {
     val companionPluginInstalled
         get() = companionPluginVersion != null
 
-    suspend fun updatePreferences(): ServerPreferences {
+    suspend fun updatePreferences(context: Context): ServerPreferences {
         val queryEngine = QueryEngine(context)
         val result = queryEngine.getServerConfiguration()
         updatePreferences(result)
@@ -293,18 +294,18 @@ class ServerPreferences(private val context: Context) {
         const val PREF_SCAN_GENERATE_CLIP_PREVIEWS = "scanGenerateClipPreviews"
 
         // Generate default settings
-        const val PREF_GEN_CLIP_PREVIEWS = "clipPreviews"
-        const val PREF_GEN_COVERS = "covers"
-        const val PREF_GEN_IMAGE_PREVIEWS = "imagePreviews"
-        const val PREF_GEN_INTERACTIVE_HEATMAPS_SPEEDS = "interactiveHeatmapsSpeeds"
-        const val PREF_GEN_MARKER_IMAGE_PREVIEWS = "markerImagePreviews"
-        const val PREF_GEN_MARKERS = "markers"
-        const val PREF_GEN_MARKER_SCREENSHOTS = "markerScreenshots"
-        const val PREF_GEN_PHASHES = "phashes"
-        const val PREF_GEN_PREVIEWS = "previews"
-        const val PREF_GEN_SPRITES = "sprites"
-        const val PREF_GEN_TRANSCODES = "transcodes"
-        const val PREF_GEN_IMAGE_THUMBNAILS = "imageThumbnails"
+        const val PREF_GEN_CLIP_PREVIEWS = "generate.clipPreviews"
+        const val PREF_GEN_COVERS = "generate.covers"
+        const val PREF_GEN_IMAGE_PREVIEWS = "generate.imagePreviews"
+        const val PREF_GEN_INTERACTIVE_HEATMAPS_SPEEDS = "generate.interactiveHeatmapsSpeeds"
+        const val PREF_GEN_MARKER_IMAGE_PREVIEWS = "generate.markerImagePreviews"
+        const val PREF_GEN_MARKERS = "generate.markers"
+        const val PREF_GEN_MARKER_SCREENSHOTS = "generate.markerScreenshots"
+        const val PREF_GEN_PHASHES = "generate.phashes"
+        const val PREF_GEN_PREVIEWS = "generate.previews"
+        const val PREF_GEN_SPRITES = "generate.sprites"
+        const val PREF_GEN_TRANSCODES = "generate.transcodes"
+        const val PREF_GEN_IMAGE_THUMBNAILS = "generate.imageThumbnails"
 
         const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
         const val PREF_INTERFACE_STUDIOS_AS_TEXT = "interface.showStudioAsText"

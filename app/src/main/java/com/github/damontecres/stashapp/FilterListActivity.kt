@@ -58,7 +58,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         titleTextView = findViewById(R.id.list_title)
 
         sortButtonManager =
-            SortButtonManager { sortAndDirection ->
+            SortButtonManager(StashServer.getCurrentServerVersion()) { sortAndDirection ->
                 val fragment =
                     supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
                 fragment.refresh(sortAndDirection)

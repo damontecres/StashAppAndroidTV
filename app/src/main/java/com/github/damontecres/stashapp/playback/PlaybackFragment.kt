@@ -42,10 +42,10 @@ import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
@@ -618,7 +618,7 @@ abstract class PlaybackFragment(
     }
 
     protected fun maybeAddActivityTracking(exoPlayer: ExoPlayer) {
-        if (ServerPreferences(requireContext()).trackActivity && currentScene != null) {
+        if (StashServer.requireCurrentServer().serverPreferences.trackActivity && currentScene != null) {
             Log.v(TAG, "Adding TrackActivityPlaybackListener")
             trackActivityListener =
                 TrackActivityPlaybackListener(

@@ -8,8 +8,8 @@ import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.toMilliseconds
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +34,8 @@ class TrackActivityPlaybackListener(
     private val coroutineScope = CoroutineScope(dispatcher)
     private val timer: Timer
     private val mutationEngine = MutationEngine(context)
-    private val minimumPlayPercent = ServerPreferences(context).minimumPlayPercent
+    private val minimumPlayPercent =
+        StashServer.getCurrentStashServer(context)?.serverPreferences?.minimumPlayPercent ?: 98
     private val maxPlayPercent: Int
 
     private var totalPlayDurationSeconds = AtomicInteger(0)

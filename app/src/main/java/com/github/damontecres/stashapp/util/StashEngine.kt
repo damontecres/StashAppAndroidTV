@@ -13,8 +13,8 @@ abstract class StashEngine(
     private val context: Context,
     private val showToasts: Boolean = false,
 ) {
-    protected val serverPreferences = ServerPreferences(context)
-    protected val serverVersion = serverPreferences.serverVersion
+    protected val serverPreferences = StashServer.getCurrentStashServer(context)?.serverPreferences
+    protected val serverVersion = serverPreferences?.serverVersion
     protected val client = StashClient.getApolloClient(context)
 
     protected suspend fun <T : Exception> createException(

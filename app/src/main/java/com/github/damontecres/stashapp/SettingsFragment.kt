@@ -34,7 +34,6 @@ import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -221,7 +220,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<Preference>("triggerScan")!!
                 .setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
-                        ServerPreferences(requireContext()).updatePreferences()
+                        StashServer.requireCurrentServer().serverPreferences
+                            .updatePreferences(requireContext())
                         MutationEngine(requireContext()).triggerScan()
                         Toast.makeText(
                             requireContext(),
@@ -235,7 +235,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<Preference>("triggerGenerate")!!
                 .setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
-                        ServerPreferences(requireContext()).updatePreferences()
+                        StashServer.requireCurrentServer().serverPreferences
+                            .updatePreferences(requireContext())
                         MutationEngine(requireContext()).triggerGenerate()
                         Toast.makeText(
                             requireContext(),
@@ -324,7 +325,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val serverPrefs = ServerPreferences(requireContext()).updatePreferences()
+                val serverPrefs =
+                    StashServer.requireCurrentServer().serverPreferences
+                        .updatePreferences(requireContext())
                 if (serverPrefs.companionPluginInstalled) {
                     setupSendLogsPref()
                 } else {
@@ -352,7 +355,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                                     ).show()
                                 } else {
                                     val serverPrefs =
-                                        ServerPreferences(requireContext()).updatePreferences()
+                                        StashServer.requireCurrentServer().serverPreferences
+                                            .updatePreferences(requireContext())
                                     if (serverPrefs.companionPluginInstalled) {
                                         Toast.makeText(
                                             requireContext(),

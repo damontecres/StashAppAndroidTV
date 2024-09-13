@@ -9,9 +9,15 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 
 data class StashServer(val url: String, val apiKey: String?) {
+    val serverPreferences = ServerPreferences(this)
+
     companion object {
         fun getCurrentServerVersion(): Version {
-            return ServerPreferences(StashApplication.getApplication()).serverVersion
+            return ServerPreferences(requireCurrentServer()).serverVersion
+        }
+
+        fun requireCurrentServer(): StashServer {
+            return getCurrentStashServer() ?: throw QueryEngine.StashNotConfiguredException()
         }
 
         fun getCurrentStashServer(): StashServer? {

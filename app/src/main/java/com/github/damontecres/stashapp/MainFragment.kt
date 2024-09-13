@@ -24,9 +24,9 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getCaseInsensitive
@@ -110,8 +110,8 @@ class MainFragment : BrowseSupportFragment() {
                     clearData()
                     rowsAdapter.clear()
 
-                    val serverPrefs = ServerPreferences(requireContext())
-                    serverPrefs.updatePreferences()
+                    val serverPrefs = StashServer.requireCurrentServer().serverPreferences
+                    serverPrefs.updatePreferences(requireContext())
                     val mainTitleView =
                         requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                     mainTitleView.refreshMenuItems()
@@ -141,7 +141,8 @@ class MainFragment : BrowseSupportFragment() {
                         )
                     if (result.status == TestResultStatus.SUCCESS) {
                         val serverInfo = result.serverInfo!!
-                        ServerPreferences(requireContext()).updatePreferences()
+                        StashServer.requireCurrentServer().serverPreferences
+                            .updatePreferences(requireContext())
                         val mainTitleView =
                             requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                         mainTitleView.refreshMenuItems()
@@ -272,7 +273,8 @@ class MainFragment : BrowseSupportFragment() {
                             FilterParser(serverVersion ?: Version.MINIMUM_STASH_VERSION)
 
                         val config = queryEngine.getServerConfiguration()
-                        ServerPreferences(requireContext()).updatePreferences(config)
+                        StashServer.requireCurrentServer().serverPreferences
+                            .updatePreferences(config)
 
                         val ui = config.configuration.ui
                         val frontPageContent =

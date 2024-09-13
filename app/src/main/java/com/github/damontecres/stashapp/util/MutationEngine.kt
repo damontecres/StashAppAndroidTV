@@ -118,8 +118,8 @@ class MutationEngine(
         preferenceKey: String,
         defValue: Boolean = false,
     ): Optional<Boolean> {
-        return Optional.present(
-            serverPreferences.preferences.getBoolean(
+        return Optional.presentIfNotNull(
+            serverPreferences?.preferences?.getBoolean(
                 preferenceKey,
                 defValue,
             ),
