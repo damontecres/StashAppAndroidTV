@@ -7,7 +7,11 @@ import android.os.Build
 import android.util.Log
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.annotations.ApolloExperimental
 import com.apollographql.apollo.network.http.DefaultHttpEngine
+import com.apollographql.apollo.network.websocket.GraphQLWsProtocol
+import com.apollographql.apollo.network.websocket.WebSocketEngine
+import com.apollographql.apollo.network.websocket.WebSocketNetworkTransport
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import okhttp3.CacheControl
@@ -221,12 +225,20 @@ class StashClient private constructor() {
         /**
          * Create a new [ApolloClient]. Using [getApolloClient] is preferred.
          */
+        @OptIn(ApolloExperimental::class)
         private fun createApolloClient(server: StashServer): ApolloClient {
             val url = cleanServerUrl(server.url)
-            val httpEngine = DefaultHttpEngine(getHttpClient(server))
+            val httpClient = getHttpClient(server)
             return ApolloClient.Builder()
                 .serverUrl(url)
-                .httpEngine(httpEngine)
+                .httpEngine(DefaultHttpEngine(httpClient))
+                .subscriptionNetworkTransport(
+                    WebSocketNetworkTransport.Builder()
+                        .serverUrl(url)
+                        .wsProtocol(GraphQLWsProtocol())
+                        .webSocketEngine(WebSocketEngine(httpClient))
+                        .build(),
+                )
                 .build()
         }
 

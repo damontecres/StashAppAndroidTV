@@ -29,6 +29,7 @@ import androidx.preference.SwitchPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
 import com.github.damontecres.stashapp.api.fragment.JobData
+import com.github.damontecres.stashapp.api.type.JobStatus
 import com.github.damontecres.stashapp.api.type.JobStatusUpdateType
 import com.github.damontecres.stashapp.data.JobResult
 import com.github.damontecres.stashapp.setup.ManageServersFragment
@@ -50,6 +51,7 @@ import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Cache
@@ -111,6 +113,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
     class PreferencesFragment(val startPreferenceFragmentFunc: (fragment: LeanbackPreferenceFragmentCompat) -> Unit) :
         LeanbackPreferenceFragmentCompat() {
         private val viewModel: ServerViewModel by activityViewModels()
+        private var subscriptionJob: Job? = null
 
         override fun onCreatePreferences(
             savedInstanceState: Bundle?,
@@ -283,7 +286,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             val generateJobId = serverPrefs.generateJobId
 
             if (job.id == scanJobId || job.id == generateJobId) {
-                if (updateType == JobStatusUpdateType.REMOVE) {
+                if (updateType == JobStatusUpdateType.REMOVE || !job.isRunning()) {
                     // Job complete
                     if (job.id == scanJobId) {
                         serverPrefs.scanJobId = null
@@ -318,6 +321,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
         }
 
+        private fun JobData.isRunning() = status == JobStatus.RUNNING || status == JobStatus.READY || status == JobStatus.STOPPING
+
         private fun refresh(currentServer: StashServer) {
             Log.v(TAG, "refresh")
             findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer.url
@@ -331,7 +336,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 // Such as when a user triggers it, navigates away, and then back
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val job = queryEngine.getJob(pendingScanJobId)
-                    if (job == null) {
+                    if (job == null || !job.isRunning()) {
+                        currentServer.serverPreferences.scanJobId = null
                         triggerScan.summary =
                             getString(R.string.stashapp_config_tasks_scan_for_content_desc)
                     } else {
@@ -349,7 +355,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             if (pendingGenJobId != null) {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val job = queryEngine.getJob(pendingGenJobId)
-                    if (job == null) {
+                    if (job == null || !job.isRunning()) {
+                        currentServer.serverPreferences.generateJobId = null
                         generatePref.summary =
                             getString(R.string.stashapp_config_tasks_generate_desc)
                     } else {
@@ -364,15 +371,17 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val serverPrefs = currentServer.serverPreferences
             val subscriptionEngine = SubscriptionEngine(currentServer)
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                subscriptionEngine.subscribeToJobs { update ->
-                    handleJobUpdate(
-                        update.jobsSubscribe.type,
-                        update.jobsSubscribe.job.jobData,
-                        serverPrefs,
-                    )
+            // Cancel previous subscription
+            subscriptionJob?.cancel()
+            subscriptionJob =
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    subscriptionEngine.subscribeToJobs { update ->
+                        val type = update.jobsSubscribe.type
+                        val jobData = update.jobsSubscribe.job.jobData
+                        Log.v(TAG, "job subscription update: $type ${jobData.id}")
+                        handleJobUpdate(type, jobData, serverPrefs)
+                    }
                 }
-            }
 
             triggerScan.setOnPreferenceClickListener {
                 if (currentServer.serverPreferences.scanJobId == null) {
