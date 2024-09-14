@@ -28,6 +28,7 @@ import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.JobData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -323,21 +324,27 @@ class QueryEngine(
         return executeQuery(query).data!!
     }
 
+    suspend fun getJob(jobId: String): JobData? {
+        val query = FindJobQuery(FindJobInput(jobId))
+        return executeQuery(query).data?.findJob?.jobData
+    }
+
     suspend fun waitForJob(
         jobId: String,
         delay: Duration = 1.toDuration(DurationUnit.SECONDS),
+        callback: ((JobData) -> Unit)? = null,
     ): JobResult {
-        val query = FindJobQuery(FindJobInput((jobId)))
-        var job: FindJobQuery.FindJob? =
-            executeQuery(query).data?.findJob ?: return JobResult.NotFound
-        while (job?.status !in
+        var job = getJob(jobId) ?: return JobResult.NotFound
+        while (job.status !in
             setOf(
                 JobStatus.FINISHED,
                 JobStatus.FAILED,
+                JobStatus.CANCELLED,
             )
         ) {
             delay(delay)
-            job = executeQuery(query).data?.findJob ?: return JobResult.NotFound
+            job = getJob(jobId) ?: return JobResult.NotFound
+            callback?.invoke(job)
         }
         if (job?.status == JobStatus.FAILED) {
             return JobResult.Failure(job.error)

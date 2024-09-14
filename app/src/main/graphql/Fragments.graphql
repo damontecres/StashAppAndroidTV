@@ -21,3 +21,14 @@ fragment TagData on Tag {
   parent_count
   child_count
 }
+
+fragment JobData on Job {
+  id
+  status
+  progress
+  description
+  subTasks
+  addTime
+  endTime
+  error
+}
