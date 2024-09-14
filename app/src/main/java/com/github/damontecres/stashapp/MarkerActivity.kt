@@ -352,52 +352,42 @@ class MarkerActivity : FragmentActivity() {
                 if (result.resultCode == Activity.RESULT_OK) {
                     val data: Intent? = result.data
                     val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
-                    if (id == StashAction.ADD_TAG.id) {
-                        val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
-                        Log.d(TAG, "Adding tag $tagId to scene marker")
+                    val newTagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
+                    if (newTagId != null) {
                         pendingJob =
                             viewLifecycleOwner.lifecycleScope.launch(
                                 StashCoroutineExceptionHandler { ex ->
                                     Toast.makeText(
                                         requireContext(),
-                                        "Failed to add tag: ${ex.message}",
+                                        "Failed to update: ${ex.message}",
                                         Toast.LENGTH_LONG,
                                     )
                                 },
                             ) {
-                                val newTagData = tagsRowManager.add(tagId)
-                                if (newTagData != null) {
-                                    Toast.makeText(
-                                        requireContext(),
-                                        "Added tag '${newTagData.name}' to marker",
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                }
-                            }
-                    } else if (id == REPLACE_PRIMARY_ID) {
-                        val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
-                        Log.d(TAG, "Setting primary tag to $tagId to scene marker")
-                        if (tagId != null) {
-                            pendingJob =
-                                viewLifecycleOwner.lifecycleScope.launch(
-                                    StashCoroutineExceptionHandler { ex ->
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Failed to set primary tag: ${ex.message}",
-                                            Toast.LENGTH_LONG,
-                                        )
-                                    },
-                                ) {
-                                    val newPrimaryTag = primaryTagRowManager.add(tagId)
-                                    if (newPrimaryTag != null) {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Changed primary tag to '${newPrimaryTag.name}'",
-                                            Toast.LENGTH_LONG,
-                                        ).show()
+                                when (id) {
+                                    REPLACE_PRIMARY_ID -> {
+                                        val newPrimaryTag = primaryTagRowManager.add(newTagId)
+                                        if (newPrimaryTag != null) {
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Changed primary tag to '${newPrimaryTag.name}'",
+                                                Toast.LENGTH_LONG,
+                                            ).show()
+                                        }
+                                    }
+
+                                    StashAction.ADD_TAG.id -> {
+                                        val newTagData = tagsRowManager.add(newTagId)
+                                        if (newTagData != null) {
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Added tag '${newTagData.name}' to marker",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                        }
                                     }
                                 }
-                        }
+                            }
                     }
                 }
             }
