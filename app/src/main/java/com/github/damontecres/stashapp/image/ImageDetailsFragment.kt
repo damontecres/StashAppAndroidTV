@@ -176,8 +176,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
         val server = StashServer.requireCurrentServer()
-        queryEngine = QueryEngine(requireContext(), server, false)
-        mutationEngine = MutationEngine(requireContext(), server, false)
+        queryEngine = QueryEngine(server)
+        mutationEngine = MutationEngine(server)
 
         adapter = mAdapter
 

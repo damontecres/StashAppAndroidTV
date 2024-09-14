@@ -34,7 +34,7 @@ class CrashReportSenderFactory : ReportSenderFactory {
             Log.w(TAG, "Sending crash report")
             try {
                 StashServer.getCurrentStashServer()?.let { server ->
-                    val client = StashClient.getApolloClient(context, server)
+                    val client = StashClient.getApolloClient(server)
                     val mutation =
                         RunPluginTaskMutation(
                             plugin_id = CompanionPlugin.PLUGIN_ID,

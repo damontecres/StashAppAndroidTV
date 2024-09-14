@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.picker.Picker
@@ -55,15 +54,11 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
         picker.setColumnValue(0, 0, true)
         picker.isActivated = true
         picker.setOnClickListener {
-            viewLifecycleOwner.lifecycleScope.launch(
-                StashCoroutineExceptionHandler { ex ->
-                    Toast.makeText(requireContext(), "Error: ${ex.message}", Toast.LENGTH_LONG)
-                },
-            ) {
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 if (column.currentValue != 0) {
                     val seconds = (viewModel.seconds.value!! + column.currentValue).coerceAtLeast(0.0)
                     val mutationEngine =
-                        MutationEngine(requireContext(), StashServer.requireCurrentServer(), true)
+                        MutationEngine(StashServer.requireCurrentServer())
                     val result =
                         mutationEngine.updateMarker(
                             SceneMarkerUpdateInput(

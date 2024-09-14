@@ -126,7 +126,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         requireContext(),
                         true,
                         StashClient.getApolloClient(
-                            requireContext(),
                             viewModel.currentServer.value!!,
                         ),
                     )
@@ -226,19 +225,15 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     ).show()
                 }
             val server = StashServer.requireCurrentServer()
-            val queryEngine = QueryEngine(requireContext(), server)
+            val queryEngine = QueryEngine(server)
             val prefs = server.serverPreferences.preferences
 
             val triggerScan = findPreference<Preference>("triggerScan")!!
             triggerScan.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
                     triggerScan.isEnabled = false
-                    server.updateServerPrefs(requireContext())
-                    val jobId =
-                        MutationEngine(
-                            requireContext(),
-                            viewModel.currentServer.value!!,
-                        ).triggerScan()
+                    server.updateServerPrefs()
+                    val jobId = MutationEngine(viewModel.currentServer.value!!).triggerScan()
                     Toast.makeText(
                         requireContext(),
                         "Triggered a default library scan",
@@ -264,13 +259,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             val generatePref = findPreference<Preference>("triggerGenerate")!!
             generatePref.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
-                    StashServer.requireCurrentServer().updateServerPrefs(requireContext())
+                    StashServer.requireCurrentServer().updateServerPrefs()
                     generatePref.isEnabled = false
-                    val jobId =
-                        MutationEngine(
-                            requireContext(),
-                            viewModel.currentServer.value!!,
-                        ).triggerGenerate()
+                    val jobId = MutationEngine(viewModel.currentServer.value!!).triggerGenerate()
                     Toast.makeText(
                         requireContext(),
                         "Triggered a default generate",
@@ -345,7 +336,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
 
             val server = StashServer.requireCurrentServer()
-            val queryEngine = QueryEngine(requireContext(), server)
+            val queryEngine = QueryEngine(server)
             val prefs = server.serverPreferences.preferences
 
             val triggerScan = findPreference<Preference>("triggerScan")!!
@@ -457,9 +448,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val serverPrefs =
-                    StashServer.requireCurrentServer()
-                        .updateServerPrefs(requireContext())
+                val serverPrefs = StashServer.requireCurrentServer().updateServerPrefs()
                 if (serverPrefs.companionPluginInstalled) {
                     setupSendLogsPref()
                 } else {
@@ -470,13 +459,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                             val jobId =
                                 CompanionPlugin.installPlugin(
-                                    MutationEngine(
-                                        requireContext(),
-                                        viewModel.currentServer.value!!,
-                                    ),
+                                    MutationEngine(viewModel.currentServer.value!!),
                                 )
                             val queryEngine =
-                                QueryEngine(requireContext(), viewModel.currentServer.value!!)
+                                QueryEngine(viewModel.currentServer.value!!)
                             val result = queryEngine.waitForJob(jobId)
                             withContext(Dispatchers.Main) {
                                 if (result is JobResult.Failure) {
@@ -493,8 +479,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                                     ).show()
                                 } else {
                                     val serverPrefs =
-                                        StashServer.requireCurrentServer()
-                                            .updateServerPrefs(requireContext())
+                                        StashServer.requireCurrentServer().updateServerPrefs()
                                     if (serverPrefs.companionPluginInstalled) {
                                         Toast.makeText(
                                             requireContext(),
@@ -520,9 +505,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
         companion object {
             private const val TAG = "SettingsFragment"
-
-            const val SERVER_PREF_PREFIX = "server_"
-            const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
         }
     }
 
@@ -571,10 +553,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     testStashConnection(
                         requireContext(),
                         true,
-                        StashClient.getApolloClient(
-                            requireContext(),
-                            StashServer.requireCurrentServer(),
-                        ),
+                        StashClient.getApolloClient(StashServer.requireCurrentServer()),
                     )
                 }
                 true

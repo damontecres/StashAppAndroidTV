@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.util.SparseArray
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -50,7 +49,7 @@ class MainFragment : BrowseSupportFragment() {
 
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()
-    private val filterList = SparseArray<FilterArgs>()
+    private val filterList = ArrayList<FilterArgs>()
     private lateinit var mBackgroundManager: BackgroundManager
 
     @Volatile
@@ -111,7 +110,7 @@ class MainFragment : BrowseSupportFragment() {
                     rowsAdapter.clear()
 
                     val server = StashServer.requireCurrentServer()
-                    server.updateServerPrefs(requireContext())
+                    server.updateServerPrefs()
                     val mainTitleView =
                         requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                     mainTitleView.refreshMenuItems()
@@ -137,10 +136,10 @@ class MainFragment : BrowseSupportFragment() {
                         testStashConnection(
                             requireContext(),
                             false,
-                            StashClient.getApolloClient(requireContext(), newServer),
+                            StashClient.getApolloClient(newServer),
                         )
                     if (result.status == TestResultStatus.SUCCESS) {
-                        newServer.updateServerPrefs(requireContext())
+                        newServer.updateServerPrefs()
                         val mainTitleView =
                             requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                         mainTitleView.refreshMenuItems()
@@ -206,15 +205,13 @@ class MainFragment : BrowseSupportFragment() {
                     OnImageFilterClickedListener(requireContext()) { image: ImageData ->
                         val position = getCurrentPosition()
                         if (position != null) {
-                            val filter = filterList.get(position.row)
-                            if (filter != null) {
-                                return@OnImageFilterClickedListener OnImageFilterClickedListener.FilterPosition(
-                                    filter,
-                                    position.column,
-                                )
-                            }
+                            val filter = filterList[position.row]
+                            return@OnImageFilterClickedListener OnImageFilterClickedListener.FilterPosition(
+                                filter,
+                                position.column,
+                            )
                         }
-                        OnImageFilterClickedListener.FilterPosition(null, null)
+                        null
                     },
                 )
     }
@@ -255,7 +252,7 @@ class MainFragment : BrowseSupportFragment() {
                     }
                 } else {
                     try {
-                        val queryEngine = QueryEngine(requireContext(), server, showToasts = true)
+                        val queryEngine = QueryEngine(server)
                         val filterParser =
                             FilterParser(serverVersion ?: Version.MINIMUM_STASH_VERSION)
 
@@ -276,7 +273,7 @@ class MainFragment : BrowseSupportFragment() {
                             job.await().let { row ->
                                 if (row.successful) {
                                     val rowData = row.data!!
-                                    filterList.set(index, rowData.filter)
+                                    filterList.add(rowData.filter)
 
                                     val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
                                     adapter.addAll(0, rowData.data)
@@ -312,7 +309,7 @@ class MainFragment : BrowseSupportFragment() {
                         withContext(Dispatchers.Main) {
                             Toast.makeText(
                                 requireContext(),
-                                "Query error: ${ex.message}",
+                                ex.message,
                                 Toast.LENGTH_LONG,
                             ).show()
                             requireActivity().findViewById<View?>(R.id.search_button).requestFocus()

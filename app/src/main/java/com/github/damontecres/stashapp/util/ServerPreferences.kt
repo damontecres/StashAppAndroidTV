@@ -20,14 +20,15 @@ class ServerPreferences(val server: StashServer) {
             Context.MODE_PRIVATE,
         )
 
-    val serverVersion
-        get() =
-            Version.fromString(
+    val serverVersion: Version
+        get() {
+            return Version.fromString(
                 preferences.getStringNotNull(
                     PREF_SERVER_VERSION,
                     "0.0.0",
                 ),
             )
+        }
 
     val trackActivity get() = preferences.getBoolean(PREF_TRACK_ACTIVITY, true)
 

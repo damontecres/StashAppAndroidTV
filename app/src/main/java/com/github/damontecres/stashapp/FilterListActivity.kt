@@ -124,7 +124,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         val context = this@FilterListActivity
         val server = StashServer.requireCurrentServer()
         val savedFilters =
-            QueryEngine(this, server).getSavedFilters(dataType)
+            QueryEngine(server).getSavedFilters(dataType)
         if (savedFilters.isEmpty()) {
             filterButton.setOnClickListener {
                 Toast.makeText(

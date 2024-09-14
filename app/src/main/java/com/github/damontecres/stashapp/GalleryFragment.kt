@@ -35,7 +35,7 @@ import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.putExtra
+import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
@@ -161,7 +161,7 @@ class GalleryFragment : TabbedFragment() {
             table = view.findViewById(R.id.gallery_table)
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
-                val queryEngine = QueryEngine(requireContext(), StashServer.requireCurrentServer())
+                val queryEngine = QueryEngine(StashServer.requireCurrentServer())
                 galleryData = queryEngine.getGalleries(listOf(gallery.id)).first()
 
                 addRow(table, R.string.stashapp_details, galleryData.details)
@@ -181,7 +181,7 @@ class GalleryFragment : TabbedFragment() {
                 ratingBar.rating100 = galleryData.rating100 ?: 0
                 ratingBar.setRatingCallback { rating100 ->
                     val mutationEngine =
-                        MutationEngine(requireContext(), StashServer.requireCurrentServer(), true)
+                        MutationEngine(StashServer.requireCurrentServer())
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
                         val result = mutationEngine.updateGallery(galleryData.id, rating100)
                         if (result != null) {
@@ -251,7 +251,7 @@ class GalleryFragment : TabbedFragment() {
                         )
                     val intent =
                         Intent(requireContext(), FilterListActivity::class.java)
-                            .putExtra(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
+                            .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
                     requireContext().startActivity(intent)
                 }
             }

@@ -9,6 +9,7 @@ import androidx.preference.PreferenceManager
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.network.http.DefaultHttpEngine
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.EventListener
@@ -45,15 +46,12 @@ class StashClient private constructor() {
         /**
          * Get an [OkHttpClient] cached from a previous call or else created from the provided [Context]
          */
-        fun getHttpClient(
-            context: Context,
-            server: StashServer,
-        ): OkHttpClient {
+        fun getHttpClient(server: StashServer): OkHttpClient {
             if (httpClient == null) {
                 synchronized(this) {
                     if (httpClient == null) {
                         Log.v(TAG, "Creating new OkHttpClient")
-                        val newClient = createOkHttpClient(context, server, true, true)
+                        val newClient = createOkHttpClient(server, true, true)
                         httpClient = newClient
                     }
                 }
@@ -66,27 +64,21 @@ class StashClient private constructor() {
          *
          * This client is not cached and does not include the API key in requests
          */
-        fun getGlideHttpClient(
-            context: Context,
-            server: StashServer,
-        ): OkHttpClient {
+        fun getGlideHttpClient(server: StashServer): OkHttpClient {
             Log.v(TAG, "Creating new OkHttpClient for Glide")
-            return createOkHttpClient(context, server, false, true)
+            return createOkHttpClient(server, false, true)
         }
 
-        fun getStreamHttpClient(
-            context: Context,
-            server: StashServer,
-        ): OkHttpClient {
-            return createOkHttpClient(context, server, true, false)
+        fun getStreamHttpClient(server: StashServer): OkHttpClient {
+            return createOkHttpClient(server, true, false)
         }
 
         private fun createOkHttpClient(
-            context: Context,
             server: StashServer,
             useApiKey: Boolean,
             useCache: Boolean,
         ): OkHttpClient {
+            val context = StashApplication.getApplication()
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
             val serverUrlRoot = getServerRoot(server.url)
             val trustAll = manager.getBoolean("trustAllCerts", false)
@@ -210,18 +202,15 @@ class StashClient private constructor() {
         }
 
         /**
-         * Get an [ApolloClient] cached from a previous call or else created from the provided [Context]
+         * Get an [ApolloClient] cached from a previous call or else created for the specified server
          */
         @Throws(QueryEngine.StashNotConfiguredException::class)
-        fun getApolloClient(
-            context: Context,
-            server: StashServer,
-        ): ApolloClient {
+        fun getApolloClient(server: StashServer): ApolloClient {
             if (apolloClient == null) {
                 synchronized(this) {
                     if (apolloClient == null) {
                         Log.v(TAG, "Creating new ApolloClient")
-                        val newClient = createApolloClient(context, server)
+                        val newClient = createApolloClient(server)
                         apolloClient = newClient
                     }
                 }
@@ -232,12 +221,9 @@ class StashClient private constructor() {
         /**
          * Create a new [ApolloClient]. Using [getApolloClient] is preferred.
          */
-        private fun createApolloClient(
-            context: Context,
-            server: StashServer,
-        ): ApolloClient {
+        private fun createApolloClient(server: StashServer): ApolloClient {
             val url = cleanServerUrl(server.url)
-            val httpEngine = DefaultHttpEngine(getHttpClient(context, server))
+            val httpEngine = DefaultHttpEngine(getHttpClient(server))
             return ApolloClient.Builder()
                 .serverUrl(url)
                 .httpEngine(httpEngine)
