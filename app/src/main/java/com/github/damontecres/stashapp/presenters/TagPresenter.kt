@@ -13,7 +13,7 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.putDataType
-import com.github.damontecres.stashapp.util.putExtra
+import com.github.damontecres.stashapp.util.putFilterArgs
 import java.util.EnumMap
 
 class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
@@ -116,7 +116,7 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
                     val name = context.getString(R.string.stashapp_parent_of, item.name)
                     val intent =
                         Intent(context, FilterListActivity::class.java)
-                            .putExtra(
+                            .putFilterArgs(
                                 FilterListActivity.INTENT_FILTER_ARGS,
                                 FilterArgs(
                                     dataType = DataType.TAG,
@@ -141,7 +141,7 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
                     val name = context.getString(R.string.stashapp_sub_tag_of, item.name)
                     val intent =
                         Intent(context, FilterListActivity::class.java)
-                            .putExtra(
+                            .putFilterArgs(
                                 FilterListActivity.INTENT_SCROLL_NEXT_PAGE,
                                 FilterArgs(
                                     dataType = DataType.TAG,
