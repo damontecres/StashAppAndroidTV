@@ -19,13 +19,27 @@ class PlayAllOnClickListener(
     override fun onClick(v: View) {
         when (dataType) {
             DataType.MARKER -> {
-                showSimpleListPopupWindow(v, listOf("15 seconds", "20 seconds", "30 seconds", "60 seconds")) {
+                showSimpleListPopupWindow(
+                    v,
+                    listOf(
+                        "15 seconds",
+                        "20 seconds",
+                        "30 seconds",
+                        "60 seconds",
+                        "5 minutes",
+                        "10 minutes",
+                        "20 minutes",
+                    ),
+                ) {
                     val duration =
                         when (it) {
                             0 -> 15_000L
                             1 -> 20_000L
                             2 -> 30_000L
                             3 -> 60_000L
+                            4 -> 5 * 60_000L
+                            5 -> 10 * 60_000L
+                            6 -> 20 * 60_000L
                             else -> 30_000L
                         }
                     val intent = Intent(context, PlaylistActivity::class.java)

@@ -46,6 +46,7 @@ class SubscriptionEngine(
                 throw SubscriptionException(id, name, "Error in $name: $errorMsgs")
             }
         }
+        Log.v(TAG, "Completed subscription $id $name")
     }
 
     suspend fun subscribeToJobs(consumer: (JobProgressSubscription.Data) -> Unit) {
