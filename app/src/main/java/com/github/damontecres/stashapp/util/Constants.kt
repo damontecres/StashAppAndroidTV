@@ -755,7 +755,7 @@ fun Intent.getDataType(): DataType {
 }
 
 @OptIn(ExperimentalSerializationApi::class)
-fun Intent.putExtra(
+fun Intent.putFilterArgs(
     name: String,
     filterArgs: FilterArgs,
 ): Intent {

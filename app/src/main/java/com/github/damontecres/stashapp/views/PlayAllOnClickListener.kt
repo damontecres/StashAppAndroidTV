@@ -9,7 +9,7 @@ import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.playback.PlaylistActivity
 import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.util.putExtra
+import com.github.damontecres.stashapp.util.putFilterArgs
 
 class PlayAllOnClickListener(
     private val context: Context,
@@ -29,7 +29,7 @@ class PlayAllOnClickListener(
                             else -> 30_000L
                         }
                     val intent = Intent(context, PlaylistActivity::class.java)
-                    intent.putExtra(PlaylistActivity.INTENT_FILTER, getFilter())
+                    intent.putFilterArgs(PlaylistActivity.INTENT_FILTER, getFilter())
                     intent.putExtra(PlaylistMarkersFragment.INTENT_DURATION_ID, duration)
                     context.startActivity(intent)
                 }
@@ -44,7 +44,7 @@ class PlayAllOnClickListener(
                             else -> throw IllegalStateException("$it")
                         }
                     val intent = Intent(context, PlaylistActivity::class.java)
-                    intent.putExtra(PlaylistActivity.INTENT_FILTER, filter)
+                    intent.putFilterArgs(PlaylistActivity.INTENT_FILTER, filter)
                     context.startActivity(intent)
                 }
             }

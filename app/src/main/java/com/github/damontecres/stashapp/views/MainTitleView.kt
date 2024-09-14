@@ -31,7 +31,7 @@ import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.putExtra
+import com.github.damontecres.stashapp.util.putFilterArgs
 import kotlinx.coroutines.launch
 
 class MainTitleView(context: Context, attrs: AttributeSet) :
@@ -176,7 +176,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
                     )
                 val intent =
                     Intent(v.context, FilterListActivity::class.java)
-                        .putExtra(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
+                        .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
                 startActivity(v.context, intent, null)
             }
         }
