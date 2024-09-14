@@ -255,6 +255,14 @@ class ServerPreferences(val server: StashServer) {
         return this?.getCaseInsensitive(key)?.toString()?.toBoolean() ?: defaultsValue ?: default
     }
 
+    var scanJobId: String?
+        get() = preferences.getString(PREF_JOB_SCAN, null)
+        set(value) = preferences.edit { putString(PREF_JOB_SCAN, value) }
+
+    var generateJobId: String?
+        get() = preferences.getString(PREF_JOB_GENERATE, null)
+        set(value) = preferences.edit { putString(PREF_JOB_GENERATE, value) }
+
     companion object {
         const val TAG = "ServerPreferences"
         val DEFAULT_MENU_ITEMS =

@@ -227,6 +227,10 @@ class StashClient private constructor() {
             return ApolloClient.Builder()
                 .serverUrl(url)
                 .httpEngine(httpEngine)
+//                .subscriptionNetworkTransport(HttpNetworkTransport.Builder()
+//                    .serverUrl(url)
+//                    .httpEngine(httpEngine)
+//                    .build())
                 .build()
         }
 
