@@ -138,7 +138,6 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         performersButton.visibility = getVis("performers")
         studiosButton.visibility = getVis("studios")
         tagsButton.visibility = getVis("tags")
-        // TODO: Workaround for potential bug https://github.com/stashapp/stash/issues/5220
         groupsButton.visibility =
             if ("groups" in menuItems || "movies" in menuItems) {
                 View.VISIBLE
@@ -151,14 +150,15 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
 
     private class ClickListener(private val dataType: DataType) : OnClickListener {
         override fun onClick(v: View) {
-            val filter = ServerPreferences.DEFAULT_FILTERS[dataType]
+            val filter =
+                StashServer.requireCurrentServer().serverPreferences.defaultFilters[dataType]
             if (filter != null) {
                 val intent =
                     Intent(v.context, FilterListActivity::class.java)
                         .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filter)
                 startActivity(v.context, intent, null)
             } else {
-                Log.w(TAG, "ServerPreferences.DEFAULT_FILTERS is missing $dataType")
+                Log.w(TAG, "ServerPreferences.defaultFilters is missing $dataType")
                 Toast.makeText(
                     v.context,
                     "Default filter not found for $dataType",

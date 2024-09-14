@@ -52,6 +52,9 @@ class ServerPreferences(val server: StashServer) {
     val companionPluginInstalled
         get() = companionPluginVersion != null
 
+    private val _defaultFilters = mutableMapOf<DataType, FilterArgs>()
+    val defaultFilters: Map<DataType, FilterArgs> = _defaultFilters
+
     /**
      * Update the local preferences from the server configuration
      */
@@ -144,6 +147,7 @@ class ServerPreferences(val server: StashServer) {
 
     private fun refreshDefaultFilters(defaultFilters: Map<String, *>) {
         val filterParser = FilterParser(serverVersion)
+
         DataType.entries.forEach { dataType ->
             val filterMap =
                 defaultFilters.getCaseInsensitive(
@@ -155,11 +159,15 @@ class ServerPreferences(val server: StashServer) {
                     val objectFilterMap = filterMap.getCaseInsensitive("object_filter")
                     val findFilter = filterParser.convertFindFilter(findFilterMap)
                     val objectFilter = filterParser.convertFilter(dataType, objectFilterMap)
-                    FilterArgs(dataType, findFilter = findFilter, objectFilter = objectFilter)
+                    FilterArgs(
+                        dataType,
+                        findFilter = findFilter,
+                        objectFilter = objectFilter,
+                    )
                 } else {
                     FilterArgs(dataType)
                 }
-            DEFAULT_FILTERS[dataType] = filter
+            _defaultFilters[dataType] = filter
         }
     }
 
@@ -340,7 +348,5 @@ class ServerPreferences(val server: StashServer) {
 
         const val PREF_JOB_SCAN = "app.job.scan"
         const val PREF_JOB_GENERATE = "app.job.generate"
-
-        val DEFAULT_FILTERS = mutableMapOf<DataType, FilterArgs>()
     }
 }
