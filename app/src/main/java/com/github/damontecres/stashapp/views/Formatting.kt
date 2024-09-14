@@ -1,8 +1,6 @@
 package com.github.damontecres.stashapp.views
 
-import android.content.Context
 import android.os.Build
-import com.github.damontecres.stashapp.util.ServerPreferences
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -20,12 +18,10 @@ fun durationToString(duration: Double): String {
 }
 
 fun getRatingAsDecimalString(
-    context: Context,
     rating100: Int,
-    ratingsAsStars: Boolean? = null,
+    ratingsAsStars: Boolean,
 ): String {
-    val asStars = ratingsAsStars ?: ServerPreferences(context).ratingsAsStars
-    return if (asStars) {
+    return if (ratingsAsStars) {
         (rating100 / 20.0).toString()
     } else {
         (rating100 / 10.0).toString()

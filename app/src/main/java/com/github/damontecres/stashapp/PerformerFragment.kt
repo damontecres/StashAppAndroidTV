@@ -29,7 +29,7 @@ import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
-import com.github.damontecres.stashapp.util.putExtra
+import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
 class PerformerFragment : TabbedFragment() {
@@ -188,7 +188,7 @@ class PerformerFragment : TabbedFragment() {
                     val name = "${performer.name} & ${item.name}"
                     val intent =
                         Intent(context, FilterListActivity::class.java)
-                            .putExtra(
+                            .putFilterArgs(
                                 FilterListActivity.INTENT_FILTER_ARGS,
                                 FilterArgs(
                                     dataType = DataType.SCENE,
@@ -237,7 +237,7 @@ class PerformerFragment : TabbedFragment() {
                     val name = "Performers with ${item.name}"
                     val intent =
                         Intent(context, FilterListActivity::class.java)
-                            .putExtra(
+                            .putFilterArgs(
                                 FilterListActivity.INTENT_FILTER_ARGS,
                                 FilterArgs(
                                     dataType = DataType.PERFORMER,

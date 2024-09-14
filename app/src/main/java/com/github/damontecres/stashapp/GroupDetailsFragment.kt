@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 import kotlin.time.DurationUnit
@@ -50,8 +51,9 @@ class GroupDetailsFragment : Fragment(R.layout.group_view) {
                 .into(backImage)
         }
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            val queryEngine = QueryEngine(requireContext())
+            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             groupData = queryEngine.getGroup(group.id)!!
+
             addRow(
                 R.string.stashapp_duration,
                 groupData?.duration?.toDuration(DurationUnit.MINUTES)?.toString(),

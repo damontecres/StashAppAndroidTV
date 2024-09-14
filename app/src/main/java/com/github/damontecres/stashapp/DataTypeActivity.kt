@@ -23,7 +23,7 @@ class DataTypeActivity : FragmentActivity(R.layout.activity_main) {
                 else -> throw IllegalArgumentException(dataType.name)
             }
         supportFragmentManager.commit {
-            add(android.R.id.content, fragment)
+            replace(android.R.id.content, fragment)
         }
     }
 }

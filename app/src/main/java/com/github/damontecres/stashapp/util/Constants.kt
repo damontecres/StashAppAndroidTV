@@ -573,7 +573,8 @@ fun showSetRatingToast(
     rating100: Int,
     ratingsAsStars: Boolean? = null,
 ) {
-    val asStars = ratingsAsStars ?: ServerPreferences(context).ratingsAsStars
+    val asStars =
+        ratingsAsStars ?: StashServer.requireCurrentServer().serverPreferences.ratingsAsStars
     val ratingStr =
         if (asStars) {
             (rating100 / 20.0).toString() + " stars"
@@ -755,7 +756,7 @@ fun Intent.getDataType(): DataType {
 }
 
 @OptIn(ExperimentalSerializationApi::class)
-fun Intent.putExtra(
+fun Intent.putFilterArgs(
     name: String,
     filterArgs: FilterArgs,
 ): Intent {

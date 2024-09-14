@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.util
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
@@ -40,6 +41,17 @@ class AppUpgradeHandler(
                         newSet,
                     )
                 }
+            }
+        }
+
+        if (previousVersion.isEqualOrBefore(Version.fromString("v0.4.1"))) {
+            val preferences: SharedPreferences =
+                context.getSharedPreferences(
+                    context.packageName + "_server_preferences",
+                    Context.MODE_PRIVATE,
+                )
+            preferences.edit(true) {
+                clear()
             }
         }
     }

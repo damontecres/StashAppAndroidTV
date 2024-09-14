@@ -60,6 +60,7 @@ import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -174,9 +175,9 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-
-        queryEngine = QueryEngine(requireContext(), false)
-        mutationEngine = MutationEngine(requireContext(), false)
+        val server = StashServer.requireCurrentServer()
+        queryEngine = QueryEngine(server)
+        mutationEngine = MutationEngine(server)
 
         adapter = mAdapter
 

@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.data.JobResult
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -79,7 +80,7 @@ class CompanionPlugin {
         suspend fun sendLogCat(
             context: Context,
             verbose: Boolean,
-        ) = withContext(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+        ) = withContext(Dispatchers.IO + StashCoroutineExceptionHandler(autoToast = true)) {
             try {
                 val lines = getLogCatLines(verbose)
                 val sb = StringBuilder("** LOGCAT START **\n")
@@ -88,7 +89,8 @@ class CompanionPlugin {
                 // Avoid individual lines being logged server-side
                 val logcat = sb.replace(Regex("\n"), "<newline>")
 
-                val mutationEngine = MutationEngine(context, true)
+                val server = StashServer.requireCurrentServer()
+                val mutationEngine = MutationEngine(server)
                 val mutation =
                     RunPluginTaskMutation(
                         plugin_id = PLUGIN_ID,
@@ -97,7 +99,7 @@ class CompanionPlugin {
                     )
                 val jobId = mutationEngine.executeMutation(mutation).data?.runPluginTask
                 if (jobId.isNotNullOrBlank()) {
-                    val result = QueryEngine(context).waitForJob(jobId)
+                    val result = QueryEngine(server).waitForJob(jobId)
                     withContext(Dispatchers.Main) {
                         if (result is JobResult.Success) {
                             val msg =

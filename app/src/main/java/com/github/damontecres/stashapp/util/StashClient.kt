@@ -9,6 +9,7 @@ import androidx.preference.PreferenceManager
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.network.http.DefaultHttpEngine
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.EventListener
@@ -45,12 +46,12 @@ class StashClient private constructor() {
         /**
          * Get an [OkHttpClient] cached from a previous call or else created from the provided [Context]
          */
-        fun getHttpClient(context: Context): OkHttpClient {
+        fun getHttpClient(server: StashServer): OkHttpClient {
             if (httpClient == null) {
                 synchronized(this) {
                     if (httpClient == null) {
                         Log.v(TAG, "Creating new OkHttpClient")
-                        val newClient = createOkHttpClient(context, true, true)
+                        val newClient = createOkHttpClient(server, true, true)
                         httpClient = newClient
                     }
                 }
@@ -63,31 +64,23 @@ class StashClient private constructor() {
          *
          * This client is not cached and does not include the API key in requests
          */
-        fun getGlideHttpClient(context: Context): OkHttpClient {
+        fun getGlideHttpClient(server: StashServer): OkHttpClient {
             Log.v(TAG, "Creating new OkHttpClient for Glide")
-            return createOkHttpClient(context, false, true)
+            return createOkHttpClient(server, false, true)
         }
 
-        fun getStreamHttpClient(context: Context): OkHttpClient {
-            return createOkHttpClient(context, true, false)
+        fun getStreamHttpClient(server: StashServer): OkHttpClient {
+            return createOkHttpClient(server, true, false)
         }
 
         private fun createOkHttpClient(
-            context: Context,
+            server: StashServer,
             useApiKey: Boolean,
             useCache: Boolean,
         ): OkHttpClient {
+            val context = StashApplication.getApplication()
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
-            val server =
-                getServerRoot(
-                    manager.getString(
-                        context.getString(R.string.pref_key_current_server),
-                        null,
-                    ),
-                )
-            val apiKey =
-                manager.getString(context.getString(R.string.pref_key_current_api_key), null)
-                    ?.trim()
+            val serverUrlRoot = getServerRoot(server.url)
             val trustAll = manager.getBoolean("trustAllCerts", false)
             val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
             val cacheLogging = manager.getBoolean("networkCacheLogging", false)
@@ -118,14 +111,14 @@ class StashClient private constructor() {
                         true
                     }
             }
-            if (useApiKey && apiKey.isNotNullOrBlank()) {
+            if (useApiKey && server.apiKey.isNotNullOrBlank()) {
                 builder =
                     builder.addInterceptor {
                         val request =
-                            if (server != null && it.request().url.toString().startsWith(server)) {
+                            if (it.request().url.toString().startsWith(serverUrlRoot)) {
                                 // Only set the API Key if the target URL is the stash server
                                 it.request().newBuilder()
-                                    .addHeader(Constants.STASH_API_HEADER, apiKey)
+                                    .addHeader(Constants.STASH_API_HEADER, server.apiKey)
                                     .build()
                             } else {
                                 it.request()
@@ -209,15 +202,15 @@ class StashClient private constructor() {
         }
 
         /**
-         * Get an [ApolloClient] cached from a previous call or else created from the provided [Context]
+         * Get an [ApolloClient] cached from a previous call or else created for the specified server
          */
         @Throws(QueryEngine.StashNotConfiguredException::class)
-        fun getApolloClient(context: Context): ApolloClient {
+        fun getApolloClient(server: StashServer): ApolloClient {
             if (apolloClient == null) {
                 synchronized(this) {
                     if (apolloClient == null) {
                         Log.v(TAG, "Creating new ApolloClient")
-                        val newClient = createApolloClient(context)
+                        val newClient = createApolloClient(server)
                         apolloClient = newClient
                     }
                 }
@@ -228,17 +221,9 @@ class StashClient private constructor() {
         /**
          * Create a new [ApolloClient]. Using [getApolloClient] is preferred.
          */
-        private fun createApolloClient(context: Context): ApolloClient {
-            val stashUrl =
-                PreferenceManager.getDefaultSharedPreferences(context).getString(
-                    context.getString(
-                        R.string.pref_key_current_server,
-                    ),
-                    null,
-                ) ?: throw QueryEngine.StashNotConfiguredException()
-
-            val url = cleanServerUrl(stashUrl)
-            val httpEngine = DefaultHttpEngine(getHttpClient(context))
+        private fun createApolloClient(server: StashServer): ApolloClient {
+            val url = cleanServerUrl(server.url)
+            val httpEngine = DefaultHttpEngine(getHttpClient(server))
             return ApolloClient.Builder()
                 .serverUrl(url)
                 .httpEngine(httpEngine)
@@ -266,10 +251,7 @@ class StashClient private constructor() {
         /**
          * Get the server URL excluding the (unlikely) `/graphql` last path segment
          */
-        fun getServerRoot(stashUrl: String?): String? {
-            if (stashUrl == null) {
-                return null
-            }
+        fun getServerRoot(stashUrl: String): String {
             var cleanedStashUrl = stashUrl.trim()
             if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
                 // Assume http

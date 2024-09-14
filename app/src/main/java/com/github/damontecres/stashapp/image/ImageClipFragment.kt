@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackFragment
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 
 /**
@@ -85,6 +86,7 @@ class ImageClipFragment : PlaybackFragment(), VideoController {
                 .getInt("skip_back_time", 10)
         return StashExoPlayer.createInstance(
             requireContext(),
+            StashServer.requireCurrentServer(),
             skipForward * 1000L,
             skipBack * 1000L,
         ).also { exoPlayer ->

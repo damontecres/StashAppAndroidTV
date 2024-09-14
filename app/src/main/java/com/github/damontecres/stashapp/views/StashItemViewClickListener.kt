@@ -32,7 +32,7 @@ import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.addToIntent
 import com.github.damontecres.stashapp.util.putDataType
-import com.github.damontecres.stashapp.util.putExtra
+import com.github.damontecres.stashapp.util.putFilterArgs
 
 /**
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc
@@ -98,7 +98,7 @@ class StashItemViewClickListener(
         } else if (item is FilterArgs) {
             val intent =
                 Intent(context, FilterListActivity::class.java)
-                    .putExtra(FilterListActivity.INTENT_FILTER_ARGS, item)
+                    .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, item)
                     .putExtra(FilterListActivity.INTENT_SCROLL_NEXT_PAGE, true)
             context.startActivity(intent)
         } else if (item is StashAction) {

@@ -6,7 +6,7 @@ import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.StashGridFragment
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.util.maxFileSize
-import com.github.damontecres.stashapp.util.putExtra
+import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener.SimpleOnItemViewClickedListener
 
 class ImageGridClickedListener(val fragment: StashGridFragment) :
@@ -19,7 +19,7 @@ class ImageGridClickedListener(val fragment: StashGridFragment) :
         intent.putExtra(ImageActivity.INTENT_IMAGE_URL, item.paths.image)
         intent.putExtra(ImageActivity.INTENT_IMAGE_SIZE, item.maxFileSize)
         intent.putExtra(ImageActivity.INTENT_POSITION, position)
-        intent.putExtra(ImageActivity.INTENT_FILTER_ARGS, fragment.filterArgs)
+        intent.putFilterArgs(ImageActivity.INTENT_FILTER_ARGS, fragment.filterArgs)
         fragment.requireActivity().startActivity(intent)
     }
 

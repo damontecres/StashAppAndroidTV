@@ -1,62 +1,59 @@
 package com.github.damontecres.stashapp.util
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
+import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.apollographql.apollo.exception.ApolloNetworkException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 abstract class StashEngine(
-    private val context: Context,
-    private val showToasts: Boolean = false,
+    protected val server: StashServer,
+    protected val client: ApolloClient,
 ) {
-    protected val serverPreferences = ServerPreferences(context)
+    protected val serverPreferences = server.serverPreferences
     protected val serverVersion = serverPreferences.serverVersion
-    protected val client = StashClient.getApolloClient(context)
 
-    protected suspend fun <T : Exception> createException(
+    protected fun <T : ServerCommunicationException> createException(
         id: Int,
-        queryName: String,
+        operationName: String,
         ex: Exception,
-        rethrow: (Int, String, Exception) -> T,
+        rethrow: (String, Exception) -> T,
     ): T {
+        val causeMsg =
+            if (ex.message.isNotNullOrBlank()) {
+                ex.message
+            } else {
+                ex.cause?.message
+            }
         return when (ex) {
             is ApolloNetworkException -> {
-                showToast("Network error ($queryName). Message: ${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "Network error in $id $queryName", ex)
-                rethrow(id, "Network error ($queryName)", ex)
+                Log.e(TAG, "Network error in $id $operationName", ex)
+                rethrow("Network error ($operationName): $causeMsg", ex)
             }
 
             is ApolloHttpException -> {
-                showToast("HTTP error ($queryName). Status=${ex.statusCode}, Msg=${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "HTTP ${ex.statusCode} error in $id $queryName", ex)
-                rethrow(id, "HTTP ${ex.statusCode} ($queryName)", ex)
+                Log.e(TAG, "HTTP ${ex.statusCode} error in $id $operationName", ex)
+                rethrow("HTTP ${ex.statusCode} ($operationName): $causeMsg", ex)
             }
 
             is ApolloException -> {
-                showToast("Server query error ($queryName). Msg=${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "ApolloException in $id $queryName", ex)
-                rethrow(id, "Apollo exception ($queryName)", ex)
+                Log.e(TAG, "ApolloException in $id $operationName", ex)
+                rethrow("Error with server ($operationName): $causeMsg", ex)
             }
 
             else -> {
-                showToast("Error ($queryName). Msg=${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "Error in $id $queryName", ex)
-                rethrow(id, "Apollo exception ($queryName)", ex)
+                Log.e(TAG, "Exception in $id $operationName", ex)
+                rethrow("Error with $operationName: $causeMsg", ex)
             }
         }
     }
 
-    protected suspend fun showToast(message: String) {
-        if (showToasts) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            }
-        }
-    }
+    open class ServerCommunicationException(
+        val operationId: Int,
+        val operationName: String,
+        message: String? = null,
+        cause: Exception? = null,
+    ) : Exception(message, cause)
 
     companion object {
         private const val TAG = "StashEngine"

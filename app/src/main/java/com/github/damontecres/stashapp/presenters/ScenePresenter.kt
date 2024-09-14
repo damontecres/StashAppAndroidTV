@@ -9,7 +9,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackActivity
-import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
@@ -58,7 +58,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
 
         cardView.setRating100(item.rating100)
         if (item.studio != null) {
-            if (ServerPreferences(cardView.context).showStudioAsText) {
+            if (StashServer.requireCurrentServer().serverPreferences.showStudioAsText) {
                 cardView.setTextOverlayText(
                     StashImageCardView.OverlayPosition.TOP_RIGHT,
                     item.studio.name,

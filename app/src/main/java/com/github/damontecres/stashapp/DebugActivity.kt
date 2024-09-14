@@ -20,7 +20,6 @@ import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -58,7 +57,7 @@ class DebugActivity : FragmentActivity() {
             }
             prefTable.isStretchAllColumns = true
 
-            val serverPrefs = ServerPreferences(requireContext())
+            val serverPrefs = StashServer.requireCurrentServer().serverPreferences
             val serverPrefsRaw = serverPrefs.preferences.all
             serverPrefsRaw.keys.sorted().forEach {
                 val row = createRow(it, serverPrefsRaw[it].toString())
@@ -147,8 +146,9 @@ class DebugActivity : FragmentActivity() {
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 try {
-                    val queryEngine = QueryEngine(requireContext())
-                    val filterParser = FilterParser(StashServer.getCurrentServerVersion())
+                    val server = StashServer.requireCurrentServer()
+                    val queryEngine = QueryEngine(server)
+                    val filterParser = FilterParser(server.serverPreferences.serverVersion)
                     DataType.entries.forEach { dataType ->
                         val filters = queryEngine.getSavedFilters(dataType)
                         filters.forEach { filter ->

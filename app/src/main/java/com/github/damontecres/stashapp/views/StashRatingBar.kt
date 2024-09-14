@@ -13,6 +13,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashServer
 
 @SuppressLint("SetTextI18n")
 class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs) {
@@ -49,7 +50,7 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
     init {
         inflate(context, R.layout.stash_rating_bar, this)
 
-        val serverPreferences = ServerPreferences(context)
+        val serverPreferences = StashServer.requireCurrentServer().serverPreferences
 
         starRatingBar = findViewById(R.id.rating_star)
         starRatingBar.setOnClickListener(RatingOnClickListener())

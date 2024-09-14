@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.Button
@@ -22,11 +21,11 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.parseTimeToString
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -62,18 +61,11 @@ class PerformerDetailsFragment() : Fragment(R.layout.performer_view) {
 
         val performer = requireActivity().intent.getParcelableExtra<Performer>("performer")
         if (performer != null) {
-            queryEngine = QueryEngine(requireContext(), true)
-            mutationEngine = MutationEngine(requireContext(), true)
+            val server = StashServer.requireCurrentServer()
+            queryEngine = QueryEngine(server)
+            mutationEngine = MutationEngine(server)
 
-            val exceptionHandler =
-                CoroutineExceptionHandler { _, ex ->
-                    Log.e(TAG, "Error fetching data", ex)
-                    Toast.makeText(
-                        requireContext(),
-                        "Error fetching data: ${ex.message}",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
+            val exceptionHandler = StashCoroutineExceptionHandler(autoToast = true)
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val perf = queryEngine.getPerformer(performer.id)
                 if (perf == null) {

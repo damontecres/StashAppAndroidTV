@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.util
 
-import android.content.Context
 import android.util.Log
+import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Mutation
 import com.apollographql.apollo.api.Optional
@@ -51,14 +51,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Class for sending graphql mutations
- *
- * @param context
- * @param showToasts show a toast when errors occur
  */
 class MutationEngine(
-    context: Context,
-    showToasts: Boolean = false,
-) : StashEngine(context, showToasts) {
+    server: StashServer,
+    client: ApolloClient = StashClient.getApolloClient(server),
+) : StashEngine(server, client) {
     suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val mutationName = mutation.name()
@@ -70,17 +67,13 @@ class MutationEngine(
                 Log.v(TAG, "executeMutation $id $mutationName successful")
                 return@withContext response
             } else if (response.exception != null) {
-                throw createException(id, mutationName, response.exception!!) { id, msg, ex ->
-                    MutationException(id, msg, ex)
+                throw createException(id, mutationName, response.exception!!) { msg, ex ->
+                    MutationException(id, mutationName, msg, ex)
                 }
             } else {
                 val errorMsgs = response.errors!!.joinToString("\n") { it.message }
-                showToast("${response.errors!!.size} errors in response ($mutationName)\n$errorMsgs")
                 Log.e(TAG, "Errors in $id $mutationName: ${response.errors}")
-                throw MutationException(
-                    id,
-                    "($mutationName), ${response.errors!!.size} errors in graphql response",
-                )
+                throw MutationException(id, mutationName, "Error in $mutationName: $errorMsgs")
             }
         }
 
@@ -122,8 +115,8 @@ class MutationEngine(
         preferenceKey: String,
         defValue: Boolean = false,
     ): Optional<Boolean> {
-        return Optional.present(
-            serverPreferences.preferences.getBoolean(
+        return Optional.presentIfNotNull(
+            serverPreferences?.preferences?.getBoolean(
                 preferenceKey,
                 defValue,
             ),
@@ -433,6 +426,10 @@ class MutationEngine(
         private val MUTATION_ID = AtomicInteger(0)
     }
 
-    open class MutationException(val id: Int, msg: String? = null, cause: Exception? = null) :
-        RuntimeException(msg, cause)
+    open class MutationException(
+        id: Int,
+        mutationName: String,
+        msg: String? = null,
+        cause: Exception? = null,
+    ) : ServerCommunicationException(id, mutationName, msg, cause)
 }

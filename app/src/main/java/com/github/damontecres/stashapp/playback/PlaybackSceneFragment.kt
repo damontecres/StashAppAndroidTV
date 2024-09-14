@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.util.StashServer
 
 @OptIn(UnstableApi::class)
 class PlaybackSceneFragment() : PlaybackFragment() {
@@ -53,7 +54,7 @@ class PlaybackSceneFragment() : PlaybackFragment() {
         val streamDecision =
             getStreamDecision(requireContext(), scene, forceTranscode, forceDirectPlay)
         updateDebugInfo(streamDecision, scene)
-        return StashExoPlayer.getInstance(requireContext())
+        return StashExoPlayer.getInstance(requireContext(), StashServer.requireCurrentServer())
             .also { exoPlayer ->
                 maybeAddActivityTracking(exoPlayer)
             }.also { exoPlayer ->

@@ -6,9 +6,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 
@@ -32,29 +30,13 @@ class ManageServersFragment : GuidedStepSupportFragment() {
         )
     }
 
-    fun getStashServers(): List<StashServer> {
-        val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        val keys =
-            manager.all.keys.filter { it.startsWith(SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX) }.sorted().toList()
-        return keys.map {
-            val url = it.replace(SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX, "")
-            val apiKeyKey =
-                it.replace(
-                    SettingsFragment.PreferencesFragment.SERVER_PREF_PREFIX,
-                    SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX,
-                )
-            val apiKey = manager.all[apiKeyKey]?.toString()?.replace(SettingsFragment.PreferencesFragment.SERVER_APIKEY_PREF_PREFIX, "")
-            StashServer(url, apiKey)
-        }.sortedBy { it.url }
-    }
-
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
         super.onCreateActions(actions, savedInstanceState)
 
-        allServers = getStashServers()
+        allServers = StashServer.getAll(requireContext())
         currentServer = StashServer.getCurrentStashServer(requireContext())
         otherServers =
             if (currentServer != null) {

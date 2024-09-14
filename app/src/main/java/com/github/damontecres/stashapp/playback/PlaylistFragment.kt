@@ -23,6 +23,7 @@ import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
@@ -83,10 +84,16 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
 
     @OptIn(UnstableApi::class)
     override fun initializePlayer(): ExoPlayer {
+        val server = StashServer.requireCurrentServer()
         return if (skipForwardOverride == -1L || skipBackOverride == -1L) {
-            StashExoPlayer.getInstance(requireContext())
+            StashExoPlayer.getInstance(requireContext(), server)
         } else {
-            StashExoPlayer.getInstance(requireContext(), skipForwardOverride, skipBackOverride)
+            StashExoPlayer.getInstance(
+                requireContext(),
+                server,
+                skipForwardOverride,
+                skipBackOverride,
+            )
         }.also { exoPlayer ->
             exoPlayer.addListener(
                 object : Listener {
@@ -118,7 +125,12 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         val filter = playlistViewModel.filterArgs.value!!
         val dataSupplier = DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, C>(filter)
         pagingSource =
-            StashPagingSource(requireContext(), PAGE_SIZE, dataSupplier, useRandom = false)
+            StashPagingSource(
+                QueryEngine(server),
+                PAGE_SIZE,
+                dataSupplier,
+                useRandom = false,
+            )
         addNextPageToPlaylist()
         maybeSetupVideoEffects(player!!)
         player!!.prepare()

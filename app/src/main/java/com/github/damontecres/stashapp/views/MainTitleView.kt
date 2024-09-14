@@ -15,7 +15,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
@@ -23,8 +22,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.ServerPreferences
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.putExtra
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.putFilterArgs
 
 class MainTitleView(context: Context, attrs: AttributeSet) :
     RelativeLayout(context, attrs),
@@ -114,11 +113,9 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
     }
 
     private fun getMenuItems(): Set<String> {
-        val serverConfigured =
-            PreferenceManager.getDefaultSharedPreferences(context).getString("stashUrl", "")
-                .isNotNullOrBlank()
-        if (serverConfigured) {
-            return ServerPreferences(context).preferences.getStringSet(
+        val server = StashServer.getCurrentStashServer()
+        if (server != null) {
+            return server.serverPreferences.preferences.getStringSet(
                 ServerPreferences.PREF_INTERFACE_MENU_ITEMS,
                 ServerPreferences.DEFAULT_MENU_ITEMS,
             )!!
@@ -158,7 +155,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
             if (filter != null) {
                 val intent =
                     Intent(v.context, FilterListActivity::class.java)
-                        .putExtra(FilterListActivity.INTENT_FILTER_ARGS, filter)
+                        .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filter)
                 startActivity(v.context, intent, null)
             } else {
                 Log.w(TAG, "ServerPreferences.DEFAULT_FILTERS is missing $dataType")
