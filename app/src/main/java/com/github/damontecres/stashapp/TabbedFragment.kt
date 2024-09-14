@@ -79,12 +79,12 @@ abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
         )
     }
 
-    override fun onStart() {
-        super.onStart()
-        if (tabLayout.selectedTabPosition >= 0) {
-            tabLayout.getChildAt(tabLayout.selectedTabPosition)?.requestFocus()
-        }
-    }
+//    override fun onStart() {
+//        super.onStart()
+//        if (tabLayout.selectedTabPosition >= 0) {
+//            tabLayout.getChildAt(tabLayout.selectedTabPosition)?.requestFocus()
+//        }
+//    }
 
     open fun getTitleText(): String? {
         return null

@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.CountMarkersQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -45,9 +46,14 @@ class PlaylistMarkersFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         duration = requireActivity().intent.getLongExtra(INTENT_DURATION_ID, 15_000L)
+
+        val prefs = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val skipForward = prefs.getInt("skip_forward_time", 30) * 1000L
+        val skipBack = prefs.getInt("skip_back_time", 10).toLong() * 1000L
+
         // Override the skip forward/back since many users will have default seeking values larger than the duration
-        super.skipForwardOverride = duration / 4
-        super.skipBackOverride = duration / 4
+        super.skipForwardOverride = (duration / 4).coerceAtMost(skipForward)
+        super.skipBackOverride = (duration / 4).coerceAtMost(skipBack)
     }
 
     companion object {

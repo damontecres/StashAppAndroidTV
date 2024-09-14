@@ -63,11 +63,6 @@ mutation InstallPackages($type: PackageType!, $packages: [PackageSpecInput!]!) {
 
 query FindJob($input: FindJobInput!) {
   findJob(input: $input) {
-    id
-    status
-    progress
-    startTime
-    endTime
-    error
+    ...JobData
   }
 }

@@ -88,7 +88,7 @@ abstract class PlaybackFragment(
      */
     protected abstract fun initializePlayer(): ExoPlayer
 
-    protected var player: ExoPlayer? = null
+    var player: ExoPlayer? = null
         private set
     protected lateinit var videoView: StashPlayerView
     protected lateinit var previewImageView: ImageView
