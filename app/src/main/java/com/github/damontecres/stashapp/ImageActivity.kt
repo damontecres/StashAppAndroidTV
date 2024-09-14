@@ -58,7 +58,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
         lifecycleScope.launch(StashCoroutineExceptionHandler()) {
             val imageId = intent.getStringExtra(INTENT_IMAGE_ID)!!
 
-            val queryEngine = QueryEngine(this@ImageActivity, StashServer.requireCurrentServer())
+            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             val image = queryEngine.getImage(imageId)!!
             viewModel.setImage(image)
 

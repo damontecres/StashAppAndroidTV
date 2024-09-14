@@ -414,7 +414,7 @@ class StashGridFragment() : Fragment() {
             factory.create<Query.Data, StashData, Query.Data>(_filterArgs.with(newSortAndDirection))
         val pagingSource =
             StashPagingSource<Query.Data, StashData, StashData, Query.Data>(
-                QueryEngine(requireContext(), server),
+                QueryEngine(server),
                 pageSize,
                 dataSupplier = dataSupplier,
                 useRandom = false,

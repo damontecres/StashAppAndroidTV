@@ -1,8 +1,8 @@
 package com.github.damontecres.stashapp.util
 
-import android.content.Context
 import android.util.Log
 import com.apollographql.apollo.ApolloCall
+import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Operation
 import com.apollographql.apollo.api.Optional
@@ -58,15 +58,11 @@ import kotlin.time.toDuration
 
 /**
  * Handles making graphql queries to the server
- *
- * @param context
- * @param showToasts show a toast when errors occur
  */
 class QueryEngine(
-    context: Context,
     server: StashServer,
-    showToasts: Boolean = false,
-) : StashEngine(context, server, showToasts) {
+    client: ApolloClient = StashClient.getApolloClient(server),
+) : StashEngine(server, client) {
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val queryName = query.operation.name()
@@ -78,17 +74,13 @@ class QueryEngine(
                 Log.v(TAG, "executeQuery $id $queryName successful")
                 return@withContext response
             } else if (response.exception != null) {
-                throw createException(id, queryName, response.exception!!) { id, msg, ex ->
-                    QueryException(id, msg, ex)
+                throw createException(id, queryName, response.exception!!) { msg, ex ->
+                    QueryException(id, queryName, msg, ex)
                 }
             } else {
                 val errorMsgs = response.errors!!.joinToString("\n") { it.message }
-                showToast("${response.errors!!.size} errors in response ($queryName)\n$errorMsgs")
                 Log.e(TAG, "Errors in $id $queryName: ${response.errors}")
-                throw QueryException(
-                    id,
-                    "($queryName), ${response.errors!!.size} errors in graphql response",
-                )
+                throw QueryException(id, queryName, "Error in $queryName: $errorMsgs")
             }
         }
 
@@ -381,8 +373,12 @@ class QueryEngine(
         private val QUERY_ID = AtomicInteger(0)
     }
 
-    open class QueryException(val id: Int, msg: String? = null, cause: Exception? = null) :
-        RuntimeException(msg, cause)
+    open class QueryException(
+        id: Int,
+        queryName: String,
+        msg: String? = null,
+        cause: Exception? = null,
+    ) : ServerCommunicationException(id, queryName, msg, cause)
 
     class StashNotConfiguredException : RuntimeException()
 }

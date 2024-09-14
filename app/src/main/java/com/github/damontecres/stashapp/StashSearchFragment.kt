@@ -76,8 +76,7 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                     per_page = Optional.present(perPage),
                     page = Optional.present(1),
                 )
-            val queryEngine =
-                QueryEngine(requireContext(), StashServer.requireCurrentServer(), true)
+            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             DataType.entries.forEach {
                 val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
                 rowsAdapter.set(

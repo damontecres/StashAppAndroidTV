@@ -110,7 +110,7 @@ class MainFragment : BrowseSupportFragment() {
                     rowsAdapter.clear()
 
                     val server = StashServer.requireCurrentServer()
-                    server.updateServerPrefs(requireContext())
+                    server.updateServerPrefs()
                     val mainTitleView =
                         requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                     mainTitleView.refreshMenuItems()
@@ -136,10 +136,10 @@ class MainFragment : BrowseSupportFragment() {
                         testStashConnection(
                             requireContext(),
                             false,
-                            StashClient.getApolloClient(requireContext(), newServer),
+                            StashClient.getApolloClient(newServer),
                         )
                     if (result.status == TestResultStatus.SUCCESS) {
-                        newServer.updateServerPrefs(requireContext())
+                        newServer.updateServerPrefs()
                         val mainTitleView =
                             requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                         mainTitleView.refreshMenuItems()
@@ -252,7 +252,7 @@ class MainFragment : BrowseSupportFragment() {
                     }
                 } else {
                     try {
-                        val queryEngine = QueryEngine(requireContext(), server, showToasts = true)
+                        val queryEngine = QueryEngine(server)
                         val filterParser =
                             FilterParser(serverVersion ?: Version.MINIMUM_STASH_VERSION)
 
@@ -309,7 +309,7 @@ class MainFragment : BrowseSupportFragment() {
                         withContext(Dispatchers.Main) {
                             Toast.makeText(
                                 requireContext(),
-                                "Query error: ${ex.message}",
+                                ex.message,
                                 Toast.LENGTH_LONG,
                             ).show()
                             requireActivity().findViewById<View?>(R.id.search_button).requestFocus()

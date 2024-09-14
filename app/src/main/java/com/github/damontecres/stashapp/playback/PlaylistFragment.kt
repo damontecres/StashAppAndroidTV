@@ -126,7 +126,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         val dataSupplier = DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, C>(filter)
         pagingSource =
             StashPagingSource(
-                QueryEngine(requireContext(), server),
+                QueryEngine(server),
                 PAGE_SIZE,
                 dataSupplier,
                 useRandom = false,

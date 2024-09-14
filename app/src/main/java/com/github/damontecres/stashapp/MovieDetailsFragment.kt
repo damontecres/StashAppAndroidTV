@@ -51,7 +51,7 @@ class MovieDetailsFragment : Fragment(R.layout.movie_view) {
                 .into(backImage)
         }
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            val queryEngine = QueryEngine(requireContext(), StashServer.requireCurrentServer())
+            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             movieData = queryEngine.getMovie(movie.id)!!
             addRow(
                 R.string.stashapp_duration,

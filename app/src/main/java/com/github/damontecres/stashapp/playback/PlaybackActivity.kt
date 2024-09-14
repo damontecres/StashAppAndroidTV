@@ -52,7 +52,7 @@ class PlaybackActivity : FragmentActivity() {
             lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val sceneId = intent.getStringExtra(SceneDetailsActivity.MOVIE_ID)!!
                 val fullScene =
-                    QueryEngine(this@PlaybackActivity, StashServer.requireCurrentServer())
+                    QueryEngine(StashServer.requireCurrentServer())
                         .getScene(sceneId)!!
                 val scene = Scene.fromFullSceneData(fullScene)
                 this@PlaybackActivity.scene = scene

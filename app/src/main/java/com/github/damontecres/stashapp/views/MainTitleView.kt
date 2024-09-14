@@ -38,7 +38,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
     private var mPreferencesView: ImageButton
     private lateinit var searchButton: ImageButton
 
-    private val iconButtom: ImageButton
+    private val iconButton: ImageButton
     private val scenesButton: Button
     private val performersButton: Button
     private val studiosButton: Button
@@ -59,14 +59,14 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         val onFocusChangeListener = StashOnFocusChangeListener(context)
 
         val root = LayoutInflater.from(context).inflate(R.layout.title, this)
-        iconButtom = root.findViewById(R.id.icon)
-        iconButtom.setOnClickListener {
+        iconButton = root.findViewById(R.id.icon)
+        iconButton.setOnClickListener {
             GuidedStepSupportFragment.add(
                 findFragment<Fragment>().parentFragmentManager,
                 ManageServersFragment(),
             )
         }
-        iconButtom.onFocusChangeListener = onFocusChangeListener
+        iconButton.onFocusChangeListener = onFocusChangeListener
 
         searchButton = root.findViewById(R.id.search_button)
         mPreferencesView = root.findViewById(R.id.settings_button)
@@ -159,7 +159,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
                 StashCoroutineExceptionHandler(true),
             ) {
                 val server = StashServer.requireCurrentServer()
-                val queryEngine = QueryEngine(v.context, server)
+                val queryEngine = QueryEngine(server)
                 val filterParser = FilterParser(server.serverPreferences.serverVersion)
                 val defaultFilter =
                     queryEngine.getDefaultFilter(dataType)

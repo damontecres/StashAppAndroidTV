@@ -31,7 +31,7 @@ class StashGlideModule : AppGlideModule() {
             registry.replace(
                 GlideUrl::class.java,
                 InputStream::class.java,
-                OkHttpUrlLoader.Factory(StashClient.getGlideHttpClient(context, server)),
+                OkHttpUrlLoader.Factory(StashClient.getGlideHttpClient(server)),
             )
         }
         registry

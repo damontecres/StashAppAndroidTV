@@ -80,7 +80,7 @@ class CompanionPlugin {
         suspend fun sendLogCat(
             context: Context,
             verbose: Boolean,
-        ) = withContext(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+        ) = withContext(Dispatchers.IO + StashCoroutineExceptionHandler(autoToast = true)) {
             try {
                 val lines = getLogCatLines(verbose)
                 val sb = StringBuilder("** LOGCAT START **\n")
@@ -90,7 +90,7 @@ class CompanionPlugin {
                 val logcat = sb.replace(Regex("\n"), "<newline>")
 
                 val server = StashServer.requireCurrentServer()
-                val mutationEngine = MutationEngine(context, server, true)
+                val mutationEngine = MutationEngine(server)
                 val mutation =
                     RunPluginTaskMutation(
                         plugin_id = PLUGIN_ID,
@@ -99,7 +99,7 @@ class CompanionPlugin {
                     )
                 val jobId = mutationEngine.executeMutation(mutation).data?.runPluginTask
                 if (jobId.isNotNullOrBlank()) {
-                    val result = QueryEngine(context, server).waitForJob(jobId)
+                    val result = QueryEngine(server).waitForJob(jobId)
                     withContext(Dispatchers.Main) {
                         if (result is JobResult.Success) {
                             val msg =
