@@ -71,8 +71,6 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
         super.onViewCreated(view, savedInstanceState)
 
         val server = StashServer.requireCurrentServer()
-        // Kind of hacky, but this will always return the same instance
-        val player = StashExoPlayer.getInstance(requireContext(), server)
         val filter = viewModel.filterArgs.value!!
 
         val playlistTitleView = view.findViewById<TextView>(R.id.playlist_title)
@@ -105,6 +103,8 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
         pagingAdapter.registerObserver(
             object : ObjectAdapter.DataObserver() {
                 override fun onChanged() {
+                    // Kind of hacky, but this will always return the same instance
+                    val player = StashExoPlayer.getInstance(requireContext(), server)
                     mGridViewHolder.gridView.selectedPosition = player.currentMediaItemIndex
                     pagingAdapter.unregisterObserver(this)
                 }
@@ -143,6 +143,7 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
             item as PlaylistItem
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val parent = (parentFragment as PlaylistFragment<*, *, *>)
+                val player = parent.player!!
                 Log.v(
                     TAG,
                     "item.index=${item.index}, player.mediaItemCount=${player.mediaItemCount}",
