@@ -268,6 +268,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
         }
 
+        /**
+         * Handle updating the UI for job progress
+         */
         private fun handleJobUpdate(
             updateType: JobStatusUpdateType,
             job: JobData,
@@ -324,6 +327,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             val triggerScan = findPreference<Preference>("triggerScan")!!
             val pendingScanJobId = currentServer.serverPreferences.scanJobId
             if (pendingScanJobId != null) {
+                // Check if a job is already running
+                // Such as when a user triggers it, navigates away, and then back
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val job = queryEngine.getJob(pendingScanJobId)
                     if (job == null) {
@@ -378,7 +383,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     ) {
                         currentServer.updateServerPrefs()
                         val jobId = MutationEngine(currentServer).triggerScan()
-                        // TODO: job could be finished between these two lines of code
+                        // TODO: job could finish between these two lines of code
                         currentServer.serverPreferences.scanJobId = jobId
                         Toast.makeText(
                             requireContext(),

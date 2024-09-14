@@ -4,25 +4,36 @@ import android.util.Log
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Subscription
 import com.github.damontecres.stashapp.api.JobProgressSubscription
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Engine for handling graphql subscriptions
+ *
+ * @param server the stash server to connect to
+ * @param client the client to use, defaults to one for the server
+ * @param ioDispatcher the dispatcher to use for general I/O operations
+ * @param callbackDispatcher the dispatcher to use for running callbacks from subscription results
+ */
 class SubscriptionEngine(
     server: StashServer,
     client: ApolloClient = StashClient.getApolloClient(server),
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val callbackDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : StashEngine(server, client) {
     private suspend fun <D : Subscription.Data> executeSubscription(
         subscription: Subscription<D>,
         consumer: (D) -> Unit,
-    ) = withContext(Dispatchers.IO) {
+    ) = withContext(ioDispatcher) {
         val name = subscription.name()
         val id = OPERATION_ID.getAndIncrement()
 
         client.subscription(subscription).toFlow().collect { response ->
             if (response.data != null) {
                 Log.v(TAG, "executeSubscription $id $name response received")
-                withContext(Dispatchers.Main) {
+                withContext(callbackDispatcher) {
                     consumer.invoke(response.data!!)
                 }
             } else if (response.exception != null) {
