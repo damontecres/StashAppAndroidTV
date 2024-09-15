@@ -747,8 +747,8 @@ fun CoroutineScope.launchIO(
     }
 }
 
-fun Intent.putDataType(dataType: DataType) {
-    this.putExtra("dataType", dataType.name)
+fun Intent.putDataType(dataType: DataType): Intent {
+    return this.putExtra("dataType", dataType.name)
 }
 
 fun Intent.getDataType(): DataType {

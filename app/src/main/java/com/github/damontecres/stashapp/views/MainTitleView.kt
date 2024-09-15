@@ -16,11 +16,17 @@ import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.apollographql.apollo.api.Optional
+import com.chrynan.parcelable.core.putExtra
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
@@ -29,6 +35,8 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.parcelable
+import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
 import kotlinx.coroutines.launch
 
@@ -79,7 +87,27 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         mPreferencesView.onFocusChangeListener = onFocusChangeListener
 
         scenesButton = root.findViewById(R.id.scenes_button)
-        scenesButton.setOnClickListener(ClickListener(DataType.SCENE))
+        // TODO undo
+//        scenesButton.setOnClickListener(ClickListener(DataType.SCENE))
+        scenesButton.setOnClickListener {
+            val intent =
+                Intent(context, CreateFilterActivity::class.java)
+                    .putDataType(DataType.SCENE)
+                    .putExtra(
+                        CreateFilterActivity.INTENT_STARTING_FILTER,
+                        SceneFilterType(
+                            performer_count =
+                                Optional.present(
+                                    IntCriterionInput(
+                                        value = 2,
+                                        modifier = CriterionModifier.EQUALS,
+                                    ),
+                                ),
+                        ),
+                        parcelable,
+                    )
+            context.startActivity(intent)
+        }
         scenesButton.onFocusChangeListener = onFocusChangeListener
 
         imagesButton = root.findViewById(R.id.images_button)
