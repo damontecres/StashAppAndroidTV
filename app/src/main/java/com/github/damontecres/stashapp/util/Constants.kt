@@ -26,6 +26,7 @@ import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.chrynan.parcelable.core.getParcelableExtra
 import com.chrynan.parcelable.core.putExtra
 import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.api.ServerInfoQuery
@@ -761,4 +762,8 @@ fun Intent.putFilterArgs(
     filterArgs: FilterArgs,
 ): Intent {
     return putExtra(name, filterArgs, parcelable)
+}
+
+fun Intent.getFilterArgs(name: String): FilterArgs? {
+    return getParcelableExtra(name, FilterArgs::class, 0, parcelable)
 }

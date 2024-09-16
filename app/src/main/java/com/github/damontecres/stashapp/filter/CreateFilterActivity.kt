@@ -1,16 +1,13 @@
 package com.github.damontecres.stashapp.filter
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
-import com.chrynan.parcelable.core.getParcelableExtra
-import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.util.parcelable
+import com.github.damontecres.stashapp.util.getFilterArgs
 
 class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
     private val viewModel by viewModels<CreateFilterViewModel>()
@@ -18,7 +15,9 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) {
-            val filter = intent.getParcelableExtra(INTENT_STARTING_FILTER, SceneFilterType::class, 0, parcelable) ?: SceneFilterType()
+            val filter =
+                intent.getFilterArgs(INTENT_STARTING_FILTER)?.objectFilter as SceneFilterType?
+                    ?: SceneFilterType()
             viewModel.filter.value = filter
 
             GuidedStepSupportFragment.addAsRoot(
@@ -29,13 +28,13 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        if (isFinishing) {
-            val intent = Intent(this, FilterListActivity::class.java)
-            startActivity(intent)
-        }
-    }
+//    override fun onPause() {
+//        super.onPause()
+//        if (isFinishing) {
+//            val intent = Intent(this, FilterListActivity::class.java)
+//            startActivity(intent)
+//        }
+//    }
 
     companion object {
         private const val TAG = "CreateFilterActivity"

@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -15,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.chrynan.parcelable.core.getParcelableExtra
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
@@ -23,6 +25,8 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.parcelable
+import com.github.damontecres.stashapp.util.putDataType
+import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -140,11 +144,21 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                     null,
                     android.R.attr.listPopupWindowStyle,
                 )
+            val adapterItems =
+                if (dataType == DataType.SCENE) {
+                    // TODO: add a separator
+                    listOf(
+                        "Create Filter",
+                        "Create Filter from current",
+                    ) + savedFilters.map { it.name.ifBlank { getString(dataType.pluralStringId) } }
+                } else {
+                    savedFilters.map { it.name.ifBlank { getString(dataType.pluralStringId) } }
+                }
             val adapter =
                 ArrayAdapter(
                     context,
                     R.layout.popup_item,
-                    savedFilters.map { it.name.ifBlank { getString(dataType.pluralStringId) } },
+                    adapterItems,
                 )
             listPopUp.setAdapter(adapter)
             listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
@@ -156,21 +170,40 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             val filterParser = FilterParser(server.serverPreferences.serverVersion)
             listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                 listPopUp.dismiss()
-                val savedFilter =
-                    savedFilters[position]
-                try {
-                    val filterArgs =
-                        savedFilter
-                            .toFilterArgs(filterParser)
-                            .withResolvedRandom()
-                    setup(filterArgs)
-                } catch (ex: Exception) {
-                    Log.e(TAG, "Exception parsing filter ${savedFilter.id}", ex)
-                    Toast.makeText(
-                        this@FilterListActivity,
-                        "Error with filter ${savedFilter.id}! Probably a bug: ${ex.message}",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                val lookupPos =
+                    if (dataType == DataType.SCENE) {
+                        position - 2
+                    } else {
+                        position
+                    }
+                if (dataType == DataType.SCENE && (position == 0 || position == 1)) {
+                    val intent =
+                        Intent(this@FilterListActivity, CreateFilterActivity::class.java)
+                            .putDataType(dataType)
+                    if (position == 1) {
+                        val fragment =
+                            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
+                        val filter = fragment.filterArgs
+                        intent.putFilterArgs(CreateFilterActivity.INTENT_STARTING_FILTER, filter)
+                    }
+                    this@FilterListActivity.startActivity(intent)
+                } else {
+                    val savedFilter =
+                        savedFilters[lookupPos]
+                    try {
+                        val filterArgs =
+                            savedFilter
+                                .toFilterArgs(filterParser)
+                                .withResolvedRandom()
+                        setup(filterArgs)
+                    } catch (ex: Exception) {
+                        Log.e(TAG, "Exception parsing filter ${savedFilter.id}", ex)
+                        Toast.makeText(
+                            this@FilterListActivity,
+                            "Error with filter ${savedFilter.id}! Probably a bug: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
                 }
             }
 

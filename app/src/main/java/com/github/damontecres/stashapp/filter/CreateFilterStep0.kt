@@ -48,8 +48,8 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
         val params =
             SceneFilterType::class.declaredMemberProperties.mapNotNull { param ->
                 val obj = param.get(filter) as Optional<*>
-                if (obj != Optional.Absent) {
-                    param.name to obj.getOrNull()
+                if (obj.getOrNull() != null) {
+                    param.name to obj.getOrNull()!!
                 } else {
                     null
                 }
