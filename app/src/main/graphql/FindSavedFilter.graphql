@@ -35,3 +35,9 @@ fragment SavedFilterData on SavedFilter {
   ui_options
   __typename
 }
+
+mutation SaveFilter($input: SaveFilterInput!) {
+  saveFilter(input: $input) {
+    ...SavedFilterData
+  }
+}

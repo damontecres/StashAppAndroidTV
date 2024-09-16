@@ -1,24 +1,36 @@
 package com.github.damontecres.stashapp.filter
 
+import android.content.Intent
 import android.os.Bundle
+import android.text.InputType
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo.api.Optional
+import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.SaveFilterInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.filter.picker.HierarchicalMultiCriterionFragment
 import com.github.damontecres.stashapp.filter.picker.IntPickerFragment
 import com.github.damontecres.stashapp.filter.picker.MultiCriterionFragment
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.putDataType
+import com.github.damontecres.stashapp.util.putFilterArgs
 import kotlinx.coroutines.launch
 import kotlin.reflect.full.declaredMemberProperties
 
@@ -64,6 +76,7 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
                 .id(FILTER_NAME)
                 .hasNext(false)
                 .title(getString(R.string.stashapp_filter_name))
+                .descriptionEditInputType(InputType.TYPE_CLASS_TEXT)
                 .descriptionEditable(true)
                 .build(),
         )
@@ -100,6 +113,61 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
+        if (action.id == SUBMIT) {
+            val objectFilter = viewModel.filter.value!!
+            val filterArgs =
+                FilterArgs(
+                    dataType = DataType.SCENE,
+                    objectFilter = objectFilter,
+                )
+            val filterNameAction = findActionById(FILTER_NAME)
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                if (filterNameAction.description.isNotNullOrBlank()) {
+                    // Save it
+                    val filterWriter = FilterWriter(QueryEngine(StashServer.requireCurrentServer()))
+                    val findFilter =
+                        filterArgs.findFilter ?: StashFindFilter(
+                            null,
+                            filterArgs.dataType.defaultSort,
+                        )
+                    val objectFilterMap = filterWriter.convertSceneFilterType(objectFilter)
+                    val mutationEngine = MutationEngine(StashServer.requireCurrentServer())
+                    val newSavedFilter =
+                        mutationEngine.saveFilter(
+                            SaveFilterInput(
+                                mode = DataType.SCENE.filterMode,
+                                name = filterNameAction.description.toString(),
+                                find_filter =
+                                    Optional.presentIfNotNull(
+                                        findFilter.toFindFilterType(1, 40),
+                                    ),
+                                object_filter = Optional.presentIfNotNull(objectFilterMap),
+                                ui_options = Optional.absent(),
+                            ),
+                        )
+                    Log.i(TAG, "New SavedFilter: ${newSavedFilter.id}")
+                }
+                finishGuidedStepSupportFragments()
+                val intent =
+                    Intent(requireContext(), FilterListActivity::class.java)
+                        .putDataType(filterArgs.dataType)
+                        .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
+                requireContext().startActivity(intent)
+            }
+        }
+    }
+
+    override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
+        if (action.id == FILTER_NAME) {
+            val submitAction = findActionById(SUBMIT)
+            if (action.description.isNotNullOrBlank()) {
+                submitAction.title = "Save & submit"
+            } else {
+                submitAction.title = "Submit"
+            }
+            notifyActionChanged(findActionPositionById(SUBMIT))
+        }
+        return GuidedAction.ACTION_ID_NEXT
     }
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
@@ -158,8 +226,10 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
     }
 
     companion object {
-        private const val SUBMIT = -1L
-        private const val FILTER_NAME = -2L
-        private const val FILTER_OPTIONS = -2L
+        private val TAG = CreateFilterStep0::class.simpleName
+
+        private const val SUBMIT = -1_000L
+        private const val FILTER_NAME = -2_000L
+        private const val FILTER_OPTIONS = -3_000L
     }
 }
