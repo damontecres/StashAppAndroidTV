@@ -22,6 +22,7 @@ import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
@@ -101,6 +102,13 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
                                     IntCriterionInput(
                                         value = 2,
                                         modifier = CriterionModifier.EQUALS,
+                                    ),
+                                ),
+                            tags =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        modifier = CriterionModifier.INCLUDES,
+                                        value = Optional.present(listOf("1", "3", "6")),
                                     ),
                                 ),
                         ),

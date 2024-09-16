@@ -121,7 +121,7 @@ class HierarchicalMultiCriterionFragment(
                         }
                     val desc =
                         when (item) {
-                            is TagData -> null
+                            is TagData -> item.description?.ifBlank { null }
                             is PerformerData -> item.disambiguation
                             else -> TODO()
                         }
@@ -130,7 +130,7 @@ class HierarchicalMultiCriterionFragment(
                         .title(title)
                         .description(desc)
                         .build()
-                },
+                }.sortedBy { it.title.toString() },
             )
         }
 
@@ -164,6 +164,7 @@ class HierarchicalMultiCriterionFragment(
             action.subActions = createItemList(list)
             action.description = "${list.size} ${getString(dataType.pluralStringId)}"
             notifyActionChanged(findActionPositionById(INCLUDE_LIST))
+            return true
         } else {
             when (action.id) {
                 ADD_INCLUDE_ITEM -> {
@@ -180,14 +181,17 @@ class HierarchicalMultiCriterionFragment(
                                             modifier = CriterionModifier.INCLUDES_ALL,
                                         )
                                 val list = currentInput.value.getOrNull()?.toMutableList() ?: ArrayList()
-                                list.add(newItem.id)
-                                val newInput = currentInput.copy(value = Optional.present(list))
-                                Log.v(TAG, "newInput=$newInput")
-                                viewModel.updateFilter(filterOption, newInput)
-                                val action = findActionById(INCLUDE_LIST)
-                                action.subActions = createItemList(list)
-                                action.description = "${list.size} ${getString(dataType.pluralStringId)}"
-                                notifyActionChanged(findActionPositionById(INCLUDE_LIST))
+                                if (!list.contains(newItem.id)) {
+                                    list.add(newItem.id)
+                                    val newInput = currentInput.copy(value = Optional.present(list))
+                                    Log.v(TAG, "newInput=$newInput")
+                                    viewModel.updateFilter(filterOption, newInput)
+                                    val action = findActionById(INCLUDE_LIST)
+                                    action.subActions = createItemList(list)
+                                    action.description =
+                                        "${list.size} ${getString(dataType.pluralStringId)}"
+                                    notifyActionChanged(findActionPositionById(INCLUDE_LIST))
+                                }
                             },
                         )
                     }
