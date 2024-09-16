@@ -64,7 +64,7 @@ class IntPickerFragment(
                         modifier = modifier,
                     ),
                 )
-            requireActivity().supportFragmentManager.popBackStackImmediate()
+            parentFragmentManager.popBackStackImmediate()
         }
     }
 

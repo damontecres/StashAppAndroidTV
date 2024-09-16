@@ -5,14 +5,29 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
+import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.filter.picker.HierarchicalMultiCriterionFragment
 import com.github.damontecres.stashapp.filter.picker.IntPickerFragment
+import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
+import kotlinx.coroutines.launch
 import kotlin.reflect.full.declaredMemberProperties
 
 class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+    private lateinit var queryEngine: QueryEngine
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        queryEngine = QueryEngine(StashServer.requireCurrentServer())
+    }
+
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val filter = viewModel.filter.value!!
 
@@ -86,18 +101,47 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
     }
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
-        when (action.id.toInt()) {
-            R.string.stashapp_performer_count -> {
-                val filterOption =
-                    SceneFilterOptionsMap[R.string.stashapp_performer_count]
-                        as FilterOption<SceneFilterType, IntCriterionInput>
+        val curVal = viewModel.filter.value!!
+        val filterOption = SceneFilterOptionsMap[action.id.toInt()]!!
+        when (filterOption.type) {
+            IntCriterionInput::class -> {
                 requireActivity().supportFragmentManager.beginTransaction()
                     .addToBackStack("picker")
                     .replace(
                         android.R.id.content,
-                        IntPickerFragment(getString(filterOption.nameStringId), filterOption),
+                        IntPickerFragment(
+                            getString(filterOption.nameStringId),
+                            filterOption as FilterOption<SceneFilterType, IntCriterionInput>,
+                        ),
                     )
                     .commit()
+            }
+        }
+        when (filterOption.nameStringId) {
+            R.string.stashapp_tags -> {
+                val tagIds =
+                    curVal.tags.getOrNull()?.value?.getOrNull()
+                        .orEmpty() + curVal.tags.getOrNull()?.excludes?.getOrNull().orEmpty()
+                if (tagIds.isNotEmpty()) {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        val items = queryEngine.getTags(tagIds).associateBy { it.id }
+                        nextStep(
+                            HierarchicalMultiCriterionFragment(
+                                DataType.TAG,
+                                filterOption as FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>,
+                                items,
+                            ),
+                        )
+                    }
+                } else {
+                    nextStep(
+                        HierarchicalMultiCriterionFragment(
+                            DataType.TAG,
+                            filterOption as FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>,
+                            emptyMap(),
+                        ),
+                    )
+                }
             }
         }
         return false

@@ -6,4 +6,11 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 
 class CreateFilterViewModel : ViewModel() {
     val filter = MutableLiveData<SceneFilterType>()
+
+    fun <ValueType : Any> updateFilter(
+        filterOption: FilterOption<SceneFilterType, ValueType>,
+        newItem: ValueType,
+    ) {
+        filter.value = filterOption.setter.invoke(filter.value!!, newItem)
+    }
 }
