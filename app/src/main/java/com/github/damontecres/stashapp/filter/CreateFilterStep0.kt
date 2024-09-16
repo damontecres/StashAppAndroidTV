@@ -10,10 +10,12 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.picker.HierarchicalMultiCriterionFragment
 import com.github.damontecres.stashapp.filter.picker.IntPickerFragment
+import com.github.damontecres.stashapp.filter.picker.MultiCriterionFragment
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -69,7 +71,7 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
         val options =
             SceneFilterOptions.map {
                 createAction(it.nameStringId)
-            }
+            }.sortedBy { it.title.toString() }
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(FILTER_OPTIONS)
@@ -122,23 +124,31 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
                 val tagIds =
                     curVal.tags.getOrNull()?.value?.getOrNull()
                         .orEmpty() + curVal.tags.getOrNull()?.excludes?.getOrNull().orEmpty()
-                if (tagIds.isNotEmpty()) {
-                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        val items = queryEngine.getTags(tagIds).associateBy { it.id }
-                        nextStep(
-                            HierarchicalMultiCriterionFragment(
-                                DataType.TAG,
-                                filterOption as FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>,
-                                items,
-                            ),
-                        )
-                    }
-                } else {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val items = queryEngine.getTags(tagIds).associateBy { it.id }
                     nextStep(
                         HierarchicalMultiCriterionFragment(
                             DataType.TAG,
                             filterOption as FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>,
-                            emptyMap(),
+                            items,
+                        ),
+                    )
+                }
+            }
+
+            R.string.stashapp_performers -> {
+                val performerIds =
+                    curVal.performers.getOrNull()?.value?.getOrNull()
+                        .orEmpty() + curVal.performers.getOrNull()?.excludes?.getOrNull().orEmpty()
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val items =
+                        queryEngine.findPerformers(performerIds = performerIds)
+                            .associateBy { it.id }
+                    nextStep(
+                        MultiCriterionFragment(
+                            DataType.PERFORMER,
+                            filterOption as FilterOption<SceneFilterType, MultiCriterionInput>,
+                            items,
                         ),
                     )
                 }

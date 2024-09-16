@@ -5,6 +5,7 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import kotlin.reflect.KClass
 
@@ -23,7 +24,12 @@ val SceneFilterOptions =
             { filter -> filter.tags },
             { filter, value -> filter.copy(tags = Optional.presentIfNotNull(value)) },
         ),
-//        FilterOption(R.string.stashapp_performers, MultiCriterionInput::class),
+        FilterOption(
+            R.string.stashapp_performers,
+            MultiCriterionInput::class,
+            { it.performers },
+            { filter, value -> filter.copy(performers = Optional.presentIfNotNull(value)) },
+        ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             R.string.stashapp_performer_count,
             IntCriterionInput::class,
