@@ -134,7 +134,7 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
                             null,
                             filterArgs.dataType.defaultSort,
                         )
-                    val objectFilterMap = filterWriter.convertSceneFilterType(objectFilter)
+                    val objectFilterMap = filterWriter.convertFilter(objectFilter)
                     val mutationEngine = MutationEngine(StashServer.requireCurrentServer())
                     val newSavedFilter =
                         mutationEngine.saveFilter(

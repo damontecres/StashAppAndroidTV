@@ -1,8 +1,10 @@
 package com.github.damontecres.stashapp.filter.output
 
+import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.StringCriterionInput
 
 fun IntCriterionInput.toMap(): Map<String, Any> =
     buildMap {
@@ -16,6 +18,26 @@ fun IntCriterionInput.toMap(): Map<String, Any> =
                 }
             },
         )
+    }
+
+fun FloatCriterionInput.toMap(): Map<String, Any> =
+    buildMap {
+        put("modifier", modifier.rawValue)
+        put(
+            "value",
+            buildMap<String, Any> {
+                put("value", value)
+                if (value2.getOrNull() != null) {
+                    put("value2", value2.getOrNull()!!)
+                }
+            },
+        )
+    }
+
+fun StringCriterionInput.toMap(): Map<String, Any> =
+    buildMap {
+        put("modifier", modifier.rawValue)
+        put("value", value)
     }
 
 fun MultiCriterionInput.getAllIds() = value.getOrNull().orEmpty() + excludes.getOrNull().orEmpty()

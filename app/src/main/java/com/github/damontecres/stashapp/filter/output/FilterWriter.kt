@@ -4,10 +4,14 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StashDataFilter
+import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -19,7 +23,7 @@ class FilterWriter(private val queryEngine: QueryEngine) {
         val sortAndDirection = filter.findFilter?.sortAndDirection ?: filter.dataType.defaultSort
         val objectFilter =
             when (filter.objectFilter) {
-                is SceneFilterType -> convertSceneFilterType(filter.objectFilter)
+                is SceneFilterType -> convertFilter(filter.objectFilter)
                 null -> null
                 else -> TODO()
             }
@@ -65,10 +69,10 @@ class FilterWriter(private val queryEngine: QueryEngine) {
         }
     }
 
-    suspend fun convertSceneFilterType(filter: SceneFilterType): Map<String, Any> {
+    suspend fun convertFilter(filter: StashDataFilter): Map<String, Any> {
         val objectFilter =
             buildMap<String, Any> {
-                SceneFilterType::class.declaredMemberProperties.forEach { param ->
+                filter.javaClass.kotlin.declaredMemberProperties.forEach { param ->
                     val obj = param.get(filter) as Optional<*>
                     if (obj != Optional.Absent) {
                         val o = obj.getOrNull()!!
@@ -76,6 +80,14 @@ class FilterWriter(private val queryEngine: QueryEngine) {
                         val value =
                             when (o) {
                                 is IntCriterionInput -> o.toMap()
+                                is FloatCriterionInput -> o.toMap()
+                                is StringCriterionInput -> o.toMap()
+                                is Boolean -> {
+                                    mapOf(
+                                        "value" to o.toString(),
+                                        "modifier" to CriterionModifier.EQUALS.rawValue,
+                                    )
+                                }
                                 is MultiCriterionInput -> {
                                     val items = queryEngine.getByIds(dataType!!, o.getAllIds())
                                     o.toMap(associateIds(items))
