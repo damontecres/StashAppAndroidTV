@@ -1,93 +1,117 @@
 package com.github.damontecres.stashapp.filter.picker
 
-import android.annotation.SuppressLint
 import android.os.Bundle
-import android.view.View
-import android.widget.TextView
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.leanback.widget.picker.Picker
-import androidx.leanback.widget.picker.PickerColumn
+import android.text.InputType
+import androidx.core.content.ContextCompat
+import androidx.leanback.widget.GuidanceStylist
+import androidx.leanback.widget.GuidedAction
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
-import com.github.damontecres.stashapp.filter.CreateFilterViewModel
+import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.filter.CreateFilterActivity.Companion.MODIFIER_OFFSET
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 
 class IntPickerFragment(
-    val title: String,
     val filterOption: FilterOption<SceneFilterType, IntCriterionInput>,
-) : Fragment(R.layout.picker_number) {
-    private val viewModel by activityViewModels<CreateFilterViewModel>()
+) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
+        return GuidanceStylist.Guidance(
+            getString(filterOption.nameStringId),
+            "",
+            null,
+            ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
+        )
+    }
 
-    override fun onViewCreated(
-        view: View,
+    override fun onCreateActions(
+        actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        super.onViewCreated(view, savedInstanceState)
+        val curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
+        val curInt = curVal?.value
+        val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
-        val filter = viewModel.filter.value!!
-        val curVal = filterOption.getter.invoke(filter).getOrNull()
+        // TODO show second value for between
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(1L)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_criterion_value))
+                .descriptionEditable(true)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER)
+                .editDescription(curInt?.toString())
+                .build(),
+        )
 
-        val titleView = view.findViewById<TextView>(R.id.title)
-        titleView.text = title
+        val modifierOptions =
+            buildList {
+                add(modifierAction(CriterionModifier.EQUALS))
+                add(modifierAction(CriterionModifier.NOT_EQUALS))
+                add(modifierAction(CriterionModifier.GREATER_THAN))
+                add(modifierAction(CriterionModifier.LESS_THAN))
+                // TODO: between
+            }
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(MODIFIER)
+                .hasNext(false)
+                .title("Modifier")
+                .description(curModifier.getString(requireContext()))
+                .subActions(modifierOptions)
+                .build(),
+        )
 
-        val picker = view.findViewById<Picker>(R.id.number_picker)
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(GuidedAction.ACTION_ID_FINISH)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_actions_finish))
+                .build(),
+        )
+    }
 
-        val modifierColumn = PickerColumn()
-        modifierColumn.staticLabels = modifiers.map { it.getString(requireContext()) }.toTypedArray()
-        modifierColumn.minValue = 0
-        modifierColumn.maxValue = modifiers.size - 1
-
-        val valueColumn = PickerColumn()
-        valueColumn.labelFormat = "%1\$d"
-        valueColumn.minValue = 0
-        valueColumn.maxValue = 100
-
-        picker.isActivated = true
-        picker.setActivatedVisibleItemCount(5f)
-        picker.separator = ""
-        picker.setColumns(listOf(modifierColumn, valueColumn))
-        picker.setColumnValue(0, modifiers.indexOf(curVal?.modifier).coerceAtLeast(0), true)
-        picker.setColumnValue(1, curVal?.value ?: 0, true)
-
-        picker.setOnClickListener {
-            val modifier = modifiers[modifierColumn.currentValue]
-            val value = valueColumn.currentValue
-            viewModel.filter.value =
-                filterOption.setter.invoke(
-                    filter,
-                    IntCriterionInput(
-                        value = value,
-                        modifier = modifier,
-                    ),
+    override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
+        val curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
+        if (action.id >= MODIFIER_OFFSET) {
+            val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
+            val newInput =
+                curVal?.copy(modifier = newModifier) ?: IntCriterionInput(
+                    value = curVal?.value ?: 0,
+                    value2 = curVal?.value2 ?: Optional.absent(),
+                    modifier = newModifier,
                 )
-            parentFragmentManager.popBackStackImmediate()
+            viewModel.updateFilter(filterOption, newInput)
+            findActionById(MODIFIER).description = newModifier.getString(requireContext())
+            notifyActionChanged(findActionPositionById(MODIFIER))
+        }
+        return true
+    }
+
+    override fun onGuidedActionClicked(action: GuidedAction) {
+        if (action.id == GuidedAction.ACTION_ID_FINISH) {
+            val curVal = filterOption.getter(viewModel.filter.value!!)
+            val newInt = findActionById(1L).description?.toString()?.toInt()
+            val modifier = curVal.getOrNull()?.modifier ?: CriterionModifier.EQUALS
+            val newValue =
+                if (newInt != null) {
+                    IntCriterionInput(value = newInt, modifier = modifier)
+                } else if (modifier == CriterionModifier.IS_NULL || modifier == CriterionModifier.NOT_NULL) {
+                    IntCriterionInput(value = 0, modifier = modifier)
+                } else {
+                    null
+                }
+
+            viewModel.updateFilter(filterOption, newValue)
+            parentFragmentManager.popBackStack()
         }
     }
 
     companion object {
-        private val modifiers =
-            listOf(
-                CriterionModifier.EQUALS,
-                CriterionModifier.NOT_EQUALS,
-                CriterionModifier.GREATER_THAN,
-                CriterionModifier.LESS_THAN,
-            )
-    }
-
-    @SuppressLint("DefaultLocale")
-    private fun staticLabels(): Array<CharSequence>? {
-        return if (filterOption.type != IntCriterionInput::class) {
-            buildList<CharSequence> {
-                for (i in 0..<10_000) {
-                    add(String.format("%.2f", i / 10.0))
-                }
-            }.toTypedArray()
-        } else {
-            null
-        }
+        private const val TAG = "StringPickerFragment"
+        private const val MODIFIER = 2L
     }
 }

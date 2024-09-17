@@ -6,7 +6,6 @@ import android.text.InputType
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.commit
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
@@ -179,16 +178,8 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
         val filterOption = SceneFilterOptionsMap[action.id.toInt()]!!
         when (filterOption.type) {
             IntCriterionInput::class -> {
-                requireActivity().supportFragmentManager.commit {
-                    addToBackStack("picker")
-                    replace(
-                        android.R.id.content,
-                        IntPickerFragment(
-                            getString(filterOption.nameStringId),
-                            filterOption as FilterOption<SceneFilterType, IntCriterionInput>,
-                        ),
-                    )
-                }
+                filterOption as FilterOption<SceneFilterType, IntCriterionInput>
+                nextStep(IntPickerFragment(filterOption))
             }
 
             Boolean::class -> {
