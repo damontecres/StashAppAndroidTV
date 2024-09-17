@@ -8,15 +8,15 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
-import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.filter.FilterOption
+import com.github.damontecres.stashapp.filter.extractDescription
+import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.views.getString
 
 class HierarchicalMultiCriterionFragment(
@@ -113,18 +113,8 @@ class HierarchicalMultiCriterionFragment(
             addAll(
                 ids.mapIndexed { index, id ->
                     val item = mutableItems[id]!!
-                    val title =
-                        when (item) {
-                            is TagData -> item.name
-                            is PerformerData -> item.name
-                            else -> TODO()
-                        }
-                    val desc =
-                        when (item) {
-                            is TagData -> item.description?.ifBlank { null }
-                            is PerformerData -> item.disambiguation
-                            else -> TODO()
-                        }
+                    val title = extractTitle(item)
+                    val desc = extractDescription(item)
                     GuidedAction.Builder(requireContext())
                         .id(INCLUDE_OFFSET + index)
                         .title(title)

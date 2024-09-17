@@ -5,9 +5,12 @@ import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
+import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.util.getFilterArgs
+import com.github.damontecres.stashapp.views.getString
 
 class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
     private val viewModel by viewModels<CreateFilterViewModel>()
@@ -39,6 +42,8 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
     companion object {
         private const val TAG = "CreateFilterActivity"
         const val INTENT_STARTING_FILTER = "$TAG.startingFilter"
+
+        const val MODIFIER_OFFSET = 3_000_000L
     }
 
     open class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
@@ -50,6 +55,14 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
 
         override fun onProvideTheme(): Int {
             return R.style.Theme_StashAppAndroidTV_GuidedStep
+        }
+
+        protected fun modifierAction(modifier: CriterionModifier): GuidedAction {
+            return GuidedAction.Builder(requireContext())
+                .id(MODIFIER_OFFSET + modifier.ordinal)
+                .hasNext(false)
+                .title(modifier.getString(requireContext()))
+                .build()
         }
     }
 }

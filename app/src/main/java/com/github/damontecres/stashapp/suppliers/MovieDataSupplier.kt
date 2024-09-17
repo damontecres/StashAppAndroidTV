@@ -24,6 +24,7 @@ class MovieDataSupplier(
         return FindMoviesQuery(
             filter = filter,
             movie_filter = movieFilter,
+            ids = null,
         )
     }
 

@@ -200,6 +200,7 @@ class QueryEngine(
     suspend fun findMovies(
         findFilter: FindFilterType? = null,
         movieFilter: MovieFilterType? = null,
+        movieIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<MovieData> {
         val query =
@@ -207,6 +208,7 @@ class QueryEngine(
                 FindMoviesQuery(
                     filter = updateFilter(findFilter, useRandom),
                     movie_filter = movieFilter,
+                    ids = movieIds,
                 ),
             )
         val tags = executeQuery(query).data?.findMovies?.movies?.map { it.movieData }
@@ -318,7 +320,7 @@ class QueryEngine(
             DataType.PERFORMER -> findPerformers(performerIds = ids)
             DataType.TAG -> getTags(ids)
             DataType.STUDIO -> findStudios(studioIds = ids)
-            DataType.MOVIE -> TODO()
+            DataType.MOVIE -> findMovies(movieIds = ids)
             DataType.MARKER -> TODO()
             DataType.IMAGE -> TODO()
             DataType.GALLERY -> TODO()

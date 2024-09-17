@@ -160,16 +160,7 @@ class SearchPickerFragment(
                             .getMostRecent(perPage, currentServer.url, dataType).map { it.id }
                     Log.v(TAG, "Got ${mostRecentIds.size} recent items")
                     if (mostRecentIds.isNotEmpty()) {
-                        val items =
-                            when (dataType) {
-                                DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
-                                DataType.TAG -> queryEngine.getTags(mostRecentIds)
-                                DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
-                                DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
-                                else -> {
-                                    listOf()
-                                }
-                            }
+                        val items = queryEngine.getByIds(dataType, mostRecentIds)
                         val results = ArrayObjectAdapter(StashPresenter.SELECTOR)
                         if (items.isNotEmpty()) {
                             Log.v(
@@ -292,6 +283,12 @@ class SearchPickerFragment(
 
         // List of data types that support querying for suggestions
         val DATA_TYPE_SUGGESTIONS =
-            setOf(DataType.TAG, DataType.PERFORMER, DataType.STUDIO, DataType.GALLERY)
+            setOf(
+                DataType.TAG,
+                DataType.PERFORMER,
+                DataType.STUDIO,
+                DataType.GALLERY,
+                DataType.MOVIE,
+            )
     }
 }

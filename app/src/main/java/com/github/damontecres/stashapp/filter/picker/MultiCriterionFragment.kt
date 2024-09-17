@@ -8,15 +8,16 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
-import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.filter.CreateFilterActivity.Companion.MODIFIER_OFFSET
 import com.github.damontecres.stashapp.filter.FilterOption
+import com.github.damontecres.stashapp.filter.extractDescription
+import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.views.getString
 
 class MultiCriterionFragment(
@@ -56,20 +57,8 @@ class MultiCriterionFragment(
 
         val modifierOptions =
             buildList {
-                add(
-                    GuidedAction.Builder(requireContext())
-                        .id(MODIFIER_OFFSET + CriterionModifier.INCLUDES.ordinal.toLong())
-                        .hasNext(false)
-                        .title(CriterionModifier.INCLUDES.getString(requireContext()))
-                        .build(),
-                )
-                add(
-                    GuidedAction.Builder(requireContext())
-                        .id(MODIFIER_OFFSET + CriterionModifier.INCLUDES_ALL.ordinal.toLong())
-                        .hasNext(false)
-                        .title(CriterionModifier.INCLUDES_ALL.getString(requireContext()))
-                        .build(),
-                )
+                add(modifierAction(CriterionModifier.INCLUDES))
+                add(modifierAction(CriterionModifier.INCLUDES_ALL))
             }
         actions.add(
             GuidedAction.Builder(requireContext())
@@ -113,18 +102,8 @@ class MultiCriterionFragment(
             addAll(
                 ids.mapIndexed { index, id ->
                     val item = mutableItems[id]!!
-                    val title =
-                        when (item) {
-                            is TagData -> item.name
-                            is PerformerData -> item.name
-                            else -> TODO()
-                        }
-                    val desc =
-                        when (item) {
-                            is TagData -> item.description?.ifBlank { null }
-                            is PerformerData -> item.disambiguation
-                            else -> TODO()
-                        }
+                    val title = extractTitle(item)
+                    val desc = extractDescription(item)
                     GuidedAction.Builder(requireContext())
                         .id(INCLUDE_OFFSET + index)
                         .title(title)
@@ -141,7 +120,7 @@ class MultiCriterionFragment(
     }
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
-        val curVal = filterOption.getter.invoke(viewModel.filter.value!!)
+        val curVal = filterOption.getter(viewModel.filter.value!!)
         if (action.id >= MODIFIER_OFFSET) {
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
             val newInput =
@@ -215,6 +194,5 @@ class MultiCriterionFragment(
 
         private const val INCLUDE_OFFSET = 1_000_000L
         private const val EXCLUDE_OFFSET = 2_000_000L
-        private const val MODIFIER_OFFSET = 3_000_000L
     }
 }

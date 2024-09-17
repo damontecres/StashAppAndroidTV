@@ -7,34 +7,89 @@ import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StringCriterionInput
+import com.github.damontecres.stashapp.data.DataType
 import kotlin.reflect.KClass
 
 data class FilterOption<FilterType, ValueType : Any>(
     @StringRes val nameStringId: Int,
+    val dataType: DataType?,
     val type: KClass<ValueType>,
     val getter: (FilterType) -> Optional<ValueType?>,
-    val setter: (FilterType, ValueType) -> FilterType,
+    val setter: (FilterType, ValueType?) -> FilterType,
 )
 
 val SceneFilterOptions =
     listOf(
         FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
             R.string.stashapp_tags,
+            DataType.TAG,
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.tags },
             { filter, value -> filter.copy(tags = Optional.presentIfNotNull(value)) },
         ),
-        FilterOption(
+        FilterOption<SceneFilterType, MultiCriterionInput>(
             R.string.stashapp_performers,
+            DataType.PERFORMER,
             MultiCriterionInput::class,
             { it.performers },
             { filter, value -> filter.copy(performers = Optional.presentIfNotNull(value)) },
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             R.string.stashapp_performer_count,
+            null,
             IntCriterionInput::class,
             { it.performer_count },
             { filter, value -> filter.copy(performer_count = Optional.presentIfNotNull(value)) },
+        ),
+        FilterOption<SceneFilterType, IntCriterionInput>(
+            R.string.stashapp_performer_age,
+            null,
+            IntCriterionInput::class,
+            { it.performer_age },
+            { filter, value -> filter.copy(performer_age = Optional.presentIfNotNull(value)) },
+        ),
+        FilterOption<SceneFilterType, IntCriterionInput>(
+            R.string.stashapp_o_counter,
+            null,
+            IntCriterionInput::class,
+            { it.o_counter },
+            { filter, value -> filter.copy(o_counter = Optional.presentIfNotNull(value)) },
+        ),
+        FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
+            R.string.stashapp_studios,
+            DataType.STUDIO,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.studios },
+            { filter, value -> filter.copy(studios = Optional.presentIfNotNull(value)) },
+        ),
+        FilterOption<SceneFilterType, MultiCriterionInput>(
+            R.string.stashapp_movies,
+            DataType.MOVIE,
+            MultiCriterionInput::class,
+            { it.movies },
+            { filter, value -> filter.copy(movies = Optional.presentIfNotNull(value)) },
+        ),
+        FilterOption<SceneFilterType, Boolean>(
+            R.string.stashapp_performer_favorite,
+            null,
+            Boolean::class,
+            { it.performer_favorite },
+            { filter, value -> filter.copy(performer_favorite = Optional.presentIfNotNull(value)) },
+        ),
+        FilterOption<SceneFilterType, StringCriterionInput>(
+            R.string.stashapp_title,
+            null,
+            StringCriterionInput::class,
+            { it.title },
+            { filter, value -> filter.copy(title = Optional.presentIfNotNull(value)) },
+        ),
+        FilterOption<SceneFilterType, StringCriterionInput>(
+            R.string.stashapp_director,
+            null,
+            StringCriterionInput::class,
+            { it.director },
+            { filter, value -> filter.copy(director = Optional.presentIfNotNull(value)) },
         ),
     )
 

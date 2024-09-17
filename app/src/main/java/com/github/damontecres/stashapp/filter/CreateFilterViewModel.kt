@@ -9,8 +9,8 @@ class CreateFilterViewModel : ViewModel() {
 
     fun <ValueType : Any> updateFilter(
         filterOption: FilterOption<SceneFilterType, ValueType>,
-        newItem: ValueType,
+        newItem: ValueType?,
     ) {
-        filter.value = filterOption.setter.invoke(filter.value!!, newItem)
+        filter.value = filterOption.setter(filter.value!!, newItem)
     }
 }
