@@ -8,15 +8,15 @@ import androidx.leanback.widget.GuidedAction
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.filter.CreateFilterActivity.Companion.MODIFIER_OFFSET
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 
-class IntPickerFragment(
-    val filterOption: FilterOption<SceneFilterType, IntCriterionInput>,
+class FloatPickerFragment(
+    val filterOption: FilterOption<SceneFilterType, FloatCriterionInput>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
@@ -42,7 +42,11 @@ class IntPickerFragment(
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))
                 .descriptionEditable(true)
-                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED)
+                .descriptionEditInputType(
+                    InputType.TYPE_CLASS_NUMBER or
+                        InputType.TYPE_NUMBER_FLAG_SIGNED or
+                        InputType.TYPE_NUMBER_FLAG_DECIMAL,
+                )
                 .editDescription(curInt?.toString())
                 .build(),
         )
@@ -79,8 +83,8 @@ class IntPickerFragment(
         if (action.id >= MODIFIER_OFFSET) {
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
             val newInput =
-                curVal?.copy(modifier = newModifier) ?: IntCriterionInput(
-                    value = curVal?.value ?: 0,
+                curVal?.copy(modifier = newModifier) ?: FloatCriterionInput(
+                    value = curVal?.value ?: 0.0,
                     value2 = curVal?.value2 ?: Optional.absent(),
                     modifier = newModifier,
                 )
@@ -94,13 +98,13 @@ class IntPickerFragment(
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
             val curVal = filterOption.getter(viewModel.filter.value!!)
-            val newInt = findActionById(1L).description?.toString()?.toInt()
+            val newInt = findActionById(1L).description?.toString()?.toDouble()
             val modifier = curVal.getOrNull()?.modifier ?: CriterionModifier.EQUALS
             val newValue =
                 if (newInt != null) {
-                    IntCriterionInput(value = newInt, modifier = modifier)
+                    FloatCriterionInput(value = newInt, modifier = modifier)
                 } else if (modifier == CriterionModifier.IS_NULL || modifier == CriterionModifier.NOT_NULL) {
-                    IntCriterionInput(value = 0, modifier = modifier)
+                    FloatCriterionInput(value = 0.0, modifier = modifier)
                 } else {
                     null
                 }
