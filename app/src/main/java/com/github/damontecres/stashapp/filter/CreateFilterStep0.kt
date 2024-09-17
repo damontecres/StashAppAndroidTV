@@ -118,15 +118,16 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == SUBMIT) {
+            val filterNameAction = findActionById(FILTER_NAME)
             val objectFilter = viewModel.filter.value!!
             val filterArgs =
                 FilterArgs(
                     dataType = DataType.SCENE,
+                    name = filterNameAction.description?.toString()?.ifBlank { null },
                     objectFilter = objectFilter,
                 )
-            val filterNameAction = findActionById(FILTER_NAME)
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                if (filterNameAction.description.isNotNullOrBlank()) {
+                if (filterArgs.name.isNotNullOrBlank()) {
                     // Save it
                     val filterWriter = FilterWriter(QueryEngine(StashServer.requireCurrentServer()))
                     val findFilter =
