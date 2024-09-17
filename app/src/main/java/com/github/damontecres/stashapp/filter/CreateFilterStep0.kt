@@ -26,6 +26,7 @@ import com.github.damontecres.stashapp.filter.picker.HierarchicalMultiCriterionF
 import com.github.damontecres.stashapp.filter.picker.IntPickerFragment
 import com.github.damontecres.stashapp.filter.picker.MultiCriterionFragment
 import com.github.damontecres.stashapp.filter.picker.RatingPickerFragment
+import com.github.damontecres.stashapp.filter.picker.SortPickerFragment
 import com.github.damontecres.stashapp.filter.picker.StringPickerFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -40,6 +41,8 @@ import kotlin.reflect.full.declaredMemberProperties
 
 class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
+
+    private val dataType = DataType.SCENE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,6 +88,16 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
                 .build(),
         )
 
+        val sortDesc = viewModel.findFilter.value!!.sortAndDirection?.toString()
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(SORT_OPTION)
+                .hasNext(true)
+                .title(getString(R.string.sort_by))
+                .description(sortDesc)
+                .build(),
+        )
+
         val options =
             SceneFilterOptions.map {
                 createAction(it.nameStringId)
@@ -117,13 +130,16 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
-        if (action.id == SUBMIT) {
+        if (action.id == SORT_OPTION) {
+            nextStep(SortPickerFragment(dataType))
+        } else if (action.id == SUBMIT) {
             val filterNameAction = findActionById(FILTER_NAME)
             val objectFilter = viewModel.filter.value!!
             val filterArgs =
                 FilterArgs(
-                    dataType = DataType.SCENE,
+                    dataType = dataType,
                     name = filterNameAction.description?.toString()?.ifBlank { null },
+                    findFilter = viewModel.findFilter.value,
                     objectFilter = objectFilter,
                 )
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
@@ -253,5 +269,6 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
         private const val SUBMIT = -1_000L
         private const val FILTER_NAME = -2_000L
         private const val FILTER_OPTIONS = -3_000L
+        private const val SORT_OPTION = -4_000L
     }
 }

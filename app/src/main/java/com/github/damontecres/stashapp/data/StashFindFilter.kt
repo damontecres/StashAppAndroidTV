@@ -23,6 +23,21 @@ data class StashFindFilter(
             page = Optional.presentIfNotNull(page),
             per_page = Optional.presentIfNotNull(perPage),
         )
+
+    fun withSort(sort: String): StashFindFilter {
+        val newSortAndDirection =
+            sortAndDirection?.copy(sort = sort) ?: SortAndDirection(sort, SortDirectionEnum.ASC)
+        return this.copy(sortAndDirection = newSortAndDirection)
+    }
+
+    fun withDirection(
+        direction: SortDirectionEnum,
+        dataType: DataType,
+    ): StashFindFilter {
+        val newSortAndDirection =
+            (sortAndDirection ?: dataType.defaultSort).copy(direction = direction)
+        return this.copy(sortAndDirection = newSortAndDirection)
+    }
 }
 
 fun FindFilterType.toStashFindFilter(): StashFindFilter =
