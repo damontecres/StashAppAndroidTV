@@ -25,6 +25,7 @@ import com.github.damontecres.stashapp.filter.picker.BooleanPickerFragment
 import com.github.damontecres.stashapp.filter.picker.HierarchicalMultiCriterionFragment
 import com.github.damontecres.stashapp.filter.picker.IntPickerFragment
 import com.github.damontecres.stashapp.filter.picker.MultiCriterionFragment
+import com.github.damontecres.stashapp.filter.picker.RatingPickerFragment
 import com.github.damontecres.stashapp.filter.picker.StringPickerFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -176,55 +177,71 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
         val curVal = viewModel.filter.value!!
         val filterOption = SceneFilterOptionsMap[action.id.toInt()]!!
-        when (filterOption.type) {
-            IntCriterionInput::class -> {
+        when (action.id.toInt()) {
+            R.string.stashapp_rating -> {
                 filterOption as FilterOption<SceneFilterType, IntCriterionInput>
-                nextStep(IntPickerFragment(filterOption))
+                nextStep(RatingPickerFragment(filterOption))
             }
 
-            Boolean::class -> {
-                filterOption as FilterOption<SceneFilterType, Boolean>
-                nextStep(BooleanPickerFragment(filterOption))
-            }
+            else ->
+                when (filterOption.type) {
+                    IntCriterionInput::class -> {
+                        filterOption as FilterOption<SceneFilterType, IntCriterionInput>
+                        nextStep(IntPickerFragment(filterOption))
+                    }
 
-            StringCriterionInput::class -> {
-                filterOption as FilterOption<SceneFilterType, StringCriterionInput>
-                nextStep(StringPickerFragment(filterOption))
-            }
+                    Boolean::class -> {
+                        filterOption as FilterOption<SceneFilterType, Boolean>
+                        nextStep(BooleanPickerFragment(filterOption))
+                    }
 
-            MultiCriterionInput::class -> {
-                filterOption as FilterOption<SceneFilterType, MultiCriterionInput>
-                val value = filterOption.getter(curVal)
-                val ids =
-                    value.getOrNull()?.value?.getOrNull()
-                        .orEmpty() + value.getOrNull()?.excludes?.getOrNull().orEmpty()
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val items =
-                        queryEngine.getByIds(filterOption.dataType!!, ids).associateBy { it.id }
-                    nextStep(MultiCriterionFragment(filterOption.dataType, filterOption, items))
+                    StringCriterionInput::class -> {
+                        filterOption as FilterOption<SceneFilterType, StringCriterionInput>
+                        nextStep(StringPickerFragment(filterOption))
+                    }
+
+                    MultiCriterionInput::class -> {
+                        filterOption as FilterOption<SceneFilterType, MultiCriterionInput>
+                        val value = filterOption.getter(curVal)
+                        val ids =
+                            value.getOrNull()?.value?.getOrNull()
+                                .orEmpty() + value.getOrNull()?.excludes?.getOrNull().orEmpty()
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                            val items =
+                                queryEngine.getByIds(filterOption.dataType!!, ids)
+                                    .associateBy { it.id }
+                            nextStep(
+                                MultiCriterionFragment(
+                                    filterOption.dataType,
+                                    filterOption,
+                                    items,
+                                ),
+                            )
+                        }
+                    }
+
+                    HierarchicalMultiCriterionInput::class -> {
+                        filterOption as FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>
+                        val value = filterOption.getter(curVal)
+                        val ids =
+                            value.getOrNull()?.value?.getOrNull()
+                                .orEmpty() + value.getOrNull()?.excludes?.getOrNull().orEmpty()
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                            val items =
+                                queryEngine.getByIds(filterOption.dataType!!, ids)
+                                    .associateBy { it.id }
+                            nextStep(
+                                HierarchicalMultiCriterionFragment(
+                                    filterOption.dataType,
+                                    filterOption,
+                                    items,
+                                ),
+                            )
+                        }
+                    }
+
+                    else -> TODO()
                 }
-            }
-
-            HierarchicalMultiCriterionInput::class -> {
-                filterOption as FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>
-                val value = filterOption.getter(curVal)
-                val ids =
-                    value.getOrNull()?.value?.getOrNull()
-                        .orEmpty() + value.getOrNull()?.excludes?.getOrNull().orEmpty()
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val items =
-                        queryEngine.getByIds(filterOption.dataType!!, ids).associateBy { it.id }
-                    nextStep(
-                        HierarchicalMultiCriterionFragment(
-                            filterOption.dataType,
-                            filterOption,
-                            items,
-                        ),
-                    )
-                }
-            }
-
-            else -> TODO()
         }
         return false
     }

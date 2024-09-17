@@ -3,8 +3,11 @@ package com.github.damontecres.stashapp.filter
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.util.StashServer
 
 class CreateFilterViewModel : ViewModel() {
+    val server = MutableLiveData<StashServer>(StashServer.requireCurrentServer())
+
     val filter = MutableLiveData<SceneFilterType>()
 
     fun <ValueType : Any> updateFilter(

@@ -27,22 +27,34 @@ class BooleanPickerFragment(
     ) {
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(1L)
+                .id(0L)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_true))
                 .build(),
         )
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(0L)
+                .id(1L)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_false))
+                .build(),
+        )
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(2L)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_actions_remove))
                 .build(),
         )
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
-        val newValue = action.id == 1L
+        val newValue =
+            when (action.id) {
+                0L -> true
+                1L -> false
+                else -> null
+            }
         viewModel.updateFilter(filterOption, newValue)
         parentFragmentManager.popBackStack()
     }

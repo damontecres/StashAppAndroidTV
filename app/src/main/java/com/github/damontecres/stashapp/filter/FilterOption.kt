@@ -91,6 +91,20 @@ val SceneFilterOptions =
             { it.director },
             { filter, value -> filter.copy(director = Optional.presentIfNotNull(value)) },
         ),
+        FilterOption<SceneFilterType, IntCriterionInput>(
+            R.string.stashapp_rating,
+            null,
+            IntCriterionInput::class,
+            { it.rating100 },
+            { filter, value -> filter.copy(rating100 = Optional.presentIfNotNull(value)) },
+        ),
+        FilterOption<SceneFilterType, IntCriterionInput>(
+            R.string.stashapp_play_count,
+            null,
+            IntCriterionInput::class,
+            { it.play_count },
+            { filter, value -> filter.copy(play_count = Optional.presentIfNotNull(value)) },
+        ),
     )
 
 val SceneFilterOptionsMap = SceneFilterOptions.associateBy { it.nameStringId }
