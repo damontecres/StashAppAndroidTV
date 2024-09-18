@@ -24,7 +24,8 @@ class CreateFilterViewModel : ViewModel() {
     ) {
         this.dataType.value = dataType
         this.filter.value = initialFilter ?: dataType.filterType.createInstance()
-        this.findFilter.value = initialFindFilter ?: StashFindFilter()
+        this.findFilter.value =
+            initialFindFilter ?: StashFindFilter(sortAndDirection = dataType.defaultSort)
     }
 
     fun <ValueType : Any> updateFilter(

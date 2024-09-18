@@ -93,7 +93,7 @@ class CreateFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
         if (action.id == FILTER_OPTIONS) {
             nextStep(CreateObjectFilterStep())
         } else if (action.id == SORT_OPTION) {
-            nextStep(CreateFindFilterFragment(dataType))
+            nextStep(CreateFindFilterFragment(dataType, viewModel.findFilter.value!!))
         } else if (action.id == SUBMIT) {
             val filterNameAction = findActionById(FILTER_NAME)
             val objectFilter = viewModel.filter.value!!
