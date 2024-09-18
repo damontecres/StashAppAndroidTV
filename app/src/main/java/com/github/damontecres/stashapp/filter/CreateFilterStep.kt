@@ -24,7 +24,7 @@ import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
 import kotlinx.coroutines.launch
 
-class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+class CreateFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -154,7 +154,7 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
     }
 
     companion object {
-        private val TAG = CreateFilterStep0::class.simpleName
+        private val TAG = CreateFilterStep::class.simpleName
 
         private const val SUBMIT = -1L
         private const val FILTER_NAME = -2L

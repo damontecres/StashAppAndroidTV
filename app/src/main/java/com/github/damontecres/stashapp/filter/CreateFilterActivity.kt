@@ -24,7 +24,7 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
 
             GuidedStepSupportFragment.addAsRoot(
                 this,
-                CreateFilterStep0(),
+                CreateFilterStep(),
                 android.R.id.content,
             )
         }
