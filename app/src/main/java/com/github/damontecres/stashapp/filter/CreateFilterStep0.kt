@@ -16,9 +16,8 @@ import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SaveFilterInput
-import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
-import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.filter.picker.BooleanPickerFragment
@@ -37,12 +36,9 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
 import kotlinx.coroutines.launch
-import kotlin.reflect.full.declaredMemberProperties
 
 class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
-
-    private val dataType = DataType.SCENE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,21 +46,7 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
     }
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        val filter = viewModel.filter.value!!
-
-        val params =
-            SceneFilterType::class.declaredMemberProperties.mapNotNull { param ->
-                val obj = param.get(filter) as Optional<*>
-                if (obj.getOrNull() != null) {
-                    param.name to obj.getOrNull()!!
-                } else {
-                    null
-                }
-            }.sortedBy { it.first }
-        val text =
-            params.joinToString("\n") {
-                "${it.first}: ${it.second}"
-            }
+        val text = filterSummary(viewModel.dataType.value!!.filterType, viewModel.filter.value!!)
 
         return GuidanceStylist.Guidance(
             "Create filter",
@@ -88,7 +70,12 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
                 .build(),
         )
 
-        val sortDesc = viewModel.findFilter.value!!.sortAndDirection?.toString()
+        val sortDesc =
+            findFilterSummary(
+                requireContext(),
+                viewModel.dataType.value!!,
+                viewModel.findFilter.value!!,
+            )
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(SORT_OPTION)
@@ -99,7 +86,7 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
         )
 
         val options =
-            SceneFilterOptions.map {
+            getFilterOptions(viewModel.dataType.value!!).map {
                 createAction(it.nameStringId)
             }.sortedBy { it.title.toString() }
         actions.add(
@@ -130,6 +117,7 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
+        val dataType = viewModel.dataType.value!!
         if (action.id == SORT_OPTION) {
             nextStep(SortPickerFragment(dataType))
         } else if (action.id == SUBMIT) {
@@ -156,7 +144,7 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
                     val newSavedFilter =
                         mutationEngine.saveFilter(
                             SaveFilterInput(
-                                mode = DataType.SCENE.filterMode,
+                                mode = dataType.filterMode,
                                 name = filterNameAction.description.toString(),
                                 find_filter =
                                     Optional.presentIfNotNull(
@@ -192,37 +180,36 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
     }
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
-        val curVal = viewModel.filter.value!!
-        val filterOption = SceneFilterOptionsMap[action.id.toInt()]!!
+        val filterOption = getFilterOption(viewModel.dataType.value!!, action.id.toInt())
         when (action.id.toInt()) {
             R.string.stashapp_rating -> {
-                filterOption as FilterOption<SceneFilterType, IntCriterionInput>
+                filterOption as FilterOption<StashDataFilter, IntCriterionInput>
                 nextStep(RatingPickerFragment(filterOption))
             }
 
             else ->
                 when (filterOption.type) {
                     IntCriterionInput::class -> {
-                        filterOption as FilterOption<SceneFilterType, IntCriterionInput>
+                        filterOption as FilterOption<StashDataFilter, IntCriterionInput>
                         nextStep(IntPickerFragment(filterOption))
                     }
 
                     Boolean::class -> {
-                        filterOption as FilterOption<SceneFilterType, Boolean>
+                        filterOption as FilterOption<StashDataFilter, Boolean>
                         nextStep(BooleanPickerFragment(filterOption))
                     }
 
                     StringCriterionInput::class -> {
-                        filterOption as FilterOption<SceneFilterType, StringCriterionInput>
+                        filterOption as FilterOption<StashDataFilter, StringCriterionInput>
                         nextStep(StringPickerFragment(filterOption))
                     }
 
                     MultiCriterionInput::class -> {
-                        filterOption as FilterOption<SceneFilterType, MultiCriterionInput>
-                        val value = filterOption.getter(curVal)
+                        filterOption as FilterOption<StashDataFilter, MultiCriterionInput>
+                        val value = viewModel.getValue(filterOption)
                         val ids =
-                            value.getOrNull()?.value?.getOrNull()
-                                .orEmpty() + value.getOrNull()?.excludes?.getOrNull().orEmpty()
+                            value?.value?.getOrNull().orEmpty() +
+                                value?.excludes?.getOrNull().orEmpty()
                         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                             val items =
                                 queryEngine.getByIds(filterOption.dataType!!, ids)
@@ -238,11 +225,11 @@ class CreateFilterStep0 : CreateFilterActivity.CreateFilterGuidedStepFragment() 
                     }
 
                     HierarchicalMultiCriterionInput::class -> {
-                        filterOption as FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>
-                        val value = filterOption.getter(curVal)
+                        filterOption as FilterOption<StashDataFilter, HierarchicalMultiCriterionInput>
+                        val value = viewModel.getValue(filterOption)
                         val ids =
-                            value.getOrNull()?.value?.getOrNull()
-                                .orEmpty() + value.getOrNull()?.excludes?.getOrNull().orEmpty()
+                            value?.value?.getOrNull().orEmpty() +
+                                value?.excludes?.getOrNull().orEmpty()
                         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                             val items =
                                 queryEngine.getByIds(filterOption.dataType!!, ids)

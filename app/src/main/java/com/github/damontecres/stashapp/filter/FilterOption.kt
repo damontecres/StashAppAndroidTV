@@ -6,12 +6,14 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import kotlin.reflect.KClass
 
-data class FilterOption<FilterType, ValueType : Any>(
+data class FilterOption<FilterType : StashDataFilter, ValueType : Any>(
     @StringRes val nameStringId: Int,
     val dataType: DataType?,
     val type: KClass<ValueType>,
@@ -19,7 +21,7 @@ data class FilterOption<FilterType, ValueType : Any>(
     val setter: (FilterType, Optional<ValueType?>) -> FilterType,
 )
 
-val SceneFilterOptions =
+private val SceneFilterOptions =
     listOf(
         FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
             R.string.stashapp_tags,
@@ -107,4 +109,38 @@ val SceneFilterOptions =
         ),
     )
 
-val SceneFilterOptionsMap = SceneFilterOptions.associateBy { it.nameStringId }
+private val PerformerFilterOptions =
+    listOf(
+        FilterOption<PerformerFilterType, StringCriterionInput>(
+            R.string.stashapp_name,
+            null,
+            StringCriterionInput::class,
+            { it.name },
+            { filter, value -> filter.copy(name = value) },
+        ),
+        FilterOption<PerformerFilterType, HierarchicalMultiCriterionInput>(
+            R.string.stashapp_tags,
+            DataType.TAG,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.tags },
+            { filter, value -> filter.copy(tags = value) },
+        ),
+    )
+
+val FilterOptions =
+    mapOf(
+        DataType.SCENE to SceneFilterOptions.associateBy { it.nameStringId },
+        DataType.PERFORMER to PerformerFilterOptions.associateBy { it.nameStringId },
+    )
+
+fun getFilterOptions(dataType: DataType): Collection<FilterOption<out StashDataFilter, out Any>> {
+    val options = FilterOptions[dataType] ?: throw UnsupportedOperationException("$dataType")
+    return options.values
+}
+
+fun getFilterOption(
+    dataType: DataType,
+    nameStringId: Int,
+): FilterOption<out StashDataFilter, out Any> {
+    return FilterOptions[dataType]!![nameStringId]!!
+}

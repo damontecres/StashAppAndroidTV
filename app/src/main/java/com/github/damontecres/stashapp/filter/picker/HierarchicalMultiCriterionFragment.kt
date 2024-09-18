@@ -11,7 +11,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
-import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.filter.FilterOption
@@ -21,7 +21,7 @@ import com.github.damontecres.stashapp.views.getString
 
 class HierarchicalMultiCriterionFragment(
     val dataType: DataType,
-    val filterOption: FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>,
+    val filterOption: FilterOption<StashDataFilter, HierarchicalMultiCriterionInput>,
     items: Map<String, StashData>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     val mutableItems = items.toMutableMap()

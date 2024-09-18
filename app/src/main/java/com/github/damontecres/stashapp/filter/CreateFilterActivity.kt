@@ -8,7 +8,7 @@ import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.views.getString
 
@@ -18,10 +18,9 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) {
-            val filter =
-                intent.getFilterArgs(INTENT_STARTING_FILTER)?.objectFilter as SceneFilterType?
-                    ?: SceneFilterType()
-            viewModel.filter.value = filter
+            val dataType = intent.getDataType()
+            val startingFilter = intent.getFilterArgs(INTENT_STARTING_FILTER)
+            viewModel.initialize(dataType, startingFilter?.objectFilter, startingFilter?.findFilter)
 
             GuidedStepSupportFragment.addAsRoot(
                 this,

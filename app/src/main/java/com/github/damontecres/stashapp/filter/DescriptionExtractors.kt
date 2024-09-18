@@ -1,5 +1,9 @@
 package com.github.damontecres.stashapp.filter
 
+import android.content.Context
+import com.apollographql.apollo.api.Optional
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -10,8 +14,21 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.api.type.StashDataFilter
+import com.github.damontecres.stashapp.api.type.StringCriterionInput
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
+import com.github.damontecres.stashapp.views.getString
+import kotlin.reflect.KClass
+import kotlin.reflect.full.declaredMemberProperties
 
 fun extractTitle(item: StashData): String? {
     return when (item) {
@@ -41,4 +58,180 @@ fun extractDescription(item: StashData): String? {
         is FullSceneData -> item.date
         else -> throw IllegalArgumentException("${item::class.qualifiedName} not supported")
     }
+}
+
+fun findFilterSummary(
+    context: Context,
+    dataType: DataType,
+    findFilter: StashFindFilter,
+): String {
+    val sortAndDirection = findFilter.sortAndDirection ?: dataType.defaultSort
+    val sortOption = dataType.sortOptions.firstOrNull { it.key == sortAndDirection.sort }
+    val sortName =
+        if (sortOption != null) {
+            context.getString(sortOption.nameStringId)
+        } else {
+            sortAndDirection.sort
+        }
+    val directionName =
+        when (sortAndDirection.direction) {
+            SortDirectionEnum.ASC -> context.getString(R.string.stashapp_ascending)
+            SortDirectionEnum.DESC -> context.getString(R.string.stashapp_descending)
+            SortDirectionEnum.UNKNOWN__ -> null
+        }
+    return "$sortName, $directionName"
+}
+
+fun filterSummary(
+    f: MultiCriterionInput,
+    itemMap: Map<String, StashData>,
+): String {
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val value = f.value.getOrNull()
+    // TODO
+    // val resolvedTitles = value?.map { extractTitle(itemMap[it]!!) }.orEmpty()
+    val resolvedTitles = value.orEmpty()
+    val toStr =
+        when (f.modifier) {
+            CriterionModifier.EQUALS -> resolvedTitles.firstOrNull() ?: ""
+            CriterionModifier.IS_NULL -> ""
+            CriterionModifier.NOT_NULL -> ""
+            CriterionModifier.INCLUDES_ALL -> resolvedTitles.toString()
+            CriterionModifier.INCLUDES -> resolvedTitles.toString()
+            else -> throw IllegalArgumentException("${f.modifier}")
+        }.ifBlank { null }
+    // TODO excludes
+    return if (toStr != null) {
+        "$modStr $toStr"
+    } else {
+        modStr
+    }
+}
+
+fun filterSummary(
+    f: HierarchicalMultiCriterionInput,
+    itemMap: Map<String, StashData>,
+): String {
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val value = f.value.getOrNull()
+    // TODO
+    // val resolvedTitles = value?.map { extractTitle(itemMap[it]!!) }.orEmpty()
+    val resolvedTitles = value.orEmpty()
+    val toStr =
+        when (f.modifier) {
+            CriterionModifier.EQUALS -> resolvedTitles.firstOrNull() ?: ""
+            CriterionModifier.IS_NULL -> ""
+            CriterionModifier.NOT_NULL -> ""
+            CriterionModifier.INCLUDES_ALL -> resolvedTitles.toString()
+            CriterionModifier.INCLUDES -> resolvedTitles.toString()
+            else -> throw IllegalArgumentException("${f.modifier}")
+        }.ifBlank { null }
+    // TODO excludes
+    return if (toStr != null) {
+        "$modStr $toStr"
+    } else {
+        modStr
+    }
+}
+
+fun filterSummary(f: StringCriterionInput): String {
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val value = f.value.ifBlank { null }
+    return if (value != null) {
+        "$modStr $value"
+    } else {
+        modStr
+    }
+}
+
+fun filterSummary(f: IntCriterionInput): String {
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val value = f.value
+    val value2 = f.value2.getOrNull()
+    val toStr =
+        when (f.modifier) {
+            CriterionModifier.EQUALS,
+            CriterionModifier.NOT_EQUALS,
+            CriterionModifier.GREATER_THAN,
+            CriterionModifier.LESS_THAN,
+            -> value.toString()
+
+            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> null
+
+            CriterionModifier.BETWEEN, CriterionModifier.NOT_BETWEEN -> "$value & $value2"
+
+            else -> throw IllegalArgumentException("${f.modifier}")
+        }
+
+    return if (toStr != null) {
+        "$modStr $toStr"
+    } else {
+        modStr
+    }
+}
+
+fun filterSummary(f: FloatCriterionInput): String {
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val value = f.value
+    val value2 = f.value2.getOrNull()
+    val toStr =
+        when (f.modifier) {
+            CriterionModifier.EQUALS,
+            CriterionModifier.NOT_EQUALS,
+            CriterionModifier.GREATER_THAN,
+            CriterionModifier.LESS_THAN,
+            -> value.toString()
+
+            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> null
+
+            CriterionModifier.BETWEEN, CriterionModifier.NOT_BETWEEN -> "$value & $value2"
+
+            else -> throw IllegalArgumentException("${f.modifier}")
+        }
+
+    return if (toStr != null) {
+        "$modStr $toStr"
+    } else {
+        modStr
+    }
+}
+
+fun filterSummary(
+    type: KClass<in StashDataFilter>,
+    f: StashDataFilter,
+): String {
+    val params =
+        type.declaredMemberProperties.mapNotNull { param ->
+            val obj = param.get(f) as Optional<*>
+            val value = obj.getOrNull()
+            if (value != null) {
+                val valueStr =
+                    when (value) {
+                        is IntCriterionInput -> filterSummary(value)
+                        is FloatCriterionInput -> filterSummary(value)
+                        is StringCriterionInput -> filterSummary(value)
+                        is Boolean, String -> value.toString()
+
+                        // TODO look up IDs
+                        is MultiCriterionInput -> {
+                            filterSummary(value, mapOf())
+                        }
+
+                        is HierarchicalMultiCriterionInput -> {
+                            filterSummary(value, mapOf())
+                        }
+
+                        // TODO
+                        else -> value.toString()
+                    }
+                param.name to valueStr
+            } else {
+                null
+            }
+        }.sortedBy { it.first }
+    val text =
+        params.joinToString("\n") {
+            "${it.first}: ${it.second}"
+        }
+    return text
 }

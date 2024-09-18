@@ -11,7 +11,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
-import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.filter.CreateFilterActivity.Companion.MODIFIER_OFFSET
@@ -22,7 +22,7 @@ import com.github.damontecres.stashapp.views.getString
 
 class MultiCriterionFragment(
     val dataType: DataType,
-    val filterOption: FilterOption<SceneFilterType, MultiCriterionInput>,
+    val filterOption: FilterOption<StashDataFilter, MultiCriterionInput>,
     items: Map<String, StashData>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     val mutableItems = items.toMutableMap()

@@ -145,7 +145,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                     android.R.attr.listPopupWindowStyle,
                 )
             val adapterItems =
-                if (dataType == DataType.SCENE) {
+                if (dataType == DataType.SCENE || dataType == DataType.PERFORMER) {
                     // TODO: add a separator
                     listOf(
                         "Create Filter",
@@ -171,12 +171,12 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
                 listPopUp.dismiss()
                 val lookupPos =
-                    if (dataType == DataType.SCENE) {
+                    if (dataType == DataType.SCENE || dataType == DataType.PERFORMER) {
                         position - 2
                     } else {
                         position
                     }
-                if (dataType == DataType.SCENE && (position == 0 || position == 1)) {
+                if ((dataType == DataType.SCENE || dataType == DataType.PERFORMER) && (position == 0 || position == 1)) {
                     val intent =
                         Intent(this@FilterListActivity, CreateFilterActivity::class.java)
                             .putDataType(dataType)
