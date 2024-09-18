@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.filter
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.StashServer
@@ -16,6 +17,6 @@ class CreateFilterViewModel : ViewModel() {
         filterOption: FilterOption<SceneFilterType, ValueType>,
         newItem: ValueType?,
     ) {
-        filter.value = filterOption.setter(filter.value!!, newItem)
+        filter.value = filterOption.setter(filter.value!!, Optional.presentIfNotNull(newItem))
     }
 }
