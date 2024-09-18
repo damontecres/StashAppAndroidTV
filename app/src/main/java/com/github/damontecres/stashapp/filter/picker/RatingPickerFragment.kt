@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.filter.picker
 
 import android.os.Bundle
 import android.text.InputType
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
@@ -18,6 +19,8 @@ import com.github.damontecres.stashapp.views.getString
 class RatingPickerFragment(
     val filterOption: FilterOption<StashDataFilter, IntCriterionInput>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+    private var curVal: IntCriterionInput? = null
+
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
@@ -31,7 +34,6 @@ class RatingPickerFragment(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        val curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
         val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
         val current =
@@ -50,7 +52,6 @@ class RatingPickerFragment(
                 .descriptionEditable(true)
                 .descriptionEditInputType(
                     InputType.TYPE_CLASS_NUMBER or
-                        InputType.TYPE_NUMBER_FLAG_SIGNED or
                         InputType.TYPE_NUMBER_FLAG_DECIMAL,
                 )
                 .editDescription(current?.toString())
@@ -81,22 +82,54 @@ class RatingPickerFragment(
             GuidedAction.Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_FINISH)
                 .hasNext(true)
-                .title(getString(R.string.stashapp_actions_finish))
+                .enabled(false)
+                .title(getString(R.string.stashapp_actions_save))
+                .build(),
+        )
+
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(GuidedAction.ACTION_ID_CANCEL)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_actions_cancel))
                 .build(),
         )
     }
 
+    override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
+        if (action.id == 1L) {
+            val desc = action.description
+            try {
+                if (desc != null) {
+                    val newInt = desc.toString().toDouble()
+                    val rating100 =
+                        if (viewModel.server.value!!.serverPreferences.ratingsAsStars) {
+                            (newInt.times(20)).toInt()
+                        } else {
+                            (newInt.times(10)).toInt()
+                        }
+                    if (rating100 in 0..100) {
+                        enableFinish(true)
+                        return GuidedAction.ACTION_ID_NEXT
+                    }
+                }
+            } catch (ex: Exception) {
+                Toast.makeText(requireContext(), "Invalid int: $desc", Toast.LENGTH_SHORT).show()
+            }
+            enableFinish(false)
+            return GuidedAction.ACTION_ID_NEXT
+        }
+        return GuidedAction.ACTION_ID_CURRENT
+    }
+
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
-        val curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
         if (action.id >= MODIFIER_OFFSET) {
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
-            val newInput =
-                curVal?.copy(modifier = newModifier) ?: IntCriterionInput(
-                    value = curVal?.value ?: 0,
-                    value2 = curVal?.value2 ?: Optional.absent(),
-                    modifier = newModifier,
-                )
-            viewModel.updateFilter(filterOption, newInput)
+            curVal = curVal?.copy(modifier = newModifier) ?: IntCriterionInput(
+                value = curVal?.value ?: 0,
+                value2 = curVal?.value2 ?: Optional.absent(),
+                modifier = newModifier,
+            )
             findActionById(MODIFIER).description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
         }
@@ -125,6 +158,8 @@ class RatingPickerFragment(
                 }
 
             viewModel.updateFilter(filterOption, newValue)
+            parentFragmentManager.popBackStack()
+        } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
             parentFragmentManager.popBackStack()
         }
     }

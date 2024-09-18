@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.filter.picker
 
 import android.os.Bundle
 import android.text.InputType
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
@@ -18,6 +19,13 @@ import com.github.damontecres.stashapp.views.getString
 class FloatPickerFragment(
     val filterOption: FilterOption<StashDataFilter, FloatCriterionInput>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+    private var curVal: FloatCriterionInput? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
+        super.onCreate(savedInstanceState)
+    }
+
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
@@ -31,7 +39,6 @@ class FloatPickerFragment(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        val curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
         val curInt = curVal?.value
         val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
@@ -73,22 +80,47 @@ class FloatPickerFragment(
             GuidedAction.Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_FINISH)
                 .hasNext(true)
+                .enabled(false)
                 .title(getString(R.string.stashapp_actions_finish))
+                .build(),
+        )
+
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(GuidedAction.ACTION_ID_CANCEL)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_actions_cancel))
                 .build(),
         )
     }
 
+    override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
+        if (action.id == 1L) {
+            val desc = action.description
+            try {
+                if (desc != null) {
+                    desc.toString().toDouble()
+                    enableFinish(true)
+                    return GuidedAction.ACTION_ID_NEXT
+                }
+            } catch (ex: Exception) {
+                Toast.makeText(requireContext(), "Invalid decimal: $desc", Toast.LENGTH_SHORT)
+                    .show()
+            }
+            enableFinish(false)
+            return GuidedAction.ACTION_ID_NEXT
+        }
+        return GuidedAction.ACTION_ID_CURRENT
+    }
+
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
-        val curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
         if (action.id >= MODIFIER_OFFSET) {
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
-            val newInput =
-                curVal?.copy(modifier = newModifier) ?: FloatCriterionInput(
-                    value = curVal?.value ?: 0.0,
-                    value2 = curVal?.value2 ?: Optional.absent(),
-                    modifier = newModifier,
-                )
-            viewModel.updateFilter(filterOption, newInput)
+            curVal = curVal?.copy(modifier = newModifier) ?: FloatCriterionInput(
+                value = curVal?.value ?: 0.0,
+                value2 = curVal?.value2 ?: Optional.absent(),
+                modifier = newModifier,
+            )
             findActionById(MODIFIER).description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
         }
@@ -97,9 +129,8 @@ class FloatPickerFragment(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val curVal = filterOption.getter(viewModel.filter.value!!)
             val newInt = findActionById(1L).description?.toString()?.toDouble()
-            val modifier = curVal.getOrNull()?.modifier ?: CriterionModifier.EQUALS
+            val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
             val newValue =
                 if (newInt != null) {
                     FloatCriterionInput(value = newInt, modifier = modifier)
@@ -111,11 +142,13 @@ class FloatPickerFragment(
 
             viewModel.updateFilter(filterOption, newValue)
             parentFragmentManager.popBackStack()
+        } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
+            parentFragmentManager.popBackStack()
         }
     }
 
     companion object {
-        private const val TAG = "StringPickerFragment"
+        private const val TAG = "FloatPickerFragment"
         private const val MODIFIER = 2L
     }
 }

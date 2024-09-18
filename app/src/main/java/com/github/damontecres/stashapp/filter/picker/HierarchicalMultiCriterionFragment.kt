@@ -24,19 +24,10 @@ class HierarchicalMultiCriterionFragment(
     val filterOption: FilterOption<StashDataFilter, HierarchicalMultiCriterionInput>,
     items: Map<String, StashData>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
-    val mutableItems = items.toMutableMap()
+    private var curVal = HierarchicalMultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
+    private val mutableItems = items.toMutableMap()
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-//        val text =
-//            """
-//            Include:
-//            ${includeNames.joinToString("\n") { "- $it" }}
-//
-//            Exclude:
-//            ${excludeNames.joinToString("\n") { "- $it" }}
-//
-//            """.trimIndent()
-
         return GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
             "",
@@ -49,10 +40,9 @@ class HierarchicalMultiCriterionFragment(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        val curVal =
-            filterOption.getter.invoke(
-                viewModel.filter.value!!,
-            ).getOrNull() ?: HierarchicalMultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
+        curVal = filterOption.getter.invoke(
+            viewModel.filter.value!!,
+        ).getOrNull() ?: HierarchicalMultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
 
         val modifierOptions =
             buildList {
@@ -95,9 +85,9 @@ class HierarchicalMultiCriterionFragment(
 
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(SUBMIT)
+                .id(GuidedAction.ACTION_ID_FINISH)
                 .hasNext(true)
-                .title(getString(R.string.stashapp_actions_finish))
+                .title(getString(R.string.stashapp_actions_save))
                 .build(),
         )
     }
@@ -125,29 +115,29 @@ class HierarchicalMultiCriterionFragment(
         }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
-        if (action.id == SUBMIT) {
+        if (action.id == GuidedAction.ACTION_ID_FINISH) {
+            viewModel.updateFilter(filterOption, curVal)
+            parentFragmentManager.popBackStack()
+        } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
             parentFragmentManager.popBackStack()
         }
     }
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
-        val curVal = filterOption.getter.invoke(viewModel.filter.value!!)
         if (action.id >= MODIFIER_OFFSET) {
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
-            val newInput =
-                curVal.getOrNull()?.copy(modifier = newModifier) ?: HierarchicalMultiCriterionInput(modifier = newModifier)
-            viewModel.updateFilter(filterOption, newInput)
+            curVal = curVal.copy(modifier = newModifier)
+                ?: HierarchicalMultiCriterionInput(modifier = newModifier)
             findActionById(MODIFIER).description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
             return true
         } else if (action.id >= EXCLUDE_OFFSET) {
             TODO()
         } else if (action.id >= INCLUDE_OFFSET) {
-            val currentInput = curVal.getOrThrow()!!
             val index = action.id - INCLUDE_OFFSET
-            val list = currentInput.value.getOrThrow()!!.toMutableList()
+            val list = curVal.value.getOrThrow()!!.toMutableList()
             list.removeAt(index.toInt())
-            val newInput = currentInput.copy(value = Optional.present(list))
+            val newInput = curVal.copy(value = Optional.present(list))
             viewModel.updateFilter(filterOption, newInput)
 
             val action = findActionById(INCLUDE_LIST)
@@ -165,17 +155,10 @@ class HierarchicalMultiCriterionFragment(
                             SearchPickerFragment(dataType) { newItem ->
                                 Log.v(TAG, "Adding ${newItem.id}")
                                 mutableItems[newItem.id] = newItem
-                                val currentInput =
-                                    curVal.getOrNull()
-                                        ?: HierarchicalMultiCriterionInput(
-                                            modifier = CriterionModifier.INCLUDES_ALL,
-                                        )
-                                val list = currentInput.value.getOrNull()?.toMutableList() ?: ArrayList()
+                                val list = curVal.value.getOrNull()?.toMutableList() ?: ArrayList()
                                 if (!list.contains(newItem.id)) {
                                     list.add(newItem.id)
-                                    val newInput = currentInput.copy(value = Optional.present(list))
-                                    Log.v(TAG, "newInput=$newInput")
-                                    viewModel.updateFilter(filterOption, newInput)
+                                    curVal = curVal.copy(value = Optional.present(list))
                                     val action = findActionById(INCLUDE_LIST)
                                     action.subActions = createItemList(list)
                                     action.description =

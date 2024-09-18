@@ -18,6 +18,8 @@ import com.github.damontecres.stashapp.views.getString
 class StringPickerFragment(
     val filterOption: FilterOption<StashDataFilter, StringCriterionInput>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+    private var curVal: StringCriterionInput? = null
+
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
@@ -31,7 +33,7 @@ class StringPickerFragment(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        val curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
+        curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
         val currentString = curVal?.value
         val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
@@ -71,18 +73,26 @@ class StringPickerFragment(
             GuidedAction.Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_FINISH)
                 .hasNext(true)
-                .title(getString(R.string.stashapp_actions_finish))
+                .title(getString(R.string.stashapp_actions_save))
+                .build(),
+        )
+
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(GuidedAction.ACTION_ID_CANCEL)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_actions_cancel))
                 .build(),
         )
     }
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
-        val curVal = filterOption.getter(viewModel.filter.value!!)
         if (action.id >= MODIFIER_OFFSET) {
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
-            val newInput =
-                curVal.getOrNull()?.copy(modifier = newModifier) ?: StringCriterionInput(value = "", modifier = newModifier)
-            viewModel.updateFilter(filterOption, newInput)
+            curVal = curVal?.copy(modifier = newModifier) ?: StringCriterionInput(
+                value = "",
+                modifier = newModifier,
+            )
             findActionById(MODIFIER).description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
         }
@@ -91,9 +101,8 @@ class StringPickerFragment(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val curVal = filterOption.getter(viewModel.filter.value!!)
             val newString = findActionById(1L).description?.toString()
-            val modifier = curVal.getOrNull()?.modifier ?: CriterionModifier.EQUALS
+            val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
             val newValue =
                 if (newString.isNotNullOrBlank()) {
                     StringCriterionInput(value = newString, modifier = modifier)
@@ -104,6 +113,8 @@ class StringPickerFragment(
                 }
 
             viewModel.updateFilter(filterOption, newValue)
+            parentFragmentManager.popBackStack()
+        } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
             parentFragmentManager.popBackStack()
         }
     }

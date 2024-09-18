@@ -89,18 +89,16 @@ class SearchPickerFragment(
         }
     }
 
-    private fun returnId(item: StashData?) {
-        if (item != null) {
-            val currentServer = StashServer.getCurrentStashServer(requireContext())
-            if (dataType in DATA_TYPE_SUGGESTIONS && currentServer != null) {
-                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                    StashApplication.getDatabase().recentSearchItemsDao()
-                        .insert(RecentSearchItem(currentServer.url, item.id, dataType))
-                }
+    private fun returnId(item: StashData) {
+        val currentServer = StashServer.getCurrentStashServer(requireContext())
+        if (dataType in DATA_TYPE_SUGGESTIONS && currentServer != null) {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                StashApplication.getDatabase().recentSearchItemsDao()
+                    .insert(RecentSearchItem(currentServer.url, item.id, dataType))
             }
-            addItem(item)
-            parentFragmentManager.popBackStackImmediate()
         }
+        addItem(item)
+        parentFragmentManager.popBackStackImmediate()
     }
 
     override fun onResume() {

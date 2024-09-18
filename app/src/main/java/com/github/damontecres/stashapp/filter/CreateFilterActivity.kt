@@ -63,5 +63,10 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
                 .title(modifier.getString(requireContext()))
                 .build()
         }
+
+        protected fun enableFinish(enabled: Boolean) {
+            findActionById(GuidedAction.ACTION_ID_FINISH).isEnabled = enabled
+            notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_FINISH))
+        }
     }
 }
