@@ -15,13 +15,20 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
+import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
+import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
+import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
+import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
+import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -196,6 +203,129 @@ fun filterSummary(f: FloatCriterionInput): String {
     }
 }
 
+fun filterSummary(f: PhashDistanceCriterionInput): String {
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val distance = f.distance.getOrNull()
+    if (distance != null) {
+        return "$modStr ${f.value} ($distance)"
+    } else {
+        return "$modStr ${f.value}"
+    }
+}
+
+fun filterSummary(f: PHashDuplicationCriterionInput): String {
+    val duplicated = f.duplicated.getOrNull()
+    val distance = f.distance.getOrNull()
+    if (distance != null) {
+        return "$duplicated ($distance)"
+    } else {
+        return "$duplicated"
+    }
+}
+
+fun filterSummary(f: ResolutionCriterionInput): String {
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    // TODO map strings
+    return "$modStr ${f.value.name}"
+}
+
+fun filterSummary(f: OrientationCriterionInput): String {
+    // TODO map strings
+    return f.value.map { it.name }.toString()
+}
+
+fun filterSummary(f: StashIDCriterionInput): String {
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val stashId = f.stash_id.getOrNull()
+    val endpoint = f.endpoint.getOrNull()
+    return if (endpoint != null) {
+        "$modStr $stashId ($endpoint)"
+    } else {
+        "$modStr $stashId"
+    }
+}
+
+fun filterSummary(f: TimestampCriterionInput): String {
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val value = f.value
+    val value2 = f.value2.getOrNull()
+    val toStr =
+        when (f.modifier) {
+            CriterionModifier.EQUALS,
+            CriterionModifier.NOT_EQUALS,
+            CriterionModifier.GREATER_THAN,
+            CriterionModifier.LESS_THAN,
+            -> value
+
+            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> null
+
+            CriterionModifier.BETWEEN, CriterionModifier.NOT_BETWEEN -> "$value & $value2"
+
+            else -> throw IllegalArgumentException("${f.modifier}")
+        }
+
+    return if (toStr != null) {
+        "$modStr $toStr"
+    } else {
+        modStr
+    }
+}
+
+fun filterSummary(f: DateCriterionInput): String {
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val value = f.value
+    val value2 = f.value2.getOrNull()
+    val toStr =
+        when (f.modifier) {
+            CriterionModifier.EQUALS,
+            CriterionModifier.NOT_EQUALS,
+            CriterionModifier.GREATER_THAN,
+            CriterionModifier.LESS_THAN,
+            -> value
+
+            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> null
+
+            CriterionModifier.BETWEEN, CriterionModifier.NOT_BETWEEN -> "$value & $value2"
+
+            else -> throw IllegalArgumentException("${f.modifier}")
+        }
+
+    return if (toStr != null) {
+        "$modStr $toStr"
+    } else {
+        modStr
+    }
+}
+
+fun filterSummary(value: Any): String {
+    return when (value) {
+        is IntCriterionInput -> filterSummary(value)
+        is FloatCriterionInput -> filterSummary(value)
+        is StringCriterionInput -> filterSummary(value)
+        is PhashDistanceCriterionInput -> filterSummary(value)
+        is PHashDuplicationCriterionInput -> filterSummary(value)
+        is ResolutionCriterionInput -> filterSummary(value)
+        is OrientationCriterionInput -> filterSummary(value)
+        is StashIDCriterionInput -> filterSummary(value)
+        is TimestampCriterionInput -> filterSummary(value)
+        is DateCriterionInput -> filterSummary(value)
+
+        is Boolean, String -> value.toString()
+
+        // TODO look up IDs
+        is MultiCriterionInput -> {
+            filterSummary(value, mapOf())
+        }
+
+        is HierarchicalMultiCriterionInput -> {
+            filterSummary(value, mapOf())
+        }
+
+        // TODO
+        else -> value.toString()
+    }
+}
+
 fun filterSummary(
     type: KClass<in StashDataFilter>,
     f: StashDataFilter,
@@ -205,25 +335,7 @@ fun filterSummary(
             val obj = param.get(f) as Optional<*>
             val value = obj.getOrNull()
             if (value != null) {
-                val valueStr =
-                    when (value) {
-                        is IntCriterionInput -> filterSummary(value)
-                        is FloatCriterionInput -> filterSummary(value)
-                        is StringCriterionInput -> filterSummary(value)
-                        is Boolean, String -> value.toString()
-
-                        // TODO look up IDs
-                        is MultiCriterionInput -> {
-                            filterSummary(value, mapOf())
-                        }
-
-                        is HierarchicalMultiCriterionInput -> {
-                            filterSummary(value, mapOf())
-                        }
-
-                        // TODO
-                        else -> value.toString()
-                    }
+                val valueStr = filterSummary(value)
                 param.name to valueStr
             } else {
                 null

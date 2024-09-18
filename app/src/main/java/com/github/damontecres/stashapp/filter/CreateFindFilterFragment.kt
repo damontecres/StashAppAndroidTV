@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.filter.picker
+package com.github.damontecres.stashapp.filter
 
 import android.os.Bundle
 import android.text.InputType
@@ -8,10 +8,9 @@ import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
-class SortPickerFragment(
+class CreateFindFilterFragment(
     val dataType: DataType,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
@@ -28,6 +27,36 @@ class SortPickerFragment(
         savedInstanceState: Bundle?,
     ) {
         val curVal = viewModel.findFilter.value!!
+
+        val sortOptions =
+            buildList {
+                dataType.sortOptions.forEachIndexed { index, sortOption ->
+                    add(
+                        GuidedAction.Builder(requireContext())
+                            .id(SORT_OFFSET + index)
+                            .hasNext(false)
+                            .title(getString(sortOption.nameStringId))
+                            .build(),
+                    )
+                }
+            }
+        val currSortOption =
+            dataType.sortOptions.firstOrNull { it.key == curVal.sortAndDirection?.sort }
+        val sortDesc =
+            if (currSortOption != null) {
+                getString(currSortOption.nameStringId)
+            } else {
+                null
+            }
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(SORT)
+                .hasNext(true)
+                .subActions(sortOptions)
+                .title(getString(R.string.sort_by))
+                .description(sortDesc)
+                .build(),
+        )
 
         val directionOptions =
             buildList {
@@ -54,35 +83,6 @@ class SortPickerFragment(
                 .subActions(directionOptions)
                 .title(getString(R.string.stashapp_config_ui_image_wall_direction))
                 .description(getDirectionString(curVal.sortAndDirection?.direction))
-                .build(),
-        )
-
-        val sortOptions =
-            buildList {
-                dataType.sortOptions.forEachIndexed { index, sortOption ->
-                    add(
-                        GuidedAction.Builder(requireContext())
-                            .id(SORT_OFFSET + index)
-                            .hasNext(false)
-                            .title(getString(sortOption.nameStringId))
-                            .build(),
-                    )
-                }
-            }
-        val currSortOption = dataType.sortOptions.firstOrNull { it.key == curVal.sortAndDirection?.sort }
-        val sortDesc =
-            if (currSortOption != null) {
-                getString(currSortOption.nameStringId)
-            } else {
-                null
-            }
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(SORT)
-                .hasNext(true)
-                .subActions(sortOptions)
-                .title(getString(R.string.sort_by))
-                .description(sortDesc)
                 .build(),
         )
 

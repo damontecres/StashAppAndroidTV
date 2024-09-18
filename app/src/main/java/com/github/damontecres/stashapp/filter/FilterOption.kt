@@ -129,18 +129,10 @@ private val PerformerFilterOptions =
 
 val FilterOptions =
     mapOf(
-        DataType.SCENE to SceneFilterOptions.associateBy { it.nameStringId },
-        DataType.PERFORMER to PerformerFilterOptions.associateBy { it.nameStringId },
+        DataType.SCENE to SceneFilterOptions,
+        DataType.PERFORMER to PerformerFilterOptions,
     )
 
-fun getFilterOptions(dataType: DataType): Collection<FilterOption<out StashDataFilter, out Any>> {
-    val options = FilterOptions[dataType] ?: throw UnsupportedOperationException("$dataType")
-    return options.values
-}
-
-fun getFilterOption(
-    dataType: DataType,
-    nameStringId: Int,
-): FilterOption<out StashDataFilter, out Any> {
-    return FilterOptions[dataType]!![nameStringId]!!
+fun getFilterOptions(dataType: DataType): List<FilterOption<out StashDataFilter, out Any>> {
+    return FilterOptions[dataType] ?: throw UnsupportedOperationException("$dataType")
 }
