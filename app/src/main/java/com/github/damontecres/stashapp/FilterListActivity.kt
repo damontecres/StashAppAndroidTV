@@ -1,11 +1,14 @@
 package com.github.damontecres.stashapp
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
-import android.widget.ArrayAdapter
+import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -129,7 +132,11 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         val server = StashServer.requireCurrentServer()
         val savedFilters =
             QueryEngine(server).getSavedFilters(dataType)
-        if (savedFilters.isEmpty()) {
+
+        val createFilterSupported = dataType == DataType.SCENE
+
+        // Always show the list for data types supporting create filter
+        if (savedFilters.isEmpty() && !createFilterSupported) {
             filterButton.setOnClickListener {
                 Toast.makeText(
                     context,
@@ -145,21 +152,9 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                     android.R.attr.listPopupWindowStyle,
                 )
             val adapterItems =
-                if (dataType == DataType.SCENE) {
-                    // TODO: add a separator
-                    listOf(
-                        "Create Filter",
-                        "Create Filter from current",
-                    ) + savedFilters.map { it.name.ifBlank { getString(dataType.pluralStringId) } }
-                } else {
-                    savedFilters.map { it.name.ifBlank { getString(dataType.pluralStringId) } }
-                }
-            val adapter =
-                ArrayAdapter(
-                    context,
-                    R.layout.popup_item,
-                    adapterItems,
-                )
+                savedFilters.map { it.name.ifBlank { getString(dataType.pluralStringId) } }
+            val adapter = SavedFilterAdapter(context, createFilterSupported, adapterItems)
+
             listPopUp.setAdapter(adapter)
             listPopUp.inputMethodMode = ListPopupWindow.INPUT_METHOD_NEEDED
             listPopUp.anchorView = filterButton
@@ -169,14 +164,15 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
 
             val filterParser = FilterParser(server.serverPreferences.serverVersion)
             listPopUp.setOnItemClickListener { parent: AdapterView<*>, view: View, position: Int, id: Long ->
+                Log.v(TAG, "filter list clicked position=$position")
                 listPopUp.dismiss()
                 val lookupPos =
-                    if (dataType == DataType.SCENE) {
-                        position - 2
+                    if (adapter.createEnabled) {
+                        position - 3
                     } else {
                         position
                     }
-                if ((dataType == DataType.SCENE) && (position == 0 || position == 1)) {
+                if (adapter.createEnabled && (position == 0 || position == 1)) {
                     val intent =
                         Intent(this@FilterListActivity, CreateFilterActivity::class.java)
                             .putDataType(dataType)
@@ -234,6 +230,89 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             replace(R.id.list_fragment, fragment)
         }
         sortButtonManager.setUpSortButton(sortButton, filter.dataType, filter.sortAndDirection)
+    }
+
+    private class SavedFilterAdapter(
+        context: Context,
+        val createEnabled: Boolean,
+        val filters: List<String>,
+    ) : BaseAdapter() {
+        private val inflater = LayoutInflater.from(context)
+
+        override fun getCount(): Int {
+            return if (createEnabled) {
+                filters.size + 3
+            } else {
+                filters.size
+            }
+        }
+
+        override fun getItem(position: Int): Any {
+            if (createEnabled) {
+                return when (position) {
+                    0 -> "Create filter"
+                    1 -> "Create filter from current"
+                    2 ->
+                        if (filters.isEmpty()) {
+                            "No saved filters"
+                        } else {
+                            "Saved filters"
+                        }
+
+                    else -> filters[position - 3]
+                }
+            }
+            return filters[position]
+        }
+
+        override fun getItemId(position: Int): Long {
+            return position.toLong()
+        }
+
+        override fun getView(
+            position: Int,
+            convertView: View?,
+            parent: ViewGroup?,
+        ): View {
+            return if (convertView != null) {
+                (convertView as TextView).text = getItem(position).toString()
+                convertView
+            } else if (createEnabled && position == 2) {
+                // header
+                val view = inflater.inflate(R.layout.popup_header, parent, false) as TextView
+                view.text = getItem(position).toString()
+                view
+            } else {
+                // regular item
+                val view = inflater.inflate(R.layout.popup_item, parent, false) as TextView
+                view.text = getItem(position).toString()
+                view
+            }
+        }
+
+        override fun areAllItemsEnabled(): Boolean {
+            return !createEnabled
+        }
+
+        override fun isEnabled(position: Int): Boolean {
+            return !(createEnabled && position == 2)
+        }
+
+        override fun getItemViewType(position: Int): Int {
+            return if (isEnabled(position)) {
+                0
+            } else {
+                1
+            }
+        }
+
+        override fun getViewTypeCount(): Int {
+            return if (createEnabled) {
+                2
+            } else {
+                1
+            }
+        }
     }
 
     companion object {

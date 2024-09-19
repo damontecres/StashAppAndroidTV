@@ -10,8 +10,8 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
 import android.widget.Adapter
-import android.widget.ArrayAdapter
 import android.widget.FrameLayout
+import android.widget.ListAdapter
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -629,7 +629,7 @@ fun View.animateToInvisible(
  */
 fun getMaxMeasuredWidth(
     context: Context,
-    adapter: ArrayAdapter<String>,
+    adapter: ListAdapter,
     maxWidth: Int? = null,
     maxWidthFraction: Double? = 0.4,
 ): Int {
@@ -644,9 +644,6 @@ fun getMaxMeasuredWidth(
             Log.w(Constants.TAG, "maxWidthFraction is not null, but couldn't get window size")
             Int.MAX_VALUE
         }
-    if (adapter.viewTypeCount != 1) {
-        throw IllegalStateException("Adapter creates more than 1 type of view")
-    }
 
     val tempParent = FrameLayout(context)
     var maxMeasuredWidth = 0
