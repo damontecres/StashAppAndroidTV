@@ -8,25 +8,21 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.filter.CreateFilterActivity.Companion.MODIFIER_OFFSET
+import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
-import com.github.damontecres.stashapp.filter.extractDescription
-import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.views.getString
 
 class MultiCriterionFragment(
     val dataType: DataType,
     val filterOption: FilterOption<StashDataFilter, MultiCriterionInput>,
-    items: Map<String, StashData>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     private var curVal = MultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
-    private val mutableItems = items.toMutableMap()
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
@@ -92,13 +88,12 @@ class MultiCriterionFragment(
             )
             addAll(
                 ids.mapIndexed { index, id ->
-                    val item = mutableItems[id]!!
-                    val title = extractTitle(item)
-                    val desc = extractDescription(item)
+                    val nameDesc =
+                        viewModel.storedItems[CreateFilterViewModel.DataTypeId(dataType, id)]
                     GuidedAction.Builder(requireContext())
                         .id(INCLUDE_OFFSET + index)
-                        .title(title)
-                        .description(desc)
+                        .title(nameDesc?.name)
+                        .description(nameDesc?.description)
                         .build()
                 }.sortedBy { it.title.toString() },
             )
@@ -144,13 +139,10 @@ class MultiCriterionFragment(
                             SearchPickerFragment(dataType) { newItem ->
                                 Log.v(TAG, "Adding ${newItem.id}")
                                 viewModel.store(dataType, newItem)
-                                mutableItems[newItem.id] = newItem
                                 val list = curVal.value.getOrNull()?.toMutableList() ?: ArrayList()
                                 if (!list.contains(newItem.id)) {
                                     list.add(newItem.id)
-                                    val newInput = curVal.copy(value = Optional.present(list))
-                                    Log.v(TAG, "newInput=$newInput")
-                                    viewModel.updateFilter(filterOption, newInput)
+                                    curVal = curVal.copy(value = Optional.present(list))
                                     val action = findActionById(INCLUDE_LIST)
                                     action.subActions = createItemList(list)
                                     action.description =

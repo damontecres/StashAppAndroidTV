@@ -5,7 +5,6 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
-import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
@@ -19,9 +18,7 @@ import com.github.damontecres.stashapp.filter.picker.MultiCriterionFragment
 import com.github.damontecres.stashapp.filter.picker.RatingPickerFragment
 import com.github.damontecres.stashapp.filter.picker.StringPickerFragment
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import kotlinx.coroutines.launch
 
 class CreateObjectFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
@@ -126,42 +123,22 @@ class CreateObjectFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragme
 
                         MultiCriterionInput::class -> {
                             filterOption as FilterOption<StashDataFilter, MultiCriterionInput>
-                            val value = viewModel.getValue(filterOption)
-                            val ids =
-                                value?.value?.getOrNull().orEmpty() +
-                                    value?.excludes?.getOrNull().orEmpty()
-                            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                                val items =
-                                    queryEngine.getByIds(filterOption.dataType!!, ids)
-                                        .associateBy { it.id }
-                                nextStep(
-                                    MultiCriterionFragment(
-                                        filterOption.dataType,
-                                        filterOption,
-                                        items,
-                                    ),
-                                )
-                            }
+                            nextStep(
+                                MultiCriterionFragment(
+                                    filterOption.dataType!!,
+                                    filterOption,
+                                ),
+                            )
                         }
 
                         HierarchicalMultiCriterionInput::class -> {
                             filterOption as FilterOption<StashDataFilter, HierarchicalMultiCriterionInput>
-                            val value = viewModel.getValue(filterOption)
-                            val ids =
-                                value?.value?.getOrNull().orEmpty() +
-                                    value?.excludes?.getOrNull().orEmpty()
-                            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                                val items =
-                                    queryEngine.getByIds(filterOption.dataType!!, ids)
-                                        .associateBy { it.id }
-                                nextStep(
-                                    HierarchicalMultiCriterionFragment(
-                                        filterOption.dataType,
-                                        filterOption,
-                                        items,
-                                    ),
-                                )
-                            }
+                            nextStep(
+                                HierarchicalMultiCriterionFragment(
+                                    filterOption.dataType!!,
+                                    filterOption,
+                                ),
+                            )
                         }
 
                         else -> TODO()
