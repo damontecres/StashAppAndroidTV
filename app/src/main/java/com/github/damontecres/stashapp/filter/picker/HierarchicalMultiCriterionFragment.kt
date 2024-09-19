@@ -86,6 +86,24 @@ class HierarchicalMultiCriterionFragment(
                 .title(getString(R.string.stashapp_actions_save))
                 .build(),
         )
+
+        if (viewModel.getValue(filterOption) != null) {
+            actions.add(
+                GuidedAction.Builder(requireContext())
+                    .id(ACTION_ID_REMOVE)
+                    .hasNext(true)
+                    .title(getString(R.string.stashapp_actions_remove))
+                    .build(),
+            )
+        }
+
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(GuidedAction.ACTION_ID_CANCEL)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_actions_cancel))
+                .build(),
+        )
     }
 
     private fun createItemList(ids: List<String>): List<GuidedAction> =
@@ -115,6 +133,9 @@ class HierarchicalMultiCriterionFragment(
             parentFragmentManager.popBackStack()
         } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
             parentFragmentManager.popBackStack()
+        } else if (action.id == ACTION_ID_REMOVE) {
+            viewModel.updateFilter(filterOption, null)
+            parentFragmentManager.popBackStack()
         }
     }
 
@@ -140,35 +161,30 @@ class HierarchicalMultiCriterionFragment(
             action.description = "${list.size} ${getString(dataType.pluralStringId)}"
             notifyActionChanged(findActionPositionById(INCLUDE_LIST))
             return true
-        } else {
-            when (action.id) {
-                ADD_INCLUDE_ITEM -> {
-                    // Add a new item
-                    requireActivity().supportFragmentManager.commit {
-                        addToBackStack("picker")
-                        replace(
-                            android.R.id.content,
-                            SearchPickerFragment(dataType) { newItem ->
-                                Log.v(TAG, "Adding ${newItem.id}")
-                                viewModel.store(dataType, newItem)
-                                val list = curVal.value.getOrNull()?.toMutableList() ?: ArrayList()
-                                if (!list.contains(newItem.id)) {
-                                    list.add(newItem.id)
-                                    curVal = curVal.copy(value = Optional.present(list))
-                                    val action = findActionById(INCLUDE_LIST)
-                                    action.subActions = createItemList(list)
-                                    action.description =
-                                        "${list.size} ${getString(dataType.pluralStringId)}"
-                                    notifyActionChanged(findActionPositionById(INCLUDE_LIST))
-                                }
-                            },
-                        )
-                    }
-                }
-                ADD_EXCLUDE_ITEM -> {
-                    TODO()
-                }
+        } else if (action.id == ADD_INCLUDE_ITEM) {
+            // Add a new item
+            requireActivity().supportFragmentManager.commit {
+                addToBackStack("picker")
+                replace(
+                    android.R.id.content,
+                    SearchPickerFragment(dataType) { newItem ->
+                        Log.v(TAG, "Adding ${newItem.id}")
+                        viewModel.store(dataType, newItem)
+                        val list = curVal.value.getOrNull()?.toMutableList() ?: ArrayList()
+                        if (!list.contains(newItem.id)) {
+                            list.add(newItem.id)
+                            curVal = curVal.copy(value = Optional.present(list))
+                            val action = findActionById(INCLUDE_LIST)
+                            action.subActions = createItemList(list)
+                            action.description =
+                                "${list.size} ${getString(dataType.pluralStringId)}"
+                            notifyActionChanged(findActionPositionById(INCLUDE_LIST))
+                        }
+                    },
+                )
             }
+        } else if (action.id == ADD_EXCLUDE_ITEM) {
+            TODO()
         }
         return false
     }

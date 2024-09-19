@@ -75,7 +75,7 @@ class CreateObjectFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragme
             GuidedAction.Builder(requireContext())
                 .id(SUBMIT)
                 .hasNext(true)
-                .title(getString(R.string.stashapp_actions_submit))
+                .title(getString(R.string.stashapp_actions_continue))
                 .build(),
         )
     }

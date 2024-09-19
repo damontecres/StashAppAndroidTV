@@ -90,6 +90,7 @@ class FilterWriter(private val queryEngine: QueryEngine) {
             mapOf(
                 "performers" to DataType.PERFORMER,
                 "tags" to DataType.TAG,
+                "performer_tags" to DataType.TAG,
                 "studios" to DataType.STUDIO,
                 "movies" to DataType.MOVIE,
                 "groups" to DataType.MOVIE,

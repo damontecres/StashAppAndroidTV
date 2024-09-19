@@ -89,6 +89,16 @@ class FloatPickerFragment(
                 .build(),
         )
 
+        if (viewModel.getValue(filterOption) != null) {
+            actions.add(
+                GuidedAction.Builder(requireContext())
+                    .id(ACTION_ID_REMOVE)
+                    .hasNext(true)
+                    .title(getString(R.string.stashapp_actions_remove))
+                    .build(),
+            )
+        }
+
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_CANCEL)
@@ -147,6 +157,9 @@ class FloatPickerFragment(
             viewModel.updateFilter(filterOption, newValue)
             parentFragmentManager.popBackStack()
         } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
+            parentFragmentManager.popBackStack()
+        } else if (action.id == ACTION_ID_REMOVE) {
+            viewModel.updateFilter(filterOption, null)
             parentFragmentManager.popBackStack()
         }
     }

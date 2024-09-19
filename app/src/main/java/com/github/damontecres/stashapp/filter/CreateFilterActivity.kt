@@ -73,5 +73,9 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
             findActionById(GuidedAction.ACTION_ID_FINISH).isEnabled = enabled
             notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_FINISH))
         }
+
+        companion object {
+            const val ACTION_ID_REMOVE = -234L
+        }
     }
 }
