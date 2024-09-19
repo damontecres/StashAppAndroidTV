@@ -11,7 +11,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
-import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.filter.CreateFilterGuidedStepFragment
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 
@@ -20,7 +20,7 @@ import com.github.damontecres.stashapp.views.getString
  */
 class FloatPickerFragment(
     private val filterOption: FilterOption<StashDataFilter, FloatCriterionInput>,
-) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+) : CreateFilterGuidedStepFragment() {
     private var curVal: FloatCriterionInput? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {

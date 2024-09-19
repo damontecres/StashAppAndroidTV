@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
  *
  * Assumes that [CreateFilterViewModel.initialize] has been called already
  */
-class CreateFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+class CreateFilterStep : CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {

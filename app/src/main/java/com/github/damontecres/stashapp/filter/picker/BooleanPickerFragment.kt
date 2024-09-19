@@ -6,7 +6,7 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.StashDataFilter
-import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.filter.CreateFilterGuidedStepFragment
 import com.github.damontecres.stashapp.filter.FilterOption
 
 /**
@@ -14,7 +14,7 @@ import com.github.damontecres.stashapp.filter.FilterOption
  */
 class BooleanPickerFragment(
     private val filterOption: FilterOption<StashDataFilter, Boolean>,
-) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+) : CreateFilterGuidedStepFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),

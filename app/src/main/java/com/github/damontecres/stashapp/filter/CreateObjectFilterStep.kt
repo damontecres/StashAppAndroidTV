@@ -22,7 +22,7 @@ import com.github.damontecres.stashapp.filter.picker.StringPickerFragment
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 
-class CreateObjectFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {

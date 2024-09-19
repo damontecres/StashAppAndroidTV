@@ -14,7 +14,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 class CreateFindFilterFragment(
     val dataType: DataType,
     private var currFindFilter: StashFindFilter,
-) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+) : CreateFilterGuidedStepFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
             getString(R.string.sort_by),

@@ -11,7 +11,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
-import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.filter.CreateFilterGuidedStepFragment
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 import java.text.ParseException
@@ -24,7 +24,7 @@ import java.util.Locale
  */
 class DatePickerFragment(
     private val filterOption: FilterOption<StashDataFilter, DateCriterionInput>,
-) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+) : CreateFilterGuidedStepFragment() {
     private var curVal: DateCriterionInput? = null
 
     private val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)

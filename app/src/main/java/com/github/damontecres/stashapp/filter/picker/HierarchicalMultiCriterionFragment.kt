@@ -12,7 +12,7 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.filter.CreateFilterGuidedStepFragment
 import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
@@ -20,7 +20,7 @@ import com.github.damontecres.stashapp.views.getString
 class HierarchicalMultiCriterionFragment(
     private val dataType: DataType,
     private val filterOption: FilterOption<StashDataFilter, HierarchicalMultiCriterionInput>,
-) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
+) : CreateFilterGuidedStepFragment() {
     private var curVal = HierarchicalMultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
