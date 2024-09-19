@@ -43,7 +43,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 viewModel.dataType.value!!.filterType,
                 viewModel.objectFilter.value!!,
                 viewModel::lookupIds,
-            )
+            ).ifBlank { "No filters set" }
         return GuidanceStylist.Guidance(
             "Create filter",
             text,
@@ -92,7 +92,15 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
             GuidedAction.Builder(requireContext())
                 .id(SUBMIT)
                 .hasNext(true)
-                .title(getString(R.string.stashapp_actions_submit))
+                .title("Submit without saving")
+                .build(),
+        )
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(SAVE_SUBMIT)
+                .hasNext(true)
+                .enabled(false)
+                .title("Save and submit")
                 .build(),
         )
     }
@@ -103,7 +111,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
             nextStep(CreateObjectFilterStep())
         } else if (action.id == SORT_OPTION) {
             nextStep(CreateFindFilterFragment(dataType, viewModel.findFilter.value!!))
-        } else if (action.id == SUBMIT) {
+        } else if (action.id == SUBMIT || action.id == SAVE_SUBMIT) {
             // Ready to load the filter!
             val filterNameAction = findActionById(FILTER_NAME)
             val objectFilter = viewModel.objectFilter.value!!
@@ -116,7 +124,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 )
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 // If there is a name, try to save it to the server
-                if (filterArgs.name.isNotNullOrBlank()) {
+                if (action.id == SAVE_SUBMIT && filterArgs.name.isNotNullOrBlank()) {
                     // Save it
                     val filterWriter = FilterWriter(QueryEngine(StashServer.requireCurrentServer()))
                     val findFilter =
@@ -154,13 +162,9 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
         if (action.id == FILTER_NAME) {
-            val submitAction = findActionById(SUBMIT)
-            if (action.description.isNotNullOrBlank()) {
-                submitAction.title = "Save & submit"
-            } else {
-                submitAction.title = "Submit"
-            }
-            notifyActionChanged(findActionPositionById(SUBMIT))
+            val submitAction = findActionById(SAVE_SUBMIT)
+            submitAction.isEnabled = action.description.isNotNullOrBlank()
+            notifyActionChanged(findActionPositionById(SAVE_SUBMIT))
         }
         return GuidedAction.ACTION_ID_NEXT
     }
@@ -168,9 +172,10 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
     companion object {
         private val TAG = CreateFilterStep::class.simpleName
 
-        private const val SUBMIT = -1L
-        private const val FILTER_NAME = -2L
-        private const val FILTER_OPTIONS = -3L
-        private const val SORT_OPTION = -4L
+        private const val SAVE_SUBMIT = -1L
+        private const val SUBMIT = -2L
+        private const val FILTER_NAME = -3L
+        private const val FILTER_OPTIONS = -4L
+        private const val SORT_OPTION = -5L
     }
 }
