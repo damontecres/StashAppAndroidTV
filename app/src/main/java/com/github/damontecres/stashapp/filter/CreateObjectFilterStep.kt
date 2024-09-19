@@ -6,12 +6,14 @@ import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.filter.picker.BooleanPickerFragment
+import com.github.damontecres.stashapp.filter.picker.DatePickerFragment
 import com.github.damontecres.stashapp.filter.picker.HierarchicalMultiCriterionFragment
 import com.github.damontecres.stashapp.filter.picker.IntPickerFragment
 import com.github.damontecres.stashapp.filter.picker.MultiCriterionFragment
@@ -119,6 +121,11 @@ class CreateObjectFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragme
                         StringCriterionInput::class -> {
                             filterOption as FilterOption<StashDataFilter, StringCriterionInput>
                             nextStep(StringPickerFragment(filterOption))
+                        }
+
+                        DateCriterionInput::class -> {
+                            filterOption as FilterOption<StashDataFilter, DateCriterionInput>
+                            nextStep(DatePickerFragment(filterOption))
                         }
 
                         MultiCriterionInput::class -> {

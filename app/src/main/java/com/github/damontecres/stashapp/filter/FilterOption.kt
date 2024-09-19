@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.filter
 import androidx.annotation.StringRes
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -129,6 +130,22 @@ private val SceneFilterOptions =
             IntCriterionInput::class,
             { it.play_count },
             { filter, value -> filter.copy(play_count = value) },
+        ),
+        FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
+            "performer_tags",
+            R.string.stashapp_performer_tags,
+            DataType.TAG,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.performer_tags },
+            { filter, value -> filter.copy(performer_tags = value) },
+        ),
+        FilterOption<SceneFilterType, DateCriterionInput>(
+            "date",
+            R.string.stashapp_date,
+            DataType.TAG,
+            DateCriterionInput::class,
+            { filter -> filter.date },
+            { filter, value -> filter.copy(date = value) },
         ),
     )
 
