@@ -315,6 +315,9 @@ class QueryEngine(
         type: DataType,
         ids: List<String>,
     ): List<StashData> {
+        if (ids.isEmpty()) {
+            return emptyList()
+        }
         return when (type) {
             DataType.SCENE -> findScenes(ids = ids)
             DataType.PERFORMER -> findPerformers(performerIds = ids)

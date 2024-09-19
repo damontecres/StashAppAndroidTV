@@ -31,6 +31,8 @@ import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.filter.output.FilterWriter
+import com.github.damontecres.stashapp.filter.output.getAllIds
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.getString
@@ -91,13 +93,11 @@ fun findFilterSummary(
 
 fun filterSummary(
     f: MultiCriterionInput,
-    itemMap: Map<String, StashData>,
+    itemMap: Map<String, CreateFilterViewModel.NameDescription?>,
 ): String {
     val modStr = f.modifier.getString(StashApplication.getApplication())
     val value = f.value.getOrNull()
-    // TODO
-    // val resolvedTitles = value?.map { extractTitle(itemMap[it]!!) }.orEmpty()
-    val resolvedTitles = value.orEmpty()
+    val resolvedTitles = value?.map { itemMap[it]?.name ?: it }.orEmpty()
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS -> resolvedTitles.firstOrNull() ?: ""
@@ -117,13 +117,11 @@ fun filterSummary(
 
 fun filterSummary(
     f: HierarchicalMultiCriterionInput,
-    itemMap: Map<String, StashData>,
+    itemMap: Map<String, CreateFilterViewModel.NameDescription?>,
 ): String {
     val modStr = f.modifier.getString(StashApplication.getApplication())
     val value = f.value.getOrNull()
-    // TODO
-    // val resolvedTitles = value?.map { extractTitle(itemMap[it]!!) }.orEmpty()
-    val resolvedTitles = value.orEmpty()
+    val resolvedTitles = value?.map { itemMap[it]?.name ?: it }.orEmpty()
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS -> resolvedTitles.firstOrNull() ?: ""
@@ -297,7 +295,11 @@ fun filterSummary(f: DateCriterionInput): String {
     }
 }
 
-fun filterSummary(value: Any): String {
+fun filterSummary(
+    name: String,
+    value: Any,
+    idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
+): String {
     return when (value) {
         is IntCriterionInput -> filterSummary(value)
         is FloatCriterionInput -> filterSummary(value)
@@ -312,13 +314,14 @@ fun filterSummary(value: Any): String {
 
         is Boolean, String -> value.toString()
 
-        // TODO look up IDs
         is MultiCriterionInput -> {
-            filterSummary(value, mapOf())
+            val dataType = FilterWriter.TYPE_MAPPING[name]!!
+            filterSummary(value, idLookup(dataType, value.getAllIds()))
         }
 
         is HierarchicalMultiCriterionInput -> {
-            filterSummary(value, mapOf())
+            val dataType = FilterWriter.TYPE_MAPPING[name]!!
+            filterSummary(value, idLookup(dataType, value.getAllIds()))
         }
 
         // TODO
@@ -329,13 +332,14 @@ fun filterSummary(value: Any): String {
 fun filterSummary(
     type: KClass<in StashDataFilter>,
     f: StashDataFilter,
+    idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
 ): String {
     val params =
         type.declaredMemberProperties.mapNotNull { param ->
             val obj = param.get(f) as Optional<*>
             val value = obj.getOrNull()
             if (value != null) {
-                val valueStr = filterSummary(value)
+                val valueStr = filterSummary(param.name, value, idLookup)
                 param.name to valueStr
             } else {
                 null
@@ -346,4 +350,31 @@ fun filterSummary(
             "${it.first}: ${it.second}"
         }
     return text
+}
+
+fun getIdsByDataType(
+    type: KClass<in StashDataFilter>,
+    f: StashDataFilter,
+): Map<DataType, List<String>> {
+    val result =
+        buildMap {
+            type.declaredMemberProperties.forEach { param ->
+                val obj = param.get(f) as Optional<*>
+                val value = obj.getOrNull()
+                if (value != null) {
+                    when (value) {
+                        is MultiCriterionInput -> {
+                            val dataType = FilterWriter.TYPE_MAPPING[param.name]!!
+                            put(dataType, value.getAllIds())
+                        }
+
+                        is HierarchicalMultiCriterionInput -> {
+                            val dataType = FilterWriter.TYPE_MAPPING[param.name]!!
+                            put(dataType, value.getAllIds())
+                        }
+                    }
+                }
+            }
+        }
+    return result
 }

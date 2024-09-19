@@ -20,23 +20,19 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
         if (savedInstanceState == null) {
             val dataType = intent.getDataType()
             val startingFilter = intent.getFilterArgs(INTENT_STARTING_FILTER)
-            viewModel.initialize(dataType, startingFilter?.objectFilter, startingFilter?.findFilter)
-
-            GuidedStepSupportFragment.addAsRoot(
-                this,
-                CreateFilterStep(),
-                android.R.id.content,
-            )
+            viewModel.initialize(
+                dataType,
+                startingFilter?.objectFilter,
+                startingFilter?.findFilter,
+            ) {
+                GuidedStepSupportFragment.addAsRoot(
+                    this,
+                    CreateFilterStep(),
+                    android.R.id.content,
+                )
+            }
         }
     }
-
-//    override fun onPause() {
-//        super.onPause()
-//        if (isFinishing) {
-//            val intent = Intent(this, FilterListActivity::class.java)
-//            startActivity(intent)
-//        }
-//    }
 
     companion object {
         private const val TAG = "CreateFilterActivity"

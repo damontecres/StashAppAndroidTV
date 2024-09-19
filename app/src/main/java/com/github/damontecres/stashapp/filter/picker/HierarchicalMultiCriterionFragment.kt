@@ -154,6 +154,7 @@ class HierarchicalMultiCriterionFragment(
                             android.R.id.content,
                             SearchPickerFragment(dataType) { newItem ->
                                 Log.v(TAG, "Adding ${newItem.id}")
+                                viewModel.store(dataType, newItem)
                                 mutableItems[newItem.id] = newItem
                                 val list = curVal.value.getOrNull()?.toMutableList() ?: ArrayList()
                                 if (!list.contains(newItem.id)) {

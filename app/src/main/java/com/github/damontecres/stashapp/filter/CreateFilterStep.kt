@@ -33,8 +33,12 @@ class CreateFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     }
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        val text = filterSummary(viewModel.dataType.value!!.filterType, viewModel.filter.value!!)
-
+        val text =
+            filterSummary(
+                viewModel.dataType.value!!.filterType,
+                viewModel.filter.value!!,
+                viewModel::lookupIds,
+            )
         return GuidanceStylist.Guidance(
             "Create filter",
             text,

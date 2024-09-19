@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.data.DataType
 import kotlin.reflect.KClass
 
 data class FilterOption<FilterType : StashDataFilter, ValueType : Any>(
+    val name: String,
     @StringRes val nameStringId: Int,
     val dataType: DataType?,
     val type: KClass<ValueType>,
@@ -24,6 +25,7 @@ data class FilterOption<FilterType : StashDataFilter, ValueType : Any>(
 private val SceneFilterOptions =
     listOf(
         FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
+            "tags",
             R.string.stashapp_tags,
             DataType.TAG,
             HierarchicalMultiCriterionInput::class,
@@ -31,6 +33,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(tags = value) },
         ),
         FilterOption<SceneFilterType, MultiCriterionInput>(
+            "performers",
             R.string.stashapp_performers,
             DataType.PERFORMER,
             MultiCriterionInput::class,
@@ -38,6 +41,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(performers = value) },
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
+            "performer_count",
             R.string.stashapp_performer_count,
             null,
             IntCriterionInput::class,
@@ -45,6 +49,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(performer_count = value) },
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
+            "performer_age",
             R.string.stashapp_performer_age,
             null,
             IntCriterionInput::class,
@@ -52,6 +57,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(performer_age = value) },
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
+            "o_counter",
             R.string.stashapp_o_counter,
             null,
             IntCriterionInput::class,
@@ -59,6 +65,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(o_counter = value) },
         ),
         FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
+            "studios",
             R.string.stashapp_studios,
             DataType.STUDIO,
             HierarchicalMultiCriterionInput::class,
@@ -66,6 +73,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(studios = value) },
         ),
         FilterOption<SceneFilterType, MultiCriterionInput>(
+            "movies",
             R.string.stashapp_movies,
             DataType.MOVIE,
             MultiCriterionInput::class,
@@ -73,6 +81,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(movies = value) },
         ),
         FilterOption<SceneFilterType, Boolean>(
+            "performer_favorite",
             R.string.stashapp_performer_favorite,
             null,
             Boolean::class,
@@ -80,6 +89,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(performer_favorite = value) },
         ),
         FilterOption<SceneFilterType, StringCriterionInput>(
+            "title",
             R.string.stashapp_title,
             null,
             StringCriterionInput::class,
@@ -87,6 +97,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(title = value) },
         ),
         FilterOption<SceneFilterType, StringCriterionInput>(
+            "director",
             R.string.stashapp_director,
             null,
             StringCriterionInput::class,
@@ -94,6 +105,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(director = value) },
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
+            "rating100",
             R.string.stashapp_rating,
             null,
             IntCriterionInput::class,
@@ -101,6 +113,7 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(rating100 = value) },
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
+            "play_count",
             R.string.stashapp_play_count,
             null,
             IntCriterionInput::class,
@@ -112,6 +125,7 @@ private val SceneFilterOptions =
 private val PerformerFilterOptions =
     listOf(
         FilterOption<PerformerFilterType, StringCriterionInput>(
+            "name",
             R.string.stashapp_name,
             null,
             StringCriterionInput::class,
@@ -119,6 +133,7 @@ private val PerformerFilterOptions =
             { filter, value -> filter.copy(name = value) },
         ),
         FilterOption<PerformerFilterType, HierarchicalMultiCriterionInput>(
+            "tags",
             R.string.stashapp_tags,
             DataType.TAG,
             HierarchicalMultiCriterionInput::class,
