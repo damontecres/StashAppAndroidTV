@@ -12,7 +12,6 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
-import com.github.damontecres.stashapp.filter.CreateFilterActivity.Companion.MODIFIER_OFFSET
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 
@@ -169,11 +168,8 @@ class RatingPickerFragment(
 
             viewModel.updateFilter(filterOption, newValue)
             parentFragmentManager.popBackStack()
-        } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
-            parentFragmentManager.popBackStack()
-        } else if (action.id == ACTION_ID_REMOVE) {
-            viewModel.updateFilter(filterOption, null)
-            parentFragmentManager.popBackStack()
+        } else {
+            onStandardActionClicked(action, filterOption)
         }
     }
 

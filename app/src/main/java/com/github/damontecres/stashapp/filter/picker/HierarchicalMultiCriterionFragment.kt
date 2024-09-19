@@ -79,31 +79,7 @@ class HierarchicalMultiCriterionFragment(
         )
         // TODO excludes
 
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(GuidedAction.ACTION_ID_FINISH)
-                .hasNext(true)
-                .title(getString(R.string.stashapp_actions_save))
-                .build(),
-        )
-
-        if (viewModel.getValue(filterOption) != null) {
-            actions.add(
-                GuidedAction.Builder(requireContext())
-                    .id(ACTION_ID_REMOVE)
-                    .hasNext(true)
-                    .title(getString(R.string.stashapp_actions_remove))
-                    .build(),
-            )
-        }
-
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(GuidedAction.ACTION_ID_CANCEL)
-                .hasNext(true)
-                .title(getString(R.string.stashapp_actions_cancel))
-                .build(),
-        )
+        addStandardActions(actions, filterOption)
     }
 
     private fun createItemList(ids: List<String>): List<GuidedAction> =
@@ -131,11 +107,8 @@ class HierarchicalMultiCriterionFragment(
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
             viewModel.updateFilter(filterOption, curVal)
             parentFragmentManager.popBackStack()
-        } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
-            parentFragmentManager.popBackStack()
-        } else if (action.id == ACTION_ID_REMOVE) {
-            viewModel.updateFilter(filterOption, null)
-            parentFragmentManager.popBackStack()
+        } else {
+            onStandardActionClicked(action, filterOption)
         }
     }
 
@@ -200,6 +173,5 @@ class HierarchicalMultiCriterionFragment(
 
         private const val INCLUDE_OFFSET = 1_000_000L
         private const val EXCLUDE_OFFSET = 2_000_000L
-        private const val MODIFIER_OFFSET = 3_000_000L
     }
 }

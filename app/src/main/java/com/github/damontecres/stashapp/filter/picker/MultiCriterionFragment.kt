@@ -13,7 +13,6 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
-import com.github.damontecres.stashapp.filter.CreateFilterActivity.Companion.MODIFIER_OFFSET
 import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
@@ -69,31 +68,7 @@ class MultiCriterionFragment(
         )
         // TODO excludes
 
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(GuidedAction.ACTION_ID_FINISH)
-                .hasNext(true)
-                .title(getString(R.string.stashapp_actions_save))
-                .build(),
-        )
-
-        if (viewModel.getValue(filterOption) != null) {
-            actions.add(
-                GuidedAction.Builder(requireContext())
-                    .id(ACTION_ID_REMOVE)
-                    .hasNext(true)
-                    .title(getString(R.string.stashapp_actions_remove))
-                    .build(),
-            )
-        }
-
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(GuidedAction.ACTION_ID_CANCEL)
-                .hasNext(true)
-                .title(getString(R.string.stashapp_actions_cancel))
-                .build(),
-        )
+        addStandardActions(actions, filterOption)
     }
 
     private fun createItemList(ids: List<String>): List<GuidedAction> =
@@ -121,11 +96,8 @@ class MultiCriterionFragment(
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
             viewModel.updateFilter(filterOption, curVal)
             parentFragmentManager.popBackStack()
-        } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
-            parentFragmentManager.popBackStack()
-        } else if (action.id == ACTION_ID_REMOVE) {
-            viewModel.updateFilter(filterOption, null)
-            parentFragmentManager.popBackStack()
+        } else {
+            onStandardActionClicked(action, filterOption)
         }
     }
 
