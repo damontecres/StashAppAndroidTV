@@ -5,70 +5,29 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
-import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
+import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
+import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
+import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
+import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
+import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.SortAndDirection
-import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.QueryEngine
 import kotlin.reflect.full.declaredMemberProperties
 
+/**
+ * Converts a [StashDataFilter] into the JSON (Map) representation
+ *
+ * @param queryEngine The webUI requires a "label" for some IDs, so this is used to query for those
+ */
 class FilterWriter(private val queryEngine: QueryEngine) {
-    private suspend fun convert(filter: FilterArgs): Map<String, Any> {
-        val sortAndDirection = filter.findFilter?.sortAndDirection ?: filter.dataType.defaultSort
-        val objectFilter =
-            when (filter.objectFilter) {
-                is SceneFilterType -> convertFilter(filter.objectFilter)
-                null -> null
-                else -> TODO()
-            }
-        return buildMap {
-            put("name", filter.name!!)
-            put("mode", filter.dataType.filterMode.rawValue)
-            put(
-                "find_filter",
-                buildMap {
-                    put("direction", sortAndDirection.direction.rawValue)
-                    put("sort", sortAndDirection.sort)
-                    put("q", "")
-                    put("page", 1)
-                    put("per_page", 40)
-                },
-            )
-            if (objectFilter != null) {
-                put("object_filter", objectFilter)
-            }
-            put(
-                "ui_options",
-                buildMap {
-                    put("display_mode", 0)
-                    put("zoom_index", 1)
-                },
-            )
-        }
-    }
-
-    fun uiOptions() =
-        buildMap {
-            put("display_mode", 0)
-            put("zoom_index", 1)
-        }
-
-    fun convertFindFilter(sortAndDirection: SortAndDirection): Map<String, Any> {
-        return buildMap {
-            put("direction", sortAndDirection.direction.rawValue)
-            put("sort", sortAndDirection.sort)
-            put("q", "")
-            put("page", 1)
-            put("per_page", 40)
-        }
-    }
-
     suspend fun convertFilter(filter: StashDataFilter): Map<String, Any> {
         val objectFilter =
             buildMap<String, Any> {
@@ -82,7 +41,15 @@ class FilterWriter(private val queryEngine: QueryEngine) {
                                 is IntCriterionInput -> o.toMap()
                                 is FloatCriterionInput -> o.toMap()
                                 is StringCriterionInput -> o.toMap()
-                                is Boolean -> {
+                                is PhashDistanceCriterionInput -> o.toMap()
+                                is PHashDuplicationCriterionInput -> o.toMap()
+                                is ResolutionCriterionInput -> o.toMap()
+                                is OrientationCriterionInput -> o.toMap()
+                                is StashIDCriterionInput -> o.toMap()
+                                is TimestampCriterionInput -> o.toMap()
+                                is DateCriterionInput -> o.toMap()
+
+                                is Boolean, String -> {
                                     mapOf(
                                         "value" to o.toString(),
                                         "modifier" to CriterionModifier.EQUALS.rawValue,
@@ -120,6 +87,13 @@ class FilterWriter(private val queryEngine: QueryEngine) {
             mapOf(
                 "performers" to DataType.PERFORMER,
                 "tags" to DataType.TAG,
+                "studios" to DataType.STUDIO,
+                "movies" to DataType.MOVIE,
+                "groups" to DataType.MOVIE,
+                "galleries" to DataType.GALLERY,
+                "images" to DataType.IMAGE,
+                "scene_markers" to DataType.MARKER,
+                "scenes" to DataType.SCENE,
             )
     }
 }
