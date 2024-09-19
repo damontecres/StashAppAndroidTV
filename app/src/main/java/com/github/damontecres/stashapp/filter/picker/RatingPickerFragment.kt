@@ -17,7 +17,7 @@ import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 
 class RatingPickerFragment(
-    val filterOption: FilterOption<StashDataFilter, IntCriterionInput>,
+    private val filterOption: FilterOption<StashDataFilter, IntCriterionInput>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     private var curVal: IntCriterionInput? = null
 
@@ -138,7 +138,7 @@ class RatingPickerFragment(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val curVal = filterOption.getter(viewModel.filter.value!!)
+            val curVal = filterOption.getter(viewModel.objectFilter.value!!)
             val newInt = findActionById(1L).description?.toString()?.toDouble()
             val modifier = curVal.getOrNull()?.modifier ?: CriterionModifier.EQUALS
 

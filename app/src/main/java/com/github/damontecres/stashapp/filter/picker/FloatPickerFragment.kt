@@ -16,13 +16,16 @@ import com.github.damontecres.stashapp.filter.CreateFilterActivity.Companion.MOD
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 
+/**
+ * Pick a decimal/float value
+ */
 class FloatPickerFragment(
-    val filterOption: FilterOption<StashDataFilter, FloatCriterionInput>,
+    private val filterOption: FilterOption<StashDataFilter, FloatCriterionInput>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     private var curVal: FloatCriterionInput? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
+        curVal = filterOption.getter(viewModel.objectFilter.value!!).getOrNull()
         super.onCreate(savedInstanceState)
     }
 
@@ -49,6 +52,7 @@ class FloatPickerFragment(
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))
                 .descriptionEditable(true)
+                // TODO handle signed vs not?
                 .descriptionEditInputType(
                     InputType.TYPE_CLASS_NUMBER or
                         InputType.TYPE_NUMBER_FLAG_SIGNED or

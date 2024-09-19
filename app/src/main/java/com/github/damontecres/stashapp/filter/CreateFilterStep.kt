@@ -24,6 +24,11 @@ import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
 import kotlinx.coroutines.launch
 
+/**
+ * The first step to create a new filter
+ *
+ * Assumes that [CreateFilterViewModel.initialize] has been called already
+ */
 class CreateFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
 
@@ -36,7 +41,7 @@ class CreateFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
         val text =
             filterSummary(
                 viewModel.dataType.value!!.filterType,
-                viewModel.filter.value!!,
+                viewModel.objectFilter.value!!,
                 viewModel::lookupIds,
             )
         return GuidanceStylist.Guidance(
@@ -99,8 +104,9 @@ class CreateFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
         } else if (action.id == SORT_OPTION) {
             nextStep(CreateFindFilterFragment(dataType, viewModel.findFilter.value!!))
         } else if (action.id == SUBMIT) {
+            // Ready to load the filter!
             val filterNameAction = findActionById(FILTER_NAME)
-            val objectFilter = viewModel.filter.value!!
+            val objectFilter = viewModel.objectFilter.value!!
             val filterArgs =
                 FilterArgs(
                     dataType = dataType,
@@ -109,6 +115,7 @@ class CreateFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
                     objectFilter = objectFilter,
                 )
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                // If there is a name, try to save it to the server
                 if (filterArgs.name.isNotNullOrBlank()) {
                     // Save it
                     val filterWriter = FilterWriter(QueryEngine(StashServer.requireCurrentServer()))
@@ -134,6 +141,7 @@ class CreateFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragment() {
                         )
                     Log.i(TAG, "New SavedFilter: ${newSavedFilter.id}")
                 }
+                // Finish & start the filter list activity
                 finishGuidedStepSupportFragments()
                 val intent =
                     Intent(requireContext(), FilterListActivity::class.java)

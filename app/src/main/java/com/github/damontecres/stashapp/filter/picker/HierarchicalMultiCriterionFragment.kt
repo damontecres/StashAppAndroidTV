@@ -18,15 +18,15 @@ import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 
 class HierarchicalMultiCriterionFragment(
-    val dataType: DataType,
-    val filterOption: FilterOption<StashDataFilter, HierarchicalMultiCriterionInput>,
+    private val dataType: DataType,
+    private val filterOption: FilterOption<StashDataFilter, HierarchicalMultiCriterionInput>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     private var curVal = HierarchicalMultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
-            "",
+            "Click to remove an item",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
@@ -37,7 +37,7 @@ class HierarchicalMultiCriterionFragment(
         savedInstanceState: Bundle?,
     ) {
         curVal = filterOption.getter.invoke(
-            viewModel.filter.value!!,
+            viewModel.objectFilter.value!!,
         ).getOrNull() ?: HierarchicalMultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
 
         val modifierOptions =
@@ -120,20 +120,20 @@ class HierarchicalMultiCriterionFragment(
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
         if (action.id >= MODIFIER_OFFSET) {
+            // Update the modifier
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
             curVal = curVal.copy(modifier = newModifier)
-                ?: HierarchicalMultiCriterionInput(modifier = newModifier)
             findActionById(MODIFIER).description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
             return true
         } else if (action.id >= EXCLUDE_OFFSET) {
             TODO()
         } else if (action.id >= INCLUDE_OFFSET) {
+            // Item was clicked, so remove it
             val index = action.id - INCLUDE_OFFSET
             val list = curVal.value.getOrThrow()!!.toMutableList()
             list.removeAt(index.toInt())
-            val newInput = curVal.copy(value = Optional.present(list))
-            viewModel.updateFilter(filterOption, newInput)
+            curVal = curVal.copy(value = Optional.present(list))
 
             val action = findActionById(INCLUDE_LIST)
             action.subActions = createItemList(list)
@@ -143,6 +143,7 @@ class HierarchicalMultiCriterionFragment(
         } else {
             when (action.id) {
                 ADD_INCLUDE_ITEM -> {
+                    // Add a new item
                     requireActivity().supportFragmentManager.commit {
                         addToBackStack("picker")
                         replace(

@@ -34,7 +34,7 @@ class IntPickerFragment(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
+        curVal = filterOption.getter(viewModel.objectFilter.value!!).getOrNull()
         val curInt = curVal?.value
         val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
@@ -88,6 +88,7 @@ class IntPickerFragment(
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
         if (action.id == 1L) {
+            // THe value was changed, so check if it valid or not
             val desc = action.description
             try {
                 if (desc != null) {

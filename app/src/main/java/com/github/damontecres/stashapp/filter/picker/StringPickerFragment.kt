@@ -16,7 +16,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.getString
 
 class StringPickerFragment(
-    val filterOption: FilterOption<StashDataFilter, StringCriterionInput>,
+    private val filterOption: FilterOption<StashDataFilter, StringCriterionInput>,
 ) : CreateFilterActivity.CreateFilterGuidedStepFragment() {
     private var curVal: StringCriterionInput? = null
 
@@ -33,7 +33,7 @@ class StringPickerFragment(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        curVal = filterOption.getter(viewModel.filter.value!!).getOrNull()
+        curVal = filterOption.getter(viewModel.objectFilter.value!!).getOrNull()
         val currentString = curVal?.value
         val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
 

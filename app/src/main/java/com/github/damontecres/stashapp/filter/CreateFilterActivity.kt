@@ -25,6 +25,7 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
                 startingFilter?.objectFilter,
                 startingFilter?.findFilter,
             ) {
+                // This occurs after the items are loaded for labels
                 GuidedStepSupportFragment.addAsRoot(
                     this,
                     CreateFilterStep(),
@@ -52,6 +53,9 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
             return R.style.Theme_StashAppAndroidTV_GuidedStep
         }
 
+        /**
+         * Create a [GuidedAction] for a [CriterionModifier]
+         */
         protected fun modifierAction(modifier: CriterionModifier): GuidedAction {
             return GuidedAction.Builder(requireContext())
                 .id(MODIFIER_OFFSET + modifier.ordinal)
@@ -60,6 +64,11 @@ class CreateFilterActivity : FragmentActivity(R.layout.frame_layout) {
                 .build()
         }
 
+        /**
+         * Enable or disable the "finish" [GuidedAction].
+         *
+         * The step must define a [GuidedAction] with ID=[GuidedAction.ACTION_ID_FINISH] or this will throw an exception.
+         */
         protected fun enableFinish(enabled: Boolean) {
             findActionById(GuidedAction.ACTION_ID_FINISH).isEnabled = enabled
             notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_FINISH))

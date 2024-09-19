@@ -13,6 +13,16 @@ import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import kotlin.reflect.KClass
 
+/**
+ * A way to filter a particular [DataType]
+ *
+ * @param name the key for the filter
+ * @param nameStringId ID for human readable name
+ * @param dataType the type of this sub-filter, not the overarching filter
+ * @param type the type of this sub-filter
+ * @param getter how to get the value of this from the filter
+ * @param setter how to set the value of this on the filter (returning a copy)
+ */
 data class FilterOption<FilterType : StashDataFilter, ValueType : Any>(
     val name: String,
     @StringRes val nameStringId: Int,

@@ -32,7 +32,7 @@ class CreateObjectFilterStep : CreateFilterActivity.CreateFilterGuidedStepFragme
         val text =
             filterSummary(
                 viewModel.dataType.value!!.filterType,
-                viewModel.filter.value!!,
+                viewModel.objectFilter.value!!,
                 viewModel::lookupIds,
             )
         return GuidanceStylist.Guidance(

@@ -40,9 +40,12 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.properties.Delegates
 
+/**
+ * Similar to [com.github.damontecres.stashapp.SearchForFragment], search for an item of a specific [DataType]
+ */
 class SearchPickerFragment(
-    val dataType: DataType,
-    val addItem: (StashData) -> Unit,
+    private val dataType: DataType,
+    private val addItem: (StashData) -> Unit,
 ) : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
     private var query: String? = null
@@ -271,8 +274,6 @@ class SearchPickerFragment(
     companion object {
         const val TAG = "SearchForFragment"
 
-        const val ID_KEY = "id"
-        const val RESULT_ID_KEY = "resultId"
         const val TITLE_KEY = "title"
 
         private const val RESULTS_POS = 0

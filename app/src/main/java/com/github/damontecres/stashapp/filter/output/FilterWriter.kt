@@ -83,6 +83,9 @@ class FilterWriter(private val queryEngine: QueryEngine) {
     }
 
     companion object {
+        /**
+         * Map the name of a filter to a [DataType]. Not all filters have a [DataType] though!
+         */
         val TYPE_MAPPING =
             mapOf(
                 "performers" to DataType.PERFORMER,

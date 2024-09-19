@@ -27,7 +27,7 @@ class MultiCriterionFragment(
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
-            "",
+            "Click to remove an item",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
@@ -39,7 +39,7 @@ class MultiCriterionFragment(
     ) {
         curVal =
             filterOption.getter.invoke(
-                viewModel.filter.value!!,
+                viewModel.objectFilter.value!!,
             ).getOrNull() ?: MultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
 
         val modifierOptions =
@@ -121,8 +121,7 @@ class MultiCriterionFragment(
             val index = action.id - INCLUDE_OFFSET
             val list = curVal.value.getOrThrow()!!.toMutableList()
             list.removeAt(index.toInt())
-            val newInput = curVal.copy(value = Optional.present(list))
-            viewModel.updateFilter(filterOption, newInput)
+            curVal = curVal.copy(value = Optional.present(list))
 
             val action = findActionById(INCLUDE_LIST)
             action.subActions = createItemList(list)
