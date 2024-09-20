@@ -1,6 +1,9 @@
 package com.github.damontecres.stashapp.views
 
+import android.content.Context
 import android.os.Build
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.CriterionModifier
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -50,3 +53,21 @@ fun parseTimeToString(ts: Any?): String? {
 
 val String.fileNameFromPath
     get() = this.replace(Regex("""^.*[\\/]"""), "")
+
+fun CriterionModifier.getString(context: Context): String =
+    when (this) {
+        CriterionModifier.EQUALS -> context.getString(R.string.stashapp_criterion_modifier_equals)
+        CriterionModifier.NOT_EQUALS -> context.getString(R.string.stashapp_criterion_modifier_not_equals)
+        CriterionModifier.LESS_THAN -> context.getString(R.string.stashapp_criterion_modifier_less_than)
+        CriterionModifier.GREATER_THAN -> context.getString(R.string.stashapp_criterion_modifier_greater_than)
+        CriterionModifier.IS_NULL -> context.getString(R.string.stashapp_criterion_modifier_is_null)
+        CriterionModifier.NOT_NULL -> context.getString(R.string.stashapp_criterion_modifier_not_null)
+        CriterionModifier.INCLUDES_ALL -> context.getString(R.string.stashapp_criterion_modifier_includes_all)
+        CriterionModifier.INCLUDES -> context.getString(R.string.stashapp_criterion_modifier_includes)
+        CriterionModifier.EXCLUDES -> context.getString(R.string.stashapp_criterion_modifier_excludes)
+        CriterionModifier.MATCHES_REGEX -> context.getString(R.string.stashapp_criterion_modifier_matches_regex)
+        CriterionModifier.NOT_MATCHES_REGEX -> context.getString(R.string.stashapp_criterion_modifier_not_matches_regex)
+        CriterionModifier.BETWEEN -> context.getString(R.string.stashapp_criterion_modifier_between)
+        CriterionModifier.NOT_BETWEEN -> context.getString(R.string.stashapp_criterion_modifier_not_between)
+        CriterionModifier.UNKNOWN__ -> "Unknown"
+    }
