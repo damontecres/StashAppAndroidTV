@@ -330,24 +330,33 @@ fun filterSummary(
 }
 
 fun filterSummary(
+    dataType: DataType,
     type: KClass<in StashDataFilter>,
     f: StashDataFilter,
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
 ): String {
+    val filterOptionNames = FilterOptions[dataType]!!.associateBy { it.name }
     val params =
         type.declaredMemberProperties.mapNotNull { param ->
             val obj = param.get(f) as Optional<*>
             val value = obj.getOrNull()
             if (value != null) {
                 val valueStr = filterSummary(param.name, value, idLookup)
-                param.name to valueStr
+                val nameStringId = filterOptionNames[param.name]?.nameStringId
+                val key =
+                    if (nameStringId != null) {
+                        StashApplication.getApplication().getString(nameStringId)
+                    } else {
+                        param.name
+                    }
+                key to valueStr
             } else {
                 null
             }
         }.sortedBy { it.first }
     val text =
         params.joinToString("\n") {
-            "${it.first}: ${it.second}"
+            "${it.first} ${it.second}"
         }
     return text
 }
