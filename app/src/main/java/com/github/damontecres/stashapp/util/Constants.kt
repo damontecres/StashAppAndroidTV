@@ -29,6 +29,8 @@ import com.bumptech.glide.load.model.LazyHeaders
 import com.chrynan.parcelable.core.getParcelableExtra
 import com.chrynan.parcelable.core.putExtra
 import com.github.damontecres.stashapp.ImageActivity
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -763,4 +765,10 @@ fun Intent.putFilterArgs(
 
 fun Intent.getFilterArgs(name: String): FilterArgs? {
     return getParcelableExtra(name, FilterArgs::class, 0, parcelable)
+}
+
+fun experimentalFeaturesEnabled(): Boolean {
+    val context = StashApplication.getApplication()
+    return PreferenceManager.getDefaultSharedPreferences(context)
+        .getBoolean(context.getString(R.string.pref_key_experimental_features), false)
 }

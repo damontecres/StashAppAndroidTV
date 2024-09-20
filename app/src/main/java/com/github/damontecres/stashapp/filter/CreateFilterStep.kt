@@ -19,6 +19,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.experimentalFeaturesEnabled
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
@@ -95,14 +96,17 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .title("Submit without saving")
                 .build(),
         )
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(SAVE_SUBMIT)
-                .hasNext(true)
-                .enabled(false)
-                .title("Save and submit")
-                .build(),
-        )
+        if (experimentalFeaturesEnabled()) {
+            actions.add(
+                GuidedAction.Builder(requireContext())
+                    .id(SAVE_SUBMIT)
+                    .hasNext(true)
+                    .enabled(false)
+                    .title("Save and submit")
+                    .description("Experimental!")
+                    .build(),
+            )
+        }
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
@@ -124,7 +128,9 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 )
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 // If there is a name, try to save it to the server
-                if (action.id == SAVE_SUBMIT && filterArgs.name.isNotNullOrBlank()) {
+                if (experimentalFeaturesEnabled() &&
+                    action.id == SAVE_SUBMIT && filterArgs.name.isNotNullOrBlank()
+                ) {
                     // Save it
                     val filterWriter = FilterWriter(QueryEngine(StashServer.requireCurrentServer()))
                     val findFilter =
