@@ -10,8 +10,8 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
 import android.widget.Adapter
-import android.widget.ArrayAdapter
 import android.widget.FrameLayout
+import android.widget.ListAdapter
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -26,8 +26,11 @@ import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.chrynan.parcelable.core.getParcelableExtra
 import com.chrynan.parcelable.core.putExtra
 import com.github.damontecres.stashapp.ImageActivity
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -628,7 +631,7 @@ fun View.animateToInvisible(
  */
 fun getMaxMeasuredWidth(
     context: Context,
-    adapter: ArrayAdapter<String>,
+    adapter: ListAdapter,
     maxWidth: Int? = null,
     maxWidthFraction: Double? = 0.4,
 ): Int {
@@ -643,9 +646,6 @@ fun getMaxMeasuredWidth(
             Log.w(Constants.TAG, "maxWidthFraction is not null, but couldn't get window size")
             Int.MAX_VALUE
         }
-    if (adapter.viewTypeCount != 1) {
-        throw IllegalStateException("Adapter creates more than 1 type of view")
-    }
 
     val tempParent = FrameLayout(context)
     var maxMeasuredWidth = 0
@@ -747,8 +747,8 @@ fun CoroutineScope.launchIO(
     }
 }
 
-fun Intent.putDataType(dataType: DataType) {
-    this.putExtra("dataType", dataType.name)
+fun Intent.putDataType(dataType: DataType): Intent {
+    return this.putExtra("dataType", dataType.name)
 }
 
 fun Intent.getDataType(): DataType {
@@ -761,4 +761,14 @@ fun Intent.putFilterArgs(
     filterArgs: FilterArgs,
 ): Intent {
     return putExtra(name, filterArgs, parcelable)
+}
+
+fun Intent.getFilterArgs(name: String): FilterArgs? {
+    return getParcelableExtra(name, FilterArgs::class, 0, parcelable)
+}
+
+fun experimentalFeaturesEnabled(): Boolean {
+    val context = StashApplication.getApplication()
+    return PreferenceManager.getDefaultSharedPreferences(context)
+        .getBoolean(context.getString(R.string.pref_key_experimental_features), false)
 }

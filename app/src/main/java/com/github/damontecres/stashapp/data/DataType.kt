@@ -3,7 +3,16 @@ package com.github.damontecres.stashapp.data
 import androidx.annotation.StringRes
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.FilterMode
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GroupFilterType
+import com.github.damontecres.stashapp.api.type.ImageFilterType
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
+import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.api.type.StashDataFilter
+import com.github.damontecres.stashapp.api.type.StudioFilterType
+import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
 import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.presenters.ImagePresenter
@@ -12,6 +21,7 @@ import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import kotlin.reflect.KClass
 
 enum class DataType(
     val filterMode: FilterMode,
@@ -101,6 +111,19 @@ enum class DataType(
                 IMAGE -> ImagePresenter.CARD_WIDTH
                 GALLERY -> GalleryPresenter.CARD_WIDTH
             }
+
+    val filterType
+        get() =
+            when (this) {
+                SCENE -> SceneFilterType::class
+                GROUP -> GroupFilterType::class
+                MARKER -> SceneMarkerFilterType::class
+                PERFORMER -> PerformerFilterType::class
+                STUDIO -> StudioFilterType::class
+                TAG -> TagFilterType::class
+                IMAGE -> ImageFilterType::class
+                GALLERY -> GalleryFilterType::class
+            } as KClass<StashDataFilter>
 
     val defaultCardRatio
         get() =

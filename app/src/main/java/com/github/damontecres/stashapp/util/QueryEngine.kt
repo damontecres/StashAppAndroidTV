@@ -49,6 +49,7 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.JobResult
+import com.github.damontecres.stashapp.data.StashData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -92,6 +93,7 @@ class QueryEngine(
     suspend fun findScenes(
         findFilter: FindFilterType? = null,
         sceneFilter: SceneFilterType? = null,
+        ids: List<String>? = null,
         useRandom: Boolean = true,
     ): List<SlimSceneData> {
         val query =
@@ -99,7 +101,7 @@ class QueryEngine(
                 FindScenesQuery(
                     filter = updateFilter(findFilter, useRandom),
                     scene_filter = sceneFilter,
-                    ids = null,
+                    ids = ids,
                 ),
             )
         val scenes =
@@ -303,6 +305,28 @@ class QueryEngine(
             DataType.MARKER -> findMarkers(findFilter, useRandom = useRandom)
             DataType.IMAGE -> findImages(findFilter, useRandom = useRandom)
             DataType.GALLERY -> findGalleries(findFilter, useRandom = useRandom)
+        }
+    }
+
+    /**
+     * Search for a type of data with the given query. Users will need to cast the returned List.
+     */
+    suspend fun getByIds(
+        type: DataType,
+        ids: List<String>,
+    ): List<StashData> {
+        if (ids.isEmpty()) {
+            return emptyList()
+        }
+        return when (type) {
+            DataType.SCENE -> findScenes(ids = ids)
+            DataType.PERFORMER -> findPerformers(performerIds = ids)
+            DataType.TAG -> getTags(ids)
+            DataType.STUDIO -> findStudios(studioIds = ids)
+            DataType.GROUP -> findGroups(groupIds = ids)
+            DataType.MARKER -> TODO()
+            DataType.IMAGE -> TODO()
+            DataType.GALLERY -> TODO()
         }
     }
 
