@@ -26,6 +26,7 @@ import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
 import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
+import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
@@ -38,6 +39,7 @@ import com.github.damontecres.stashapp.filter.output.getAllIds
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.getString
+import java.util.Locale
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 
@@ -240,13 +242,33 @@ fun filterSummary(f: PHashDuplicationCriterionInput): String {
 
 fun filterSummary(f: ResolutionCriterionInput): String {
     val modStr = f.modifier.getString(StashApplication.getApplication())
-    // TODO map strings
-    return "$modStr ${f.value.name}"
+    val name =
+        when (f.value) {
+            ResolutionEnum.VERY_LOW -> "144p"
+            ResolutionEnum.LOW -> "240p"
+            ResolutionEnum.R360P -> "360p"
+            ResolutionEnum.STANDARD -> "480p"
+            ResolutionEnum.WEB_HD -> "540p"
+            ResolutionEnum.STANDARD_HD -> "720p"
+            ResolutionEnum.FULL_HD -> "1080p"
+            ResolutionEnum.QUAD_HD -> "1440p"
+            ResolutionEnum.VR_HD -> "1920p"
+            ResolutionEnum.FOUR_K -> "4K"
+            ResolutionEnum.FIVE_K -> "5K"
+            ResolutionEnum.SIX_K -> "6K"
+            ResolutionEnum.SEVEN_K -> "7K"
+            ResolutionEnum.EIGHT_K -> "8K"
+            ResolutionEnum.HUGE -> "8K+"
+            ResolutionEnum.UNKNOWN__ -> "Unknown"
+        }
+    return "$modStr $name"
 }
 
 fun filterSummary(f: OrientationCriterionInput): String {
-    // TODO map strings
-    return f.value.map { it.name }.toString()
+    return f.value.map { v ->
+        v.name.lowercase()
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }.toString()
 }
 
 fun filterSummary(f: StashIDCriterionInput): String {
