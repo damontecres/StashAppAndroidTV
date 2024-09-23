@@ -44,7 +44,6 @@ class FloatPickerFragment(
         val curInt = curVal?.value
         val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
-        // TODO show second value for between
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(VALUE_1)

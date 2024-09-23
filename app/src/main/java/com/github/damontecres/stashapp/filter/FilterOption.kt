@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
@@ -40,7 +41,7 @@ private val SceneFilterOptions =
         FilterOption<SceneFilterType, DateCriterionInput>(
             "date",
             R.string.stashapp_date,
-            DataType.TAG,
+            null,
             DateCriterionInput::class,
             { filter -> filter.date },
             { filter, value -> filter.copy(date = value) },
@@ -283,10 +284,47 @@ private val PerformerFilterOptions =
         ),
     )
 
+private val MarkerFilterOptions =
+    listOf(
+        FilterOption<SceneMarkerFilterType, MultiCriterionInput>(
+            "performers",
+            R.string.stashapp_performers,
+            DataType.PERFORMER,
+            MultiCriterionInput::class,
+            { filter -> filter.performers },
+            { filter, value -> filter.copy(performers = value) },
+        ),
+        FilterOption<SceneMarkerFilterType, DateCriterionInput>(
+            "scene_date",
+            R.string.stashapp_scene_date,
+            null,
+            DateCriterionInput::class,
+            { filter -> filter.scene_date },
+            { filter, value -> filter.copy(scene_date = value) },
+        ),
+        FilterOption<SceneMarkerFilterType, HierarchicalMultiCriterionInput>(
+            "scene_tags",
+            R.string.stashapp_scene_tags,
+            DataType.TAG,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.scene_tags },
+            { filter, value -> filter.copy(scene_tags = value) },
+        ),
+        FilterOption<SceneMarkerFilterType, HierarchicalMultiCriterionInput>(
+            "tags",
+            R.string.stashapp_tags,
+            DataType.TAG,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.tags },
+            { filter, value -> filter.copy(tags = value) },
+        ),
+    )
+
 val FilterOptions =
     mapOf(
         DataType.SCENE to SceneFilterOptions,
         DataType.PERFORMER to PerformerFilterOptions,
+        DataType.MARKER to MarkerFilterOptions,
     )
 
 fun getFilterOptions(dataType: DataType): List<FilterOption<out StashDataFilter, out Any>> {
