@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
+import androidx.lifecycle.ViewModelProvider
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
@@ -24,14 +25,19 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 class MainTitleView(context: Context, attrs: AttributeSet) :
     RelativeLayout(context, attrs),
     TitleViewAdapter.Provider {
+    private val serverViewModel by lazy {
+        ViewModelProvider(findFragment<Fragment>().requireActivity())[ServerViewModel::class]
+    }
+
     private var mPreferencesView: ImageButton
     private lateinit var searchButton: ImageButton
 
-    private val iconButtom: ImageButton
+    private val iconButton: ImageButton
     private val scenesButton: Button
     private val performersButton: Button
     private val studiosButton: Button
@@ -54,14 +60,14 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         val onFocusChangeListener = StashOnFocusChangeListener(context)
 
         val root = LayoutInflater.from(context).inflate(R.layout.title, this)
-        iconButtom = root.findViewById(R.id.icon)
-        iconButtom.setOnClickListener {
+        iconButton = root.findViewById(R.id.icon)
+        iconButton.setOnClickListener {
             GuidedStepSupportFragment.add(
                 findFragment<Fragment>().parentFragmentManager,
                 ManageServersFragment(),
             )
         }
-        iconButtom.onFocusChangeListener = onFocusChangeListener
+        iconButton.onFocusChangeListener = onFocusChangeListener
 
         searchButton = root.findViewById(R.id.search_button)
         mPreferencesView = root.findViewById(R.id.settings_button)
@@ -148,10 +154,10 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         galleriesButton.visibility = getVis("galleries")
     }
 
-    private class ClickListener(private val dataType: DataType) : OnClickListener {
+    private inner class ClickListener(private val dataType: DataType) : OnClickListener {
         override fun onClick(v: View) {
-            val filter =
-                StashServer.requireCurrentServer().serverPreferences.defaultFilters[dataType]
+            val serverPrefs = serverViewModel.currentServer.value!!.serverPreferences
+            val filter = serverPrefs.defaultFilters[dataType]
             if (filter != null) {
                 val intent =
                     Intent(v.context, FilterListActivity::class.java)

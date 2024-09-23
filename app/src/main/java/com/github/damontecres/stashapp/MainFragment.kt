@@ -109,7 +109,7 @@ class MainFragment : BrowseSupportFragment() {
                     clearData()
                     rowsAdapter.clear()
 
-                    val server = StashServer.requireCurrentServer()
+                    val server = viewModel.currentServer.value!!
                     server.updateServerPrefs()
                     val mainTitleView =
                         requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
@@ -257,8 +257,7 @@ class MainFragment : BrowseSupportFragment() {
                             FilterParser(serverVersion ?: Version.MINIMUM_STASH_VERSION)
 
                         val config = queryEngine.getServerConfiguration()
-                        StashServer.requireCurrentServer().serverPreferences
-                            .updatePreferences(config)
+                        server.serverPreferences.updatePreferences(config)
 
                         val ui = config.configuration.ui
                         val frontPageContent =

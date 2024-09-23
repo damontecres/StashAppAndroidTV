@@ -60,7 +60,7 @@ class ServerPreferences(val server: StashServer) {
      */
     fun updatePreferences(config: ConfigurationQuery.Data) {
         val serverVersion = Version.tryFromString(config.version.version)
-        Log.i(TAG, "updatePreferences for server version $serverVersion")
+        Log.i(TAG, "updatePreferences for server version $serverVersion, obj=$this")
 
         val companionPluginVersion =
             config.plugins?.firstOrNull { it.id == CompanionPlugin.PLUGIN_ID }?.version
@@ -155,15 +155,20 @@ class ServerPreferences(val server: StashServer) {
                 ) as Map<String, *>?
             val filter =
                 if (filterMap != null) {
-                    val findFilterMap = filterMap.getCaseInsensitive("find_filter")
-                    val objectFilterMap = filterMap.getCaseInsensitive("object_filter")
-                    val findFilter = filterParser.convertFindFilter(findFilterMap)
-                    val objectFilter = filterParser.convertFilter(dataType, objectFilterMap)
-                    FilterArgs(
-                        dataType,
-                        findFilter = findFilter,
-                        objectFilter = objectFilter,
-                    )
+                    try {
+                        val findFilterMap = filterMap.getCaseInsensitive("find_filter")
+                        val objectFilterMap = filterMap.getCaseInsensitive("object_filter")
+                        val findFilter = filterParser.convertFindFilter(findFilterMap)
+                        val objectFilter = filterParser.convertFilter(dataType, objectFilterMap)
+                        FilterArgs(
+                            dataType,
+                            findFilter = findFilter,
+                            objectFilter = objectFilter,
+                        )
+                    } catch (ex: Exception) {
+                        Log.w(TAG, "default filter parse error for $dataType", ex)
+                        FilterArgs(dataType)
+                    }
                 } else {
                     FilterArgs(dataType)
                 }
