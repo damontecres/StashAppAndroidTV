@@ -5,6 +5,7 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
@@ -447,12 +448,121 @@ private val ImageFilterOptions =
         ),
     )
 
+private val GalleryFilterOptions =
+    listOf(
+        FilterOption<GalleryFilterType, DateCriterionInput>(
+            "date",
+            R.string.stashapp_date,
+            null,
+            DateCriterionInput::class,
+            { filter -> filter.date },
+            { filter, value -> filter.copy(date = value) },
+        ),
+        FilterOption<GalleryFilterType, IntCriterionInput>(
+            "image_count",
+            R.string.stashapp_image_count,
+            null,
+            IntCriterionInput::class,
+            { it.image_count },
+            { filter, value -> filter.copy(image_count = value) },
+        ),
+        FilterOption<GalleryFilterType, IntCriterionInput>(
+            "performer_age",
+            R.string.stashapp_performer_age,
+            null,
+            IntCriterionInput::class,
+            { it.performer_age },
+            { filter, value -> filter.copy(performer_age = value) },
+        ),
+        FilterOption<GalleryFilterType, IntCriterionInput>(
+            "performer_count",
+            R.string.stashapp_performer_count,
+            null,
+            IntCriterionInput::class,
+            { it.performer_count },
+            { filter, value -> filter.copy(performer_count = value) },
+        ),
+        FilterOption<GalleryFilterType, Boolean>(
+            "performer_favorite",
+            R.string.stashapp_performer_favorite,
+            null,
+            Boolean::class,
+            { it.performer_favorite },
+            { filter, value -> filter.copy(performer_favorite = value) },
+        ),
+        FilterOption<GalleryFilterType, HierarchicalMultiCriterionInput>(
+            "performer_tags",
+            R.string.stashapp_performer_tags,
+            DataType.TAG,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.performer_tags },
+            { filter, value -> filter.copy(performer_tags = value) },
+        ),
+        FilterOption<GalleryFilterType, MultiCriterionInput>(
+            "performers",
+            R.string.stashapp_performers,
+            DataType.PERFORMER,
+            MultiCriterionInput::class,
+            { filter -> filter.performers },
+            { filter, value -> filter.copy(performers = value) },
+        ),
+        FilterOption<GalleryFilterType, StringCriterionInput>(
+            "photographer",
+            R.string.stashapp_photographer,
+            null,
+            StringCriterionInput::class,
+            { it.photographer },
+            { filter, value -> filter.copy(photographer = value) },
+        ),
+        FilterOption<GalleryFilterType, IntCriterionInput>(
+            "rating100",
+            R.string.stashapp_rating,
+            null,
+            IntCriterionInput::class,
+            { it.rating100 },
+            { filter, value -> filter.copy(rating100 = value) },
+        ),
+        FilterOption<GalleryFilterType, MultiCriterionInput>(
+            "scenes",
+            R.string.stashapp_scenes,
+            DataType.SCENE,
+            MultiCriterionInput::class,
+            { filter -> filter.scenes },
+            { filter, value -> filter.copy(scenes = value) },
+        ),
+        FilterOption<GalleryFilterType, HierarchicalMultiCriterionInput>(
+            "studios",
+            R.string.stashapp_studios,
+            DataType.STUDIO,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.studios },
+            { filter, value -> filter.copy(studios = value) },
+        ),
+        FilterOption<GalleryFilterType, HierarchicalMultiCriterionInput>(
+            "tags",
+            R.string.stashapp_tags,
+            DataType.TAG,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.tags },
+            { filter, value -> filter.copy(tags = value) },
+        ),
+        FilterOption<GalleryFilterType, StringCriterionInput>(
+            "title",
+            R.string.stashapp_title,
+            null,
+            StringCriterionInput::class,
+            { it.title },
+            { filter, value -> filter.copy(title = value) },
+        ),
+    )
+
 val FilterOptions =
     mapOf(
         DataType.SCENE to SceneFilterOptions,
         DataType.PERFORMER to PerformerFilterOptions,
         DataType.MARKER to MarkerFilterOptions,
         DataType.IMAGE to ImageFilterOptions,
+        DataType.GALLERY to GalleryFilterOptions,
     )
 
 fun getFilterOptions(dataType: DataType): List<FilterOption<out StashDataFilter, out Any>> {
