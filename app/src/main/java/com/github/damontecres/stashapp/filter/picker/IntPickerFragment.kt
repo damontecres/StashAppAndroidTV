@@ -126,7 +126,7 @@ class IntPickerFragment(
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
             val newValue1 = findActionById(VALUE_1).description?.toString()?.toInt()
-            val newValue2 = findActionById(VALUE_2).description?.toString()?.toInt()
+            val newValue2 = findActionById(VALUE_2).description?.toString()?.toIntOrNull()
             val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
             val newValue =
                 if (newValue1 != null) {
