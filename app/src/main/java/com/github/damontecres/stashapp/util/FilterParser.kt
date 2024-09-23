@@ -447,6 +447,7 @@ class FilterParser(private val serverVersion: Version) {
                 has_markers = Optional.presentIfNotNull(convertString(filter["has_markers"])),
                 is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
                 studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
+                movies = Optional.presentIfNotNull(convertMultiCriterionInput(filter["movies"])),
                 groups = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["groups"])),
                 galleries = Optional.presentIfNotNull(convertMultiCriterionInput(filter["galleries"])),
                 tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
@@ -477,9 +478,8 @@ class FilterParser(private val serverVersion: Version) {
                 performers_filter = Optional.presentIfNotNull(convertPerformerFilterType(filter["performers_filter"])),
                 studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
                 tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
+//                movies_filter = Optional.presentIfNotNull(convertMovieFilterType(filter["movies_filter"])),
                 groups_filter = Optional.presentIfNotNull(convertGroupFilterType(filter["groups_filter"])),
-                // TODO group->group
-//                groups_filter = Optional.presentIfNotNull(convertGroupFilterType(filter["groups_filter"])),
                 markers_filter = Optional.presentIfNotNull(convertSceneMarkerFilterType(filter["markers_filter"])),
             )
         } else {
@@ -542,6 +542,7 @@ class FilterParser(private val serverVersion: Version) {
                 gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
                 performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_count"])),
                 studio_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["studio_count"])),
+                movie_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["movie_count"])),
                 group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["group_count"])),
                 marker_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["marker_count"])),
                 parents = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["parents"])),
@@ -583,6 +584,15 @@ class FilterParser(private val serverVersion: Version) {
                 date = Optional.presentIfNotNull(convertDateCriterionInput(filter["date"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+                containing_groups =
+                    Optional.presentIfNotNull(
+                        convertHierarchicalMultiCriterionInput(
+                            filter["containing_groups"],
+                        ),
+                    ),
+                sub_groups = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["sub_groups"])),
+                containing_group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["containing_group_count"])),
+                sub_group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["sub_group_count"])),
                 scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
                 studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
             )
