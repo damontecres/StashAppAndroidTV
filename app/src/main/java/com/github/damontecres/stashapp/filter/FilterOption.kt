@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
+import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import kotlin.reflect.KClass
 
@@ -556,6 +557,74 @@ private val GalleryFilterOptions =
         ),
     )
 
+private val TagFilterOptions =
+    listOf(
+        FilterOption<TagFilterType, StringCriterionInput>(
+            "aliases",
+            R.string.stashapp_aliases,
+            null,
+            StringCriterionInput::class,
+            { it.aliases },
+            { filter, value -> filter.copy(aliases = value) },
+        ),
+        FilterOption<TagFilterType, Boolean>(
+            "favorite",
+            R.string.stashapp_favourite,
+            null,
+            Boolean::class,
+            { filter -> filter.favorite },
+            { filter, value -> filter.copy(favorite = value) },
+        ),
+        FilterOption<TagFilterType, IntCriterionInput>(
+            "image_count",
+            R.string.stashapp_image_count,
+            null,
+            IntCriterionInput::class,
+            { it.image_count },
+            { filter, value -> filter.copy(image_count = value) },
+        ),
+        FilterOption<TagFilterType, StringCriterionInput>(
+            "name",
+            R.string.stashapp_name,
+            null,
+            StringCriterionInput::class,
+            { it.name },
+            { filter, value -> filter.copy(name = value) },
+        ),
+        FilterOption<TagFilterType, IntCriterionInput>(
+            "scene_count",
+            R.string.stashapp_scene_count,
+            null,
+            IntCriterionInput::class,
+            { it.scene_count },
+            { filter, value -> filter.copy(scene_count = value) },
+        ),
+        FilterOption<TagFilterType, IntCriterionInput>(
+            "gallery_count",
+            R.string.stashapp_gallery_count,
+            null,
+            IntCriterionInput::class,
+            { it.gallery_count },
+            { filter, value -> filter.copy(gallery_count = value) },
+        ),
+        FilterOption<TagFilterType, IntCriterionInput>(
+            "marker_count",
+            R.string.stashapp_marker_count,
+            null,
+            IntCriterionInput::class,
+            { it.marker_count },
+            { filter, value -> filter.copy(marker_count = value) },
+        ),
+        FilterOption<TagFilterType, IntCriterionInput>(
+            "performer_count",
+            R.string.stashapp_performer_count,
+            null,
+            IntCriterionInput::class,
+            { it.performer_count },
+            { filter, value -> filter.copy(performer_count = value) },
+        ),
+    )
+
 val FilterOptions =
     mapOf(
         DataType.SCENE to SceneFilterOptions,
@@ -563,6 +632,7 @@ val FilterOptions =
         DataType.MARKER to MarkerFilterOptions,
         DataType.IMAGE to ImageFilterOptions,
         DataType.GALLERY to GalleryFilterOptions,
+        DataType.TAG to TagFilterOptions,
     )
 
 fun getFilterOptions(dataType: DataType): List<FilterOption<out StashDataFilter, out Any>> {
