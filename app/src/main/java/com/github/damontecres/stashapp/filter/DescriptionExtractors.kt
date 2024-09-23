@@ -23,6 +23,7 @@ import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
+import com.github.damontecres.stashapp.api.type.OrientationEnum
 import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
@@ -86,6 +87,11 @@ fun displayName(
         GenderEnum.NON_BINARY -> context.getString(R.string.stashapp_gender_types_NON_BINARY)
         GenderEnum.UNKNOWN__ -> ""
     }
+}
+
+fun displayName(orientation: OrientationEnum): String {
+    return orientation.rawValue.lowercase()
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 }
 
 fun findFilterSummary(
@@ -240,27 +246,30 @@ fun filterSummary(f: PHashDuplicationCriterionInput): String {
     }
 }
 
+fun resolutionName(res: ResolutionEnum): String {
+    return when (res) {
+        ResolutionEnum.VERY_LOW -> "144p"
+        ResolutionEnum.LOW -> "240p"
+        ResolutionEnum.R360P -> "360p"
+        ResolutionEnum.STANDARD -> "480p"
+        ResolutionEnum.WEB_HD -> "540p"
+        ResolutionEnum.STANDARD_HD -> "720p"
+        ResolutionEnum.FULL_HD -> "1080p"
+        ResolutionEnum.QUAD_HD -> "1440p"
+        ResolutionEnum.VR_HD -> "1920p"
+        ResolutionEnum.FOUR_K -> "4K"
+        ResolutionEnum.FIVE_K -> "5K"
+        ResolutionEnum.SIX_K -> "6K"
+        ResolutionEnum.SEVEN_K -> "7K"
+        ResolutionEnum.EIGHT_K -> "8K"
+        ResolutionEnum.HUGE -> "8K+"
+        ResolutionEnum.UNKNOWN__ -> "Unknown"
+    }
+}
+
 fun filterSummary(f: ResolutionCriterionInput): String {
     val modStr = f.modifier.getString(StashApplication.getApplication())
-    val name =
-        when (f.value) {
-            ResolutionEnum.VERY_LOW -> "144p"
-            ResolutionEnum.LOW -> "240p"
-            ResolutionEnum.R360P -> "360p"
-            ResolutionEnum.STANDARD -> "480p"
-            ResolutionEnum.WEB_HD -> "540p"
-            ResolutionEnum.STANDARD_HD -> "720p"
-            ResolutionEnum.FULL_HD -> "1080p"
-            ResolutionEnum.QUAD_HD -> "1440p"
-            ResolutionEnum.VR_HD -> "1920p"
-            ResolutionEnum.FOUR_K -> "4K"
-            ResolutionEnum.FIVE_K -> "5K"
-            ResolutionEnum.SIX_K -> "6K"
-            ResolutionEnum.SEVEN_K -> "7K"
-            ResolutionEnum.EIGHT_K -> "8K"
-            ResolutionEnum.HUGE -> "8K+"
-            ResolutionEnum.UNKNOWN__ -> "Unknown"
-        }
+    val name = resolutionName(f.value)
     return "$modStr $name"
 }
 
