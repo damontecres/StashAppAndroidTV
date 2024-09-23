@@ -47,17 +47,27 @@ class FloatPickerFragment(
         // TODO show second value for between
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(1L)
+                .id(VALUE_1)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))
                 .descriptionEditable(true)
                 // TODO handle signed vs not?
                 .descriptionEditInputType(
-                    InputType.TYPE_CLASS_NUMBER or
-                        InputType.TYPE_NUMBER_FLAG_SIGNED or
-                        InputType.TYPE_NUMBER_FLAG_DECIMAL,
+                    InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL,
                 )
                 .editDescription(curInt?.toString())
+                .build(),
+        )
+
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(VALUE_2)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_criterion_value))
+                .descriptionEditable(true)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED)
+                .editDescription(curInt?.toString())
+                .enabled(curModifier == CriterionModifier.BETWEEN || curModifier == CriterionModifier.NOT_BETWEEN)
                 .build(),
         )
 
@@ -67,11 +77,12 @@ class FloatPickerFragment(
                 add(modifierAction(CriterionModifier.NOT_EQUALS))
                 add(modifierAction(CriterionModifier.GREATER_THAN))
                 add(modifierAction(CriterionModifier.LESS_THAN))
-                // TODO: between
+                add(modifierAction(CriterionModifier.BETWEEN))
+                add(modifierAction(CriterionModifier.NOT_BETWEEN))
             }
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(MODIFIER)
+                .id(MODIFIER_OFFSET)
                 .hasNext(false)
                 .title("Modifier")
                 .description(curModifier.getString(requireContext()))
@@ -83,7 +94,7 @@ class FloatPickerFragment(
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        if (action.id == 1L) {
+        if (action.id == VALUE_1) {
             val desc = action.description
             try {
                 if (desc != null) {
@@ -109,19 +120,32 @@ class FloatPickerFragment(
                 value2 = curVal?.value2 ?: Optional.absent(),
                 modifier = newModifier,
             )
-            findActionById(MODIFIER).description = newModifier.getString(requireContext())
-            notifyActionChanged(findActionPositionById(MODIFIER))
+            findActionById(MODIFIER_OFFSET).description = newModifier.getString(requireContext())
+            notifyActionChanged(findActionPositionById(MODIFIER_OFFSET))
+
+            val value2Action = findActionById(VALUE_2)
+            if (newModifier == CriterionModifier.BETWEEN || newModifier == CriterionModifier.NOT_BETWEEN) {
+                value2Action.isEnabled = true
+            } else {
+                value2Action.isEnabled = false
+            }
+            notifyActionChanged(findActionPositionById(VALUE_2))
         }
         return true
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val newInt = findActionById(1L).description?.toString()?.toDouble()
+            val newValue1 = findActionById(VALUE_1).description?.toString()?.toDouble()
+            val newValue2 = findActionById(VALUE_2).description?.toString()?.toDouble()
             val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
             val newValue =
-                if (newInt != null) {
-                    FloatCriterionInput(value = newInt, modifier = modifier)
+                if (newValue1 != null) {
+                    FloatCriterionInput(
+                        value = newValue1,
+                        value2 = Optional.presentIfNotNull(newValue2),
+                        modifier = modifier,
+                    )
                 } else if (modifier == CriterionModifier.IS_NULL || modifier == CriterionModifier.NOT_NULL) {
                     FloatCriterionInput(value = 0.0, modifier = modifier)
                 } else {
@@ -137,6 +161,7 @@ class FloatPickerFragment(
 
     companion object {
         private const val TAG = "FloatPickerFragment"
-        private const val MODIFIER = 2L
+        private const val VALUE_1 = 1L
+        private const val VALUE_2 = 2L
     }
 }

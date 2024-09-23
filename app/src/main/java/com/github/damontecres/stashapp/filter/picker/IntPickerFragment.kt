@@ -40,12 +40,24 @@ class IntPickerFragment(
         // TODO show second value for between
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(1L)
+                .id(VALUE_1)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))
                 .descriptionEditable(true)
                 .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED)
                 .editDescription(curInt?.toString())
+                .build(),
+        )
+
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(VALUE_2)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_criterion_value))
+                .descriptionEditable(true)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED)
+                .editDescription(curInt?.toString())
+                .enabled(curModifier == CriterionModifier.BETWEEN || curModifier == CriterionModifier.NOT_BETWEEN)
                 .build(),
         )
 
@@ -55,11 +67,12 @@ class IntPickerFragment(
                 add(modifierAction(CriterionModifier.NOT_EQUALS))
                 add(modifierAction(CriterionModifier.GREATER_THAN))
                 add(modifierAction(CriterionModifier.LESS_THAN))
-                // TODO: between
+                add(modifierAction(CriterionModifier.BETWEEN))
+                add(modifierAction(CriterionModifier.NOT_BETWEEN))
             }
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(MODIFIER)
+                .id(MODIFIER_OFFSET)
                 .hasNext(false)
                 .title("Modifier")
                 .description(curModifier.getString(requireContext()))
@@ -71,8 +84,8 @@ class IntPickerFragment(
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        if (action.id == 1L) {
-            // THe value was changed, so check if it valid or not
+        if (action.id == VALUE_1) {
+            // The value was changed, so check if it valid or not
             val desc = action.description
             try {
                 if (desc != null) {
@@ -97,19 +110,32 @@ class IntPickerFragment(
                 value2 = curVal?.value2 ?: Optional.absent(),
                 modifier = newModifier,
             )
-            findActionById(MODIFIER).description = newModifier.getString(requireContext())
-            notifyActionChanged(findActionPositionById(MODIFIER))
+            findActionById(MODIFIER_OFFSET).description = newModifier.getString(requireContext())
+            notifyActionChanged(findActionPositionById(MODIFIER_OFFSET))
+
+            val value2Action = findActionById(VALUE_2)
+            if (newModifier == CriterionModifier.BETWEEN || newModifier == CriterionModifier.NOT_BETWEEN) {
+                value2Action.isEnabled = true
+            } else {
+                value2Action.isEnabled = false
+            }
+            notifyActionChanged(findActionPositionById(VALUE_2))
         }
         return true
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val newInt = findActionById(1L).description?.toString()?.toInt()
+            val newValue1 = findActionById(VALUE_1).description?.toString()?.toInt()
+            val newValue2 = findActionById(VALUE_2).description?.toString()?.toInt()
             val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
             val newValue =
-                if (newInt != null) {
-                    IntCriterionInput(value = newInt, modifier = modifier)
+                if (newValue1 != null) {
+                    IntCriterionInput(
+                        value = newValue1,
+                        value2 = Optional.presentIfNotNull(newValue2),
+                        modifier = modifier,
+                    )
                 } else if (modifier == CriterionModifier.IS_NULL || modifier == CriterionModifier.NOT_NULL) {
                     IntCriterionInput(value = 0, modifier = modifier)
                 } else {
@@ -118,16 +144,15 @@ class IntPickerFragment(
 
             viewModel.updateFilter(filterOption, newValue)
             parentFragmentManager.popBackStack()
-        } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
-            parentFragmentManager.popBackStack()
-        } else if (action.id == ACTION_ID_REMOVE) {
-            viewModel.updateFilter(filterOption, null)
-            parentFragmentManager.popBackStack()
+        } else {
+            onStandardActionClicked(action, filterOption)
         }
     }
 
     companion object {
         private const val TAG = "IntPickerFragment"
-        private const val MODIFIER = 2L
+
+        private const val VALUE_1 = 1L
+        private const val VALUE_2 = 2L
     }
 }
