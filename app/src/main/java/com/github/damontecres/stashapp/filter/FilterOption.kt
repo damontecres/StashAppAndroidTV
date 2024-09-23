@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
+import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import kotlin.reflect.KClass
@@ -625,6 +626,66 @@ private val TagFilterOptions =
         ),
     )
 
+private val StudioFilterOptions =
+    listOf(
+        FilterOption<StudioFilterType, StringCriterionInput>(
+            "aliases",
+            R.string.stashapp_aliases,
+            null,
+            StringCriterionInput::class,
+            { it.aliases },
+            { filter, value -> filter.copy(aliases = value) },
+        ),
+        FilterOption<StudioFilterType, Boolean>(
+            "favorite",
+            R.string.stashapp_favourite,
+            null,
+            Boolean::class,
+            { filter -> filter.favorite },
+            { filter, value -> filter.copy(favorite = value) },
+        ),
+        FilterOption<StudioFilterType, IntCriterionInput>(
+            "image_count",
+            R.string.stashapp_image_count,
+            null,
+            IntCriterionInput::class,
+            { it.image_count },
+            { filter, value -> filter.copy(image_count = value) },
+        ),
+        FilterOption<StudioFilterType, IntCriterionInput>(
+            "gallery_count",
+            R.string.stashapp_gallery_count,
+            null,
+            IntCriterionInput::class,
+            { it.gallery_count },
+            { filter, value -> filter.copy(gallery_count = value) },
+        ),
+        FilterOption<StudioFilterType, StringCriterionInput>(
+            "name",
+            R.string.stashapp_name,
+            null,
+            StringCriterionInput::class,
+            { it.name },
+            { filter, value -> filter.copy(name = value) },
+        ),
+        FilterOption<StudioFilterType, IntCriterionInput>(
+            "rating100",
+            R.string.stashapp_rating,
+            null,
+            IntCriterionInput::class,
+            { it.rating100 },
+            { filter, value -> filter.copy(rating100 = value) },
+        ),
+        FilterOption<StudioFilterType, IntCriterionInput>(
+            "scene_count",
+            R.string.stashapp_scene_count,
+            null,
+            IntCriterionInput::class,
+            { it.scene_count },
+            { filter, value -> filter.copy(scene_count = value) },
+        ),
+    )
+
 val FilterOptions =
     mapOf(
         DataType.SCENE to SceneFilterOptions,
@@ -633,6 +694,7 @@ val FilterOptions =
         DataType.IMAGE to ImageFilterOptions,
         DataType.GALLERY to GalleryFilterOptions,
         DataType.TAG to TagFilterOptions,
+        DataType.STUDIO to StudioFilterOptions,
     )
 
 fun getFilterOptions(dataType: DataType): List<FilterOption<out StashDataFilter, out Any>> {
