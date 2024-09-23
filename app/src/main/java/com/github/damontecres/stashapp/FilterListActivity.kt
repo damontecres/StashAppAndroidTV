@@ -20,6 +20,7 @@ import androidx.preference.PreferenceManager
 import com.chrynan.parcelable.core.getParcelableExtra
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.filter.FilterOptions
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
@@ -133,7 +134,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         val savedFilters =
             QueryEngine(server).getSavedFilters(dataType)
 
-        val createFilterSupported = dataType == DataType.SCENE
+        val createFilterSupported = dataType in FilterOptions.keys
 
         // Always show the list for data types supporting create filter
         if (savedFilters.isEmpty() && !createFilterSupported) {

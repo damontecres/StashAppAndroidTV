@@ -7,6 +7,8 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
+import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -14,6 +16,8 @@ import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.filter.picker.BooleanPickerFragment
 import com.github.damontecres.stashapp.filter.picker.DatePickerFragment
+import com.github.damontecres.stashapp.filter.picker.FloatPickerFragment
+import com.github.damontecres.stashapp.filter.picker.GenderPickerFragment
 import com.github.damontecres.stashapp.filter.picker.HierarchicalMultiCriterionFragment
 import com.github.damontecres.stashapp.filter.picker.IntPickerFragment
 import com.github.damontecres.stashapp.filter.picker.MultiCriterionFragment
@@ -114,6 +118,11 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                             nextStep(IntPickerFragment(filterOption))
                         }
 
+                        FloatCriterionInput::class -> {
+                            filterOption as FilterOption<StashDataFilter, FloatCriterionInput>
+                            nextStep(FloatPickerFragment(filterOption))
+                        }
+
                         Boolean::class -> {
                             filterOption as FilterOption<StashDataFilter, Boolean>
                             nextStep(BooleanPickerFragment(filterOption))
@@ -149,7 +158,12 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                             )
                         }
 
-                        else -> TODO()
+                        GenderCriterionInput::class -> {
+                            filterOption as FilterOption<StashDataFilter, GenderCriterionInput>
+                            nextStep(GenderPickerFragment(filterOption))
+                        }
+
+                        else -> throw UnsupportedOperationException("$filterOption")
                     }
             }
         }

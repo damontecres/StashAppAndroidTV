@@ -17,6 +17,8 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -66,6 +68,21 @@ fun extractDescription(item: StashData): String? {
         is SlimSceneData -> item.date
         is FullSceneData -> item.date
         else -> throw IllegalArgumentException("${item::class.qualifiedName} not supported")
+    }
+}
+
+fun displayName(
+    context: Context,
+    gender: GenderEnum,
+): String {
+    return when (gender) {
+        GenderEnum.MALE -> context.getString(R.string.stashapp_gender_types_MALE)
+        GenderEnum.FEMALE -> context.getString(R.string.stashapp_gender_types_FEMALE)
+        GenderEnum.TRANSGENDER_MALE -> context.getString(R.string.stashapp_gender_types_TRANSGENDER_MALE)
+        GenderEnum.TRANSGENDER_FEMALE -> context.getString(R.string.stashapp_gender_types_TRANSGENDER_FEMALE)
+        GenderEnum.INTERSEX -> context.getString(R.string.stashapp_gender_types_INTERSEX)
+        GenderEnum.NON_BINARY -> context.getString(R.string.stashapp_gender_types_NON_BINARY)
+        GenderEnum.UNKNOWN__ -> ""
     }
 }
 
@@ -295,6 +312,31 @@ fun filterSummary(f: DateCriterionInput): String {
     }
 }
 
+fun filterSummary(f: GenderCriterionInput): String {
+    val values = f.value_list.getOrNull() ?: listOfNotNull(f.value.getOrNull())
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val resolvedTitles = values.map { displayName(StashApplication.getApplication(), it) }.orEmpty()
+    val toStr =
+        when (f.modifier) {
+            CriterionModifier.EQUALS,
+            CriterionModifier.NOT_EQUALS,
+            CriterionModifier.INCLUDES,
+            CriterionModifier.EXCLUDES,
+            -> resolvedTitles.toString()
+
+            CriterionModifier.IS_NULL,
+            CriterionModifier.NOT_NULL,
+            -> ""
+
+            else -> throw IllegalArgumentException("${f.modifier}")
+        }.ifBlank { null }
+    return if (toStr != null) {
+        "$modStr $toStr"
+    } else {
+        modStr
+    }
+}
+
 fun filterSummary(
     name: String,
     value: Any,
@@ -311,6 +353,7 @@ fun filterSummary(
         is StashIDCriterionInput -> filterSummary(value)
         is TimestampCriterionInput -> filterSummary(value)
         is DateCriterionInput -> filterSummary(value)
+        is GenderCriterionInput -> filterSummary(value)
 
         is Boolean, String -> value.toString()
 
