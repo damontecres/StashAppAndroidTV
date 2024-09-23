@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
@@ -686,6 +687,58 @@ private val StudioFilterOptions =
         ),
     )
 
+private val MovieFilterOptions =
+    listOf(
+        FilterOption<MovieFilterType, DateCriterionInput>(
+            "date",
+            R.string.stashapp_date,
+            null,
+            DateCriterionInput::class,
+            { filter -> filter.date },
+            { filter, value -> filter.copy(date = value) },
+        ),
+        FilterOption<MovieFilterType, StringCriterionInput>(
+            "director",
+            R.string.stashapp_director,
+            null,
+            StringCriterionInput::class,
+            { it.director },
+            { filter, value -> filter.copy(director = value) },
+        ),
+        FilterOption<MovieFilterType, StringCriterionInput>(
+            "name",
+            R.string.stashapp_name,
+            null,
+            StringCriterionInput::class,
+            { it.name },
+            { filter, value -> filter.copy(name = value) },
+        ),
+        FilterOption<MovieFilterType, MultiCriterionInput>(
+            "performers",
+            R.string.stashapp_performers,
+            DataType.PERFORMER,
+            MultiCriterionInput::class,
+            { it.performers },
+            { filter, value -> filter.copy(performers = value) },
+        ),
+        FilterOption<MovieFilterType, IntCriterionInput>(
+            "rating100",
+            R.string.stashapp_rating,
+            null,
+            IntCriterionInput::class,
+            { it.rating100 },
+            { filter, value -> filter.copy(rating100 = value) },
+        ),
+        FilterOption<MovieFilterType, HierarchicalMultiCriterionInput>(
+            "studios",
+            R.string.stashapp_studios,
+            DataType.STUDIO,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.studios },
+            { filter, value -> filter.copy(studios = value) },
+        ),
+    )
+
 val FilterOptions =
     mapOf(
         DataType.SCENE to SceneFilterOptions,
@@ -695,6 +748,7 @@ val FilterOptions =
         DataType.GALLERY to GalleryFilterOptions,
         DataType.TAG to TagFilterOptions,
         DataType.STUDIO to StudioFilterOptions,
+        DataType.MOVIE to MovieFilterOptions,
     )
 
 fun getFilterOptions(dataType: DataType): List<FilterOption<out StashDataFilter, out Any>> {
