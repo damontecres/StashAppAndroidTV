@@ -1,8 +1,10 @@
 package com.github.damontecres.stashapp.filter.output
 
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -15,6 +17,7 @@ import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
+import com.github.damontecres.stashapp.filter.displayName
 
 fun IntCriterionInput.toMap(): Map<String, Any> =
     buildMap {
@@ -218,4 +221,13 @@ fun DateCriterionInput.toMap(): Map<String, Any> =
                 }
             },
         )
+    }
+
+fun GenderCriterionInput.toMap(): Map<String, Any> =
+    buildMap {
+        put("modifier", modifier.rawValue)
+        val values =
+            value_list.getOrNull() ?: listOfNotNull(value.getOrNull())
+                .map { displayName(StashApplication.getApplication(), it) }
+        put("value", values)
     }

@@ -17,13 +17,17 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
+import com.github.damontecres.stashapp.api.type.OrientationEnum
 import com.github.damontecres.stashapp.api.type.PHashDuplicationCriterionInput
 import com.github.damontecres.stashapp.api.type.PhashDistanceCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
+import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
@@ -36,6 +40,7 @@ import com.github.damontecres.stashapp.filter.output.getAllIds
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.getString
+import java.util.Locale
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 
@@ -67,6 +72,26 @@ fun extractDescription(item: StashData): String? {
         is FullSceneData -> item.date
         else -> throw IllegalArgumentException("${item::class.qualifiedName} not supported")
     }
+}
+
+fun displayName(
+    context: Context,
+    gender: GenderEnum,
+): String {
+    return when (gender) {
+        GenderEnum.MALE -> context.getString(R.string.stashapp_gender_types_MALE)
+        GenderEnum.FEMALE -> context.getString(R.string.stashapp_gender_types_FEMALE)
+        GenderEnum.TRANSGENDER_MALE -> context.getString(R.string.stashapp_gender_types_TRANSGENDER_MALE)
+        GenderEnum.TRANSGENDER_FEMALE -> context.getString(R.string.stashapp_gender_types_TRANSGENDER_FEMALE)
+        GenderEnum.INTERSEX -> context.getString(R.string.stashapp_gender_types_INTERSEX)
+        GenderEnum.NON_BINARY -> context.getString(R.string.stashapp_gender_types_NON_BINARY)
+        GenderEnum.UNKNOWN__ -> ""
+    }
+}
+
+fun displayName(orientation: OrientationEnum): String {
+    return orientation.rawValue.lowercase()
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
 }
 
 fun findFilterSummary(
@@ -221,15 +246,38 @@ fun filterSummary(f: PHashDuplicationCriterionInput): String {
     }
 }
 
+fun resolutionName(res: ResolutionEnum): String {
+    return when (res) {
+        ResolutionEnum.VERY_LOW -> "144p"
+        ResolutionEnum.LOW -> "240p"
+        ResolutionEnum.R360P -> "360p"
+        ResolutionEnum.STANDARD -> "480p"
+        ResolutionEnum.WEB_HD -> "540p"
+        ResolutionEnum.STANDARD_HD -> "720p"
+        ResolutionEnum.FULL_HD -> "1080p"
+        ResolutionEnum.QUAD_HD -> "1440p"
+        ResolutionEnum.VR_HD -> "1920p"
+        ResolutionEnum.FOUR_K -> "4K"
+        ResolutionEnum.FIVE_K -> "5K"
+        ResolutionEnum.SIX_K -> "6K"
+        ResolutionEnum.SEVEN_K -> "7K"
+        ResolutionEnum.EIGHT_K -> "8K"
+        ResolutionEnum.HUGE -> "8K+"
+        ResolutionEnum.UNKNOWN__ -> "Unknown"
+    }
+}
+
 fun filterSummary(f: ResolutionCriterionInput): String {
     val modStr = f.modifier.getString(StashApplication.getApplication())
-    // TODO map strings
-    return "$modStr ${f.value.name}"
+    val name = resolutionName(f.value)
+    return "$modStr $name"
 }
 
 fun filterSummary(f: OrientationCriterionInput): String {
-    // TODO map strings
-    return f.value.map { it.name }.toString()
+    return f.value.map { v ->
+        v.name.lowercase()
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }.toString()
 }
 
 fun filterSummary(f: StashIDCriterionInput): String {
@@ -295,6 +343,31 @@ fun filterSummary(f: DateCriterionInput): String {
     }
 }
 
+fun filterSummary(f: GenderCriterionInput): String {
+    val values = f.value_list.getOrNull() ?: listOfNotNull(f.value.getOrNull())
+    val modStr = f.modifier.getString(StashApplication.getApplication())
+    val resolvedTitles = values.map { displayName(StashApplication.getApplication(), it) }.orEmpty()
+    val toStr =
+        when (f.modifier) {
+            CriterionModifier.EQUALS,
+            CriterionModifier.NOT_EQUALS,
+            CriterionModifier.INCLUDES,
+            CriterionModifier.EXCLUDES,
+            -> resolvedTitles.toString()
+
+            CriterionModifier.IS_NULL,
+            CriterionModifier.NOT_NULL,
+            -> ""
+
+            else -> throw IllegalArgumentException("${f.modifier}")
+        }.ifBlank { null }
+    return if (toStr != null) {
+        "$modStr $toStr"
+    } else {
+        modStr
+    }
+}
+
 fun filterSummary(
     name: String,
     value: Any,
@@ -311,6 +384,7 @@ fun filterSummary(
         is StashIDCriterionInput -> filterSummary(value)
         is TimestampCriterionInput -> filterSummary(value)
         is DateCriterionInput -> filterSummary(value)
+        is GenderCriterionInput -> filterSummary(value)
 
         is Boolean, String -> value.toString()
 
