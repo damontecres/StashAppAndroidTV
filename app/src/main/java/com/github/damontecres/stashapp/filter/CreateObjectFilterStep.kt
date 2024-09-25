@@ -7,17 +7,25 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
+import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
+import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.filter.picker.BooleanPickerFragment
 import com.github.damontecres.stashapp.filter.picker.DatePickerFragment
+import com.github.damontecres.stashapp.filter.picker.FloatPickerFragment
+import com.github.damontecres.stashapp.filter.picker.GenderPickerFragment
 import com.github.damontecres.stashapp.filter.picker.HierarchicalMultiCriterionFragment
 import com.github.damontecres.stashapp.filter.picker.IntPickerFragment
 import com.github.damontecres.stashapp.filter.picker.MultiCriterionFragment
+import com.github.damontecres.stashapp.filter.picker.OrientationPickerFragment
 import com.github.damontecres.stashapp.filter.picker.RatingPickerFragment
+import com.github.damontecres.stashapp.filter.picker.ResolutionPickerFragment
 import com.github.damontecres.stashapp.filter.picker.StringPickerFragment
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
@@ -114,6 +122,11 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                             nextStep(IntPickerFragment(filterOption))
                         }
 
+                        FloatCriterionInput::class -> {
+                            filterOption as FilterOption<StashDataFilter, FloatCriterionInput>
+                            nextStep(FloatPickerFragment(filterOption))
+                        }
+
                         Boolean::class -> {
                             filterOption as FilterOption<StashDataFilter, Boolean>
                             nextStep(BooleanPickerFragment(filterOption))
@@ -149,7 +162,22 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                             )
                         }
 
-                        else -> TODO()
+                        GenderCriterionInput::class -> {
+                            filterOption as FilterOption<StashDataFilter, GenderCriterionInput>
+                            nextStep(GenderPickerFragment(filterOption))
+                        }
+
+                        ResolutionCriterionInput::class -> {
+                            filterOption as FilterOption<StashDataFilter, ResolutionCriterionInput>
+                            nextStep(ResolutionPickerFragment(filterOption))
+                        }
+
+                        OrientationCriterionInput::class -> {
+                            filterOption as FilterOption<StashDataFilter, OrientationCriterionInput>
+                            nextStep(OrientationPickerFragment(filterOption))
+                        }
+
+                        else -> throw UnsupportedOperationException("$filterOption")
                     }
             }
         }
