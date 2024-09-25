@@ -288,6 +288,7 @@ class StashGridFragment() : Fragment() {
         playAllButton = root.findViewById(R.id.play_all_button)
         val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
+        mGridViewHolder.view.isFocusableInTouchMode = false
         gridDock.addView(mGridViewHolder.view)
         mGridViewHolder.gridView.setOnChildLaidOutListener(mChildLaidOutListener)
         if (name == null) {

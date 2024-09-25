@@ -11,8 +11,6 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 class SetupStep4Pin(private val setupState: SetupState) :
     SetupActivity.SimpleGuidedStepSupportFragment() {
-    private var pinCode: Int? = null
-
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
             "Set a PIN code?",
@@ -33,7 +31,7 @@ class SetupStep4Pin(private val setupState: SetupState) :
                 .description("")
                 .editDescription("")
                 .descriptionEditable(true)
-                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD)
                 .build(),
         )
         actions.add(
@@ -43,7 +41,7 @@ class SetupStep4Pin(private val setupState: SetupState) :
                 .description("")
                 .editDescription("")
                 .descriptionEditable(true)
-                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD)
                 .focusable(false)
                 .enabled(false)
                 .build(),
@@ -62,7 +60,6 @@ class SetupStep4Pin(private val setupState: SetupState) :
         val okAction = findActionById(GuidedAction.ACTION_ID_OK)
         if (action.id == ACTION_PIN) {
             if (action.editDescription.isNotNullOrBlank()) {
-                pinCode = action.editDescription.toString().toInt()
                 val confirmAction = findActionById(ACTION_CONFIRM_PIN)
                 confirmAction.isEnabled = true
                 confirmAction.isFocusable = true
@@ -82,9 +79,14 @@ class SetupStep4Pin(private val setupState: SetupState) :
             }
         } else if (action.id == ACTION_CONFIRM_PIN) {
             if (action.editDescription.isNotNullOrBlank()) {
-                val confirmPin = action.editDescription.toString().toInt()
+                val pinCode = findActionById(ACTION_PIN).editDescription.toString().toIntOrNull()
+                val confirmPin = action.editDescription.toString().toIntOrNull()
+
                 if (pinCode != confirmPin) {
-                    Toast.makeText(requireContext(), "PINs do not match!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "PINs do not match!", Toast.LENGTH_SHORT)
+                        .show()
+                    okAction.isEnabled = false
+                    notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_OK))
                     return GuidedAction.ACTION_ID_CURRENT
                 } else {
                     okAction.title = "Save PIN"
@@ -100,8 +102,15 @@ class SetupStep4Pin(private val setupState: SetupState) :
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
-            val newState = setupState.copy(pinCode = pinCode)
-            finishSetup(newState)
+            val pin = findActionById(ACTION_PIN).editDescription.toString().toIntOrNull()
+            val confirmPin =
+                findActionById(ACTION_CONFIRM_PIN).editDescription.toString().toIntOrNull()
+            if (pin == confirmPin) {
+                val newState = setupState.copy(pinCode = pin)
+                finishSetup(newState)
+            } else {
+                Toast.makeText(requireContext(), "PINs do not match!", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
