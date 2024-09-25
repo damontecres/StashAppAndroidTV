@@ -17,7 +17,7 @@
         android:required="false" />
     <uses-feature
         android:name="android.software.leanback"
-        android:required="true" />
+        android:required="false" />
     <uses-feature
         android:name="android.hardware.microphone"
         android:required="false" />
@@ -37,7 +37,6 @@
             android:icon="@mipmap/stash_logo"
             android:logo="@mipmap/stash_logo"
             android:noHistory="true"
-            android:screenOrientation="landscape"
             android:theme="@style/NoTitleTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

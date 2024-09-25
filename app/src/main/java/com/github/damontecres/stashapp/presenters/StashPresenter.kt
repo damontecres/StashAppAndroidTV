@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.graphics.drawable.PictureDrawable
 import android.view.View
 import android.view.ViewGroup
@@ -29,23 +28,13 @@ import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
-import kotlin.properties.Delegates
 
-abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = null) :
-    Presenter() {
-    protected var vParent: ViewGroup by Delegates.notNull()
-    protected var mDefaultCardImage: Drawable? = null
-
+abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = null) : Presenter() {
     final override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
-        vParent = parent
-        mDefaultCardImage =
-            ContextCompat.getDrawable(parent.context, R.drawable.baseline_camera_indoor_48)
-
         val cardView = StashImageCardView(parent.context)
         cardView.isFocusable = true
-        cardView.isFocusableInTouchMode = true
+        cardView.isFocusableInTouchMode = false
         cardView.updateCardBackgroundColor(cardView, false)
-
         return ViewHolder(cardView)
     }
 
