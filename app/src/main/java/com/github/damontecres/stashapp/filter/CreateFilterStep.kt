@@ -104,7 +104,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                     .hasNext(true)
                     .enabled(false)
                     .title("Save and submit")
-                    .description("Experimental!")
+                    .description(getString(R.string.save_and_submit_no_name_desc))
                     .build(),
             )
         }
@@ -171,6 +171,12 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         if (action.id == FILTER_NAME) {
             val submitAction = findActionById(SAVE_SUBMIT)
             submitAction.isEnabled = action.description.isNotNullOrBlank()
+            submitAction.description =
+                if (submitAction.isEnabled) {
+                    getString(R.string.save_and_submit_desc)
+                } else {
+                    getString(R.string.save_and_submit_no_name_desc)
+                }
             notifyActionChanged(findActionPositionById(SAVE_SUBMIT))
         }
         return GuidedAction.ACTION_ID_NEXT
