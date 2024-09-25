@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.setup
 
 import android.os.Bundle
+import android.text.InputType
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
@@ -33,6 +34,7 @@ class SetupStep3ApiKey(private val setupState: SetupState) :
                 .description("API key not set")
                 .editDescription("")
                 .descriptionEditable(true)
+                .descriptionEditInputType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD)
                 .hasNext(true)
                 .build(),
         )

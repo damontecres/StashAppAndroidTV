@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.setup
 
 import android.os.Bundle
+import android.text.InputType
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
@@ -29,6 +30,7 @@ class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
             GuidedAction.Builder(requireContext())
                 .id(SetupActivity.ACTION_SERVER_URL)
                 .title("Server URL")
+                .descriptionInputType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
                 .descriptionEditable(true)
                 .hasNext(true)
                 .build(),
