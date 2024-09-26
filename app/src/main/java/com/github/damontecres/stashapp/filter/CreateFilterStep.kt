@@ -126,7 +126,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                     name = filterNameAction.description?.toString()?.ifBlank { null },
                     findFilter = viewModel.findFilter.value,
                     objectFilter = objectFilter,
-                )
+                ).withResolvedRandom()
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 // If there is a name, try to save it to the server
                 if (experimentalFeaturesEnabled() &&

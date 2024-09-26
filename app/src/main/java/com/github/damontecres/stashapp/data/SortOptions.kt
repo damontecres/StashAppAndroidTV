@@ -24,11 +24,13 @@ data class SortOption(
     val requiresVersion: Version = Version.MINIMUM_STASH_VERSION,
 )
 
+val RANDOM_SORT_OPTION = SortOption("random", R.string.stashapp_random)
+
 val COMMON_SORT_OPTIONS =
     arrayOf(
         SortOption("created_at", R.string.stashapp_created_at),
         SortOption("updated_at", R.string.stashapp_updated_at),
-        SortOption("random", R.string.stashapp_random),
+        RANDOM_SORT_OPTION,
     )
 
 val SCENE_SORT_OPTIONS =

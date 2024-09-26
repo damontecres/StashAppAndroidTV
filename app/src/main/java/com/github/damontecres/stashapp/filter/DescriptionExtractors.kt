@@ -34,6 +34,7 @@ import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.RANDOM_SORT_OPTION
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.filter.output.getAllIds
@@ -100,7 +101,12 @@ fun findFilterSummary(
     findFilter: StashFindFilter,
 ): String {
     val sortAndDirection = findFilter.sortAndDirection ?: dataType.defaultSort
-    val sortOption = dataType.sortOptions.firstOrNull { it.key == sortAndDirection.sort }
+    val sortOption =
+        if (sortAndDirection.isRandom) {
+            RANDOM_SORT_OPTION
+        } else {
+            dataType.sortOptions.firstOrNull { it.key == sortAndDirection.sort }
+        }
     val sortName =
         if (sortOption != null) {
             context.getString(sortOption.nameStringId)
