@@ -38,6 +38,27 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         queryEngine = QueryEngine(StashServer.requireCurrentServer())
     }
 
+    private fun createActionList(): List<GuidedAction> {
+        return getFilterOptions(viewModel.dataType.value!!)
+            .mapIndexed { index, filterOption ->
+                filterOption as FilterOption<StashDataFilter, Any>
+                val value = viewModel.getValue(filterOption)
+                val description =
+                    if (value != null) {
+                        filterSummary(filterOption.name, value, viewModel::lookupIds)
+                    } else {
+                        null
+                    }
+                createAction(index, filterOption.nameStringId, description)
+            }
+            .sortedBy { it.title.toString() }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        actions = createActionList()
+    }
+
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val text =
             filterSummary(
@@ -58,22 +79,7 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        getFilterOptions(viewModel.dataType.value!!)
-            .mapIndexed { index, filterOption ->
-                filterOption as FilterOption<StashDataFilter, Any>
-                val value = viewModel.getValue(filterOption)
-                val description =
-                    if (value != null) {
-                        filterSummary(filterOption.name, value, viewModel::lookupIds)
-                    } else {
-                        null
-                    }
-                createAction(index, filterOption.nameStringId, description)
-            }
-            .sortedBy { it.title.toString() }
-            .forEach {
-                actions.add(it)
-            }
+        actions.addAll(createActionList())
     }
 
     override fun onCreateButtonActions(
