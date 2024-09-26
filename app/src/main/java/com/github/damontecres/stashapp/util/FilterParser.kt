@@ -29,6 +29,9 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 
+/**
+ * Parse a server-side filter from JSON (Map<String, *>)
+ */
 class FilterParser(private val serverVersion: Version) {
     companion object {
         const val TAG = "FilterParser"

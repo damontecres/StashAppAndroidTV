@@ -61,7 +61,7 @@ class GalleryFragment : TabbedFragment() {
     ) :
         StashFragmentPagerAdapter(
                 listOf(
-                    PagerEntry("Details", null),
+                    PagerEntry("Details"),
                     PagerEntry(DataType.IMAGE),
                     PagerEntry(DataType.SCENE),
                     PagerEntry(DataType.PERFORMER),

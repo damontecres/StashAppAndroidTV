@@ -12,6 +12,9 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.addToIntent
 import com.github.damontecres.stashapp.util.putFilterArgs
 
+/**
+ * Similar to [ImageGridClickedListener] but for the main page
+ */
 class OnImageFilterClickedListener(
     private val context: Context,
     private val callback: (ImageData) -> FilterPosition?,

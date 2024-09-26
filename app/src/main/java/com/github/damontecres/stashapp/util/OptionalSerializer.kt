@@ -9,17 +9,23 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 
-val optionalSerializerModule =
-    SerializersModule {
-        contextual(Optional::class) { args -> OptionalSerializer(args[0]) }
-    }
-
+/**
+ * Contextual [Parcelable] with [OptionalSerializer]
+ */
 @OptIn(ExperimentalSerializationApi::class)
-val parcelable =
+val StashParcelable =
     Parcelable {
-        serializersModule = optionalSerializerModule
+        serializersModule =
+            SerializersModule {
+                contextual(Optional::class) { args -> OptionalSerializer(args[0]) }
+            }
     }
 
+/**
+ * Serializes [Optional]s
+ *
+ * Basically just writes a boolean for whether the [Optional] is present or absent before the value
+ */
 class OptionalSerializer<T>(private val dataSerializer: KSerializer<T>) : KSerializer<Optional<T>> {
     override val descriptor: SerialDescriptor
         get() = dataSerializer.descriptor

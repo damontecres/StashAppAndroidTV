@@ -29,7 +29,7 @@ class TagFragment : TabbedFragment() {
                 PagerEntry(DataType.IMAGE),
                 PagerEntry(DataType.MARKER),
                 PagerEntry(DataType.PERFORMER),
-                PagerEntry(getString(R.string.stashapp_sub_tags), DataType.TAG),
+                PagerEntry(getString(R.string.stashapp_sub_tags)),
             )
 
         return TabPageAdapter(tabs, tagId, includeSubTags, fm)

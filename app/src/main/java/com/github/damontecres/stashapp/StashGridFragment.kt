@@ -42,12 +42,12 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashComparator
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashParcelable
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getInt
-import com.github.damontecres.stashapp.util.parcelable
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
@@ -373,7 +373,11 @@ class StashGridFragment() : Fragment() {
         super.onSaveInstanceState(outState)
         outState.putInt("mSelectedPosition", mSelectedPosition)
         columns?.let { outState.putInt("columns", it) }
-        outState.putParcelable("_filterArgs", _filterArgs.with(currentSortAndDirection), parcelable)
+        outState.putParcelable(
+            "_filterArgs",
+            _filterArgs.with(currentSortAndDirection),
+            StashParcelable,
+        )
         outState.putString("name", name)
         outState.putBoolean("sortButtonEnabled", sortButtonEnabled)
     }

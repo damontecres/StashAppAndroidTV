@@ -12,6 +12,9 @@ import androidx.media3.common.util.Util
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 
+/**
+ * A [PlayerView] which overrides button presses
+ */
 class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     PlayerView(context, attrs, defStyleAttr) {
     constructor(context: Context, attrs: AttributeSet? = null) : this(context, attrs, 0)

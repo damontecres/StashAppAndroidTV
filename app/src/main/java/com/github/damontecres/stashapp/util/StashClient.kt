@@ -26,6 +26,9 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
 import kotlin.time.DurationUnit
 
+/**
+ * Provides static functions to get clients to interact with the server
+ */
 class StashClient private constructor() {
     companion object {
         private const val TAG = "StashClient"
@@ -186,13 +189,18 @@ class StashClient private constructor() {
             return builder.build()
         }
 
+        /**
+         * Create the user agent used in HTTP calls
+         *
+         * Form of: StashAppAndroidTV/<version> (release/<android version>; sdk/<android sdk int>) (<manufacturer>; <device model>; <device name>)
+         */
         fun createUserAgent(context: Context): String {
             val appName = context.getString(R.string.app_name)
             val versionStr = context.packageManager.getPackageInfo(context.packageName, 0).versionName
             val comments =
                 listOf(
-                    join("os", Build.VERSION.BASE_OS),
-                    join("release", Build.VERSION.RELEASE),
+                    joinValueNotNull("os", Build.VERSION.BASE_OS),
+                    joinValueNotNull("release", Build.VERSION.RELEASE),
                     "sdk/${Build.VERSION.SDK_INT}",
                 ).joinNotNullOrBlank("; ")
             val device =
@@ -242,6 +250,11 @@ class StashClient private constructor() {
                 .build()
         }
 
+        /**
+         * Cleans up the URL that a user enters
+         *
+         * Tries to add protocol (http) and endpoint (/graphql)
+         */
         fun cleanServerUrl(stashUrl: String): String {
             var cleanedStashUrl = stashUrl.trim()
             if (!cleanedStashUrl.startsWith("http://") && !cleanedStashUrl.startsWith("https://")) {
@@ -262,6 +275,8 @@ class StashClient private constructor() {
 
         /**
          * Get the server URL excluding the (unlikely) `/graphql` last path segment
+         *
+         * Basically, if a user is using a reverse proxy routes the path ending with `/graphql`, this will remove that
          */
         fun getServerRoot(stashUrl: String): String {
             var cleanedStashUrl = stashUrl.trim()
@@ -283,6 +298,8 @@ class StashClient private constructor() {
 
         /**
          * Build an [ApolloClient] suitable for testing connectivity for the specified server.
+         *
+         * @see [com.github.damontecres.stashapp.util.testStashConnection]
          */
         fun createTestApolloClient(
             context: Context,

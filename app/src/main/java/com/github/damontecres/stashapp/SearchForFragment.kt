@@ -49,6 +49,11 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
 import kotlin.properties.Delegates
 
+/**
+ * Search for an item of a specific [DataType]
+ *
+ * Will load recently used items via [com.github.damontecres.stashapp.data.room.RecentSearchItemsDao]
+ */
 class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
     private var query: String? = null

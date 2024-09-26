@@ -1,11 +1,26 @@
 package com.github.damontecres.stashapp.data
 
+import androidx.annotation.StringRes
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.Version
 
+/**
+ * A way to sort something
+ */
 data class SortOption(
+    /**
+     * The key as understood by the server
+     */
     val key: String,
-    val nameStringId: Int,
+    /**
+     * The string resource for the readable name of the sort
+     */
+    @StringRes val nameStringId: Int,
+    /**
+     * The minimum server version required to sort by this
+     *
+     * This allows for adding future compatible sorting to older app versions
+     */
     val requiresVersion: Version = Version.MINIMUM_STASH_VERSION,
 )
 

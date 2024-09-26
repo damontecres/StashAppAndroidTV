@@ -21,6 +21,9 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getParcelable
 import kotlinx.coroutines.launch
 
+/**
+ * Select a value to shift a [Marker]'s seconds by
+ */
 class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
     private val viewModel by activityViewModels<MarkerDetailsViewModel>()
 

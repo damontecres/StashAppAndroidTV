@@ -33,6 +33,9 @@ import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
+/**
+ * Main [TabbedFragment] for a performers which includes [PerformerDetailsFragment] and other tabs
+ */
 class PerformerFragment : TabbedFragment() {
     private lateinit var performer: Performer
 
@@ -58,13 +61,13 @@ class PerformerFragment : TabbedFragment() {
     ) :
         StashFragmentPagerAdapter(
                 listOf(
-                    PagerEntry("Details", null),
+                    PagerEntry("Details"),
                     PagerEntry(DataType.SCENE),
                     PagerEntry(DataType.GALLERY),
                     PagerEntry(DataType.IMAGE),
                     PagerEntry(DataType.MOVIE),
                     PagerEntry(DataType.TAG),
-                    PagerEntry("Appears With", DataType.PERFORMER),
+                    PagerEntry("Appears With"),
                 ),
                 fm,
             ) {

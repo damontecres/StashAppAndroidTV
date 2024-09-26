@@ -6,6 +6,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.github.damontecres.stashapp.data.DataType
 
+/**
+ * Retrieve and store [RecentSearchItem]s
+ */
 @Dao
 interface RecentSearchItemsDao {
     @Query("SELECT * FROM recent_search_items WHERE serverUrl = :serverUrl AND dataType = :dataType  ORDER BY timestamp DESC LIMIT :count")

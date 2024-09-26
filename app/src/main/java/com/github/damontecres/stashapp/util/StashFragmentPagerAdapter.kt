@@ -7,6 +7,9 @@ import androidx.fragment.app.FragmentStatePagerAdapter
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.data.DataType
 
+/**
+ * A [FragmentStatePagerAdapter] to show various tabs for data types
+ */
 abstract class StashFragmentPagerAdapter(
     private val items: List<PagerEntry>,
     fm: FragmentManager,
@@ -30,8 +33,13 @@ abstract class StashFragmentPagerAdapter(
 
     abstract fun getFragment(position: Int): Fragment
 
-    data class PagerEntry(val title: String, val dataType: DataType?) {
-        constructor(dataType: DataType) : this(StashApplication.getApplication().getString(dataType.pluralStringId), dataType)
+    /**
+     * Represents a tab with an title
+     */
+    data class PagerEntry(val title: String) {
+        constructor(dataType: DataType) : this(
+            StashApplication.getApplication().getString(dataType.pluralStringId),
+        )
     }
 
     companion object {

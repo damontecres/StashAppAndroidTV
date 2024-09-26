@@ -279,21 +279,20 @@ class MainFragment : BrowseSupportFragment() {
                         val jobs = frontPageParser.parse(frontPageContent)
                         jobs.forEachIndexed { index, job ->
                             job.await().let { row ->
-                                if (row.successful) {
-                                    val rowData = row.data!!
-                                    filterList.add(rowData.filter)
+                                if (row is FrontPageParser.FrontPageRow.Success) {
+                                    filterList.add(row.filter)
 
                                     val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
-                                    adapter.addAll(0, rowData.data)
-                                    adapter.add(rowData.filter)
+                                    adapter.addAll(0, row.data)
+                                    adapter.add(row.filter)
                                     adapters.add(adapter)
                                     withContext(Dispatchers.Main) {
                                         rowsAdapter.set(
                                             index,
-                                            ListRow(HeaderItem(rowData.name), adapter),
+                                            ListRow(HeaderItem(row.name), adapter),
                                         )
                                     }
-                                } else if (row.result == FrontPageParser.FrontPageRowResult.ERROR) {
+                                } else if (row is FrontPageParser.FrontPageRow.Error) {
                                     withContext(Dispatchers.Main) {
                                         Toast.makeText(
                                             requireContext(),

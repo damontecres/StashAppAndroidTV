@@ -6,6 +6,9 @@ import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.apollographql.apollo.exception.ApolloNetworkException
 
+/**
+ * Super class for "engines" that interact with the server
+ */
 abstract class StashEngine(
     protected val server: StashServer,
     protected val client: ApolloClient,

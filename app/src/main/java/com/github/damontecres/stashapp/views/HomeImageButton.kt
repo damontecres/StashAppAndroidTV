@@ -8,6 +8,9 @@ import androidx.appcompat.widget.AppCompatImageButton
 import com.github.damontecres.stashapp.MainActivity
 import com.github.damontecres.stashapp.R
 
+/**
+ * An [AppCompatImageButton] that is the stash server icon and clicking returns to [MainActivity]
+ */
 class HomeImageButton(context: Context, attrs: AttributeSet?) : AppCompatImageButton(context, attrs) {
     init {
         setOnClickListener {

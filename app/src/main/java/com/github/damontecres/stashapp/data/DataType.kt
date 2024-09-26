@@ -23,12 +23,33 @@ import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import kotlin.reflect.KClass
 
+/**
+ * One of the eight core types of data that the server uses
+ */
 enum class DataType(
+    /**
+     * The equivalent [FilterMode] for this data type
+     */
     val filterMode: FilterMode,
+    /**
+     * The string resource for the singular form of the data type
+     */
     @StringRes val stringId: Int,
+    /**
+     * The string resource for the plural form of the data type
+     */
     @StringRes val pluralStringId: Int,
+    /**
+     * The string resource for the icon form of the data type
+     */
     @StringRes val iconStringId: Int,
+    /**
+     * The default sort for items of this data type
+     */
     val defaultSort: SortAndDirection,
+    /**
+     * The available options for sorting this data type
+     */
     val sortOptions: List<SortOption>,
 ) {
     SCENE(

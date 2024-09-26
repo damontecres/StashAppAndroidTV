@@ -31,6 +31,9 @@ import kotlinx.coroutines.launch
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
+/**
+ * Details for a performer
+ */
 class PerformerDetailsFragment() : Fragment(R.layout.performer_view) {
     constructor(performer: Performer) : this() {
         this.performer = performer

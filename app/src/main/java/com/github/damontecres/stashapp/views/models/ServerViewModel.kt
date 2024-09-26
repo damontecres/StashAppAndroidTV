@@ -9,6 +9,9 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getInt
 import java.util.Objects
 
+/**
+ * Tracks the current server
+ */
 class ServerViewModel : ViewModel() {
     private val _currentServer =
         EqualityMutableLiveData<StashServer?>(StashServer.getCurrentStashServer(StashApplication.getApplication()))

@@ -26,7 +26,7 @@ class MovieFragment : TabbedFragment() {
     override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
         val pages =
             listOf(
-                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details), null),
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)),
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
             )
         return object : StashFragmentPagerAdapter(pages, fm) {
