@@ -13,19 +13,20 @@ import com.github.damontecres.stashapp.data.Movie
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.util.getParcelable
 
 class MovieFragment : TabbedFragment() {
     private lateinit var movie: Movie
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        movie = requireActivity().intent.getParcelableExtra<Movie>("movie")!!
+        movie = requireActivity().intent.getParcelable("movie", Movie::class)!!
         super.onCreate(savedInstanceState)
     }
 
     override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
         val pages =
             listOf(
-                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details), null),
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)),
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
             )
         return object : StashFragmentPagerAdapter(pages, fm) {

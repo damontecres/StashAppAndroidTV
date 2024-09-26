@@ -106,11 +106,12 @@ class FrontPageFilterTests {
             runBlocking { frontPageParser.parse(parseFileToFrontPageContent("front_page_basic.json")) }
         val rows = result.map { runBlocking { it.await() } }
         Assert.assertEquals(4, rows.size)
-        rows.forEach { Assert.assertEquals(FrontPageParser.FrontPageRowResult.SUCCESS, it.result) }
-        Assert.assertEquals(DataType.SCENE, rows[0].data!!.filter.dataType)
-        Assert.assertEquals(DataType.SCENE, rows[1].data!!.filter.dataType)
-        Assert.assertEquals(DataType.PERFORMER, rows[2].data!!.filter.dataType)
-        Assert.assertEquals(DataType.PERFORMER, rows[3].data!!.filter.dataType)
+        rows.forEach { Assert.assertTrue(it is FrontPageParser.FrontPageRow.Success) }
+        rows as List<FrontPageParser.FrontPageRow.Success>
+        Assert.assertEquals(DataType.SCENE, rows[0].filter.dataType)
+        Assert.assertEquals(DataType.SCENE, rows[1].filter.dataType)
+        Assert.assertEquals(DataType.PERFORMER, rows[2].filter.dataType)
+        Assert.assertEquals(DataType.PERFORMER, rows[3].filter.dataType)
     }
 
     @Test
@@ -125,7 +126,7 @@ class FrontPageFilterTests {
         val result = runBlocking { frontPageParser.parse(parseFileToFrontPageContent("front_page_unsupported.json")) }
         val rows = result.map { runBlocking { it.await() } }
         Assert.assertEquals(2, rows.size)
-        Assert.assertEquals(FrontPageParser.FrontPageRowResult.DATA_TYPE_NOT_SUPPORTED, rows[0].result)
-        Assert.assertEquals(FrontPageParser.FrontPageRowResult.DATA_TYPE_NOT_SUPPORTED, rows[1].result)
+        Assert.assertTrue(rows[0] is FrontPageParser.FrontPageRow.NotSupported)
+        Assert.assertTrue(rows[1] is FrontPageParser.FrontPageRow.NotSupported)
     }
 }

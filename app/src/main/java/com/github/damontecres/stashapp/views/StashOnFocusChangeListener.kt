@@ -3,6 +3,9 @@ package com.github.damontecres.stashapp.views
 import android.content.Context
 import android.view.View
 
+/**
+ * A [View.OnFocusChangeListener] which slightly zooms the view
+ */
 open class StashOnFocusChangeListener(val context: Context) : View.OnFocusChangeListener {
     private val mFocusedZoom =
         context.resources.getFraction(

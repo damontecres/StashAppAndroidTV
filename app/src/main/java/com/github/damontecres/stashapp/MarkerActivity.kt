@@ -13,7 +13,6 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.activityViewModels
@@ -56,6 +55,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.convertDpToPixel
+import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
@@ -65,9 +65,10 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
+/**
+ * Shows details and editable actions for a scene marker
+ */
 class MarkerActivity : FragmentActivity() {
-    private val viewModel by viewModels<MarkerDetailsViewModel>()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_details)
@@ -172,7 +173,7 @@ class MarkerActivity : FragmentActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
 
-            val marker = requireActivity().intent.getParcelableExtra<Marker>("marker")!!
+            val marker = requireActivity().intent.getParcelable("marker", Marker::class)!!
             viewModel.setMarker(marker)
 
             primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)

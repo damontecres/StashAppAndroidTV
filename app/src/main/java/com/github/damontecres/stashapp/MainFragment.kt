@@ -260,9 +260,17 @@ class MainFragment : BrowseSupportFragment() {
                         StashServer.requireCurrentServer().serverPreferences
                             .updatePreferences(config)
 
-                        val ui = config.configuration.ui
+                        val ui = config.configuration.ui as Map<*, *>
                         val frontPageContent =
-                            (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>
+                            ui.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
+                        if (frontPageContent == null) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Unable to find front page content! Check the Web UI.",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            return@launch
+                        }
                         val pageSize =
                             PreferenceManager.getDefaultSharedPreferences(requireContext())
                                 .getInt(getString(R.string.pref_key_page_size), 25)
@@ -271,21 +279,20 @@ class MainFragment : BrowseSupportFragment() {
                         val jobs = frontPageParser.parse(frontPageContent)
                         jobs.forEachIndexed { index, job ->
                             job.await().let { row ->
-                                if (row.successful) {
-                                    val rowData = row.data!!
-                                    filterList.add(rowData.filter)
+                                if (row is FrontPageParser.FrontPageRow.Success) {
+                                    filterList.add(row.filter)
 
                                     val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
-                                    adapter.addAll(0, rowData.data)
-                                    adapter.add(rowData.filter)
+                                    adapter.addAll(0, row.data)
+                                    adapter.add(row.filter)
                                     adapters.add(adapter)
                                     withContext(Dispatchers.Main) {
                                         rowsAdapter.set(
                                             index,
-                                            ListRow(HeaderItem(rowData.name), adapter),
+                                            ListRow(HeaderItem(row.name), adapter),
                                         )
                                     }
-                                } else if (row.result == FrontPageParser.FrontPageRowResult.ERROR) {
+                                } else if (row is FrontPageParser.FrontPageRow.Error) {
                                     withContext(Dispatchers.Main) {
                                         Toast.makeText(
                                             requireContext(),

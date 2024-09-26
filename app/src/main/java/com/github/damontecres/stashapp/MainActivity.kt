@@ -36,6 +36,7 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (!fragment.onBackPressed()) {
             super.onBackPressed()

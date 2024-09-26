@@ -23,6 +23,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.ageInYears
+import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.parseTimeToString
@@ -30,6 +31,9 @@ import kotlinx.coroutines.launch
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
+/**
+ * Details for a performer
+ */
 class PerformerDetailsFragment() : Fragment(R.layout.performer_view) {
     constructor(performer: Performer) : this() {
         this.performer = performer
@@ -51,7 +55,7 @@ class PerformerDetailsFragment() : Fragment(R.layout.performer_view) {
         super.onViewCreated(view, savedInstanceState)
 
         if (savedInstanceState != null) {
-            performer = savedInstanceState.getParcelable("performer")!!
+            performer = savedInstanceState.getParcelable("performer", Performer::class)!!
         }
 
         mPerformerImage = view.findViewById(R.id.performer_image)
@@ -59,7 +63,7 @@ class PerformerDetailsFragment() : Fragment(R.layout.performer_view) {
         favoriteButton = view.findViewById(R.id.favorite_button)
         favoriteButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
 
-        val performer = requireActivity().intent.getParcelableExtra<Performer>("performer")
+        val performer = requireActivity().intent.getParcelable("performer", Performer::class)
         if (performer != null) {
             val server = StashServer.requireCurrentServer()
             queryEngine = QueryEngine(server)

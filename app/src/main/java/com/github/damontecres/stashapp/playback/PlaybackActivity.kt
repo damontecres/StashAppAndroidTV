@@ -20,6 +20,7 @@ import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.toMilliseconds
 import kotlinx.coroutines.launch
 
@@ -39,7 +40,7 @@ class PlaybackActivity : FragmentActivity() {
             setResultAndFinish()
         }
 
-        val scene = intent.getParcelableExtra(SceneDetailsActivity.MOVIE) as Scene?
+        val scene = intent.getParcelable(SceneDetailsActivity.MOVIE, Scene::class)
         if (scene != null) {
             this.scene = scene
             if (savedInstanceState == null) {

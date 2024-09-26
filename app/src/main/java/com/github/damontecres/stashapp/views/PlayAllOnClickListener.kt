@@ -11,6 +11,9 @@ import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.putFilterArgs
 
+/**
+ * The "Play All" button clicker which starts playback for multiple scenes or markers
+ */
 class PlayAllOnClickListener(
     private val context: Context,
     private val dataType: DataType,

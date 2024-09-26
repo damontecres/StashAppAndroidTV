@@ -1,5 +1,10 @@
 package com.github.damontecres.stashapp.actions
 
+/**
+ * Represents an action a user can take
+ *
+ * This is sort of a catch-all, but [com.github.damontecres.stashapp.presenters.ActionPresenter] can render them
+ */
 enum class StashAction(val id: Long, val actionName: String) {
     ADD_TAG(1L, "Add Tag"),
     ADD_PERFORMER(2L, "Add Performer"),
@@ -13,6 +18,7 @@ enum class StashAction(val id: Long, val actionName: String) {
     ;
 
     companion object {
+        // Actions that require searching for something
         val SEARCH_FOR_ACTIONS =
             setOf(ADD_TAG, ADD_PERFORMER, CREATE_MARKER, SET_STUDIO, ADD_GALLERY)
     }

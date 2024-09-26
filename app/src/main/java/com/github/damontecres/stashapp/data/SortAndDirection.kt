@@ -6,16 +6,25 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.util.getRandomSort
 import kotlinx.serialization.Serializable
 
+/**
+ * Represents a way to sort something
+ */
 @Serializable
 data class SortAndDirection(val sort: String, val direction: SortDirectionEnum) {
     val asFindFilterType get() = FindFilterType(sort = Optional.present(sort), direction = Optional.present(direction))
 
+    /**
+     * Is this sorting by random?
+     */
     val isRandom get() = sort.startsWith("random")
 
     companion object {
         val NAME_ASC = SortAndDirection("name", SortDirectionEnum.ASC)
         val PATH_ASC = SortAndDirection("path", SortDirectionEnum.ASC)
 
+        /**
+         * Create a random sort
+         */
         fun random() = SortAndDirection(getRandomSort(), SortDirectionEnum.ASC)
 
         fun create(

@@ -32,6 +32,11 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.putFilterArgs
 import kotlinx.coroutines.launch
 
+/**
+ * The top title bar which has buttons for each [DataType]
+ *
+ * Clicking them goes to the default filter for that [DataType]
+ */
 class MainTitleView(context: Context, attrs: AttributeSet) :
     RelativeLayout(context, attrs),
     TitleViewAdapter.Provider {

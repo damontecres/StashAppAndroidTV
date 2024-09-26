@@ -7,6 +7,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.github.damontecres.stashapp.R
 
+/**
+ * A simple dialog to confirm or cancel an action
+ */
 class ConfirmationDialogFragment(
     private val message: String,
     private val onClickListener: DialogInterface.OnClickListener,

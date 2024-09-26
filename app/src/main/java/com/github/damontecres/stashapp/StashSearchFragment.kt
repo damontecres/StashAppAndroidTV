@@ -26,6 +26,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Search for items regardless of data type
+ */
 class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
 

@@ -15,6 +15,9 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashServer
 
+/**
+ * A [View] for rating which handles displaying either a star or decimal rating based on the server preferences
+ */
 @SuppressLint("SetTextI18n")
 class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs) {
     constructor(context: Context) : this(context, null)

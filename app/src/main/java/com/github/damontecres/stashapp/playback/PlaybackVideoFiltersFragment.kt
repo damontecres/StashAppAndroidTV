@@ -12,7 +12,10 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.room.VideoFilter
 
-class PlaybackFilterFragment : Fragment(R.layout.apply_video_filters) {
+/**
+ * Display the [VideoFilter] options to manipulate
+ */
+class PlaybackVideoFiltersFragment : Fragment(R.layout.apply_video_filters) {
     private val viewModel: VideoFilterViewModel by activityViewModels()
 
     override fun onViewCreated(

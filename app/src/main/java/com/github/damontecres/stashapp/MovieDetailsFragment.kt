@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 import kotlin.time.DurationUnit
@@ -39,7 +40,7 @@ class MovieDetailsFragment : Fragment(R.layout.movie_view) {
 
         table = view.findViewById(R.id.movie_table)
 
-        val movie = requireActivity().intent.getParcelableExtra<Movie>("movie")!!
+        val movie = requireActivity().intent.getParcelable("movie", Movie::class)!!
         if (movie.frontImagePath != null) {
             StashGlide.with(requireActivity(), movie.frontImagePath)
                 .error(StashPresenter.glideError(requireContext()))
