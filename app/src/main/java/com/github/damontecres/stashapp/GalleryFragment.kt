@@ -34,6 +34,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -45,7 +46,7 @@ class GalleryFragment : TabbedFragment() {
     private lateinit var gallery: Gallery
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        gallery = requireActivity().intent.getParcelableExtra(INTENT_GALLERY_OBJ)!!
+        gallery = requireActivity().intent.getParcelable(INTENT_GALLERY_OBJ, Gallery::class)!!
         super.onCreate(savedInstanceState)
         viewModel.title.value = gallery.name
     }
@@ -148,7 +149,7 @@ class GalleryFragment : TabbedFragment() {
             super.onViewCreated(view, savedInstanceState)
 
             if (savedInstanceState != null) {
-                val gallery = savedInstanceState.getParcelable<Gallery>("gallery")
+                val gallery = savedInstanceState.getParcelable("gallery", Gallery::class)
                 if (gallery != null) {
                     this.gallery = gallery
                 } else {

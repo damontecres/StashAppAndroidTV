@@ -13,7 +13,6 @@ import androidx.fragment.app.commitNow
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
-import com.chrynan.parcelable.core.getParcelableExtra
 import com.github.damontecres.stashapp.api.CountImagesQuery
 import com.github.damontecres.stashapp.api.FindImagesQuery
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -26,15 +25,14 @@ import com.github.damontecres.stashapp.image.ImageDetailsFragment
 import com.github.damontecres.stashapp.image.ImageFragment
 import com.github.damontecres.stashapp.image.ImageViewModel
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
-import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.StashSparseFilterFetcher
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.isImageClip
-import com.github.damontecres.stashapp.util.parcelable
 import kotlinx.coroutines.launch
 
 class ImageActivity : FragmentActivity(R.layout.activity_image) {
@@ -106,8 +104,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
     }
 
     private fun createDataSupplier(): ImageDataSupplier? {
-        val filterArgs: FilterArgs? =
-            intent.getParcelableExtra(INTENT_FILTER_ARGS, FilterArgs::class, 0, parcelable)
+        val filterArgs = intent.getFilterArgs(INTENT_FILTER_ARGS)
         val galleryId = intent.getStringExtra(INTENT_GALLERY_ID)
         if (filterArgs != null) {
             return DataSupplierFactory(

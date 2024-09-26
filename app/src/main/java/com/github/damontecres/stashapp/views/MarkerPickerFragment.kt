@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getParcelable
 import kotlinx.coroutines.launch
 
 class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
@@ -29,7 +30,7 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val marker = requireActivity().intent.getParcelableExtra<Marker>("marker")!!
+        val marker = requireActivity().intent.getParcelable("marker", Marker::class)!!
 
         val picker = view.findViewById<Picker>(R.id.picker)
         val sceneTitle = view.findViewById<TextView>(R.id.scene_title)

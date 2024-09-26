@@ -260,9 +260,17 @@ class MainFragment : BrowseSupportFragment() {
                         StashServer.requireCurrentServer().serverPreferences
                             .updatePreferences(config)
 
-                        val ui = config.configuration.ui
+                        val ui = config.configuration.ui as Map<*, *>
                         val frontPageContent =
-                            (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>
+                            ui.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
+                        if (frontPageContent == null) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Unable to find front page content! Check the Web UI.",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            return@launch
+                        }
                         val pageSize =
                             PreferenceManager.getDefaultSharedPreferences(requireContext())
                                 .getInt(getString(R.string.pref_key_page_size), 25)

@@ -9,10 +9,8 @@ import androidx.activity.viewModels
 import androidx.annotation.OptIn
 import androidx.fragment.app.FragmentActivity
 import androidx.media3.common.util.UnstableApi
-import com.chrynan.parcelable.core.getParcelableExtra
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.util.parcelable
+import com.github.damontecres.stashapp.util.getFilterArgs
 
 class PlaylistActivity : FragmentActivity() {
     private val viewModel: PlaylistViewModel by viewModels()
@@ -22,8 +20,7 @@ class PlaylistActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) {
-            val filter =
-                intent.getParcelableExtra(INTENT_FILTER, FilterArgs::class, 0, parcelable)!!
+            val filter = intent.getFilterArgs(INTENT_FILTER)!!
             Log.v(TAG, "filter=${filter.sortAndDirection}")
             viewModel.filterArgs.value = filter
             fragment =

@@ -16,8 +16,6 @@ import androidx.appcompat.widget.ListPopupWindow
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
-import com.chrynan.parcelable.core.getParcelableExtra
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.filter.FilterOptions
@@ -27,8 +25,8 @@ import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
-import com.github.damontecres.stashapp.util.parcelable
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
@@ -51,8 +49,6 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val preferences = PreferenceManager.getDefaultSharedPreferences(this)
 
         filterButton = findViewById(R.id.filter_button)
         filterButton.setOnClickListener {
@@ -85,8 +81,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             }
         }
 
-        val startingFilter =
-            intent.getParcelableExtra(INTENT_FILTER_ARGS, FilterArgs::class, 0, parcelable)!!
+        val startingFilter = intent.getFilterArgs(INTENT_FILTER_ARGS)!!
         if (savedInstanceState == null) {
             setup(startingFilter, first = true)
         }

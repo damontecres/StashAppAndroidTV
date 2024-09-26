@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
@@ -36,7 +37,7 @@ class PerformerFragment : TabbedFragment() {
     private lateinit var performer: Performer
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        performer = requireActivity().intent.getParcelableExtra("performer")!!
+        performer = requireActivity().intent.getParcelable("performer", Performer::class)!!
         super.onCreate(savedInstanceState)
         viewModel.title.value =
             SpannableString("${performer.name} ${performer.disambiguation}").apply {

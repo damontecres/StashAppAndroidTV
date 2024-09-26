@@ -56,6 +56,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.convertDpToPixel
+import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
@@ -172,7 +173,7 @@ class MarkerActivity : FragmentActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
 
-            val marker = requireActivity().intent.getParcelableExtra<Marker>("marker")!!
+            val marker = requireActivity().intent.getParcelable("marker", Marker::class)!!
             viewModel.setMarker(marker)
 
             primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)

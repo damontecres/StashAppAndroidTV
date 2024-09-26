@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
+import android.os.Bundle
 import android.text.TextUtils
 import android.util.DisplayMetrics
 import android.util.Log
@@ -26,6 +27,7 @@ import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.chrynan.parcelable.core.getParcelable
 import com.chrynan.parcelable.core.getParcelableExtra
 import com.chrynan.parcelable.core.putExtra
 import com.github.damontecres.stashapp.ImageActivity
@@ -323,7 +325,7 @@ val supportedFilterModes = DataType.entries.map { it.filterMode }.toSet()
 /**
  * Gets the value for the key trying first the key as provided and next the key lower cased
  */
-fun <V> Map<String, V>.getCaseInsensitive(k: String?): V? {
+fun <V> Map<*, V>.getCaseInsensitive(k: String?): V? {
     if (k == null) {
         return null
     }
@@ -763,8 +765,14 @@ fun Intent.putFilterArgs(
     return putExtra(name, filterArgs, parcelable)
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 fun Intent.getFilterArgs(name: String): FilterArgs? {
     return getParcelableExtra(name, FilterArgs::class, 0, parcelable)
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun Bundle.getFilterArgs(name: String): FilterArgs? {
+    return getParcelable(name, FilterArgs::class, 0, parcelable)
 }
 
 fun experimentalFeaturesEnabled(): Boolean {

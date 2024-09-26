@@ -27,7 +27,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
-import com.chrynan.parcelable.core.getParcelable
 import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.StashDataFilter
@@ -46,6 +45,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
+import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.parcelable
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
@@ -55,6 +55,7 @@ import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.serialization.ExperimentalSerializationApi
 
 /**
  * A [Fragment] that shows a grid of items of the same [DataType].
@@ -241,7 +242,7 @@ class StashGridFragment() : Fragment() {
             name = savedInstanceState.getString("name")
             sortButtonEnabled = savedInstanceState.getBoolean("sortButtonEnabled")
             _filterArgs =
-                savedInstanceState.getParcelable("_filterArgs", FilterArgs::class, 0, parcelable)!!
+                savedInstanceState.getFilterArgs("_filterArgs")!!
             Log.v(TAG, "sortAndDirection=${_filterArgs.sortAndDirection}")
         }
 
@@ -367,6 +368,7 @@ class StashGridFragment() : Fragment() {
         }
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("mSelectedPosition", mSelectedPosition)
