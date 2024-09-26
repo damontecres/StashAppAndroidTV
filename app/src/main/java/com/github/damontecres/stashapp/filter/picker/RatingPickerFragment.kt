@@ -49,10 +49,7 @@ class RatingPickerFragment(
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))
                 .descriptionEditable(true)
-                .descriptionEditInputType(
-                    InputType.TYPE_CLASS_NUMBER or
-                        InputType.TYPE_NUMBER_FLAG_DECIMAL,
-                )
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
                 .description(current?.toString())
                 .build(),
         )
@@ -174,7 +171,7 @@ class RatingPickerFragment(
     }
 
     companion object {
-        private const val TAG = "StringPickerFragment"
+        private const val TAG = "RatingPickerFragment"
         private const val MODIFIER = 2L
     }
 }

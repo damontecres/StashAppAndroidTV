@@ -64,7 +64,7 @@ class FloatPickerFragment(
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))
                 .descriptionEditable(true)
-                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
                 .description(curInt?.toString())
                 .enabled(curModifier == CriterionModifier.BETWEEN || curModifier == CriterionModifier.NOT_BETWEEN)
                 .build(),

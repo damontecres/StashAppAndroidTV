@@ -30,18 +30,16 @@ class CreateFindFilterFragment(
         savedInstanceState: Bundle?,
     ) {
         val sortOptions =
-            buildList {
-                dataType.sortOptions
-                    .mapIndexed { index, sortOption ->
-                        GuidedAction.Builder(requireContext())
-                            .id(SORT_OFFSET + index)
-                            .hasNext(false)
-                            .title(getString(sortOption.nameStringId))
-                            .build()
-                    }
-                    .sortedBy { it.title.toString() }
-                    .forEach(::add)
-            }
+            dataType.sortOptions
+                .mapIndexed { index, sortOption ->
+                    GuidedAction.Builder(requireContext())
+                        .id(SORT_OFFSET + index)
+                        .hasNext(false)
+                        .title(getString(sortOption.nameStringId))
+                        .build()
+                }
+                .sortedBy { it.title.toString() }
+
         val currSortOption =
             if (currFindFilter.sortAndDirection?.isRandom == true) {
                 RANDOM_SORT_OPTION

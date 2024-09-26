@@ -109,7 +109,7 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
             parentFragmentManager.popBackStack()
         } else {
             val filterOption = getFilterOptions(dataType)[action.id.toInt()]
-            when (action.id.toInt()) {
+            when (filterOption.nameStringId) {
                 R.string.stashapp_rating -> {
                     filterOption as FilterOption<StashDataFilter, IntCriterionInput>
                     nextStep(RatingPickerFragment(filterOption))
