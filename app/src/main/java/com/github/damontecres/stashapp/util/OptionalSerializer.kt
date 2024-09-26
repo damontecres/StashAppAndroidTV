@@ -9,16 +9,18 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 
+val OptionalSerializersModule =
+    SerializersModule {
+        contextual(Optional::class) { args -> OptionalSerializer(args[0]) }
+    }
+
 /**
  * Contextual [Parcelable] with [OptionalSerializer]
  */
 @OptIn(ExperimentalSerializationApi::class)
 val StashParcelable =
     Parcelable {
-        serializersModule =
-            SerializersModule {
-                contextual(Optional::class) { args -> OptionalSerializer(args[0]) }
-            }
+        serializersModule = OptionalSerializersModule
     }
 
 /**

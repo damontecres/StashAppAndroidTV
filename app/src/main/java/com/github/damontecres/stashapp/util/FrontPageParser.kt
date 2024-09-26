@@ -108,11 +108,14 @@ class FrontPageParser(
                             else -> null
                         }
                 val mode = FilterMode.safeValueOf(frontPageFilter["mode"] as String)
+                val dataType =
+                    DataType.fromFilterMode(mode)
+                        ?: return@withContext CompletableDeferred(FrontPageRow.NotSupported)
                 val job =
                     async {
                         try {
                             val direction = frontPageFilter["direction"] as String?
-                            val dataType = DataType.fromFilterMode(mode)!!
+
                             val customFilter =
                                 FilterArgs(
                                     dataType = dataType,
