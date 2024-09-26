@@ -53,7 +53,7 @@ class RatingPickerFragment(
                     InputType.TYPE_CLASS_NUMBER or
                         InputType.TYPE_NUMBER_FLAG_DECIMAL,
                 )
-                .editDescription(current?.toString())
+                .description(current?.toString())
                 .build(),
         )
 
