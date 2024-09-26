@@ -46,6 +46,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
+import com.github.damontecres.stashapp.views.getRatingString
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -544,12 +545,7 @@ fun showSetRatingToast(
 ) {
     val asStars =
         ratingsAsStars ?: StashServer.requireCurrentServer().serverPreferences.ratingsAsStars
-    val ratingStr =
-        if (asStars) {
-            (rating100 / 20.0).toString() + " stars"
-        } else {
-            (rating100 / 10.0).toString()
-        }
+    val ratingStr = getRatingString(rating100, asStars)
     Toast.makeText(
         context,
         "Set rating to $ratingStr!",

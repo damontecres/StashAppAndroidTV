@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.views
 import android.content.Context
 import android.os.Build
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -28,6 +29,21 @@ fun getRatingAsDecimalString(
         (rating100 / 20.0).toString()
     } else {
         (rating100 / 10.0).toString()
+    }
+}
+
+fun getRatingString(
+    rating100: Int,
+    ratingsAsStars: Boolean,
+): String {
+    val decimal = getRatingAsDecimalString(rating100, ratingsAsStars)
+    return if (ratingsAsStars) {
+        val starsStr =
+            StashApplication.getApplication()
+                .getString(R.string.stashapp_config_ui_editing_rating_system_type_options_stars)
+        "$decimal $starsStr"
+    } else {
+        decimal
     }
 }
 

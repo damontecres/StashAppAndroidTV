@@ -38,8 +38,11 @@ import com.github.damontecres.stashapp.data.RANDOM_SORT_OPTION
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.filter.output.getAllIds
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
+import com.github.damontecres.stashapp.views.getRatingAsDecimalString
+import com.github.damontecres.stashapp.views.getRatingString
 import com.github.damontecres.stashapp.views.getString
 import java.util.Locale
 import kotlin.reflect.KClass
@@ -175,6 +178,45 @@ fun filterSummary(f: StringCriterionInput): String {
     val value = f.value.ifBlank { null }
     return if (value != null) {
         "$modStr $value"
+    } else {
+        modStr
+    }
+}
+
+fun filterSummaryRating(f: IntCriterionInput): String {
+    val context = StashApplication.getApplication()
+    val ratingsAsStars = StashServer.requireCurrentServer().serverPreferences.ratingsAsStars
+    val modStr = f.modifier.getString(context)
+    val value = f.value
+    val value2 = f.value2.getOrNull()
+    val toStr =
+        when (f.modifier) {
+            CriterionModifier.EQUALS,
+            CriterionModifier.NOT_EQUALS,
+            CriterionModifier.GREATER_THAN,
+            CriterionModifier.LESS_THAN,
+            -> getRatingString(value, ratingsAsStars)
+
+            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> null
+
+            CriterionModifier.BETWEEN, CriterionModifier.NOT_BETWEEN -> {
+                val valueStr = getRatingAsDecimalString(value, ratingsAsStars)
+                val value2Str = getRatingAsDecimalString(value2!!, ratingsAsStars)
+                if (ratingsAsStars) {
+                    val starsStr =
+                        StashApplication.getApplication()
+                            .getString(R.string.stashapp_config_ui_editing_rating_system_type_options_stars)
+                    "$valueStr & $value2Str $starsStr"
+                } else {
+                    "$valueStr & $value2Str"
+                }
+            }
+
+            else -> throw IllegalArgumentException("${f.modifier}")
+        }
+
+    return if (toStr != null) {
+        "$modStr $toStr"
     } else {
         modStr
     }
@@ -379,33 +421,37 @@ fun filterSummary(
     value: Any,
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
 ): String {
-    return when (value) {
-        is IntCriterionInput -> filterSummary(value)
-        is FloatCriterionInput -> filterSummary(value)
-        is StringCriterionInput -> filterSummary(value)
-        is PhashDistanceCriterionInput -> filterSummary(value)
-        is PHashDuplicationCriterionInput -> filterSummary(value)
-        is ResolutionCriterionInput -> filterSummary(value)
-        is OrientationCriterionInput -> filterSummary(value)
-        is StashIDCriterionInput -> filterSummary(value)
-        is TimestampCriterionInput -> filterSummary(value)
-        is DateCriterionInput -> filterSummary(value)
-        is GenderCriterionInput -> filterSummary(value)
+    return if (name == "rating100") {
+        filterSummaryRating(value as IntCriterionInput)
+    } else {
+        when (value) {
+            is IntCriterionInput -> filterSummary(value)
+            is FloatCriterionInput -> filterSummary(value)
+            is StringCriterionInput -> filterSummary(value)
+            is PhashDistanceCriterionInput -> filterSummary(value)
+            is PHashDuplicationCriterionInput -> filterSummary(value)
+            is ResolutionCriterionInput -> filterSummary(value)
+            is OrientationCriterionInput -> filterSummary(value)
+            is StashIDCriterionInput -> filterSummary(value)
+            is TimestampCriterionInput -> filterSummary(value)
+            is DateCriterionInput -> filterSummary(value)
+            is GenderCriterionInput -> filterSummary(value)
 
-        is Boolean, String -> value.toString()
+            is Boolean, String -> value.toString()
 
-        is MultiCriterionInput -> {
-            val dataType = FilterWriter.TYPE_MAPPING[name]!!
-            filterSummary(value, idLookup(dataType, value.getAllIds()))
+            is MultiCriterionInput -> {
+                val dataType = FilterWriter.TYPE_MAPPING[name]!!
+                filterSummary(value, idLookup(dataType, value.getAllIds()))
+            }
+
+            is HierarchicalMultiCriterionInput -> {
+                val dataType = FilterWriter.TYPE_MAPPING[name]!!
+                filterSummary(value, idLookup(dataType, value.getAllIds()))
+            }
+
+            // TODO
+            else -> value.toString()
         }
-
-        is HierarchicalMultiCriterionInput -> {
-            val dataType = FilterWriter.TYPE_MAPPING[name]!!
-            filterSummary(value, idLookup(dataType, value.getAllIds()))
-        }
-
-        // TODO
-        else -> value.toString()
     }
 }
 
@@ -421,8 +467,8 @@ fun filterSummary(
             val obj = param.get(f) as Optional<*>
             val value = obj.getOrNull()
             if (value != null) {
-                val valueStr = filterSummary(param.name, value, idLookup)
                 val nameStringId = filterOptionNames[param.name]?.nameStringId
+                val valueStr = filterSummary(param.name, value, idLookup)
                 val key =
                     if (nameStringId != null) {
                         StashApplication.getApplication().getString(nameStringId)
