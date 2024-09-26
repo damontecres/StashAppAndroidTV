@@ -33,6 +33,8 @@ import kotlinx.coroutines.launch
 class CreateFilterStep : CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
 
+    private val experimental = experimentalFeaturesEnabled()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         queryEngine = QueryEngine(StashServer.requireCurrentServer())
@@ -97,7 +99,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .title("Submit without saving")
                 .build(),
         )
-        if (experimentalFeaturesEnabled()) {
+        if (experimental) {
             actions.add(
                 GuidedAction.Builder(requireContext())
                     .id(SAVE_SUBMIT)
@@ -105,6 +107,16 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                     .enabled(false)
                     .title("Save and submit")
                     .description(getString(R.string.save_and_submit_no_name_desc))
+                    .build(),
+            )
+        } else {
+            actions.add(
+                GuidedAction.Builder(requireContext())
+                    .id(SAVE_SUBMIT)
+                    .hasNext(true)
+                    .enabled(false)
+                    .title("Save and submit")
+                    .description(getString(R.string.save_and_submit_not_enabled))
                     .build(),
             )
         }
@@ -168,7 +180,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        if (action.id == FILTER_NAME) {
+        if (action.id == FILTER_NAME && experimental) {
             val submitAction = findActionById(SAVE_SUBMIT)
             submitAction.isEnabled = action.description.isNotNullOrBlank()
             submitAction.description =
