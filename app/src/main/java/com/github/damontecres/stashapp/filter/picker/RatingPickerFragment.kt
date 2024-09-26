@@ -20,6 +20,11 @@ class RatingPickerFragment(
 ) : CreateFilterGuidedStepFragment() {
     private var curVal: IntCriterionInput? = null
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        curVal = filterOption.getter(viewModel.objectFilter.value!!).getOrNull()
+        super.onCreate(savedInstanceState)
+    }
+
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
@@ -105,25 +110,26 @@ class RatingPickerFragment(
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
         if (action.id == 1L) {
             val desc = action.description
-            try {
-                if (desc != null) {
-                    val newInt = desc.toString().toDouble()
+            if (desc != null) {
+                val newValue = desc.toString().toDoubleOrNull()
+                if (newValue != null) {
                     val rating100 =
                         if (viewModel.server.value!!.serverPreferences.ratingsAsStars) {
-                            (newInt.times(20)).toInt()
+                            (newValue.times(20)).toInt()
                         } else {
-                            (newInt.times(10)).toInt()
+                            (newValue.times(10)).toInt()
                         }
                     if (rating100 in 0..100) {
                         enableFinish(true)
                         return GuidedAction.ACTION_ID_NEXT
+                    } else {
+                        Toast.makeText(requireContext(), "Invalid rating!", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 }
-            } catch (ex: Exception) {
-                Toast.makeText(requireContext(), "Invalid int: $desc", Toast.LENGTH_SHORT).show()
             }
             enableFinish(false)
-            return GuidedAction.ACTION_ID_NEXT
+            return GuidedAction.ACTION_ID_CURRENT
         }
         return GuidedAction.ACTION_ID_CURRENT
     }
@@ -144,9 +150,8 @@ class RatingPickerFragment(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val curVal = filterOption.getter(viewModel.objectFilter.value!!)
             val newInt = findActionById(1L).description?.toString()?.toDouble()
-            val modifier = curVal.getOrNull()?.modifier ?: CriterionModifier.EQUALS
+            val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
             val rating100 =
                 if (viewModel.server.value!!.serverPreferences.ratingsAsStars) {
