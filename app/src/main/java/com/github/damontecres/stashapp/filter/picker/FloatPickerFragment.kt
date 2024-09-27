@@ -54,7 +54,7 @@ class FloatPickerFragment(
                 .descriptionEditInputType(
                     InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL,
                 )
-                .editDescription(curInt?.toString())
+                .description(curInt?.toString())
                 .build(),
         )
 
@@ -64,8 +64,8 @@ class FloatPickerFragment(
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))
                 .descriptionEditable(true)
-                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED)
-                .editDescription(curInt?.toString())
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+                .description(curInt?.toString())
                 .enabled(curModifier == CriterionModifier.BETWEEN || curModifier == CriterionModifier.NOT_BETWEEN)
                 .build(),
         )
@@ -95,18 +95,21 @@ class FloatPickerFragment(
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
         if (action.id == VALUE_1) {
             val desc = action.description
-            try {
-                if (desc != null) {
-                    desc.toString().toDouble()
+            if (desc != null) {
+                val newDouble = desc.toString().toDoubleOrNull()
+                if (newDouble != null) {
                     enableFinish(true)
-                    return GuidedAction.ACTION_ID_NEXT
+                    return GuidedAction.ACTION_ID_CURRENT
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "Invalid decimal: $desc",
+                        Toast.LENGTH_SHORT,
+                    ).show()
                 }
-            } catch (ex: Exception) {
-                Toast.makeText(requireContext(), "Invalid decimal: $desc", Toast.LENGTH_SHORT)
-                    .show()
             }
             enableFinish(false)
-            return GuidedAction.ACTION_ID_NEXT
+            return GuidedAction.ACTION_ID_CURRENT
         }
         return GuidedAction.ACTION_ID_CURRENT
     }
