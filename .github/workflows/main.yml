@@ -115,4 +115,6 @@ jobs:
 
             See https://github.com/damontecres/StashAppAndroidTV/releases/latest for the latest stable release.
 
+            If you want to update to this version in-app, change Settings->Advanced->Update URL to https://github.com/damontecres/StashAppAndroidTV/releases/tag/${{ env.TAG_NAME }} (replace `latest` with `tag/${{ env.TAG_NAME }}`).
+
             [See changes since `${{ env.LATEST_TAG }}`](https://github.com/damontecres/StashAppAndroidTV/compare/${{ env.LATEST_TAG }}...${{ env.TAG_NAME }})
