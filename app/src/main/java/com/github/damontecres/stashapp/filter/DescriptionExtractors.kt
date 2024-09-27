@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.filter.output.getAllIds
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
@@ -53,7 +54,7 @@ fun extractTitle(item: StashData): String? {
         is TagData -> item.name
         is PerformerData -> item.name
         is StudioData -> item.name
-        is GalleryData -> item.title
+        is GalleryData -> item.name
         is ImageData -> item.title
         is MarkerData -> item.title
         is GroupData -> item.name

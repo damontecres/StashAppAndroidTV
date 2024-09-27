@@ -1,10 +1,12 @@
 package com.github.damontecres.stashapp.filter.output
 
-import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
+import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -17,7 +19,6 @@ import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
-import com.github.damontecres.stashapp.filter.displayName
 
 fun IntCriterionInput.toMap(): Map<String, Any> =
     buildMap {
@@ -228,6 +229,30 @@ fun GenderCriterionInput.toMap(): Map<String, Any> =
         put("modifier", modifier.rawValue)
         val values =
             value_list.getOrNull() ?: listOfNotNull(value.getOrNull())
-                .map { displayName(StashApplication.getApplication(), it) }
+                .map {
+                    when (it) {
+                        GenderEnum.MALE -> "Male"
+                        GenderEnum.FEMALE -> "Female"
+                        GenderEnum.TRANSGENDER_MALE -> "Transgender Male"
+                        GenderEnum.TRANSGENDER_FEMALE -> "Transgender Female"
+                        GenderEnum.INTERSEX -> "Intersex"
+                        GenderEnum.NON_BINARY -> "Non-Binary"
+                        GenderEnum.UNKNOWN__ -> "Unknown"
+                    }
+                }
+        put("value", values)
+    }
+
+fun CircumcisionCriterionInput.toMap(): Map<String, Any> =
+    buildMap {
+        put("modifier", modifier.rawValue)
+        val values =
+            value.getOrNull()?.map {
+                when (it) {
+                    CircumisedEnum.CUT -> "Cut"
+                    CircumisedEnum.UNCUT -> "Uncut"
+                    CircumisedEnum.UNKNOWN__ -> "Unknown"
+                }
+            }.orEmpty()
         put("value", values)
     }
