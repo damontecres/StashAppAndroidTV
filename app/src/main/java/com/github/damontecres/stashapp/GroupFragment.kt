@@ -17,30 +17,25 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.util.getParcelable
 
 class GroupFragment : TabbedFragment() {
     private lateinit var group: Group
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        group = requireActivity().intent.getParcelableExtra<Group>("group")!!
+        group = requireActivity().intent.getParcelable("group", Group::class)!!
         super.onCreate(savedInstanceState)
     }
 
     override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
         val pages =
             listOf(
-                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details), null),
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)),
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
                 StashFragmentPagerAdapter.PagerEntry(DataType.MARKER),
                 StashFragmentPagerAdapter.PagerEntry(DataType.TAG),
-                StashFragmentPagerAdapter.PagerEntry(
-                    getString(R.string.stashapp_containing_groups),
-                    DataType.GROUP,
-                ),
-                StashFragmentPagerAdapter.PagerEntry(
-                    getString(R.string.stashapp_sub_groups),
-                    DataType.GROUP,
-                ),
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_containing_groups)),
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_sub_groups)),
             )
         return object : StashFragmentPagerAdapter(pages, fm) {
             override fun getFragment(position: Int): Fragment {

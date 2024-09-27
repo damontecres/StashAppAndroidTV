@@ -8,6 +8,7 @@ import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.RANDOM_SORT_OPTION
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
@@ -29,19 +30,22 @@ class CreateFindFilterFragment(
         savedInstanceState: Bundle?,
     ) {
         val sortOptions =
-            buildList {
-                dataType.sortOptions.forEachIndexed { index, sortOption ->
-                    add(
-                        GuidedAction.Builder(requireContext())
-                            .id(SORT_OFFSET + index)
-                            .hasNext(false)
-                            .title(getString(sortOption.nameStringId))
-                            .build(),
-                    )
+            dataType.sortOptions
+                .mapIndexed { index, sortOption ->
+                    GuidedAction.Builder(requireContext())
+                        .id(SORT_OFFSET + index)
+                        .hasNext(false)
+                        .title(getString(sortOption.nameStringId))
+                        .build()
                 }
-            }
+                .sortedBy { it.title.toString() }
+
         val currSortOption =
-            dataType.sortOptions.firstOrNull { it.key == currFindFilter.sortAndDirection?.sort }
+            if (currFindFilter.sortAndDirection?.isRandom == true) {
+                RANDOM_SORT_OPTION
+            } else {
+                dataType.sortOptions.firstOrNull { it.key == currFindFilter.sortAndDirection?.sort }
+            }
         val sortDesc =
             if (currSortOption != null) {
                 getString(currSortOption.nameStringId)

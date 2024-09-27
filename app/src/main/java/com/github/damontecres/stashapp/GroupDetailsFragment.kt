@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 import kotlin.time.DurationUnit
@@ -39,7 +40,7 @@ class GroupDetailsFragment : Fragment(R.layout.group_view) {
 
         table = view.findViewById(R.id.group_table)
 
-        val group = requireActivity().intent.getParcelableExtra<Group>("group")!!
+        val group = requireActivity().intent.getParcelable("group", Group::class)!!
         if (group.frontImagePath != null) {
             StashGlide.with(requireActivity(), group.frontImagePath)
                 .error(StashPresenter.glideError(requireContext()))

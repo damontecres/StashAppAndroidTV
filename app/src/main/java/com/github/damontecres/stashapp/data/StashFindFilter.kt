@@ -5,6 +5,9 @@ import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import kotlinx.serialization.Serializable
 
+/**
+ * Represents a "find" filter which is basically a query string and a sort by
+ */
 @Serializable
 data class StashFindFilter(
     val q: String? = null,
@@ -24,12 +27,18 @@ data class StashFindFilter(
             per_page = Optional.presentIfNotNull(perPage),
         )
 
+    /**
+     * This, but with a different sort key
+     */
     fun withSort(sort: String): StashFindFilter {
         val newSortAndDirection =
             sortAndDirection?.copy(sort = sort) ?: SortAndDirection(sort, SortDirectionEnum.ASC)
         return this.copy(sortAndDirection = newSortAndDirection)
     }
 
+    /**
+     * This, but with a different sort direction
+     */
     fun withDirection(
         direction: SortDirectionEnum,
         dataType: DataType,

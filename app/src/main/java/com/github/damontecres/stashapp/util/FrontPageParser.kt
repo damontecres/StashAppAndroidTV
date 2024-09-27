@@ -29,29 +29,16 @@ class FrontPageParser(
         const val TAG = "FrontPageParser"
     }
 
-    enum class FrontPageRowResult {
-        SUCCESS,
-        ERROR,
-        DATA_TYPE_NOT_SUPPORTED,
-    }
+    sealed class FrontPageRow {
+        data class Success(
+            val name: String,
+            val filter: FilterArgs,
+            val data: List<*>,
+        ) : FrontPageRow()
 
-    data class FrontPageRowData(val name: String, val filter: FilterArgs, val data: List<*>)
+        data object Error : FrontPageRow()
 
-    data class FrontPageRow(val result: FrontPageRowResult, val data: FrontPageRowData?) {
-        constructor(
-            name: String,
-            filter: FilterArgs,
-            data: List<*>,
-        ) : this(FrontPageRowResult.SUCCESS, FrontPageRowData(name, filter, data))
-
-        constructor(result: FrontPageRowResult) : this(result, null)
-
-        val successful get() = result == FrontPageRowResult.SUCCESS && data!!.data.isNotEmpty()
-
-        companion object {
-            val ERROR = FrontPageRow(FrontPageRowResult.ERROR)
-            val NOT_SUPPORTED = FrontPageRow(FrontPageRowResult.DATA_TYPE_NOT_SUPPORTED)
-        }
+        data object NotSupported : FrontPageRow()
     }
 
     suspend fun parse(frontPageContent: List<Map<String, *>>): List<Deferred<FrontPageRow>> {
@@ -81,7 +68,7 @@ class FrontPageParser(
                         TAG,
                         "Unknown frontPageFilter typename: $filterType",
                     )
-                    CompletableDeferred(FrontPageRow.NOT_SUPPORTED)
+                    CompletableDeferred(FrontPageRow.NotSupported)
                 }
             }
         }
@@ -121,15 +108,14 @@ class FrontPageParser(
                             else -> null
                         }
                 val mode = FilterMode.safeValueOf(frontPageFilter["mode"] as String)
-                if (mode !in supportedFilterModes) {
-                    Log.w(TAG, "CustomFilter mode is $mode which is not supported yet")
-                    return@withContext CompletableDeferred(FrontPageRow(FrontPageRowResult.DATA_TYPE_NOT_SUPPORTED))
-                }
+                val dataType =
+                    DataType.fromFilterMode(mode)
+                        ?: return@withContext CompletableDeferred(FrontPageRow.NotSupported)
                 val job =
                     async {
                         try {
                             val direction = frontPageFilter["direction"] as String?
-                            val dataType = DataType.fromFilterMode(mode)!!
+
                             val customFilter =
                                 FilterArgs(
                                     dataType = dataType,
@@ -149,16 +135,16 @@ class FrontPageParser(
                                     customFilter.findFilter!!.toFindFilterType(1, pageSize),
                                     useRandom = false,
                                 )
-                            FrontPageRow(description, customFilter, data)
+                            FrontPageRow.Success(description, customFilter, data)
                         } catch (ex: Exception) {
                             Log.e(TAG, "Exception in addCustomFilterRow", ex)
-                            FrontPageRow.ERROR
+                            FrontPageRow.Error
                         }
                     }
                 return@withContext job
             } catch (ex: Exception) {
                 Log.e(TAG, "Exception during addCustomFilterRow", ex)
-                CompletableDeferred(FrontPageRow.ERROR)
+                CompletableDeferred(FrontPageRow.Error)
             }
         }
 
@@ -261,14 +247,14 @@ class FrontPageParser(
                                     )
                                 }
                             }
-                        FrontPageRow(result.name, filter, data)
+                        FrontPageRow.Success(result.name, filter, data)
                     } else {
                         Log.w(TAG, "SavedFilter does not exist")
-                        FrontPageRow.ERROR
+                        FrontPageRow.Error
                     }
                 } catch (ex: Exception) {
                     Log.e(TAG, "Exception in addSavedFilterRow filterId=$filterId", ex)
-                    FrontPageRow.ERROR
+                    FrontPageRow.Error
                 }
             }
         }

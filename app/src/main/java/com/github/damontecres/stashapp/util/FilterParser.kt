@@ -34,6 +34,9 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
 
+/**
+ * Parse a server-side filter from JSON (Map<String, *>)
+ */
 class FilterParser(private val serverVersion: Version) {
     companion object {
         const val TAG = "FilterParser"

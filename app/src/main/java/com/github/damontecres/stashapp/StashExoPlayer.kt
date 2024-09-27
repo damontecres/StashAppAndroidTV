@@ -12,6 +12,9 @@ import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashServer
 import okhttp3.CacheControl
 
+/**
+ * Manages a static [ExoPlayer] which might be reused between views
+ */
 class StashExoPlayer private constructor() {
     companion object {
         private val listeners: MutableList<Player.Listener> = mutableListOf()

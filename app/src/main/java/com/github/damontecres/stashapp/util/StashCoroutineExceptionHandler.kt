@@ -6,6 +6,15 @@ import com.github.damontecres.stashapp.StashApplication
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * A general [CoroutineExceptionHandler] which can optionally show [Toast]s when an exception is thrown
+ *
+ * Note: a toast will be shown for each parameter given, up to three!
+ *
+ * @param autoToast automatically show a toast with the exception's message
+ * @param toast the toast to show when an exception occurs
+ * @param makeToast make a toast to show when an exception occurs
+ */
 class StashCoroutineExceptionHandler(
     private val autoToast: Boolean = false,
     private val toast: Toast? = null,

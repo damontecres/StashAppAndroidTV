@@ -18,8 +18,12 @@ import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getParcelable
 import kotlinx.coroutines.launch
 
+/**
+ * Select a value to shift a [Marker]'s seconds by
+ */
 class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
     private val viewModel by activityViewModels<MarkerDetailsViewModel>()
 
@@ -29,7 +33,7 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val marker = requireActivity().intent.getParcelableExtra<Marker>("marker")!!
+        val marker = requireActivity().intent.getParcelable("marker", Marker::class)!!
 
         val picker = view.findViewById<Picker>(R.id.picker)
         val sceneTitle = view.findViewById<TextView>(R.id.scene_title)

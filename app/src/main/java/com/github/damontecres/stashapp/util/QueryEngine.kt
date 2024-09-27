@@ -239,13 +239,15 @@ class QueryEngine(
     suspend fun findImages(
         findFilter: FindFilterType? = null,
         imageFilter: ImageFilterType? = null,
+        ids: List<String>? = null,
         useRandom: Boolean = true,
     ): List<ImageData> {
         val query =
             client.query(
                 FindImagesQuery(
-                    updateFilter(findFilter, useRandom),
-                    imageFilter,
+                    filter = updateFilter(findFilter, useRandom),
+                    image_filter = imageFilter,
+                    ids = ids,
                 ),
             )
         return executeQuery(query).data?.findImages?.images?.map { it.imageData }.orEmpty()
@@ -324,9 +326,9 @@ class QueryEngine(
             DataType.TAG -> getTags(ids)
             DataType.STUDIO -> findStudios(studioIds = ids)
             DataType.GROUP -> findGroups(groupIds = ids)
-            DataType.MARKER -> TODO()
-            DataType.IMAGE -> TODO()
-            DataType.GALLERY -> TODO()
+            DataType.IMAGE -> findImages(ids = ids)
+            DataType.GALLERY -> findGalleries(galleryIds = ids)
+            DataType.MARKER -> throw UnsupportedOperationException("Cannot query markers by ID") // TODO: Unsupported by the server
         }
     }
 

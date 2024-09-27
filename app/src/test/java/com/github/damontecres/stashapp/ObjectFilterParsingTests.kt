@@ -11,8 +11,8 @@ import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.OptionalSerializersModule
 import com.github.damontecres.stashapp.util.Version
-import com.github.damontecres.stashapp.util.optionalSerializerModule
 import kotlinx.serialization.json.Json
 import okio.FileSystem
 import okio.Path.Companion.toPath
@@ -49,13 +49,13 @@ class ObjectFilterParsingTests {
                 file_count =
                     Optional.present(
                         IntCriterionInput(
-                            100,
-                            Optional.absent(),
-                            CriterionModifier.INCLUDES_ALL,
+                            value = 100,
+                            value2 = Optional.absent(),
+                            modifier = CriterionModifier.INCLUDES_ALL,
                         ),
                     ),
             )
-        val format = Json { serializersModule = optionalSerializerModule }
+        val format = Json { serializersModule = OptionalSerializersModule }
         val json = format.encodeToString(SceneFilterType.serializer(), filter)
         val result = format.decodeFromString<SceneFilterType>(json)
         Assert.assertEquals(filter, result)

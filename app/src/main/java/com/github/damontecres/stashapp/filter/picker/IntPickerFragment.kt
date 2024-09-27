@@ -44,7 +44,7 @@ class IntPickerFragment(
                 .title(getString(R.string.stashapp_criterion_value))
                 .descriptionEditable(true)
                 .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED)
-                .editDescription(curInt?.toString())
+                .description(curInt?.toString())
                 .build(),
         )
 
@@ -55,7 +55,7 @@ class IntPickerFragment(
                 .title(getString(R.string.stashapp_criterion_value))
                 .descriptionEditable(true)
                 .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED)
-                .editDescription(curInt?.toString())
+                .description(curInt?.toString())
                 .enabled(curModifier == CriterionModifier.BETWEEN || curModifier == CriterionModifier.NOT_BETWEEN)
                 .build(),
         )
@@ -86,17 +86,18 @@ class IntPickerFragment(
         if (action.id == VALUE_1) {
             // The value was changed, so check if it valid or not
             val desc = action.description
-            try {
-                if (desc != null) {
-                    desc.toString().toInt()
+            if (desc != null) {
+                val newInt = desc.toString().toIntOrNull()
+                if (newInt != null) {
                     enableFinish(true)
-                    return GuidedAction.ACTION_ID_NEXT
+                    return GuidedAction.ACTION_ID_CURRENT
+                } else {
+                    Toast.makeText(requireContext(), "Invalid int: $desc", Toast.LENGTH_SHORT)
+                        .show()
                 }
-            } catch (ex: Exception) {
-                Toast.makeText(requireContext(), "Invalid int: $desc", Toast.LENGTH_SHORT).show()
             }
             enableFinish(false)
-            return GuidedAction.ACTION_ID_NEXT
+            return GuidedAction.ACTION_ID_CURRENT
         }
         return GuidedAction.ACTION_ID_CURRENT
     }

@@ -1,19 +1,36 @@
 package com.github.damontecres.stashapp.data
 
+import androidx.annotation.StringRes
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.Version
 
+/**
+ * A way to sort something
+ */
 data class SortOption(
+    /**
+     * The key as understood by the server
+     */
     val key: String,
-    val nameStringId: Int,
+    /**
+     * The string resource for the readable name of the sort
+     */
+    @StringRes val nameStringId: Int,
+    /**
+     * The minimum server version required to sort by this
+     *
+     * This allows for adding future compatible sorting to older app versions
+     */
     val requiresVersion: Version = Version.MINIMUM_STASH_VERSION,
 )
+
+val RANDOM_SORT_OPTION = SortOption("random", R.string.stashapp_random)
 
 val COMMON_SORT_OPTIONS =
     arrayOf(
         SortOption("created_at", R.string.stashapp_created_at),
         SortOption("updated_at", R.string.stashapp_updated_at),
-        SortOption("random", R.string.stashapp_random),
+        RANDOM_SORT_OPTION,
     )
 
 val SCENE_SORT_OPTIONS =

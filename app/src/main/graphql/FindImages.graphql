@@ -1,5 +1,5 @@
-query FindImages($filter: FindFilterType, $image_filter: ImageFilterType) {
-  findImages(filter: $filter, image_filter: $image_filter) {
+query FindImages($filter: FindFilterType, $image_filter: ImageFilterType, $ids: [ID!]) {
+  findImages(filter: $filter, image_filter: $image_filter, ids: $ids) {
     images {
       ...ImageData
     }

@@ -8,11 +8,13 @@ import com.squareup.kotlinpoet.DelicateKotlinPoetApi
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName
-import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
+/**
+ * An [ApolloCompilerPlugin] to add some extra annotations and interfaces to the classes generated from the graphql schema
+ */
 class StashApolloCompilerPlugin : ApolloCompilerPlugin {
     override fun kotlinOutputTransform(): Transform<KotlinOutput> {
         return object : Transform<KotlinOutput> {
@@ -33,8 +35,11 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                 val newFileSpecs =
                     input.fileSpecs.map { file ->
                         if (file.name.endsWith("FilterType") || file.name.endsWith("CriterionInput")) {
+                            // Modify filter or filter input types
                             handleFilterInput(file, stashFilterInterface)
                         } else if (file.name.endsWith("Data")) {
+                            // Modify data types
+                            // Note that fragments for data types by convention are suffixed with "Data"
                             handleData(file, stashDataInterface)
                         } else {
                             file
@@ -56,6 +61,7 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
         val builder = file.toBuilder()
         builder.members.replaceAll { member ->
             if (member is TypeSpec) {
+                // Mark as Serializable
                 val typeBuilder =
                     member.toBuilder()
                         .addAnnotation(Serializable::class.java)
@@ -63,6 +69,8 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                     if (prop.type is ParameterizedTypeName &&
                         (prop.type as ParameterizedTypeName).rawType.canonicalName == "com.apollographql.apollo.api.Optional"
                     ) {
+                        // If the property is an Optional (basically all of them), then add a Contextual annotation
+                        // This allows for runtime serialization, because the app defines a serializer for this class
                         prop.toBuilder()
                             .addAnnotation(Contextual::class)
                             .build()
@@ -71,12 +79,12 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                     }
                 }
 
+                // If the type is a filter, add the interface
                 if (member.name!!.endsWith("FilterType")) {
                     typeBuilder.addSuperinterface(stashFilterInterface)
                 }
 
                 typeBuilder.build()
-            } else if (member is PropertySpec) {
             } else {
                 member
             }
@@ -84,7 +92,6 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
         return builder.build()
     }
 
-    @OptIn(DelicateKotlinPoetApi::class)
     private fun handleData(
         file: FileSpec,
         stashDataInterface: ClassName,
@@ -92,32 +99,18 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
         val builder = file.toBuilder()
         builder.members.replaceAll { member ->
             if (member is TypeSpec && member.propertySpecs.find { it.name == "id" } != null) {
+                // Mark the type with the data interface
                 val memberBuilder =
                     member.toBuilder()
                         .addSuperinterface(stashDataInterface)
-                // TODO: adding Serializable i
-//                        .addAnnotation(Serializable::class)
                 memberBuilder.propertySpecs.replaceAll {
                     if (it.name == "id") {
+                        // If the property is named id, need to add override due to the super interface
                         it.toBuilder()
                             .addModifiers(KModifier.OVERRIDE)
                             .build()
-                    } else if (it.name == "updated_at" || it.name == "created_at") {
-                        it.toBuilder()
-//                            .addAnnotation(Contextual::class)
-                            .build()
                     } else {
                         it
-                    }
-                }
-                memberBuilder.typeSpecs.replaceAll { innerType ->
-                    if (innerType.modifiers.contains(KModifier.DATA)) {
-                        // Inner data class
-                        innerType.toBuilder()
-//                            .addAnnotation(Serializable::class)
-                            .build()
-                    } else {
-                        innerType
                     }
                 }
                 memberBuilder.build()

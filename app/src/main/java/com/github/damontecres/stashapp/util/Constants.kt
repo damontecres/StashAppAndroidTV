@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
+import android.os.Bundle
 import android.text.TextUtils
 import android.util.DisplayMetrics
 import android.util.Log
@@ -21,11 +22,11 @@ import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.Visibility
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.ApolloClient
-import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.chrynan.parcelable.core.getParcelable
 import com.chrynan.parcelable.core.getParcelableExtra
 import com.chrynan.parcelable.core.putExtra
 import com.github.damontecres.stashapp.ImageActivity
@@ -36,17 +37,16 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
-import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
+import com.github.damontecres.stashapp.views.getRatingString
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,13 +71,18 @@ import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
+/**
+ * Originally this file was for constant values (such as API Key header name).
+ *
+ * Now it's mostly a dumping ground for various extension functions
+ */
 object Constants {
     /**
      * The name of the header for authenticating to Stash
      */
     const val STASH_API_HEADER = "ApiKey"
     const val TAG = "Constants"
-    const val OK_HTTP_CACHE_DIR = "okhttpcache"
+    private const val OK_HTTP_CACHE_DIR = "okhttpcache"
 
     fun getNetworkCache(context: Context): Cache {
         val cacheSize =
@@ -87,7 +92,7 @@ object Constants {
     }
 }
 
-fun join(
+fun joinValueNotNull(
     prefix: String,
     value: String?,
 ): String? {
@@ -143,6 +148,11 @@ data class TestResult(val status: TestResultStatus, val serverInfo: ServerInfoQu
     constructor(status: TestResultStatus) : this(status, null)
 }
 
+/**
+ * Test the connection to the server using the specified [ApolloClient]
+ *
+ * The client should have been configured with the server URL and API key if needed
+ */
 suspend fun testStashConnection(
     context: Context,
     showToast: Boolean,
@@ -206,16 +216,6 @@ suspend fun testStashConnection(
                                 Toast.makeText(
                                     context,
                                     "Connected to server, but an API key is required.",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                            }
-                            return TestResult(TestResultStatus.AUTH_REQUIRED)
-                        } else if (ex.statusCode == 500) {
-                            // In server <0.26.0, the server may return a 500 for incorrect API keys
-                            if (showToast) {
-                                Toast.makeText(
-                                    context,
-                                    "Connected to server, but the API key may be incorrect.",
                                     Toast.LENGTH_LONG,
                                 ).show()
                             }
@@ -290,40 +290,10 @@ suspend fun testStashConnection(
     return TestResult(TestResultStatus.ERROR)
 }
 
-fun SavedFilterData.Find_filter.toFindFilterType(resolveRandom: Boolean = false): FindFilterType {
-    val newSort =
-        if (sort != null && resolveRandom && sort.startsWith("random")) {
-            getRandomSort()
-        } else {
-            sort
-        }
-    return FindFilterType(
-        q = Optional.presentIfNotNull(this.q),
-        page = Optional.presentIfNotNull(this.page),
-        per_page = Optional.presentIfNotNull(this.per_page),
-        sort = Optional.presentIfNotNull(newSort),
-        direction = Optional.presentIfNotNull(this.direction),
-    )
-}
-
-@Suppress("ktlint:standard:function-naming")
-fun FindFilterType.toFind_filter(): SavedFilterData.Find_filter {
-    return SavedFilterData.Find_filter(
-        q = q.getOrNull(),
-        page = page.getOrNull(),
-        per_page = per_page.getOrNull(),
-        sort = sort.getOrNull(),
-        direction = direction.getOrNull(),
-        __typename = "FindFilterType",
-    )
-}
-
-val supportedFilterModes = DataType.entries.map { it.filterMode }.toSet()
-
 /**
  * Gets the value for the key trying first the key as provided and next the key lower cased
  */
-fun <V> Map<String, V>.getCaseInsensitive(k: String?): V? {
+fun <V> Map<*, V>.getCaseInsensitive(k: String?): V? {
     if (k == null) {
         return null
     }
@@ -476,9 +446,6 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                 },
         )
 
-val FullSceneData.File.asVideoSceneDataFile: VideoSceneData.File
-    get() = VideoSceneData.File("", videoFileData)
-
 val FullSceneData.asVideoSceneData: VideoSceneData
     get() =
         VideoSceneData(
@@ -578,12 +545,7 @@ fun showSetRatingToast(
 ) {
     val asStars =
         ratingsAsStars ?: StashServer.requireCurrentServer().serverPreferences.ratingsAsStars
-    val ratingStr =
-        if (asStars) {
-            (rating100 / 20.0).toString() + " stars"
-        } else {
-            (rating100 / 10.0).toString()
-        }
+    val ratingStr = getRatingString(rating100, asStars)
     Toast.makeText(
         context,
         "Set rating to $ratingStr!",
@@ -671,6 +633,9 @@ val SlimSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
 
 val Long.toMilliseconds get() = this / 1000.0
 
+/**
+ * Show a [Toast] on [Dispatchers.Main]
+ */
 suspend fun showToastOnMain(
     context: Context,
     message: CharSequence,
@@ -726,13 +691,6 @@ val ImageData.isImageClip: Boolean
         visual_files.firstOrNull()?.onVideoFile != null &&
             visual_files.firstOrNull()?.onVideoFile!!.format != "gif"
 
-val ImageData.isGif: Boolean
-    get() {
-        val file = visual_files.firstOrNull()
-        return (file?.onVideoFile != null && file.onVideoFile.format == "gif") ||
-            file?.onBaseFile?.path?.endsWith(".gif", true) == true
-    }
-
 /**
  * Launch in the [Dispatchers.IO] context with an optional [CoroutineExceptionHandler] defaulting to [StashCoroutineExceptionHandler]
  */
@@ -760,11 +718,17 @@ fun Intent.putFilterArgs(
     name: String,
     filterArgs: FilterArgs,
 ): Intent {
-    return putExtra(name, filterArgs, parcelable)
+    return putExtra(name, filterArgs, StashParcelable)
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 fun Intent.getFilterArgs(name: String): FilterArgs? {
-    return getParcelableExtra(name, FilterArgs::class, 0, parcelable)
+    return getParcelableExtra(name, FilterArgs::class, 0, StashParcelable)
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun Bundle.getFilterArgs(name: String): FilterArgs? {
+    return getParcelable(name, FilterArgs::class, 0, StashParcelable)
 }
 
 fun experimentalFeaturesEnabled(): Boolean {

@@ -12,6 +12,9 @@ import androidx.media3.effect.ScaleAndRotateTransformation
 import androidx.room.Embedded
 import androidx.room.Entity
 
+/**
+ * Store a [VideoFilter] for a specific scene (by server & scene ID)
+ */
 @Entity(tableName = "playback_effects", primaryKeys = ["serverUrl", "id"])
 data class PlaybackEffect(
     val serverUrl: String,
@@ -19,6 +22,9 @@ data class PlaybackEffect(
     @Embedded val videoFilter: VideoFilter,
 )
 
+/**
+ * Modifications to a video playback
+ */
 data class VideoFilter(
     val rotation: Int = 0,
     val brightness: Int = COLOR_DEFAULT,
@@ -59,6 +65,9 @@ data class VideoFilter(
         return blur > 0
     }
 
+    /**
+     * Create the list of effects to apply
+     */
     @OptIn(UnstableApi::class)
     fun createEffectList(): List<GlEffect> {
         return buildList {

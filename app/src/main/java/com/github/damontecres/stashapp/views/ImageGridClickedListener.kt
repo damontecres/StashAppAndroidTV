@@ -9,6 +9,9 @@ import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener.SimpleOnItemViewClickedListener
 
+/**
+ * A [SimpleOnItemViewClickedListener] for images in a [StashGridFragment] to allow for scrolling through the grid's other images
+ */
 class ImageGridClickedListener(val fragment: StashGridFragment) :
     SimpleOnItemViewClickedListener<ImageData> {
     override fun onItemClicked(item: ImageData) {

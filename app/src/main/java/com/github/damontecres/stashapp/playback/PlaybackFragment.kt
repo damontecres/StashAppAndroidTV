@@ -109,7 +109,7 @@ abstract class PlaybackFragment(
     // Track whether the video is playing before calling the resultLauncher
     protected var wasPlayingBeforeResultLauncher: Boolean? = null
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
-    private val videoFilterFragment = PlaybackFilterFragment()
+    private val videoFilterFragment = PlaybackVideoFiltersFragment()
 
     protected var playbackPosition = -1L
     val currentVideoPosition get() = player?.currentPosition ?: playbackPosition

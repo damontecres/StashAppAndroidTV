@@ -31,10 +31,7 @@ class StudioFragment : TabbedFragment() {
                 StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER),
                 StashFragmentPagerAdapter.PagerEntry(DataType.GROUP),
                 StashFragmentPagerAdapter.PagerEntry(DataType.TAG),
-                StashFragmentPagerAdapter.PagerEntry(
-                    getString(R.string.stashapp_subsidiary_studios),
-                    DataType.STUDIO,
-                ),
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_subsidiary_studios)),
             )
         return StudioPagerAdapter(tabTitles, studioId.toString(), fm)
     }

@@ -86,16 +86,23 @@ class StashApplication : Application() {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val currentVersion = prefs.getString(VERSION_NAME_CURRENT_KEY, null)
         val currentVersionCode = prefs.getLong(VERSION_CODE_CURRENT_KEY, -1)
-        if (pkgInfo.versionName != currentVersion || pkgInfo.versionCode.toLong() != currentVersionCode) {
+
+        val newVersionCode =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                pkgInfo.longVersionCode
+            } else {
+                pkgInfo.versionCode.toLong()
+            }
+        if (pkgInfo.versionName != currentVersion || newVersionCode != currentVersionCode) {
             Log.i(
                 TAG,
-                "App installed: $currentVersion=>${pkgInfo.versionName} ($currentVersionCode=>${pkgInfo.versionCode})",
+                "App installed: $currentVersion=>${pkgInfo.versionName} ($currentVersionCode=>$newVersionCode",
             )
             prefs.edit(true) {
                 putString(VERSION_NAME_PREVIOUS_KEY, currentVersion)
                 putLong(VERSION_CODE_PREVIOUS_KEY, currentVersionCode)
                 putString(VERSION_NAME_CURRENT_KEY, pkgInfo.versionName)
-                putLong(VERSION_CODE_CURRENT_KEY, pkgInfo.versionCode.toLong())
+                putLong(VERSION_CODE_CURRENT_KEY, newVersionCode)
             }
             if (currentVersion != null) {
                 CoroutineScope(Dispatchers.IO + StashCoroutineExceptionHandler()).launch {

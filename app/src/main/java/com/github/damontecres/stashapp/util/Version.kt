@@ -7,6 +7,11 @@ data class Version(
     val numCommits: Int? = null,
     val hash: String? = null,
 ) {
+    /**
+     * Is this version at least the given version
+     *
+     * Checks major, minor, & patch only!
+     */
     fun isAtLeast(version: Version): Boolean {
         if (this.major > version.major) {
             return true
@@ -26,6 +31,11 @@ data class Version(
         return false
     }
 
+    /**
+     * Is this greater than the given version (and not equal to!)
+     *
+     * Checks major, minor, & patch only!
+     */
     fun isGreaterThan(version: Version): Boolean {
         if (this.major > version.major) {
             return true
@@ -45,6 +55,9 @@ data class Version(
         return false
     }
 
+    /**
+     * Is this equal to or before the specified version
+     */
     fun isEqualOrBefore(version: Version): Boolean {
         return !isGreaterThan(version)
     }
@@ -70,15 +83,21 @@ data class Version(
 
         val MINIMUM_STASH_VERSION = DEVELOP
 
+        /**
+         * Parse a version string throwing if it is invalid
+         */
         fun fromString(version: String): Version {
             val v = tryFromString(version)
             if (v == null) {
-                throw IllegalArgumentException()
+                throw IllegalArgumentException(version)
             } else {
                 return v
             }
         }
 
+        /**
+         * Attempt to parse a version string or else return null
+         */
         fun tryFromString(version: String?): Version? {
             if (version == null) {
                 return null
@@ -97,6 +116,9 @@ data class Version(
             }
         }
 
+        /**
+         * Returns if the version is at least [MINIMUM_STASH_VERSION]
+         */
         fun isStashVersionSupported(version: Version?): Boolean {
             if (version == null) {
                 return false
@@ -104,11 +126,15 @@ data class Version(
             return version.isAtLeast(MINIMUM_STASH_VERSION)
         }
 
+        /**
+         * Checks if the given server and app versions are compatible
+         *
+         * Versions are offset by minor version 22: https://github.com/damontecres/StashAppAndroidTV/discussions/308
+         */
         fun isServerSupportedByAppVersion(
             serverVersion: Version,
             appVersion: Version,
         ): Boolean {
-            // Versions are offset by 22: https://github.com/damontecres/StashAppAndroidTV/discussions/308
             val minServerVer = appVersion.copy(minor = appVersion.minor + 22, patch = 0)
             return serverVersion.isAtLeast(minServerVer)
         }

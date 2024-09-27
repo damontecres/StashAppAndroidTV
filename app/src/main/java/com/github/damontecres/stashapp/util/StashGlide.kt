@@ -10,6 +10,9 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.signature.ObjectKey
 
+/**
+ * Replacement for [Glide] static functions to incorporate the caching schemes used in the app
+ */
 class StashGlide private constructor() {
     companion object {
         // Images larger than 5mb need disk cache

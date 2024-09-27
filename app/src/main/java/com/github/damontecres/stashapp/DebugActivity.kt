@@ -26,6 +26,11 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import kotlinx.coroutines.launch
 
+/**
+ * Activity to show various debugging information
+ *
+ * Not really intended for the average user to use
+ */
 class DebugActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
