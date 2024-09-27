@@ -1,12 +1,12 @@
 package com.github.damontecres.stashapp.filter.output
 
 import com.apollographql.apollo.api.Optional
-import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
-import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
+import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
@@ -19,6 +19,7 @@ import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.util.QueryEngine
 import kotlin.reflect.full.declaredMemberProperties
 
@@ -48,6 +49,8 @@ class FilterWriter(private val queryEngine: QueryEngine) {
                                 is StashIDCriterionInput -> o.toMap()
                                 is TimestampCriterionInput -> o.toMap()
                                 is DateCriterionInput -> o.toMap()
+                                is GenderCriterionInput -> o.toMap()
+                                is CircumcisionCriterionInput -> o.toMap()
 
                                 is Boolean, String -> {
                                     mapOf(
@@ -63,7 +66,12 @@ class FilterWriter(private val queryEngine: QueryEngine) {
                                     val items = queryEngine.getByIds(dataType!!, o.getAllIds())
                                     o.toMap(associateIds(items))
                                 }
-                                else -> TODO()
+
+                                is StashDataFilter -> convertFilter(o)
+
+                                else -> throw UnsupportedOperationException(
+                                    "Unable to convert ${filter::class.simpleName}.${param.name} (${o::class.qualifiedName})",
+                                )
                             }
                         put(param.name, value)
                     }
@@ -74,11 +82,7 @@ class FilterWriter(private val queryEngine: QueryEngine) {
 
     private fun associateIds(items: List<StashData>): Map<String, String> {
         return items.associate {
-            when (it) {
-                is TagData -> it.id to it.name
-                is PerformerData -> it.id to it.name
-                else -> TODO()
-            }
+            it.id to (extractTitle(it) ?: it.id)
         }
     }
 
@@ -98,6 +102,11 @@ class FilterWriter(private val queryEngine: QueryEngine) {
                 "images" to DataType.IMAGE,
                 "scene_markers" to DataType.MARKER,
                 "scenes" to DataType.SCENE,
+                "scene_tags" to DataType.SCENE,
+                "parents" to DataType.TAG,
+                "children" to DataType.TAG,
+                "containing_groups" to DataType.MOVIE,
+                "sub_groups" to DataType.MOVIE,
             )
     }
 }
