@@ -137,18 +137,27 @@ fun filterSummary(
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS -> resolvedTitles.firstOrNull() ?: ""
-            CriterionModifier.IS_NULL -> ""
-            CriterionModifier.NOT_NULL -> ""
             CriterionModifier.INCLUDES_ALL -> resolvedTitles.toString()
             CriterionModifier.INCLUDES -> resolvedTitles.toString()
+
+            // Short circuit and return
+            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> return modStr
             else -> throw IllegalArgumentException("${f.modifier}")
         }.ifBlank { null }
-    // TODO excludes
-    return if (toStr != null) {
-        "$modStr $toStr"
-    } else {
-        modStr
-    }
+
+    val resolvedExcludes = f.excludes.getOrNull()?.map { itemMap[it]?.name ?: it }.orEmpty()
+    val excludeStr =
+        if (resolvedExcludes.isNotEmpty()) {
+            val str =
+                StashApplication.getApplication()
+                    .getString(R.string.stashapp_criterion_modifier_excludes)
+            "$str $resolvedExcludes"
+        } else {
+            null
+        }
+
+    val strings = listOf(modStr, toStr, excludeStr)
+    return strings.joinNotNullOrBlank(" ")
 }
 
 fun filterSummary(
