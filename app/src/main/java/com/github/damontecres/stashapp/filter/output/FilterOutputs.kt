@@ -56,7 +56,7 @@ fun StringCriterionInput.toMap(): Map<String, Any> =
 
 fun MultiCriterionInput.getAllIds() = value.getOrNull().orEmpty() + excludes.getOrNull().orEmpty()
 
-fun MultiCriterionInput.toMap(labelMapping: Map<String, String>): Map<String, Any> =
+fun MultiCriterionInput.toMap(labelMapping: Map<String, String?>): Map<String, Any> =
     buildMap {
         put("modifier", modifier.rawValue)
         put(
@@ -66,55 +66,50 @@ fun MultiCriterionInput.toMap(labelMapping: Map<String, String>): Map<String, An
                     value.getOrNull().orEmpty().map { id ->
                         buildMap {
                             put("id", id)
-                            put("label", labelMapping[id])
+                            put("label", labelMapping[id] ?: id)
                         }
                     }
-                if (items.isNotEmpty()) {
-                    put("items", items)
-                }
-                val excludes =
+                put("items", items)
+
+                val excluded =
                     excludes.getOrNull().orEmpty().map { id ->
                         buildMap {
                             put("id", id)
-                            put("label", labelMapping[id])
+                            put("label", labelMapping[id] ?: id)
                         }
                     }
-                if (excludes.isNotEmpty()) {
-                    put("excludes", excludes)
-                }
+                put("excluded", excluded)
             },
         )
     }
 
 fun HierarchicalMultiCriterionInput.getAllIds() = value.getOrNull().orEmpty() + excludes.getOrNull().orEmpty()
 
-fun HierarchicalMultiCriterionInput.toMap(labelMapping: Map<String, String>): Map<String, Any> =
+fun HierarchicalMultiCriterionInput.toMap(labelMapping: Map<String, String?>): Map<String, Any> =
     buildMap {
         put("modifier", modifier.rawValue)
-        put("depth", depth.getOrNull() ?: 0)
         put(
             "value",
             buildMap<String, Any> {
+                put("depth", depth.getOrNull() ?: 0)
+
                 val items =
                     value.getOrNull().orEmpty().map { id ->
                         buildMap {
                             put("id", id)
-                            put("label", labelMapping[id])
+                            put("label", labelMapping[id] ?: id)
                         }
                     }
-                if (items.isNotEmpty()) {
-                    put("items", items)
-                }
-                val excludes =
+                put("items", items)
+
+                val excluded =
                     excludes.getOrNull().orEmpty().map { id ->
                         buildMap {
                             put("id", id)
-                            put("label", labelMapping[id])
+                            put("label", labelMapping[id] ?: id)
                         }
                     }
-                if (excludes.isNotEmpty()) {
-                    put("excludes", excludes)
-                }
+                put("excluded", excluded)
             },
         )
     }

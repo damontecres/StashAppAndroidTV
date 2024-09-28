@@ -20,15 +20,14 @@ import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.extractTitle
-import com.github.damontecres.stashapp.util.QueryEngine
 import kotlin.reflect.full.declaredMemberProperties
 
 /**
  * Converts a [StashDataFilter] into the JSON (Map) representation
  *
- * @param queryEngine The webUI requires a "label" for some IDs, so this is used to query for those
+ * @param associateIdsToNames The webUI requires a "label" for some IDs, so this is used to query for those
  */
-class FilterWriter(private val queryEngine: QueryEngine) {
+class FilterWriter(private val associateIdsToNames: suspend (dataType: DataType, ids: List<String>) -> Map<String, String?>) {
     suspend fun convertFilter(filter: StashDataFilter): Map<String, Any> {
         val objectFilter =
             buildMap<String, Any> {
@@ -52,19 +51,19 @@ class FilterWriter(private val queryEngine: QueryEngine) {
                                 is GenderCriterionInput -> o.toMap()
                                 is CircumcisionCriterionInput -> o.toMap()
 
-                                is Boolean, String -> {
+                                is Boolean, is String -> {
                                     mapOf(
                                         "value" to o.toString(),
                                         "modifier" to CriterionModifier.EQUALS.rawValue,
                                     )
                                 }
                                 is MultiCriterionInput -> {
-                                    val items = queryEngine.getByIds(dataType!!, o.getAllIds())
-                                    o.toMap(associateIds(items))
+                                    val items = associateIdsToNames(dataType!!, o.getAllIds())
+                                    o.toMap(items)
                                 }
                                 is HierarchicalMultiCriterionInput -> {
-                                    val items = queryEngine.getByIds(dataType!!, o.getAllIds())
-                                    o.toMap(associateIds(items))
+                                    val items = associateIdsToNames(dataType!!, o.getAllIds())
+                                    o.toMap(items)
                                 }
 
                                 is StashDataFilter -> convertFilter(o)
