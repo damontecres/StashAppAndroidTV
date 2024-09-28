@@ -79,6 +79,24 @@ class HierarchicalMultiCriterionFragment(
         )
         // TODO excludes
 
+        val subValueTitle =
+            when (dataType) {
+                DataType.TAG -> getString(R.string.stashapp_include_sub_tags)
+                DataType.STUDIO -> getString(R.string.stashapp_include_sub_studios)
+                DataType.MOVIE -> TODO() // v0.27
+                else -> throw IllegalStateException("$dataType not supported")
+            }
+
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(INCLUDE_SUB_VALUES)
+                .hasNext(false)
+                .title(subValueTitle)
+                .checked(curVal.depth.getOrNull() == -1)
+                .checkSetId(GuidedAction.CHECKBOX_CHECK_SET_ID)
+                .build(),
+        )
+
         addStandardActions(actions, filterOption)
     }
 
@@ -105,6 +123,10 @@ class HierarchicalMultiCriterionFragment(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
+            val subValuesAction = findActionById(INCLUDE_SUB_VALUES)
+            if (subValuesAction.isChecked) {
+                curVal = curVal.copy(depth = Optional.present(-1))
+            }
             viewModel.updateFilter(filterOption, curVal)
             parentFragmentManager.popBackStack()
         } else {
@@ -169,7 +191,7 @@ class HierarchicalMultiCriterionFragment(
         private const val INCLUDE_LIST = 2L
         private const val ADD_INCLUDE_ITEM = 3L
         private const val ADD_EXCLUDE_ITEM = 4L
-        private const val SUBMIT = 5L
+        private const val INCLUDE_SUB_VALUES = 5L
 
         private const val INCLUDE_OFFSET = 1_000_000L
         private const val EXCLUDE_OFFSET = 2_000_000L

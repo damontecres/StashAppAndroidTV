@@ -168,7 +168,15 @@ fun filterSummary(
         }.ifBlank { null }
     // TODO excludes
     return if (toStr != null) {
-        "$modStr $toStr"
+        val depth = f.depth.getOrNull()
+        if (depth == -1) {
+            val allStr = StashApplication.getApplication().getString(R.string.stashapp_all)
+            "$modStr $toStr (+$allStr)"
+        } else if (depth != null && depth > 0) {
+            "$modStr $toStr (+$depth)"
+        } else {
+            "$modStr $toStr"
+        }
     } else {
         modStr
     }
