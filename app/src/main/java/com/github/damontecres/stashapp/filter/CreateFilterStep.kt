@@ -144,8 +144,13 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 if (experimentalFeaturesEnabled() &&
                     action.id == SAVE_SUBMIT && filterArgs.name.isNotNullOrBlank()
                 ) {
+                    val queryEngine = QueryEngine(viewModel.server.value!!)
                     // Save it
-                    val filterWriter = FilterWriter(QueryEngine(StashServer.requireCurrentServer()))
+                    val filterWriter =
+                        FilterWriter { dataType, ids ->
+                            queryEngine.getByIds(dataType, ids)
+                                .associate { it.id to extractTitle(it) }
+                        }
                     val findFilter =
                         filterArgs.findFilter ?: StashFindFilter(
                             null,
