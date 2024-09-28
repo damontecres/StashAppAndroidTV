@@ -39,6 +39,7 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.filter.output.getAllIds
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
@@ -160,26 +161,37 @@ fun filterSummary(
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS -> resolvedTitles.firstOrNull() ?: ""
-            CriterionModifier.IS_NULL -> ""
-            CriterionModifier.NOT_NULL -> ""
             CriterionModifier.INCLUDES_ALL -> resolvedTitles.toString()
             CriterionModifier.INCLUDES -> resolvedTitles.toString()
+
+            // Short circuit and return
+            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> return modStr
             else -> throw IllegalArgumentException("${f.modifier}")
         }.ifBlank { null }
-    // TODO excludes
-    return if (toStr != null) {
-        val depth = f.depth.getOrNull()
+
+    val depth = f.depth.getOrNull()
+    val depthStr =
         if (depth == -1) {
             val allStr = StashApplication.getApplication().getString(R.string.stashapp_all)
-            "$modStr $toStr (+$allStr)"
+            "(+$allStr)"
         } else if (depth != null && depth > 0) {
-            "$modStr $toStr (+$depth)"
+            "(+$depth)"
         } else {
-            "$modStr $toStr"
+            null
         }
-    } else {
-        modStr
-    }
+    val resolvedExcludes = f.excludes.getOrNull()?.map { itemMap[it]?.name ?: it }.orEmpty()
+    val excludeStr =
+        if (resolvedExcludes.isNotEmpty()) {
+            val str =
+                StashApplication.getApplication()
+                    .getString(R.string.stashapp_criterion_modifier_excludes)
+            "$str $resolvedExcludes"
+        } else {
+            null
+        }
+
+    val strings = listOf(modStr, toStr, depthStr, excludeStr)
+    return strings.joinNotNullOrBlank(" ")
 }
 
 fun filterSummary(f: StringCriterionInput): String {
