@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StudioFilterType
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.OptionalSerializersModule
@@ -194,13 +195,14 @@ class ObjectFilterParsingTests {
      */
     private fun <T : StashDataFilter> checkFilterOutput(
         file: String,
+        dataType: DataType,
         filterType: KClass<in T>,
         parser: (Any?) -> T?,
     ) {
         val savedFilterData = getSavedFilterData(file)
         val sceneFilter = parser(savedFilterData.object_filter)!!
         val filterWriter =
-            FilterWriter { dataType, ids ->
+            FilterWriter(dataType) { dataType, ids ->
                 ids.associateWith { it }
             }
         val filterOut = runBlocking { filterWriter.convertFilter(sceneFilter) }
@@ -266,6 +268,7 @@ class ObjectFilterParsingTests {
     fun testSceneFilterWriter() {
         checkFilterOutput(
             "scene_savedfilter.json",
+            DataType.SCENE,
             SceneFilterType::class,
             filterParser::convertSceneObjectFilter,
         )
@@ -275,6 +278,7 @@ class ObjectFilterParsingTests {
     fun testScene2FilterWriter() {
         checkFilterOutput(
             "scene_savedfilter2.json",
+            DataType.SCENE,
             SceneFilterType::class,
             filterParser::convertSceneObjectFilter,
         )
@@ -284,6 +288,7 @@ class ObjectFilterParsingTests {
     fun testPerformerFilterWriter() {
         checkFilterOutput(
             "performer_savedfilter.json",
+            DataType.PERFORMER,
             PerformerFilterType::class,
             filterParser::convertPerformerObjectFilter,
         )
@@ -293,6 +298,7 @@ class ObjectFilterParsingTests {
     fun testGenderFilterWriter() {
         checkFilterOutput(
             "gender_savedfilter.json",
+            DataType.PERFORMER,
             PerformerFilterType::class,
             filterParser::convertPerformerObjectFilter,
         )
@@ -302,6 +308,7 @@ class ObjectFilterParsingTests {
     fun testStudioChildrenFilterWriter() {
         checkFilterOutput(
             "studio_children_savedfilter.json",
+            DataType.STUDIO,
             StudioFilterType::class,
             filterParser::convertStudioObjectFilter,
         )
