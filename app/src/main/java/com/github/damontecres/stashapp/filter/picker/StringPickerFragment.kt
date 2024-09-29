@@ -36,15 +36,15 @@ class StringPickerFragment(
         val currentString = curVal?.value
         val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
-        // TODO disable for is/not null modifier
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(1L)
+                .id(VALUE)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))
                 .descriptionEditable(true)
                 .descriptionEditInputType(InputType.TYPE_CLASS_TEXT)
-                .editDescription(currentString)
+                .description(currentString)
+                .enabled(curModifier != CriterionModifier.IS_NULL && curModifier != CriterionModifier.NOT_NULL)
                 .build(),
         )
 
@@ -56,7 +56,8 @@ class StringPickerFragment(
                 add(modifierAction(CriterionModifier.EXCLUDES))
                 add(modifierAction(CriterionModifier.IS_NULL))
                 add(modifierAction(CriterionModifier.NOT_NULL))
-                // TODO: regex?
+                add(modifierAction(CriterionModifier.MATCHES_REGEX))
+                add(modifierAction(CriterionModifier.NOT_MATCHES_REGEX))
             }
         actions.add(
             GuidedAction.Builder(requireContext())
@@ -80,13 +81,20 @@ class StringPickerFragment(
             )
             findActionById(MODIFIER).description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
+            if (newModifier == CriterionModifier.IS_NULL || newModifier == CriterionModifier.NOT_NULL) {
+                findActionById(VALUE).isEnabled = false
+                notifyActionChanged(findActionPositionById(VALUE))
+            } else {
+                findActionById(VALUE).isEnabled = true
+                notifyActionChanged(findActionPositionById(VALUE))
+            }
         }
         return true
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val newString = findActionById(1L).description?.toString()
+            val newString = findActionById(VALUE).description?.toString()
             val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
             val newValue =
                 if (newString.isNotNullOrBlank()) {
@@ -106,6 +114,7 @@ class StringPickerFragment(
 
     companion object {
         private const val TAG = "StringPickerFragment"
+        private const val VALUE = 1L
         private const val MODIFIER = 2L
     }
 }
