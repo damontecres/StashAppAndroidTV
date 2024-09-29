@@ -44,7 +44,7 @@ class CreateFilterViewModel : ViewModel() {
 
         // Fetch all of the labels for any existing IDs in the initial object filter
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
-            getIdsByDataType(dataType.filterType, objectFilter.value!!).entries.forEach {
+            getIdsByDataType(dataType, objectFilter.value!!).entries.forEach {
                 val dt = it.key
                 val ids = it.value
                 val items = queryEngine.getByIds(dt, ids)

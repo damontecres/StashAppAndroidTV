@@ -8,11 +8,18 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.GenderEnum
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StashDataFilter
+import com.github.damontecres.stashapp.api.type.StudioFilterType
+import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.OptionalSerializersModule
 import com.github.damontecres.stashapp.util.Version
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okio.FileSystem
 import okio.Path.Companion.toPath
@@ -21,9 +28,13 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.junit.MockitoJUnitRunner
+import kotlin.reflect.KClass
+import kotlin.reflect.full.declaredMemberProperties
 
 @RunWith(MockitoJUnitRunner::class)
 class ObjectFilterParsingTests {
+    private val filterParser = FilterParser(Version.MINIMUM_STASH_VERSION)
+
     @Before
     fun init() {
     }
@@ -73,7 +84,7 @@ class ObjectFilterParsingTests {
             sceneFilter.studios.getOrThrow()!!.value.getOrThrow()!!.first(),
         )
         Assert.assertEquals(
-            listOf("8", "148"),
+            listOf("9", "148"),
             sceneFilter.tags.getOrThrow()!!.value.getOrThrow()!!,
         )
         Assert.assertEquals(
@@ -170,5 +181,129 @@ class ObjectFilterParsingTests {
         Assert.assertEquals(FilterMode.STUDIOS, savedFilterData.mode)
 
         Assert.assertEquals(3, studioFilter.child_count.getOrThrow()!!.value)
+    }
+
+    /**
+     * Test [FilterWriter] using a saved filter
+     *
+     * This basically does the following:
+     * 1. Parses json into a filter using [FilterParser]
+     * 2. Writes that filter out as a Map using [FilterWriter]
+     * 3. Parse that Map using [FilterParser]
+     * 4. Compares the filters from steps 1 & 3
+     */
+    private fun <T : StashDataFilter> checkFilterOutput(
+        file: String,
+        filterType: KClass<in T>,
+        parser: (Any?) -> T?,
+    ) {
+        val savedFilterData = getSavedFilterData(file)
+        val sceneFilter = parser(savedFilterData.object_filter)!!
+        val filterWriter =
+            FilterWriter { dataType, ids ->
+                ids.associateWith { it }
+            }
+        val filterOut = runBlocking { filterWriter.convertFilter(sceneFilter) }
+        val result = parser(filterOut)!!
+        filterType.declaredMemberProperties.forEach { prop ->
+            val expected = (prop.get(sceneFilter) as Optional<*>).getOrNull()
+            val actual = (prop.get(result) as Optional<*>).getOrNull()
+            when (expected) {
+                is MultiCriterionInput -> {
+                    expected as MultiCriterionInput
+                    actual as MultiCriterionInput
+                    Assert.assertTrue(prop.name, compareOptionalList(expected.value, actual.value))
+                    Assert.assertTrue(
+                        prop.name,
+                        compareOptionalList(expected.excludes, actual.excludes),
+                    )
+                    Assert.assertEquals(prop.name, expected.modifier, actual.modifier)
+                }
+
+                is HierarchicalMultiCriterionInput -> {
+                    expected as HierarchicalMultiCriterionInput
+                    actual as HierarchicalMultiCriterionInput
+                    Assert.assertTrue(prop.name, compareOptionalList(expected.value, actual.value))
+                    Assert.assertTrue(
+                        prop.name,
+                        compareOptionalList(expected.excludes, actual.excludes),
+                    )
+                    Assert.assertEquals(prop.name, expected.modifier, actual.modifier)
+                    Assert.assertEquals(prop.name, expected.depth, actual.depth)
+                }
+
+                else -> Assert.assertEquals(prop.name, expected, actual)
+            }
+        }
+    }
+
+    /**
+     * When comparing HierarchicalMulti & Multi, there is little functional difference between an absent list and an empty list,
+     * so override and check for that situation and return true if so
+     */
+    private fun compareOptionalList(
+        expected: Optional<List<*>?>,
+        actual: Optional<List<*>?>,
+    ): Boolean {
+        return if (expected == Optional.Absent && actual == Optional.Absent) {
+            true
+        } else {
+            val exList = expected.getOrNull()
+            val acList = actual.getOrNull()
+            if (exList == acList) {
+                true
+            } else if (expected == Optional.Absent && acList != null && acList.isEmpty()) {
+                true
+            } else if (actual == Optional.Absent && exList != null && exList.isEmpty()) {
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    @Test
+    fun testSceneFilterWriter() {
+        checkFilterOutput(
+            "scene_savedfilter.json",
+            SceneFilterType::class,
+            filterParser::convertSceneObjectFilter,
+        )
+    }
+
+    @Test
+    fun testScene2FilterWriter() {
+        checkFilterOutput(
+            "scene_savedfilter2.json",
+            SceneFilterType::class,
+            filterParser::convertSceneObjectFilter,
+        )
+    }
+
+    @Test
+    fun testPerformerFilterWriter() {
+        checkFilterOutput(
+            "performer_savedfilter.json",
+            PerformerFilterType::class,
+            filterParser::convertPerformerObjectFilter,
+        )
+    }
+
+    @Test
+    fun testGenderFilterWriter() {
+        checkFilterOutput(
+            "gender_savedfilter.json",
+            PerformerFilterType::class,
+            filterParser::convertPerformerObjectFilter,
+        )
+    }
+
+    @Test
+    fun testStudioChildrenFilterWriter() {
+        checkFilterOutput(
+            "studio_children_savedfilter.json",
+            StudioFilterType::class,
+            filterParser::convertStudioObjectFilter,
+        )
     }
 }

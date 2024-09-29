@@ -14,14 +14,17 @@ import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.filter.CreateFilterGuidedStepFragment
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
+import kotlin.properties.Delegates
 
 class RatingPickerFragment(
     private val filterOption: FilterOption<StashDataFilter, IntCriterionInput>,
 ) : CreateFilterGuidedStepFragment() {
     private var curVal: IntCriterionInput? = null
+    private var ratingsAsStars by Delegates.notNull<Boolean>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         curVal = filterOption.getter(viewModel.objectFilter.value!!).getOrNull()
+        ratingsAsStars = viewModel.server.value!!.serverPreferences.ratingsAsStars
         super.onCreate(savedInstanceState)
     }
 
@@ -39,25 +42,18 @@ class RatingPickerFragment(
         savedInstanceState: Bundle?,
     ) {
         val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
-
         val current =
-            if (viewModel.server.value!!.serverPreferences.ratingsAsStars) {
+            if (ratingsAsStars) {
                 curVal?.value?.div(20.0)
             } else {
                 curVal?.value?.div(10.0)
             }
-
-        // TODO show second value for between
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(1L)
-                .hasNext(true)
-                .title(getString(R.string.stashapp_criterion_value))
-                .descriptionEditable(true)
-                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
-                .description(current?.toString())
-                .build(),
-        )
+        val current2 =
+            if (ratingsAsStars) {
+                curVal?.value2?.getOrNull()?.div(20.0)
+            } else {
+                curVal?.value2?.getOrNull()?.div(10.0)
+            }
 
         val modifierOptions =
             buildList {
@@ -65,9 +61,10 @@ class RatingPickerFragment(
                 add(modifierAction(CriterionModifier.NOT_EQUALS))
                 add(modifierAction(CriterionModifier.GREATER_THAN))
                 add(modifierAction(CriterionModifier.LESS_THAN))
+                add(modifierAction(CriterionModifier.BETWEEN))
+                add(modifierAction(CriterionModifier.NOT_BETWEEN))
                 add(modifierAction(CriterionModifier.IS_NULL))
                 add(modifierAction(CriterionModifier.NOT_NULL))
-                // TODO: between
             }
         actions.add(
             GuidedAction.Builder(requireContext())
@@ -81,55 +78,79 @@ class RatingPickerFragment(
 
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(GuidedAction.ACTION_ID_FINISH)
+                .id(VALUE)
                 .hasNext(true)
-                .enabled(false)
-                .title(getString(R.string.stashapp_actions_save))
+                .title(getString(R.string.stashapp_criterion_value))
+                .descriptionEditable(true)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+                .description(current?.toString())
                 .build(),
         )
-
-        if (viewModel.getValue(filterOption) != null) {
-            actions.add(
-                GuidedAction.Builder(requireContext())
-                    .id(ACTION_ID_REMOVE)
-                    .hasNext(true)
-                    .title(getString(R.string.stashapp_actions_remove))
-                    .build(),
-            )
-        }
 
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(GuidedAction.ACTION_ID_CANCEL)
+                .id(VALUE_2)
                 .hasNext(true)
-                .title(getString(R.string.stashapp_actions_cancel))
+                .title(getString(R.string.stashapp_criterion_value))
+                .descriptionEditable(true)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+                .description(current2?.toString())
+                .enabled(curModifier == CriterionModifier.BETWEEN || curModifier == CriterionModifier.NOT_BETWEEN)
                 .build(),
         )
+
+        addStandardActions(actions, filterOption)
+    }
+
+    private fun calcRating100(value: Double?): Int? {
+        if (value == null) {
+            return null
+        }
+        return if (ratingsAsStars) {
+            (value.times(20)).toInt()
+        } else {
+            (value.times(10)).toInt()
+        }
+    }
+
+    private fun validateValue(desc: CharSequence?): Boolean {
+        if (desc != null) {
+            val newValue = desc.toString().toDoubleOrNull()
+            if (newValue != null) {
+                val rating100 = calcRating100(newValue)
+                if (rating100 in 0..100) {
+                    return true
+                } else {
+                    Toast.makeText(requireContext(), "Invalid rating!", Toast.LENGTH_SHORT)
+                        .show()
+                }
+            }
+        }
+        return false
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        if (action.id == 1L) {
+        if (action.id == VALUE || action.id == VALUE_2) {
             val desc = action.description
-            if (desc != null) {
-                val newValue = desc.toString().toDoubleOrNull()
-                if (newValue != null) {
-                    val rating100 =
-                        if (viewModel.server.value!!.serverPreferences.ratingsAsStars) {
-                            (newValue.times(20)).toInt()
-                        } else {
-                            (newValue.times(10)).toInt()
-                        }
-                    if (rating100 in 0..100) {
-                        enableFinish(true)
-                        return GuidedAction.ACTION_ID_NEXT
+            val valid = validateValue(desc)
+
+            val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
+            if (curModifier == CriterionModifier.BETWEEN || curModifier == CriterionModifier.NOT_BETWEEN) {
+                val otherDesc =
+                    if (action.id == VALUE) {
+                        findActionById(VALUE_2).description
                     } else {
-                        Toast.makeText(requireContext(), "Invalid rating!", Toast.LENGTH_SHORT)
-                            .show()
+                        findActionById(VALUE).description
                     }
+                val otherValid = validateValue(otherDesc)
+                if (valid && otherValid) {
+                    enableFinish(true)
+                } else {
+                    enableFinish(false)
                 }
+            } else {
+                enableFinish(valid)
             }
-            enableFinish(false)
-            return GuidedAction.ACTION_ID_CURRENT
         }
         return GuidedAction.ACTION_ID_CURRENT
     }
@@ -144,26 +165,35 @@ class RatingPickerFragment(
             )
             findActionById(MODIFIER).description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
+
+            val value2Action = findActionById(VALUE_2)
+            if (newModifier == CriterionModifier.BETWEEN || newModifier == CriterionModifier.NOT_BETWEEN) {
+                value2Action.isEnabled = true
+            } else {
+                value2Action.isEnabled = false
+            }
+            notifyActionChanged(findActionPositionById(VALUE_2))
         }
         return true
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val newInt = findActionById(1L).description?.toString()?.toDouble()
+            val value = findActionById(VALUE).description?.toString()?.toDoubleOrNull()
+            val value2 = findActionById(VALUE_2).description?.toString()?.toDoubleOrNull()
             val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
-            val rating100 =
-                if (viewModel.server.value!!.serverPreferences.ratingsAsStars) {
-                    (newInt?.times(20))?.toInt()
-                } else {
-                    (newInt?.times(10))?.toInt()
-                }
+            val rating100 = calcRating100(value)
+            val rating1002 = calcRating100(value2)
             val newValue =
                 if (rating100 != null) {
-                    IntCriterionInput(value = rating100, modifier = modifier)
+                    IntCriterionInput(
+                        value = rating100,
+                        value2 = Optional.presentIfNotNull(rating1002),
+                        modifier = modifier,
+                    )
                 } else if (modifier == CriterionModifier.IS_NULL || modifier == CriterionModifier.NOT_NULL) {
-                    IntCriterionInput(value = 0, modifier = modifier)
+                    IntCriterionInput(value = 0, value2 = Optional.absent(), modifier = modifier)
                 } else {
                     null
                 }
@@ -177,6 +207,8 @@ class RatingPickerFragment(
 
     companion object {
         private const val TAG = "RatingPickerFragment"
-        private const val MODIFIER = 2L
+        private const val VALUE = 1L
+        private const val VALUE_2 = 2L
+        private const val MODIFIER = 3L
     }
 }
