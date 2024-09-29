@@ -41,13 +41,14 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     }
 
     private fun createActionList(): List<GuidedAction> {
-        return getFilterOptions(viewModel.dataType.value!!)
+        val dataType = viewModel.dataType.value!!
+        return getFilterOptions(dataType)
             .mapIndexed { index, filterOption ->
                 filterOption as FilterOption<StashDataFilter, Any>
                 val value = viewModel.getValue(filterOption)
                 val description =
                     if (value != null) {
-                        filterSummary(filterOption.name, value, viewModel::lookupIds)
+                        filterSummary(filterOption.name, dataType, value, viewModel::lookupIds)
                     } else {
                         null
                     }
