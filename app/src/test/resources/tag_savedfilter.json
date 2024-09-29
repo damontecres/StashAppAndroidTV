@@ -1,0 +1,54 @@
+{
+  "data": {
+    "findSavedFilter": {
+      "id": "30",
+      "mode": "TAGS",
+      "name": "Test Filter",
+      "find_filter": {
+        "q": "",
+        "sort": "random_109614",
+        "direction": "ASC",
+        "page": 1,
+        "per_page": 40,
+        "__typename": "SavedFindFilterType"
+      },
+      "object_filter": {
+        "aliases": {
+          "modifier": "INCLUDES",
+          "value": "aliases_includes"
+        },
+        "children": {
+          "modifier": "INCLUDES_ALL",
+          "value": {
+            "depth": -1,
+            "excluded": [
+              {
+                "id": "6",
+                "label": "New"
+              }
+            ],
+            "items": []
+          }
+        },
+        "is_missing": {
+          "modifier": "EQUALS",
+          "value": "image"
+        },
+        "parents": {
+          "modifier": "INCLUDES",
+          "value": {
+            "depth": 0,
+            "excluded": [],
+            "items": [
+              {
+                "id": "6",
+                "label": "New"
+              }
+            ]
+          }
+        }
+      },
+      "__typename": "SavedFilter"
+    }
+  }
+}
