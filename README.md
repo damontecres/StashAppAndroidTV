@@ -96,7 +96,7 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 
 ### Scene list with sorting & filters
 
-![0_4_0_scenes](https://github.com/user-attachments/assets/a3207445-448a-455a-ac2e-7c739b0b7133)
+![0_4_2_scenes](https://github.com/user-attachments/assets/438fe917-1ea0-4f65-9c96-ddd2ace0504a)
 
 ### Performer page
 ![0_4_0_performer](https://github.com/user-attachments/assets/16ae2514-6b00-425a-82a2-9db0f4de51d6)
