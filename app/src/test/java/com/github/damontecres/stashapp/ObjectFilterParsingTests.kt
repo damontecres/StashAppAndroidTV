@@ -267,7 +267,7 @@ class ObjectFilterParsingTests {
         checkFilterOutput(
             "scene_savedfilter.json",
             SceneFilterType::class,
-            filterParser::convertSceneObjectFilter,
+            filterParser::convertSceneFilterType,
         )
     }
 
@@ -276,7 +276,7 @@ class ObjectFilterParsingTests {
         checkFilterOutput(
             "scene_savedfilter2.json",
             SceneFilterType::class,
-            filterParser::convertSceneObjectFilter,
+            filterParser::convertSceneFilterType,
         )
     }
 
@@ -285,7 +285,7 @@ class ObjectFilterParsingTests {
         checkFilterOutput(
             "performer_savedfilter.json",
             PerformerFilterType::class,
-            filterParser::convertPerformerObjectFilter,
+            filterParser::convertPerformerFilterType,
         )
     }
 
@@ -294,7 +294,7 @@ class ObjectFilterParsingTests {
         checkFilterOutput(
             "gender_savedfilter.json",
             PerformerFilterType::class,
-            filterParser::convertPerformerObjectFilter,
+            filterParser::convertPerformerFilterType,
         )
     }
 
@@ -303,7 +303,7 @@ class ObjectFilterParsingTests {
         checkFilterOutput(
             "studio_children_savedfilter.json",
             StudioFilterType::class,
-            filterParser::convertStudioObjectFilter,
+            filterParser::convertStudioFilterType,
         )
     }
 }
