@@ -46,6 +46,8 @@ class MultiCriterionFragment(
             buildList {
                 add(modifierAction(CriterionModifier.INCLUDES))
                 add(modifierAction(CriterionModifier.INCLUDES_ALL))
+                add(modifierAction(CriterionModifier.IS_NULL))
+                add(modifierAction(CriterionModifier.NOT_NULL))
             }
         actions.add(
             GuidedAction.Builder(requireContext())

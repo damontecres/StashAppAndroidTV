@@ -47,18 +47,6 @@ class RatingPickerFragment(
                 curVal?.value?.div(10.0)
             }
 
-        // TODO show second value for between
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(1L)
-                .hasNext(true)
-                .title(getString(R.string.stashapp_criterion_value))
-                .descriptionEditable(true)
-                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
-                .description(current?.toString())
-                .build(),
-        )
-
         val modifierOptions =
             buildList {
                 add(modifierAction(CriterionModifier.EQUALS))
@@ -76,6 +64,18 @@ class RatingPickerFragment(
                 .title("Modifier")
                 .description(curModifier.getString(requireContext()))
                 .subActions(modifierOptions)
+                .build(),
+        )
+
+        // TODO show second value for between
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(VALUE)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_criterion_value))
+                .descriptionEditable(true)
+                .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
+                .description(current?.toString())
                 .build(),
         )
 
@@ -108,7 +108,7 @@ class RatingPickerFragment(
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        if (action.id == 1L) {
+        if (action.id == VALUE) {
             val desc = action.description
             if (desc != null) {
                 val newValue = desc.toString().toDoubleOrNull()
@@ -150,7 +150,7 @@ class RatingPickerFragment(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val newInt = findActionById(1L).description?.toString()?.toDouble()
+            val newInt = findActionById(VALUE).description?.toString()?.toDouble()
             val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
             val rating100 =
@@ -177,6 +177,7 @@ class RatingPickerFragment(
 
     companion object {
         private const val TAG = "RatingPickerFragment"
+        private const val VALUE = 1L
         private const val MODIFIER = 2L
     }
 }

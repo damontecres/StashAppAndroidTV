@@ -36,18 +36,6 @@ class StringPickerFragment(
         val currentString = curVal?.value
         val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(VALUE)
-                .hasNext(true)
-                .title(getString(R.string.stashapp_criterion_value))
-                .descriptionEditable(true)
-                .descriptionEditInputType(InputType.TYPE_CLASS_TEXT)
-                .description(currentString)
-                .enabled(curModifier != CriterionModifier.IS_NULL && curModifier != CriterionModifier.NOT_NULL)
-                .build(),
-        )
-
         val modifierOptions =
             buildList {
                 add(modifierAction(CriterionModifier.EQUALS))
@@ -66,6 +54,18 @@ class StringPickerFragment(
                 .title("Modifier")
                 .description(curModifier.getString(requireContext()))
                 .subActions(modifierOptions)
+                .build(),
+        )
+
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(VALUE)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_criterion_value))
+                .descriptionEditable(true)
+                .descriptionEditInputType(InputType.TYPE_CLASS_TEXT)
+                .description(currentString)
+                .enabled(curModifier != CriterionModifier.IS_NULL && curModifier != CriterionModifier.NOT_NULL)
                 .build(),
         )
 

@@ -62,16 +62,6 @@ class DatePickerFragment(
                 Date().time
             }
 
-        // TODO show second value for between
-        actions.add(
-            GuidedDatePickerAction.Builder(requireContext())
-                .id(1L)
-                .hasNext(true)
-                .title(getString(R.string.stashapp_criterion_value))
-                .date(dateLong)
-                .build(),
-        )
-
         val modifierOptions =
             buildList {
                 add(modifierAction(CriterionModifier.EQUALS))
@@ -92,11 +82,21 @@ class DatePickerFragment(
                 .build(),
         )
 
+        // TODO show second value for between
+        actions.add(
+            GuidedDatePickerAction.Builder(requireContext())
+                .id(VALUE)
+                .hasNext(true)
+                .title(getString(R.string.stashapp_criterion_value))
+                .date(dateLong)
+                .build(),
+        )
+
         addStandardActions(actions, filterOption)
     }
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
-        val curDate = Date((findActionById(1L) as GuidedDatePickerAction).date)
+        val curDate = Date((findActionById(VALUE) as GuidedDatePickerAction).date)
         if (action.id >= MODIFIER_OFFSET) {
             val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
             curVal = curVal?.copy(modifier = newModifier) ?: DateCriterionInput(
@@ -131,6 +131,7 @@ class DatePickerFragment(
 
     companion object {
         private const val TAG = "FloatPickerFragment"
+        private const val VALUE = 1L
         private const val MODIFIER = 2L
     }
 }
