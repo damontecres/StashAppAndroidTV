@@ -14,6 +14,8 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
+import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
@@ -369,6 +371,23 @@ fun filterSummary(f: StashIDCriterionInput): String {
     }
 }
 
+fun filterSummary(f: CircumcisionCriterionInput): String {
+    val context = StashApplication.getApplication()
+    val modStr = f.modifier.getString(context)
+    val strings =
+        f.value.getOrNull().orEmpty().map {
+            when (it) {
+                CircumisedEnum.CUT -> context.getString(R.string.stashapp_circumcised_types_CUT)
+                CircumisedEnum.UNCUT -> context.getString(R.string.stashapp_circumcised_types_UNCUT)
+                CircumisedEnum.UNKNOWN__ -> "Unknown"
+            }
+        }
+    return when (f.modifier) {
+        CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> modStr
+        else -> "$modStr $strings"
+    }
+}
+
 fun filterSummary(f: TimestampCriterionInput): String {
     val modStr = f.modifier.getString(StashApplication.getApplication())
     val value = f.value
@@ -466,6 +485,7 @@ fun filterSummary(
             is TimestampCriterionInput -> filterSummary(value)
             is DateCriterionInput -> filterSummary(value)
             is GenderCriterionInput -> filterSummary(value)
+            is CircumcisionCriterionInput -> filterSummary(value)
 
             is Boolean, String -> value.toString()
 
@@ -479,7 +499,6 @@ fun filterSummary(
                 filterSummary(value, idLookup(dataType, value.getAllIds()))
             }
 
-            // TODO
             else -> value.toString()
         }
     }

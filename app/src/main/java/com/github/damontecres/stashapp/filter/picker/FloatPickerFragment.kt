@@ -55,7 +55,7 @@ class FloatPickerFragment(
             }
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(MODIFIER_OFFSET)
+                .id(MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
                 .description(curModifier.getString(requireContext()))
@@ -122,8 +122,8 @@ class FloatPickerFragment(
                 value2 = curVal?.value2 ?: Optional.absent(),
                 modifier = newModifier,
             )
-            findActionById(MODIFIER_OFFSET).description = newModifier.getString(requireContext())
-            notifyActionChanged(findActionPositionById(MODIFIER_OFFSET))
+            findActionById(MODIFIER).description = newModifier.getString(requireContext())
+            notifyActionChanged(findActionPositionById(MODIFIER))
 
             val value2Action = findActionById(VALUE_2)
             if (newModifier == CriterionModifier.BETWEEN || newModifier == CriterionModifier.NOT_BETWEEN) {
@@ -165,5 +165,6 @@ class FloatPickerFragment(
         private const val TAG = "FloatPickerFragment"
         private const val VALUE_1 = 1L
         private const val VALUE_2 = 2L
+        private const val MODIFIER = 3L
     }
 }

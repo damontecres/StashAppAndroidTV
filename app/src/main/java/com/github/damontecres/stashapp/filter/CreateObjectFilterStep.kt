@@ -6,6 +6,7 @@ import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
@@ -17,6 +18,7 @@ import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.filter.picker.BooleanPickerFragment
+import com.github.damontecres.stashapp.filter.picker.CircumcisionPickerFragment
 import com.github.damontecres.stashapp.filter.picker.DatePickerFragment
 import com.github.damontecres.stashapp.filter.picker.FloatPickerFragment
 import com.github.damontecres.stashapp.filter.picker.GenderPickerFragment
@@ -181,6 +183,11 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                         OrientationCriterionInput::class -> {
                             filterOption as FilterOption<StashDataFilter, OrientationCriterionInput>
                             nextStep(OrientationPickerFragment(filterOption))
+                        }
+
+                        CircumcisionCriterionInput::class -> {
+                            filterOption as FilterOption<StashDataFilter, CircumcisionCriterionInput>
+                            nextStep(CircumcisionPickerFragment(filterOption))
                         }
 
                         else -> throw UnsupportedOperationException("$filterOption")

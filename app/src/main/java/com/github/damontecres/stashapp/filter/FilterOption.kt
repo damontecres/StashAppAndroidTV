@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.filter
 import androidx.annotation.StringRes
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -184,6 +185,14 @@ private val PerformerFilterOptions =
             DateCriterionInput::class,
             { filter -> filter.birthdate },
             { filter, value -> filter.copy(birthdate = value) },
+        ),
+        FilterOption<PerformerFilterType, CircumcisionCriterionInput>(
+            "circumcised",
+            R.string.stashapp_circumcised,
+            null,
+            CircumcisionCriterionInput::class,
+            { filter -> filter.circumcised },
+            { filter, value -> filter.copy(circumcised = value) },
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "eye_color",
