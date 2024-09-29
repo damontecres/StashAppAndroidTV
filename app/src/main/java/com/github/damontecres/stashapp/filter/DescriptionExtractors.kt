@@ -14,6 +14,8 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
+import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
@@ -39,6 +41,7 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.filter.output.getAllIds
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
@@ -136,18 +139,27 @@ fun filterSummary(
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS -> resolvedTitles.firstOrNull() ?: ""
-            CriterionModifier.IS_NULL -> ""
-            CriterionModifier.NOT_NULL -> ""
             CriterionModifier.INCLUDES_ALL -> resolvedTitles.toString()
             CriterionModifier.INCLUDES -> resolvedTitles.toString()
+
+            // Short circuit and return
+            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> return modStr
             else -> throw IllegalArgumentException("${f.modifier}")
         }.ifBlank { null }
-    // TODO excludes
-    return if (toStr != null) {
-        "$modStr $toStr"
-    } else {
-        modStr
-    }
+
+    val resolvedExcludes = f.excludes.getOrNull()?.map { itemMap[it]?.name ?: it }.orEmpty()
+    val excludeStr =
+        if (resolvedExcludes.isNotEmpty()) {
+            val str =
+                StashApplication.getApplication()
+                    .getString(R.string.stashapp_criterion_modifier_excludes)
+            "$str $resolvedExcludes"
+        } else {
+            null
+        }
+
+    val strings = listOf(modStr, toStr, excludeStr)
+    return strings.joinNotNullOrBlank(" ")
 }
 
 fun filterSummary(
@@ -160,18 +172,37 @@ fun filterSummary(
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS -> resolvedTitles.firstOrNull() ?: ""
-            CriterionModifier.IS_NULL -> ""
-            CriterionModifier.NOT_NULL -> ""
             CriterionModifier.INCLUDES_ALL -> resolvedTitles.toString()
             CriterionModifier.INCLUDES -> resolvedTitles.toString()
+
+            // Short circuit and return
+            CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> return modStr
             else -> throw IllegalArgumentException("${f.modifier}")
         }.ifBlank { null }
-    // TODO excludes
-    return if (toStr != null) {
-        "$modStr $toStr"
-    } else {
-        modStr
-    }
+
+    val depth = f.depth.getOrNull()
+    val depthStr =
+        if (depth == -1) {
+            val allStr = StashApplication.getApplication().getString(R.string.stashapp_all)
+            "(+$allStr)"
+        } else if (depth != null && depth > 0) {
+            "(+$depth)"
+        } else {
+            null
+        }
+    val resolvedExcludes = f.excludes.getOrNull()?.map { itemMap[it]?.name ?: it }.orEmpty()
+    val excludeStr =
+        if (resolvedExcludes.isNotEmpty()) {
+            val str =
+                StashApplication.getApplication()
+                    .getString(R.string.stashapp_criterion_modifier_excludes)
+            "$str $resolvedExcludes"
+        } else {
+            null
+        }
+
+    val strings = listOf(modStr, toStr, depthStr, excludeStr)
+    return strings.joinNotNullOrBlank(" ")
 }
 
 fun filterSummary(f: StringCriterionInput): String {
@@ -340,6 +371,23 @@ fun filterSummary(f: StashIDCriterionInput): String {
     }
 }
 
+fun filterSummary(f: CircumcisionCriterionInput): String {
+    val context = StashApplication.getApplication()
+    val modStr = f.modifier.getString(context)
+    val strings =
+        f.value.getOrNull().orEmpty().map {
+            when (it) {
+                CircumisedEnum.CUT -> context.getString(R.string.stashapp_circumcised_types_CUT)
+                CircumisedEnum.UNCUT -> context.getString(R.string.stashapp_circumcised_types_UNCUT)
+                CircumisedEnum.UNKNOWN__ -> "Unknown"
+            }
+        }
+    return when (f.modifier) {
+        CriterionModifier.IS_NULL, CriterionModifier.NOT_NULL -> modStr
+        else -> "$modStr $strings"
+    }
+}
+
 fun filterSummary(f: TimestampCriterionInput): String {
     val modStr = f.modifier.getString(StashApplication.getApplication())
     val value = f.value
@@ -419,6 +467,7 @@ fun filterSummary(f: GenderCriterionInput): String {
 
 fun filterSummary(
     name: String,
+    filterDataType: DataType,
     value: Any,
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
 ): String {
@@ -437,20 +486,20 @@ fun filterSummary(
             is TimestampCriterionInput -> filterSummary(value)
             is DateCriterionInput -> filterSummary(value)
             is GenderCriterionInput -> filterSummary(value)
+            is CircumcisionCriterionInput -> filterSummary(value)
 
             is Boolean, String -> value.toString()
 
             is MultiCriterionInput -> {
-                val dataType = FilterWriter.TYPE_MAPPING[name]!!
+                val dataType = FilterWriter.getType(filterDataType, name)!!
                 filterSummary(value, idLookup(dataType, value.getAllIds()))
             }
 
             is HierarchicalMultiCriterionInput -> {
-                val dataType = FilterWriter.TYPE_MAPPING[name]!!
+                val dataType = FilterWriter.getType(filterDataType, name)!!
                 filterSummary(value, idLookup(dataType, value.getAllIds()))
             }
 
-            // TODO
             else -> value.toString()
         }
     }
@@ -469,7 +518,7 @@ fun filterSummary(
             val value = obj.getOrNull()
             if (value != null) {
                 val nameStringId = filterOptionNames[param.name]?.nameStringId
-                val valueStr = filterSummary(param.name, value, idLookup)
+                val valueStr = filterSummary(param.name, dataType, value, idLookup)
                 val key =
                     if (nameStringId != null) {
                         StashApplication.getApplication().getString(nameStringId)
@@ -489,23 +538,23 @@ fun filterSummary(
 }
 
 fun getIdsByDataType(
-    type: KClass<in StashDataFilter>,
+    filterDataType: DataType,
     f: StashDataFilter,
 ): Map<DataType, List<String>> {
     val result =
         buildMap {
-            type.declaredMemberProperties.forEach { param ->
+            filterDataType.filterType.declaredMemberProperties.forEach { param ->
                 val obj = param.get(f) as Optional<*>
                 val value = obj.getOrNull()
                 if (value != null) {
                     when (value) {
                         is MultiCriterionInput -> {
-                            val dataType = FilterWriter.TYPE_MAPPING[param.name]!!
+                            val dataType = FilterWriter.getType(filterDataType, param.name)!!
                             put(dataType, value.getAllIds())
                         }
 
                         is HierarchicalMultiCriterionInput -> {
-                            val dataType = FilterWriter.TYPE_MAPPING[param.name]!!
+                            val dataType = FilterWriter.getType(filterDataType, param.name)!!
                             put(dataType, value.getAllIds())
                         }
                     }

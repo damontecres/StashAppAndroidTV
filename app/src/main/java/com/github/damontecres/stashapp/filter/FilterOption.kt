@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.filter
 import androidx.annotation.StringRes
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -70,6 +71,22 @@ private val SceneFilterOptions =
             { filter, value -> filter.copy(movies = value) },
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
+            "o_counter",
+            R.string.stashapp_o_counter,
+            null,
+            IntCriterionInput::class,
+            { it.o_counter },
+            { filter, value -> filter.copy(o_counter = value) },
+        ),
+        FilterOption<SceneFilterType, Boolean>(
+            "organized",
+            R.string.stashapp_organized,
+            null,
+            Boolean::class,
+            { filter -> filter.organized },
+            { filter, value -> filter.copy(organized = value) },
+        ),
+        FilterOption<SceneFilterType, IntCriterionInput>(
             "performer_age",
             R.string.stashapp_performer_age,
             null,
@@ -116,14 +133,6 @@ private val SceneFilterOptions =
             IntCriterionInput::class,
             { it.play_count },
             { filter, value -> filter.copy(play_count = value) },
-        ),
-        FilterOption<SceneFilterType, IntCriterionInput>(
-            "o_counter",
-            R.string.stashapp_o_counter,
-            null,
-            IntCriterionInput::class,
-            { it.o_counter },
-            { filter, value -> filter.copy(o_counter = value) },
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             "rating100",
@@ -186,6 +195,30 @@ private val PerformerFilterOptions =
             { filter, value -> filter.copy(birthdate = value) },
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
+            "country",
+            R.string.stashapp_country,
+            null,
+            StringCriterionInput::class,
+            { it.country },
+            { filter, value -> filter.copy(country = value) },
+        ),
+        FilterOption<PerformerFilterType, CircumcisionCriterionInput>(
+            "circumcised",
+            R.string.stashapp_circumcised,
+            null,
+            CircumcisionCriterionInput::class,
+            { filter -> filter.circumcised },
+            { filter, value -> filter.copy(circumcised = value) },
+        ),
+        FilterOption<PerformerFilterType, StringCriterionInput>(
+            "ethnicity",
+            R.string.stashapp_ethnicity,
+            null,
+            StringCriterionInput::class,
+            { it.ethnicity },
+            { filter, value -> filter.copy(ethnicity = value) },
+        ),
+        FilterOption<PerformerFilterType, StringCriterionInput>(
             "eye_color",
             R.string.stashapp_eye_color,
             null,
@@ -209,6 +242,14 @@ private val PerformerFilterOptions =
             { it.gender },
             { filter, value -> filter.copy(gender = value) },
         ),
+        FilterOption<PerformerFilterType, IntCriterionInput>(
+            "gallery_count",
+            R.string.stashapp_gallery_count,
+            null,
+            IntCriterionInput::class,
+            { it.gallery_count },
+            { filter, value -> filter.copy(gallery_count = value) },
+        ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "hair_color",
             R.string.stashapp_hair_color,
@@ -216,6 +257,14 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.hair_color },
             { filter, value -> filter.copy(hair_color = value) },
+        ),
+        FilterOption<PerformerFilterType, IntCriterionInput>(
+            "image_count",
+            R.string.stashapp_image_count,
+            null,
+            IntCriterionInput::class,
+            { it.image_count },
+            { filter, value -> filter.copy(image_count = value) },
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "measurements",
@@ -232,6 +281,14 @@ private val PerformerFilterOptions =
             StringCriterionInput::class,
             { it.name },
             { filter, value -> filter.copy(name = value) },
+        ),
+        FilterOption<PerformerFilterType, StringCriterionInput>(
+            "piercings",
+            R.string.stashapp_piercings,
+            null,
+            StringCriterionInput::class,
+            { it.piercings },
+            { filter, value -> filter.copy(piercings = value) },
         ),
         FilterOption<PerformerFilterType, FloatCriterionInput>(
             "penis_length",
@@ -288,6 +345,22 @@ private val PerformerFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.tags },
             { filter, value -> filter.copy(tags = value) },
+        ),
+        FilterOption<PerformerFilterType, StringCriterionInput>(
+            "tattoos",
+            R.string.stashapp_tattoos,
+            null,
+            StringCriterionInput::class,
+            { it.tattoos },
+            { filter, value -> filter.copy(tattoos = value) },
+        ),
+        FilterOption<PerformerFilterType, IntCriterionInput>(
+            "weight",
+            R.string.stashapp_weight,
+            null,
+            IntCriterionInput::class,
+            { it.weight },
+            { filter, value -> filter.copy(weight = value) },
         ),
     )
 
@@ -668,6 +741,14 @@ private val StudioFilterOptions =
             StringCriterionInput::class,
             { it.name },
             { filter, value -> filter.copy(name = value) },
+        ),
+        FilterOption<StudioFilterType, MultiCriterionInput>(
+            "parents",
+            R.string.stashapp_parent_studios,
+            DataType.STUDIO,
+            MultiCriterionInput::class,
+            { filter -> filter.parents },
+            { filter, value -> filter.copy(parents = value) },
         ),
         FilterOption<StudioFilterType, IntCriterionInput>(
             "rating100",

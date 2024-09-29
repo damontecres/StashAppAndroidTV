@@ -44,6 +44,25 @@ class FloatPickerFragment(
         val curInt = curVal?.value
         val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
 
+        val modifierOptions =
+            buildList {
+                add(modifierAction(CriterionModifier.EQUALS))
+                add(modifierAction(CriterionModifier.NOT_EQUALS))
+                add(modifierAction(CriterionModifier.GREATER_THAN))
+                add(modifierAction(CriterionModifier.LESS_THAN))
+                add(modifierAction(CriterionModifier.BETWEEN))
+                add(modifierAction(CriterionModifier.NOT_BETWEEN))
+            }
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(MODIFIER)
+                .hasNext(false)
+                .title("Modifier")
+                .description(curModifier.getString(requireContext()))
+                .subActions(modifierOptions)
+                .build(),
+        )
+
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(VALUE_1)
@@ -67,25 +86,6 @@ class FloatPickerFragment(
                 .descriptionEditInputType(InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL)
                 .description(curInt?.toString())
                 .enabled(curModifier == CriterionModifier.BETWEEN || curModifier == CriterionModifier.NOT_BETWEEN)
-                .build(),
-        )
-
-        val modifierOptions =
-            buildList {
-                add(modifierAction(CriterionModifier.EQUALS))
-                add(modifierAction(CriterionModifier.NOT_EQUALS))
-                add(modifierAction(CriterionModifier.GREATER_THAN))
-                add(modifierAction(CriterionModifier.LESS_THAN))
-                add(modifierAction(CriterionModifier.BETWEEN))
-                add(modifierAction(CriterionModifier.NOT_BETWEEN))
-            }
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(MODIFIER_OFFSET)
-                .hasNext(false)
-                .title("Modifier")
-                .description(curModifier.getString(requireContext()))
-                .subActions(modifierOptions)
                 .build(),
         )
 
@@ -122,8 +122,8 @@ class FloatPickerFragment(
                 value2 = curVal?.value2 ?: Optional.absent(),
                 modifier = newModifier,
             )
-            findActionById(MODIFIER_OFFSET).description = newModifier.getString(requireContext())
-            notifyActionChanged(findActionPositionById(MODIFIER_OFFSET))
+            findActionById(MODIFIER).description = newModifier.getString(requireContext())
+            notifyActionChanged(findActionPositionById(MODIFIER))
 
             val value2Action = findActionById(VALUE_2)
             if (newModifier == CriterionModifier.BETWEEN || newModifier == CriterionModifier.NOT_BETWEEN) {
@@ -165,5 +165,6 @@ class FloatPickerFragment(
         private const val TAG = "FloatPickerFragment"
         private const val VALUE_1 = 1L
         private const val VALUE_2 = 2L
+        private const val MODIFIER = 3L
     }
 }

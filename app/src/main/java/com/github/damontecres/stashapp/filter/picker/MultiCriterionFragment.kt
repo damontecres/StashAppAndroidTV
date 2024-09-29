@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.filter.CreateFilterGuidedStepFragment
 import com.github.damontecres.stashapp.filter.CreateFilterViewModel
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
+import java.util.Locale
 
 class MultiCriterionFragment(
     val dataType: DataType,
@@ -45,6 +46,8 @@ class MultiCriterionFragment(
             buildList {
                 add(modifierAction(CriterionModifier.INCLUDES))
                 add(modifierAction(CriterionModifier.INCLUDES_ALL))
+                add(modifierAction(CriterionModifier.IS_NULL))
+                add(modifierAction(CriterionModifier.NOT_NULL))
             }
         actions.add(
             GuidedAction.Builder(requireContext())
@@ -56,7 +59,7 @@ class MultiCriterionFragment(
                 .build(),
         )
 
-        val includeItems = createItemList(curVal.value.getOrNull().orEmpty())
+        val includeItems = createItemList(curVal.value.getOrNull().orEmpty(), true)
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(INCLUDE_LIST)
@@ -66,16 +69,38 @@ class MultiCriterionFragment(
                 .subActions(includeItems)
                 .build(),
         )
-        // TODO excludes
+        val excludeItems = createItemList(curVal.excludes.getOrNull().orEmpty(), false)
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(EXCLUDE_LIST)
+                .hasNext(false)
+                .title(
+                    getString(R.string.stashapp_criterion_modifier_excludes).replaceFirstChar {
+                        if (it.isLowerCase()) {
+                            it.titlecase(
+                                Locale.getDefault(),
+                            )
+                        } else {
+                            it.toString()
+                        }
+                    },
+                )
+                .description("${excludeItems.size - 1} ${getString(dataType.pluralStringId)}")
+                .subActions(excludeItems)
+                .build(),
+        )
 
         addStandardActions(actions, filterOption)
     }
 
-    private fun createItemList(ids: List<String>): List<GuidedAction> =
+    private fun createItemList(
+        ids: List<String>,
+        include: Boolean,
+    ): List<GuidedAction> =
         buildList {
             add(
                 GuidedAction.Builder(requireContext())
-                    .id(ADD_INCLUDE_ITEM)
+                    .id(if (include) ADD_INCLUDE_ITEM else ADD_EXCLUDE_ITEM)
                     .title("Add")
                     .build(),
             )
@@ -84,13 +109,23 @@ class MultiCriterionFragment(
                     val nameDesc =
                         viewModel.storedItems[CreateFilterViewModel.DataTypeId(dataType, id)]
                     GuidedAction.Builder(requireContext())
-                        .id(INCLUDE_OFFSET + index)
+                        .id(index + if (include) INCLUDE_OFFSET else EXCLUDE_OFFSET)
                         .title(nameDesc?.name)
                         .description(nameDesc?.description)
                         .build()
                 }.sortedBy { it.title.toString() },
             )
         }
+
+    private fun refreshItemList(
+        items: List<String>,
+        include: Boolean,
+    ) {
+        val action = findActionById(if (include) INCLUDE_LIST else EXCLUDE_LIST)
+        action.subActions = createItemList(items, include)
+        action.description = "${items.size} ${getString(dataType.pluralStringId)}"
+        notifyActionChanged(findActionPositionById(if (include) INCLUDE_LIST else EXCLUDE_LIST))
+    }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
@@ -109,17 +144,18 @@ class MultiCriterionFragment(
             notifyActionChanged(findActionPositionById(MODIFIER))
             return true
         } else if (action.id >= EXCLUDE_OFFSET) {
-            TODO()
+            val index = action.id - EXCLUDE_OFFSET
+            val list = curVal.excludes.getOrThrow()!!.toMutableList()
+            list.removeAt(index.toInt())
+            curVal = curVal.copy(excludes = Optional.present(list))
+            refreshItemList(list, false)
+            return true
         } else if (action.id >= INCLUDE_OFFSET) {
             val index = action.id - INCLUDE_OFFSET
             val list = curVal.value.getOrThrow()!!.toMutableList()
             list.removeAt(index.toInt())
             curVal = curVal.copy(value = Optional.present(list))
-
-            val action = findActionById(INCLUDE_LIST)
-            action.subActions = createItemList(list)
-            action.description = "${list.size} ${getString(dataType.pluralStringId)}"
-            notifyActionChanged(findActionPositionById(INCLUDE_LIST))
+            refreshItemList(list, true)
             return true
         } else if (action.id == ADD_INCLUDE_ITEM) {
             requireActivity().supportFragmentManager.commit {
@@ -133,29 +169,40 @@ class MultiCriterionFragment(
                         if (!list.contains(newItem.id)) {
                             list.add(newItem.id)
                             curVal = curVal.copy(value = Optional.present(list))
-                            val action = findActionById(INCLUDE_LIST)
-                            action.subActions = createItemList(list)
-                            action.description =
-                                "${list.size} ${getString(dataType.pluralStringId)}"
-                            notifyActionChanged(findActionPositionById(INCLUDE_LIST))
+                            refreshItemList(list, true)
                         }
                     },
                 )
             }
         } else if (action.id == ADD_EXCLUDE_ITEM) {
-            TODO()
+            requireActivity().supportFragmentManager.commit {
+                addToBackStack("picker")
+                replace(
+                    android.R.id.content,
+                    SearchPickerFragment(dataType) { newItem ->
+                        Log.v(TAG, "Adding ${newItem.id} to exclude")
+                        viewModel.store(dataType, newItem)
+                        val list = curVal.excludes.getOrNull()?.toMutableList() ?: ArrayList()
+                        if (!list.contains(newItem.id)) {
+                            list.add(newItem.id)
+                            curVal = curVal.copy(excludes = Optional.present(list))
+                            refreshItemList(list, false)
+                        }
+                    },
+                )
+            }
         }
         return false
     }
 
     companion object {
-        private const val TAG = "HierarchicalMultiCriterionFragment"
+        private const val TAG = "MultiCriterionFragment"
 
         private const val MODIFIER = 1L
         private const val INCLUDE_LIST = 2L
-        private const val ADD_INCLUDE_ITEM = 3L
-        private const val ADD_EXCLUDE_ITEM = 4L
-        private const val SUBMIT = 5L
+        private const val EXCLUDE_LIST = 3L
+        private const val ADD_INCLUDE_ITEM = 4L
+        private const val ADD_EXCLUDE_ITEM = 5L
 
         private const val INCLUDE_OFFSET = 1_000_000L
         private const val EXCLUDE_OFFSET = 2_000_000L

@@ -89,7 +89,14 @@ class FilterWriter(private val associateIdsToNames: suspend (dataType: DataType,
         /**
          * Map the name of a filter to a [DataType]. Not all filters have a [DataType] though!
          */
-        val TYPE_MAPPING =
+        fun getType(
+            parentFilterDataType: DataType,
+            name: String,
+        ): DataType? {
+            return TYPE_MAPPING[name] ?: TYPE_MAPPING_BY_TYPE[parentFilterDataType]?.get(name)
+        }
+
+        private val TYPE_MAPPING =
             mapOf(
                 "performers" to DataType.PERFORMER,
                 "tags" to DataType.TAG,
@@ -102,10 +109,21 @@ class FilterWriter(private val associateIdsToNames: suspend (dataType: DataType,
                 "scene_markers" to DataType.MARKER,
                 "scenes" to DataType.SCENE,
                 "scene_tags" to DataType.SCENE,
-                "parents" to DataType.TAG,
-                "children" to DataType.TAG,
                 "containing_groups" to DataType.MOVIE,
                 "sub_groups" to DataType.MOVIE,
+            )
+        private val TYPE_MAPPING_BY_TYPE =
+            mapOf(
+                DataType.TAG to
+                    mapOf(
+                        "parents" to DataType.TAG,
+                        "children" to DataType.TAG,
+                    ),
+                DataType.STUDIO to
+                    mapOf(
+                        "parents" to DataType.STUDIO,
+                        "children" to DataType.STUDIO,
+                    ),
             )
     }
 }
