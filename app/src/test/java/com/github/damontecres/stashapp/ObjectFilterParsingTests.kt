@@ -9,12 +9,15 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StudioFilterType
+import com.github.damontecres.stashapp.api.type.TagFilterType
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.OptionalSerializersModule
@@ -183,6 +186,33 @@ class ObjectFilterParsingTests {
         Assert.assertEquals(3, studioFilter.child_count.getOrThrow()!!.value)
     }
 
+    @Test
+    fun testImageFilter() {
+        val savedFilterData = getSavedFilterData("image_savedfilter.json")
+        val filter = filterParser.convertImageObjectFilter(savedFilterData.object_filter)
+        Assert.assertNotNull(filter!!)
+        Assert.assertEquals(FilterMode.IMAGES, savedFilterData.mode)
+
+        Assert.assertEquals("1234", filter.code.getOrThrow()!!.value)
+        Assert.assertEquals(CriterionModifier.EXCLUDES, filter.code.getOrThrow()!!.modifier)
+    }
+
+    @Test
+    fun testTagFilter() {
+        val savedFilterData = getSavedFilterData("tag_savedfilter.json")
+        val filter = filterParser.convertTagObjectFilter(savedFilterData.object_filter)
+        Assert.assertNotNull(filter!!)
+        Assert.assertEquals(FilterMode.TAGS, savedFilterData.mode)
+
+        Assert.assertEquals(listOf("6"), filter.children.getOrThrow()!!.excludes.getOrThrow()!!)
+        Assert.assertEquals(
+            emptyList<String>(),
+            filter.children.getOrThrow()!!.value.getOrThrow()!!,
+        )
+        Assert.assertEquals(-1, filter.children.getOrThrow()!!.depth.getOrThrow())
+        Assert.assertEquals(CriterionModifier.INCLUDES_ALL, filter.children.getOrThrow()!!.modifier)
+    }
+
     /**
      * Test [FilterWriter] using a saved filter
      *
@@ -194,13 +224,14 @@ class ObjectFilterParsingTests {
      */
     private fun <T : StashDataFilter> checkFilterOutput(
         file: String,
+        dataType: DataType,
         filterType: KClass<in T>,
         parser: (Any?) -> T?,
     ) {
         val savedFilterData = getSavedFilterData(file)
         val sceneFilter = parser(savedFilterData.object_filter)!!
         val filterWriter =
-            FilterWriter { dataType, ids ->
+            FilterWriter(dataType) { dataType, ids ->
                 ids.associateWith { it }
             }
         val filterOut = runBlocking { filterWriter.convertFilter(sceneFilter) }
@@ -266,6 +297,7 @@ class ObjectFilterParsingTests {
     fun testSceneFilterWriter() {
         checkFilterOutput(
             "scene_savedfilter.json",
+            DataType.SCENE,
             SceneFilterType::class,
             filterParser::convertSceneObjectFilter,
         )
@@ -275,6 +307,7 @@ class ObjectFilterParsingTests {
     fun testScene2FilterWriter() {
         checkFilterOutput(
             "scene_savedfilter2.json",
+            DataType.SCENE,
             SceneFilterType::class,
             filterParser::convertSceneObjectFilter,
         )
@@ -284,6 +317,7 @@ class ObjectFilterParsingTests {
     fun testPerformerFilterWriter() {
         checkFilterOutput(
             "performer_savedfilter.json",
+            DataType.PERFORMER,
             PerformerFilterType::class,
             filterParser::convertPerformerObjectFilter,
         )
@@ -293,6 +327,7 @@ class ObjectFilterParsingTests {
     fun testGenderFilterWriter() {
         checkFilterOutput(
             "gender_savedfilter.json",
+            DataType.PERFORMER,
             PerformerFilterType::class,
             filterParser::convertPerformerObjectFilter,
         )
@@ -302,8 +337,29 @@ class ObjectFilterParsingTests {
     fun testStudioChildrenFilterWriter() {
         checkFilterOutput(
             "studio_children_savedfilter.json",
+            DataType.STUDIO,
             StudioFilterType::class,
             filterParser::convertStudioObjectFilter,
+        )
+    }
+
+    @Test
+    fun testImageFilterWriter() {
+        checkFilterOutput(
+            "image_savedfilter.json",
+            DataType.IMAGE,
+            ImageFilterType::class,
+            filterParser::convertImageObjectFilter,
+        )
+    }
+
+    @Test
+    fun testTagFilterWriter() {
+        checkFilterOutput(
+            "tag_savedfilter.json",
+            DataType.TAG,
+            TagFilterType::class,
+            filterParser::convertTagObjectFilter,
         )
     }
 }

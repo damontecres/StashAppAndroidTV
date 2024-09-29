@@ -147,7 +147,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                     val queryEngine = QueryEngine(viewModel.server.value!!)
                     // Save it
                     val filterWriter =
-                        FilterWriter { dataType, ids ->
+                        FilterWriter(dataType) { dataType, ids ->
                             queryEngine.getByIds(dataType, ids)
                                 .associate { it.id to extractTitle(it) }
                         }
