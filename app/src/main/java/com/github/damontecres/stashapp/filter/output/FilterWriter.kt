@@ -111,7 +111,7 @@ class FilterWriter(
                 "images" to DataType.IMAGE,
                 "scene_markers" to DataType.MARKER,
                 "scenes" to DataType.SCENE,
-                "scene_tags" to DataType.SCENE,
+                "scene_tags" to DataType.TAG,
                 "containing_groups" to DataType.MOVIE,
                 "sub_groups" to DataType.MOVIE,
             )
