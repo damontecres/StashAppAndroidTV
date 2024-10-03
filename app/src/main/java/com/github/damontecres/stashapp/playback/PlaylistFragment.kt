@@ -27,6 +27,8 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * A [PlaybackFragment] that manages and plays a playlist/queue of videos
@@ -45,6 +47,9 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
     protected var skipBackOverride = -1L
 
     private val playlistListFragment = PlaylistListFragment<T, D, C>()
+
+    // Pages are 1-indexed
+    private var currentPage = 1
 
     override fun onViewCreated(
         view: View,
@@ -143,17 +148,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      * @return false if no videos were added
      */
     suspend fun addNextPageToPlaylist(): Boolean {
-        // Pages are 1-indexed
-        val nextPage = player!!.mediaItemCount / PAGE_SIZE + 1
-        return addPageToPlaylist(nextPage)
-    }
-
-    /**
-     * Add a specific page of videos to the playlist. Prefer using [addNextPageToPlaylist] to preserve filter order
-     *
-     * @return false if no videos were added
-     */
-    private suspend fun addPageToPlaylist(page: Int): Boolean {
+        val page = currentPage++
         Log.v(TAG, "Fetching page #$page")
         val newItems = pagingSource.fetchPage(page, PAGE_SIZE)
         val mediaItems =
@@ -196,7 +191,10 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      * A [Listener] for when a new [MediaItem] is playing in case the playlist needs to be extended
      */
     private inner class PlaylistListener : Listener {
+        @Volatile
         private var hasMorePages = true
+
+        private val lock = Mutex()
 
         override fun onMediaItemTransition(
             mediaItem: MediaItem?,
@@ -206,7 +204,10 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 // Update the UI
                 val tag = mediaItem.localConfiguration!!.tag!! as MediaItemTag
                 val scene = tag.item
-                Log.v(TAG, "Starting playback of ${scene.id}")
+                Log.v(
+                    TAG,
+                    "Starting playback of index=${player?.currentMediaItemIndex}, id=${scene.id}",
+                )
                 currentScene = scene
                 updateDebugInfo(tag.streamDecision, scene)
 
@@ -223,11 +224,14 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 // If there are only a few items left in the playlist but there are more server-side, fetch the next page
                 if (count - player!!.currentMediaItemIndex <= 5) {
                     Log.v(TAG, "Too few items in playlist")
-                    // TODO: if the user skips a lot of videos very quickly, there is a race condition where the same page might be fetched multiple times
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        if (!addNextPageToPlaylist()) {
-                            Log.v(TAG, "No more items")
-                            hasMorePages = false
+                        // If the user skips a lot of videos very quickly, the same page might be fetched multiple times
+                        // Locking here will prevent that
+                        lock.withLock {
+                            if (hasMorePages && !addNextPageToPlaylist()) {
+                                Log.v(TAG, "No more items")
+                                hasMorePages = false
+                            }
                         }
                     }
                 }
