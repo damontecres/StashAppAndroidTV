@@ -152,16 +152,12 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         Log.v(TAG, "Fetching page #$page")
         val newItems = pagingSource.fetchPage(page, PAGE_SIZE)
         val mediaItems =
-            newItems.mapNotNull { item ->
+            newItems.map { item ->
                 val scene = convertToScene(item)
-                if (scene.streams.isEmpty()) {
-                    null
-                } else {
-                    val streamDecision = getStreamDecision(requireContext(), scene)
-                    buildMediaItem(requireContext(), streamDecision, scene) {
-                        builderCallback(item)?.invoke(this)
-                        setTag(MediaItemTag(scene, streamDecision))
-                    }
+                val streamDecision = getStreamDecision(requireContext(), scene)
+                buildMediaItem(requireContext(), streamDecision, scene) {
+                    builderCallback(item)?.invoke(this)
+                    setTag(MediaItemTag(scene, streamDecision))
                 }
             }
         Log.v(TAG, "Got ${mediaItems.size} media items")
