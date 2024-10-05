@@ -1,12 +1,12 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
 import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -193,9 +193,10 @@ class MainFragment : BrowseSupportFragment() {
 
     private fun setupEventListeners() {
         setOnSearchClickedListener {
-//            Toast.makeText(activity!!, "Implement your own in-app search", Toast.LENGTH_LONG)
-//                .show()
-            requireActivity().startActivity(Intent(requireContext(), SearchActivity::class.java))
+            requireActivity().supportFragmentManager.commit {
+                addToBackStack("search")
+                replace(R.id.main_browse_fragment, StashSearchFragment())
+            }
         }
 
         onItemViewClickedListener =

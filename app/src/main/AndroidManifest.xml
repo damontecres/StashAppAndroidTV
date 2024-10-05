@@ -64,10 +64,6 @@
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".SearchActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
             android:name=".FilterListActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
