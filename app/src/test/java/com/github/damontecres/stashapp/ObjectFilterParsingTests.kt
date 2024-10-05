@@ -189,7 +189,7 @@ class ObjectFilterParsingTests {
     @Test
     fun testImageFilter() {
         val savedFilterData = getSavedFilterData("image_savedfilter.json")
-        val filter = filterParser.convertImageObjectFilter(savedFilterData.object_filter)
+        val filter = filterParser.convertImageFilterType(savedFilterData.object_filter)
         Assert.assertNotNull(filter!!)
         Assert.assertEquals(FilterMode.IMAGES, savedFilterData.mode)
 
@@ -200,7 +200,7 @@ class ObjectFilterParsingTests {
     @Test
     fun testTagFilter() {
         val savedFilterData = getSavedFilterData("tag_savedfilter.json")
-        val filter = filterParser.convertTagObjectFilter(savedFilterData.object_filter)
+        val filter = filterParser.convertTagFilterType(savedFilterData.object_filter)
         Assert.assertNotNull(filter!!)
         Assert.assertEquals(FilterMode.TAGS, savedFilterData.mode)
 
@@ -349,7 +349,7 @@ class ObjectFilterParsingTests {
             "image_savedfilter.json",
             DataType.IMAGE,
             ImageFilterType::class,
-            filterParser::convertImageObjectFilter,
+            filterParser::convertImageFilterType,
         )
     }
 
@@ -359,7 +359,7 @@ class ObjectFilterParsingTests {
             "tag_savedfilter.json",
             DataType.TAG,
             TagFilterType::class,
-            filterParser::convertTagObjectFilter,
+            filterParser::convertTagFilterType,
         )
     }
 }
