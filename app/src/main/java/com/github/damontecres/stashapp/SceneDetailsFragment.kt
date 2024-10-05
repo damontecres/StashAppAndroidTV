@@ -23,7 +23,6 @@ import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.DetailsOverviewRow
 import androidx.leanback.widget.FullWidthDetailsOverviewRowPresenter
-import androidx.leanback.widget.FullWidthDetailsOverviewSharedElementHelper
 import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
@@ -59,6 +58,7 @@ import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -201,7 +201,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
-        sceneId = requireActivity().intent.getStringExtra(SceneDetailsActivity.MOVIE)!!
+        sceneId = requireActivity().intent.getStringExtra(Constants.SCENE_ID_ARG)!!
 
         queryEngine = QueryEngine(server)
         mutationEngine = MutationEngine(server)
@@ -422,12 +422,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             ContextCompat.getColor(requireActivity(), R.color.default_card_background)
 
         // Hook up transition element.
-        val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
-        sharedElementHelper.setSharedElementEnterTransition(
-            activity,
-            SceneDetailsActivity.SHARED_ELEMENT_NAME,
-        )
-        detailsPresenter.setListener(sharedElementHelper)
+//        val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
+//        sharedElementHelper.setSharedElementEnterTransition(
+//            activity,
+//            SceneDetailsActivity.SHARED_ELEMENT_NAME,
+//        )
+//        detailsPresenter.setListener(sharedElementHelper)
         detailsPresenter.isParticipatingEntranceTransition = true
 
         detailsPresenter.onActionClickedListener =
@@ -443,14 +443,14 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     ) {
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
                         intent.putExtra(
-                            SceneDetailsActivity.MOVIE,
+                            Constants.SCENE_ARG,
                             Scene.fromFullSceneData(sceneData!!),
                         )
                         if (action.id == ACTION_RESUME_SCENE ||
                             action.id == ACTION_TRANSCODE_RESUME_SCENE ||
                             action.id == ACTION_DIRECT_PLAY_RESUME_SCENE
                         ) {
-                            intent.putExtra(POSITION_ARG, position)
+                            intent.putExtra(Constants.POSITION_ARG, position)
                         }
                         if (action.id == ACTION_TRANSCODE_RESUME_SCENE) {
                             intent.putExtra(FORCE_TRANSCODE, true)
@@ -929,7 +929,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     }
 
     companion object {
-        private const val TAG = "VideoDetailsFragment"
+        private const val TAG = "SceneDetailsFragment"
 
         private const val ACTION_PLAY_SCENE = 1L
         private const val ACTION_RESUME_SCENE = 2L
@@ -939,7 +939,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val DETAIL_THUMB_WIDTH = ScenePresenter.CARD_WIDTH
         private const val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
 
-        const val POSITION_ARG = "position"
         const val POSITION_RESULT_ARG = "position.result"
         const val FORCE_TRANSCODE = "forceTranscode"
         const val FORCE_DIRECT_PLAY = "forceDirectPlay"

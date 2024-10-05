@@ -12,7 +12,6 @@ import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.GalleryFragment
 import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.SceneDetailsActivity
-import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.POSITION_ARG
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -27,9 +26,11 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Group
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Performer
+import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.toGallery
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.addToIntent
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
@@ -54,7 +55,7 @@ class StashItemViewClickListener(
         if (item is SlimSceneData) {
             val intent = Intent(context, SceneDetailsActivity::class.java)
             intent.putDataType(DataType.SCENE)
-            intent.putExtra(SceneDetailsActivity.MOVIE, item.id)
+            intent.putExtra(Constants.SCENE_ID_ARG, item.id)
             context.startActivity(intent)
         } else if (item is PerformerData) {
             val intent = Intent(context, DataTypeActivity::class.java)
@@ -81,8 +82,11 @@ class StashItemViewClickListener(
         } else if (item is MarkerData) {
             val intent = Intent(context, PlaybackActivity::class.java)
             intent.putDataType(DataType.MARKER)
-            intent.putExtra(SceneDetailsActivity.MOVIE_ID, item.scene.videoSceneData.id)
-            intent.putExtra(POSITION_ARG, (item.seconds * 1000).toLong())
+            intent.putExtra(
+                Constants.SCENE_ID_ARG,
+                Scene.fromVideoSceneData(item.scene.videoSceneData),
+            )
+            intent.putExtra(Constants.POSITION_ARG, (item.seconds * 1000).toLong())
             context.startActivity(intent)
         } else if (item is ImageData) {
             val intent = Intent(context, ImageActivity::class.java)

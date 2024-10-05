@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashServer
 
 @OptIn(UnstableApi::class)
@@ -39,7 +40,7 @@ class PlaybackSceneFragment() : PlaybackFragment() {
             if (playbackPosition >= 0) {
                 playbackPosition
             } else {
-                requireActivity().intent.getLongExtra(SceneDetailsFragment.POSITION_ARG, -1)
+                requireActivity().intent.getLongExtra(Constants.POSITION_ARG, -1)
             }
         val forceTranscode =
             requireActivity().intent.getBooleanExtra(
@@ -157,8 +158,8 @@ class PlaybackSceneFragment() : PlaybackFragment() {
 
         currentScene = scene
 
-        val position = requireActivity().intent.getLongExtra(SceneDetailsFragment.POSITION_ARG, -1)
-        Log.d(TAG, "scene=${scene.id}, ${SceneDetailsFragment.POSITION_ARG}=$position")
+        val position = requireActivity().intent.getLongExtra(Constants.POSITION_ARG, -1)
+        Log.d(TAG, "scene=${scene.id}, ${Constants.POSITION_ARG}=$position")
     }
 
     companion object {

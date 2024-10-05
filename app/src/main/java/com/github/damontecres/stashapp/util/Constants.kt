@@ -84,6 +84,11 @@ object Constants {
     const val TAG = "Constants"
     private const val OK_HTTP_CACHE_DIR = "okhttpcache"
 
+    const val ARG = "arg"
+    const val SCENE_ARG = "$ARG.scene"
+    const val SCENE_ID_ARG = "$ARG.scene.id"
+    const val POSITION_ARG = "$ARG.position"
+
     fun getNetworkCache(context: Context): Cache {
         val cacheSize =
             PreferenceManager.getDefaultSharedPreferences(context)

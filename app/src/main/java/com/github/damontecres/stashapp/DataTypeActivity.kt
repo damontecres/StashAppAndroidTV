@@ -15,6 +15,7 @@ class DataTypeActivity : FragmentActivity(R.layout.activity_main) {
         val dataType = intent.getDataType()
         val fragment =
             when (dataType) {
+                DataType.SCENE -> SceneDetailsFragment()
                 DataType.TAG -> TagFragment()
                 DataType.GROUP -> GroupFragment()
                 DataType.PERFORMER -> PerformerFragment()

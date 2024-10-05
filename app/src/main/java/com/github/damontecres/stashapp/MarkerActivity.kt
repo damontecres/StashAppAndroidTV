@@ -48,6 +48,7 @@ import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -243,11 +244,11 @@ class MarkerActivity : FragmentActivity() {
                     OnActionClickedListener { _ ->
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
                         intent.putExtra(
-                            SceneDetailsActivity.MOVIE,
+                            Constants.SCENE_ARG,
                             Scene.fromFullSceneData(sceneData),
                         )
                         intent.putExtra(
-                            SceneDetailsFragment.POSITION_ARG,
+                            Constants.POSITION_ARG,
                             (viewModel.seconds.value!! * 1000).toLong(),
                         )
 
