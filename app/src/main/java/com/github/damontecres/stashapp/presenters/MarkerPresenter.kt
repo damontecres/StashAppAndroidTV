@@ -2,13 +2,14 @@ package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
 import android.content.Intent
+import com.github.damontecres.stashapp.DataTypeActivity
 import com.github.damontecres.stashapp.MarkerActivity
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SceneDetailsActivity
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.putDataType
 import java.util.EnumMap
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -60,7 +61,8 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
                     }
 
                     1L -> {
-                        val intent = Intent(cardView.context, SceneDetailsActivity::class.java)
+                        val intent = Intent(cardView.context, DataTypeActivity::class.java)
+                        intent.putDataType(DataType.SCENE)
                         intent.putExtra(Constants.SCENE_ID_ARG, item.scene.videoSceneData.id)
                         cardView.context.startActivity(intent)
                     }

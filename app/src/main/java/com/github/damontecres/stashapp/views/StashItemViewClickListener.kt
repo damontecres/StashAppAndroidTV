@@ -11,7 +11,6 @@ import com.github.damontecres.stashapp.DataTypeActivity
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.GalleryFragment
 import com.github.damontecres.stashapp.ImageActivity
-import com.github.damontecres.stashapp.SceneDetailsActivity
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -53,7 +52,7 @@ class StashItemViewClickListener(
         row: Row?,
     ) {
         if (item is SlimSceneData) {
-            val intent = Intent(context, SceneDetailsActivity::class.java)
+            val intent = Intent(context, DataTypeActivity::class.java)
             intent.putDataType(DataType.SCENE)
             intent.putExtra(Constants.SCENE_ID_ARG, item.id)
             context.startActivity(intent)
