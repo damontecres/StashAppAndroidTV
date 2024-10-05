@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -30,99 +29,88 @@ class GroupFragment : TabbedFragment() {
     override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
         val pages =
             listOf(
-                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)),
-                StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
-                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER),
-                StashFragmentPagerAdapter.PagerEntry(DataType.TAG),
-                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_containing_groups)),
-                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_sub_groups)),
-            )
-        return object : StashFragmentPagerAdapter(pages, fm) {
-            override fun getFragment(position: Int): Fragment {
-                return when (position) {
-                    // Details
-                    0 -> GroupDetailsFragment()
-                    // Scenes
-                    1 ->
-                        StashGridFragment(
-                            dataType = DataType.SCENE,
-                            findFilter =
-                                StashFindFilter(
-                                    SortAndDirection(
-                                        "group_scene_number",
-                                        SortDirectionEnum.ASC,
-                                    ),
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
+                    GroupDetailsFragment()
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
+                    StashGridFragment(
+                        dataType = DataType.SCENE,
+                        findFilter =
+                            StashFindFilter(
+                                SortAndDirection(
+                                    "group_scene_number",
+                                    SortDirectionEnum.ASC,
                                 ),
-                            objectFilter =
-                                SceneFilterType(
-                                    groups =
-                                        Optional.present(
-                                            HierarchicalMultiCriterionInput(
-                                                value = Optional.present(listOf(group.id)),
-                                                modifier = CriterionModifier.INCLUDES,
-                                            ),
+                            ),
+                        objectFilter =
+                            SceneFilterType(
+                                groups =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(group.id)),
+                                            modifier = CriterionModifier.INCLUDES,
                                         ),
-                                ),
-                        )
-                    2 -> {
-                        StashGridFragment(
-                            dataType = DataType.MARKER,
-                            objectFilter =
-                                SceneMarkerFilterType(
-                                    scene_filter =
-                                        Optional.present(
-                                            SceneFilterType(
-                                                groups =
-                                                    Optional.present(
-                                                        HierarchicalMultiCriterionInput(
-                                                            value = Optional.present(listOf(group.id)),
-                                                            modifier = CriterionModifier.INCLUDES,
-                                                        ),
+                                    ),
+                            ),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
+                    StashGridFragment(
+                        dataType = DataType.MARKER,
+                        objectFilter =
+                            SceneMarkerFilterType(
+                                scene_filter =
+                                    Optional.present(
+                                        SceneFilterType(
+                                            groups =
+                                                Optional.present(
+                                                    HierarchicalMultiCriterionInput(
+                                                        value = Optional.present(listOf(group.id)),
+                                                        modifier = CriterionModifier.INCLUDES,
                                                     ),
-                                            ),
+                                                ),
                                         ),
+                                    ),
+                            ),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
+                    StashGridFragment(
+                        FilterArgs(
+                            DataType.TAG,
+                            override = DataSupplierOverride.GroupTags(group.id),
+                        ),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_containing_groups)) {
+                    StashGridFragment(
+                        FilterArgs(
+                            DataType.GROUP,
+                            override =
+                                DataSupplierOverride.GroupRelationship(
+                                    group.id,
+                                    GroupRelationshipType.CONTAINING,
                                 ),
-                        )
-                    }
-                    // Tags
-                    3 ->
-                        StashGridFragment(
-                            FilterArgs(
-                                DataType.TAG,
-                                override = DataSupplierOverride.GroupTags(group.id),
-                            ),
-                        )
-                    // containing groups
-                    4 ->
-                        StashGridFragment(
-                            FilterArgs(
-                                DataType.GROUP,
-                                override =
-                                    DataSupplierOverride.GroupRelationship(
-                                        group.id,
-                                        GroupRelationshipType.CONTAINING,
-                                    ),
-                            ),
-                        )
-                    // sub groups
-                    5 ->
-                        StashGridFragment(
-                            FilterArgs(
-                                DataType.GROUP,
-                                override =
-                                    DataSupplierOverride.GroupRelationship(
-                                        group.id,
-                                        GroupRelationshipType.SUB,
-                                    ),
-                            ),
-                        )
-                    else -> throw IllegalArgumentException()
-                }
-            }
-        }
+                        ),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_sub_groups)) {
+                    StashGridFragment(
+                        FilterArgs(
+                            DataType.GROUP,
+                            override =
+                                DataSupplierOverride.GroupRelationship(
+                                    group.id,
+                                    GroupRelationshipType.SUB,
+                                ),
+                        ),
+                    )
+                },
+            )
+        return StashFragmentPagerAdapter(pages, fm)
     }
 
-    override fun getTitleText(): String? {
+    override fun getTitleText(): String {
         return group.name
     }
 }

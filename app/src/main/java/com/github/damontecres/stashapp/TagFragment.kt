@@ -22,70 +22,55 @@ class TagFragment : TabbedFragment() {
     override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
         val tagId = requireActivity().intent.getStringExtra("tagId")!!
         val includeSubTags = requireActivity().intent.getBooleanExtra("includeSubTags", false)
-        val tabs =
+        val depth = Optional.present(if (includeSubTags) -1 else 0)
+        val tags =
+            Optional.present(
+                HierarchicalMultiCriterionInput(
+                    value = Optional.present(listOf(tagId)),
+                    modifier = CriterionModifier.INCLUDES_ALL,
+                    depth = depth,
+                ),
+            )
+        val items =
             listOf(
-                PagerEntry(DataType.SCENE),
-                PagerEntry(DataType.GALLERY),
-                PagerEntry(DataType.IMAGE),
-                PagerEntry(DataType.MARKER),
-                PagerEntry(DataType.PERFORMER),
-                PagerEntry(getString(R.string.stashapp_sub_tags)),
+                PagerEntry(DataType.SCENE) {
+                    StashGridFragment(
+                        dataType = DataType.SCENE,
+                        objectFilter = SceneFilterType(tags = tags),
+                    )
+                },
+                PagerEntry(DataType.GALLERY) {
+                    StashGridFragment(
+                        dataType = DataType.GALLERY,
+                        objectFilter = GalleryFilterType(tags = tags),
+                    )
+                },
+                PagerEntry(DataType.IMAGE) {
+                    StashGridFragment(
+                        dataType = DataType.IMAGE,
+                        objectFilter = ImageFilterType(tags = tags),
+                    ).withImageGridClickListener()
+                },
+                PagerEntry(DataType.MARKER) {
+                    StashGridFragment(
+                        dataType = DataType.MARKER,
+                        objectFilter = SceneMarkerFilterType(tags = tags),
+                    )
+                },
+                PagerEntry(DataType.PERFORMER) {
+                    StashGridFragment(
+                        dataType = DataType.PERFORMER,
+                        objectFilter = PerformerFilterType(tags = tags),
+                    )
+                },
+                PagerEntry(getString(R.string.stashapp_sub_tags)) {
+                    StashGridFragment(
+                        dataType = DataType.TAG,
+                        objectFilter = TagFilterType(parents = tags),
+                    )
+                },
             )
 
-        return TabPageAdapter(tabs, tagId, includeSubTags, fm)
-    }
-
-    class TabPageAdapter(
-        tabs: List<PagerEntry>,
-        private val tagId: String,
-        private val includeSubTags: Boolean,
-        fm: FragmentManager,
-    ) :
-        StashFragmentPagerAdapter(tabs, fm) {
-        override fun getFragment(position: Int): StashGridFragment {
-            val depth = Optional.present(if (includeSubTags) -1 else 0)
-            val tags =
-                Optional.present(
-                    HierarchicalMultiCriterionInput(
-                        value = Optional.present(listOf(tagId)),
-                        modifier = CriterionModifier.INCLUDES_ALL,
-                        depth = depth,
-                    ),
-                )
-
-            return if (position == 0) {
-                StashGridFragment(
-                    dataType = DataType.SCENE,
-                    objectFilter = SceneFilterType(tags = tags),
-                )
-            } else if (position == 1) {
-                StashGridFragment(
-                    dataType = DataType.GALLERY,
-                    objectFilter = GalleryFilterType(tags = tags),
-                )
-            } else if (position == 2) {
-                StashGridFragment(
-                    dataType = DataType.IMAGE,
-                    objectFilter = ImageFilterType(tags = tags),
-                ).withImageGridClickListener()
-            } else if (position == 3) {
-                StashGridFragment(
-                    dataType = DataType.MARKER,
-                    objectFilter = SceneMarkerFilterType(tags = tags),
-                )
-            } else if (position == 4) {
-                StashGridFragment(
-                    dataType = DataType.PERFORMER,
-                    objectFilter = PerformerFilterType(tags = tags),
-                )
-            } else if (position == 5) {
-                StashGridFragment(
-                    dataType = DataType.TAG,
-                    objectFilter = TagFilterType(parents = tags),
-                )
-            } else {
-                throw IllegalStateException()
-            }
-        }
+        return StashFragmentPagerAdapter(items, fm)
     }
 }

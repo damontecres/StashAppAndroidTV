@@ -70,7 +70,7 @@ class StashItemViewClickListener(
         } else if (item is StudioData) {
             val intent = Intent(context, DataTypeActivity::class.java)
             intent.putDataType(DataType.STUDIO)
-            intent.putExtra("studioId", item.id.toInt())
+            intent.putExtra("studioId", item.id)
             intent.putExtra("studioName", item.name)
             context.startActivity(intent)
         } else if (item is GroupData) {

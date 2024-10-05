@@ -22,83 +22,70 @@ class StudioFragment : TabbedFragment() {
     }
 
     override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
-        val studioId = requireActivity().intent.getIntExtra("studioId", -1)
-        val tabTitles =
-            mutableListOf(
-                StashFragmentPagerAdapter.PagerEntry(DataType.SCENE),
-                StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY),
-                StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE),
-                StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER),
-                StashFragmentPagerAdapter.PagerEntry(DataType.GROUP),
-                StashFragmentPagerAdapter.PagerEntry(DataType.TAG),
-                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_subsidiary_studios)),
+        val studioId = requireActivity().intent.getStringExtra("studioId")!!
+        val studios =
+            Optional.present(
+                HierarchicalMultiCriterionInput(
+                    value = Optional.present(listOf(studioId)),
+                    modifier = CriterionModifier.INCLUDES,
+                ),
             )
-        return StudioPagerAdapter(tabTitles, studioId.toString(), fm)
-    }
-
-    class StudioPagerAdapter(
-        tabs: MutableList<StashFragmentPagerAdapter.PagerEntry>,
-        private val studioId: String,
-        fm: FragmentManager,
-    ) :
-        StashFragmentPagerAdapter(tabs, fm) {
-        override fun getFragment(position: Int): StashGridFragment {
-            val studios =
-                Optional.present(
-                    HierarchicalMultiCriterionInput(
-                        value = Optional.present(listOf(studioId)),
-                        modifier = CriterionModifier.INCLUDES,
-                    ),
-                )
-            return if (position == 0) {
-                StashGridFragment(
-                    dataType = DataType.SCENE,
-                    objectFilter = SceneFilterType(studios = studios),
-                )
-            } else if (position == 1) {
-                StashGridFragment(
-                    dataType = DataType.GALLERY,
-                    objectFilter = GalleryFilterType(studios = studios),
-                )
-            } else if (position == 2) {
-                StashGridFragment(
-                    dataType = DataType.IMAGE,
-                    objectFilter = ImageFilterType(studios = studios),
-                ).withImageGridClickListener()
-            } else if (position == 3) {
-                StashGridFragment(
-                    dataType = DataType.PERFORMER,
-                    objectFilter = PerformerFilterType(studios = studios),
-                )
-            } else if (position == 4) {
-                StashGridFragment(
-                    dataType = DataType.GROUP,
-                    objectFilter = GroupFilterType(studios = studios),
-                )
-            } else if (position == 5) {
-                StashGridFragment(
-                    FilterArgs(
-                        DataType.TAG,
-                        override = DataSupplierOverride.StudioTags(studioId),
-                    ),
-                )
-            } else if (position == 6) {
-                StashGridFragment(
-                    dataType = DataType.STUDIO,
-                    objectFilter =
-                        StudioFilterType(
-                            parents =
-                                Optional.present(
-                                    MultiCriterionInput(
-                                        value = Optional.present(listOf(studioId)),
-                                        modifier = CriterionModifier.INCLUDES,
-                                    ),
-                                ),
+        val items =
+            listOf(
+                StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
+                    StashGridFragment(
+                        dataType = DataType.SCENE,
+                        objectFilter = SceneFilterType(studios = studios),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY) {
+                    StashGridFragment(
+                        dataType = DataType.GALLERY,
+                        objectFilter = GalleryFilterType(studios = studios),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
+                    StashGridFragment(
+                        dataType = DataType.IMAGE,
+                        objectFilter = ImageFilterType(studios = studios),
+                    ).withImageGridClickListener()
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER) {
+                    StashGridFragment(
+                        dataType = DataType.PERFORMER,
+                        objectFilter = PerformerFilterType(studios = studios),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.GROUP) {
+                    StashGridFragment(
+                        dataType = DataType.GROUP,
+                        objectFilter = GroupFilterType(studios = studios),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
+                    StashGridFragment(
+                        FilterArgs(
+                            DataType.TAG,
+                            override = DataSupplierOverride.StudioTags(studioId),
                         ),
-                )
-            } else {
-                throw IllegalStateException()
-            }
-        }
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_subsidiary_studios)) {
+                    StashGridFragment(
+                        dataType = DataType.STUDIO,
+                        objectFilter =
+                            StudioFilterType(
+                                parents =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(listOf(studioId)),
+                                            modifier = CriterionModifier.INCLUDES,
+                                        ),
+                                    ),
+                            ),
+                    )
+                },
+            )
+        return StashFragmentPagerAdapter(items, fm)
     }
 }
