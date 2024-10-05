@@ -82,7 +82,7 @@ class StashItemViewClickListener(
             val intent = Intent(context, PlaybackActivity::class.java)
             intent.putDataType(DataType.MARKER)
             intent.putExtra(
-                Constants.SCENE_ID_ARG,
+                Constants.SCENE_ARG,
                 Scene.fromVideoSceneData(item.scene.videoSceneData),
             )
             intent.putExtra(Constants.POSITION_ARG, (item.seconds * 1000).toLong())

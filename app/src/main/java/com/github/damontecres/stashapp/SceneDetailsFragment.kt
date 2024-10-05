@@ -827,7 +827,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         ) {
             when (popUpItem.id) {
                 177L -> {
-                    val intent = Intent(context, MarkerActivity::class.java)
+                    val intent = Intent(context, DataTypeActivity::class.java)
+                    intent.putDataType(DataType.MARKER)
                     intent.putExtra("marker", Marker(item))
                     context.startActivity(intent)
                 }

@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.presenters
 import android.content.Context
 import android.content.Intent
 import com.github.damontecres.stashapp.DataTypeActivity
-import com.github.damontecres.stashapp.MarkerActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
@@ -68,7 +67,8 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
                     }
 
                     2L -> {
-                        val intent = Intent(cardView.context, MarkerActivity::class.java)
+                        val intent = Intent(cardView.context, DataTypeActivity::class.java)
+                        intent.putDataType(DataType.MARKER)
                         intent.putExtra("marker", Marker(item))
                         cardView.context.startActivity(intent)
                     }

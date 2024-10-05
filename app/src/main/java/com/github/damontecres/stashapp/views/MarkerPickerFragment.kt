@@ -11,7 +11,6 @@ import androidx.leanback.widget.picker.PickerColumn
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
-import com.github.damontecres.stashapp.MarkerActivity.MarkerDetailsViewModel
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.data.Marker
@@ -19,6 +18,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getParcelable
+import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
 import kotlinx.coroutines.launch
 
 /**

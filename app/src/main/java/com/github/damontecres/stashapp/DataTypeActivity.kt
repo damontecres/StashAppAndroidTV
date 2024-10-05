@@ -21,7 +21,8 @@ class DataTypeActivity : FragmentActivity(R.layout.activity_main) {
                 DataType.PERFORMER -> PerformerFragment()
                 DataType.STUDIO -> StudioFragment()
                 DataType.GALLERY -> GalleryFragment()
-                else -> throw IllegalArgumentException(dataType.name)
+                DataType.MARKER -> MarkerDetailsFragment()
+                DataType.IMAGE -> TODO()
             }
         supportFragmentManager.commit {
             replace(android.R.id.content, fragment)
