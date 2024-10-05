@@ -13,12 +13,16 @@ class StashFragmentPagerAdapter(
     private val items: List<PagerEntry>,
     fm: FragmentManager,
 ) : FragmentStatePagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
+    var fragmentCreatedListener: ((Fragment, Int) -> Unit)? = null
+
     override fun getCount(): Int {
         return items.size
     }
 
     override fun getItem(position: Int): Fragment {
-        return items[position].createFragment.invoke()
+        val newFragment = items[position].createFragment.invoke()
+        fragmentCreatedListener?.invoke(newFragment, position)
+        return newFragment
     }
 
     override fun getPageTitle(position: Int): CharSequence {
