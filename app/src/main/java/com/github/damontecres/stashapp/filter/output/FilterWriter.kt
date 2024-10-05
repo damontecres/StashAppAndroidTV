@@ -27,7 +27,10 @@ import kotlin.reflect.full.declaredMemberProperties
  *
  * @param associateIdsToNames The webUI requires a "label" for some IDs, so this is used to query for those
  */
-class FilterWriter(private val associateIdsToNames: suspend (dataType: DataType, ids: List<String>) -> Map<String, String?>) {
+class FilterWriter(
+    private val filterDataType: DataType,
+    private val associateIdsToNames: suspend (dataType: DataType, ids: List<String>) -> Map<String, String?>,
+) {
     suspend fun convertFilter(filter: StashDataFilter): Map<String, Any> {
         val objectFilter =
             buildMap<String, Any> {
@@ -35,7 +38,7 @@ class FilterWriter(private val associateIdsToNames: suspend (dataType: DataType,
                     val obj = param.get(filter) as Optional<*>
                     if (obj != Optional.Absent) {
                         val o = obj.getOrNull()!!
-                        val dataType = TYPE_MAPPING[param.name]
+                        val dataType = getType(filterDataType, param.name)
                         val value =
                             when (o) {
                                 is IntCriterionInput -> o.toMap()
@@ -110,7 +113,7 @@ class FilterWriter(private val associateIdsToNames: suspend (dataType: DataType,
                 "images" to DataType.IMAGE,
                 "scene_markers" to DataType.MARKER,
                 "scenes" to DataType.SCENE,
-                "scene_tags" to DataType.SCENE,
+                "scene_tags" to DataType.TAG,
                 "containing_groups" to DataType.GROUP,
                 "sub_groups" to DataType.GROUP,
             )

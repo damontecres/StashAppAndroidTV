@@ -1,0 +1,195 @@
+{
+  "data": {
+    "findSavedFilter": {
+      "id": "29",
+      "mode": "IMAGES",
+      "name": "Test Filter",
+      "find_filter": {
+        "q": "",
+        "sort": "path",
+        "direction": "ASC",
+        "page": 1,
+        "per_page": 40,
+        "__typename": "SavedFindFilterType"
+      },
+      "object_filter": {
+        "checksum": {
+          "modifier": "EQUALS",
+          "value": "123"
+        },
+        "code": {
+          "modifier": "EXCLUDES",
+          "value": "1234"
+        },
+        "created_at": {
+          "modifier": "BETWEEN",
+          "value": {
+            "value": "2024-09-29 16:00",
+            "value2": "2024-09-29 18:00"
+          }
+        },
+        "date": {
+          "modifier": "IS_NULL",
+          "value": {
+            "value": ""
+          }
+        },
+        "details": {
+          "modifier": "INCLUDES",
+          "value": "includes value"
+        },
+        "file_count": {
+          "modifier": "EQUALS",
+          "value": {
+            "value": 2
+          }
+        },
+        "galleries": {
+          "modifier": "INCLUDES_ALL",
+          "value": [
+            {
+              "id": "17",
+              "label": "gif.zip"
+            }
+          ]
+        },
+        "is_missing": {
+          "modifier": "EQUALS",
+          "value": "performers"
+        },
+        "o_counter": {
+          "modifier": "LESS_THAN",
+          "value": {
+            "value": 5
+          }
+        },
+        "organized": {
+          "modifier": "EQUALS",
+          "value": "false"
+        },
+        "orientation": {
+          "modifier": "EQUALS",
+          "value": [
+            "Portrait",
+            "Square"
+          ]
+        },
+        "path": {
+          "modifier": "NOT_NULL",
+          "value": ""
+        },
+        "performer_age": {
+          "modifier": "EQUALS",
+          "value": {
+            "value": 22
+          }
+        },
+        "performer_count": {
+          "modifier": "EQUALS",
+          "value": {
+            "value": 1
+          }
+        },
+        "performer_favorite": {
+          "modifier": "EQUALS",
+          "value": "true"
+        },
+        "performer_tags": {
+          "modifier": "INCLUDES_ALL",
+          "value": {
+            "depth": 2,
+            "excluded": [
+              {
+                "id": "7",
+                "label": "Test2"
+              }
+            ],
+            "items": [
+              {
+                "id": "6",
+                "label": "New"
+              },
+              {
+                "id": "5",
+                "label": "Other"
+              }
+            ]
+          }
+        },
+        "performers": {
+          "modifier": "INCLUDES_ALL",
+          "value": {
+            "excluded": [],
+            "items": [
+              {
+                "id": "4",
+                "label": "Test"
+              }
+            ]
+          }
+        },
+        "photographer": {
+          "modifier": "EQUALS",
+          "value": "photographer1234"
+        },
+        "rating100": {
+          "modifier": "EQUALS",
+          "value": {
+            "value": 70
+          }
+        },
+        "resolution": {
+          "modifier": "EQUALS",
+          "value": "1440p"
+        },
+        "studios": {
+          "modifier": "NOT_NULL",
+          "value": {
+            "depth": 0,
+            "excluded": [],
+            "items": []
+          }
+        },
+        "tag_count": {
+          "modifier": "EQUALS",
+          "value": {
+            "value": 4
+          }
+        },
+        "tags": {
+          "modifier": "EQUALS",
+          "value": {
+            "depth": 0,
+            "excluded": [],
+            "items": [
+              {
+                "id": "6",
+                "label": "New"
+              },
+              {
+                "id": "2",
+                "label": "Midpoint"
+              }
+            ]
+          }
+        },
+        "title": {
+          "modifier": "EQUALS",
+          "value": "title1234"
+        },
+        "updated_at": {
+          "modifier": "NOT_BETWEEN",
+          "value": {
+            "value": "2024-09-01 00:00",
+            "value2": "2024-09-03 00:00"
+          }
+        },
+        "url": {
+          "modifier": "NOT_MATCHES_REGEX",
+          "value": "urltest123"
+        }
+      },
+      "__typename": "SavedFilter"
+    }
+  }
+}

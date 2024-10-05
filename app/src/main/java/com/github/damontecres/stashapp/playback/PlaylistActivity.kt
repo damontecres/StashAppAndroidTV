@@ -22,7 +22,7 @@ class PlaylistActivity : FragmentActivity() {
         if (savedInstanceState == null) {
             val filter = intent.getFilterArgs(INTENT_FILTER)!!
             Log.v(TAG, "filter=${filter.sortAndDirection}")
-            viewModel.filterArgs.value = filter
+            viewModel.setFilter(filter)
             fragment =
                 when (filter.dataType) {
                     DataType.MARKER -> PlaylistMarkersFragment()
