@@ -770,6 +770,22 @@ private val StudioFilterOptions =
 
 private val GroupFilterOptions =
     listOf(
+        FilterOption<GroupFilterType, HierarchicalMultiCriterionInput>(
+            "containing_groups",
+            R.string.stashapp_containing_groups,
+            DataType.GROUP,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.containing_groups },
+            { filter, value -> filter.copy(containing_groups = value) },
+        ),
+        FilterOption<GroupFilterType, IntCriterionInput>(
+            "containing_group_count",
+            R.string.stashapp_containing_group_count,
+            null,
+            IntCriterionInput::class,
+            { it.containing_group_count },
+            { filter, value -> filter.copy(containing_group_count = value) },
+        ),
         FilterOption<GroupFilterType, DateCriterionInput>(
             "date",
             R.string.stashapp_date,
@@ -817,6 +833,22 @@ private val GroupFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.studios },
             { filter, value -> filter.copy(studios = value) },
+        ),
+        FilterOption<GroupFilterType, HierarchicalMultiCriterionInput>(
+            "sub_groups",
+            R.string.stashapp_sub_groups,
+            DataType.GROUP,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.sub_groups },
+            { filter, value -> filter.copy(sub_groups = value) },
+        ),
+        FilterOption<GroupFilterType, IntCriterionInput>(
+            "sub_group_count",
+            R.string.stashapp_sub_group_count,
+            null,
+            IntCriterionInput::class,
+            { it.sub_group_count },
+            { filter, value -> filter.copy(sub_group_count = value) },
         ),
     )
 
