@@ -20,6 +20,7 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
@@ -129,6 +130,12 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                         )
                     fragment.presenterSelector = presenter
                     fragment
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
+                    StashGridFragment(
+                        dataType = DataType.MARKER,
+                        objectFilter = SceneMarkerFilterType(performers = performers),
+                    )
                 },
             ).filter { it.title in getUiTabs(requireContext(), DataType.PERFORMER) }
         return StashFragmentPagerAdapter(items, fm)
