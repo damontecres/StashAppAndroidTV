@@ -224,6 +224,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 startPreferenceFragmentFunc(AdvancedPreferencesFragment())
                 true
             }
+            val advancedUiPreferences = findPreference<Preference>("advancedUiPreferences")!!
+            advancedUiPreferences.setOnPreferenceClickListener {
+                startPreferenceFragmentFunc(SettingsUiFragment())
+                true
+            }
         }
 
         override fun onViewCreated(

@@ -741,3 +741,22 @@ fun experimentalFeaturesEnabled(): Boolean {
     return PreferenceManager.getDefaultSharedPreferences(context)
         .getBoolean(context.getString(R.string.pref_key_experimental_features), false)
 }
+
+fun getUiTabs(
+    context: Context,
+    dataType: DataType,
+): Set<String> {
+    val prefKey: Int
+    val defaultArrayKey: Int
+    when (dataType) {
+        DataType.PERFORMER -> {
+            prefKey = R.string.pref_key_ui_performer_tabs
+            defaultArrayKey = R.array.performer_tabs
+        }
+
+        else -> TODO()
+    }
+    val defaultValues = context.resources.getStringArray(defaultArrayKey).toSet()
+    return PreferenceManager.getDefaultSharedPreferences(context)
+        .getStringSet(context.getString(prefKey), defaultValues)!!
+}

@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getParcelable
+import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
@@ -61,7 +62,7 @@ class PerformerFragment : TabbedFragment() {
 
         val items =
             listOf(
-                StashFragmentPagerAdapter.PagerEntry("Details") {
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
                     PerformerDetailsFragment(performer)
                 },
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
@@ -105,7 +106,7 @@ class PerformerFragment : TabbedFragment() {
                     fragment.presenterSelector = presenter
                     fragment
                 },
-                StashFragmentPagerAdapter.PagerEntry("Appears With") {
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_appears_with)) {
                     val presenter =
                         ClassPresenterSelector()
                             .addClassPresenter(
@@ -129,7 +130,7 @@ class PerformerFragment : TabbedFragment() {
                     fragment.presenterSelector = presenter
                     fragment
                 },
-            )
+            ).filter { it.title in getUiTabs(requireContext(), DataType.PERFORMER) }
         return StashFragmentPagerAdapter(items, fm)
     }
 

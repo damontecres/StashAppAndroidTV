@@ -18,4 +18,6 @@
     <string name="pref_key_crop_card_images" translatable="false">card.cropImages</string>
     <string name="pref_key_back_button_scroll" translatable="false">grid_back_button_scroll</string>
     <string name="pref_key_video_filters" translatable="false">playback.videoFilters</string>
+
+    <string name="pref_key_ui_performer_tabs" translatable="false">ui.tabs.performer</string>
 </resources>

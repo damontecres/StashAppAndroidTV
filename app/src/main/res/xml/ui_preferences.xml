@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:key="tabs"
+        app:title="Show/Hide Tabs"
+        app:isPreferenceVisible="true">
+        <MultiSelectListPreference
+            app:key="@string/pref_key_ui_performer_tabs"
+            app:title="Performer Page"
+            app:summary=""
+            app:defaultValue="@array/performer_tabs"
+            app:entries="@array/performer_tabs"
+            app:entryValues="@array/performer_tabs"
+            />
+    </PreferenceCategory>
+</androidx.preference.PreferenceScreen>
