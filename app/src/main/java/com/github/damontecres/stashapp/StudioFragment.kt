@@ -10,13 +10,15 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.util.getUiTabs
 
-class StudioFragment : TabbedFragment() {
+class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
     override fun getTitleText(): String? {
         return requireActivity().intent.getStringExtra("studioName")
     }
@@ -85,7 +87,19 @@ class StudioFragment : TabbedFragment() {
                             ),
                     )
                 },
-            )
+                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
+                    StashGridFragment(
+                        dataType = DataType.MARKER,
+                        objectFilter =
+                            SceneMarkerFilterType(
+                                scene_filter =
+                                    Optional.present(
+                                        SceneFilterType(studios = studios),
+                                    ),
+                            ),
+                    )
+                },
+            ).filter { it.title in getUiTabs(requireContext(), DataType.STUDIO) }
         return StashFragmentPagerAdapter(items, fm)
     }
 }

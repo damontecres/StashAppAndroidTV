@@ -741,3 +741,41 @@ fun experimentalFeaturesEnabled(): Boolean {
     return PreferenceManager.getDefaultSharedPreferences(context)
         .getBoolean(context.getString(R.string.pref_key_experimental_features), false)
 }
+
+fun getUiTabs(
+    context: Context,
+    dataType: DataType,
+): Set<String> {
+    val prefKey: Int
+    val defaultArrayKey: Int
+    when (dataType) {
+        DataType.PERFORMER -> {
+            prefKey = R.string.pref_key_ui_performer_tabs
+            defaultArrayKey = R.array.performer_tabs
+        }
+        DataType.GALLERY -> {
+            prefKey = R.string.pref_key_ui_gallery_tabs
+            defaultArrayKey = R.array.gallery_tabs
+        }
+
+        DataType.GROUP -> {
+            prefKey = R.string.pref_key_ui_group_tabs
+            defaultArrayKey = R.array.group_tabs
+        }
+
+        DataType.STUDIO -> {
+            prefKey = R.string.pref_key_ui_studio_tabs
+            defaultArrayKey = R.array.studio_tabs
+        }
+
+        DataType.TAG -> {
+            prefKey = R.string.pref_key_ui_tag_tabs
+            defaultArrayKey = R.array.tag_tabs
+        }
+
+        else -> throw UnsupportedOperationException("$dataType not supported")
+    }
+    val defaultValues = context.resources.getStringArray(defaultArrayKey).toSet()
+    return PreferenceManager.getDefaultSharedPreferences(context)
+        .getStringSet(context.getString(prefKey), defaultValues)!!
+}

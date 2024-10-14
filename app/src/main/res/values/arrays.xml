@@ -134,4 +134,53 @@
         <item>webm</item>
     </string-array>
 
+    <string-array name="performer_tabs">
+        <item>@string/stashapp_details</item>
+        <item>@string/stashapp_scenes</item>
+        <item>@string/stashapp_galleries</item>
+        <item>@string/stashapp_images</item>
+        <item>@string/stashapp_groups</item>
+        <item>@string/stashapp_tags</item>
+        <item>@string/stashapp_appears_with</item>
+        <item>@string/stashapp_markers</item>
+    </string-array>
+
+    <string-array name="gallery_tabs">
+        <item>@string/stashapp_details</item>
+        <item>@string/stashapp_images</item>
+        <item>@string/stashapp_scenes</item>
+        <item>@string/stashapp_performers</item>
+        <item>@string/stashapp_tags</item>
+    </string-array>
+
+    <string-array name="group_tabs">
+        <item>@string/stashapp_details</item>
+        <item>@string/stashapp_scenes</item>
+        <item>@string/stashapp_markers</item>
+        <item>@string/stashapp_tags</item>
+        <item>@string/stashapp_containing_groups</item>
+        <item>@string/stashapp_sub_groups</item>
+    </string-array>
+
+    <string-array name="studio_tabs">
+        <item>@string/stashapp_scenes</item>
+        <item>@string/stashapp_galleries</item>
+        <item>@string/stashapp_images</item>
+        <item>@string/stashapp_performers</item>
+        <item>@string/stashapp_groups</item>
+        <item>@string/stashapp_tags</item>
+        <item>@string/stashapp_subsidiary_studios</item>
+        <item>@string/stashapp_markers</item>
+    </string-array>
+
+    <string-array name="tag_tabs">
+        <item>@string/stashapp_scenes</item>
+        <item>@string/stashapp_galleries</item>
+        <item>@string/stashapp_images</item>
+        <item>@string/stashapp_markers</item>
+        <item>@string/stashapp_performers</item>
+        <item>@string/stashapp_studios</item>
+        <item>@string/stashapp_sub_tags</item>
+    </string-array>
+
 </resources>
