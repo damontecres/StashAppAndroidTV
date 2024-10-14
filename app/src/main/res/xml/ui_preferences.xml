@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <PreferenceCategory app:title="Advanced UI">
+        <SwitchPreference
+            app:key="@string/pref_key_ui_remember_tab"
+            app:title="Remember selected tab?"
+            app:summaryOn="Start on previously selected tab"
+            app:summaryOff="Start on first tab"
+            app:defaultValue="false" />
+    </PreferenceCategory>
+
     <PreferenceCategory
         app:key="tabs"
         app:title="Show/Hide Tabs"
         app:isPreferenceVisible="true">
-        <MultiSelectListPreference
+
+    <MultiSelectListPreference
             app:key="@string/pref_key_ui_gallery_tabs"
             app:title="Gallery Page"
             app:summary=""

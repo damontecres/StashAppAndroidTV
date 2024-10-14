@@ -36,7 +36,7 @@ import com.github.damontecres.stashapp.views.StashItemViewClickListener
 /**
  * Main [TabbedFragment] for a performers which includes [PerformerDetailsFragment] and other tabs
  */
-class PerformerFragment : TabbedFragment() {
+class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
     private lateinit var performer: Performer
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -19,7 +19,7 @@ import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.getUiTabs
 
-class GroupFragment : TabbedFragment() {
+class GroupFragment : TabbedFragment(DataType.GROUP.name) {
     private lateinit var group: Group
 
     override fun onCreate(savedInstanceState: Bundle?) {

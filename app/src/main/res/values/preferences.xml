@@ -24,4 +24,6 @@
     <string name="pref_key_ui_group_tabs" translatable="false">ui.tabs.group</string>
     <string name="pref_key_ui_studio_tabs" translatable="false">ui.tabs.studio</string>
     <string name="pref_key_ui_tag_tabs" translatable="false">ui.tabs.tag</string>
+
+    <string name="pref_key_ui_remember_tab" translatable="false">ui.rememberTab</string>
 </resources>

@@ -17,7 +17,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getUiTabs
 
-class StudioFragment : TabbedFragment() {
+class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
     override fun getTitleText(): String? {
         return requireActivity().intent.getStringExtra("studioName")
     }

@@ -43,7 +43,7 @@ import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import kotlinx.coroutines.launch
 
-class GalleryFragment : TabbedFragment() {
+class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
     private lateinit var gallery: Gallery
 
     override fun onCreate(savedInstanceState: Bundle?) {
