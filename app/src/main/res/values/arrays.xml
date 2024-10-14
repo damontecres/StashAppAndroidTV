@@ -179,6 +179,7 @@
         <item>@string/stashapp_images</item>
         <item>@string/stashapp_markers</item>
         <item>@string/stashapp_performers</item>
+        <item>@string/stashapp_studios</item>
         <item>@string/stashapp_sub_tags</item>
     </string-array>
 
