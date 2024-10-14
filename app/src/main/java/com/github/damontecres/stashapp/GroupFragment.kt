@@ -17,6 +17,7 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getParcelable
+import com.github.damontecres.stashapp.util.getUiTabs
 
 class GroupFragment : TabbedFragment() {
     private lateinit var group: Group
@@ -106,7 +107,7 @@ class GroupFragment : TabbedFragment() {
                         ),
                     )
                 },
-            )
+            ).filter { it.title in getUiTabs(requireContext(), DataType.GROUP) }
         return StashFragmentPagerAdapter(pages, fm)
     }
 

@@ -6,12 +6,44 @@
         app:title="Show/Hide Tabs"
         app:isPreferenceVisible="true">
         <MultiSelectListPreference
+            app:key="@string/pref_key_ui_gallery_tabs"
+            app:title="Gallery Page"
+            app:summary=""
+            app:defaultValue="@array/gallery_tabs"
+            app:entries="@array/gallery_tabs"
+            app:entryValues="@array/gallery_tabs"
+            />
+        <MultiSelectListPreference
+            app:key="@string/pref_key_ui_group_tabs"
+            app:title="Group Page"
+            app:summary=""
+            app:defaultValue="@array/group_tabs"
+            app:entries="@array/group_tabs"
+            app:entryValues="@array/group_tabs"
+            />
+        <MultiSelectListPreference
             app:key="@string/pref_key_ui_performer_tabs"
             app:title="Performer Page"
             app:summary=""
             app:defaultValue="@array/performer_tabs"
             app:entries="@array/performer_tabs"
             app:entryValues="@array/performer_tabs"
+            />
+        <MultiSelectListPreference
+            app:key="@string/pref_key_ui_studio_tabs"
+            app:title="Studio Page"
+            app:summary=""
+            app:defaultValue="@array/studio_tabs"
+            app:entries="@array/studio_tabs"
+            app:entryValues="@array/studio_tabs"
+            />
+        <MultiSelectListPreference
+            app:key="@string/pref_key_ui_tag_tabs"
+            app:title="Tag Page"
+            app:summary=""
+            app:defaultValue="@array/tag_tabs"
+            app:entries="@array/tag_tabs"
+            app:entryValues="@array/tag_tabs"
             />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

@@ -35,6 +35,7 @@ import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getParcelable
+import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.util.showSetRatingToast
@@ -61,7 +62,7 @@ class GalleryFragment : TabbedFragment() {
             )
         val items =
             listOf(
-                StashFragmentPagerAdapter.PagerEntry("Details") {
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
                     GalleryDetailsFragment(gallery)
                 },
                 StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
@@ -102,7 +103,7 @@ class GalleryFragment : TabbedFragment() {
                             ),
                     )
                 },
-            )
+            ).filter { it.title in getUiTabs(requireContext(), DataType.GALLERY) }
         return StashFragmentPagerAdapter(items, fm)
     }
 

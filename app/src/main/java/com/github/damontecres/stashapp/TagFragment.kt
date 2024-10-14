@@ -13,6 +13,7 @@ import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter.PagerEntry
+import com.github.damontecres.stashapp.util.getUiTabs
 
 class TagFragment : TabbedFragment() {
     override fun getTitleText(): String? {
@@ -69,7 +70,7 @@ class TagFragment : TabbedFragment() {
                         objectFilter = TagFilterType(parents = tags),
                     )
                 },
-            )
+            ).filter { it.title in getUiTabs(requireContext(), DataType.TAG) }
 
         return StashFragmentPagerAdapter(items, fm)
     }

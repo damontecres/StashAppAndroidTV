@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.util.getUiTabs
 
 class StudioFragment : TabbedFragment() {
     override fun getTitleText(): String? {
@@ -85,7 +86,7 @@ class StudioFragment : TabbedFragment() {
                             ),
                     )
                 },
-            )
+            ).filter { it.title in getUiTabs(requireContext(), DataType.STUDIO) }
         return StashFragmentPagerAdapter(items, fm)
     }
 }
