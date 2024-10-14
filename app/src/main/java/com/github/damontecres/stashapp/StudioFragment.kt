@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
@@ -82,6 +83,18 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                                             value = Optional.present(listOf(studioId)),
                                             modifier = CriterionModifier.INCLUDES,
                                         ),
+                                    ),
+                            ),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
+                    StashGridFragment(
+                        dataType = DataType.MARKER,
+                        objectFilter =
+                            SceneMarkerFilterType(
+                                scene_filter =
+                                    Optional.present(
+                                        SceneFilterType(studios = studios),
                                     ),
                             ),
                     )

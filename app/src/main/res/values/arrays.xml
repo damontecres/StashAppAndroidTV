@@ -170,6 +170,7 @@
         <item>@string/stashapp_groups</item>
         <item>@string/stashapp_tags</item>
         <item>@string/stashapp_subsidiary_studios</item>
+        <item>@string/stashapp_markers</item>
     </string-array>
 
     <string-array name="tag_tabs">
