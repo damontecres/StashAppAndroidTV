@@ -27,6 +27,7 @@ enum class SortOption(
     BITRATE("bitrate", R.string.stashapp_bitrate),
     CAREER_LENGTH("career_length", R.string.stashapp_career_length, Version.V0_27_0),
     CHILD_COUNT("child_count", R.string.stashapp_subsidiary_studio_count),
+    CREATED_AT("created_at", R.string.stashapp_created_at),
     DATE("date", R.string.stashapp_date),
     DURATION("duration", R.string.stashapp_duration),
     FILE_COUNT("file_count", R.string.stashapp_file_count),
@@ -62,13 +63,20 @@ enum class SortOption(
     SECONDS("seconds", R.string.stashapp_seconds),
     TAG_COUNT("tag_count", R.string.stashapp_tag_count),
     TITLE("title", R.string.stashapp_title),
-    WEIGHT("weight", R.string.stashapp_weight, Version.V0_27_0),
     UPDATED_AT("updated_at", R.string.stashapp_updated_at),
-    CREATED_AT("created_at", R.string.stashapp_created_at),
+    WEIGHT("weight", R.string.stashapp_weight, Version.V0_27_0),
     ;
 
     companion object {
-        val COMMON_SORT_OPTIONS =
+        fun getByKey(key: String): SortOption {
+            return if (key.startsWith("random")) {
+                RANDOM
+            } else {
+                entries.first { it.key == key }
+            }
+        }
+
+        private val COMMON_SORT_OPTIONS =
             arrayOf(
                 CREATED_AT,
                 UPDATED_AT,

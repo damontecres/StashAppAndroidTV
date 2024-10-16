@@ -687,8 +687,8 @@ fun VideoFileData.resolutionName(): CharSequence {
 /**
  * Gets a sort by string for a random sort
  */
-fun getRandomSort(): String {
-    return "random_" + Random.nextInt(1e8.toInt()).toString()
+fun getRandomSort(): Int {
+    return Random.nextInt(1e8.toInt())
 }
 
 val ImageData.isImageClip: Boolean

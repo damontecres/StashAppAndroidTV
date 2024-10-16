@@ -333,7 +333,7 @@ class FilterParser(private val serverVersion: Version) {
                     ?: SortDirectionEnum.ASC
             val sortAndDirection =
                 if (sort.isNotNullOrBlank()) {
-                    SortAndDirection(sort, direction)
+                    SortAndDirection.create(sort, direction)
                 } else {
                     null
                 }

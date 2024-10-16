@@ -136,14 +136,8 @@ data class FilterArgs(
 ) {
     val sortAndDirection: SortAndDirection
         get() {
-            return if (findFilter?.sortAndDirection != null) {
-                SortAndDirection(
-                    findFilter.sortAndDirection.sort,
-                    findFilter.sortAndDirection.direction,
-                )
-            } else {
-                dataType.defaultSort
-            }
+            return findFilter?.sortAndDirection
+                ?: dataType.defaultSort
         }
 
     /**
@@ -161,7 +155,7 @@ data class FilterArgs(
      */
     fun withResolvedRandom(): FilterArgs {
         return if (sortAndDirection.isRandom) {
-            with(sortAndDirection.copy(sort = getRandomSort()))
+            with(sortAndDirection.copy(randomSeed = getRandomSort()))
         } else {
             this
         }
@@ -170,7 +164,7 @@ data class FilterArgs(
 
 fun SavedFilterData.Find_filter.toStashFindFilter(): StashFindFilter {
     return if (sort != null) {
-        StashFindFilter(q, SortAndDirection(sort, direction ?: SortDirectionEnum.ASC))
+        StashFindFilter(q, SortAndDirection.create(sort, direction ?: SortDirectionEnum.ASC))
     } else {
         StashFindFilter(q, null)
     }

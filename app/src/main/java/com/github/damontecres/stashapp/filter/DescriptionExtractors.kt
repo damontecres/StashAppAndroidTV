@@ -35,7 +35,6 @@ import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
@@ -108,18 +107,7 @@ fun findFilterSummary(
     findFilter: StashFindFilter,
 ): String {
     val sortAndDirection = findFilter.sortAndDirection ?: dataType.defaultSort
-    val sortOption =
-        if (sortAndDirection.isRandom) {
-            SortOption.RANDOM
-        } else {
-            dataType.sortOptions.firstOrNull { it.key == sortAndDirection.sort }
-        }
-    val sortName =
-        if (sortOption != null) {
-            context.getString(sortOption.nameStringId)
-        } else {
-            sortAndDirection.sort
-        }
+    val sortName = context.getString(sortAndDirection.sort.nameStringId)
     val directionName =
         when (sortAndDirection.direction) {
             SortDirectionEnum.ASC -> context.getString(R.string.stashapp_ascending)

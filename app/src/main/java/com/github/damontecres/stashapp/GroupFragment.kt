@@ -12,6 +12,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Group
 import com.github.damontecres.stashapp.data.GroupRelationshipType
 import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -39,7 +40,7 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                         findFilter =
                             StashFindFilter(
                                 SortAndDirection(
-                                    "group_scene_number",
+                                    SortOption.GROUP_SCENE_NUMBER,
                                     SortDirectionEnum.ASC,
                                 ),
                             ),

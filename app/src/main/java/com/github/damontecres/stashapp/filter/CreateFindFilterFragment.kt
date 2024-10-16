@@ -8,7 +8,6 @@ import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
@@ -40,12 +39,7 @@ class CreateFindFilterFragment(
                 }
                 .sortedBy { it.title.toString() }
 
-        val currSortOption =
-            if (currFindFilter.sortAndDirection?.isRandom == true) {
-                SortOption.RANDOM
-            } else {
-                dataType.sortOptions.firstOrNull { it.key == currFindFilter.sortAndDirection?.sort }
-            }
+        val currSortOption = currFindFilter.sortAndDirection?.sort
         val sortDesc =
             if (currSortOption != null) {
                 getString(currSortOption.nameStringId)

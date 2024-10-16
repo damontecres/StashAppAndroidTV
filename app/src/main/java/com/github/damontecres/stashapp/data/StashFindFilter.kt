@@ -21,7 +21,7 @@ data class StashFindFilter(
     ): FindFilterType =
         FindFilterType(
             q = Optional.presentIfNotNull(q),
-            sort = Optional.presentIfNotNull(sortAndDirection?.sort),
+            sort = Optional.presentIfNotNull(sortAndDirection?.sortKey),
             direction = Optional.presentIfNotNull(sortAndDirection?.direction),
             page = Optional.presentIfNotNull(page),
             per_page = Optional.presentIfNotNull(perPage),
@@ -30,11 +30,14 @@ data class StashFindFilter(
     /**
      * This, but with a different sort key
      */
-    fun withSort(sort: String): StashFindFilter {
-        val newSortAndDirection =
-            sortAndDirection?.copy(sort = sort) ?: SortAndDirection(sort, SortDirectionEnum.ASC)
-        return this.copy(sortAndDirection = newSortAndDirection)
-    }
+    fun withSort(sort: String): StashFindFilter =
+        copy(
+            sortAndDirection =
+                SortAndDirection.create(
+                    sort,
+                    sortAndDirection?.direction,
+                ),
+        )
 
     /**
      * This, but with a different sort direction
@@ -54,9 +57,9 @@ fun FindFilterType.toStashFindFilter(): StashFindFilter =
         q = q.getOrNull(),
         sortAndDirection =
             if (sort.getOrNull() != null && direction.getOrNull() != null) {
-                SortAndDirection(sort.getOrNull()!!, direction.getOrNull()!!)
+                SortAndDirection.create(sort.getOrNull()!!, direction.getOrNull()!!)
             } else if (sort.getOrNull() != null) {
-                SortAndDirection(sort.getOrNull()!!, SortDirectionEnum.ASC)
+                SortAndDirection.create(sort.getOrNull()!!, SortDirectionEnum.ASC)
             } else {
                 null
             },

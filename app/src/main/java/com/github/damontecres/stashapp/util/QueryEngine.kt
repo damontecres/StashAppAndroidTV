@@ -393,7 +393,7 @@ class QueryEngine(
         return if (filter != null) {
             if (useRandom && filter.sort.getOrNull()?.startsWith("random") == true) {
                 Log.v(TAG, "Updating random filter")
-                filter.copy(sort = Optional.present(getRandomSort()))
+                filter.copy(sort = Optional.present("random_" + getRandomSort()))
             } else {
                 filter
             }
