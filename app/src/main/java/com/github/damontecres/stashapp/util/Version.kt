@@ -79,9 +79,8 @@ data class Version(
         val V0_26_0 = fromString("v0.26.0")
         val V0_26_2 = fromString("v0.26.2")
         val V0_27_0 = fromString("v0.27.0")
-        val DEVELOP = fromString("v0.26.2-97-gad442fbe")
 
-        val MINIMUM_STASH_VERSION = DEVELOP
+        val MINIMUM_STASH_VERSION = V0_27_0
 
         /**
          * Parse a version string throwing if it is invalid
