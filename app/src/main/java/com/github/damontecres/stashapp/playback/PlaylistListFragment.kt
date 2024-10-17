@@ -137,6 +137,10 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
                 pagingAdapter.submitData(it)
             }
         }
+        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            val count = pagingSource.getCount()
+            playlistTitleView.text = playlistTitleView.text.toString() + " ($count)"
+        }
 
         mGridPresenter.onBindViewHolder(mGridViewHolder, pagingAdapter)
         mGridPresenter.setOnItemViewClickedListener { itemViewHolder, item, rowViewHolder, row ->
