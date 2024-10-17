@@ -72,6 +72,9 @@ fun parseTimeToString(ts: Any?): String? {
 val String.fileNameFromPath
     get() = this.replace(Regex("""^.*[\\/]"""), "")
 
+/**
+ * Get the [String] representation for a [CriterionModifier]
+ */
 fun CriterionModifier.getString(context: Context): String =
     when (this) {
         CriterionModifier.EQUALS -> context.getString(R.string.stashapp_criterion_modifier_equals)
@@ -92,6 +95,9 @@ fun CriterionModifier.getString(context: Context): String =
 
 private val abbrevSuffixes = listOf("", "K", "M", "B")
 
+/**
+ * Format a number by abbreviation, eg 5533 => 5.5K
+ */
 fun abbreviateCounter(counter: Int): String {
     var unit = 0
     var count = counter.toDouble()
@@ -102,11 +108,17 @@ fun abbreviateCounter(counter: Int): String {
     return String.format(Locale.getDefault(), "%.1f%s", count, abbrevSuffixes[unit])
 }
 
+/**
+ * Formats a number which may abbreviate it or add commas, etc
+ *
+ * @param number the number to format
+ * @param abbreviateCounters whether to use the server-side abbreviateCounters settings
+ */
 fun formatNumber(
     number: Int,
-    abbreviateCounter: Boolean = StashServer.requireCurrentServer().serverPreferences.abbreviateCounters,
+    abbreviateCounters: Boolean = StashServer.requireCurrentServer().serverPreferences.abbreviateCounters,
 ): String {
-    return if (abbreviateCounter) {
+    return if (abbreviateCounters) {
         abbreviateCounter(number)
     } else {
         java.text.NumberFormat.getNumberInstance().format(number)

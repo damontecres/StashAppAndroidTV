@@ -139,12 +139,14 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         } else {
             val filterOption = getFilterOptions(dataType)[action.id.toInt()]
             when (filterOption.nameStringId) {
+                // Rating needs a special picker for its sub-filter type
                 R.string.stashapp_rating -> {
                     filterOption as FilterOption<StashDataFilter, IntCriterionInput>
                     nextStep(RatingPickerFragment(filterOption))
                 }
 
                 else ->
+                    // Get the picker for the sub-filter type
                     when (filterOption.type) {
                         IntCriterionInput::class -> {
                             filterOption as FilterOption<StashDataFilter, IntCriterionInput>

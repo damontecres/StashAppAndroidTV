@@ -91,7 +91,7 @@ class CreateFindFilterFragment(
                 .title(getString(R.string.stashapp_component_tagger_noun_query))
                 .descriptionEditable(true)
                 .descriptionEditInputType(InputType.TYPE_CLASS_TEXT)
-                .editDescription(currFindFilter.q)
+                .description(currFindFilter.q)
                 .build(),
         )
 
@@ -152,7 +152,7 @@ class CreateFindFilterFragment(
     }
 
     companion object {
-        private const val TAG = "SortPickerFragment"
+        private const val TAG = "CreateFindFilterFragment"
         private const val DIRECTION = 2L
         private const val SORT = 3L
         private const val QUERY = 4L

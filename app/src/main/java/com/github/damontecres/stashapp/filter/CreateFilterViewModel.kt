@@ -83,6 +83,9 @@ class CreateFilterViewModel : ViewModel() {
         objectFilter.value = newFilter
     }
 
+    /**
+     * Update the [resultCount] using the current [findFilter] & [objectFilter]
+     */
     fun updateCount() {
         countJob?.cancel()
         countJob =
@@ -99,6 +102,7 @@ class CreateFilterViewModel : ViewModel() {
                     DataSupplierFactory(server.value!!.version).create<Query.Data, StashData, Query.Data>(
                         FilterArgs(
                             dataType = dataType.value!!,
+                            findFilter = findFilter.value,
                             objectFilter = objectFilter.value,
                         ),
                     )

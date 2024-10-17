@@ -51,6 +51,9 @@ import java.util.Locale
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 
+/**
+ * Get the default title for a [StashData] item usable as a sub-filter label
+ */
 fun extractTitle(item: StashData): String? {
     return when (item) {
         is TagData -> item.name
@@ -66,6 +69,9 @@ fun extractTitle(item: StashData): String? {
     }
 }
 
+/**
+ * Get the default description for a [StashData] item
+ */
 fun extractDescription(item: StashData): String? {
     return when (item) {
         is TagData -> item.description?.ifBlank { null }
@@ -453,6 +459,14 @@ fun filterSummary(f: GenderCriterionInput): String {
     }
 }
 
+/**
+ * Summarize a "sub-filter"
+ *
+ * @param name the sub-filter name
+ * @param filterDataType the sub-filter's [DataType]
+ * @param value the sub-filter value
+ * @param idLookup a function associate IDs to a [CreateFilterViewModel.NameDescription]
+ */
 fun filterSummary(
     name: String,
     filterDataType: DataType,
@@ -493,6 +507,14 @@ fun filterSummary(
     }
 }
 
+/**
+ * Summarize a filter
+ *
+ * @param dataType the filter [DataType]
+ * @param type the filter's class
+ * @param f the filter
+ * @param idLookup a function associate IDs to a [CreateFilterViewModel.NameDescription]
+ */
 fun filterSummary(
     dataType: DataType,
     type: KClass<in StashDataFilter>,
@@ -525,6 +547,11 @@ fun filterSummary(
     return text
 }
 
+/**
+ * Collect all of the IDs in the filter's [MultiCriterionInput] or [HierarchicalMultiCriterionInput] sub-filters and associate them by their [DataType]
+ *
+ * For example, a SceneFilterType.performers will associated [DataType.PERFORMER] to the list of performers IDs
+ */
 fun getIdsByDataType(
     filterDataType: DataType,
     f: StashDataFilter,
