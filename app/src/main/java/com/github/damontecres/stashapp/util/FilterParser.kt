@@ -9,10 +9,10 @@ import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderEnum
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
-import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationEnum
@@ -23,11 +23,16 @@ import com.github.damontecres.stashapp.api.type.ResolutionCriterionInput
 import com.github.damontecres.stashapp.api.type.ResolutionEnum
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.StashFindFilter
 
 /**
  * Parse a server-side filter from JSON (Map<String, *>)
@@ -315,15 +320,52 @@ class FilterParser(private val serverVersion: Version) {
         }
     }
 
-    fun convertPerformerObjectFilter(f: Any?): PerformerFilterType? {
+    fun convertFindFilter(f: Any?): StashFindFilter? {
+        return if (f is StashFindFilter) {
+            f
+        } else if (f == null) {
+            null
+        } else {
+            val filter = f as Map<String, String>
+            val sort = filter.getCaseInsensitive("sort")
+            val direction =
+                SortDirectionEnum.entries.find { it.name == (filter.getCaseInsensitive("direction")) }
+                    ?: SortDirectionEnum.ASC
+            val sortAndDirection =
+                if (sort.isNotNullOrBlank()) {
+                    SortAndDirection.create(sort, direction)
+                } else {
+                    null
+                }
+            StashFindFilter(filter.getCaseInsensitive("q"), sortAndDirection)
+        }
+    }
+
+    fun convertFilter(
+        dataType: DataType,
+        f: Any?,
+    ): StashDataFilter? {
+        return when (dataType) {
+            DataType.TAG -> convertTagFilterType(f)
+            DataType.STUDIO -> convertStudioFilterType(f)
+            DataType.GROUP -> convertGroupFilterType(f)
+            DataType.SCENE -> convertSceneFilterType(f)
+            DataType.IMAGE -> convertImageFilterType(f)
+            DataType.GALLERY -> convertGalleryFilterType(f)
+            DataType.MARKER -> convertSceneMarkerFilterType(f)
+            DataType.PERFORMER -> convertPerformerFilterType(f)
+        }
+    }
+
+    fun convertPerformerFilterType(f: Any?): PerformerFilterType? {
         return if (f != null && f is PerformerFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             PerformerFilterType(
-                AND = Optional.presentIfNotNull(convertPerformerObjectFilter(filter["AND"])),
-                OR = Optional.presentIfNotNull(convertPerformerObjectFilter(filter["OR"])),
-                NOT = Optional.presentIfNotNull(convertPerformerObjectFilter(filter["NOT"])),
+                AND = Optional.presentIfNotNull(convertPerformerFilterType(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertPerformerFilterType(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertPerformerFilterType(filter["NOT"])),
                 name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
                 disambiguation = Optional.presentIfNotNull(convertStringCriterionInput(filter["disambiguation"])),
                 details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
@@ -362,6 +404,10 @@ class FilterParser(private val serverVersion: Version) {
                 ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
                 birthdate = Optional.presentIfNotNull(convertDateCriterionInput(filter["birthdate"])),
                 death_date = Optional.presentIfNotNull(convertDateCriterionInput(filter["death_date"])),
+                scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
+                images_filter = Optional.presentIfNotNull(convertImageFilterType(filter["images_filter"])),
+                galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
+                tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
             )
@@ -370,15 +416,15 @@ class FilterParser(private val serverVersion: Version) {
         }
     }
 
-    fun convertSceneObjectFilter(f: Any?): SceneFilterType? {
+    fun convertSceneFilterType(f: Any?): SceneFilterType? {
         return if (f != null && f is SceneFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             SceneFilterType(
-                AND = Optional.presentIfNotNull(convertSceneObjectFilter(filter["AND"])),
-                OR = Optional.presentIfNotNull(convertSceneObjectFilter(filter["OR"])),
-                NOT = Optional.presentIfNotNull(convertSceneObjectFilter(filter["NOT"])),
+                AND = Optional.presentIfNotNull(convertSceneFilterType(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertSceneFilterType(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertSceneFilterType(filter["NOT"])),
                 id = Optional.presentIfNotNull(convertIntCriterionInput(filter["id"])),
                 title = Optional.presentIfNotNull(convertStringCriterionInput(filter["title"])),
                 code = Optional.presentIfNotNull(convertStringCriterionInput(filter["code"])),
@@ -405,6 +451,7 @@ class FilterParser(private val serverVersion: Version) {
                 is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
                 studios = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["studios"])),
                 movies = Optional.presentIfNotNull(convertMultiCriterionInput(filter["movies"])),
+                groups = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["groups"])),
                 galleries = Optional.presentIfNotNull(convertMultiCriterionInput(filter["galleries"])),
                 tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
                 tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["tag_count"])),
@@ -430,40 +477,47 @@ class FilterParser(private val serverVersion: Version) {
                 date = Optional.presentIfNotNull(convertDateCriterionInput(filter["date"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+                galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
+                performers_filter = Optional.presentIfNotNull(convertPerformerFilterType(filter["performers_filter"])),
+                studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
+                tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
+//                movies_filter = Optional.presentIfNotNull(convertMovieFilterType(filter["movies_filter"])),
+                groups_filter = Optional.presentIfNotNull(convertGroupFilterType(filter["groups_filter"])),
+                markers_filter = Optional.presentIfNotNull(convertSceneMarkerFilterType(filter["markers_filter"])),
             )
         } else {
             null
         }
     }
 
-    fun convertStudioObjectFilter(f: Any?): StudioFilterType? {
+    fun convertStudioFilterType(f: Any?): StudioFilterType? {
         return if (f != null && f is StudioFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             StudioFilterType(
-                AND = Optional.presentIfNotNull(convertStudioObjectFilter(filter["AND"])),
-                OR = Optional.presentIfNotNull(convertStudioObjectFilter(filter["OR"])),
-                NOT = Optional.presentIfNotNull(convertStudioObjectFilter(filter["NOT"])),
+                AND = Optional.presentIfNotNull(convertStudioFilterType(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertStudioFilterType(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertStudioFilterType(filter["NOT"])),
                 name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
                 details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
                 parents = Optional.presentIfNotNull(convertMultiCriterionInput(filter["parents"])),
-                stash_id_endpoint =
-                    Optional.presentIfNotNull(
-                        convertStashIDCriterionInput(
-                            filter["stash_id_endpoint"],
-                        ),
-                    ),
+                stash_id_endpoint = Optional.presentIfNotNull(convertStashIDCriterionInput(filter["stash_id_endpoint"])),
+                tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
                 is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
                 rating100 = Optional.presentIfNotNull(convertIntCriterionInput(filter["rating100"])),
                 favorite = Optional.presentIfNotNull(convertBoolean(filter["favorite"])),
                 scene_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["scene_count"])),
                 image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["image_count"])),
                 gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
+                tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["tag_count"])),
                 url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
                 aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
                 child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
                 ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
+                scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
+                images_filter = Optional.presentIfNotNull(convertImageFilterType(filter["images_filter"])),
+                galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
             )
@@ -472,15 +526,15 @@ class FilterParser(private val serverVersion: Version) {
         }
     }
 
-    fun convertTagObjectFilter(f: Any?): TagFilterType? {
+    fun convertTagFilterType(f: Any?): TagFilterType? {
         return if (f != null && f is TagFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             TagFilterType(
-                AND = Optional.presentIfNotNull(convertTagObjectFilter(filter["AND"])),
-                OR = Optional.presentIfNotNull(convertTagObjectFilter(filter["OR"])),
-                NOT = Optional.presentIfNotNull(convertTagObjectFilter(filter["NOT"])),
+                AND = Optional.presentIfNotNull(convertTagFilterType(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertTagFilterType(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertTagFilterType(filter["NOT"])),
                 name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
                 aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
                 favorite = Optional.presentIfNotNull(convertBoolean(filter["favorite"])),
@@ -490,12 +544,18 @@ class FilterParser(private val serverVersion: Version) {
                 image_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["image_count"])),
                 gallery_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["gallery_count"])),
                 performer_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["performer_count"])),
+                studio_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["studio_count"])),
+                movie_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["movie_count"])),
+                group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["group_count"])),
                 marker_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["marker_count"])),
                 parents = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["parents"])),
                 children = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["children"])),
                 parent_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["parent_count"])),
                 child_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["child_count"])),
                 ignore_auto_tag = Optional.presentIfNotNull(convertBoolean(filter["ignore_auto_tag"])),
+                scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
+                images_filter = Optional.presentIfNotNull(convertImageFilterType(filter["images_filter"])),
+                galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
             )
@@ -504,12 +564,15 @@ class FilterParser(private val serverVersion: Version) {
         }
     }
 
-    fun convertMovieObjectFilter(f: Any?): MovieFilterType? {
-        return if (f != null && f is MovieFilterType) {
+    fun convertGroupFilterType(f: Any?): GroupFilterType? {
+        return if (f != null && f is GroupFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
-            MovieFilterType(
+            GroupFilterType(
+                AND = Optional.presentIfNotNull(convertGroupFilterType(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertGroupFilterType(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertGroupFilterType(filter["NOT"])),
                 name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
                 director = Optional.presentIfNotNull(convertStringCriterionInput(filter["director"])),
                 synopsis = Optional.presentIfNotNull(convertStringCriterionInput(filter["synopsis"])),
@@ -519,16 +582,29 @@ class FilterParser(private val serverVersion: Version) {
                 is_missing = Optional.presentIfNotNull(convertString(filter["is_missing"])),
                 url = Optional.presentIfNotNull(convertStringCriterionInput(filter["url"])),
                 performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
+                tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
+                tag_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["tag_count"])),
                 date = Optional.presentIfNotNull(convertDateCriterionInput(filter["date"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+                containing_groups =
+                    Optional.presentIfNotNull(
+                        convertHierarchicalMultiCriterionInput(
+                            filter["containing_groups"],
+                        ),
+                    ),
+                sub_groups = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["sub_groups"])),
+                containing_group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["containing_group_count"])),
+                sub_group_count = Optional.presentIfNotNull(convertIntCriterionInput(filter["sub_group_count"])),
+                scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
+                studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
             )
         } else {
             null
         }
     }
 
-    fun convertMarkerObjectFilter(f: Any?): SceneMarkerFilterType? {
+    fun convertSceneMarkerFilterType(f: Any?): SceneMarkerFilterType? {
         return if (f != null && f is SceneMarkerFilterType) {
             f
         } else if (f != null) {
@@ -537,26 +613,28 @@ class FilterParser(private val serverVersion: Version) {
                 tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["tags"])),
                 scene_tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["scene_tags"])),
                 performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
+                scenes = Optional.presentIfNotNull(convertMultiCriterionInput(filter["scenes"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
                 scene_date = Optional.presentIfNotNull(convertDateCriterionInput(filter["scene_date"])),
                 scene_created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["scene_created_at"])),
                 scene_updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["scene_updated_at"])),
+                scene_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scene_filter"])),
             )
         } else {
             null
         }
     }
 
-    fun convertImageObjectFilter(f: Any?): ImageFilterType? {
+    fun convertImageFilterType(f: Any?): ImageFilterType? {
         return if (f != null && f is ImageFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             ImageFilterType(
-                AND = Optional.presentIfNotNull(convertImageObjectFilter(filter["AND"])),
-                OR = Optional.presentIfNotNull(convertImageObjectFilter(filter["OR"])),
-                NOT = Optional.presentIfNotNull(convertImageObjectFilter(filter["NOT"])),
+                AND = Optional.presentIfNotNull(convertImageFilterType(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertImageFilterType(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertImageFilterType(filter["NOT"])),
                 title = Optional.presentIfNotNull(convertStringCriterionInput(filter["title"])),
                 details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
                 id = Optional.presentIfNotNull(convertIntCriterionInput(filter["id"])),
@@ -589,21 +667,25 @@ class FilterParser(private val serverVersion: Version) {
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
                 code = Optional.presentIfNotNull(convertStringCriterionInput(filter["code"])),
                 photographer = Optional.presentIfNotNull(convertStringCriterionInput(filter["photographer"])),
+                galleries_filter = Optional.presentIfNotNull(convertGalleryFilterType(filter["galleries_filter"])),
+                performers_filter = Optional.presentIfNotNull(convertPerformerFilterType(filter["performers_filter"])),
+                studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
+                tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
             )
         } else {
             null
         }
     }
 
-    fun convertGalleryObjectFilter(f: Any?): GalleryFilterType? {
+    fun convertGalleryFilterType(f: Any?): GalleryFilterType? {
         return if (f != null && f is GalleryFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
             GalleryFilterType(
-                AND = Optional.presentIfNotNull(convertGalleryObjectFilter(filter["AND"])),
-                OR = Optional.presentIfNotNull(convertGalleryObjectFilter(filter["OR"])),
-                NOT = Optional.presentIfNotNull(convertGalleryObjectFilter(filter["NOT"])),
+                AND = Optional.presentIfNotNull(convertGalleryFilterType(filter["AND"])),
+                OR = Optional.presentIfNotNull(convertGalleryFilterType(filter["OR"])),
+                NOT = Optional.presentIfNotNull(convertGalleryFilterType(filter["NOT"])),
                 id = Optional.presentIfNotNull(convertIntCriterionInput(filter["id"])),
                 title = Optional.presentIfNotNull(convertStringCriterionInput(filter["title"])),
                 details = Optional.presentIfNotNull(convertStringCriterionInput(filter["details"])),
@@ -642,6 +724,11 @@ class FilterParser(private val serverVersion: Version) {
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
                 code = Optional.presentIfNotNull(convertStringCriterionInput(filter["code"])),
                 photographer = Optional.presentIfNotNull(convertStringCriterionInput(filter["photographer"])),
+                scenes_filter = Optional.presentIfNotNull(convertSceneFilterType(filter["scenes_filter"])),
+                images_filter = Optional.presentIfNotNull(convertImageFilterType(filter["images_filter"])),
+                performers_filter = Optional.presentIfNotNull(convertPerformerFilterType(filter["performers_filter"])),
+                studios_filter = Optional.presentIfNotNull(convertStudioFilterType(filter["studios_filter"])),
+                tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
             )
         } else {
             null

@@ -23,7 +23,6 @@ import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.DetailsOverviewRow
 import androidx.leanback.widget.FullWidthDetailsOverviewRowPresenter
-import androidx.leanback.widget.FullWidthDetailsOverviewSharedElementHelper
 import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
@@ -37,6 +36,7 @@ import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StudioData
@@ -50,14 +50,15 @@ import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
 import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
+import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
-import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -67,6 +68,7 @@ import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asVideoSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
@@ -116,7 +118,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             }
         }
 
-    // Presenter is set in fetchData because it requires mSelectedMovie
+    // Presenter is set in fetchData because it requires mSelectedGroup
     private val mPerformersAdapter = ArrayObjectAdapter()
     private val performersRowManager =
         ListRowManager<PerformerData>(
@@ -138,8 +140,17 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             result?.tags?.map { it.tagData }.orEmpty()
         }
 
+    private val groupsRowManager =
+        ListRowManager<GroupData>(
+            DataType.GROUP,
+            ListRowManager.SparseArrayRowModifier(mAdapter, GROUP_POS),
+            ArrayObjectAdapter(GroupPresenter(GroupLongClickCallBack())),
+        ) { groupIds ->
+            val result = mutationEngine.setGroupsOnScene(sceneData!!.id, groupIds)
+            result?.groups?.map { it.group.groupData }.orEmpty()
+        }
+
     private val markersAdapter = ArrayObjectAdapter(MarkerPresenter(MarkerLongClickCallBack()))
-    private val moviesAdapter = ArrayObjectAdapter(MoviePresenter())
     private val galleriesAdapter = ArrayObjectAdapter(GalleryPresenter())
     private val sceneActionsAdapter =
         SparseArrayObjectAdapter(
@@ -190,7 +201,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
-        sceneId = requireActivity().intent.getStringExtra(SceneDetailsActivity.MOVIE)!!
+        sceneId = requireActivity().intent.getStringExtra(Constants.SCENE_ID_ARG)!!
 
         queryEngine = QueryEngine(server)
         mutationEngine = MutationEngine(server)
@@ -320,21 +331,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             performersRowManager.setItems(listOf())
         }
 
-        if (sceneData!!.movies.isNotEmpty()) {
-            if (mAdapter.lookup(MOVIE_POS) == null) {
-                mAdapter.set(
-                    MOVIE_POS,
-                    ListRow(
-                        HeaderItem(getString(R.string.stashapp_movies)),
-                        moviesAdapter,
-                    ),
-                )
-            }
-            val movies = sceneData!!.movies.map { it.movie.movieData }
-            moviesAdapter.setItems(movies, StashDiffCallback)
-        } else {
-            mAdapter.clear(MOVIE_POS)
-        }
+        groupsRowManager.setItems(sceneData!!.groups.map { it.group.groupData })
 
         if (sceneData!!.galleries.isNotEmpty()) {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
@@ -425,12 +422,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             ContextCompat.getColor(requireActivity(), R.color.default_card_background)
 
         // Hook up transition element.
-        val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
-        sharedElementHelper.setSharedElementEnterTransition(
-            activity,
-            SceneDetailsActivity.SHARED_ELEMENT_NAME,
-        )
-        detailsPresenter.setListener(sharedElementHelper)
+//        val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
+//        sharedElementHelper.setSharedElementEnterTransition(
+//            activity,
+//            SceneDetailsActivity.SHARED_ELEMENT_NAME,
+//        )
+//        detailsPresenter.setListener(sharedElementHelper)
         detailsPresenter.isParticipatingEntranceTransition = true
 
         detailsPresenter.onActionClickedListener =
@@ -446,14 +443,14 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     ) {
                         val intent = Intent(requireActivity(), PlaybackActivity::class.java)
                         intent.putExtra(
-                            SceneDetailsActivity.MOVIE,
+                            Constants.SCENE_ARG,
                             Scene.fromFullSceneData(sceneData!!),
                         )
                         if (action.id == ACTION_RESUME_SCENE ||
                             action.id == ACTION_TRANSCODE_RESUME_SCENE ||
                             action.id == ACTION_DIRECT_PLAY_RESUME_SCENE
                         ) {
-                            intent.putExtra(POSITION_ARG, position)
+                            intent.putExtra(Constants.POSITION_ARG, position)
                         }
                         if (action.id == ACTION_TRANSCODE_RESUME_SCENE) {
                             intent.putExtra(FORCE_TRANSCODE, true)
@@ -485,6 +482,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     when (action) {
                         StashAction.ADD_TAG -> DataType.TAG
                         StashAction.ADD_PERFORMER -> DataType.PERFORMER
+                        StashAction.ADD_GROUP -> DataType.GROUP
                         StashAction.SET_STUDIO -> DataType.STUDIO
                         StashAction.CREATE_MARKER -> {
                             intent.putExtra(
@@ -496,7 +494,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
                         else -> throw RuntimeException("Unsupported search for type $action")
                     }
-                intent.putExtra("dataType", dataType.name)
+                intent.putDataType(dataType)
                 intent.putExtra(SearchForFragment.ID_KEY, action.id)
                 resultLauncher.launch(intent)
             } else if (action == StashAction.FORCE_TRANSCODE) {
@@ -532,17 +530,22 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupPlayActionsAdapter() {
-        if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
-            playActionsAdapter.set(
-                0,
-                Action(ACTION_PLAY_SCENE, resources.getString(R.string.play_scene)),
-            )
-            playActionsAdapter.clear(1)
+        if (sceneData!!.files.isNotEmpty()) {
+            val serverPreferences = server.serverPreferences
+            if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
+                playActionsAdapter.set(
+                    0,
+                    Action(ACTION_PLAY_SCENE, resources.getString(R.string.play_scene)),
+                )
+                playActionsAdapter.clear(1)
+            } else {
+                playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, getString(R.string.resume)))
+                // Force focus to move to Resume
+                playActionsAdapter.clear(1)
+                playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, getString(R.string.restart)))
+            }
         } else {
-            playActionsAdapter.set(0, Action(ACTION_RESUME_SCENE, getString(R.string.resume)))
-            // Force focus to move to Resume
-            playActionsAdapter.clear(1)
-            playActionsAdapter.set(1, Action(ACTION_PLAY_SCENE, getString(R.string.restart)))
+            playActionsAdapter.clear()
         }
     }
 
@@ -777,6 +780,35 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         }
     }
 
+    private inner class GroupLongClickCallBack : DetailsLongClickCallBack<GroupData> {
+        override fun onItemLongClick(
+            context: Context,
+            item: GroupData,
+            popUpItem: StashPresenter.PopUpItem,
+        ) {
+            if (popUpItem == REMOVE_POPUP_ITEM) {
+                viewLifecycleOwner.lifecycleScope.launch(
+                    CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception setting groups", ex)
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to remove group: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    },
+                ) {
+                    if (groupsRowManager.remove(item)) {
+                        Toast.makeText(
+                            requireContext(),
+                            "Removed group '${item.name}' from scene",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
     private inner class MarkerLongClickCallBack : StashPresenter.LongClickCallBack<MarkerData> {
         override fun getPopUpItems(
             context: Context,
@@ -795,7 +827,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         ) {
             when (popUpItem.id) {
                 177L -> {
-                    val intent = Intent(context, MarkerActivity::class.java)
+                    val intent = Intent(context, DataTypeActivity::class.java)
+                    intent.putDataType(DataType.MARKER)
                     intent.putExtra("marker", Marker(item))
                     context.startActivity(intent)
                 }
@@ -897,7 +930,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     }
 
     companion object {
-        private const val TAG = "VideoDetailsFragment"
+        private const val TAG = "SceneDetailsFragment"
 
         private const val ACTION_PLAY_SCENE = 1L
         private const val ACTION_RESUME_SCENE = 2L
@@ -907,7 +940,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val DETAIL_THUMB_WIDTH = ScenePresenter.CARD_WIDTH
         private const val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
 
-        const val POSITION_ARG = "position"
         const val POSITION_RESULT_ARG = "position.result"
         const val FORCE_TRANSCODE = "forceTranscode"
         const val FORCE_DIRECT_PLAY = "forceDirectPlay"
@@ -915,8 +947,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         // Row order
         private const val DETAILS_POS = 1
         private const val MARKER_POS = DETAILS_POS + 1
-        private const val MOVIE_POS = MARKER_POS + 1
-        private const val STUDIO_POS = MOVIE_POS + 1
+        private const val GROUP_POS = MARKER_POS + 1
+        private const val STUDIO_POS = GROUP_POS + 1
         private const val PERFORMER_POS = STUDIO_POS + 1
         private const val TAG_POS = PERFORMER_POS + 1
         private const val GALLERY_POS = TAG_POS + 1
@@ -926,7 +958,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val O_COUNTER_POS = 1
         private const val ADD_TAG_POS = O_COUNTER_POS + 1
         private const val ADD_PERFORMER_POS = ADD_TAG_POS + 1
-        private const val CREATE_MARKER_POS = ADD_PERFORMER_POS + 1
+        private const val ADD_GROUP_POS = ADD_PERFORMER_POS + 1
+        private const val CREATE_MARKER_POS = ADD_GROUP_POS + 1
         private const val SET_STUDIO_POS = CREATE_MARKER_POS + 1
         private const val FORCE_TRANSCODE_POS = SET_STUDIO_POS + 1
         private const val FORCE_DIRECT_PLAY_POS = FORCE_TRANSCODE_POS + 1

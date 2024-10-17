@@ -8,10 +8,10 @@ import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
-import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.OrientationCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
@@ -62,13 +62,13 @@ private val SceneFilterOptions =
             { it.director },
             { filter, value -> filter.copy(director = value) },
         ),
-        FilterOption<SceneFilterType, MultiCriterionInput>(
-            "movies",
-            R.string.stashapp_movies,
-            DataType.MOVIE,
-            MultiCriterionInput::class,
-            { it.movies },
-            { filter, value -> filter.copy(movies = value) },
+        FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
+            "groups",
+            R.string.stashapp_groups,
+            DataType.GROUP,
+            HierarchicalMultiCriterionInput::class,
+            { it.groups },
+            { filter, value -> filter.copy(groups = value) },
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             "o_counter",
@@ -768,9 +768,25 @@ private val StudioFilterOptions =
         ),
     )
 
-private val MovieFilterOptions =
+private val GroupFilterOptions =
     listOf(
-        FilterOption<MovieFilterType, DateCriterionInput>(
+        FilterOption<GroupFilterType, HierarchicalMultiCriterionInput>(
+            "containing_groups",
+            R.string.stashapp_containing_groups,
+            DataType.GROUP,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.containing_groups },
+            { filter, value -> filter.copy(containing_groups = value) },
+        ),
+        FilterOption<GroupFilterType, IntCriterionInput>(
+            "containing_group_count",
+            R.string.stashapp_containing_group_count,
+            null,
+            IntCriterionInput::class,
+            { it.containing_group_count },
+            { filter, value -> filter.copy(containing_group_count = value) },
+        ),
+        FilterOption<GroupFilterType, DateCriterionInput>(
             "date",
             R.string.stashapp_date,
             null,
@@ -778,7 +794,7 @@ private val MovieFilterOptions =
             { filter -> filter.date },
             { filter, value -> filter.copy(date = value) },
         ),
-        FilterOption<MovieFilterType, StringCriterionInput>(
+        FilterOption<GroupFilterType, StringCriterionInput>(
             "director",
             R.string.stashapp_director,
             null,
@@ -786,7 +802,7 @@ private val MovieFilterOptions =
             { it.director },
             { filter, value -> filter.copy(director = value) },
         ),
-        FilterOption<MovieFilterType, StringCriterionInput>(
+        FilterOption<GroupFilterType, StringCriterionInput>(
             "name",
             R.string.stashapp_name,
             null,
@@ -794,7 +810,7 @@ private val MovieFilterOptions =
             { it.name },
             { filter, value -> filter.copy(name = value) },
         ),
-        FilterOption<MovieFilterType, MultiCriterionInput>(
+        FilterOption<GroupFilterType, MultiCriterionInput>(
             "performers",
             R.string.stashapp_performers,
             DataType.PERFORMER,
@@ -802,7 +818,7 @@ private val MovieFilterOptions =
             { it.performers },
             { filter, value -> filter.copy(performers = value) },
         ),
-        FilterOption<MovieFilterType, IntCriterionInput>(
+        FilterOption<GroupFilterType, IntCriterionInput>(
             "rating100",
             R.string.stashapp_rating,
             null,
@@ -810,13 +826,29 @@ private val MovieFilterOptions =
             { it.rating100 },
             { filter, value -> filter.copy(rating100 = value) },
         ),
-        FilterOption<MovieFilterType, HierarchicalMultiCriterionInput>(
+        FilterOption<GroupFilterType, HierarchicalMultiCriterionInput>(
             "studios",
             R.string.stashapp_studios,
             DataType.STUDIO,
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.studios },
             { filter, value -> filter.copy(studios = value) },
+        ),
+        FilterOption<GroupFilterType, HierarchicalMultiCriterionInput>(
+            "sub_groups",
+            R.string.stashapp_sub_groups,
+            DataType.GROUP,
+            HierarchicalMultiCriterionInput::class,
+            { filter -> filter.sub_groups },
+            { filter, value -> filter.copy(sub_groups = value) },
+        ),
+        FilterOption<GroupFilterType, IntCriterionInput>(
+            "sub_group_count",
+            R.string.stashapp_sub_group_count,
+            null,
+            IntCriterionInput::class,
+            { it.sub_group_count },
+            { filter, value -> filter.copy(sub_group_count = value) },
         ),
     )
 
@@ -829,7 +861,7 @@ val FilterOptions =
         DataType.GALLERY to GalleryFilterOptions,
         DataType.TAG to TagFilterOptions,
         DataType.STUDIO to StudioFilterOptions,
-        DataType.MOVIE to MovieFilterOptions,
+        DataType.GROUP to GroupFilterOptions,
     )
 
 fun getFilterOptions(dataType: DataType): List<FilterOption<out StashDataFilter, out Any>> {

@@ -4,8 +4,8 @@ import androidx.annotation.StringRes
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
-import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
@@ -14,9 +14,9 @@ import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
+import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.presenters.ImagePresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
-import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
@@ -57,24 +57,24 @@ enum class DataType(
         R.string.stashapp_scene,
         R.string.stashapp_scenes,
         R.string.fa_circle_play,
-        SortAndDirection("date", SortDirectionEnum.DESC),
-        SCENE_SORT_OPTIONS,
+        SortAndDirection(SortOption.DATE, SortDirectionEnum.DESC),
+        SortOption.SCENE_SORT_OPTIONS,
     ),
-    MOVIE(
-        FilterMode.MOVIES,
-        R.string.stashapp_movie,
-        R.string.stashapp_movies,
+    GROUP(
+        FilterMode.GROUPS,
+        R.string.stashapp_group,
+        R.string.stashapp_groups,
         R.string.fa_film,
         SortAndDirection.NAME_ASC,
-        MOVIE_SORT_OPTIONS,
+        SortOption.MOVIE_SORT_OPTIONS,
     ),
     MARKER(
         FilterMode.SCENE_MARKERS,
         R.string.stashapp_markers,
         R.string.stashapp_markers,
         R.string.fa_location_dot,
-        SortAndDirection("created_at", SortDirectionEnum.DESC),
-        MARKER_SORT_OPTIONS,
+        SortAndDirection(SortOption.CREATED_AT, SortDirectionEnum.DESC),
+        SortOption.MARKER_SORT_OPTIONS,
     ),
     PERFORMER(
         FilterMode.PERFORMERS,
@@ -82,7 +82,7 @@ enum class DataType(
         R.string.stashapp_performers,
         R.string.fa_user,
         SortAndDirection.NAME_ASC,
-        PERFORMER_SORT_OPTIONS,
+        SortOption.PERFORMER_SORT_OPTIONS,
     ),
     STUDIO(
         FilterMode.STUDIOS,
@@ -90,7 +90,7 @@ enum class DataType(
         R.string.stashapp_studios,
         R.string.fa_video,
         SortAndDirection.NAME_ASC,
-        STUDIO_SORT_OPTIONS,
+        SortOption.STUDIO_SORT_OPTIONS,
     ),
     TAG(
         FilterMode.TAGS,
@@ -98,7 +98,7 @@ enum class DataType(
         R.string.stashapp_tags,
         R.string.fa_tag,
         SortAndDirection.NAME_ASC,
-        TAG_SORT_OPTIONS,
+        SortOption.TAG_SORT_OPTIONS,
     ),
     IMAGE(
         FilterMode.IMAGES,
@@ -106,7 +106,7 @@ enum class DataType(
         R.string.stashapp_images,
         R.string.fa_image,
         SortAndDirection.PATH_ASC,
-        IMAGE_SORT_OPTIONS,
+        SortOption.IMAGE_SORT_OPTIONS,
     ),
     GALLERY(
         FilterMode.GALLERIES,
@@ -114,7 +114,7 @@ enum class DataType(
         R.string.stashapp_galleries,
         R.string.fa_images,
         SortAndDirection.PATH_ASC,
-        GALLERY_SORT_OPTIONS,
+        SortOption.GALLERY_SORT_OPTIONS,
     ),
     ;
 
@@ -124,7 +124,7 @@ enum class DataType(
         get() =
             when (this) {
                 SCENE -> ScenePresenter.CARD_WIDTH
-                MOVIE -> MoviePresenter.CARD_WIDTH
+                GROUP -> GroupPresenter.CARD_WIDTH
                 MARKER -> MarkerPresenter.CARD_WIDTH
                 PERFORMER -> PerformerPresenter.CARD_WIDTH
                 STUDIO -> StudioPresenter.CARD_WIDTH
@@ -137,7 +137,7 @@ enum class DataType(
         get() =
             when (this) {
                 SCENE -> SceneFilterType::class
-                MOVIE -> MovieFilterType::class
+                GROUP -> GroupFilterType::class
                 MARKER -> SceneMarkerFilterType::class
                 PERFORMER -> PerformerFilterType::class
                 STUDIO -> StudioFilterType::class

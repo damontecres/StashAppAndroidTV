@@ -10,6 +10,12 @@ mutation SceneUpdate($input: SceneUpdateInput!) {
     studio {
       ...StudioData
     }
+    groups {
+      scene_index
+      group{
+        ...GroupData
+      }
+    }
     rating100
   }
 }

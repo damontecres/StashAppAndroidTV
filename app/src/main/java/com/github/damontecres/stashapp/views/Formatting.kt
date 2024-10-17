@@ -5,9 +5,11 @@ import android.os.Build
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.util.StashServer
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.Locale
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -70,6 +72,9 @@ fun parseTimeToString(ts: Any?): String? {
 val String.fileNameFromPath
     get() = this.replace(Regex("""^.*[\\/]"""), "")
 
+/**
+ * Get the [String] representation for a [CriterionModifier]
+ */
 fun CriterionModifier.getString(context: Context): String =
     when (this) {
         CriterionModifier.EQUALS -> context.getString(R.string.stashapp_criterion_modifier_equals)
@@ -87,3 +92,35 @@ fun CriterionModifier.getString(context: Context): String =
         CriterionModifier.NOT_BETWEEN -> context.getString(R.string.stashapp_criterion_modifier_not_between)
         CriterionModifier.UNKNOWN__ -> "Unknown"
     }
+
+private val abbrevSuffixes = listOf("", "K", "M", "B")
+
+/**
+ * Format a number by abbreviation, eg 5533 => 5.5K
+ */
+fun abbreviateCounter(counter: Int): String {
+    var unit = 0
+    var count = counter.toDouble()
+    while (count >= 1000 && unit + 1 < abbrevSuffixes.size) {
+        count /= 1000
+        unit++
+    }
+    return String.format(Locale.getDefault(), "%.1f%s", count, abbrevSuffixes[unit])
+}
+
+/**
+ * Formats a number which may abbreviate it or add commas, etc
+ *
+ * @param number the number to format
+ * @param abbreviateCounters whether to use the server-side abbreviateCounters settings
+ */
+fun formatNumber(
+    number: Int,
+    abbreviateCounters: Boolean = StashServer.requireCurrentServer().serverPreferences.abbreviateCounters,
+): String {
+    return if (abbreviateCounters) {
+        abbreviateCounter(number)
+    } else {
+        java.text.NumberFormat.getNumberInstance().format(number)
+    }
+}

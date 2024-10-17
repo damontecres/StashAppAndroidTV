@@ -18,6 +18,7 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.getRandomSort
@@ -54,12 +55,11 @@ class SortButtonManager(
                 }.sortedBy { it.second }
         val resolvedNames = sortOptions.map { it.second }
 
-        val isRandom = sortAndDirection.sort.startsWith("random")
         val index =
-            if (isRandom) {
-                sortOptions.map { it.first }.indexOf("random")
+            if (sortAndDirection.isRandom) {
+                sortOptions.map { it.first }.indexOf(SortOption.RANDOM.key)
             } else {
-                sortOptions.map { it.first }.indexOf(sortAndDirection.sort)
+                sortOptions.map { it.first }.indexOf(sortAndDirection.sort.key)
             }
 
         val resolvedName = resolvedNames[index]
@@ -84,7 +84,7 @@ class SortButtonManager(
             listPopUp.dismiss()
 
             val currentDirection = sortAndDirection.direction
-            val currentKey = sortAndDirection.sort
+            val currentKey = sortAndDirection.sort.key
             val newDirection =
                 if (newSortBy == currentKey) {
                     currentDirection.toggle()
@@ -93,12 +93,12 @@ class SortButtonManager(
                 }
             val resolvedNewSortBy =
                 if (newSortBy.startsWith("random")) {
-                    getRandomSort()
+                    "random_" + getRandomSort()
                 } else {
                     newSortBy
                 }
 
-            val newSortAndDirection = SortAndDirection(resolvedNewSortBy, newDirection)
+            val newSortAndDirection = SortAndDirection.create(resolvedNewSortBy, newDirection)
             Log.v(TAG, "newSortAndDirection=$newSortAndDirection")
             newSortCallback(newSortAndDirection)
             setUpSortButton(sortButton, dataType, newSortAndDirection)
@@ -106,7 +106,7 @@ class SortButtonManager(
 
         sortButton.setOnClickListener {
             val currentDirection = sortAndDirection.direction
-            val currentKey = sortAndDirection.sort
+            val currentKey = sortAndDirection.sort.key
             val currentIndex = sortOptions.map { it.first }.indexOf(currentKey)
             adapter.currentIndex = currentIndex
             adapter.currentDirection = currentDirection

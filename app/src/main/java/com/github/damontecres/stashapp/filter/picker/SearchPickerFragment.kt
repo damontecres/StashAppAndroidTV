@@ -19,13 +19,13 @@ import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -287,7 +287,7 @@ class SearchPickerFragment(
                 DataType.PERFORMER,
                 DataType.STUDIO,
                 DataType.GALLERY,
-                DataType.MOVIE,
+                DataType.GROUP,
             )
     }
 }

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
+import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
@@ -23,6 +24,7 @@ import com.github.damontecres.stashapp.util.experimentalFeaturesEnabled
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.views.formatNumber
 import kotlinx.coroutines.launch
 
 /**
@@ -56,10 +58,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         )
     }
 
-    override fun onCreateActions(
-        actions: MutableList<GuidedAction>,
-        savedInstanceState: Bundle?,
-    ) {
+    private fun updateActions(actions: MutableList<GuidedAction>) {
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(FILTER_NAME)
@@ -92,11 +91,14 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .title(getString(R.string.stashapp_filters))
                 .build(),
         )
+        val count = viewModel.resultCount.value ?: -1
+        val countStr = formatNumber(count, viewModel.abbreviateCounters)
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(SUBMIT)
                 .hasNext(true)
                 .title("Submit without saving")
+                .description(if (count >= 0) "$countStr results" else "Querying...")
                 .build(),
         )
         if (experimental) {
@@ -119,6 +121,40 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                     .description(getString(R.string.save_and_submit_not_enabled))
                     .build(),
             )
+        }
+    }
+
+    override fun onCreateActions(
+        actions: MutableList<GuidedAction>,
+        savedInstanceState: Bundle?,
+    ) {
+        updateActions(actions)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val refreshActions = mutableListOf<GuidedAction>()
+        updateActions(refreshActions)
+        actions = refreshActions
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        if (savedInstanceState == null) {
+            viewModel.updateCount()
+            viewModel.resultCount.observe(viewLifecycleOwner) { count ->
+                val countStr = formatNumber(count, viewModel.abbreviateCounters)
+                if (count >= 0) {
+                    findActionById(SUBMIT).description = "$countStr results"
+                    notifyActionChanged(findActionPositionById(SUBMIT))
+                } else {
+                    findActionById(SUBMIT).description = "Querying..."
+                    notifyActionChanged(findActionPositionById(SUBMIT))
+                }
+            }
         }
     }
 

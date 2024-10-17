@@ -10,12 +10,12 @@ import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
+import com.github.damontecres.stashapp.api.FindGroupQuery
+import com.github.damontecres.stashapp.api.FindGroupsQuery
 import com.github.damontecres.stashapp.api.FindImageQuery
 import com.github.damontecres.stashapp.api.FindImagesQuery
 import com.github.damontecres.stashapp.api.FindJobQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
-import com.github.damontecres.stashapp.api.FindMovieQuery
-import com.github.damontecres.stashapp.api.FindMoviesQuery
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.FindSavedFiltersQuery
@@ -27,22 +27,21 @@ import com.github.damontecres.stashapp.api.GetSceneQuery
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.JobData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.FindJobInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.JobStatus
-import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
@@ -50,6 +49,7 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.JobResult
+import com.github.damontecres.stashapp.data.StashData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -197,27 +197,27 @@ class QueryEngine(
         return tags.orEmpty()
     }
 
-    suspend fun findMovies(
+    suspend fun findGroups(
         findFilter: FindFilterType? = null,
-        movieFilter: MovieFilterType? = null,
-        movieIds: List<String>? = null,
+        groupFilter: GroupFilterType? = null,
+        groupIds: List<String>? = null,
         useRandom: Boolean = true,
-    ): List<MovieData> {
+    ): List<GroupData> {
         val query =
             client.query(
-                FindMoviesQuery(
+                FindGroupsQuery(
                     filter = updateFilter(findFilter, useRandom),
-                    movie_filter = movieFilter,
-                    ids = movieIds,
+                    group_filter = groupFilter,
+                    ids = groupIds,
                 ),
             )
-        val tags = executeQuery(query).data?.findMovies?.movies?.map { it.movieData }
+        val tags = executeQuery(query).data?.findGroups?.groups?.map { it.groupData }
         return tags.orEmpty()
     }
 
-    suspend fun getMovie(movieId: String): MovieData? {
-        val query = client.query(FindMovieQuery(movieId))
-        return executeQuery(query).data?.findMovie?.movieData
+    suspend fun getGroup(groupId: String): GroupData? {
+        val query = client.query(FindGroupQuery(groupId))
+        return executeQuery(query).data?.findGroup?.groupData
     }
 
     suspend fun findMarkers(
@@ -303,7 +303,7 @@ class QueryEngine(
             DataType.PERFORMER -> findPerformers(findFilter, useRandom = useRandom)
             DataType.TAG -> findTags(findFilter, useRandom = useRandom)
             DataType.STUDIO -> findStudios(findFilter, useRandom = useRandom)
-            DataType.MOVIE -> findMovies(findFilter, useRandom = useRandom)
+            DataType.GROUP -> findGroups(findFilter, useRandom = useRandom)
             DataType.MARKER -> findMarkers(findFilter, useRandom = useRandom)
             DataType.IMAGE -> findImages(findFilter, useRandom = useRandom)
             DataType.GALLERY -> findGalleries(findFilter, useRandom = useRandom)
@@ -325,7 +325,7 @@ class QueryEngine(
             DataType.PERFORMER -> findPerformers(performerIds = ids)
             DataType.TAG -> getTags(ids)
             DataType.STUDIO -> findStudios(studioIds = ids)
-            DataType.MOVIE -> findMovies(movieIds = ids)
+            DataType.GROUP -> findGroups(groupIds = ids)
             DataType.IMAGE -> findImages(ids = ids)
             DataType.GALLERY -> findGalleries(galleryIds = ids)
             DataType.MARKER -> throw UnsupportedOperationException("Cannot query markers by ID") // TODO: Unsupported by the server
@@ -393,7 +393,7 @@ class QueryEngine(
         return if (filter != null) {
             if (useRandom && filter.sort.getOrNull()?.startsWith("random") == true) {
                 Log.v(TAG, "Updating random filter")
-                filter.copy(sort = Optional.present(getRandomSort()))
+                filter.copy(sort = Optional.present("random_" + getRandomSort()))
             } else {
                 filter
             }

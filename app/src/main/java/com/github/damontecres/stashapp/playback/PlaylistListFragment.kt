@@ -22,8 +22,8 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.PlaylistItem
+import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.toPlayListItem
 import com.github.damontecres.stashapp.presenters.PlaylistItemPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
@@ -136,6 +136,10 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
             flow.collectLatest {
                 pagingAdapter.submitData(it)
             }
+        }
+        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            val count = pagingSource.getCount()
+            playlistTitleView.text = playlistTitleView.text.toString() + " ($count)"
         }
 
         mGridPresenter.onBindViewHolder(mGridViewHolder, pagingAdapter)

@@ -40,7 +40,10 @@
             android:theme="@style/NoTitleTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
@@ -48,10 +51,6 @@
             android:name=".MainActivity"
             android:exported="false"
             android:launchMode="singleTop" />
-        <activity
-            android:name=".SceneDetailsActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".playback.PlaybackActivity"
             android:exported="false"
@@ -65,10 +64,6 @@
             android:exported="false" />
         <activity
             android:name=".DataTypeActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".SearchActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
@@ -95,10 +90,6 @@
             android:name=".setup.SetupActivity"
             android:exported="false"
             android:theme="@style/Theme.StashAppAndroidTV.GuidedStep" />
-        <activity
-            android:name=".MarkerActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".UpdateChangelogActivity"
             android:exported="false"

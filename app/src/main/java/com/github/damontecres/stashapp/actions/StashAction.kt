@@ -15,11 +15,12 @@ enum class StashAction(val id: Long, val actionName: String) {
     SET_STUDIO(7L, "Set Studio"),
     SHIFT_MARKERS(8L, "Shift marker timestamp"),
     ADD_GALLERY(9L, "Add Gallery"),
+    ADD_GROUP(10L, "Add Group"),
     ;
 
     companion object {
         // Actions that require searching for something
         val SEARCH_FOR_ACTIONS =
-            setOf(ADD_TAG, ADD_PERFORMER, CREATE_MARKER, SET_STUDIO, ADD_GALLERY)
+            setOf(ADD_TAG, ADD_PERFORMER, CREATE_MARKER, SET_STUDIO, ADD_GALLERY, ADD_GROUP)
     }
 }

@@ -2,8 +2,8 @@ package com.github.damontecres.stashapp.util
 
 import androidx.leanback.widget.DiffCallback
 import androidx.recyclerview.widget.DiffUtil
-import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.PlaylistItem
+import com.github.damontecres.stashapp.data.StashData
 
 object StashComparator : DiffUtil.ItemCallback<StashData>() {
     override fun areItemsTheSame(

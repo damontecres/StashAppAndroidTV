@@ -8,7 +8,6 @@ import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.RANDOM_SORT_OPTION
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
@@ -40,12 +39,7 @@ class CreateFindFilterFragment(
                 }
                 .sortedBy { it.title.toString() }
 
-        val currSortOption =
-            if (currFindFilter.sortAndDirection?.isRandom == true) {
-                RANDOM_SORT_OPTION
-            } else {
-                dataType.sortOptions.firstOrNull { it.key == currFindFilter.sortAndDirection?.sort }
-            }
+        val currSortOption = currFindFilter.sortAndDirection?.sort
         val sortDesc =
             if (currSortOption != null) {
                 getString(currSortOption.nameStringId)
@@ -97,7 +91,7 @@ class CreateFindFilterFragment(
                 .title(getString(R.string.stashapp_component_tagger_noun_query))
                 .descriptionEditable(true)
                 .descriptionEditInputType(InputType.TYPE_CLASS_TEXT)
-                .editDescription(currFindFilter.q)
+                .description(currFindFilter.q)
                 .build(),
         )
 
@@ -142,6 +136,7 @@ class CreateFindFilterFragment(
                     currFindFilter
                 }
             viewModel.findFilter.value = newValue
+            viewModel.updateCount()
             parentFragmentManager.popBackStack()
         } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
             parentFragmentManager.popBackStack()
@@ -157,7 +152,7 @@ class CreateFindFilterFragment(
     }
 
     companion object {
-        private const val TAG = "SortPickerFragment"
+        private const val TAG = "CreateFindFilterFragment"
         private const val DIRECTION = 2L
         private const val SORT = 3L
         private const val QUERY = 4L

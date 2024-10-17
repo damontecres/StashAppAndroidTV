@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.TextView
+import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.TabbedGridTitleView
@@ -18,7 +20,7 @@ import com.google.android.material.tabs.TabLayout
 /**
  * A [Fragment] that displays multiple tabs
  */
-abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
+abstract class TabbedFragment(val tabKey: String) : Fragment(R.layout.tabbed_grid_view) {
     protected val viewModel by activityViewModels<TabbedGridViewModel>()
 
     private lateinit var titleView: TabbedGridTitleView
@@ -31,6 +33,12 @@ abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val rememberTab =
+            preferences.getBoolean(getString(R.string.pref_key_ui_remember_tab), false)
+        val rememberTabKey = getString(R.string.pref_key_ui_remember_tab) + ".$tabKey"
+        val rememberedTabIndex = if (rememberTab) preferences.getInt(rememberTabKey, 0) else 0
 
         titleView = view.findViewById(R.id.browse_title_group)
         val gridTitle = view.findViewById<TextView>(R.id.grid_title)
@@ -64,6 +72,11 @@ abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
                         if (tab == tabLayout.getTabAt(i)) {
                             Log.v(TAG, "onTabSelected: currentTabPosition=$i")
                             currentTabPosition = i
+                            if (rememberTab) {
+                                preferences.edit {
+                                    putInt(rememberTabKey, i)
+                                }
+                            }
                         }
                     }
                 }
@@ -77,6 +90,13 @@ abstract class TabbedFragment : Fragment(R.layout.tabbed_grid_view) {
                 }
             },
         )
+
+        if (rememberTab) {
+            val tabIndex = if (rememberedTabIndex < tabLayout.tabCount) rememberedTabIndex else 0
+            val tab = tabLayout.getTabAt(tabIndex)
+            tabLayout.selectTab(tab, true)
+            tab?.view?.requestFocus()
+        }
     }
 
 //    override fun onStart() {

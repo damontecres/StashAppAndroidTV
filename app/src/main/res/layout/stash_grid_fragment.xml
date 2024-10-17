@@ -61,5 +61,15 @@
             android:visibility="gone"
             tools:visibility="visible"
             />
+
+        <TextView
+            android:id="@+id/no_results_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:gravity="center"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/stashapp_performer_tagger_no_results_found"
+            tools:visibility="visible" />
     </androidx.leanback.widget.BrowseFrameLayout>
 </LinearLayout>

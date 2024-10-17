@@ -84,6 +84,11 @@ object Constants {
     const val TAG = "Constants"
     private const val OK_HTTP_CACHE_DIR = "okhttpcache"
 
+    const val ARG = "arg"
+    const val SCENE_ARG = "$ARG.scene"
+    const val SCENE_ID_ARG = "$ARG.scene.id"
+    const val POSITION_ARG = "$ARG.position"
+
     fun getNetworkCache(context: Context): Cache {
         val cacheSize =
             PreferenceManager.getDefaultSharedPreferences(context)
@@ -426,12 +431,12 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                 } else {
                     null
                 },
-            movies =
-                this.movies.map {
-                    SlimSceneData.Movie(
-                        SlimSceneData.Movie1(
-                            it.movie.movieData.id,
-                            it.movie.movieData.name,
+            groups =
+                this.groups.map {
+                    SlimSceneData.Group(
+                        SlimSceneData.Group1(
+                            it.group.groupData.id,
+                            it.group.groupData.name,
                         ),
                     )
                 },
@@ -682,8 +687,8 @@ fun VideoFileData.resolutionName(): CharSequence {
 /**
  * Gets a sort by string for a random sort
  */
-fun getRandomSort(): String {
-    return "random_" + Random.nextInt(1e8.toInt()).toString()
+fun getRandomSort(): Int {
+    return Random.nextInt(1e8.toInt())
 }
 
 val ImageData.isImageClip: Boolean
@@ -735,4 +740,42 @@ fun experimentalFeaturesEnabled(): Boolean {
     val context = StashApplication.getApplication()
     return PreferenceManager.getDefaultSharedPreferences(context)
         .getBoolean(context.getString(R.string.pref_key_experimental_features), false)
+}
+
+fun getUiTabs(
+    context: Context,
+    dataType: DataType,
+): Set<String> {
+    val prefKey: Int
+    val defaultArrayKey: Int
+    when (dataType) {
+        DataType.PERFORMER -> {
+            prefKey = R.string.pref_key_ui_performer_tabs
+            defaultArrayKey = R.array.performer_tabs
+        }
+        DataType.GALLERY -> {
+            prefKey = R.string.pref_key_ui_gallery_tabs
+            defaultArrayKey = R.array.gallery_tabs
+        }
+
+        DataType.GROUP -> {
+            prefKey = R.string.pref_key_ui_group_tabs
+            defaultArrayKey = R.array.group_tabs
+        }
+
+        DataType.STUDIO -> {
+            prefKey = R.string.pref_key_ui_studio_tabs
+            defaultArrayKey = R.array.studio_tabs
+        }
+
+        DataType.TAG -> {
+            prefKey = R.string.pref_key_ui_tag_tabs
+            defaultArrayKey = R.array.tag_tabs
+        }
+
+        else -> throw UnsupportedOperationException("$dataType not supported")
+    }
+    val defaultValues = context.resources.getStringArray(defaultArrayKey).toSet()
+    return PreferenceManager.getDefaultSharedPreferences(context)
+        .getStringSet(context.getString(prefKey), defaultValues)!!
 }

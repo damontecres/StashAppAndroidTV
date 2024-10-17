@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.leanback.widget.ClassPresenterSelector
 import com.apollographql.apollo.api.Optional
@@ -15,12 +14,13 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.ImageFilterType
-import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
@@ -30,13 +30,14 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getParcelable
+import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 
 /**
  * Main [TabbedFragment] for a performers which includes [PerformerDetailsFragment] and other tabs
  */
-class PerformerFragment : TabbedFragment() {
+class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
     private lateinit var performer: Performer
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,117 +53,92 @@ class PerformerFragment : TabbedFragment() {
     }
 
     override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
-        return PagerAdapter(performer, fm)
-    }
-
-    private class PagerAdapter(
-        private val performer: Performer,
-        fm: FragmentManager,
-    ) :
-        StashFragmentPagerAdapter(
-                listOf(
-                    PagerEntry("Details"),
-                    PagerEntry(DataType.SCENE),
-                    PagerEntry(DataType.GALLERY),
-                    PagerEntry(DataType.IMAGE),
-                    PagerEntry(DataType.MOVIE),
-                    PagerEntry(DataType.TAG),
-                    PagerEntry("Appears With"),
+        val performers =
+            Optional.present(
+                MultiCriterionInput(
+                    value = Optional.present(listOf(performer.id)),
+                    modifier = CriterionModifier.INCLUDES_ALL,
                 ),
-                fm,
-            ) {
-        override fun getFragment(position: Int): Fragment {
-            val performers =
-                Optional.present(
-                    MultiCriterionInput(
-                        value = Optional.present(listOf(performer.id)),
-                        modifier = CriterionModifier.INCLUDES_ALL,
-                    ),
-                )
+            )
 
-            val fragment =
-                when (position) {
-                    0 -> {
-                        PerformerDetailsFragment(performer)
-                    }
-
-                    1 -> {
-                        StashGridFragment(
-                            dataType = DataType.SCENE,
-                            objectFilter = SceneFilterType(performers = performers),
-                        )
-                    }
-
-                    2 -> {
-                        StashGridFragment(
-                            dataType = DataType.GALLERY,
-                            objectFilter = GalleryFilterType(performers = performers),
-                        )
-                    }
-
-                    3 -> {
-                        StashGridFragment(
-                            dataType = DataType.IMAGE,
-                            objectFilter = ImageFilterType(performers = performers),
-                        ).withImageGridClickListener()
-                    }
-
-                    4 -> {
-                        StashGridFragment(
-                            dataType = DataType.MOVIE,
-                            objectFilter = MovieFilterType(performers = performers),
-                        )
-                    }
-
-                    5 -> {
-                        val presenter =
-                            ClassPresenterSelector()
-                                .addClassPresenter(
-                                    TagData::class.java,
-                                    TagPresenter(PerformersWithTagLongClickCallback()),
-                                )
-                        val fragment =
-                            StashGridFragment(
-                                FilterArgs(
-                                    dataType = DataType.TAG,
-                                    override = DataSupplierOverride.PerformerTags(performer.id),
-                                ),
+        val items =
+            listOf(
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
+                    PerformerDetailsFragment(performer)
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
+                    StashGridFragment(
+                        dataType = DataType.SCENE,
+                        objectFilter = SceneFilterType(performers = performers),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY) {
+                    StashGridFragment(
+                        dataType = DataType.GALLERY,
+                        objectFilter = GalleryFilterType(performers = performers),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
+                    StashGridFragment(
+                        dataType = DataType.IMAGE,
+                        objectFilter = ImageFilterType(performers = performers),
+                    ).withImageGridClickListener()
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.GROUP) {
+                    StashGridFragment(
+                        dataType = DataType.GROUP,
+                        objectFilter = GroupFilterType(performers = performers),
+                    )
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
+                    val presenter =
+                        ClassPresenterSelector()
+                            .addClassPresenter(
+                                TagData::class.java,
+                                TagPresenter(PerformersWithTagLongClickCallback()),
                             )
-                        fragment.presenterSelector = presenter
-                        fragment
-                    }
-
-                    6 -> {
-                        val presenter =
-                            ClassPresenterSelector()
-                                .addClassPresenter(
-                                    PerformerData::class.java,
-                                    PerformerPresenter(PerformTogetherLongClickCallback(performer)),
-                                )
-                        val fragment =
-                            StashGridFragment(
-                                dataType = DataType.PERFORMER,
-                                objectFilter =
-                                    PerformerFilterType(
-                                        performers =
-                                            Optional.present(
-                                                MultiCriterionInput(
-                                                    value = Optional.present(listOf(performer.id)),
-                                                    modifier = CriterionModifier.INCLUDES_ALL,
-                                                ),
+                    val fragment =
+                        StashGridFragment(
+                            FilterArgs(
+                                dataType = DataType.TAG,
+                                override = DataSupplierOverride.PerformerTags(performer.id),
+                            ),
+                        )
+                    fragment.presenterSelector = presenter
+                    fragment
+                },
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_appears_with)) {
+                    val presenter =
+                        ClassPresenterSelector()
+                            .addClassPresenter(
+                                PerformerData::class.java,
+                                PerformerPresenter(PerformTogetherLongClickCallback(performer)),
+                            )
+                    val fragment =
+                        StashGridFragment(
+                            dataType = DataType.PERFORMER,
+                            objectFilter =
+                                PerformerFilterType(
+                                    performers =
+                                        Optional.present(
+                                            MultiCriterionInput(
+                                                value = Optional.present(listOf(performer.id)),
+                                                modifier = CriterionModifier.INCLUDES_ALL,
                                             ),
-                                    ),
-                            )
-                        fragment.presenterSelector = presenter
-                        fragment
-                    }
-
-                    else -> {
-                        throw IllegalStateException()
-                    }
-                }
-            return fragment
-        }
+                                        ),
+                                ),
+                        )
+                    fragment.presenterSelector = presenter
+                    fragment
+                },
+                StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
+                    StashGridFragment(
+                        dataType = DataType.MARKER,
+                        objectFilter = SceneMarkerFilterType(performers = performers),
+                    )
+                },
+            ).filter { it.title in getUiTabs(requireContext(), DataType.PERFORMER) }
+        return StashFragmentPagerAdapter(items, fm)
     }
 
     private class PerformTogetherLongClickCallback(val performer: Performer) :

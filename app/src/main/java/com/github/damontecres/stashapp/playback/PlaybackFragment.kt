@@ -102,6 +102,7 @@ abstract class PlaybackFragment(
     protected lateinit var debugVideoTextView: TextView
     protected lateinit var debugAudioTextView: TextView
     protected lateinit var debugContainerTextView: TextView
+    protected lateinit var debugPlaylistTextView: TextView
     protected lateinit var oCounterButton: ImageButton
     protected lateinit var oCounterText: TextView
     private lateinit var moreOptionsButton: ImageButton
@@ -367,6 +368,7 @@ abstract class PlaybackFragment(
         debugVideoTextView = view.findViewById(R.id.debug_video)
         debugAudioTextView = view.findViewById(R.id.debug_audio)
         debugContainerTextView = view.findViewById(R.id.debug_container_format)
+        debugPlaylistTextView = view.findViewById(R.id.debug_playlist)
 
         if (manager.getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)) {
             debugView.visibility = View.VISIBLE

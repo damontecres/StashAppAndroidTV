@@ -11,25 +11,25 @@ import com.github.damontecres.stashapp.DataTypeActivity
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.GalleryFragment
 import com.github.damontecres.stashapp.ImageActivity
-import com.github.damontecres.stashapp.SceneDetailsActivity
-import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.POSITION_ARG
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Movie
+import com.github.damontecres.stashapp.data.Group
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Performer
+import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.toGallery
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.addToIntent
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
@@ -52,9 +52,9 @@ class StashItemViewClickListener(
         row: Row?,
     ) {
         if (item is SlimSceneData) {
-            val intent = Intent(context, SceneDetailsActivity::class.java)
+            val intent = Intent(context, DataTypeActivity::class.java)
             intent.putDataType(DataType.SCENE)
-            intent.putExtra(SceneDetailsActivity.MOVIE, item.id)
+            intent.putExtra(Constants.SCENE_ID_ARG, item.id)
             context.startActivity(intent)
         } else if (item is PerformerData) {
             val intent = Intent(context, DataTypeActivity::class.java)
@@ -70,19 +70,22 @@ class StashItemViewClickListener(
         } else if (item is StudioData) {
             val intent = Intent(context, DataTypeActivity::class.java)
             intent.putDataType(DataType.STUDIO)
-            intent.putExtra("studioId", item.id.toInt())
+            intent.putExtra("studioId", item.id)
             intent.putExtra("studioName", item.name)
             context.startActivity(intent)
-        } else if (item is MovieData) {
+        } else if (item is GroupData) {
             val intent = Intent(context, DataTypeActivity::class.java)
-            intent.putDataType(DataType.MOVIE)
-            intent.putExtra("movie", Movie(item))
+            intent.putDataType(DataType.GROUP)
+            intent.putExtra("group", Group(item))
             context.startActivity(intent)
         } else if (item is MarkerData) {
             val intent = Intent(context, PlaybackActivity::class.java)
             intent.putDataType(DataType.MARKER)
-            intent.putExtra(SceneDetailsActivity.MOVIE_ID, item.scene.videoSceneData.id)
-            intent.putExtra(POSITION_ARG, (item.seconds * 1000).toLong())
+            intent.putExtra(
+                Constants.SCENE_ARG,
+                Scene.fromVideoSceneData(item.scene.videoSceneData),
+            )
+            intent.putExtra(Constants.POSITION_ARG, (item.seconds * 1000).toLong())
             context.startActivity(intent)
         } else if (item is ImageData) {
             val intent = Intent(context, ImageActivity::class.java)

@@ -12,20 +12,20 @@ import com.github.damontecres.stashapp.util.getDataType
 class DataTypeActivity : FragmentActivity(R.layout.activity_main) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState == null) {
-            val dataType = intent.getDataType()
-            val fragment =
-                when (dataType) {
-                    DataType.TAG -> TagFragment()
-                    DataType.MOVIE -> MovieFragment()
-                    DataType.PERFORMER -> PerformerFragment()
-                    DataType.STUDIO -> StudioFragment()
-                    DataType.GALLERY -> GalleryFragment()
-                    else -> throw IllegalArgumentException(dataType.name)
-                }
-            supportFragmentManager.commit {
-                replace(android.R.id.content, fragment)
+        val dataType = intent.getDataType()
+        val fragment =
+            when (dataType) {
+                DataType.SCENE -> SceneDetailsFragment()
+                DataType.TAG -> TagFragment()
+                DataType.GROUP -> GroupFragment()
+                DataType.PERFORMER -> PerformerFragment()
+                DataType.STUDIO -> StudioFragment()
+                DataType.GALLERY -> GalleryFragment()
+                DataType.MARKER -> MarkerDetailsFragment()
+                DataType.IMAGE -> TODO()
             }
+        supportFragmentManager.commit {
+            replace(android.R.id.content, fragment)
         }
     }
 }

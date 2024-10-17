@@ -103,7 +103,7 @@ class HierarchicalMultiCriterionFragment(
             when (dataType) {
                 DataType.TAG -> getString(R.string.stashapp_include_sub_tags)
                 DataType.STUDIO -> getString(R.string.stashapp_include_sub_studios)
-                DataType.MOVIE -> TODO() // v0.27
+                DataType.GROUP -> getString(R.string.stashapp_include_sub_groups)
                 else -> throw IllegalStateException("$dataType not supported")
             }
 

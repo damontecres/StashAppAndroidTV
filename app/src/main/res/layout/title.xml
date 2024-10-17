@@ -49,8 +49,8 @@
             style="@style/TitleBarButton" />
 
         <Button
-            android:id="@+id/movies_button"
-            android:text="@string/stashapp_movies"
+            android:id="@+id/groups_button"
+            android:text="@string/stashapp_groups"
             style="@style/TitleBarButton" />
 
         <Button

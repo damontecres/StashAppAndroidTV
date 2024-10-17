@@ -80,7 +80,7 @@ data class Version(
         val V0_26_2 = fromString("v0.26.2")
         val V0_27_0 = fromString("v0.27.0")
 
-        val MINIMUM_STASH_VERSION = V0_26_0
+        val MINIMUM_STASH_VERSION = V0_27_0
 
         /**
          * Parse a version string throwing if it is invalid

@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.filter.output
 
 import com.apollographql.apollo.api.Optional
-import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
@@ -19,6 +18,7 @@ import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.filter.extractTitle
 import kotlin.reflect.full.declaredMemberProperties
 
@@ -60,10 +60,12 @@ class FilterWriter(
                                         "modifier" to CriterionModifier.EQUALS.rawValue,
                                     )
                                 }
+
                                 is MultiCriterionInput -> {
                                     val items = associateIdsToNames(dataType!!, o.getAllIds())
                                     o.toMap(items)
                                 }
+
                                 is HierarchicalMultiCriterionInput -> {
                                     val items = associateIdsToNames(dataType!!, o.getAllIds())
                                     o.toMap(items)
@@ -105,15 +107,15 @@ class FilterWriter(
                 "tags" to DataType.TAG,
                 "performer_tags" to DataType.TAG,
                 "studios" to DataType.STUDIO,
-                "movies" to DataType.MOVIE,
-                "groups" to DataType.MOVIE,
+                "movies" to DataType.GROUP,
+                "groups" to DataType.GROUP,
                 "galleries" to DataType.GALLERY,
                 "images" to DataType.IMAGE,
                 "scene_markers" to DataType.MARKER,
                 "scenes" to DataType.SCENE,
                 "scene_tags" to DataType.TAG,
-                "containing_groups" to DataType.MOVIE,
-                "sub_groups" to DataType.MOVIE,
+                "containing_groups" to DataType.GROUP,
+                "sub_groups" to DataType.GROUP,
             )
         private val TYPE_MAPPING_BY_TYPE =
             mapOf(

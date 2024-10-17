@@ -5,9 +5,9 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashData
 
 /**
  * Manages a [ListRow] handling adding/removing items, or even the adding/remove the row itself

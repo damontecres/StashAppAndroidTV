@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.filter
 
 import android.os.Bundle
+import android.view.View
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
@@ -31,6 +32,7 @@ import com.github.damontecres.stashapp.filter.picker.ResolutionPickerFragment
 import com.github.damontecres.stashapp.filter.picker.StringPickerFragment
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.views.formatNumber
 
 class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
@@ -60,6 +62,24 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     override fun onResume() {
         super.onResume()
         actions = createActionList()
+        viewModel.updateCount()
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.resultCount.observe(viewLifecycleOwner) { count ->
+            val countStr = formatNumber(count, viewModel.abbreviateCounters)
+            if (count >= 0) {
+                findButtonActionById(SUBMIT).description = "$countStr results"
+                notifyButtonActionChanged(findButtonActionPositionById(SUBMIT))
+            } else {
+                findButtonActionById(SUBMIT).description = "Querying..."
+                notifyButtonActionChanged(findButtonActionPositionById(SUBMIT))
+            }
+        }
     }
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
@@ -119,12 +139,14 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         } else {
             val filterOption = getFilterOptions(dataType)[action.id.toInt()]
             when (filterOption.nameStringId) {
+                // Rating needs a special picker for its sub-filter type
                 R.string.stashapp_rating -> {
                     filterOption as FilterOption<StashDataFilter, IntCriterionInput>
                     nextStep(RatingPickerFragment(filterOption))
                 }
 
                 else ->
+                    // Get the picker for the sub-filter type
                     when (filterOption.type) {
                         IntCriterionInput::class -> {
                             filterOption as FilterOption<StashDataFilter, IntCriterionInput>

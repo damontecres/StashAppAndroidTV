@@ -14,9 +14,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SceneDetailsActivity
 import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -40,7 +40,7 @@ class PlaybackActivity : FragmentActivity() {
             setResultAndFinish()
         }
 
-        val scene = intent.getParcelable(SceneDetailsActivity.MOVIE, Scene::class)
+        val scene = intent.getParcelable(Constants.SCENE_ARG, Scene::class)
         if (scene != null) {
             this.scene = scene
             if (savedInstanceState == null) {
@@ -50,8 +50,9 @@ class PlaybackActivity : FragmentActivity() {
                     .commit()
             }
         } else {
+            // TODO remove?
             lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val sceneId = intent.getStringExtra(SceneDetailsActivity.MOVIE_ID)!!
+                val sceneId = intent.getStringExtra(Constants.SCENE_ID_ARG)!!
                 val fullScene =
                     QueryEngine(StashServer.requireCurrentServer())
                         .getScene(sceneId)!!
@@ -108,6 +109,6 @@ class PlaybackActivity : FragmentActivity() {
     }
 
     companion object {
-        const val TAG = "PlaybackActivity"
+        private const val TAG = "PlaybackActivity"
     }
 }

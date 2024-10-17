@@ -6,6 +6,8 @@ import android.util.Log
 import androidx.core.content.edit
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ConfigurationQuery
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 
 /**
@@ -40,6 +42,8 @@ class ServerPreferences(val server: StashServer) {
 
     val alwaysStartFromBeginning get() = preferences.getBoolean(PREF_ALWAYS_START_BEGINNING, false)
 
+    val abbreviateCounters get() = preferences.getBoolean(PREF_INTERFACE_ABBREV_COUNTERS, false)
+
     val companionPluginVersion
         get() =
             preferences.getString(
@@ -50,12 +54,15 @@ class ServerPreferences(val server: StashServer) {
     val companionPluginInstalled
         get() = companionPluginVersion != null
 
+    private val _defaultFilters = mutableMapOf<DataType, FilterArgs>()
+    val defaultFilters: Map<DataType, FilterArgs> = _defaultFilters
+
     /**
      * Update the local preferences from the server configuration
      */
     fun updatePreferences(config: ConfigurationQuery.Data) {
         val serverVersion = Version.tryFromString(config.version.version)
-        Log.i(TAG, "updatePreferences for server version $serverVersion")
+        Log.i(TAG, "updatePreferences for server version $serverVersion, obj=$this")
 
         val companionPluginVersion =
             config.plugins?.firstOrNull { it.id == CompanionPlugin.PLUGIN_ID }?.version
@@ -116,6 +123,10 @@ class ServerPreferences(val server: StashServer) {
                     PREF_ALWAYS_START_BEGINNING,
                     alwaysStartFromBeginning?.toString()?.toBoolean() ?: false,
                 )
+                putBoolean(
+                    PREF_INTERFACE_ABBREV_COUNTERS,
+                    ui.getCaseInsensitive("abbreviateCounters") as Boolean? ?: false,
+                )
 
                 val taskDefaults = ui.getCaseInsensitive("taskDefaults") as Map<String, *>?
                 try {
@@ -133,7 +144,41 @@ class ServerPreferences(val server: StashServer) {
                     PREF_INTERFACE_STUDIOS_AS_TEXT,
                     config.configuration.`interface`.showStudioAsText ?: false,
                 )
+
+                val defaultFilters = ui.getCaseInsensitive("defaultFilters")
+                defaultFilters?.let { refreshDefaultFilters(it as Map<String, *>) }
             }
+        }
+    }
+
+    private fun refreshDefaultFilters(defaultFilters: Map<String, *>) {
+        val filterParser = FilterParser(serverVersion)
+
+        DataType.entries.forEach { dataType ->
+            val filterMap =
+                defaultFilters.getCaseInsensitive(
+                    StashApplication.getApplication().getString(dataType.pluralStringId),
+                ) as Map<String, *>?
+            val filter =
+                if (filterMap != null) {
+                    try {
+                        val findFilterMap = filterMap.getCaseInsensitive("find_filter")
+                        val objectFilterMap = filterMap.getCaseInsensitive("object_filter")
+                        val findFilter = filterParser.convertFindFilter(findFilterMap)
+                        val objectFilter = filterParser.convertFilter(dataType, objectFilterMap)
+                        FilterArgs(
+                            dataType,
+                            findFilter = findFilter,
+                            objectFilter = objectFilter,
+                        )
+                    } catch (ex: Exception) {
+                        Log.w(TAG, "default filter parse error for $dataType", ex)
+                        FilterArgs(dataType)
+                    }
+                } else {
+                    FilterArgs(dataType)
+                }
+            _defaultFilters[dataType] = filter
         }
     }
 
@@ -269,7 +314,7 @@ class ServerPreferences(val server: StashServer) {
             setOf(
                 "scenes",
                 "images",
-                "movies",
+                "groups",
                 "markers",
                 "galleries",
                 "performers",
@@ -311,6 +356,7 @@ class ServerPreferences(val server: StashServer) {
 
         const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
         const val PREF_INTERFACE_STUDIOS_AS_TEXT = "interface.showStudioAsText"
+        const val PREF_INTERFACE_ABBREV_COUNTERS = "interface.abbreviateCounters"
 
         const val PREF_JOB_SCAN = "app.job.scan"
         const val PREF_JOB_GENERATE = "app.job.generate"

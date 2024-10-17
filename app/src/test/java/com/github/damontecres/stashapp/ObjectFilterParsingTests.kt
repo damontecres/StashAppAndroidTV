@@ -79,7 +79,7 @@ class ObjectFilterParsingTests {
     fun testSceneFilter() {
         val savedFilterData = getSavedFilterData("scene_savedfilter.json")
         val sceneFilter =
-            FilterParser(Version.MINIMUM_STASH_VERSION).convertSceneObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertSceneFilterType(savedFilterData.object_filter)
         Assert.assertNotNull(sceneFilter!!)
         Assert.assertEquals(FilterMode.SCENES, savedFilterData.mode)
         Assert.assertEquals(
@@ -111,12 +111,12 @@ class ObjectFilterParsingTests {
             sceneFilter.performers.getOrThrow()!!.value.getOrThrow()!!,
         )
         Assert.assertEquals(
-            listOf<String>(),
-            sceneFilter.movies.getOrThrow()!!.value.getOrThrow()!!,
+            listOf<String>("1"),
+            sceneFilter.groups.getOrThrow()!!.value.getOrThrow()!!,
         )
         Assert.assertEquals(
-            CriterionModifier.NOT_NULL,
-            sceneFilter.movies.getOrThrow()!!.modifier,
+            CriterionModifier.INCLUDES,
+            sceneFilter.groups.getOrThrow()!!.modifier,
         )
     }
 
@@ -124,7 +124,7 @@ class ObjectFilterParsingTests {
     fun testScene2Filter() {
         val savedFilterData = getSavedFilterData("scene_savedfilter2.json")
         val sceneFilter =
-            FilterParser(Version.MINIMUM_STASH_VERSION).convertSceneObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertSceneFilterType(savedFilterData.object_filter)
         Assert.assertNotNull(sceneFilter!!)
         Assert.assertEquals(FilterMode.SCENES, savedFilterData.mode)
     }
@@ -133,7 +133,7 @@ class ObjectFilterParsingTests {
     fun testPerformerFilter() {
         val savedFilterData = getSavedFilterData("performer_savedfilter.json")
         val performerFilter =
-            FilterParser(Version.MINIMUM_STASH_VERSION).convertPerformerObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertPerformerFilterType(savedFilterData.object_filter)
         Assert.assertNotNull(performerFilter!!)
         Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
 
@@ -155,7 +155,7 @@ class ObjectFilterParsingTests {
     fun testGenderFilter() {
         val savedFilterData = getSavedFilterData("gender_savedfilter.json")
         val performerFilter =
-            FilterParser(Version.MINIMUM_STASH_VERSION).convertPerformerObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertPerformerFilterType(savedFilterData.object_filter)
         Assert.assertNotNull(performerFilter!!)
         Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
 
@@ -179,7 +179,7 @@ class ObjectFilterParsingTests {
     fun testStudioChildrenFilter() {
         val savedFilterData = getSavedFilterData("studio_children_savedfilter.json")
         val studioFilter =
-            FilterParser(Version.MINIMUM_STASH_VERSION).convertStudioObjectFilter(savedFilterData.object_filter)
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertStudioFilterType(savedFilterData.object_filter)
         Assert.assertNotNull(studioFilter!!)
         Assert.assertEquals(FilterMode.STUDIOS, savedFilterData.mode)
 
@@ -189,7 +189,7 @@ class ObjectFilterParsingTests {
     @Test
     fun testImageFilter() {
         val savedFilterData = getSavedFilterData("image_savedfilter.json")
-        val filter = filterParser.convertImageObjectFilter(savedFilterData.object_filter)
+        val filter = filterParser.convertImageFilterType(savedFilterData.object_filter)
         Assert.assertNotNull(filter!!)
         Assert.assertEquals(FilterMode.IMAGES, savedFilterData.mode)
 
@@ -200,7 +200,7 @@ class ObjectFilterParsingTests {
     @Test
     fun testTagFilter() {
         val savedFilterData = getSavedFilterData("tag_savedfilter.json")
-        val filter = filterParser.convertTagObjectFilter(savedFilterData.object_filter)
+        val filter = filterParser.convertTagFilterType(savedFilterData.object_filter)
         Assert.assertNotNull(filter!!)
         Assert.assertEquals(FilterMode.TAGS, savedFilterData.mode)
 
@@ -299,7 +299,7 @@ class ObjectFilterParsingTests {
             "scene_savedfilter.json",
             DataType.SCENE,
             SceneFilterType::class,
-            filterParser::convertSceneObjectFilter,
+            filterParser::convertSceneFilterType,
         )
     }
 
@@ -309,7 +309,7 @@ class ObjectFilterParsingTests {
             "scene_savedfilter2.json",
             DataType.SCENE,
             SceneFilterType::class,
-            filterParser::convertSceneObjectFilter,
+            filterParser::convertSceneFilterType,
         )
     }
 
@@ -319,7 +319,7 @@ class ObjectFilterParsingTests {
             "performer_savedfilter.json",
             DataType.PERFORMER,
             PerformerFilterType::class,
-            filterParser::convertPerformerObjectFilter,
+            filterParser::convertPerformerFilterType,
         )
     }
 
@@ -329,7 +329,7 @@ class ObjectFilterParsingTests {
             "gender_savedfilter.json",
             DataType.PERFORMER,
             PerformerFilterType::class,
-            filterParser::convertPerformerObjectFilter,
+            filterParser::convertPerformerFilterType,
         )
     }
 
@@ -339,7 +339,7 @@ class ObjectFilterParsingTests {
             "studio_children_savedfilter.json",
             DataType.STUDIO,
             StudioFilterType::class,
-            filterParser::convertStudioObjectFilter,
+            filterParser::convertStudioFilterType,
         )
     }
 
@@ -349,7 +349,7 @@ class ObjectFilterParsingTests {
             "image_savedfilter.json",
             DataType.IMAGE,
             ImageFilterType::class,
-            filterParser::convertImageObjectFilter,
+            filterParser::convertImageFilterType,
         )
     }
 
@@ -359,7 +359,7 @@ class ObjectFilterParsingTests {
             "tag_savedfilter.json",
             DataType.TAG,
             TagFilterType::class,
-            filterParser::convertTagObjectFilter,
+            filterParser::convertTagFilterType,
         )
     }
 }

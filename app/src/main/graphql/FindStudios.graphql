@@ -14,6 +14,15 @@ query CountStudios($filter: FindFilterType, $studio_filter: StudioFilterType) {
   }
 }
 
+query FindStudioTags($id: ID!) {
+  findStudio(id: $id) {
+    id
+    tags {
+      ...TagData
+    }
+  }
+}
+
 fragment StudioData on Studio {
   id
   name
@@ -31,6 +40,10 @@ fragment StudioData on Studio {
     image_path
     __typename
   }
+  tags {
+    ...SlimTagData
+    __typename
+  }
   ignore_auto_tag
   image_path
   scene_count
@@ -41,13 +54,8 @@ fragment StudioData on Studio {
   gallery_count_all: gallery_count(depth: -1)
   performer_count
   performer_count_all: performer_count(depth: -1)
-  movie_count
-  movie_count_all: movie_count(depth: -1)
-  stash_ids {
-    stash_id
-    endpoint
-    __typename
-  }
+    group_count
+    group_count_all: group_count(depth: -1)
   details
   rating100
   aliases

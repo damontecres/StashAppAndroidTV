@@ -6,12 +6,11 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
@@ -36,7 +35,7 @@ import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.RANDOM_SORT_OPTION
+import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
 import com.github.damontecres.stashapp.filter.output.getAllIds
@@ -52,6 +51,9 @@ import java.util.Locale
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 
+/**
+ * Get the default title for a [StashData] item usable as a sub-filter label
+ */
 fun extractTitle(item: StashData): String? {
     return when (item) {
         is TagData -> item.name
@@ -60,13 +62,16 @@ fun extractTitle(item: StashData): String? {
         is GalleryData -> item.name
         is ImageData -> item.title
         is MarkerData -> item.title
-        is MovieData -> item.name
+        is GroupData -> item.name
         is SlimSceneData -> item.titleOrFilename
         is FullSceneData -> item.titleOrFilename
         else -> throw IllegalArgumentException("${item::class.qualifiedName} not supported")
     }
 }
 
+/**
+ * Get the default description for a [StashData] item
+ */
 fun extractDescription(item: StashData): String? {
     return when (item) {
         is TagData -> item.description?.ifBlank { null }
@@ -75,7 +80,7 @@ fun extractDescription(item: StashData): String? {
         is GalleryData -> item.date
         is ImageData -> item.date
         is MarkerData -> "${item.scene.videoSceneData.titleOrFilename} (${durationToString(item.seconds)})"
-        is MovieData -> item.date
+        is GroupData -> item.date
         is SlimSceneData -> item.date
         is FullSceneData -> item.date
         else -> throw IllegalArgumentException("${item::class.qualifiedName} not supported")
@@ -108,18 +113,7 @@ fun findFilterSummary(
     findFilter: StashFindFilter,
 ): String {
     val sortAndDirection = findFilter.sortAndDirection ?: dataType.defaultSort
-    val sortOption =
-        if (sortAndDirection.isRandom) {
-            RANDOM_SORT_OPTION
-        } else {
-            dataType.sortOptions.firstOrNull { it.key == sortAndDirection.sort }
-        }
-    val sortName =
-        if (sortOption != null) {
-            context.getString(sortOption.nameStringId)
-        } else {
-            sortAndDirection.sort
-        }
+    val sortName = context.getString(sortAndDirection.sort.nameStringId)
     val directionName =
         when (sortAndDirection.direction) {
             SortDirectionEnum.ASC -> context.getString(R.string.stashapp_ascending)
@@ -465,6 +459,14 @@ fun filterSummary(f: GenderCriterionInput): String {
     }
 }
 
+/**
+ * Summarize a "sub-filter"
+ *
+ * @param name the sub-filter name
+ * @param filterDataType the sub-filter's [DataType]
+ * @param value the sub-filter value
+ * @param idLookup a function associate IDs to a [CreateFilterViewModel.NameDescription]
+ */
 fun filterSummary(
     name: String,
     filterDataType: DataType,
@@ -505,6 +507,14 @@ fun filterSummary(
     }
 }
 
+/**
+ * Summarize a filter
+ *
+ * @param dataType the filter [DataType]
+ * @param type the filter's class
+ * @param f the filter
+ * @param idLookup a function associate IDs to a [CreateFilterViewModel.NameDescription]
+ */
 fun filterSummary(
     dataType: DataType,
     type: KClass<in StashDataFilter>,
@@ -537,6 +547,11 @@ fun filterSummary(
     return text
 }
 
+/**
+ * Collect all of the IDs in the filter's [MultiCriterionInput] or [HierarchicalMultiCriterionInput] sub-filters and associate them by their [DataType]
+ *
+ * For example, a SceneFilterType.performers will associated [DataType.PERFORMER] to the list of performers IDs
+ */
 fun getIdsByDataType(
     filterDataType: DataType,
     f: StashDataFilter,

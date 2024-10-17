@@ -19,25 +19,9 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
     override fun kotlinOutputTransform(): Transform<KotlinOutput> {
         return object : Transform<KotlinOutput> {
             override fun transform(input: KotlinOutput): KotlinOutput {
-                val packageName = "com.github.damontecres.stashapp.api"
-
-                // Create an interface for "data" types (Performer, Scene, etc)
-                // It has an id property and is sealed which allows for Serializable
-                val stashDataInterface = ClassName("$packageName.fragment", "StashData")
-                val stashDataFileSpec =
-                    FileSpec.builder(stashDataInterface)
-                        .addType(
-                            TypeSpec.interfaceBuilder(stashDataInterface)
-                                .addProperty("id", String::class)
-                                .addModifiers(KModifier.SEALED)
-                                .addAnnotation(Serializable::class)
-                                .build(),
-                        )
-                        .build()
-
-                // Create an interface for "filter" types (PerformerFilterType, etc)
-                // It is sealed which allows for Serializable
-                val stashFilterInterface = ClassName("$packageName.type", "StashDataFilter")
+                val packageName = "com.github.damontecres.stashapp"
+                val stashDataInterface = ClassName("$packageName.data", "StashData")
+                val stashFilterInterface = ClassName("$packageName.api.type", "StashDataFilter")
                 val stashFilterFileSpec =
                     FileSpec.builder(stashFilterInterface)
                         .addType(
@@ -62,7 +46,7 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                         }
                     }
                 return KotlinOutput(
-                    newFileSpecs + stashDataFileSpec + stashFilterFileSpec,
+                    newFileSpecs + stashFilterFileSpec,
                     input.codegenMetadata,
                 )
             }

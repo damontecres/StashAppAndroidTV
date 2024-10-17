@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.media3.common.C
 import androidx.media3.common.Player
@@ -17,6 +18,7 @@ import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashServer
 
 @OptIn(UnstableApi::class)
@@ -38,7 +40,7 @@ class PlaybackSceneFragment() : PlaybackFragment() {
             if (playbackPosition >= 0) {
                 playbackPosition
             } else {
-                requireActivity().intent.getLongExtra(SceneDetailsFragment.POSITION_ARG, -1)
+                requireActivity().intent.getLongExtra(Constants.POSITION_ARG, -1)
             }
         val forceTranscode =
             requireActivity().intent.getBooleanExtra(
@@ -121,19 +123,28 @@ class PlaybackSceneFragment() : PlaybackFragment() {
                     else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
                 }
             }.also { exoPlayer ->
-                maybeSetupVideoEffects(exoPlayer)
-                exoPlayer.setMediaItem(
-                    buildMediaItem(requireContext(), streamDecision, scene),
-                    if (position > 0) position else C.TIME_UNSET,
-                )
+                if (scene.streams.isNotEmpty()) {
+                    maybeSetupVideoEffects(exoPlayer)
+                    exoPlayer.setMediaItem(
+                        buildMediaItem(requireContext(), streamDecision, scene),
+                        if (position > 0) position else C.TIME_UNSET,
+                    )
 
-                Log.v(TAG, "Preparing playback")
-                exoPlayer.prepare()
-                // Unless the video was paused before called the result launcher, play immediately
-                exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
-                exoPlayer.volume = 1f
-                if (videoView.controllerShowTimeoutMs > 0) {
-                    videoView.hideController()
+                    Log.v(TAG, "Preparing playback")
+                    exoPlayer.prepare()
+                    // Unless the video was paused before called the result launcher, play immediately
+                    exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
+                    exoPlayer.volume = 1f
+                    if (videoView.controllerShowTimeoutMs > 0) {
+                        videoView.hideController()
+                    }
+                } else {
+                    videoView.useController = false
+                    Toast.makeText(
+                        requireContext(),
+                        "This scene has no video files to play",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 }
             }
     }
@@ -147,8 +158,8 @@ class PlaybackSceneFragment() : PlaybackFragment() {
 
         currentScene = scene
 
-        val position = requireActivity().intent.getLongExtra(SceneDetailsFragment.POSITION_ARG, -1)
-        Log.d(TAG, "scene=${scene.id}, ${SceneDetailsFragment.POSITION_ARG}=$position")
+        val position = requireActivity().intent.getLongExtra(Constants.POSITION_ARG, -1)
+        Log.d(TAG, "scene=${scene.id}, ${Constants.POSITION_ARG}=$position")
     }
 
     companion object {

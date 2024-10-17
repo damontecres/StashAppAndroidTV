@@ -5,6 +5,7 @@ import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Mutation
 import com.apollographql.apollo.api.Optional
+import com.github.damontecres.stashapp.api.CreateGroupMutation
 import com.github.damontecres.stashapp.api.CreateMarkerMutation
 import com.github.damontecres.stashapp.api.CreatePerformerMutation
 import com.github.damontecres.stashapp.api.CreateTagMutation
@@ -26,12 +27,14 @@ import com.github.damontecres.stashapp.api.UpdateGalleryMutation
 import com.github.damontecres.stashapp.api.UpdateImageMutation
 import com.github.damontecres.stashapp.api.UpdateMarkerMutation
 import com.github.damontecres.stashapp.api.UpdatePerformerMutation
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.GalleryUpdateInput
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
+import com.github.damontecres.stashapp.api.type.GroupCreateInput
 import com.github.damontecres.stashapp.api.type.ImageUpdateInput
 import com.github.damontecres.stashapp.api.type.PackageSpecInput
 import com.github.damontecres.stashapp.api.type.PackageType
@@ -39,6 +42,7 @@ import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.PerformerUpdateInput
 import com.github.damontecres.stashapp.api.type.SaveFilterInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
+import com.github.damontecres.stashapp.api.type.SceneGroupInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
@@ -174,6 +178,31 @@ class MutationEngine(
                     SceneUpdateInput(
                         id = sceneId,
                         tag_ids = Optional.present(tagIds),
+                    ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.sceneUpdate
+    }
+
+    suspend fun setGroupsOnScene(
+        sceneId: String,
+        groupIds: List<String>,
+    ): SceneUpdateMutation.SceneUpdate? {
+        Log.v(TAG, "setGroupsOnScene sceneId=$sceneId, tagIds=$groupIds")
+        val mutation =
+            SceneUpdateMutation(
+                input =
+                    SceneUpdateInput(
+                        id = sceneId,
+                        groups =
+                            Optional.present(
+                                groupIds.map {
+                                    SceneGroupInput(
+                                        group_id = it,
+                                        scene_index = Optional.absent(),
+                                    )
+                                },
+                            ),
                     ),
             )
         val result = executeMutation(mutation)
@@ -362,6 +391,12 @@ class MutationEngine(
         val mutation = CreatePerformerMutation(input)
         val result = executeMutation(mutation)
         return result.data?.performerCreate?.performerData
+    }
+
+    suspend fun createGroup(input: GroupCreateInput): GroupData {
+        val mutation = CreateGroupMutation(input)
+        val result = executeMutation(mutation)
+        return result.data?.groupCreate?.groupData!!
     }
 
     suspend fun updateGallery(

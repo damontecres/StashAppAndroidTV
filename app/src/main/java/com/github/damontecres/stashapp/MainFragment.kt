@@ -1,12 +1,12 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
 import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -42,7 +42,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Loads a grid of cards with movies to browse.
+ * Loads a grid of cards with groups to browse.
  */
 class MainFragment : BrowseSupportFragment() {
     private val viewModel: ServerViewModel by activityViewModels()
@@ -109,7 +109,7 @@ class MainFragment : BrowseSupportFragment() {
                     clearData()
                     rowsAdapter.clear()
 
-                    val server = StashServer.requireCurrentServer()
+                    val server = viewModel.currentServer.value!!
                     server.updateServerPrefs()
                     val mainTitleView =
                         requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
@@ -193,9 +193,10 @@ class MainFragment : BrowseSupportFragment() {
 
     private fun setupEventListeners() {
         setOnSearchClickedListener {
-//            Toast.makeText(activity!!, "Implement your own in-app search", Toast.LENGTH_LONG)
-//                .show()
-            requireActivity().startActivity(Intent(requireContext(), SearchActivity::class.java))
+            requireActivity().supportFragmentManager.commit {
+                addToBackStack("search")
+                replace(R.id.main_browse_fragment, StashSearchFragment())
+            }
         }
 
         onItemViewClickedListener =
@@ -257,8 +258,7 @@ class MainFragment : BrowseSupportFragment() {
                             FilterParser(serverVersion ?: Version.MINIMUM_STASH_VERSION)
 
                         val config = queryEngine.getServerConfiguration()
-                        StashServer.requireCurrentServer().serverPreferences
-                            .updatePreferences(config)
+                        server.serverPreferences.updatePreferences(config)
 
                         val ui = config.configuration.ui as Map<*, *>
                         val frontPageContent =

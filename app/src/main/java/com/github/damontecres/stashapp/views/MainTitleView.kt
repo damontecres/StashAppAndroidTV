@@ -9,28 +9,23 @@ import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RelativeLayout
+import android.widget.Toast
 import androidx.core.content.ContextCompat.startActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
-import androidx.lifecycle.findViewTreeLifecycleOwner
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModelProvider
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.suppliers.toFilterArgs
-import com.github.damontecres.stashapp.util.FilterParser
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.putFilterArgs
-import kotlinx.coroutines.launch
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 /**
  * The top title bar which has buttons for each [DataType]
@@ -40,6 +35,10 @@ import kotlinx.coroutines.launch
 class MainTitleView(context: Context, attrs: AttributeSet) :
     RelativeLayout(context, attrs),
     TitleViewAdapter.Provider {
+    private val serverViewModel by lazy {
+        ViewModelProvider(findFragment<Fragment>().requireActivity())[ServerViewModel::class]
+    }
+
     private var mPreferencesView: ImageButton
     private lateinit var searchButton: ImageButton
 
@@ -48,7 +47,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
     private val performersButton: Button
     private val studiosButton: Button
     private val tagsButton: Button
-    private val moviesButton: Button
+    private val groupsButton: Button
     private val markersButton: Button
     private val imagesButton: Button
     private val galleriesButton: Button
@@ -59,6 +58,8 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
                 return searchButton
             }
         }
+
+    private val defaultFilters = mutableMapOf<DataType, FilterArgs>()
 
     init {
         val onFocusChangeListener = StashOnFocusChangeListener(context)
@@ -103,9 +104,9 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         tagsButton.setOnClickListener(ClickListener(DataType.TAG))
         tagsButton.onFocusChangeListener = onFocusChangeListener
 
-        moviesButton = root.findViewById(R.id.movies_button)
-        moviesButton.setOnClickListener(ClickListener(DataType.MOVIE))
-        moviesButton.onFocusChangeListener = onFocusChangeListener
+        groupsButton = root.findViewById(R.id.groups_button)
+        groupsButton.setOnClickListener(ClickListener(DataType.GROUP))
+        groupsButton.onFocusChangeListener = onFocusChangeListener
 
         markersButton = root.findViewById(R.id.markers_button)
         markersButton.setOnClickListener(ClickListener(DataType.MARKER))
@@ -148,7 +149,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         performersButton.visibility = getVis("performers")
         studiosButton.visibility = getVis("studios")
         tagsButton.visibility = getVis("tags")
-        moviesButton.visibility =
+        groupsButton.visibility =
             if ("groups" in menuItems || "movies" in menuItems) {
                 View.VISIBLE
             } else {
@@ -158,28 +159,22 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         galleriesButton.visibility = getVis("galleries")
     }
 
-    private class ClickListener(private val dataType: DataType) : OnClickListener {
+    private inner class ClickListener(private val dataType: DataType) : OnClickListener {
         override fun onClick(v: View) {
-            v.findViewTreeLifecycleOwner()?.lifecycleScope?.launch(
-                StashCoroutineExceptionHandler(true),
-            ) {
-                val server = StashServer.requireCurrentServer()
-                val queryEngine = QueryEngine(server)
-                val filterParser = FilterParser(server.serverPreferences.serverVersion)
-                val defaultFilter =
-                    queryEngine.getDefaultFilter(dataType)
-                        ?.toFilterArgs(filterParser)
-                        ?.withResolvedRandom()
-                Log.v(TAG, "Got default filter for $dataType: ${defaultFilter != null}")
-                val filterArgs =
-                    defaultFilter ?: FilterArgs(
-                        dataType = dataType,
-                        findFilter = StashFindFilter(dataType.defaultSort),
-                    )
+            val serverPrefs = serverViewModel.currentServer.value!!.serverPreferences
+            val filter = serverPrefs.defaultFilters[dataType]
+            if (filter != null) {
                 val intent =
                     Intent(v.context, FilterListActivity::class.java)
-                        .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
+                        .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filter)
                 startActivity(v.context, intent, null)
+            } else {
+                Log.w(TAG, "ServerPreferences.defaultFilters is missing $dataType")
+                Toast.makeText(
+                    v.context,
+                    "Default filter not found for $dataType",
+                    Toast.LENGTH_LONG,
+                ).show()
             }
         }
     }
