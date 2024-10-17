@@ -56,10 +56,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         )
     }
 
-    override fun onCreateActions(
-        actions: MutableList<GuidedAction>,
-        savedInstanceState: Bundle?,
-    ) {
+    private fun updateActions(actions: MutableList<GuidedAction>) {
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(FILTER_NAME)
@@ -120,6 +117,20 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                     .build(),
             )
         }
+    }
+
+    override fun onCreateActions(
+        actions: MutableList<GuidedAction>,
+        savedInstanceState: Bundle?,
+    ) {
+        updateActions(actions)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val refreshActions = mutableListOf<GuidedAction>()
+        updateActions(refreshActions)
+        actions = refreshActions
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
