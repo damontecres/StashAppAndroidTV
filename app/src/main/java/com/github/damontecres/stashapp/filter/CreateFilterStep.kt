@@ -24,7 +24,7 @@ import com.github.damontecres.stashapp.util.experimentalFeaturesEnabled
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
-import com.github.damontecres.stashapp.views.abbreviateCounter
+import com.github.damontecres.stashapp.views.formatNumber
 import kotlinx.coroutines.launch
 
 /**
@@ -92,12 +92,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .build(),
         )
         val count = viewModel.resultCount.value ?: -1
-        val countStr =
-            if (viewModel.server.value!!.serverPreferences.abbreviateCounters) {
-                abbreviateCounter(count)
-            } else {
-                count.toString()
-            }
+        val countStr = formatNumber(count, viewModel.abbreviateCounters)
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(SUBMIT)
@@ -151,12 +146,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         if (savedInstanceState == null) {
             viewModel.updateCount()
             viewModel.resultCount.observe(viewLifecycleOwner) { count ->
-                val countStr =
-                    if (viewModel.server.value!!.serverPreferences.abbreviateCounters) {
-                        abbreviateCounter(count)
-                    } else {
-                        count.toString()
-                    }
+                val countStr = formatNumber(count, viewModel.abbreviateCounters)
                 if (count >= 0) {
                     findActionById(SUBMIT).description = "$countStr results"
                     notifyActionChanged(findActionPositionById(SUBMIT))

@@ -53,6 +53,7 @@ import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
+import com.github.damontecres.stashapp.views.formatNumber
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -68,6 +69,7 @@ class StashGridFragment() : Fragment() {
     private lateinit var playAllButton: Button
     private lateinit var positionTextView: TextView
     private lateinit var totalCountTextView: TextView
+    private lateinit var noResultsTextView: TextView
     private lateinit var mGridPresenter: VerticalGridPresenter
     private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
     private lateinit var mAdapter: ObjectAdapter
@@ -140,7 +142,7 @@ class StashGridFragment() : Fragment() {
                     mGridViewHolder.gridView.selectedPosition = position
                 }
 
-                positionTextView.text = (position + 1).toString()
+                positionTextView.text = formatNumber(position + 1, false)
             }
             mSelectedPosition = position
         }
@@ -211,7 +213,7 @@ class StashGridFragment() : Fragment() {
             Log.v(TAG, "gridOnItemSelected=$position")
             mSelectedPosition = position
             showOrHideTitle()
-            positionTextView.text = (position + 1).toString()
+            positionTextView.text = formatNumber(position + 1, false)
 
             // If on the second row & the back callback exists, enable it
             onBackPressedCallback?.isEnabled = mSelectedPosition >= mGridPresenter.numberOfColumns
@@ -307,6 +309,7 @@ class StashGridFragment() : Fragment() {
 
         positionTextView = view.findViewById(R.id.position_text)
         totalCountTextView = view.findViewById(R.id.total_count_text)
+        noResultsTextView = view.findViewById(R.id.no_results_text)
 
         mGridPresenter.onItemViewClickedListener =
             onItemViewClickedListener ?: StashItemViewClickListener(requireContext())
@@ -328,7 +331,7 @@ class StashGridFragment() : Fragment() {
 
             refresh(_filterArgs.sortAndDirection) {
                 if (previousPosition > 0) {
-                    positionTextView.text = (previousPosition + 1).toString()
+                    positionTextView.text = formatNumber(previousPosition + 1, false)
                     mGridViewHolder.gridView.requestFocus()
                     currentSelectedPosition = previousPosition
                 }
@@ -455,16 +458,20 @@ class StashGridFragment() : Fragment() {
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_show_grid_footer), true)
         val footerLayout = requireView().findViewById<View>(R.id.footer_layout)
-        if (showFooter) {
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val count = pagingSource.getCount()
-                if (count == 0) {
-                    positionTextView.text = getString(R.string.zero)
-                }
-                totalCountTextView.text = count.toString()
+
+        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            val count = pagingSource.getCount()
+            if (count == 0) {
+                positionTextView.text = getString(R.string.zero)
+                noResultsTextView.animateToVisible()
+            }
+            totalCountTextView.text =
+                formatNumber(count, server.serverPreferences.abbreviateCounters)
+            if (showFooter) {
                 footerLayout.animateToVisible()
             }
-        } else {
+        }
+        if (!showFooter) {
             footerLayout.visibility = View.GONE
         }
 

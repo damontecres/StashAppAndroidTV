@@ -5,6 +5,7 @@ import android.os.Build
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.util.StashServer
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -99,4 +100,15 @@ fun abbreviateCounter(counter: Int): String {
         unit++
     }
     return String.format(Locale.getDefault(), "%.1f%s", count, abbrevSuffixes[unit])
+}
+
+fun formatNumber(
+    number: Int,
+    abbreviateCounter: Boolean = StashServer.requireCurrentServer().serverPreferences.abbreviateCounters,
+): String {
+    return if (abbreviateCounter) {
+        abbreviateCounter(number)
+    } else {
+        java.text.NumberFormat.getNumberInstance().format(number)
+    }
 }
