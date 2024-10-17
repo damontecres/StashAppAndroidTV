@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.filter
 
 import android.os.Bundle
+import android.view.View
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
@@ -60,6 +61,20 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     override fun onResume() {
         super.onResume()
         actions = createActionList()
+        viewModel.updateCount()
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.resultCount.observe(viewLifecycleOwner) { count ->
+            if (count >= 0) {
+                findButtonActionById(SUBMIT).description = "$count results"
+                notifyButtonActionChanged(findButtonActionPositionById(SUBMIT))
+            }
+        }
     }
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {

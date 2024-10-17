@@ -1,16 +1,23 @@
 package com.github.damontecres.stashapp.filter
 
+import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.reflect.cast
 import kotlin.reflect.full.createInstance
@@ -27,6 +34,9 @@ class CreateFilterViewModel : ViewModel() {
     val findFilter = MutableLiveData<StashFindFilter>()
 
     val storedItems = mutableMapOf<DataTypeId, NameDescription>()
+
+    val resultCount = MutableLiveData(-1)
+    private var countJob: Job? = null
 
     /**
      * Initialize the state
@@ -70,6 +80,31 @@ class CreateFilterViewModel : ViewModel() {
                 Optional.presentIfNotNull(newItem),
             )
         objectFilter.value = newFilter
+    }
+
+    fun updateCount() {
+        countJob?.cancel()
+        countJob =
+            viewModelScope.launch(
+                StashCoroutineExceptionHandler { ex ->
+                    Toast.makeText(
+                        StashApplication.getApplication(),
+                        "Error querying: ${ex.message}",
+                        Toast.LENGTH_LONG,
+                    )
+                },
+            ) {
+                val supplier =
+                    DataSupplierFactory(server.value!!.version).create<Query.Data, StashData, Query.Data>(
+                        FilterArgs(
+                            dataType = dataType.value!!,
+                            objectFilter = objectFilter.value,
+                        ),
+                    )
+                val pagingSource =
+                    StashPagingSource<Query.Data, StashData, Any, Query.Data>(queryEngine, 25, supplier)
+                resultCount.value = pagingSource.getCount()
+            }
     }
 
     /**

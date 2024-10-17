@@ -136,6 +136,7 @@ class CreateFindFilterFragment(
                     currFindFilter
                 }
             viewModel.findFilter.value = newValue
+            viewModel.updateCount()
             parentFragmentManager.popBackStack()
         } else if (action.id == GuidedAction.ACTION_ID_CANCEL) {
             parentFragmentManager.popBackStack()

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
+import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
@@ -89,11 +90,13 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .title(getString(R.string.stashapp_filters))
                 .build(),
         )
+        val count = viewModel.resultCount.value ?: -1
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(SUBMIT)
                 .hasNext(true)
                 .title("Submit without saving")
+                .description(if (count >= 0) "$count results" else null)
                 .build(),
         )
         if (experimental) {
@@ -131,6 +134,22 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         val refreshActions = mutableListOf<GuidedAction>()
         updateActions(refreshActions)
         actions = refreshActions
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        if (savedInstanceState == null) {
+            viewModel.updateCount()
+            viewModel.resultCount.observe(viewLifecycleOwner) { count ->
+                if (count >= 0) {
+                    findActionById(SUBMIT).description = "$count results"
+                    notifyActionChanged(findActionPositionById(SUBMIT))
+                }
+            }
+        }
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
