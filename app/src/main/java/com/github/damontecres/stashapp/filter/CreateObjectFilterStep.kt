@@ -32,6 +32,7 @@ import com.github.damontecres.stashapp.filter.picker.ResolutionPickerFragment
 import com.github.damontecres.stashapp.filter.picker.StringPickerFragment
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.views.abbreviateCounter
 
 class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
@@ -70,8 +71,17 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.resultCount.observe(viewLifecycleOwner) { count ->
+            val countStr =
+                if (viewModel.server.value!!.serverPreferences.abbreviateCounters) {
+                    abbreviateCounter(count)
+                } else {
+                    count.toString()
+                }
             if (count >= 0) {
-                findButtonActionById(SUBMIT).description = "$count results"
+                findButtonActionById(SUBMIT).description = "$countStr results"
+                notifyButtonActionChanged(findButtonActionPositionById(SUBMIT))
+            } else {
+                findButtonActionById(SUBMIT).description = "Querying..."
                 notifyButtonActionChanged(findButtonActionPositionById(SUBMIT))
             }
         }

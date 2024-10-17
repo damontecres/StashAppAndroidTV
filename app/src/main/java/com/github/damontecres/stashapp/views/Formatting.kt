@@ -8,6 +8,7 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.Locale
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -87,3 +88,15 @@ fun CriterionModifier.getString(context: Context): String =
         CriterionModifier.NOT_BETWEEN -> context.getString(R.string.stashapp_criterion_modifier_not_between)
         CriterionModifier.UNKNOWN__ -> "Unknown"
     }
+
+private val abbrevSuffixes = listOf("", "K", "M", "B")
+
+fun abbreviateCounter(counter: Int): String {
+    var unit = 0
+    var count = counter.toDouble()
+    while (count >= 1000 && unit + 1 < abbrevSuffixes.size) {
+        count /= 1000
+        unit++
+    }
+    return String.format(Locale.getDefault(), "%.1f%s", count, abbrevSuffixes[unit])
+}

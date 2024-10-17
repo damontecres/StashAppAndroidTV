@@ -42,6 +42,8 @@ class ServerPreferences(val server: StashServer) {
 
     val alwaysStartFromBeginning get() = preferences.getBoolean(PREF_ALWAYS_START_BEGINNING, false)
 
+    val abbreviateCounters get() = preferences.getBoolean(PREF_INTERFACE_ABBREV_COUNTERS, false)
+
     val companionPluginVersion
         get() =
             preferences.getString(
@@ -120,6 +122,10 @@ class ServerPreferences(val server: StashServer) {
                 putBoolean(
                     PREF_ALWAYS_START_BEGINNING,
                     alwaysStartFromBeginning?.toString()?.toBoolean() ?: false,
+                )
+                putBoolean(
+                    PREF_INTERFACE_ABBREV_COUNTERS,
+                    ui.getCaseInsensitive("abbreviateCounters") as Boolean? ?: false,
                 )
 
                 val taskDefaults = ui.getCaseInsensitive("taskDefaults") as Map<String, *>?
@@ -350,6 +356,7 @@ class ServerPreferences(val server: StashServer) {
 
         const val PREF_INTERFACE_MENU_ITEMS = "interface.menuItems"
         const val PREF_INTERFACE_STUDIOS_AS_TEXT = "interface.showStudioAsText"
+        const val PREF_INTERFACE_ABBREV_COUNTERS = "interface.abbreviateCounters"
 
         const val PREF_JOB_SCAN = "app.job.scan"
         const val PREF_JOB_GENERATE = "app.job.generate"

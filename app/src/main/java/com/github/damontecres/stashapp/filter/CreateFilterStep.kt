@@ -24,6 +24,7 @@ import com.github.damontecres.stashapp.util.experimentalFeaturesEnabled
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.views.abbreviateCounter
 import kotlinx.coroutines.launch
 
 /**
@@ -91,12 +92,18 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .build(),
         )
         val count = viewModel.resultCount.value ?: -1
+        val countStr =
+            if (viewModel.server.value!!.serverPreferences.abbreviateCounters) {
+                abbreviateCounter(count)
+            } else {
+                count.toString()
+            }
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(SUBMIT)
                 .hasNext(true)
                 .title("Submit without saving")
-                .description(if (count >= 0) "$count results" else null)
+                .description(if (count >= 0) "$countStr results" else "Querying...")
                 .build(),
         )
         if (experimental) {
@@ -144,8 +151,17 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         if (savedInstanceState == null) {
             viewModel.updateCount()
             viewModel.resultCount.observe(viewLifecycleOwner) { count ->
+                val countStr =
+                    if (viewModel.server.value!!.serverPreferences.abbreviateCounters) {
+                        abbreviateCounter(count)
+                    } else {
+                        count.toString()
+                    }
                 if (count >= 0) {
-                    findActionById(SUBMIT).description = "$count results"
+                    findActionById(SUBMIT).description = "$countStr results"
+                    notifyActionChanged(findActionPositionById(SUBMIT))
+                } else {
+                    findActionById(SUBMIT).description = "Querying..."
                     notifyActionChanged(findActionPositionById(SUBMIT))
                 }
             }
