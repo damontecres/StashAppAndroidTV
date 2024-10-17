@@ -26,9 +26,11 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 /**
  * A [PlaybackFragment] that manages and plays a playlist/queue of videos
@@ -50,6 +52,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
 
     // Pages are 1-indexed
     private var currentPage = 1
+    private var totalCount = -1
 
     override fun onViewCreated(
         view: View,
@@ -128,7 +131,8 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      */
     private suspend fun buildPlaylist() {
         val filter = playlistViewModel.filterArgs.value!!
-        val dataSupplier = DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, C>(filter)
+        val dataSupplier =
+            DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, C>(filter)
         pagingSource =
             StashPagingSource(
                 QueryEngine(server),
@@ -140,6 +144,10 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         maybeSetupVideoEffects(player!!)
         player!!.prepare()
         player!!.play()
+        totalCount = pagingSource.getCount()
+        withContext(Dispatchers.Main) {
+            updatePlaylistDebug()
+        }
     }
 
     /**
@@ -183,6 +191,11 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      */
     abstract fun builderCallback(item: D): (MediaItem.Builder.() -> Unit)?
 
+    private fun updatePlaylistDebug() {
+        debugPlaylistTextView.text =
+            "${player?.currentMediaItemIndex?.plus(1)} of ${player?.mediaItemCount} ($totalCount)"
+    }
+
     /**
      * A [Listener] for when a new [MediaItem] is playing in case the playlist needs to be extended
      */
@@ -206,6 +219,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 )
                 currentScene = scene
                 updateDebugInfo(tag.streamDecision, scene)
+                updatePlaylistDebug()
 
                 // Replace activity tracker
                 if (trackActivityListener != null) {

@@ -91,6 +91,19 @@
                 tools:text="mp4" />
         </TableRow>
 
+        <TableRow>
+
+            <TextView
+                style="@style/DebugInfoOverlayText"
+                android:text="Playlist" />
+
+            <TextView
+                android:id="@+id/debug_playlist"
+                style="@style/DebugInfoOverlayText"
+                android:text="N/A"
+                tools:text="2 of 25 (100)" />
+        </TableRow>
+
     </TableLayout>
 
     <LinearLayout
