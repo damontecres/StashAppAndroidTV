@@ -140,7 +140,7 @@ enum class SortOption(
                 TITLE,
             )
 
-        val MOVIE_SORT_OPTIONS =
+        val GROUP_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
                 DATE,
