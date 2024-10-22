@@ -38,6 +38,19 @@
             android:background="@drawable/button_selector"
             android:text="@string/play_all"
             tools:visibility="visible" />
+
+        <Button
+            android:id="@+id/filter_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:minWidth="0dp"
+            android:padding="8dp"
+            android:visibility="gone"
+            android:textSize="14sp"
+            android:background="@drawable/button_selector"
+            android:text="@string/stashapp_filter"
+            tools:visibility="visible" />
     </LinearLayout>
 
     <androidx.leanback.widget.BrowseFrameLayout
