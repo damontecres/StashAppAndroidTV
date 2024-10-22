@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -33,6 +34,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -48,6 +50,8 @@ import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.putDataType
+import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
@@ -67,6 +71,7 @@ class StashGridFragment() : Fragment() {
     // Views
     private lateinit var sortButton: Button
     private lateinit var playAllButton: Button
+    private lateinit var filterButton: Button
     private lateinit var positionTextView: TextView
     private lateinit var totalCountTextView: TextView
     private lateinit var noResultsTextView: TextView
@@ -109,6 +114,11 @@ class StashGridFragment() : Fragment() {
      * Whether to enable the built-in play all button, defaults to true
      */
     var playAllButtonEnabled = true
+
+    /**
+     * Whether to enable the built-in filter button, defaults to true
+     */
+    var filterButtonEnabled = true
 
     /**
      * Whether to enable scrolling to the top on a back press, defaults to true
@@ -243,6 +253,7 @@ class StashGridFragment() : Fragment() {
         if (savedInstanceState != null) {
             name = savedInstanceState.getString("name")
             sortButtonEnabled = savedInstanceState.getBoolean("sortButtonEnabled")
+            filterButtonEnabled = savedInstanceState.getBoolean("filterButtonEnabled")
             _filterArgs =
                 savedInstanceState.getFilterArgs("_filterArgs")!!
             Log.v(TAG, "sortAndDirection=${_filterArgs.sortAndDirection}")
@@ -289,6 +300,7 @@ class StashGridFragment() : Fragment() {
         val gridFrame = root.findViewById<View>(androidx.leanback.R.id.grid_frame) as ViewGroup
         sortButton = root.findViewById(R.id.sort_button)
         playAllButton = root.findViewById(R.id.play_all_button)
+        filterButton = root.findViewById(R.id.filter_button)
         val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         mGridViewHolder.view.isFocusableInTouchMode = false
@@ -357,6 +369,17 @@ class StashGridFragment() : Fragment() {
                 },
             )
         }
+        if (filterButtonEnabled) {
+            filterButton.visibility = View.VISIBLE
+            filterButton.nextFocusUpId = R.id.tab_layout
+            filterButton.setOnClickListener {
+                val intent =
+                    Intent(requireContext(), CreateFilterActivity::class.java)
+                        .putDataType(dataType)
+                        .putFilterArgs(CreateFilterActivity.INTENT_STARTING_FILTER, filterArgs)
+                requireContext().startActivity(intent)
+            }
+        }
 
         val prefBackPressScrollEnabled =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
@@ -383,6 +406,7 @@ class StashGridFragment() : Fragment() {
         )
         outState.putString("name", name)
         outState.putBoolean("sortButtonEnabled", sortButtonEnabled)
+        outState.putBoolean("filterButtonEnabled", filterButtonEnabled)
     }
 
     private fun setGridPresenter(gridPresenter: VerticalGridPresenter) {
@@ -549,6 +573,15 @@ class StashGridFragment() : Fragment() {
         }
         onItemViewClickedListener = ImageGridClickedListener(this)
         return this
+    }
+
+    /**
+     * Disable the built-in buttons by setting [sortButtonEnabled], [playAllButtonEnabled], [filterButtonEnabled], etc to false
+     */
+    fun disableButtons() {
+        sortButtonEnabled = false
+        playAllButtonEnabled = false
+        filterButtonEnabled = false
     }
 
     companion object {

@@ -50,8 +50,9 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 viewModel.objectFilter.value!!,
                 viewModel::lookupIds,
             ).ifBlank { "No filters set" }
+        val typeStr = getString(viewModel.dataType.value!!.stringId)
         return GuidanceStylist.Guidance(
-            "Create filter",
+            "Create $typeStr filter",
             text,
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),

@@ -216,8 +216,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             fragment.withImageGridClickListener()
         }
         fragment.name = filter.name
-        fragment.sortButtonEnabled = false
-        fragment.playAllButtonEnabled = false
+        fragment.disableButtons()
         fragment.requestFocus = true
         supportFragmentManager.commit {
             if (!first) {
