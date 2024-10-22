@@ -146,19 +146,17 @@ class ServerPreferences(val server: StashServer) {
                 )
 
                 val defaultFilters = ui.getCaseInsensitive("defaultFilters")
-                defaultFilters?.let { refreshDefaultFilters(it as Map<String, *>) }
+                refreshDefaultFilters(defaultFilters as Map<String, *>?)
             }
         }
     }
 
-    private fun refreshDefaultFilters(defaultFilters: Map<String, *>) {
+    private fun refreshDefaultFilters(defaultFilters: Map<String, *>?) {
         val filterParser = FilterParser(serverVersion)
 
         DataType.entries.forEach { dataType ->
             val filterMap =
-                defaultFilters.getCaseInsensitive(
-                    StashApplication.getApplication().getString(dataType.pluralStringId),
-                ) as Map<String, *>?
+                defaultFilters?.getCaseInsensitive(dataType.filterMode.name) as Map<String, *>?
             val filter =
                 if (filterMap != null) {
                     try {

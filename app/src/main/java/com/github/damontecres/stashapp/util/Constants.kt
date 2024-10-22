@@ -302,7 +302,7 @@ fun <V> Map<*, V>.getCaseInsensitive(k: String?): V? {
     if (k == null) {
         return null
     }
-    return this[k] ?: this[k.lowercase()]
+    return this[k] ?: this[k.lowercase()] ?: this[k.uppercase()]
 }
 
 fun TextView.enableMarquee(selected: Boolean = false) {
