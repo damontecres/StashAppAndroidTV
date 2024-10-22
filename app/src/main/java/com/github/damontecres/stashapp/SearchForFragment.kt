@@ -379,6 +379,6 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
             )
 
         // List of data types that support creating a new one
-        val DATA_TYPE_ALLOW_CREATE = setOf(DataType.TAG, DataType.PERFORMER)
+        val DATA_TYPE_ALLOW_CREATE = setOf(DataType.TAG, DataType.PERFORMER, DataType.GROUP)
     }
 }

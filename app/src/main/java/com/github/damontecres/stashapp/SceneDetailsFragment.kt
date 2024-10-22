@@ -298,6 +298,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
         sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
         sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
+        sceneActionsAdapter.set(ADD_GROUP_POS, StashAction.ADD_GROUP)
         sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
         sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
 
@@ -600,6 +601,17 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                         Toast.makeText(
                                             requireContext(),
                                             "Set studio to '${newStudio.name}'",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                }
+
+                                StashAction.ADD_GROUP.id -> {
+                                    val newGroup = groupsRowManager.add(newId)
+                                    if (newGroup != null) {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Added to '${newGroup.name}'",
                                             Toast.LENGTH_SHORT,
                                         ).show()
                                     }
@@ -956,11 +968,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
         // Actions row order
         private const val O_COUNTER_POS = 1
-        private const val ADD_TAG_POS = O_COUNTER_POS + 1
+        private const val CREATE_MARKER_POS = O_COUNTER_POS + 1
+        private const val ADD_TAG_POS = CREATE_MARKER_POS + 1
         private const val ADD_PERFORMER_POS = ADD_TAG_POS + 1
         private const val ADD_GROUP_POS = ADD_PERFORMER_POS + 1
-        private const val CREATE_MARKER_POS = ADD_GROUP_POS + 1
-        private const val SET_STUDIO_POS = CREATE_MARKER_POS + 1
+        private const val SET_STUDIO_POS = ADD_GROUP_POS + 1
         private const val FORCE_TRANSCODE_POS = SET_STUDIO_POS + 1
         private const val FORCE_DIRECT_PLAY_POS = FORCE_TRANSCODE_POS + 1
 
