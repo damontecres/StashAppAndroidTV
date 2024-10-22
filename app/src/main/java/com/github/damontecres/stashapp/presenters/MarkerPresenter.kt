@@ -8,7 +8,9 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
+import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -25,7 +27,10 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
             }
         cardView.titleText = "$title - ${item.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
         cardView.contentText =
-            if (item.title.isNotBlank()) item.primary_tag.tagData.name else null
+            listOf(
+                if (item.title.isNotBlank()) item.primary_tag.tagData.name else null,
+                item.scene.videoSceneData.titleOrFilename,
+            ).joinNotNullOrBlank(" - ")
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.TAG] = item.tags.size
