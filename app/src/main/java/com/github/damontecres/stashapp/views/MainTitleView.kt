@@ -9,7 +9,6 @@ import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RelativeLayout
-import android.widget.Toast
 import androidx.core.content.ContextCompat.startActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
@@ -161,21 +160,17 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
 
     private inner class ClickListener(private val dataType: DataType) : OnClickListener {
         override fun onClick(v: View) {
+            val intent = Intent(v.context, FilterListActivity::class.java)
+
             val serverPrefs = serverViewModel.currentServer.value!!.serverPreferences
             val filter = serverPrefs.defaultFilters[dataType]
             if (filter != null) {
-                val intent =
-                    Intent(v.context, FilterListActivity::class.java)
-                        .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filter)
-                startActivity(v.context, intent, null)
+                intent.putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filter)
             } else {
                 Log.w(TAG, "ServerPreferences.defaultFilters is missing $dataType")
-                Toast.makeText(
-                    v.context,
-                    "Default filter not found for $dataType",
-                    Toast.LENGTH_LONG,
-                ).show()
+                intent.putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, FilterArgs(dataType))
             }
+            startActivity(v.context, intent, null)
         }
     }
 
