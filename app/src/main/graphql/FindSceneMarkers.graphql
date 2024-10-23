@@ -15,7 +15,7 @@ query CountMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFil
 
 mutation UpdateMarker($input: SceneMarkerUpdateInput!){
   sceneMarkerUpdate(input: $input){
-    ...MarkerData
+    ...FullMarkerData
   }
 }
 
@@ -45,6 +45,28 @@ fragment VideoSceneData on Scene {
 }
 
 fragment MarkerData on SceneMarker {
+  id
+  title
+  created_at
+  updated_at
+  stream
+  screenshot
+  seconds
+  preview
+  primary_tag {
+    ...SlimTagData
+    __typename
+  }
+  tags {
+    ...SlimTagData
+  }
+  scene {
+    ...VideoSceneData
+  }
+  __typename
+}
+
+fragment FullMarkerData on SceneMarker {
   id
   title
   created_at

@@ -282,16 +282,16 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 OCounter(newImage.id, newImage.o_counter ?: 0),
             )
 
-            if (newImage.studio != null) {
-                studioAdapter.setItems(listOf(newImage.studio.studioData))
-            } else {
-                studioAdapter.clear()
-            }
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val extraImageData = queryEngine.getImageExtra(newImage.id)
                 tagsRowManager.setItems(extraImageData?.tags?.map { it.tagData }.orEmpty())
                 performersRowManager.setItems(extraImageData?.performers?.map { it.performerData }.orEmpty())
                 galleriesRowManager.setItems(extraImageData?.galleries?.map { it.galleryData }.orEmpty())
+                if (extraImageData?.studio != null) {
+                    studioAdapter.setItems(listOf(extraImageData.studio.studioData))
+                } else {
+                    studioAdapter.clear()
+                }
             }
         }
     }

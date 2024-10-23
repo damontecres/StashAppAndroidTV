@@ -93,3 +93,12 @@ fragment PerformerData on Performer {
   weight
   __typename
 }
+
+fragment SlimPerformerData on Performer {
+  id
+  name
+  disambiguation
+  gender
+  birthdate
+  __typename
+}

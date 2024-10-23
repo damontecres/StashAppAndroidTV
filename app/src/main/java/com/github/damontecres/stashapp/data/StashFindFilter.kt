@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.data
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.util.presentIfNotNullOrBlank
 import kotlinx.serialization.Serializable
 
 /**
@@ -20,8 +21,8 @@ data class StashFindFilter(
         perPage: Int? = null,
     ): FindFilterType =
         FindFilterType(
-            q = Optional.presentIfNotNull(q),
-            sort = Optional.presentIfNotNull(sortAndDirection?.sortKey),
+            q = Optional.presentIfNotNullOrBlank(q),
+            sort = Optional.presentIfNotNullOrBlank(sortAndDirection?.sortKey),
             direction = Optional.presentIfNotNull(sortAndDirection?.direction),
             page = Optional.presentIfNotNull(page),
             per_page = Optional.presentIfNotNull(perPage),

@@ -3,7 +3,8 @@ package com.github.damontecres.stashapp.suppliers
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.CountGalleriesQuery
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
-import com.github.damontecres.stashapp.api.FindGalleryQuery
+import com.github.damontecres.stashapp.api.FindGalleryPerformersQuery
+import com.github.damontecres.stashapp.api.FindGalleryTagsQuery
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
@@ -49,53 +50,53 @@ class GalleryDataSupplier(
 }
 
 class GalleryPerformerDataSupplier(private val galleryId: String) :
-    StashPagingSource.DataSupplier<FindGalleryQuery.Data, PerformerData, FindGalleryQuery.Data> {
+    StashPagingSource.DataSupplier<FindGalleryPerformersQuery.Data, PerformerData, FindGalleryPerformersQuery.Data> {
     override val dataType: DataType
         get() = DataType.PERFORMER
 
-    override fun createQuery(filter: FindFilterType?): Query<FindGalleryQuery.Data> {
-        return FindGalleryQuery(galleryId)
+    override fun createQuery(filter: FindFilterType?): Query<FindGalleryPerformersQuery.Data> {
+        return FindGalleryPerformersQuery(galleryId)
     }
 
     override fun getDefaultFilter(): FindFilterType {
         return DataType.PERFORMER.asDefaultFindFilterType
     }
 
-    override fun createCountQuery(filter: FindFilterType?): Query<FindGalleryQuery.Data> {
-        return FindGalleryQuery(galleryId)
+    override fun createCountQuery(filter: FindFilterType?): Query<FindGalleryPerformersQuery.Data> {
+        return FindGalleryPerformersQuery(galleryId)
     }
 
-    override fun parseCountQuery(data: FindGalleryQuery.Data): Int {
-        return data.findGallery?.galleryData?.performers?.size ?: 0
+    override fun parseCountQuery(data: FindGalleryPerformersQuery.Data): Int {
+        return data.findGallery?.performers?.size ?: 0
     }
 
-    override fun parseQuery(data: FindGalleryQuery.Data): List<PerformerData> {
-        return data.findGallery?.galleryData?.performers?.map { it.performerData }.orEmpty()
+    override fun parseQuery(data: FindGalleryPerformersQuery.Data): List<PerformerData> {
+        return data.findGallery?.performers?.map { it.performerData }.orEmpty()
     }
 }
 
 class GalleryTagDataSupplier(private val galleryId: String) :
-    StashPagingSource.DataSupplier<FindGalleryQuery.Data, TagData, FindGalleryQuery.Data> {
+    StashPagingSource.DataSupplier<FindGalleryTagsQuery.Data, TagData, FindGalleryTagsQuery.Data> {
     override val dataType: DataType
         get() = DataType.TAG
 
-    override fun createQuery(filter: FindFilterType?): Query<FindGalleryQuery.Data> {
-        return FindGalleryQuery(galleryId)
+    override fun createQuery(filter: FindFilterType?): Query<FindGalleryTagsQuery.Data> {
+        return FindGalleryTagsQuery(galleryId)
     }
 
     override fun getDefaultFilter(): FindFilterType {
         return DataType.TAG.asDefaultFindFilterType
     }
 
-    override fun createCountQuery(filter: FindFilterType?): Query<FindGalleryQuery.Data> {
-        return FindGalleryQuery(galleryId)
+    override fun createCountQuery(filter: FindFilterType?): Query<FindGalleryTagsQuery.Data> {
+        return FindGalleryTagsQuery(galleryId)
     }
 
-    override fun parseCountQuery(data: FindGalleryQuery.Data): Int {
-        return data.findGallery?.galleryData?.performers?.size ?: 0
+    override fun parseCountQuery(data: FindGalleryTagsQuery.Data): Int {
+        return data.findGallery?.tags?.size ?: 0
     }
 
-    override fun parseQuery(data: FindGalleryQuery.Data): List<TagData> {
-        return data.findGallery?.galleryData?.tags?.map { it.tagData }.orEmpty()
+    override fun parseQuery(data: FindGalleryTagsQuery.Data): List<TagData> {
+        return data.findGallery?.tags?.map { it.tagData }.orEmpty()
     }
 }
