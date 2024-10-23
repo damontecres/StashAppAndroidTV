@@ -22,12 +22,12 @@ data class PlaylistItem(
 fun MarkerData.toPlayListItem(index: Int): PlaylistItem {
     val name =
         title.ifBlank {
-            primary_tag.tagData.name
+            primary_tag.slimTagData.name
         }
     val details =
         buildList {
-            add(primary_tag.tagData.name)
-            addAll(tags.map { it.tagData.name })
+            add(primary_tag.slimTagData.name)
+            addAll(tags.map { it.slimTagData.name })
         }.joinNotNullOrBlank(", ")
     return PlaylistItem(
         index,

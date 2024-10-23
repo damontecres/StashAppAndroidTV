@@ -44,7 +44,8 @@ fragment ImageData on Image {
     id
   }
   studio {
-    ...StudioData
+    id
+    name
   }
   tags {
     id
@@ -85,5 +86,8 @@ fragment ExtraImageData on Image {
   }
   galleries {
     ...GalleryData
+  }
+  studio {
+    ...StudioData
   }
 }

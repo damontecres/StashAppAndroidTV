@@ -27,8 +27,8 @@ import com.github.damontecres.stashapp.api.UpdateGalleryMutation
 import com.github.damontecres.stashapp.api.UpdateImageMutation
 import com.github.damontecres.stashapp.api.UpdateMarkerMutation
 import com.github.damontecres.stashapp.api.UpdatePerformerMutation
+import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.GroupData
-import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.TagData
@@ -209,17 +209,17 @@ class MutationEngine(
         return result.data?.sceneUpdate
     }
 
-    suspend fun updateMarker(input: SceneMarkerUpdateInput): MarkerData? {
+    suspend fun updateMarker(input: SceneMarkerUpdateInput): FullMarkerData? {
         val mutation = UpdateMarkerMutation(input = input)
         val result = executeMutation(mutation)
-        return result.data?.sceneMarkerUpdate?.markerData
+        return result.data?.sceneMarkerUpdate?.fullMarkerData
     }
 
     suspend fun setTagsOnMarker(
         markerId: String,
         primaryTagId: String,
         tagIds: List<String>,
-    ): MarkerData? {
+    ): FullMarkerData? {
         Log.v(TAG, "setTagsOnMarker markerId=$markerId, primaryTagId=$primaryTagId, tagIds=$tagIds")
         return updateMarker(
             SceneMarkerUpdateInput(
@@ -286,7 +286,7 @@ class MutationEngine(
         sceneId: String,
         position: Long,
         primaryTagId: String,
-    ): MarkerData? {
+    ): FullMarkerData? {
         val input =
             SceneMarkerCreateInput(
                 title = "",
@@ -297,7 +297,7 @@ class MutationEngine(
             )
         val mutation = CreateMarkerMutation(input)
         val result = executeMutation(mutation)
-        return result.data?.sceneMarkerCreate?.markerData
+        return result.data?.sceneMarkerCreate?.fullMarkerData
     }
 
     suspend fun deleteMarker(id: String): Boolean {

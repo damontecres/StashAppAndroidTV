@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.suppliers
 
+import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.apollographql.apollo.api.Optional
@@ -97,6 +98,7 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
                     per_page = Optional.present(loadSize),
                     page = Optional.present(page),
                 )
+            Log.v(TAG, "page=$page, loadSize=$loadSize, filter=$filter")
             val query = dataSupplier.createQuery(filter)
             val queryResult = queryEngine.executeQuery(query)
             if (queryResult.data != null) {
@@ -190,6 +192,7 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
     }
 
     companion object {
+        private const val TAG = "StashPagingSource"
         const val INVALID_COUNT = -1
         const val UNSUPPORTED_COUNT = -2
     }

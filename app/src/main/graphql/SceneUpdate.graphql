@@ -22,7 +22,7 @@ mutation SceneUpdate($input: SceneUpdateInput!) {
 
 mutation CreateMarker($input: SceneMarkerCreateInput!) {
   sceneMarkerCreate(input: $input) {
-    ...MarkerData
+    ...FullMarkerData
   }
 }
 

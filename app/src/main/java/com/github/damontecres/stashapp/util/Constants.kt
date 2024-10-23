@@ -22,6 +22,7 @@ import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.Visibility
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
@@ -778,4 +779,8 @@ fun getUiTabs(
     val defaultValues = context.resources.getStringArray(defaultArrayKey).toSet()
     return PreferenceManager.getDefaultSharedPreferences(context)
         .getStringSet(context.getString(prefKey), defaultValues)!!
+}
+
+fun Optional.Companion.presentIfNotNullOrBlank(value: String?): Optional<String> {
+    return presentIfNotNull(value?.ifBlank { null })
 }

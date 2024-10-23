@@ -23,12 +23,12 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
     ) {
         val title =
             item.title.ifBlank {
-                item.primary_tag.tagData.name
+                item.primary_tag.slimTagData.name
             }
         cardView.titleText = "$title - ${item.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
         cardView.contentText =
             listOf(
-                if (item.title.isNotBlank()) item.primary_tag.tagData.name else null,
+                if (item.title.isNotBlank()) item.primary_tag.slimTagData.name else null,
                 item.scene.videoSceneData.titleOrFilename,
             ).joinNotNullOrBlank(" - ")
 
