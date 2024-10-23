@@ -101,7 +101,10 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
 
     private val videoDelay =
         PreferenceManager.getDefaultSharedPreferences(context)
-            .getInt(context.getString(R.string.pref_key_ui_card_overlay_delay), 1000)
+            .getInt(
+                context.getString(R.string.pref_key_ui_card_overlay_delay),
+                context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
+            )
             .toLong()
 
     private val listener =
@@ -237,7 +240,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         }
         player.prepare()
         player.repeatMode = Player.REPEAT_MODE_ONE
-        player.playWhenReady = false
+        player.playWhenReady = videoDelay <= 0
     }
 
     fun setUpExtraRow(
@@ -306,9 +309,9 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     }
 
     private fun hideOverlayAndPlayVideo() {
+        videoView?.player?.play()
         cardOverlay.clearAnimation()
         cardOverlay.animateToInvisible(durationMs = animateTime)
-        videoView?.player?.play()
     }
 
     fun getTextOverlay(position: OverlayPosition): TextView {

@@ -13,9 +13,9 @@
             app:key="@string/pref_key_ui_card_overlay_delay"
             app:title="Delay before playing card preview"
             app:seekBarIncrement="100"
-            app:showSeekBarValue="true"
-            android:max="3000"
-            app:defaultValue="500" />
+            app:showSeekBarValue="false"
+            android:max="5000"
+            app:defaultValue="@integer/pref_key_ui_card_overlay_delay_default" />
     </PreferenceCategory>
 
     <PreferenceCategory
