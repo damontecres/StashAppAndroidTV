@@ -26,4 +26,5 @@
     <string name="pref_key_ui_tag_tabs" translatable="false">ui.tabs.tag</string>
 
     <string name="pref_key_ui_remember_tab" translatable="false">ui.rememberTab</string>
+    <string name="pref_key_ui_card_overlay_delay" translatable="false">ui.card.delayVideoDuration</string>
 </resources>
