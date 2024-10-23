@@ -30,7 +30,7 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         dataTypeMap[DataType.GALLERY] = item.gallery_count
 
         cardView.setUpExtraRow(dataTypeMap, null)
-        cardView.hideOverlayOnSelection = false
+//        cardView.hideOverlayOnSelection = false
 
         cardView.titleText = item.name
         cardView.contentText = item.description

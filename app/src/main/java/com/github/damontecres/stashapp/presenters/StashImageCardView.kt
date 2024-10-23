@@ -19,6 +19,8 @@ import android.widget.TextView
 import android.widget.ViewSwitcher
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.ImageCardView
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -33,6 +35,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
@@ -42,6 +45,11 @@ import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.EnumMap
 
 class StashImageCardView(context: Context) : ImageCardView(context) {
@@ -77,7 +85,6 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
 
     private var videoView: PlayerView? = null
     val mainView: ViewSwitcher = findViewById(R.id.main_view)
-    var hideOverlayOnSelection = true
 
     private val iconTextView: TextView
 
@@ -91,6 +98,14 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     private val playVideoPreviews =
         PreferenceManager.getDefaultSharedPreferences(context)
             .getBoolean("playVideoPreviews", true)
+
+    private val videoDelay =
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .getInt(
+                context.getString(R.string.pref_key_ui_card_overlay_delay),
+                context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
+            )
+            .toLong()
 
     private val listener =
         object : Player.Listener {
@@ -106,6 +121,8 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     private val textSize =
         context.resources.getDimension(androidx.leanback.R.dimen.lb_basic_card_content_text_size)
     private val sweat = ContextCompat.getDrawable(context, R.drawable.sweat_drops)!!
+
+    private var delayJob: Job? = null
 
     init {
         mainImageView.visibility = View.VISIBLE
@@ -133,11 +150,12 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     }
 
     override fun setSelected(selected: Boolean) {
+        delayJob?.cancel()
         if (playVideoPreviews && videoUrl.isNotNullOrBlank()) {
             if (selected) {
                 initPlayer()
                 videoView?.player?.seekToDefaultPosition()
-                videoView?.player?.playWhenReady = true
+//                videoView?.player?.playWhenReady = true
             } else {
                 showImage()
                 StashExoPlayer.removeListeners()
@@ -145,10 +163,20 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                 videoView?.player = null
             }
         }
-        if (selected && hideOverlayOnSelection) {
-            cardOverlay.clearAnimation()
-            cardOverlay.animateToInvisible(durationMs = animateTime)
-        } else if (hideOverlayOnSelection) {
+        if (selected) {
+            if (videoDelay > 0) {
+                delayJob =
+                    findViewTreeLifecycleOwner()!!.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                        delay(videoDelay)
+                        withContext(Dispatchers.Main) {
+                            hideOverlayAndPlayVideo()
+                        }
+                    }
+            } else {
+                // No delay, so do it immediately
+                hideOverlayAndPlayVideo()
+            }
+        } else {
             cardOverlay.clearAnimation()
             cardOverlay.animateToVisible(animateTime)
         }
@@ -212,7 +240,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         }
         player.prepare()
         player.repeatMode = Player.REPEAT_MODE_ONE
-        player.playWhenReady = true
+        player.playWhenReady = videoDelay <= 0
     }
 
     fun setUpExtraRow(
@@ -278,6 +306,12 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         // Reset the background back for images so transparent ones show through
         mainView.setBackgroundColor(resources.getColor(R.color.default_card_background, null))
         mainView.displayedChild = 0
+    }
+
+    private fun hideOverlayAndPlayVideo() {
+        videoView?.player?.play()
+        cardOverlay.clearAnimation()
+        cardOverlay.animateToInvisible(durationMs = animateTime)
     }
 
     fun getTextOverlay(position: OverlayPosition): TextView {

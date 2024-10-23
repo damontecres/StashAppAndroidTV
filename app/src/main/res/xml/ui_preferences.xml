@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory app:title="Advanced UI">
         <SwitchPreference
@@ -8,6 +9,13 @@
             app:summaryOn="Start on previously selected tab"
             app:summaryOff="Start on first tab"
             app:defaultValue="false" />
+        <SeekBarPreference
+            app:key="@string/pref_key_ui_card_overlay_delay"
+            app:title="Delay before playing card preview"
+            app:seekBarIncrement="100"
+            app:showSeekBarValue="false"
+            android:max="5000"
+            app:defaultValue="@integer/pref_key_ui_card_overlay_delay_default" />
     </PreferenceCategory>
 
     <PreferenceCategory
