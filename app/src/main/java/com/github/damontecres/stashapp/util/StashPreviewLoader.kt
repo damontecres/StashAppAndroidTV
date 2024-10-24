@@ -12,6 +12,9 @@ import com.github.rubensousa.previewseekbar.PreviewLoader
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 
+/**
+ * Loads and presents scrubber previews
+ */
 class StashPreviewLoader(
     private val context: Context,
     private val imageView: ImageView,
@@ -38,6 +41,9 @@ class StashPreviewLoader(
         private const val TAG = "StashPreviewLoader"
     }
 
+    /**
+     * Extracts the thumbnail scrubber image for a given position of the video (in milliseconds)
+     */
     class GlideThumbnailTransformation(duration: Long, position: Long) : BitmapTransformation() {
         private val x: Int
         private val y: Int
@@ -80,7 +86,7 @@ class StashPreviewLoader(
 
         companion object {
             private val KEY =
-                "com.github.damontecres.stashapp.util.StashPreviewLoader.GlideThumbnailTransformation".encodeToByteArray()
+                GlideThumbnailTransformation::class.qualifiedName!!.encodeToByteArray()
             const val MAX_LINES = 9
             const val MAX_COLUMNS = 9
         }

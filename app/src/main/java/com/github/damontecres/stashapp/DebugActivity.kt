@@ -3,8 +3,10 @@ package com.github.damontecres.stashapp
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.widget.Button
 import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
@@ -13,21 +15,29 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.playback.CodecSupport
-import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.suppliers.toFilterArgs
+import com.github.damontecres.stashapp.util.FilterParser
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import kotlinx.coroutines.launch
 
+/**
+ * Activity to show various debugging information
+ *
+ * Not really intended for the average user to use
+ */
 class DebugActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.frame_layout)
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.frame_fragment, DebugFragment())
+                .replace(android.R.id.content, DebugFragment())
                 .commitNow()
         }
     }
@@ -52,7 +62,7 @@ class DebugActivity : FragmentActivity() {
             }
             prefTable.isStretchAllColumns = true
 
-            val serverPrefs = ServerPreferences(requireContext())
+            val serverPrefs = StashServer.requireCurrentServer().serverPreferences
             val serverPrefsRaw = serverPrefs.preferences.all
             serverPrefsRaw.keys.sorted().forEach {
                 val row = createRow(it, serverPrefsRaw[it].toString())
@@ -128,11 +138,57 @@ class DebugActivity : FragmentActivity() {
                 val logs = CompanionPlugin.getLogCatLines(true).joinToString("\n")
                 logTextView.text = logs
             }
+
+            view.findViewById<Button>(R.id.button_test_saved_filters).setOnClickListener {
+                testSavedFilters()
+            }
+        }
+
+        private fun testSavedFilters() {
+            val table = requireView().findViewById<TableLayout>(R.id.debug_test_table)
+            table.removeAllViews()
+            table.addView(createRow("Data Type", "ID", "Name", "Result"))
+
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                try {
+                    val server = StashServer.requireCurrentServer()
+                    val queryEngine = QueryEngine(server)
+                    val filterParser = FilterParser(server.serverPreferences.serverVersion)
+                    DataType.entries.forEach { dataType ->
+                        val filters = queryEngine.getSavedFilters(dataType)
+                        filters.forEach { filter ->
+                            try {
+                                filter.toFilterArgs(filterParser)
+                                table.addView(
+                                    createRow(
+                                        dataType.name,
+                                        filter.id,
+                                        filter.name,
+                                        "Success",
+                                    ),
+                                )
+                            } catch (ex: Exception) {
+                                Log.w(TAG, "Test saved filter failed: id=${filter.id}", ex)
+                                table.addView(
+                                    createRow(
+                                        dataType.name,
+                                        filter.id,
+                                        filter.name,
+                                        ex.message?.ifBlank { ex.cause?.message },
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Exception during test", ex)
+                }
+            }
         }
 
         private fun createRow(
             key: String,
-            value: String?,
+            vararg values: String?,
         ): TableRow {
             val row = TableRow(requireContext())
             row.layoutParams =
@@ -154,34 +210,37 @@ class DebugActivity : FragmentActivity() {
 //            keyView.maxLines=8
 //            keyView.maxWidth=400
 
+            row.addView(keyView)
+
             val isApiKey = key.contains("apikey", true) || key.contains("api key", true)
 
-            val valueView = TextView(requireContext())
-            valueView.text =
-                if (isApiKey && value != null
-                ) {
-                    value.take(4) + "..." + value.takeLast(8)
-                } else {
-                    value
+            values.forEach { value ->
+                val valueView = TextView(requireContext())
+                valueView.text =
+                    if (isApiKey && value != null
+                    ) {
+                        value.take(4) + "..." + value.takeLast(8)
+                    } else {
+                        value
+                    }
+                if (isApiKey) {
+                    valueView.typeface = Typeface.MONOSPACE
                 }
-            if (isApiKey) {
-                valueView.typeface = Typeface.MONOSPACE
-            }
-            valueView.textSize = TABLE_TEXT_SIZE
-            valueView.setTextColor(Color.WHITE)
-            valueView.textAlignment = TextView.TEXT_ALIGNMENT_VIEW_START
-            valueView.setPadding(15, 3, 5, 3)
+                valueView.textSize = TABLE_TEXT_SIZE
+                valueView.setTextColor(Color.WHITE)
+                valueView.textAlignment = TextView.TEXT_ALIGNMENT_VIEW_START
+                valueView.setPadding(15, 3, 5, 3)
 //            valueView.isSingleLine=false
 //            valueView.maxLines=8
 //            valueView.maxWidth=400
-
-            row.addView(keyView)
-            row.addView(valueView)
+                row.addView(valueView)
+            }
 
             return row
         }
 
         companion object {
+            private const val TAG = "DebugFragment"
             private const val TABLE_TEXT_SIZE = 12F
         }
     }

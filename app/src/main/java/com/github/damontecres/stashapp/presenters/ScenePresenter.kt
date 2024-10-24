@@ -3,12 +3,12 @@ package com.github.damontecres.stashapp.presenters
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
-import com.github.damontecres.stashapp.SceneDetailsActivity
-import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackActivity
-import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
@@ -32,7 +32,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.TAG] = item.tags.size
         dataTypeMap[DataType.PERFORMER] = item.performers.size
-        dataTypeMap[DataType.MOVIE] = item.movies.size
+        dataTypeMap[DataType.GROUP] = item.groups.size
         dataTypeMap[DataType.MARKER] = item.scene_markers.size
         dataTypeMap[DataType.GALLERY] = item.galleries.size
 
@@ -57,7 +57,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
 
         cardView.setRating100(item.rating100)
         if (item.studio != null) {
-            if (ServerPreferences(cardView.context).showStudioAsText) {
+            if (StashServer.requireCurrentServer().serverPreferences.showStudioAsText) {
                 cardView.setTextOverlayText(
                     StashImageCardView.OverlayPosition.TOP_RIGHT,
                     item.studio.name,
@@ -112,15 +112,9 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                     1L -> {
                         // Resume
                         val intent = Intent(context, PlaybackActivity::class.java)
-                        intent.putExtra(
-                            SceneDetailsActivity.MOVIE_ID,
-                            item.id,
-                        )
+                        intent.putExtra(Constants.SCENE_ARG, Scene.fromSlimSceneData(item))
                         if (item.resume_time != null) {
-                            intent.putExtra(
-                                SceneDetailsFragment.POSITION_ARG,
-                                item.resume_position!!,
-                            )
+                            intent.putExtra(Constants.POSITION_ARG, item.resume_position!!)
                         }
                         context.startActivity(intent)
                     }
@@ -128,10 +122,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                     2L -> {
                         // Restart/Play
                         val intent = Intent(context, PlaybackActivity::class.java)
-                        intent.putExtra(
-                            SceneDetailsActivity.MOVIE_ID,
-                            item.id,
-                        )
+                        intent.putExtra(Constants.SCENE_ARG, Scene.fromSlimSceneData(item))
                         context.startActivity(intent)
                     }
 

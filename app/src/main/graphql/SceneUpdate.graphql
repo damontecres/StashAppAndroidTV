@@ -10,13 +10,19 @@ mutation SceneUpdate($input: SceneUpdateInput!) {
     studio {
       ...StudioData
     }
+    groups {
+      scene_index
+      group{
+        ...GroupData
+      }
+    }
     rating100
   }
 }
 
 mutation CreateMarker($input: SceneMarkerCreateInput!) {
   sceneMarkerCreate(input: $input) {
-    ...MarkerData
+    ...FullMarkerData
   }
 }
 

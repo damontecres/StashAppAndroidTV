@@ -8,12 +8,16 @@ import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
 import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.api.fragment.ImageData
-import com.github.damontecres.stashapp.data.StashFilter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.addToIntent
+import com.github.damontecres.stashapp.util.putFilterArgs
 
+/**
+ * Similar to [ImageGridClickedListener] but for the main page
+ */
 class OnImageFilterClickedListener(
     private val context: Context,
-    private val callback: (ImageData) -> FilterPosition,
+    private val callback: (ImageData) -> FilterPosition?,
 ) : OnItemViewClickedListener {
     override fun onItemClicked(
         itemViewHolder: Presenter.ViewHolder?,
@@ -26,11 +30,12 @@ class OnImageFilterClickedListener(
         val filterPosition = callback(image)
         val intent = Intent(context, ImageActivity::class.java)
         image.addToIntent(intent)
-        intent.putExtra(ImageActivity.INTENT_POSITION, filterPosition.position)
-        intent.putExtra(ImageActivity.INTENT_FILTER, filterPosition.filter)
-        intent.putExtra(ImageActivity.INTENT_FILTER_TYPE, filterPosition.filter?.filterType?.name)
+        if (filterPosition != null) {
+            intent.putExtra(ImageActivity.INTENT_POSITION, filterPosition.position)
+            intent.putFilterArgs(ImageActivity.INTENT_FILTER_ARGS, filterPosition.filter)
+        }
         context.startActivity(intent)
     }
 
-    data class FilterPosition(val filter: StashFilter?, val position: Int?)
+    data class FilterPosition(val filter: FilterArgs, val position: Int)
 }

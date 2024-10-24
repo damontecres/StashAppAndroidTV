@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
-
     <PreferenceCategory  app:title="Interface">
         <ListPreference
             app:key="@string/pref_key_ui_theme_dark_appearance"
@@ -12,4 +11,61 @@
             app:entryValues="@array/ui_theme_dark_appearance_choices" />
     </PreferenceCategory>
 
+    <PreferenceCategory app:title="Advanced UI">
+        <SwitchPreference
+            app:key="@string/pref_key_ui_remember_tab"
+            app:title="Remember selected tab?"
+            app:summaryOn="Start on previously selected tab"
+            app:summaryOff="Start on first tab"
+            app:defaultValue="false" />
+        <SeekBarPreference
+            app:key="@string/pref_key_ui_card_overlay_delay"
+            app:title="Delay before playing card preview"
+            app:seekBarIncrement="100"
+            app:showSeekBarValue="false"
+            android:max="5000"
+            app:defaultValue="@integer/pref_key_ui_card_overlay_delay_default" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="tabs"
+        app:title="Show/Hide Tabs"
+        app:isPreferenceVisible="true">
+
+        <MultiSelectListPreference
+            app:key="@string/pref_key_ui_gallery_tabs"
+            app:title="Gallery Page"
+            app:summary=""
+            app:defaultValue="@array/gallery_tabs"
+            app:entries="@array/gallery_tabs"
+            app:entryValues="@array/gallery_tabs" />
+        <MultiSelectListPreference
+            app:key="@string/pref_key_ui_group_tabs"
+            app:title="Group Page"
+            app:summary=""
+            app:defaultValue="@array/group_tabs"
+            app:entries="@array/group_tabs"
+            app:entryValues="@array/group_tabs" />
+        <MultiSelectListPreference
+            app:key="@string/pref_key_ui_performer_tabs"
+            app:title="Performer Page"
+            app:summary=""
+            app:defaultValue="@array/performer_tabs"
+            app:entries="@array/performer_tabs"
+            app:entryValues="@array/performer_tabs" />
+        <MultiSelectListPreference
+            app:key="@string/pref_key_ui_studio_tabs"
+            app:title="Studio Page"
+            app:summary=""
+            app:defaultValue="@array/studio_tabs"
+            app:entries="@array/studio_tabs"
+            app:entryValues="@array/studio_tabs" />
+        <MultiSelectListPreference
+            app:key="@string/pref_key_ui_tag_tabs"
+            app:title="Tag Page"
+            app:summary=""
+            app:defaultValue="@array/tag_tabs"
+            app:entries="@array/tag_tabs"
+            app:entryValues="@array/tag_tabs" />
+    </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

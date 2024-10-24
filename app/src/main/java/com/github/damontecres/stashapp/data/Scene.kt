@@ -4,6 +4,7 @@ import android.os.Parcelable
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import kotlinx.parcelize.Parcelize
 
@@ -12,7 +13,6 @@ data class Scene(
     val id: String,
     val title: String?,
     val date: String?,
-    val details: String?,
     val streamUrl: String?,
     val screenshotUrl: String?,
     val streams: Map<String, String>,
@@ -24,8 +24,12 @@ data class Scene(
     val audioCodec: String?,
     val format: String?,
     val oCounter: Int?,
+    val captionUrl: String?,
+    val captions: List<Caption>,
 ) : Parcelable {
     val durationPosition get() = duration?.times(1000L)?.toLong()
+
+    val hasCaptions get() = captionUrl.isNotNullOrBlank() && captions.isNotEmpty()
 
     companion object {
         fun fromFullSceneData(data: FullSceneData): Scene {
@@ -39,7 +43,6 @@ data class Scene(
                 id = data.id,
                 title = data.titleOrFilename,
                 date = data.date,
-                details = data.details,
                 streamUrl = data.paths.stream,
                 screenshotUrl = data.paths.screenshot,
                 streams = streams,
@@ -51,6 +54,8 @@ data class Scene(
                 audioCodec = fileData?.audio_codec,
                 format = fileData?.format,
                 oCounter = data.o_counter,
+                captionUrl = data.paths.caption,
+                captions = data.captions?.map { it.toCaption() }.orEmpty(),
             )
         }
 
@@ -65,7 +70,6 @@ data class Scene(
                 id = data.id,
                 title = data.titleOrFilename,
                 date = data.date,
-                details = data.details,
                 streamUrl = data.paths.stream,
                 screenshotUrl = data.paths.screenshot,
                 streams = streams,
@@ -77,6 +81,8 @@ data class Scene(
                 audioCodec = fileData?.audio_codec,
                 format = fileData?.format,
                 oCounter = data.o_counter,
+                captionUrl = data.paths.caption,
+                captions = data.captions?.map { it.toCaption() }.orEmpty(),
             )
         }
 
@@ -91,7 +97,6 @@ data class Scene(
                 id = data.id,
                 title = data.titleOrFilename,
                 date = data.date,
-                details = null,
                 streamUrl = data.paths.stream,
                 screenshotUrl = data.paths.screenshot,
                 streams = streams,
@@ -103,7 +108,20 @@ data class Scene(
                 audioCodec = fileData?.audio_codec,
                 format = fileData?.format,
                 oCounter = data.o_counter,
+                captionUrl = null,
+                captions = emptyList(),
             )
         }
     }
+}
+
+@Parcelize
+data class Caption(val lang: String, val type: String) : Parcelable
+
+fun SlimSceneData.Caption.toCaption(): Caption {
+    return Caption(language_code, caption_type)
+}
+
+fun FullSceneData.Caption.toCaption(): Caption {
+    return Caption(language_code, caption_type)
 }

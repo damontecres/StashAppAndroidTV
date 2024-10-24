@@ -32,7 +32,7 @@ data class CodecSupport(
         private const val TAG = "CodecSupport"
 
         private val videoCodecMapping =
-            buildMap<String, String> {
+            buildMap {
                 put(MediaFormat.MIMETYPE_VIDEO_MPEG2, "mpeg2video")
                 put(MediaFormat.MIMETYPE_VIDEO_MPEG4, "mpeg4")
                 put(MediaFormat.MIMETYPE_VIDEO_H263, "h263")
@@ -46,7 +46,7 @@ data class CodecSupport(
             }.toMap()
 
         private val audioCodecMapping =
-            buildMap<String, String> {
+            buildMap {
                 put(MediaFormat.MIMETYPE_AUDIO_AAC, "aac")
                 put(MediaFormat.MIMETYPE_AUDIO_AC3, "ac3")
                 put(MediaFormat.MIMETYPE_AUDIO_EAC3, "eac3")

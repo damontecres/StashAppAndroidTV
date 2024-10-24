@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.setup
 import android.os.Bundle
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
@@ -12,9 +13,11 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
 class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
+    private val viewModel: ServerViewModel by activityViewModels()
     private var serverUrl: CharSequence? = null
     private var serverApiKey: CharSequence? = null
 
@@ -45,7 +48,7 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
             guidedActionSubmit =
                 GuidedAction.Builder(requireContext())
                     .id(GuidedAction.ACTION_ID_OK)
-                    .title("Submit")
+                    .title(getString(R.string.stashapp_actions_submit))
                     .description("")
                     .enabled(false)
                     .focusable(false)
@@ -144,11 +147,10 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                 val result =
                     testConnection(serverUrl!!.toString(), serverApiKey?.toString(), trustCerts)
                 if (result.status == TestResultStatus.SUCCESS) {
+                    val server = StashServer(serverUrl.toString(), serverApiKey?.toString())
                     // Persist values
-                    StashServer.addAndSwitchServer(
-                        requireContext(),
-                        StashServer(serverUrl.toString(), serverApiKey?.toString()),
-                    )
+                    StashServer.addAndSwitchServer(requireContext(), server)
+                    viewModel.switchServer(server)
                     finishGuidedStepSupportFragments()
                 } else {
                     Toast.makeText(

@@ -1,12 +1,12 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.util.SparseArray
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
 import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -17,65 +17,46 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.ImageData
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.Version
-import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.getCaseInsensitive
-import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.MainTitleView
 import com.github.damontecres.stashapp.views.OnImageFilterClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Objects
 
 /**
- * Loads a grid of cards with movies to browse.
+ * Loads a grid of cards with groups to browse.
  */
 class MainFragment : BrowseSupportFragment() {
+    private val viewModel: ServerViewModel by activityViewModels()
+
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()
-    private val filterList = SparseArray<StashFilter>()
+    private val filterList = ArrayList<FilterArgs>()
     private lateinit var mBackgroundManager: BackgroundManager
-    private var serverHash: Int? = null
 
     @Volatile
     private var fetchingData = false
 
-    /**
-     * This just hashes a few preferences that affect what this fragment shows
-     */
-    private fun computeServerHash(): Int {
-        val manager = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        val url = manager.getString("stashUrl", null)
-        val apiKey = manager.getString("stashApiKey", null)
-        val maxSearchResults = manager.getInt("maxSearchResults", 0)
-        val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
-        val columns = manager.getInt("cardSize", getString(R.string.card_size_default))
-        val showRatings = manager.getBoolean(getString(R.string.pref_key_show_rating), true)
-        return Objects.hash(url, apiKey, maxSearchResults, playVideoPreviews, columns, showRatings)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        serverHash = computeServerHash()
-
         headersState = HEADERS_DISABLED
 
         prepareBackgroundManager()
@@ -85,25 +66,6 @@ class MainFragment : BrowseSupportFragment() {
         setupEventListeners()
 
         adapter = rowsAdapter
-
-        lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            val result =
-                testStashConnection(
-                    requireContext(),
-                    false,
-                    StashClient.getApolloClient(requireContext()),
-                )
-            if (result.status == TestResultStatus.SUCCESS) {
-                val serverInfo = result.serverInfo!!
-                ServerPreferences(requireContext()).updatePreferences()
-                val mainTitleView =
-                    requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-                mainTitleView.refreshMenuItems()
-                if (rowsAdapter.size() == 0) {
-                    fetchData(serverInfo)
-                }
-            }
-        }
     }
 
     override fun onViewCreated(
@@ -122,75 +84,95 @@ class MainFragment : BrowseSupportFragment() {
                     null
                 }
             }
+        setupObservers()
     }
 
     override fun onResume() {
         super.onResume()
+        viewModel.refresh()
+    }
 
-        val newServerHash = computeServerHash()
-        if (serverHash != newServerHash) {
-            Log.v(TAG, "server hash changed")
-            clearData()
-            rowsAdapter.clear()
-        }
-        serverHash = newServerHash
-
-        viewLifecycleOwner.lifecycleScope.launch(
-            StashCoroutineExceptionHandler { ex ->
-                Toast.makeText(
-                    requireContext(),
-                    "Exception: ${ex.message}",
-                    Toast.LENGTH_LONG,
-                )
-            },
-        ) {
-            try {
-                val result =
-                    testStashConnection(
+    private fun setupObservers() {
+        var firstTime = true
+        viewModel.currentSettingsHash.observe(viewLifecycleOwner) {
+            viewLifecycleOwner.lifecycleScope.launch(
+                StashCoroutineExceptionHandler { ex ->
+                    Toast.makeText(
                         requireContext(),
-                        false,
-                        StashClient.getApolloClient(requireContext()),
+                        "Exception: ${ex.message}",
+                        Toast.LENGTH_LONG,
                     )
-                if (result.status == TestResultStatus.SUCCESS) {
-                    val serverInfo = result.serverInfo!!
-                    ServerPreferences(requireContext()).updatePreferences()
+                },
+            ) {
+                Log.d(TAG, "Settings hash changed: $it")
+                if (!firstTime) {
+                    clearData()
+                    rowsAdapter.clear()
+
+                    val server = viewModel.currentServer.value!!
+                    server.updateServerPrefs()
                     val mainTitleView =
                         requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
                     mainTitleView.refreshMenuItems()
-                    if (rowsAdapter.size() == 0) {
-                        fetchData(serverInfo)
-                    }
-                    try {
-                        val position = getCurrentPosition()
-                        if (position != null) {
-                            val adapter = adapters[position.row]
-                            val item = adapter.get(position.column)
-                            if (item is SlimSceneData) {
-                                val queryEngine = QueryEngine(requireContext())
-                                queryEngine.getScene(item.id)?.let {
-                                    adapter.replace(position.column, it.asSlimeSceneData)
-                                }
-                            }
-                        }
-                    } catch (ex: Exception) {
-                        Log.e(TAG, "Exception", ex)
+                    fetchData(server)
+                }
+                firstTime = false
+            }
+        }
+
+        viewModel.currentServer.observe(viewLifecycleOwner) { newServer ->
+            viewLifecycleOwner.lifecycleScope.launch(
+                StashCoroutineExceptionHandler { ex ->
+                    Toast.makeText(
+                        requireContext(),
+                        "Exception: ${ex.message}",
+                        Toast.LENGTH_LONG,
+                    )
+                },
+            ) {
+                Log.d(TAG, "Server changed")
+                if (newServer != null) {
+                    val result =
+                        testStashConnection(
+                            requireContext(),
+                            false,
+                            StashClient.getApolloClient(newServer),
+                        )
+                    if (result.status == TestResultStatus.SUCCESS) {
+                        newServer.updateServerPrefs()
+                        val mainTitleView =
+                            requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
+                        mainTitleView.refreshMenuItems()
+                        fetchData(newServer)
+                    } else if (result.status == TestResultStatus.UNSUPPORTED_VERSION) {
+                        clearData()
+                        Log.w(
+                            TAG,
+                            "Server version is not supported: ${result.serverInfo?.version?.version}",
+                        )
+                        Toast.makeText(
+                            requireContext(),
+                            "Server version ${result.serverInfo?.version?.version} is not supported!",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    } else {
+                        Log.w(TAG, "testStashConnection returned $result")
+                        clearData()
+                        requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                        Toast.makeText(
+                            requireContext(),
+                            "Connection to Stash failed: ${result.status}",
+                            Toast.LENGTH_LONG,
+                        ).show()
                     }
                 } else {
                     clearData()
-                    requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                     Toast.makeText(
                         requireContext(),
-                        "Connection to Stash failed.",
+                        "Stash server not configured!",
                         Toast.LENGTH_LONG,
                     ).show()
                 }
-            } catch (ex: QueryEngine.StashNotConfiguredException) {
-                clearData()
-                Toast.makeText(
-                    requireContext(),
-                    "Stash server not configured!",
-                    Toast.LENGTH_LONG,
-                ).show()
             }
         }
     }
@@ -211,9 +193,10 @@ class MainFragment : BrowseSupportFragment() {
 
     private fun setupEventListeners() {
         setOnSearchClickedListener {
-//            Toast.makeText(activity!!, "Implement your own in-app search", Toast.LENGTH_LONG)
-//                .show()
-            requireActivity().startActivity(Intent(requireContext(), SearchActivity::class.java))
+            requireActivity().supportFragmentManager.commit {
+                addToBackStack("search")
+                replace(R.id.main_browse_fragment, StashSearchFragment())
+            }
         }
 
         onItemViewClickedListener =
@@ -223,15 +206,13 @@ class MainFragment : BrowseSupportFragment() {
                     OnImageFilterClickedListener(requireContext()) { image: ImageData ->
                         val position = getCurrentPosition()
                         if (position != null) {
-                            val filter = filterList.get(position.row)
-                            if (filter != null) {
-                                return@OnImageFilterClickedListener OnImageFilterClickedListener.FilterPosition(
-                                    filter,
-                                    position.column,
-                                )
-                            }
+                            val filter = filterList[position.row]
+                            return@OnImageFilterClickedListener OnImageFilterClickedListener.FilterPosition(
+                                filter,
+                                position.column,
+                            )
                         }
-                        OnImageFilterClickedListener.FilterPosition(null, null)
+                        null
                     },
                 )
     }
@@ -241,7 +222,7 @@ class MainFragment : BrowseSupportFragment() {
         adapters.forEach { it.clear() }
     }
 
-    private fun fetchData(serverInfo: ServerInfoQuery.Data) {
+    private fun fetchData(server: StashServer) {
         if (fetchingData) {
             return
         }
@@ -259,26 +240,11 @@ class MainFragment : BrowseSupportFragment() {
                 },
         ) {
             try {
-                if (serverInfo.version.version == null) {
-                    Log.w(TAG, "Version returned by server is null")
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Could not determine the server version. Things may not work!",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                }
+                val serverVersion = server.serverPreferences.serverVersion
 
-                if (serverInfo.version.version != null &&
-                    !Version.isStashVersionSupported(
-                        Version.fromString(
-                            serverInfo.version.version,
-                        ),
-                    )
-                ) {
+                if (!Version.isStashVersionSupported(serverVersion)) {
                     val msg =
-                        "Stash server version ${serverInfo.version.version} is not supported!"
+                        "Stash server version $serverVersion is not supported!"
                     Log.e(TAG, msg)
                     withContext(Dispatchers.Main) {
                         Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
@@ -287,42 +253,46 @@ class MainFragment : BrowseSupportFragment() {
                     }
                 } else {
                     try {
-                        val queryEngine = QueryEngine(requireContext(), showToasts = true)
+                        val queryEngine = QueryEngine(server)
                         val filterParser =
-                            FilterParser(
-                                Version.tryFromString(serverInfo.version.version)
-                                    ?: Version.MINIMUM_STASH_VERSION,
-                            )
+                            FilterParser(serverVersion ?: Version.MINIMUM_STASH_VERSION)
 
                         val config = queryEngine.getServerConfiguration()
-                        ServerPreferences(requireContext()).updatePreferences(config)
+                        server.serverPreferences.updatePreferences(config)
 
-                        val ui = config.configuration.ui
+                        val ui = config.configuration.ui as Map<*, *>
                         val frontPageContent =
-                            (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>
+                            ui.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
+                        if (frontPageContent == null) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Unable to find front page content! Check the Web UI.",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                            return@launch
+                        }
                         val pageSize =
                             PreferenceManager.getDefaultSharedPreferences(requireContext())
                                 .getInt(getString(R.string.pref_key_page_size), 25)
                         val frontPageParser =
-                            FrontPageParser(queryEngine, filterParser, pageSize)
+                            FrontPageParser(requireContext(), queryEngine, filterParser, pageSize)
                         val jobs = frontPageParser.parse(frontPageContent)
                         jobs.forEachIndexed { index, job ->
                             job.await().let { row ->
-                                if (row.successful) {
-                                    val rowData = row.data!!
-                                    filterList.set(index, rowData.filter)
+                                if (row is FrontPageParser.FrontPageRow.Success) {
+                                    filterList.add(row.filter)
 
                                     val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
-                                    adapter.addAll(0, rowData.data)
-                                    adapter.add(rowData.filter)
+                                    adapter.addAll(0, row.data)
+                                    adapter.add(row.filter)
                                     adapters.add(adapter)
                                     withContext(Dispatchers.Main) {
                                         rowsAdapter.set(
                                             index,
-                                            ListRow(HeaderItem(rowData.name), adapter),
+                                            ListRow(HeaderItem(row.name), adapter),
                                         )
                                     }
-                                } else if (row.result == FrontPageParser.FrontPageRowResult.ERROR) {
+                                } else if (row is FrontPageParser.FrontPageRow.Error) {
                                     withContext(Dispatchers.Main) {
                                         Toast.makeText(
                                             requireContext(),
@@ -346,7 +316,7 @@ class MainFragment : BrowseSupportFragment() {
                         withContext(Dispatchers.Main) {
                             Toast.makeText(
                                 requireContext(),
-                                "Query error: ${ex.message}",
+                                ex.message,
                                 Toast.LENGTH_LONG,
                             ).show()
                             requireActivity().findViewById<View?>(R.id.search_button).requestFocus()

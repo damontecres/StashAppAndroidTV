@@ -6,6 +6,9 @@ import android.widget.TextView
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import java.io.BufferedReader
 
+/**
+ * Show various licenses for third party libraries included in the app
+ */
 class LicenseActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -15,7 +15,7 @@ class ImagePresenter(callback: LongClickCallBack<ImageData>? = null) : StashPres
         cardView.titleText = item.title
 
         val details = mutableListOf<String?>()
-        details.add(item.studio?.studioData?.name)
+        details.add(item.studio?.name)
         details.add(item.date)
         cardView.contentText = concatIfNotBlank(" - ", details)
 

@@ -31,18 +31,21 @@ Check the [Tips & Tricks](https://github.com/damontecres/StashAppAndroidTV/wiki/
 1. [Configure the app](#configuration)
 1. Optionally, install the [StashAppAndroidTV Companion](https://github.com/damontecres/StashAppAndroidTV-Companion) plugin on your server to enable additional features
     - Search for `StashAppAndroidTV Companion` on your server's Settings->Plugins page
+    - Alternatively, trigger an install from the Android TV app in `Settings->Advanced->Install companion plugin`
 
 ### Upgrading the app
 
-Starting with `v0.2.2`, the app will automatically check for updates and, as an experimental feature, the update can be installed in settings.
+After the initial install above, the app will automatically check for updates which can then be installed in settings.
+
+The first time you attempt an update, the Android TV OS should guide you through enabling the required additional permissions for the app to install updates.
 
 #### Develop build
 
-This build has the latest features, but may be unstable or have bugs!
+This build is the current work-in-progress. It has the latest features, but may be unstable or have bugs!
 
 You can install the latest development debug build from the [develop pre-release](https://github.com/damontecres/StashAppAndroidTV/releases/tag/develop) using the same methods as above. The short code is `505547` or URL: https://aftv.news/505547
 
-Starting with `v0.2.2`, you update in-app to the newest development build by changing the URL in `Settings->Advanced->Update URL` to https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/tags/develop (replace `latest` with `tags/develop`).
+You can also use the in-app updater for development builds by changing the URL in `Settings->Advanced->Update URL` to https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/tags/develop (replace `latest` with `tags/develop`).
 
 ### Configuration
 
@@ -50,15 +53,16 @@ The first time you open the app, follow the prompts to configure the app to conn
 
 1. Enter the full URL of your Stash server (e.g. `http://192.168.1.122:9999`)
     - Don't use `localhost`; use the IP address or domain of your Stash server
+    - Don't forget to include the port which 9999 by default
     - If you have configured HTTPS/SSL/TLS, make sure to use `https://` instead of `http://`
-1. If you have enabled authentication on your Stash server, enter the API Key
+1. If you have enabled authentication on your Stash server, you will be prompted to enter the API Key
     1. Use your phone to browse to your Stash server and copy the API Key from the Settings->Security page (e.g. http://192.168.1.122:9999/settings?tab=security)
     1. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) to paste the API Key into the TV app
 1. If you have trouble submitting the URL or API Key using the virtual remote control, [see some tips here](https://github.com/damontecres/StashAppAndroidTV/wiki/Tips-&-Tricks#i-cant-submit-the-server-url-when-using-a-remote-phone-app)
 
 #### Multiple servers
 
-You can configure multiple servers in the app. To add, remove, or switch servers, use the `Manage Servers` option in the settings.
+You can configure multiple servers in the app. To add, remove, or switch servers, use the `Manage Servers` option in the settings or click the Stash icon on the main page.
 
 ### Compatibility
 
@@ -66,7 +70,7 @@ You can configure multiple servers in the app. To add, remove, or switch servers
 
 The app strives to be compatible with the latest released version of Stash.
 
-Currently, the minimum supported/tested server version is Stash `0.25.0`.
+Currently, the minimum supported/tested server version is Stash `0.27.0`.
 
 #### Devices
 
@@ -90,8 +94,13 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 
 ## Additional screenshots
 
-### Scene list, filters, & sorting
-![0_2_10_scenes](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/092e0a87-e097-44c2-a605-e1ba93443e89)
+### Scene list with sorting & filters
+
+![0_4_2_scenes](https://github.com/user-attachments/assets/438fe917-1ea0-4f65-9c96-ddd2ace0504a)
 
 ### Performer page
-![0_2_10_performer](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/83eefe0d-800c-4a0c-bcc5-4176372d296d)
+![0_4_0_performer](https://github.com/user-attachments/assets/16ae2514-6b00-425a-82a2-9db0f4de51d6)
+![0_4_0_performer_scenes_sort](https://github.com/user-attachments/assets/c5b4e89b-b4de-4499-88a1-828eeda1b550)
+
+### Playlist
+![0_4_0_playlist](https://github.com/user-attachments/assets/f06b0ce3-82fe-4cbd-a8b5-c2213d8c33f7)

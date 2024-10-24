@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.setup
 
 import android.os.Bundle
+import android.text.InputType
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
@@ -14,8 +15,8 @@ import kotlinx.coroutines.launch
 class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
-            "Stash Server URL",
-            "Enter the URL for your Stash server, including the port if needed",
+            getString(R.string.stash_server_url),
+            getString(R.string.stash_server_url_desc),
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
@@ -29,6 +30,7 @@ class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
             GuidedAction.Builder(requireContext())
                 .id(SetupActivity.ACTION_SERVER_URL)
                 .title("Server URL")
+                .descriptionInputType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
                 .descriptionEditable(true)
                 .hasNext(true)
                 .build(),

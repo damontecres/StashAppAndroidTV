@@ -2,10 +2,14 @@ package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.os.Build
-import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.util.StashServer
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.Locale
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -20,15 +24,28 @@ fun durationToString(duration: Double): String {
 }
 
 fun getRatingAsDecimalString(
-    context: Context,
     rating100: Int,
-    ratingsAsStars: Boolean? = null,
+    ratingsAsStars: Boolean,
 ): String {
-    val asStars = ratingsAsStars ?: ServerPreferences(context).ratingsAsStars
-    return if (asStars) {
+    return if (ratingsAsStars) {
         (rating100 / 20.0).toString()
     } else {
         (rating100 / 10.0).toString()
+    }
+}
+
+fun getRatingString(
+    rating100: Int,
+    ratingsAsStars: Boolean,
+): String {
+    val decimal = getRatingAsDecimalString(rating100, ratingsAsStars)
+    return if (ratingsAsStars) {
+        val starsStr =
+            StashApplication.getApplication()
+                .getString(R.string.stashapp_config_ui_editing_rating_system_type_options_stars)
+        "$decimal $starsStr"
+    } else {
+        decimal
     }
 }
 
@@ -49,5 +66,61 @@ fun parseTimeToString(ts: Any?): String? {
         }
     } else {
         ts.toString()
+    }
+}
+
+val String.fileNameFromPath
+    get() = this.replace(Regex("""^.*[\\/]"""), "")
+
+/**
+ * Get the [String] representation for a [CriterionModifier]
+ */
+fun CriterionModifier.getString(context: Context): String =
+    when (this) {
+        CriterionModifier.EQUALS -> context.getString(R.string.stashapp_criterion_modifier_equals)
+        CriterionModifier.NOT_EQUALS -> context.getString(R.string.stashapp_criterion_modifier_not_equals)
+        CriterionModifier.LESS_THAN -> context.getString(R.string.stashapp_criterion_modifier_less_than)
+        CriterionModifier.GREATER_THAN -> context.getString(R.string.stashapp_criterion_modifier_greater_than)
+        CriterionModifier.IS_NULL -> context.getString(R.string.stashapp_criterion_modifier_is_null)
+        CriterionModifier.NOT_NULL -> context.getString(R.string.stashapp_criterion_modifier_not_null)
+        CriterionModifier.INCLUDES_ALL -> context.getString(R.string.stashapp_criterion_modifier_includes_all)
+        CriterionModifier.INCLUDES -> context.getString(R.string.stashapp_criterion_modifier_includes)
+        CriterionModifier.EXCLUDES -> context.getString(R.string.stashapp_criterion_modifier_excludes)
+        CriterionModifier.MATCHES_REGEX -> context.getString(R.string.stashapp_criterion_modifier_matches_regex)
+        CriterionModifier.NOT_MATCHES_REGEX -> context.getString(R.string.stashapp_criterion_modifier_not_matches_regex)
+        CriterionModifier.BETWEEN -> context.getString(R.string.stashapp_criterion_modifier_between)
+        CriterionModifier.NOT_BETWEEN -> context.getString(R.string.stashapp_criterion_modifier_not_between)
+        CriterionModifier.UNKNOWN__ -> "Unknown"
+    }
+
+private val abbrevSuffixes = listOf("", "K", "M", "B")
+
+/**
+ * Format a number by abbreviation, eg 5533 => 5.5K
+ */
+fun abbreviateCounter(counter: Int): String {
+    var unit = 0
+    var count = counter.toDouble()
+    while (count >= 1000 && unit + 1 < abbrevSuffixes.size) {
+        count /= 1000
+        unit++
+    }
+    return String.format(Locale.getDefault(), "%.1f%s", count, abbrevSuffixes[unit])
+}
+
+/**
+ * Formats a number which may abbreviate it or add commas, etc
+ *
+ * @param number the number to format
+ * @param abbreviateCounters whether to use the server-side abbreviateCounters settings
+ */
+fun formatNumber(
+    number: Int,
+    abbreviateCounters: Boolean = StashServer.requireCurrentServer().serverPreferences.abbreviateCounters,
+): String {
+    return if (abbreviateCounters) {
+        abbreviateCounter(number)
+    } else {
+        java.text.NumberFormat.getNumberInstance().format(number)
     }
 }

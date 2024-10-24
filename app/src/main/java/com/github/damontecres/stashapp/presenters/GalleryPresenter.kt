@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.presenters
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.concatIfNotBlank
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
 import java.util.EnumMap
 
@@ -28,13 +27,8 @@ class GalleryPresenter(callback: LongClickCallBack<GalleryData>? = null) : Stash
         cardView.setUpExtraRow(dataTypeMap, null)
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-        val coverPaths = item.cover?.paths
-        if (coverPaths != null && coverPaths.thumbnail.isNotNullOrBlank()) {
-            loadImage(cardView, coverPaths.thumbnail)
-        }
-        if (coverPaths?.preview.isNotNullOrBlank()) {
-            cardView.videoUrl = coverPaths?.preview
-        }
+        val coverImage = item.paths.cover
+        loadImage(cardView, coverImage)
 
         cardView.setRating100(item.rating100)
     }

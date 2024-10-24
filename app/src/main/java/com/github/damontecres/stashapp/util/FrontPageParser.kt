@@ -1,13 +1,14 @@
 package com.github.damontecres.stashapp.util
 
+import android.content.Context
 import android.util.Log
-import com.apollographql.apollo3.api.Optional
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.FilterMode
-import com.github.damontecres.stashapp.api.type.FindFilterType
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
-import com.github.damontecres.stashapp.data.StashCustomFilter
-import com.github.damontecres.stashapp.data.StashFilter
-import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FrontPageParser.FrontPageRow
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
@@ -18,34 +19,26 @@ import kotlinx.coroutines.withContext
 /**
  * Parses the front page content from the server into a list of [FrontPageRow]s
  */
-class FrontPageParser(private val queryEngine: QueryEngine, private val filterParser: FilterParser, private val pageSize: Int = 25) {
+class FrontPageParser(
+    private val context: Context,
+    private val queryEngine: QueryEngine,
+    private val filterParser: FilterParser,
+    private val pageSize: Int = 25,
+) {
     companion object {
-        const val TAG = "MainPageParser"
+        const val TAG = "FrontPageParser"
     }
 
-    enum class FrontPageRowResult {
-        SUCCESS,
-        ERROR,
-        DATA_TYPE_NOT_SUPPORTED,
-    }
+    sealed class FrontPageRow {
+        data class Success(
+            val name: String,
+            val filter: FilterArgs,
+            val data: List<*>,
+        ) : FrontPageRow()
 
-    data class FrontPageRowData(val name: String, val filter: StashFilter, val data: List<*>)
+        data object Error : FrontPageRow()
 
-    data class FrontPageRow(val result: FrontPageRowResult, val data: FrontPageRowData?) {
-        constructor(
-            name: String,
-            filter: StashFilter,
-            data: List<*>,
-        ) : this(FrontPageRowResult.SUCCESS, FrontPageRowData(name, filter, data))
-
-        constructor(result: FrontPageRowResult) : this(result, null)
-
-        val successful get() = result == FrontPageRowResult.SUCCESS && data!!.data.isNotEmpty()
-
-        companion object {
-            val ERROR = FrontPageRow(FrontPageRowResult.ERROR)
-            val NOT_SUPPORTED = FrontPageRow(FrontPageRowResult.DATA_TYPE_NOT_SUPPORTED)
-        }
+        data object NotSupported : FrontPageRow()
     }
 
     suspend fun parse(frontPageContent: List<Map<String, *>>): List<Deferred<FrontPageRow>> {
@@ -75,7 +68,7 @@ class FrontPageParser(private val queryEngine: QueryEngine, private val filterPa
                         TAG,
                         "Unknown frontPageFilter typename: $filterType",
                     )
-                    CompletableDeferred(FrontPageRow.NOT_SUPPORTED)
+                    CompletableDeferred(FrontPageRow.NotSupported)
                 }
             }
         }
@@ -92,8 +85,17 @@ class FrontPageParser(private val queryEngine: QueryEngine, private val filterPa
                     (msg["values"] as Map<String, String>)["objects"] as String
                 val description =
                     when (msg["id"].toString()) {
-                        "recently_added_objects" -> "Recently Added $objType"
-                        "recently_released_objects" -> "Recently Released $objType"
+                        "recently_added_objects" ->
+                            context.getString(
+                                R.string.stashapp_recently_added_objects,
+                                objType,
+                            )
+
+                        "recently_released_objects" ->
+                            context.getString(
+                                R.string.stashapp_recently_released_objects,
+                                objType,
+                            )
                         else -> objType
                     }
 
@@ -106,75 +108,43 @@ class FrontPageParser(private val queryEngine: QueryEngine, private val filterPa
                             else -> null
                         }
                 val mode = FilterMode.safeValueOf(frontPageFilter["mode"] as String)
-                if (mode !in supportedFilterModes) {
-                    Log.w(TAG, "CustomFilter mode is $mode which is not supported yet")
-                    return@withContext CompletableDeferred(FrontPageRow(FrontPageRowResult.DATA_TYPE_NOT_SUPPORTED))
-                }
+                val dataType =
+                    DataType.fromFilterMode(mode)
+                        ?: return@withContext CompletableDeferred(FrontPageRow.NotSupported)
                 val job =
                     async {
                         try {
                             val direction = frontPageFilter["direction"] as String?
-                            val directionEnum =
-                                if (direction != null) {
-                                    val enum = SortDirectionEnum.safeValueOf(direction.uppercase())
-                                    if (enum == SortDirectionEnum.UNKNOWN__) {
-                                        SortDirectionEnum.DESC
-                                    } else {
-                                        enum
-                                    }
-                                } else {
-                                    SortDirectionEnum.DESC
-                                }
 
-                            val filter =
-                                FindFilterType(
-                                    direction = Optional.presentIfNotNull(directionEnum),
-                                    sort = Optional.presentIfNotNull(sortBy),
-                                    per_page = Optional.present(pageSize),
-                                )
-                            val data =
-                                when (mode) {
-                                    FilterMode.SCENES -> {
-                                        queryEngine.findScenes(filter)
-                                    }
-
-                                    FilterMode.STUDIOS -> {
-                                        queryEngine.findStudios(filter)
-                                    }
-
-                                    FilterMode.PERFORMERS -> {
-                                        queryEngine.findPerformers(filter)
-                                    }
-
-                                    FilterMode.MOVIES -> {
-                                        queryEngine.findMovies(filter)
-                                    }
-
-                                    FilterMode.IMAGES -> {
-                                        queryEngine.findImages(filter)
-                                    }
-
-                                    FilterMode.GALLERIES -> {
-                                        queryEngine.findGalleries(filter)
-                                    }
-
-                                    else -> {
-                                        Log.w(TAG, "Unsupported mode in frontpage: $mode")
-                                        listOf()
-                                    }
-                                }
                             val customFilter =
-                                StashCustomFilter(mode, direction, sortBy, description)
-                            FrontPageRow(description, customFilter, data)
+                                FilterArgs(
+                                    dataType = dataType,
+                                    name = description,
+                                    findFilter =
+                                        StashFindFilter(
+                                            SortAndDirection.create(
+                                                dataType,
+                                                sortBy,
+                                                direction,
+                                            ),
+                                        ),
+                                ).withResolvedRandom()
+                            val data =
+                                queryEngine.find(
+                                    customFilter.dataType,
+                                    customFilter.findFilter!!.toFindFilterType(1, pageSize),
+                                    useRandom = false,
+                                )
+                            FrontPageRow.Success(description, customFilter, data)
                         } catch (ex: Exception) {
                             Log.e(TAG, "Exception in addCustomFilterRow", ex)
-                            FrontPageRow.ERROR
+                            FrontPageRow.Error
                         }
                     }
                 return@withContext job
             } catch (ex: Exception) {
                 Log.e(TAG, "Exception during addCustomFilterRow", ex)
-                CompletableDeferred(FrontPageRow.ERROR)
+                CompletableDeferred(FrontPageRow.Error)
             }
         }
 
@@ -189,86 +159,102 @@ class FrontPageParser(private val queryEngine: QueryEngine, private val filterPa
                 val filterId = frontPageFilter.getCaseInsensitive("savedFilterId")
                 try {
                     val result = queryEngine.getSavedFilter(filterId.toString())
-                    if (result?.mode in supportedFilterModes) {
+                    if (result != null) {
                         val filter =
-                            queryEngine.updateFilter(
-                                result?.find_filter?.toFindFilterType(),
-                                useRandom = true,
-                            )?.copy(per_page = Optional.present(pageSize))
-                        val objectFilter =
-                            result?.object_filter as Map<String, Map<String, *>>?
+                            result.toFilterArgs(filterParser)
+                                .withResolvedRandom()
+                        val findFilter =
+                            filter.findFilter?.toFindFilterType(page = 1, perPage = pageSize)
+                        val objectFilter = result.object_filter
 
                         val data =
-                            when (result?.mode) {
-                                FilterMode.SCENES -> {
+                            when (filter.dataType) {
+                                DataType.SCENE -> {
                                     val sceneFilter =
-                                        filterParser.convertSceneObjectFilter(objectFilter)
-                                    queryEngine.findScenes(filter, sceneFilter, useRandom = false)
+                                        filterParser.convertSceneFilterType(objectFilter)
+                                    queryEngine.findScenes(
+                                        findFilter,
+                                        sceneFilter,
+                                        useRandom = false,
+                                    )
                                 }
 
-                                FilterMode.STUDIOS -> {
+                                DataType.STUDIO -> {
                                     val studioFilter =
-                                        filterParser.convertStudioObjectFilter(objectFilter)
+                                        filterParser.convertStudioFilterType(objectFilter)
                                     queryEngine.findStudios(
-                                        filter,
+                                        findFilter,
                                         studioFilter,
                                         useRandom = false,
                                     )
                                 }
 
-                                FilterMode.PERFORMERS -> {
+                                DataType.PERFORMER -> {
                                     val performerFilter =
-                                        filterParser.convertPerformerObjectFilter(objectFilter)
+                                        filterParser.convertPerformerFilterType(objectFilter)
 
                                     queryEngine.findPerformers(
-                                        filter,
+                                        findFilter,
                                         performerFilter,
                                         useRandom = false,
                                     )
                                 }
 
-                                FilterMode.TAGS -> {
+                                DataType.TAG -> {
                                     val tagFilter =
-                                        filterParser.convertTagObjectFilter(objectFilter)
+                                        filterParser.convertTagFilterType(objectFilter)
 
-                                    queryEngine.findTags(filter, tagFilter, useRandom = false)
+                                    queryEngine.findTags(findFilter, tagFilter, useRandom = false)
                                 }
 
-                                FilterMode.IMAGES -> {
+                                DataType.IMAGE -> {
                                     val imageFilter =
-                                        filterParser.convertImageObjectFilter(objectFilter)
-                                    queryEngine.findImages(filter, imageFilter, useRandom = false)
-                                }
-
-                                FilterMode.GALLERIES -> {
-                                    val galleryFilter =
-                                        filterParser.convertGalleryObjectFilter(objectFilter)
-                                    queryEngine.findGalleries(filter, galleryFilter, useRandom = false)
-                                }
-
-                                else -> {
-                                    Log.w(
-                                        TAG,
-                                        "Unsupported mode in frontpage: ${result?.mode}",
+                                        filterParser.convertImageFilterType(objectFilter)
+                                    queryEngine.findImages(
+                                        findFilter,
+                                        imageFilter,
+                                        useRandom = false,
                                     )
-                                    listOf()
+                                }
+
+                                DataType.GALLERY -> {
+                                    val galleryFilter =
+                                        filterParser.convertGalleryFilterType(objectFilter)
+                                    queryEngine.findGalleries(
+                                        findFilter,
+                                        galleryFilter,
+                                        useRandom = false,
+                                    )
+                                }
+
+                                DataType.GROUP -> {
+                                    val groupFilter =
+                                        filterParser.convertGroupFilterType(objectFilter)
+                                    queryEngine.findGroups(
+                                        findFilter,
+                                        groupFilter,
+                                        useRandom = false,
+                                    )
+                                }
+
+                                DataType.MARKER -> {
+                                    val markerFilter =
+                                        filterParser.convertSceneMarkerFilterType(objectFilter)
+                                    queryEngine.findMarkers(
+                                        findFilter,
+                                        markerFilter,
+                                        useRandom = false,
+                                    )
                                 }
                             }
-                        val savedFilter =
-                            StashSavedFilter(
-                                filterId.toString(),
-                                result!!.mode,
-                                filter?.sort?.getOrNull(),
-                                filter?.direction?.getOrNull()?.toString(),
-                            )
-                        FrontPageRow(result.name, savedFilter, data)
+                        FrontPageRow.Success(result.name, filter, data)
                     } else {
-                        Log.w(TAG, "SavedFilter mode is ${result?.mode} which is not supported yet")
-                        FrontPageRow.NOT_SUPPORTED
+                        Log.w(TAG, "SavedFilter does not exist")
+                        FrontPageRow.Error
                     }
                 } catch (ex: Exception) {
                     Log.e(TAG, "Exception in addSavedFilterRow filterId=$filterId", ex)
-                    FrontPageRow.ERROR
+                    FrontPageRow.Error
                 }
             }
         }

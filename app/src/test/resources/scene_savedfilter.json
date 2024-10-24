@@ -89,11 +89,20 @@
         },
         "is_missing": {
           "modifier": "EQUALS",
-          "value": "movie"
+          "value": "group"
         },
-        "movies": {
-          "modifier": "NOT_NULL",
-          "value": []
+        "groups": {
+          "modifier": "INCLUDES",
+          "value": {
+            "depth": 0,
+            "excluded": [],
+            "items": [
+              {
+                "id": "1",
+                "label": "Label"
+              }
+            ]
+          }
         },
         "o_counter": {
           "modifier": "GREATER_THAN",
@@ -137,7 +146,7 @@
             "items": [
               {
                 "id": "8",
-                "label": "Anal"
+                "label": "TestTag"
               }
             ]
           }
@@ -223,7 +232,7 @@
             "excluded": [],
             "items": [
               {
-                "id": "8",
+                "id": "9",
                 "label": "AAA"
               },
               {

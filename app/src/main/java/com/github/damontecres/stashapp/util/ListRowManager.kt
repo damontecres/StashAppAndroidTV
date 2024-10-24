@@ -1,30 +1,23 @@
 package com.github.damontecres.stashapp.util
 
 import androidx.leanback.widget.ArrayObjectAdapter
-import androidx.leanback.widget.DiffCallback
 import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.api.fragment.GalleryData
-import com.github.damontecres.stashapp.api.fragment.ImageData
-import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
-import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
-import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashData
 
 /**
  * Manages a [ListRow] handling adding/removing items, or even the adding/remove the row itself
  */
-class ListRowManager<T>(
+class ListRowManager<T : StashData>(
     dataType: DataType,
     rowModifier: SparseArrayRowModifier,
     private val adapter: ArrayObjectAdapter,
     rowHeaderName: String? = null,
-    private val setItemsCallback: SetIdsForItemCallback,
+    private val setItemsCallback: SetIdsForItemCallback<T>,
 ) {
     var name: String =
         rowHeaderName ?: StashApplication.getApplication().getString(dataType.pluralStringId)
@@ -36,46 +29,11 @@ class ListRowManager<T>(
         }
     private val addRowCallback: RowAdder
     private val removeRowCallback: RowRemover
-    private val diffCallback: DiffCallback<*>
-    private val idExtractor: (Any?) -> String
+    private val diffCallback = StashDiffCallback
 
     init {
         addRowCallback = rowModifier
         removeRowCallback = rowModifier
-        when (dataType) {
-            DataType.SCENE -> {
-                diffCallback = SceneDiffCallback
-                idExtractor = { item -> (item as SlimSceneData).id }
-            }
-            DataType.MOVIE -> {
-                diffCallback = MovieDiffCallback
-                idExtractor = { item -> (item as MovieData).id }
-            }
-            DataType.MARKER -> {
-                diffCallback = MarkerDiffCallback
-                idExtractor = { item -> (item as MarkerData).id }
-            }
-            DataType.PERFORMER -> {
-                diffCallback = PerformerDiffCallback
-                idExtractor = { item -> (item as PerformerData).id }
-            }
-            DataType.STUDIO -> {
-                diffCallback = StudioDiffCallback
-                idExtractor = { item -> (item as StudioData).id }
-            }
-            DataType.TAG -> {
-                diffCallback = TagDiffCallback
-                idExtractor = { item -> (item as TagData).id }
-            }
-            DataType.IMAGE -> {
-                diffCallback = ImageDiffCallback
-                idExtractor = { item -> (item as ImageData).id }
-            }
-            DataType.GALLERY -> {
-                diffCallback = GalleryDiffCallback
-                idExtractor = { item -> (item as GalleryData).id }
-            }
-        }
     }
 
     /**
@@ -83,8 +41,8 @@ class ListRowManager<T>(
      * @return true if the item existed and was removed
      */
     suspend fun remove(item: T): Boolean {
-        val currentIds = adapter.unmodifiableList<T>().map { idExtractor(it) }.toMutableList()
-        if (currentIds.remove(idExtractor(item))) {
+        val currentIds = adapter.unmodifiableList<T>().map { it.id }.toMutableList()
+        if (currentIds.remove(item.id)) {
             val results = setItemsCallback.setIds(currentIds)
             if (results.isEmpty()) {
                 removeRowCallback.removeRow()
@@ -102,7 +60,7 @@ class ListRowManager<T>(
      * @return the object for the ID or null if it exists already
      */
     suspend fun add(id: String): T? {
-        val currentIds = adapter.unmodifiableList<T>().map { idExtractor(it) }.toMutableList()
+        val currentIds = adapter.unmodifiableList<T>().map { it.id }.toMutableList()
         if (!currentIds.contains(id)) {
             val wasEmpty = adapter.isEmpty()
             currentIds.add(id)
@@ -111,7 +69,7 @@ class ListRowManager<T>(
             if (wasEmpty) {
                 addRowCallback.addRow(ListRow(HeaderItem(name), adapter))
             }
-            return results.firstOrNull { idExtractor(it) == id } as T
+            return results.firstOrNull { it.id == id }
         }
         return null
     }
@@ -133,6 +91,13 @@ class ListRowManager<T>(
     }
 
     /**
+     * Remove all items
+     */
+    fun clear() {
+        setItems(listOf())
+    }
+
+    /**
      * Set the ids for something on a parent object.
      *
      * Returns the items on the parent object, typically the items represented by the IDs.
@@ -141,8 +106,8 @@ class ListRowManager<T>(
      *
      * @return the items from the parent object
      */
-    fun interface SetIdsForItemCallback {
-        suspend fun setIds(ids: List<String>): List<Any>
+    fun interface SetIdsForItemCallback<T> {
+        suspend fun setIds(ids: List<String>): List<T>
     }
 
     fun interface RowAdder {

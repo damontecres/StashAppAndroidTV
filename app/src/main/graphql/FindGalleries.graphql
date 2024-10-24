@@ -19,6 +19,24 @@ query FindGallery($id: ID!) {
   }
 }
 
+query FindGalleryPerformers($id: ID!) {
+  findGallery(id: $id) {
+    id
+    performers {
+      ...PerformerData
+    }
+  }
+}
+
+query FindGalleryTags($id: ID!) {
+  findGallery(id: $id) {
+    id
+    tags {
+      ...TagData
+    }
+  }
+}
+
 fragment GalleryData on Gallery {
   id
   title
@@ -37,10 +55,10 @@ fragment GalleryData on Gallery {
     path
   }
   performers {
-    ...PerformerData
+    ...SlimPerformerData
   }
   tags {
-    ...TagData
+    ...SlimTagData
   }
   studio {
     id
@@ -50,12 +68,20 @@ fragment GalleryData on Gallery {
   scenes {
     id
   }
-  cover {
-    id
-    paths {
-      thumbnail
-      image
-      preview
+  paths {
+    cover
+    preview
+  }
+}
+
+mutation UpdateGallery($input: GalleryUpdateInput!) {
+  galleryUpdate(input: $input) {
+    tags {
+      ...TagData
     }
+    performers {
+      ...PerformerData
+    }
+    rating100
   }
 }

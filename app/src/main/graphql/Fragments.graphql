@@ -2,6 +2,7 @@ fragment SlimTagData on Tag {
   id
   name
   description
+  favorite
   image_path
 }
 
@@ -9,6 +10,7 @@ fragment TagData on Tag {
   id
   name
   description
+  favorite
   aliases
   scene_count
   performer_count
@@ -18,4 +20,15 @@ fragment TagData on Tag {
   gallery_count
   parent_count
   child_count
+}
+
+fragment JobData on Job {
+  id
+  status
+  progress
+  description
+  subTasks
+  addTime
+  endTime
+  error
 }

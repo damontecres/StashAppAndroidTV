@@ -9,6 +9,11 @@
             app:summary="Automatically scroll down to the 'next' results when clicking View All on main page"
             app:defaultValue="true" />
         <SwitchPreference
+            app:key="@string/pref_key_back_button_scroll"
+            app:title="Scroll to top on back"
+            app:summary="Scroll to the top of page when pressing the back button"
+            app:defaultValue="true" />
+        <SwitchPreference
             app:key="scrollSceneDetails"
             app:title="Long scene details behavior"
             app:summaryOn="Scroll if needed"
@@ -32,6 +37,12 @@
             app:summaryOn="Play audio"
             app:summaryOff="Don't play audio"
             app:defaultValue="false" />
+        <SwitchPreference
+            app:key="@string/pref_key_crop_card_images"
+            app:title="Card image handling"
+            app:summaryOn="Crop center"
+            app:summaryOff="Don't crop, scale to fit"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">
@@ -90,6 +101,21 @@
             app:title="Scene title/date"
             app:summaryOn="Show title &amp; date"
             app:summaryOff="Hide title &amp; date"
+            app:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="Scene Video Filters">
+        <SwitchPreference
+            app:key="@string/pref_key_video_filters"
+            app:title="Enable video filters"
+            app:summaryOn="Enabled"
+            app:summaryOff="Disabled"
+            app:defaultValue="false" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_save_effects"
+            app:title="Persist scene filters"
+            app:summaryOn="Save applied filters (rotation, etc) for future plays"
+            app:summaryOff="Do not save applied filters"
             app:defaultValue="true" />
     </PreferenceCategory>
 

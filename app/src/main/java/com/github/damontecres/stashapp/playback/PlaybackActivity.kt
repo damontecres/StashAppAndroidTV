@@ -7,16 +7,20 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.WindowManager
+import androidx.activity.addCallback
 import androidx.annotation.OptIn
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.SceneDetailsActivity
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.toMilliseconds
 import kotlinx.coroutines.launch
 
@@ -26,30 +30,38 @@ class PlaybackActivity : FragmentActivity() {
 
     private lateinit var scene: Scene
 
+    @OptIn(UnstableApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val scene = intent.getParcelableExtra(SceneDetailsActivity.MOVIE) as Scene?
+        setContentView(R.layout.activity_playback)
+
+        onBackPressedDispatcher.addCallback(this, true) {
+            setResultAndFinish()
+        }
+
+        val scene = intent.getParcelable(Constants.SCENE_ARG, Scene::class)
         if (scene != null) {
             this.scene = scene
             if (savedInstanceState == null) {
-                fragment = PlaybackSceneFragment()
-                fragment!!.scene = scene
+                fragment = PlaybackSceneFragment(scene)
                 supportFragmentManager.beginTransaction()
-                    .replace(android.R.id.content, fragment!!)
+                    .replace(R.id.playback_container, fragment!!)
                     .commit()
             }
         } else {
+            // TODO remove?
             lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val sceneId = intent.getStringExtra(SceneDetailsActivity.MOVIE_ID)!!
-                val fullScene = QueryEngine(this@PlaybackActivity).getScene(sceneId)!!
+                val sceneId = intent.getStringExtra(Constants.SCENE_ID_ARG)!!
+                val fullScene =
+                    QueryEngine(StashServer.requireCurrentServer())
+                        .getScene(sceneId)!!
                 val scene = Scene.fromFullSceneData(fullScene)
                 this@PlaybackActivity.scene = scene
                 if (savedInstanceState == null) {
-                    fragment = PlaybackSceneFragment()
-                    fragment!!.scene = scene
+                    fragment = PlaybackSceneFragment(scene)
                     supportFragmentManager.beginTransaction()
-                        .replace(android.R.id.content, fragment!!)
+                        .replace(R.id.playback_container, fragment!!)
                         .commit()
                 }
             }
@@ -57,18 +69,6 @@ class PlaybackActivity : FragmentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         maxPlayPercent =
             PreferenceManager.getDefaultSharedPreferences(this).getInt("maxPlayPercent", 98)
-    }
-
-    @OptIn(UnstableApi::class)
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        // TODO: deprecated, so use https://stackoverflow.com/a/72634975/608317 eventually
-        if (fragment == null) {
-            super.onBackPressed()
-        } else if (!fragment!!.hideControlsIfVisible()) {
-            returnPosition()
-            super.onBackPressed()
-        }
     }
 
     @OptIn(UnstableApi::class)
@@ -81,24 +81,22 @@ class PlaybackActivity : FragmentActivity() {
         }
     }
 
-    /**
-     * Return the video's current position to the previous Activity
-     */
-    private fun returnPosition() {
-        val sceneDuration = scene.duration ?: Double.MIN_VALUE
+    private fun setResultAndFinish() {
+        // Return the video's current position to the previous Activity
+        val sceneDuration = scene.duration
         val position = fragment!!.currentVideoPosition
 
-        val playedPercent = (position.toMilliseconds / sceneDuration) * 100
         val positionToSave =
-            if (playedPercent >= maxPlayPercent) {
+            if (sceneDuration == null || (position.toMilliseconds / sceneDuration) * 100 < maxPlayPercent) {
+                position
+            } else {
                 Log.v(
                     PlaybackSceneFragment.TAG,
-                    "Setting position to 0 since $playedPercent >= $maxPlayPercent",
+                    "Setting position to 0 since played percent (${(position.toMilliseconds / sceneDuration) * 100} >= $maxPlayPercent",
                 )
                 0L
-            } else {
-                position
             }
+
         Log.d(
             TAG,
             "Video playback ending, currentVideoPosition=$position, positionToSave=$positionToSave",
@@ -111,6 +109,6 @@ class PlaybackActivity : FragmentActivity() {
     }
 
     companion object {
-        const val TAG = "PlaybackActivity"
+        private const val TAG = "PlaybackActivity"
     }
 }

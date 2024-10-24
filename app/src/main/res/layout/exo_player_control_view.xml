@@ -25,6 +25,7 @@
         android:layout_height="wrap_content"
         android:background="@color/transparent_black_50"
         android:layout_margin="4dp"
+        android:padding="4dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:visibility="gone"
@@ -34,7 +35,19 @@
 
             <TextView
                 style="@style/DebugInfoOverlayText"
-                android:text="Playback:" />
+                android:text="@string/stashapp_scene_id" />
+
+            <TextView
+                android:id="@+id/debug_scene_id"
+                style="@style/DebugInfoOverlayText"
+                tools:text="1234" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                style="@style/DebugInfoOverlayText"
+                android:text="@string/playback" />
 
             <TextView
                 android:id="@+id/debug_playback"
@@ -46,7 +59,7 @@
 
             <TextView
                 style="@style/DebugInfoOverlayText"
-                android:text="Video:" />
+                android:text="@string/stashapp_video_codec" />
 
             <TextView
                 android:id="@+id/debug_video"
@@ -58,7 +71,7 @@
 
             <TextView
                 style="@style/DebugInfoOverlayText"
-                android:text="Audio:" />
+                android:text="@string/stashapp_audio_codec" />
 
             <TextView
                 android:id="@+id/debug_audio"
@@ -70,12 +83,25 @@
 
             <TextView
                 style="@style/DebugInfoOverlayText"
-                android:text="Format:" />
+                android:text="@string/format" />
 
             <TextView
                 android:id="@+id/debug_container_format"
                 style="@style/DebugInfoOverlayText"
                 tools:text="mp4" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                style="@style/DebugInfoOverlayText"
+                android:text="Playlist" />
+
+            <TextView
+                android:id="@+id/debug_playlist"
+                style="@style/DebugInfoOverlayText"
+                android:text="N/A"
+                tools:text="2 of 25 (100)" />
         </TableRow>
 
     </TableLayout>
@@ -191,6 +217,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
+        android:nextFocusLeft="@id/exo_progress"
+        android:nextFocusRight="@id/exo_progress"
         app:layout_constraintBottom_toBottomOf="@id/exo_position"
         app:layout_constraintEnd_toStartOf="@id/exo_duration"
         app:layout_constraintStart_toEndOf="@+id/exo_position"
@@ -275,6 +303,14 @@
             tools:text="12" />
 
     </LinearLayout>
+
+    <ImageButton
+        android:id="@id/exo_subtitle"
+        app:layout_constraintTop_toTopOf="@id/exo_center_controls"
+        app:layout_constraintBottom_toBottomOf="@id/exo_center_controls"
+        app:layout_constraintEnd_toStartOf="@id/exo_settings"
+        android:background="@drawable/playback_button_selector"
+        style="@style/ExoStyledControls.Button.Bottom.CC" />
 
     <ImageButton
         android:id="@id/exo_settings"

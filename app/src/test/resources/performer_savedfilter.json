@@ -99,6 +99,7 @@
         "gender": {
           "modifier": "EQUALS",
           "value": [
+            "Male",
             "Female"
           ]
         },

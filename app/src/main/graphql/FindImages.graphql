@@ -1,5 +1,5 @@
-query FindImages($filter: FindFilterType, $image_filter: ImageFilterType) {
-  findImages(filter: $filter, image_filter: $image_filter) {
+query FindImages($filter: FindFilterType, $image_filter: ImageFilterType, $ids: [ID!]) {
+  findImages(filter: $filter, image_filter: $image_filter, ids: $ids) {
     images {
       ...ImageData
     }
@@ -18,6 +18,12 @@ query FindImage($id: ID) {
   }
 }
 
+query GetExtraImage($id: ID) {
+  findImage(id: $id) {
+    ...ExtraImageData
+  }
+}
+
 fragment ImageData on Image {
   id
   title
@@ -27,19 +33,22 @@ fragment ImageData on Image {
   details
   photographer
   o_counter
+  created_at
+  updated_at
   paths {
     thumbnail
     preview
     image
   }
   performers{
-    ...PerformerData
+    id
   }
   studio {
-    ...StudioData
+    id
+    name
   }
   tags {
-    ...SlimTagData
+    id
   }
   galleries {
     id
@@ -64,5 +73,21 @@ fragment ImageData on Image {
       audio_codec
       duration
     }
+  }
+}
+
+fragment ExtraImageData on Image {
+  id
+  performers{
+    ...PerformerData
+  }
+  tags {
+    ...TagData
+  }
+  galleries {
+    ...GalleryData
+  }
+  studio {
+    ...StudioData
   }
 }

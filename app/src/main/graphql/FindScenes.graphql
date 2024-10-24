@@ -40,11 +40,16 @@ fragment SlimSceneData on Scene {
     preview
     stream
     sprite
+    caption
   }
   sceneStreams {
     url
     mime_type
     label
+  }
+  captions {
+    language_code
+    caption_type
   }
   scene_markers {
     id
@@ -59,8 +64,8 @@ fragment SlimSceneData on Scene {
     name
     image_path
   }
-  movies {
-    movie {
+  groups {
+    group {
       id
       name
     }
@@ -115,6 +120,10 @@ fragment FullSceneData on Scene {
     mime_type
     label
   }
+  captions {
+    language_code
+    caption_type
+  }
   scene_markers {
     id
     title
@@ -136,9 +145,9 @@ fragment FullSceneData on Scene {
     ...StudioData
     __typename
   }
-  movies {
-    movie {
-      ...MovieData
+  groups {
+    group {
+      ...GroupData
       __typename
     }
     scene_index

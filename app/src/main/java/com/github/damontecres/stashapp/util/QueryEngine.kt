@@ -1,107 +1,88 @@
 package com.github.damontecres.stashapp.util
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
-import com.apollographql.apollo3.ApolloCall
-import com.apollographql.apollo3.api.ApolloResponse
-import com.apollographql.apollo3.api.Operation
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.api.Query
-import com.apollographql.apollo3.exception.ApolloException
-import com.apollographql.apollo3.exception.ApolloHttpException
-import com.apollographql.apollo3.exception.ApolloNetworkException
+import com.apollographql.apollo.ApolloCall
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.Operation
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
+import com.github.damontecres.stashapp.api.FindGroupQuery
+import com.github.damontecres.stashapp.api.FindGroupsQuery
 import com.github.damontecres.stashapp.api.FindImageQuery
 import com.github.damontecres.stashapp.api.FindImagesQuery
+import com.github.damontecres.stashapp.api.FindJobQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
-import com.github.damontecres.stashapp.api.FindMovieQuery
-import com.github.damontecres.stashapp.api.FindMoviesQuery
 import com.github.damontecres.stashapp.api.FindPerformersQuery
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
 import com.github.damontecres.stashapp.api.FindSavedFiltersQuery
 import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
+import com.github.damontecres.stashapp.api.GetExtraImageQuery
 import com.github.damontecres.stashapp.api.GetSceneQuery
+import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.JobData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.FindFilterType
+import com.github.damontecres.stashapp.api.type.FindJobInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
-import com.github.damontecres.stashapp.api.type.MovieFilterType
+import com.github.damontecres.stashapp.api.type.JobStatus
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.JobResult
+import com.github.damontecres.stashapp.data.StashData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReadWriteLock
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /**
  * Handles making graphql queries to the server
- *
- * @param context
- * @param showToasts show a toast when errors occur
- * @param lock an optional lock, when if shared with [MutationEngine], can prevent race conditions
  */
 class QueryEngine(
-    private val context: Context,
-    private val showToasts: Boolean = false,
-    lock: ReadWriteLock? = null,
-) {
-    private val serverVersion = ServerPreferences(context).serverVersion
-    private val client = StashClient.getApolloClient(context)
-
-    private val readLock = lock?.readLock()
-
+    server: StashServer,
+    client: ApolloClient = StashClient.getApolloClient(server),
+) : StashEngine(server, client) {
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val queryName = query.operation.name()
             val id = QUERY_ID.getAndIncrement()
             Log.v(TAG, "executeQuery $id $queryName")
-            try {
-                readLock?.lock()
-                val response = query.execute()
-                if (response.errors.isNullOrEmpty()) {
-                    Log.v(TAG, "executeQuery $id $queryName successful")
-                    return@withContext response
-                } else {
-                    val errorMsgs = response.errors!!.joinToString("\n") { it.message }
-                    showToast("${response.errors!!.size} errors in response ($queryName)\n$errorMsgs")
-                    Log.e(TAG, "Errors in $id $queryName: ${response.errors}")
-                    throw QueryException(
-                        id,
-                        "($queryName), ${response.errors!!.size} errors in graphql response",
-                    )
+
+            val response = query.execute()
+            if (response.data != null) {
+                Log.v(TAG, "executeQuery $id $queryName successful")
+                return@withContext response
+            } else if (response.exception != null) {
+                throw createException(id, queryName, response.exception!!) { msg, ex ->
+                    QueryException(id, queryName, msg, ex)
                 }
-            } catch (ex: ApolloNetworkException) {
-                showToast("Network error ($queryName). Message: ${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "Network error in $id $queryName", ex)
-                throw QueryException(id, "Network error ($queryName)", ex)
-            } catch (ex: ApolloHttpException) {
-                showToast("HTTP error ($queryName). Status=${ex.statusCode}, Msg=${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "HTTP ${ex.statusCode} error in $id $queryName", ex)
-                throw QueryException(id, "HTTP ${ex.statusCode} ($queryName)", ex)
-            } catch (ex: ApolloException) {
-                showToast("Server query error ($queryName). Msg=${ex.message}, ${ex.cause?.message}")
-                Log.e(TAG, "ApolloException in $id $queryName", ex)
-                throw QueryException(id, "Apollo exception ($queryName)", ex)
-            } finally {
-                readLock?.unlock()
+            } else {
+                val errorMsgs = response.errors!!.joinToString("\n") { it.message }
+                Log.e(TAG, "Errors in $id $queryName: ${response.errors}")
+                throw QueryException(id, queryName, "Error in $queryName: $errorMsgs")
             }
         }
 
@@ -112,6 +93,7 @@ class QueryEngine(
     suspend fun findScenes(
         findFilter: FindFilterType? = null,
         sceneFilter: SceneFilterType? = null,
+        ids: List<String>? = null,
         useRandom: Boolean = true,
     ): List<SlimSceneData> {
         val query =
@@ -119,7 +101,7 @@ class QueryEngine(
                 FindScenesQuery(
                     filter = updateFilter(findFilter, useRandom),
                     scene_filter = sceneFilter,
-                    ids = null,
+                    ids = ids,
                 ),
             )
         val scenes =
@@ -159,10 +141,10 @@ class QueryEngine(
         return findPerformers(performerIds = listOf(performerId)).firstOrNull()
     }
 
-    // TODO Add studioIds?
     suspend fun findStudios(
         findFilter: FindFilterType? = null,
         studioFilter: StudioFilterType? = null,
+        studioIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<StudioData> {
         val query =
@@ -170,6 +152,7 @@ class QueryEngine(
                 FindStudiosQuery(
                     filter = updateFilter(findFilter, useRandom),
                     studio_filter = studioFilter,
+                    ids = studioIds,
                 ),
             )
         val studios =
@@ -214,25 +197,27 @@ class QueryEngine(
         return tags.orEmpty()
     }
 
-    suspend fun findMovies(
+    suspend fun findGroups(
         findFilter: FindFilterType? = null,
-        movieFilter: MovieFilterType? = null,
+        groupFilter: GroupFilterType? = null,
+        groupIds: List<String>? = null,
         useRandom: Boolean = true,
-    ): List<MovieData> {
+    ): List<GroupData> {
         val query =
             client.query(
-                FindMoviesQuery(
+                FindGroupsQuery(
                     filter = updateFilter(findFilter, useRandom),
-                    movie_filter = movieFilter,
+                    group_filter = groupFilter,
+                    ids = groupIds,
                 ),
             )
-        val tags = executeQuery(query).data?.findMovies?.movies?.map { it.movieData }
+        val tags = executeQuery(query).data?.findGroups?.groups?.map { it.groupData }
         return tags.orEmpty()
     }
 
-    suspend fun getMovie(movieId: String): MovieData? {
-        val query = client.query(FindMovieQuery(movieId))
-        return query.execute().data?.findMovie?.movieData
+    suspend fun getGroup(groupId: String): GroupData? {
+        val query = client.query(FindGroupQuery(groupId))
+        return executeQuery(query).data?.findGroup?.groupData
     }
 
     suspend fun findMarkers(
@@ -254,13 +239,15 @@ class QueryEngine(
     suspend fun findImages(
         findFilter: FindFilterType? = null,
         imageFilter: ImageFilterType? = null,
+        ids: List<String>? = null,
         useRandom: Boolean = true,
     ): List<ImageData> {
         val query =
             client.query(
                 FindImagesQuery(
-                    updateFilter(findFilter, useRandom),
-                    imageFilter,
+                    filter = updateFilter(findFilter, useRandom),
+                    image_filter = imageFilter,
+                    ids = ids,
                 ),
             )
         return executeQuery(query).data?.findImages?.images?.map { it.imageData }.orEmpty()
@@ -271,9 +258,15 @@ class QueryEngine(
         return executeQuery(query).data?.findImage?.imageData
     }
 
+    suspend fun getImageExtra(imageId: String): ExtraImageData? {
+        val query = client.query(GetExtraImageQuery(imageId))
+        return executeQuery(query).data?.findImage?.extraImageData
+    }
+
     suspend fun findGalleries(
         findFilter: FindFilterType? = null,
         galleryFilter: GalleryFilterType? = null,
+        galleryIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<GalleryData> {
         val query =
@@ -281,7 +274,7 @@ class QueryEngine(
                 FindGalleriesQuery(
                     updateFilter(findFilter, useRandom),
                     galleryFilter,
-                    null,
+                    ids = galleryIds,
                 ),
             )
         return executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
@@ -303,16 +296,39 @@ class QueryEngine(
     suspend fun find(
         type: DataType,
         findFilter: FindFilterType,
+        useRandom: Boolean = true,
     ): List<*> {
         return when (type) {
-            DataType.SCENE -> findScenes(findFilter)
-            DataType.PERFORMER -> findPerformers(findFilter)
-            DataType.TAG -> findTags(findFilter)
-            DataType.STUDIO -> findStudios(findFilter)
-            DataType.MOVIE -> findMovies(findFilter)
-            DataType.MARKER -> findMarkers(findFilter)
-            DataType.IMAGE -> findImages(findFilter)
-            DataType.GALLERY -> findGalleries(findFilter)
+            DataType.SCENE -> findScenes(findFilter, useRandom = useRandom)
+            DataType.PERFORMER -> findPerformers(findFilter, useRandom = useRandom)
+            DataType.TAG -> findTags(findFilter, useRandom = useRandom)
+            DataType.STUDIO -> findStudios(findFilter, useRandom = useRandom)
+            DataType.GROUP -> findGroups(findFilter, useRandom = useRandom)
+            DataType.MARKER -> findMarkers(findFilter, useRandom = useRandom)
+            DataType.IMAGE -> findImages(findFilter, useRandom = useRandom)
+            DataType.GALLERY -> findGalleries(findFilter, useRandom = useRandom)
+        }
+    }
+
+    /**
+     * Search for a type of data with the given query. Users will need to cast the returned List.
+     */
+    suspend fun getByIds(
+        type: DataType,
+        ids: List<String>,
+    ): List<StashData> {
+        if (ids.isEmpty()) {
+            return emptyList()
+        }
+        return when (type) {
+            DataType.SCENE -> findScenes(ids = ids)
+            DataType.PERFORMER -> findPerformers(performerIds = ids)
+            DataType.TAG -> getTags(ids)
+            DataType.STUDIO -> findStudios(studioIds = ids)
+            DataType.GROUP -> findGroups(groupIds = ids)
+            DataType.IMAGE -> findImages(ids = ids)
+            DataType.GALLERY -> findGalleries(galleryIds = ids)
+            DataType.MARKER -> throw UnsupportedOperationException("Cannot query markers by ID") // TODO: Unsupported by the server
         }
     }
 
@@ -336,6 +352,35 @@ class QueryEngine(
         return executeQuery(query).data!!
     }
 
+    suspend fun getJob(jobId: String): JobData? {
+        val query = FindJobQuery(FindJobInput(jobId))
+        return executeQuery(query).data?.findJob?.jobData
+    }
+
+    suspend fun waitForJob(
+        jobId: String,
+        delay: Duration = 1.toDuration(DurationUnit.SECONDS),
+        callback: ((JobData) -> Unit)? = null,
+    ): JobResult {
+        var job = getJob(jobId) ?: return JobResult.NotFound
+        while (job.status !in
+            setOf(
+                JobStatus.FINISHED,
+                JobStatus.FAILED,
+                JobStatus.CANCELLED,
+            )
+        ) {
+            delay(delay)
+            job = getJob(jobId) ?: return JobResult.NotFound
+            callback?.invoke(job)
+        }
+        if (job?.status == JobStatus.FAILED) {
+            return JobResult.Failure(job.error)
+        } else {
+            return JobResult.Success
+        }
+    }
+
     /**
      * Updates a FindFilterType if needed
      *
@@ -346,9 +391,9 @@ class QueryEngine(
         useRandom: Boolean = true,
     ): FindFilterType? {
         return if (filter != null) {
-            if (useRandom && filter.sort.getOrNull()?.startsWith("random_") == true) {
+            if (useRandom && filter.sort.getOrNull()?.startsWith("random") == true) {
                 Log.v(TAG, "Updating random filter")
-                filter.copy(sort = Optional.present(getRandomSort()))
+                filter.copy(sort = Optional.present("random_" + getRandomSort()))
             } else {
                 filter
             }
@@ -357,22 +402,18 @@ class QueryEngine(
         }
     }
 
-    private suspend fun showToast(message: String) {
-        if (showToasts) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
     companion object {
-        const val TAG = "QueryEngine"
+        private const val TAG = "QueryEngine"
 
         private val QUERY_ID = AtomicInteger(0)
     }
 
-    open class QueryException(val id: Int, msg: String? = null, cause: ApolloException? = null) :
-        RuntimeException(msg, cause)
+    open class QueryException(
+        id: Int,
+        queryName: String,
+        msg: String? = null,
+        cause: Exception? = null,
+    ) : ServerCommunicationException(id, queryName, msg, cause)
 
     class StashNotConfiguredException : RuntimeException()
 }

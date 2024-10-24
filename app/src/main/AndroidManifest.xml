@@ -17,7 +17,7 @@
         android:required="false" />
     <uses-feature
         android:name="android.software.leanback"
-        android:required="true" />
+        android:required="false" />
     <uses-feature
         android:name="android.hardware.microphone"
         android:required="false" />
@@ -36,10 +36,14 @@
             android:exported="true"
             android:icon="@mipmap/stash_logo"
             android:logo="@mipmap/stash_logo"
+            android:noHistory="true"
             android:theme="@style/NoTitleTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
@@ -60,26 +64,14 @@
             android:exported="false"
             android:theme="@style/PlaybackTheme" />
         <activity
-            android:name=".playback.PlaybackMarkersActivity"
+            android:name=".playback.PlaylistActivity"
             android:exported="false"
             android:theme="@style/PlaybackTheme" />
         <activity
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".PerformerActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".TagActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".StudioActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".SearchActivity"
+            android:name=".DataTypeActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
@@ -87,15 +79,7 @@
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".MovieActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
             android:name=".ImageActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".GalleryActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
@@ -115,11 +99,11 @@
             android:exported="false"
             android:theme="@style/Theme.StashAppAndroidTV.GuidedStep" />
         <activity
-            android:name=".MarkerActivity"
+            android:name=".UpdateChangelogActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".UpdateChangelogActivity"
+            android:name=".filter.CreateFilterActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
 

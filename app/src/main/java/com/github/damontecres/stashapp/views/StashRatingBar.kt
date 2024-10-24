@@ -13,7 +13,12 @@ import android.widget.SeekBar
 import android.widget.TextView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashServer
 
+/**
+ * A [View] for rating which handles displaying either a star or decimal rating based on the server preferences
+ */
+@SuppressLint("SetTextI18n")
 class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs) {
     constructor(context: Context) : this(context, null)
 
@@ -48,7 +53,7 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
     init {
         inflate(context, R.layout.stash_rating_bar, this)
 
-        val serverPreferences = ServerPreferences(context)
+        val serverPreferences = StashServer.requireCurrentServer().serverPreferences
 
         starRatingBar = findViewById(R.id.rating_star)
         starRatingBar.setOnClickListener(RatingOnClickListener())
@@ -148,6 +153,12 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
         super.setNextFocusUpId(nextFocusUpId)
         starRatingBar.nextFocusUpId = nextFocusUpId
         decimalRatingBar.nextFocusUpId = nextFocusUpId
+    }
+
+    override fun setOnFocusChangeListener(l: OnFocusChangeListener?) {
+        super.setOnFocusChangeListener(l)
+        starRatingBar.onFocusChangeListener = l
+        decimalRatingBar.onFocusChangeListener = l
     }
 
     private inner class RatingOnClickListener : OnClickListener {

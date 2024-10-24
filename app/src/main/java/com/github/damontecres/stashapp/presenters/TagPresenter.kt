@@ -2,13 +2,18 @@ package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
 import android.content.Intent
+import com.apollographql.apollo.api.Optional
+import com.github.damontecres.stashapp.DataTypeActivity
 import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.TagActivity
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.GetParentTagsFilter
-import com.github.damontecres.stashapp.data.GetSubTagsFilter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.putDataType
+import com.github.damontecres.stashapp.util.putFilterArgs
 import java.util.EnumMap
 
 class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
@@ -25,7 +30,7 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         dataTypeMap[DataType.GALLERY] = item.gallery_count
 
         cardView.setUpExtraRow(dataTypeMap, null)
-        cardView.hideOverlayOnSelection = false
+//        cardView.hideOverlayOnSelection = false
 
         cardView.titleText = item.name
         cardView.contentText = item.description
@@ -48,6 +53,10 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         if (item.image_path != null) {
             loadImage(cardView, item.image_path)
+        }
+
+        if (item.favorite) {
+            cardView.setIsFavorite()
         }
     }
 
@@ -86,7 +95,8 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         ) {
             when (popUpItem.id) {
                 PopUpItem.DEFAULT_ID -> {
-                    val intent = Intent(context, TagActivity::class.java)
+                    val intent = Intent(context, DataTypeActivity::class.java)
+                    intent.putDataType(DataType.TAG)
                     intent.putExtra("tagId", item.id)
                     intent.putExtra("tagName", item.name)
                     intent.putExtra("includeSubTags", false)
@@ -94,7 +104,8 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
                 }
 
                 POPUP_GOTO_WITH_SUB_ID -> {
-                    val intent = Intent(context, TagActivity::class.java)
+                    val intent = Intent(context, DataTypeActivity::class.java)
+                    intent.putDataType(DataType.TAG)
                     intent.putExtra("tagId", item.id)
                     intent.putExtra("tagName", item.name)
                     intent.putExtra("includeSubTags", true)
@@ -103,17 +114,51 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
 
                 POPUP_PARENTS_ID -> {
                     val name = context.getString(R.string.stashapp_parent_of, item.name)
-                    val appFilter = GetParentTagsFilter(name, item.id)
-                    val intent = Intent(context, FilterListActivity::class.java)
-                    intent.putExtra("filter", appFilter)
+                    val intent =
+                        Intent(context, FilterListActivity::class.java)
+                            .putFilterArgs(
+                                FilterListActivity.INTENT_FILTER_ARGS,
+                                FilterArgs(
+                                    dataType = DataType.TAG,
+                                    name = name,
+                                    objectFilter =
+                                        TagFilterType(
+                                            children =
+                                                Optional.present(
+                                                    HierarchicalMultiCriterionInput(
+                                                        value = Optional.present(listOf(item.id)),
+                                                        modifier = CriterionModifier.INCLUDES,
+                                                        depth = Optional.present(-1),
+                                                    ),
+                                                ),
+                                        ),
+                                ),
+                            )
                     context.startActivity(intent)
                 }
 
                 POPUP_CHILDREN_ID -> {
                     val name = context.getString(R.string.stashapp_sub_tag_of, item.name)
-                    val appFilter = GetSubTagsFilter(name, item.id)
-                    val intent = Intent(context, FilterListActivity::class.java)
-                    intent.putExtra("filter", appFilter)
+                    val intent =
+                        Intent(context, FilterListActivity::class.java)
+                            .putFilterArgs(
+                                FilterListActivity.INTENT_SCROLL_NEXT_PAGE,
+                                FilterArgs(
+                                    dataType = DataType.TAG,
+                                    name = name,
+                                    objectFilter =
+                                        TagFilterType(
+                                            parents =
+                                                Optional.present(
+                                                    HierarchicalMultiCriterionInput(
+                                                        value = Optional.present(listOf(item.id)),
+                                                        modifier = CriterionModifier.INCLUDES,
+                                                        depth = Optional.present(-1),
+                                                    ),
+                                                ),
+                                        ),
+                                ),
+                            )
                     context.startActivity(intent)
                 }
             }

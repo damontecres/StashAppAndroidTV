@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp
 
+import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
@@ -10,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
@@ -22,22 +25,33 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import androidx.preference.PreferenceScreen
 import androidx.preference.SeekBarPreference
+import androidx.preference.SwitchPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
+import com.github.damontecres.stashapp.api.fragment.JobData
+import com.github.damontecres.stashapp.api.type.JobStatus
+import com.github.damontecres.stashapp.api.type.JobStatusUpdateType
+import com.github.damontecres.stashapp.data.JobResult
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.SubscriptionEngine
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import com.github.damontecres.stashapp.util.testStashConnection
-import kotlinx.coroutines.CoroutineExceptionHandler
+import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Cache
@@ -98,8 +112,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
     class PreferencesFragment(val startPreferenceFragmentFunc: (fragment: LeanbackPreferenceFragmentCompat) -> Unit) :
         LeanbackPreferenceFragmentCompat() {
-        private var serverKeys = listOf<String>()
-        private var serverValues = listOf<String>()
+        private val viewModel: ServerViewModel by activityViewModels()
+        private var subscriptionJob: Job? = null
 
         override fun onCreatePreferences(
             savedInstanceState: Bundle?,
@@ -112,7 +126,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     testStashConnection(
                         requireContext(),
                         true,
-                        StashClient.getApolloClient(requireContext()),
+                        StashClient.getApolloClient(
+                            viewModel.currentServer.value!!,
+                        ),
                     )
                 }
                 true
@@ -200,42 +216,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
             }
 
-            val triggerExceptionHandler =
-                CoroutineExceptionHandler { _, ex ->
-                    Log.e(TAG, "Error during trigger", ex)
-                    Toast.makeText(
-                        requireContext(),
-                        "Error trying to trigger a task: ${ex.message}",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-
-            findPreference<Preference>("triggerScan")!!
-                .setOnPreferenceClickListener {
-                    viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
-                        MutationEngine(requireContext()).triggerScan()
-                        Toast.makeText(
-                            requireContext(),
-                            "Triggered a default library scan",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                    true
-                }
-
-            findPreference<Preference>("triggerGenerate")!!
-                .setOnPreferenceClickListener {
-                    viewLifecycleOwner.lifecycleScope.launch(triggerExceptionHandler) {
-                        MutationEngine(requireContext()).triggerGenerate()
-                        Toast.makeText(
-                            requireContext(),
-                            "Triggered a default generate",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                    true
-                }
-
             findPreference<SeekBarPreference>("skip_back_time")!!.min = 5
             findPreference<SeekBarPreference>("skip_forward_time")!!.min = 5
 
@@ -250,6 +230,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 startPreferenceFragmentFunc(AdvancedPreferencesFragment())
                 true
             }
+            val advancedUiPreferences = findPreference<Preference>("advancedUiPreferences")!!
+            advancedUiPreferences.setOnPreferenceClickListener {
+                startPreferenceFragmentFunc(SettingsUiFragment())
+                true
+            }
         }
 
         override fun onViewCreated(
@@ -257,6 +242,13 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             savedInstanceState: Bundle?,
         ) {
             super.onViewCreated(view, savedInstanceState)
+            setTitle(getString(R.string.stashapp_settings))
+
+            viewModel.currentServer.observe(viewLifecycleOwner) {
+                if (it != null) {
+                    refresh(it)
+                }
+            }
 
             if (PreferenceManager.getDefaultSharedPreferences(requireContext())
                     .getBoolean("autoCheckForUpdates", true)
@@ -290,60 +282,238 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
         }
 
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            if (savedInstanceState == null) {
-                requireActivity().supportFragmentManager.addOnBackStackChangedListener {
-                    if (requireActivity().supportFragmentManager.backStackEntryCount == 0) {
-                        refresh()
+        /**
+         * Handle updating the UI for job progress
+         */
+        private fun handleJobUpdate(
+            updateType: JobStatusUpdateType,
+            job: JobData,
+            serverPrefs: ServerPreferences,
+        ) {
+            val triggerScan = findPreference<Preference>("triggerScan")!!
+            val generatePref = findPreference<Preference>("triggerGenerate")!!
+
+            val scanJobId = serverPrefs.scanJobId
+            val generateJobId = serverPrefs.generateJobId
+
+            if (job.id == scanJobId || job.id == generateJobId) {
+                if (updateType == JobStatusUpdateType.REMOVE || !job.isRunning()) {
+                    // Job complete
+                    if (job.id == scanJobId) {
+                        serverPrefs.scanJobId = null
+                        triggerScan.summary =
+                            getString(R.string.stashapp_config_tasks_scan_for_content_desc)
+                    } else {
+                        serverPrefs.generateJobId = null
+                        generatePref.summary =
+                            getString(R.string.stashapp_config_tasks_generate_desc)
+                    }
+                } else {
+                    val message =
+                        if (job.progress != null) {
+                            val progress = (job.progress * 1000).toInt() / 10.0
+                            if (!job.subTasks.isNullOrEmpty() &&
+                                job.subTasks.first().isNotNullOrBlank()
+                            ) {
+                                "${job.description} $progress%\n${job.subTasks.first()}"
+                            } else {
+                                "${job.description} $progress%"
+                            }
+                        } else {
+                            job.description
+                        }
+
+                    if (job.id == scanJobId) {
+                        triggerScan.summary = message
+                    } else {
+                        generatePref.summary = message
                     }
                 }
             }
         }
 
-        override fun onResume() {
-            super.onResume()
-            refresh()
-        }
+        private fun JobData.isRunning() = status == JobStatus.RUNNING || status == JobStatus.READY || status == JobStatus.STOPPING
 
-        private fun refresh() {
+        private fun refresh(currentServer: StashServer) {
             Log.v(TAG, "refresh")
-            val currentServer = StashServer.getCurrentStashServer(requireContext())
-            findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer?.url
+            findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer.url
+
+            val queryEngine = QueryEngine(currentServer)
+
+            val triggerScan = findPreference<Preference>("triggerScan")!!
+            val pendingScanJobId = currentServer.serverPreferences.scanJobId
+            if (pendingScanJobId != null) {
+                // Check if a job is already running
+                // Such as when a user triggers it, navigates away, and then back
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val job = queryEngine.getJob(pendingScanJobId)
+                    if (job == null || !job.isRunning()) {
+                        currentServer.serverPreferences.scanJobId = null
+                        triggerScan.summary =
+                            getString(R.string.stashapp_config_tasks_scan_for_content_desc)
+                    } else {
+                        handleJobUpdate(
+                            JobStatusUpdateType.UPDATE,
+                            job,
+                            currentServer.serverPreferences,
+                        )
+                    }
+                }
+            }
+
+            val generatePref = findPreference<Preference>("triggerGenerate")!!
+            val pendingGenJobId = currentServer.serverPreferences.generateJobId
+            if (pendingGenJobId != null) {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val job = queryEngine.getJob(pendingGenJobId)
+                    if (job == null || !job.isRunning()) {
+                        currentServer.serverPreferences.generateJobId = null
+                        generatePref.summary =
+                            getString(R.string.stashapp_config_tasks_generate_desc)
+                    } else {
+                        handleJobUpdate(
+                            JobStatusUpdateType.UPDATE,
+                            job,
+                            currentServer.serverPreferences,
+                        )
+                    }
+                }
+            }
+
+            val serverPrefs = currentServer.serverPreferences
+            val subscriptionEngine = SubscriptionEngine(currentServer)
+            // Cancel previous subscription
+            subscriptionJob?.cancel()
+            subscriptionJob =
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    subscriptionEngine.subscribeToJobs { update ->
+                        val type = update.jobsSubscribe.type
+                        val jobData = update.jobsSubscribe.job.jobData
+                        Log.v(TAG, "job subscription update: $type ${jobData.id}")
+                        handleJobUpdate(type, jobData, serverPrefs)
+                    }
+                }
+
+            triggerScan.setOnPreferenceClickListener {
+                if (currentServer.serverPreferences.scanJobId == null) {
+                    viewLifecycleOwner.lifecycleScope.launch(
+                        StashCoroutineExceptionHandler(
+                            autoToast = true,
+                        ),
+                    ) {
+                        currentServer.updateServerPrefs()
+                        val jobId = MutationEngine(currentServer).triggerScan()
+                        // TODO: job could finish between these two lines of code
+                        currentServer.serverPreferences.scanJobId = jobId
+                        Toast.makeText(
+                            requireContext(),
+                            "Triggered a library scan",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                }
+                true
+            }
+
+            generatePref.setOnPreferenceClickListener {
+                if (currentServer.serverPreferences.generateJobId == null) {
+                    viewLifecycleOwner.lifecycleScope.launch(
+                        StashCoroutineExceptionHandler(
+                            autoToast = true,
+                        ),
+                    ) {
+                        currentServer.updateServerPrefs()
+                        val jobId = MutationEngine(currentServer).triggerGenerate()
+                        currentServer.serverPreferences.generateJobId = jobId
+                        Toast.makeText(
+                            requireContext(),
+                            "Triggered a generate task",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
+                }
+                true
+            }
 
             val sendLogsPref = findPreference<LongClickPreference>("sendLogs")!!
-            sendLogsPref.isEnabled = false
-            sendLogsPref.summary = "Checking for companion plugin..."
+            sendLogsPref.title = "Checking for companion plugin..."
+            sendLogsPref.summary = null
+
+            val setupSendLogsPref = {
+                sendLogsPref.title = "Send Logs"
+                sendLogsPref.summary = "Send a copy of recent app logs to your current server"
+                sendLogsPref.setOnPreferenceClickListener {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        CompanionPlugin.sendLogCat(requireContext(), false)
+                    }
+                    true
+                }
+                sendLogsPref.setOnLongClickListener {
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        CompanionPlugin.sendLogCat(requireContext(), true)
+                    }
+                    true
+                }
+            }
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val serverPrefs = ServerPreferences(requireContext()).updatePreferences()
+                val serverPrefs = StashServer.requireCurrentServer().updateServerPrefs()
                 if (serverPrefs.companionPluginInstalled) {
-                    sendLogsPref.isEnabled = true
-                    sendLogsPref.summary = "Send a copy of recent app logs to your current server"
-                    sendLogsPref.setOnPreferenceClickListener {
-                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                            CompanionPlugin.sendLogCat(requireContext(), false)
-                        }
-                        true
-                    }
-                    sendLogsPref.setOnLongClickListener {
-                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                            CompanionPlugin.sendLogCat(requireContext(), true)
-                        }
-                        true
-                    }
+                    setupSendLogsPref()
                 } else {
-                    sendLogsPref.isEnabled = false
-                    sendLogsPref.summary = "Companion plugin not installed"
+                    sendLogsPref.title = "Install companion plugin"
+                    sendLogsPref.summary =
+                        "Install StashAppAndroid TV Companion plugin on the current server"
+                    sendLogsPref.setOnPreferenceClickListener {
+                        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                            val jobId =
+                                CompanionPlugin.installPlugin(
+                                    MutationEngine(viewModel.currentServer.value!!),
+                                )
+                            val queryEngine =
+                                QueryEngine(viewModel.currentServer.value!!)
+                            val result = queryEngine.waitForJob(jobId)
+                            withContext(Dispatchers.Main) {
+                                if (result is JobResult.Failure) {
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Error installing plugin: ${result.message}",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                } else if (result is JobResult.NotFound) {
+                                    Toast.makeText(
+                                        requireContext(),
+                                        "Error installing plugin",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                } else {
+                                    val serverPrefs =
+                                        StashServer.requireCurrentServer().updateServerPrefs()
+                                    if (serverPrefs.companionPluginInstalled) {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Companion plugin installed!",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                        setupSendLogsPref()
+                                    } else {
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Error installing plugin",
+                                            Toast.LENGTH_LONG,
+                                        ).show()
+                                    }
+                                }
+                            }
+                        }
+                        true
+                    }
                 }
             }
         }
 
         companion object {
             private const val TAG = "SettingsFragment"
-
-            const val SERVER_PREF_PREFIX = "server_"
-            const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
         }
     }
 
@@ -401,7 +571,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     testStashConnection(
                         requireContext(),
                         true,
-                        StashClient.getApolloClient(requireContext()),
+                        StashClient.getApolloClient(StashServer.requireCurrentServer()),
                     )
                 }
                 true
@@ -416,6 +586,40 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
                 true
             }
+
+            val persistPlaybackEffectsPref =
+                findPreference<SwitchPreference>(getString(R.string.pref_key_playback_save_effects))!!
+            persistPlaybackEffectsPref.setOnPreferenceChangeListener { preference, newValue ->
+                if (newValue == false) {
+                    viewLifecycleOwner.lifecycleScope.launchIO {
+                        StashApplication.getDatabase().playbackEffectsDao().deleteAll()
+                    }
+                }
+                true
+            }
+
+            val videoEffectsPref =
+                findPreference<SwitchPreference>(getString(R.string.pref_key_video_filters))!!
+            videoEffectsPref.setOnPreferenceChangeListener { _, newValue ->
+                if (newValue == true) {
+                    ConfirmationDialogFragment(
+                        "Some device do not support video filters!\n\nWould you like to enable it?",
+                    ) { _, which ->
+                        if (which == DialogInterface.BUTTON_POSITIVE) {
+                            videoEffectsPref.isChecked = true
+                        }
+                    }.show(childFragmentManager, null)
+                }
+                newValue == false
+            }
+        }
+
+        override fun onViewCreated(
+            view: View,
+            savedInstanceState: Bundle?,
+        ) {
+            super.onViewCreated(view, savedInstanceState)
+            setTitle(getString(R.string.advanced_settings))
         }
 
         private fun setCacheDurationSummary(
@@ -426,6 +630,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             pref.summary = duration?.toString() ?: "Always request from server"
         }
 
+        @SuppressLint("DefaultLocale")
         private fun setUsedCachedSummary(
             cacheSizePref: Preference,
             cache: Cache,

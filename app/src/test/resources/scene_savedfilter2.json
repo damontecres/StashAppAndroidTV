@@ -1,0 +1,115 @@
+{
+  "data": {
+    "findSavedFilter": {
+      "id": "7",
+      "name": "Test filter",
+      "mode": "SCENES",
+      "find_filter": {
+        "q": "",
+        "page": 1,
+        "per_page": 40,
+        "sort": "created_at",
+        "direction": "ASC",
+        "__typename": "SavedFindFilterType"
+      },
+      "object_filter": {
+        "audio_codec": {
+          "modifier": "INCLUDES",
+          "value": "vdsa"
+        },
+        "captions": {
+          "modifier": "INCLUDES",
+          "value": "日本"
+        },
+        "checksum": {
+          "modifier": "MATCHES_REGEX",
+          "value": "fdsavdfsa"
+        },
+        "created_at": {
+          "modifier": "BETWEEN",
+          "value": {
+            "value": "2024-09-03 00:00",
+            "value2": "2024-09-06 00:00"
+          }
+        },
+        "date": {
+          "modifier": "GREATER_THAN",
+          "value": {
+            "value": "2024-09-01"
+          }
+        },
+        "details": {
+          "modifier": "EXCLUDES",
+          "value": "gfes"
+        },
+        "director": {
+          "modifier": "IS_NULL",
+          "value": ""
+        },
+        "duplicated": {
+          "modifier": "EQUALS",
+          "value": "false"
+        },
+        "duration": {
+          "modifier": "NOT_BETWEEN",
+          "value": {
+            "value": 6,
+            "value2": 14
+          }
+        },
+        "file_count": {
+          "modifier": "LESS_THAN",
+          "value": {
+            "value": 3
+          }
+        },
+        "galleries": {
+          "modifier": "INCLUDES",
+          "value": [
+            {
+              "id": "75",
+              "label": ""
+            },
+            {
+              "id": "76",
+              "label": ""
+            },
+            {
+              "id": "77",
+              "label": ""
+            }
+          ]
+        },
+        "has_markers": {
+          "modifier": "EQUALS",
+          "value": "true"
+        },
+        "interactive": {
+          "modifier": "EQUALS",
+          "value": "true"
+        },
+        "oshash": {
+          "modifier": "NOT_MATCHES_REGEX",
+          "value": "gfdesbfdgs"
+        },
+        "phash_distance": {
+          "modifier": "IS_NULL"
+        },
+        "tags": {
+          "modifier": "INCLUDES",
+          "value": {
+            "depth": 0,
+            "excluded": [],
+            "items": [
+              {
+                "id": "288",
+                "label": "Test"
+              }
+            ]
+          }
+        }
+      },
+      "__typename": "SavedFilter"
+    }
+  }
+}

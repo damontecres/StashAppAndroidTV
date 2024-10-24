@@ -22,17 +22,58 @@
     <string name="fa_heart" translatable="false">&#xf004;</string>
     <string name="fa_video" translatable="false">&#xf03d;</string>
     <string name="fa_house" translatable="false">&#xf015;</string>
+    <string name="fa_play" translatable="false">&#xf04b;</string>
+    <string name="fa_pause" translatable="false">&#xf04c;</string>
+    <string name="fa_arrow_down_long" translatable="false">&#xf175;</string>
+    <string name="fa_arrow_up_long" translatable="false">&#xf176;</string>
 
     <string name="go_to">Go to</string>
     <string name="go_to_scene">Go to scene</string>
     <string name="view_scenes">View scenes</string>
     <string name="view_markers">View markers</string>
     <string name="failed_o_counter">Failed to update o-counter</string>
+    <string name="advanced_settings">Advanced Settings</string>
 
     <string name="app_update_url" translatable="false">https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest</string>
 
     <string name="setup_1_title">Server URL</string>
     <string name="setup_1_description">Configure the server URL</string>
+    <string name="app_name_long">Stash for Android TV</string>
+    <string name="first_time_setup">First time setup</string>
+    <string name="stash_server_url">Stash Server URL</string>
+    <string name="stash_server_url_desc">Enter the URL for your Stash server, including the port if needed</string>
+
+    <string name="preferences">Preferences</string>
+    <string name="server_preferences">Server Preferences</string>
+    <string name="supported_formats">Supported Formats</string>
+    <string name="other">Other</string>
+    <string name="logcat" translatable="false">Logcat</string>
+    <string name="playback">Playback</string>
+    <string name="format">Format</string>
+    <string name="play_all">Play All</string>
+    <string name="sort_by">Sort By</string>
+    <string name="enter_pin">Enter PIN</string>
+    <string name="force_direct">Force direct</string>
+    <string name="unsupported">unsupported</string>
+    <string name="results">Results</string>
+    <string name="waiting_for_query">Enter search query</string>
+    <string name="suggestions">Suggestions</string>
+    <string name="resume">Resume</string>
+    <string name="restart">Restart</string>
+    <string name="increment">Increment</string>
+    <string name="decrement">Decrement</string>
+    <string name="reset">Reset</string>
+    <string name="replace">Replace</string>
+    <string name="format_recently_used">Recently used %1$s</string>
+    <string name="debug_tests">Debugging Tests</string>
+
+    <string name="format_percent" formatted="true">%1$d\%%</string>
+    <string name="format_pixels" formatted="true">%1$.1fpx</string>
+    <string name="format_degrees" formatted="true">%1$d°</string>
+    <string name="transcode">Transcode</string>
+    <string name="force_transcode">Force transcode</string>
+    <string name="direct">Direct</string>
+    <string name="zero">0</string>
 
     <string name="home">Home</string>
 

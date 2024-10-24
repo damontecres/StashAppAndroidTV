@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/browse_dummy"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/grid_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_vertical">
+
+        <Button
+            android:id="@+id/sort_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:minWidth="0dp"
+            android:padding="8dp"
+            android:visibility="gone"
+            android:textSize="14sp"
+            android:background="@drawable/button_selector"
+            tools:visibility="visible"
+            tools:text="Sort By" />
+
+        <Button
+            android:id="@+id/play_all_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:minWidth="0dp"
+            android:padding="8dp"
+            android:visibility="gone"
+            android:textSize="14sp"
+            android:background="@drawable/button_selector"
+            android:text="@string/play_all"
+            tools:visibility="visible" />
+
+        <Button
+            android:id="@+id/filter_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:minWidth="0dp"
+            android:padding="8dp"
+            android:visibility="gone"
+            android:textSize="14sp"
+            android:background="@drawable/button_selector"
+            android:text="@string/stashapp_filter"
+            tools:visibility="visible" />
+    </LinearLayout>
+
+    <androidx.leanback.widget.BrowseFrameLayout
+        android:id="@+id/grid_frame"
+        android:focusable="true"
+        android:focusableInTouchMode="false"
+        android:descendantFocusability="afterDescendants"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/browse_grid_dock"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <include
+            layout="@layout/grid_footer_layout"
+            android:id="@+id/footer_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:visibility="gone"
+            tools:visibility="visible"
+            />
+
+        <TextView
+            android:id="@+id/no_results_text"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:gravity="center"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/stashapp_performer_tagger_no_results_found"
+            tools:visibility="visible" />
+    </androidx.leanback.widget.BrowseFrameLayout>
+</LinearLayout>

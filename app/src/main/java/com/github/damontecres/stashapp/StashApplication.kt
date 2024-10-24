@@ -15,6 +15,8 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.preference.PreferenceManager
+import androidx.room.Room
+import com.github.damontecres.stashapp.data.room.AppDatabase
 import com.github.damontecres.stashapp.setup.SetupActivity
 import com.github.damontecres.stashapp.util.AppUpgradeHandler
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -87,16 +89,23 @@ class StashApplication : Application() {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val currentVersion = prefs.getString(VERSION_NAME_CURRENT_KEY, null)
         val currentVersionCode = prefs.getLong(VERSION_CODE_CURRENT_KEY, -1)
-        if (pkgInfo.versionName != currentVersion || pkgInfo.versionCode.toLong() != currentVersionCode) {
+
+        val newVersionCode =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                pkgInfo.longVersionCode
+            } else {
+                pkgInfo.versionCode.toLong()
+            }
+        if (pkgInfo.versionName != currentVersion || newVersionCode != currentVersionCode) {
             Log.i(
                 TAG,
-                "App installed: $currentVersion=>${pkgInfo.versionName} ($currentVersionCode=>${pkgInfo.versionCode})",
+                "App installed: $currentVersion=>${pkgInfo.versionName} ($currentVersionCode=>$newVersionCode",
             )
             prefs.edit(true) {
                 putString(VERSION_NAME_PREVIOUS_KEY, currentVersion)
                 putLong(VERSION_CODE_PREVIOUS_KEY, currentVersionCode)
                 putString(VERSION_NAME_CURRENT_KEY, pkgInfo.versionName)
-                putLong(VERSION_CODE_CURRENT_KEY, pkgInfo.versionCode.toLong())
+                putLong(VERSION_CODE_CURRENT_KEY, newVersionCode)
             }
             if (currentVersion != null) {
                 CoroutineScope(Dispatchers.IO + StashCoroutineExceptionHandler()).launch {
@@ -108,6 +117,16 @@ class StashApplication : Application() {
                 }
             }
         }
+
+        setupDB()
+    }
+
+    private fun setupDB() {
+        val dbName = getString(R.string.app_name)
+        database =
+            Room.databaseBuilder(this, AppDatabase::class.java, dbName)
+                .fallbackToDestructiveMigration()
+                .build()
     }
 
     fun showPinActivity() {
@@ -203,6 +222,7 @@ class StashApplication : Application() {
 
     companion object {
         private lateinit var application: StashApplication
+        private lateinit var database: AppDatabase
 
         private val fontCache = mutableMapOf<Int, Typeface>()
 
@@ -220,6 +240,10 @@ class StashApplication : Application() {
             return fontCache.getOrPut(fontId) {
                 return ResourcesCompat.getFont(getApplication(), fontId)!!
             }
+        }
+
+        fun getDatabase(): AppDatabase {
+            return database
         }
 
         const val TAG = "StashApplication"

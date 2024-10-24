@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.github.damontecres.stashapp.api.RunPluginTaskMutation
 import com.github.damontecres.stashapp.util.StashClient
+import com.github.damontecres.stashapp.util.StashServer
 import com.google.auto.service.AutoService
 import kotlinx.coroutines.runBlocking
 import org.acra.config.CoreConfiguration
@@ -32,17 +33,21 @@ class CrashReportSenderFactory : ReportSenderFactory {
         ) {
             Log.w(TAG, "Sending crash report")
             try {
-                val client = StashClient.getApolloClient(context)
-                val mutation =
-                    RunPluginTaskMutation(
-                        plugin_id = CompanionPlugin.PLUGIN_ID,
-                        task_name = CompanionPlugin.CRASH_TASK_NAME,
-                        args_map = mapOf(CompanionPlugin.CRASH_TASK_NAME to errorContent.toJSON()),
-                    )
-                runBlocking {
-                    val response = client.mutation(mutation).execute()
-                    if (response.hasErrors()) {
-                        throw ReportSenderException(response.errors.toString())
+                StashServer.getCurrentStashServer()?.let { server ->
+                    val client = StashClient.getApolloClient(server)
+                    val mutation =
+                        RunPluginTaskMutation(
+                            plugin_id = CompanionPlugin.PLUGIN_ID,
+                            task_name = CompanionPlugin.CRASH_TASK_NAME,
+                            args_map = mapOf(CompanionPlugin.CRASH_TASK_NAME to errorContent.toJSON()),
+                        )
+                    runBlocking {
+                        val response = client.mutation(mutation).execute()
+                        if (response.exception != null) {
+                            throw ReportSenderException("Exception", response.exception!!)
+                        } else if (response.hasErrors()) {
+                            throw ReportSenderException(response.errors.toString())
+                        }
                     }
                 }
             } catch (ex: Exception) {

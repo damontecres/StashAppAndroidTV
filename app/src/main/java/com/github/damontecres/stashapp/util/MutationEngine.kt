@@ -1,14 +1,11 @@
 package com.github.damontecres.stashapp.util
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
-import com.apollographql.apollo3.api.ApolloResponse
-import com.apollographql.apollo3.api.Mutation
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.exception.ApolloException
-import com.apollographql.apollo3.exception.ApolloHttpException
-import com.apollographql.apollo3.exception.ApolloNetworkException
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.Mutation
+import com.apollographql.apollo.api.Optional
+import com.github.damontecres.stashapp.api.CreateGroupMutation
 import com.github.damontecres.stashapp.api.CreateMarkerMutation
 import com.github.damontecres.stashapp.api.CreatePerformerMutation
 import com.github.damontecres.stashapp.api.CreateTagMutation
@@ -16,25 +13,36 @@ import com.github.damontecres.stashapp.api.DeleteMarkerMutation
 import com.github.damontecres.stashapp.api.ImageDecrementOMutation
 import com.github.damontecres.stashapp.api.ImageIncrementOMutation
 import com.github.damontecres.stashapp.api.ImageResetOMutation
+import com.github.damontecres.stashapp.api.InstallPackagesMutation
 import com.github.damontecres.stashapp.api.MetadataGenerateMutation
 import com.github.damontecres.stashapp.api.MetadataScanMutation
+import com.github.damontecres.stashapp.api.SaveFilterMutation
 import com.github.damontecres.stashapp.api.SceneAddOMutation
 import com.github.damontecres.stashapp.api.SceneAddPlayCountMutation
 import com.github.damontecres.stashapp.api.SceneDeleteOMutation
 import com.github.damontecres.stashapp.api.SceneResetOMutation
 import com.github.damontecres.stashapp.api.SceneSaveActivityMutation
 import com.github.damontecres.stashapp.api.SceneUpdateMutation
+import com.github.damontecres.stashapp.api.UpdateGalleryMutation
 import com.github.damontecres.stashapp.api.UpdateImageMutation
 import com.github.damontecres.stashapp.api.UpdateMarkerMutation
 import com.github.damontecres.stashapp.api.UpdatePerformerMutation
-import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.FullMarkerData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.GalleryUpdateInput
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
+import com.github.damontecres.stashapp.api.type.GroupCreateInput
 import com.github.damontecres.stashapp.api.type.ImageUpdateInput
+import com.github.damontecres.stashapp.api.type.PackageSpecInput
+import com.github.damontecres.stashapp.api.type.PackageType
 import com.github.damontecres.stashapp.api.type.PerformerCreateInput
 import com.github.damontecres.stashapp.api.type.PerformerUpdateInput
+import com.github.damontecres.stashapp.api.type.SaveFilterInput
 import com.github.damontecres.stashapp.api.type.ScanMetadataInput
+import com.github.damontecres.stashapp.api.type.SceneGroupInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
@@ -43,90 +51,34 @@ import com.github.damontecres.stashapp.data.OCounter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReadWriteLock
 
 /**
  * Class for sending graphql mutations
- *
- * @param context
- * @param showToasts show a toast when errors occur
- * @param lock an optional lock, when if shared with [QueryEngine], can prevent race conditions
  */
 class MutationEngine(
-    private val context: Context,
-    private val showToasts: Boolean = false,
-    lock: ReadWriteLock? = null,
-) {
-    private val client = StashClient.getApolloClient(context)
+    server: StashServer,
+    client: ApolloClient = StashClient.getApolloClient(server),
+) : StashEngine(server, client) {
+    suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> =
+        withContext(Dispatchers.IO) {
+            val mutationName = mutation.name()
+            val id = MUTATION_ID.getAndIncrement()
 
-    private val serverPreferences = ServerPreferences(context)
-
-    private val writeLock = lock?.writeLock()
-
-    suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> {
-        val mutationName = mutation.name()
-        val id = MUTATION_ID.getAndIncrement()
-        try {
             Log.v(TAG, "executeMutation $id $mutationName start")
-            val response =
-                withContext(Dispatchers.IO) {
-                    try {
-                        writeLock?.lock()
-                        client.mutation(mutation).execute()
-                    } finally {
-                        writeLock?.unlock()
-                    }
-                }
-            if (response.errors.isNullOrEmpty()) {
+            val response = client.mutation(mutation).execute()
+            if (response.data != null) {
                 Log.v(TAG, "executeMutation $id $mutationName successful")
-                return response
+                return@withContext response
+            } else if (response.exception != null) {
+                throw createException(id, mutationName, response.exception!!) { msg, ex ->
+                    MutationException(id, mutationName, msg, ex)
+                }
             } else {
                 val errorMsgs = response.errors!!.joinToString("\n") { it.message }
-                if (showToasts) {
-                    Toast.makeText(
-                        context,
-                        "${response.errors!!.size} errors in response ($mutationName)\n$errorMsgs",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
                 Log.e(TAG, "Errors in $id $mutationName: ${response.errors}")
-                throw MutationException(
-                    id,
-                    "($mutationName), ${response.errors!!.size} errors in graphql response",
-                )
+                throw MutationException(id, mutationName, "Error in $mutationName: $errorMsgs")
             }
-        } catch (ex: ApolloNetworkException) {
-            if (showToasts) {
-                Toast.makeText(
-                    context,
-                    "Network error ($id $mutationName). Message: ${ex.message}, ${ex.cause?.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-            Log.e(TAG, "Network error in $id $mutationName", ex)
-            throw MutationException(id, "Network error ($mutationName)", ex)
-        } catch (ex: ApolloHttpException) {
-            if (showToasts) {
-                Toast.makeText(
-                    context,
-                    "HTTP error ($mutationName). Status=${ex.statusCode}, Msg=${ex.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-            Log.e(TAG, "HTTP ${ex.statusCode} error in $id $mutationName", ex)
-            throw MutationException(id, "HTTP ${ex.statusCode} ($mutationName)", ex)
-        } catch (ex: ApolloException) {
-            if (showToasts) {
-                Toast.makeText(
-                    context,
-                    "Server query error ($id $mutationName). Msg=${ex.message}, ${ex.cause?.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-            Log.e(TAG, "ApolloException in $id $mutationName", ex)
-            throw MutationException(id, "Apollo exception ($mutationName)", ex)
         }
-    }
 
     /**
      * Saves the resume time for a given scene
@@ -166,7 +118,7 @@ class MutationEngine(
         preferenceKey: String,
         defValue: Boolean = false,
     ): Optional<Boolean> {
-        return Optional.present(
+        return Optional.presentIfNotNull(
             serverPreferences.preferences.getBoolean(
                 preferenceKey,
                 defValue,
@@ -174,7 +126,7 @@ class MutationEngine(
         )
     }
 
-    suspend fun triggerScan() {
+    suspend fun triggerScan(): String {
         val mutation =
             MetadataScanMutation(
                 ScanMetadataInput(
@@ -191,10 +143,10 @@ class MutationEngine(
                     scanGenerateImagePreviews = getServerBoolean(ServerPreferences.PREF_SCAN_GENERATE_IMAGE_PREVIEWS),
                 ),
             )
-        executeMutation(mutation)
+        return executeMutation(mutation).data!!.metadataScan
     }
 
-    suspend fun triggerGenerate() {
+    suspend fun triggerGenerate(): String {
         val mutation =
             MetadataGenerateMutation(
                 GenerateMetadataInput(
@@ -212,7 +164,7 @@ class MutationEngine(
                     imageThumbnails = getServerBoolean(ServerPreferences.PREF_GEN_IMAGE_THUMBNAILS),
                 ),
             )
-        executeMutation(mutation)
+        return executeMutation(mutation).data!!.metadataGenerate
     }
 
     suspend fun setTagsOnScene(
@@ -232,23 +184,50 @@ class MutationEngine(
         return result.data?.sceneUpdate
     }
 
+    suspend fun setGroupsOnScene(
+        sceneId: String,
+        groupIds: List<String>,
+    ): SceneUpdateMutation.SceneUpdate? {
+        Log.v(TAG, "setGroupsOnScene sceneId=$sceneId, tagIds=$groupIds")
+        val mutation =
+            SceneUpdateMutation(
+                input =
+                    SceneUpdateInput(
+                        id = sceneId,
+                        groups =
+                            Optional.present(
+                                groupIds.map {
+                                    SceneGroupInput(
+                                        group_id = it,
+                                        scene_index = Optional.absent(),
+                                    )
+                                },
+                            ),
+                    ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.sceneUpdate
+    }
+
+    suspend fun updateMarker(input: SceneMarkerUpdateInput): FullMarkerData? {
+        val mutation = UpdateMarkerMutation(input = input)
+        val result = executeMutation(mutation)
+        return result.data?.sceneMarkerUpdate?.fullMarkerData
+    }
+
     suspend fun setTagsOnMarker(
         markerId: String,
         primaryTagId: String,
         tagIds: List<String>,
-    ): MarkerData? {
+    ): FullMarkerData? {
         Log.v(TAG, "setTagsOnMarker markerId=$markerId, primaryTagId=$primaryTagId, tagIds=$tagIds")
-        val mutation =
-            UpdateMarkerMutation(
-                input =
-                    SceneMarkerUpdateInput(
-                        id = markerId,
-                        primary_tag_id = Optional.present(primaryTagId),
-                        tag_ids = Optional.present(tagIds),
-                    ),
-            )
-        val result = executeMutation(mutation)
-        return result.data?.sceneMarkerUpdate?.markerData
+        return updateMarker(
+            SceneMarkerUpdateInput(
+                id = markerId,
+                primary_tag_id = Optional.present(primaryTagId),
+                tag_ids = Optional.present(tagIds),
+            ),
+        )
     }
 
     suspend fun setPerformersOnScene(
@@ -307,7 +286,7 @@ class MutationEngine(
         sceneId: String,
         position: Long,
         primaryTagId: String,
-    ): MarkerData? {
+    ): FullMarkerData? {
         val input =
             SceneMarkerCreateInput(
                 title = "",
@@ -318,7 +297,7 @@ class MutationEngine(
             )
         val mutation = CreateMarkerMutation(input)
         val result = executeMutation(mutation)
-        return result.data?.sceneMarkerCreate?.markerData
+        return result.data?.sceneMarkerCreate?.fullMarkerData
     }
 
     suspend fun deleteMarker(id: String): Boolean {
@@ -363,16 +342,20 @@ class MutationEngine(
 
     suspend fun updateImage(
         imageId: String,
+        studioId: String? = null,
         performerIds: List<String>? = null,
         tagIds: List<String>? = null,
+        galleryIds: List<String>? = null,
         rating100: Int? = null,
     ): UpdateImageMutation.ImageUpdate? {
         val mutation =
             UpdateImageMutation(
                 ImageUpdateInput(
                     id = imageId,
+                    studio_id = Optional.presentIfNotNull(studioId),
                     performer_ids = Optional.presentIfNotNull(performerIds),
                     tag_ids = Optional.presentIfNotNull(tagIds),
+                    gallery_ids = Optional.presentIfNotNull(galleryIds),
                     rating100 = Optional.presentIfNotNull(rating100),
                 ),
             )
@@ -410,12 +393,51 @@ class MutationEngine(
         return result.data?.performerCreate?.performerData
     }
 
+    suspend fun createGroup(input: GroupCreateInput): GroupData {
+        val mutation = CreateGroupMutation(input)
+        val result = executeMutation(mutation)
+        return result.data?.groupCreate?.groupData!!
+    }
+
+    suspend fun updateGallery(
+        galleryId: String,
+        rating100: Int,
+    ): UpdateGalleryMutation.GalleryUpdate? {
+        val mutation =
+            UpdateGalleryMutation(
+                GalleryUpdateInput(
+                    id = galleryId,
+                    rating100 = Optional.present(rating100),
+                ),
+            )
+        val result = executeMutation(mutation)
+        return result.data?.galleryUpdate
+    }
+
+    suspend fun installPackage(
+        type: PackageType,
+        input: PackageSpecInput,
+    ): String {
+        val mutation = InstallPackagesMutation(type, listOf(input))
+        val result = executeMutation(mutation)
+        return result.data!!.installPackages
+    }
+
+    suspend fun saveFilter(input: SaveFilterInput): SavedFilterData {
+        val mutation = SaveFilterMutation(input)
+        return executeMutation(mutation).data!!.saveFilter.savedFilterData
+    }
+
     companion object {
         const val TAG = "MutationEngine"
 
         private val MUTATION_ID = AtomicInteger(0)
     }
 
-    open class MutationException(val id: Int, msg: String? = null, cause: ApolloException? = null) :
-        RuntimeException(msg, cause)
+    open class MutationException(
+        id: Int,
+        mutationName: String,
+        msg: String? = null,
+        cause: Exception? = null,
+    ) : ServerCommunicationException(id, mutationName, msg, cause)
 }

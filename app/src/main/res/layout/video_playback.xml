@@ -17,6 +17,12 @@
         app:scrubber_dragged_size="22dp"
         app:played_color="@color/selected_background"
         app:use_controller="true"
-        app:hide_during_ads="false" />
+        app:hide_during_ads="false"
+        app:show_subtitle_button="true" />
+
+    <FrameLayout
+        android:id="@+id/video_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </FrameLayout>

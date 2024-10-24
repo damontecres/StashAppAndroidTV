@@ -14,10 +14,25 @@
     <string name="pref_key_default_forced_direct_containers" translatable="false">forcedDirectContainers</string>
     <string name="pref_key_show_playback_debug_info" translatable="false">playback.showDebugInfo</string>
     <string name="pref_key_experimental_features" translatable="false">playback.experimentalFeatures</string>
+    <string name="pref_key_playback_save_effects" translatable="false">playback.saveEffects</string>
+    <string name="pref_key_crop_card_images" translatable="false">card.cropImages</string>
+    <string name="pref_key_back_button_scroll" translatable="false">grid_back_button_scroll</string>
+    <string name="pref_key_video_filters" translatable="false">playback.videoFilters</string>
+
+    <string name="pref_key_ui_performer_tabs" translatable="false">ui.tabs.performer</string>
+    <string name="pref_key_ui_gallery_tabs" translatable="false">ui.tabs.gallery</string>
+    <string name="pref_key_ui_group_tabs" translatable="false">ui.tabs.group</string>
+    <string name="pref_key_ui_studio_tabs" translatable="false">ui.tabs.studio</string>
+    <string name="pref_key_ui_tag_tabs" translatable="false">ui.tabs.tag</string>
+
+    <string name="pref_key_ui_remember_tab" translatable="false">ui.rememberTab</string>
+    <string name="pref_key_ui_card_overlay_delay" translatable="false">ui.card.delayVideoDuration</string>
+    <integer name="pref_key_ui_card_overlay_delay_default">1000</integer>
+
+
+    <!-- Compose -->
     <string name="pref_key_use_compose_ui" translatable="false">useComposeUI</string>
-
     <string name="pref_key_ui_theme_dark_appearance" translatable="false">ui.theme.darkAppearance</string>
-
     <string name="ui_theme_dark_appearance_choice_default">System</string>
     <string name="ui_theme_dark_appearance_choice_light">Light</string>
     <string name="ui_theme_dark_appearance_choice_dark">Dark</string>

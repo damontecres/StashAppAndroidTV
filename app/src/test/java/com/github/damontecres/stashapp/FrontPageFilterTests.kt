@@ -1,13 +1,14 @@
 package com.github.damontecres.stashapp
 
-import com.apollographql.apollo3.api.json.BufferedSourceJsonReader
-import com.apollographql.apollo3.api.parseJsonResponse
+import android.content.Context
+import com.apollographql.apollo.api.json.BufferedSourceJsonReader
+import com.apollographql.apollo.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.ConfigurationUIQuery
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashCustomFilter
-import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -23,10 +24,16 @@ import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 
 @RunWith(MockitoJUnitRunner::class)
 class FrontPageFilterTests {
+    private val mockedContext =
+        mock<Context> {
+            on { getString(any(), any()) } doReturn "context_string"
+        }
+
     private fun parseFileToFrontPageContent(file: String): List<Map<String, *>> {
         val path = file.toPath()
         FileSystem.RESOURCES.read(path) {
@@ -48,34 +55,78 @@ class FrontPageFilterTests {
     fun basicTest() {
         val mockedQueryEngine =
             mock<QueryEngine> {
-                onBlocking { getSavedFilter("1") } doReturn createSavedFilterData("1", FilterMode.SCENES)
-                onBlocking { getSavedFilter("2") } doReturn createSavedFilterData("2", FilterMode.PERFORMERS)
-                onBlocking { findScenes(anyOrNull(), anyOrNull(), any()) } doReturn listOf()
-                onBlocking { findPerformers(anyOrNull(), anyOrNull(), anyOrNull(), any()) } doReturn listOf()
+                onBlocking { getSavedFilter("1") } doReturn
+                    createSavedFilterData(
+                        "1",
+                        FilterMode.SCENES,
+                    )
+                onBlocking { getSavedFilter("2") } doReturn
+                    createSavedFilterData(
+                        "2",
+                        FilterMode.PERFORMERS,
+                    )
+                onBlocking {
+                    findScenes(
+                        anyOrNull(),
+                        anyOrNull(),
+                        anyOrNull(),
+                        any(),
+                    )
+                } doReturn listOf()
+                onBlocking {
+                    findPerformers(
+                        anyOrNull(),
+                        anyOrNull(),
+                        anyOrNull(),
+                        any(),
+                    )
+                } doReturn listOf()
+                onBlocking {
+                    find(
+                        eq(DataType.SCENE),
+                        anyOrNull(),
+                        any(),
+                    )
+                } doReturn listOf<SlimSceneData>()
+                onBlocking {
+                    find(
+                        eq(DataType.PERFORMER),
+                        anyOrNull(),
+                        any(),
+                    )
+                } doReturn listOf<PerformerData>()
             }
-        val frontPageParser = FrontPageParser(mockedQueryEngine, FilterParser(Version.V0_25_0))
-        val result = runBlocking { frontPageParser.parse(parseFileToFrontPageContent("front_page_basic.json")) }
+        val frontPageParser =
+            FrontPageParser(
+                mockedContext,
+                mockedQueryEngine,
+                FilterParser(Version.MINIMUM_STASH_VERSION),
+            )
+        val result =
+            runBlocking { frontPageParser.parse(parseFileToFrontPageContent("front_page_basic.json")) }
         val rows = result.map { runBlocking { it.await() } }
         Assert.assertEquals(4, rows.size)
-        rows.forEach { Assert.assertEquals(FrontPageParser.FrontPageRowResult.SUCCESS, it.result) }
-        Assert.assertEquals(DataType.SCENE, rows[0].data!!.filter.dataType)
-        Assert.assertTrue(rows[0].data!!.filter is StashSavedFilter)
-        Assert.assertEquals(DataType.SCENE, rows[1].data!!.filter.dataType)
-        Assert.assertTrue(rows[1].data!!.filter is StashCustomFilter)
-        Assert.assertEquals(DataType.PERFORMER, rows[2].data!!.filter.dataType)
-        Assert.assertTrue(rows[2].data!!.filter is StashCustomFilter)
-        Assert.assertEquals(DataType.PERFORMER, rows[3].data!!.filter.dataType)
-        Assert.assertTrue(rows[3].data!!.filter is StashSavedFilter)
+        rows.forEach { Assert.assertTrue(it is FrontPageParser.FrontPageRow.Success) }
+        rows as List<FrontPageParser.FrontPageRow.Success>
+        Assert.assertEquals(DataType.SCENE, rows[0].filter.dataType)
+        Assert.assertEquals(DataType.SCENE, rows[1].filter.dataType)
+        Assert.assertEquals(DataType.PERFORMER, rows[2].filter.dataType)
+        Assert.assertEquals(DataType.PERFORMER, rows[3].filter.dataType)
     }
 
     @Test
     fun unsupportedTest() {
         val mockedQueryEngine = mock<QueryEngine>()
-        val frontPageParser = FrontPageParser(mockedQueryEngine, FilterParser(Version.V0_25_0))
+        val frontPageParser =
+            FrontPageParser(
+                mockedContext,
+                mockedQueryEngine,
+                FilterParser(Version.MINIMUM_STASH_VERSION),
+            )
         val result = runBlocking { frontPageParser.parse(parseFileToFrontPageContent("front_page_unsupported.json")) }
         val rows = result.map { runBlocking { it.await() } }
         Assert.assertEquals(2, rows.size)
-        Assert.assertEquals(FrontPageParser.FrontPageRowResult.DATA_TYPE_NOT_SUPPORTED, rows[0].result)
-        Assert.assertEquals(FrontPageParser.FrontPageRowResult.DATA_TYPE_NOT_SUPPORTED, rows[1].result)
+        Assert.assertTrue(rows[0] is FrontPageParser.FrontPageRow.NotSupported)
+        Assert.assertTrue(rows[1] is FrontPageParser.FrontPageRow.NotSupported)
     }
 }

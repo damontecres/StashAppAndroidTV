@@ -1,11 +1,17 @@
 mutation UpdateImage($input: ImageUpdateInput!) {
   imageUpdate(input: $input) {
     id
+    studio {
+      ...StudioData
+    }
     tags {
       ...TagData
     }
     performers {
       ...PerformerData
+    }
+    galleries {
+      ...GalleryData
     }
     rating100
   }

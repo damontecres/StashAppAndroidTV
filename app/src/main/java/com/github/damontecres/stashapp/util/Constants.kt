@@ -4,16 +4,15 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.text.TextUtils
 import android.util.DisplayMetrics
 import android.util.Log
-import android.util.TypedValue
 import android.view.View
 import android.widget.Adapter
-import android.widget.ArrayAdapter
 import android.widget.FrameLayout
+import android.widget.ListAdapter
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -22,33 +21,45 @@ import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.Visibility
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.exception.ApolloException
-import com.apollographql.apollo3.exception.ApolloHttpException
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.chrynan.parcelable.core.getParcelable
+import com.chrynan.parcelable.core.getParcelableExtra
+import com.chrynan.parcelable.core.putExtra
 import com.github.damontecres.stashapp.ImageActivity
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
-import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.Group
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
+import com.github.damontecres.stashapp.views.fileNameFromPath
+import com.github.damontecres.stashapp.views.getRatingString
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
 import okhttp3.Cache
 import java.io.File
 import java.io.IOException
@@ -66,14 +77,24 @@ import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
+/**
+ * Originally this file was for constant values (such as API Key header name).
+ *
+ * Now it's mostly a dumping ground for various extension functions
+ */
 object Constants {
     /**
      * The name of the header for authenticating to Stash
      */
     const val STASH_API_HEADER = "ApiKey"
     const val TAG = "Constants"
-    const val OK_HTTP_CACHE_DIR = "okhttpcache"
     const val USE_NAV_CONTROLLER = "useNavController"
+    private const val OK_HTTP_CACHE_DIR = "okhttpcache"
+
+    const val ARG = "arg"
+    const val SCENE_ARG = "$ARG.scene"
+    const val SCENE_ID_ARG = "$ARG.scene.id"
+    const val POSITION_ARG = "$ARG.position"
 
     fun getNetworkCache(context: Context): Cache {
         val cacheSize =
@@ -83,7 +104,7 @@ object Constants {
     }
 }
 
-fun join(
+fun joinValueNotNull(
     prefix: String,
     value: String?,
 ): String? {
@@ -139,6 +160,11 @@ data class TestResult(val status: TestResultStatus, val serverInfo: ServerInfoQu
     constructor(status: TestResultStatus) : this(status, null)
 }
 
+/**
+ * Test the connection to the server using the specified [ApolloClient]
+ *
+ * The client should have been configured with the server URL and API key if needed
+ */
 suspend fun testStashConnection(
     context: Context,
     showToast: Boolean,
@@ -158,16 +184,8 @@ suspend fun testStashConnection(
                 withContext(Dispatchers.IO) {
                     client.query(ServerInfoQuery()).execute()
                 }
-            if (info.hasErrors()) {
-                if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Connected to Stash, but server returned an error: ${info.errors}",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-                Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
-            } else {
+
+            if (info.data != null) {
                 val serverVersion = Version.tryFromString(info.data?.version?.version)
                 if (!Version.isStashVersionSupported(serverVersion)) {
                     if (showToast) {
@@ -191,104 +209,107 @@ suspend fun testStashConnection(
                     }
                     return TestResult(TestResultStatus.SUCCESS, info.data)
                 }
-            }
-        } catch (ex: ApolloHttpException) {
-            Log.e(Constants.TAG, "ApolloHttpException", ex)
-            if (ex.statusCode == 400) {
-                // Server returns 400 with body "Client sent an HTTP request to an HTTPS server.", but apollo doesn't record the body
-                if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Connected to server, but server may require using HTTPS.",
-                        Toast.LENGTH_LONG,
-                    ).show()
+            } else if (info.exception != null) {
+                when (val ex = info.exception) {
+                    is ApolloHttpException -> {
+                        Log.e(Constants.TAG, "ApolloHttpException", ex)
+                        if (ex.statusCode == 400) {
+                            // Server returns 400 with body "Client sent an HTTP request to an HTTPS server.", but apollo doesn't record the body
+                            if (showToast) {
+                                Toast.makeText(
+                                    context,
+                                    "Connected to server, but server may require using HTTPS.",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                            return TestResult(TestResultStatus.SSL_REQUIRED)
+                        } else if (ex.statusCode == 401 || ex.statusCode == 403) {
+                            if (showToast) {
+                                Toast.makeText(
+                                    context,
+                                    "Connected to server, but an API key is required.",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                            return TestResult(TestResultStatus.AUTH_REQUIRED)
+                        } else {
+                            if (showToast) {
+                                Toast.makeText(
+                                    context,
+                                    "Connected to Stash, but got HTTP ${ex.statusCode}: '${ex.message}'",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                            return TestResult(TestResultStatus.ERROR)
+                        }
+                    }
+
+                    is ApolloException -> {
+                        Log.e(Constants.TAG, "ApolloException", ex)
+                        if (showToast) {
+                            val message =
+                                when (val cause = ex.cause) {
+                                    is UnknownHostException, is ConnectException -> cause.localizedMessage
+                                    is SSLHandshakeException -> "server may be using a self-signed certificate"
+                                    is IOException -> cause.localizedMessage
+                                    else -> ex.localizedMessage
+                                }
+                            Toast.makeText(
+                                context,
+                                "Failed to connect to Stash: $message",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+                        if (ex.cause is SSLHandshakeException) {
+                            return TestResult(TestResultStatus.SELF_SIGNED_REQUIRED)
+                        }
+                    }
+
+                    else -> {
+                        Log.e(Constants.TAG, "Exception", ex)
+                        if (showToast) {
+                            Toast.makeText(
+                                context,
+                                "Failed to connect to Stash: ${ex?.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        }
+                        return TestResult(TestResultStatus.ERROR)
+                    }
                 }
-                return TestResult(TestResultStatus.SSL_REQUIRED)
-            } else if (ex.statusCode == 401 || ex.statusCode == 403) {
-                if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Connected to server, but an API key is required.",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-                return TestResult(TestResultStatus.AUTH_REQUIRED)
-            } else if (ex.statusCode == 500) {
-                // In server <0.26.0, the server may return a 500 for incorrect API keys
-                if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Connected to server, but the API key may be incorrect.",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                }
-                return TestResult(TestResultStatus.AUTH_REQUIRED)
             } else {
                 if (showToast) {
                     Toast.makeText(
                         context,
-                        "Connected to Stash, but got HTTP ${ex.statusCode}: '${ex.message}'",
+                        "Connected to Stash, but server returned an error: ${info.errors}",
                         Toast.LENGTH_LONG,
                     ).show()
                 }
-                return TestResult(TestResultStatus.ERROR)
+                Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
             }
-        } catch (ex: ApolloException) {
-            Log.e(Constants.TAG, "ApolloException", ex)
+        } catch (ex: Exception) {
+            Log.e(Constants.TAG, "Exception", ex)
             if (showToast) {
-                val message =
-                    when (val cause = ex.cause) {
-                        is UnknownHostException, is ConnectException -> cause.localizedMessage
-                        is SSLHandshakeException -> "server may be using a self-signed certificate"
-                        is IOException -> cause.localizedMessage
-                        else -> ex.localizedMessage
-                    }
                 Toast.makeText(
                     context,
-                    "Failed to connect to Stash: $message",
+                    "Failed to connect to Stash: ${ex.message}",
                     Toast.LENGTH_LONG,
                 ).show()
             }
-            if (ex.cause is SSLHandshakeException) {
-                return TestResult(TestResultStatus.SELF_SIGNED_REQUIRED)
-            }
+            return TestResult(TestResultStatus.ERROR)
         }
     }
     return TestResult(TestResultStatus.ERROR)
 }
 
-fun SavedFilterData.Find_filter.toFindFilterType(): FindFilterType {
-    return FindFilterType(
-        q = Optional.presentIfNotNull(this.q),
-        page = Optional.presentIfNotNull(this.page),
-        per_page = Optional.presentIfNotNull(this.per_page),
-        sort = Optional.presentIfNotNull(this.sort),
-        direction = Optional.presentIfNotNull(this.direction),
-    )
-}
-
-@Suppress("ktlint:standard:function-naming")
-fun FindFilterType.toFind_filter(): SavedFilterData.Find_filter {
-    return SavedFilterData.Find_filter(
-        q = q.getOrNull(),
-        page = page.getOrNull(),
-        per_page = per_page.getOrNull(),
-        sort = sort.getOrNull(),
-        direction = direction.getOrNull(),
-        __typename = "FindFilterType",
-    )
-}
-
-val supportedFilterModes = DataType.entries.map { it.filterMode }.toSet()
-
 /**
  * Gets the value for the key trying first the key as provided and next the key lower cased
  */
-fun <V> Map<String, V>.getCaseInsensitive(k: String?): V? {
+fun <V> Map<*, V>.getCaseInsensitive(k: String?): V? {
     if (k == null) {
         return null
     }
-    return this[k] ?: this[k.lowercase()]
+    return this[k] ?: this[k.lowercase()] ?: this[k.uppercase()]
 }
 
 fun TextView.enableMarquee(selected: Boolean = false) {
@@ -326,13 +347,6 @@ fun cacheDurationPrefToDuration(value: Int): Duration? {
     }
 }
 
-fun Context.toPx(dp: Int): Float =
-    TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP,
-        dp.toFloat(),
-        resources.displayMetrics,
-    )
-
 fun convertDpToPixel(
     context: Context,
     dp: Int,
@@ -356,11 +370,7 @@ val FullSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
             val path = files.firstOrNull()?.videoFileData?.path
-            if (path != null) {
-                File(path).name
-            } else {
-                null
-            }
+            path?.fileNameFromPath
         } else {
             title
         }
@@ -369,11 +379,7 @@ val SlimSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
             val path = files.firstOrNull()?.videoFileData?.path
-            if (path != null) {
-                File(path).name
-            } else {
-                null
-            }
+            path?.fileNameFromPath
         } else {
             title
         }
@@ -382,11 +388,7 @@ val VideoSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
             val path = files.firstOrNull()?.videoFileData?.path
-            if (path != null) {
-                File(path).name
-            } else {
-                null
-            }
+            path?.fileNameFromPath
         } else {
             title
         }
@@ -414,6 +416,7 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                     preview = this.paths.preview,
                     stream = this.paths.stream,
                     sprite = this.paths.sprite,
+                    caption = this.paths.caption,
                 ),
             sceneStreams =
                 this.sceneStreams.map {
@@ -435,21 +438,25 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                 } else {
                     null
                 },
-            movies =
-                this.movies.map {
-                    SlimSceneData.Movie(
-                        SlimSceneData.Movie1(
-                            it.movie.movieData.id,
-                            it.movie.movieData.name,
+            groups =
+                this.groups.map {
+                    SlimSceneData.Group(
+                        SlimSceneData.Group1(
+                            it.group.groupData.id,
+                            it.group.groupData.name,
                         ),
                     )
                 },
             tags = this.tags.map { SlimSceneData.Tag("", it.tagData.asSlimTagData) },
             performers = this.performers.map { SlimSceneData.Performer(it.id, it.name) },
+            captions =
+                this.captions?.map {
+                    SlimSceneData.Caption(
+                        it.language_code,
+                        it.caption_type,
+                    )
+                },
         )
-
-val FullSceneData.File.asVideoSceneDataFile: VideoSceneData.File
-    get() = VideoSceneData.File("", videoFileData)
 
 val FullSceneData.asVideoSceneData: VideoSceneData
     get() =
@@ -468,7 +475,7 @@ val FullSceneData.asVideoSceneData: VideoSceneData
         )
 
 val TagData.asSlimTagData: SlimTagData
-    get() = SlimTagData(id, name, description, image_path)
+    get() = SlimTagData(id, name, description, favorite, image_path)
 
 val PerformerData.ageInYears: Int?
     @RequiresApi(Build.VERSION_CODES.O)
@@ -486,10 +493,10 @@ val GalleryData.name: String?
     get() =
         if (title.isNotNullOrBlank()) {
             title
+        } else if (files.isNotEmpty() && files.first().path.isNotNullOrBlank()) {
+            files.first().path.fileNameFromPath
         } else if (folder != null && folder.path.isNotNullOrBlank()) {
-            Uri.parse(folder.path).pathSegments.last()
-        } else if (files.firstOrNull()?.path.isNotNullOrBlank()) {
-            Uri.parse(files.firstOrNull()?.path).pathSegments.last()
+            folder.path.fileNameFromPath
         } else {
             null
         }
@@ -548,13 +555,9 @@ fun showSetRatingToast(
     rating100: Int,
     ratingsAsStars: Boolean? = null,
 ) {
-    val asStars = ratingsAsStars ?: ServerPreferences(context).ratingsAsStars
-    val ratingStr =
-        if (asStars) {
-            (rating100 / 20.0).toString() + " stars"
-        } else {
-            (rating100 / 10.0).toString()
-        }
+    val asStars =
+        ratingsAsStars ?: StashServer.requireCurrentServer().serverPreferences.ratingsAsStars
+    val ratingStr = getRatingString(rating100, asStars)
     Toast.makeText(
         context,
         "Set rating to $ratingStr!",
@@ -602,7 +605,7 @@ fun View.animateToInvisible(
  */
 fun getMaxMeasuredWidth(
     context: Context,
-    adapter: ArrayAdapter<String>,
+    adapter: ListAdapter,
     maxWidth: Int? = null,
     maxWidthFraction: Double? = 0.4,
 ): Int {
@@ -617,9 +620,6 @@ fun getMaxMeasuredWidth(
             Log.w(Constants.TAG, "maxWidthFraction is not null, but couldn't get window size")
             Int.MAX_VALUE
         }
-    if (adapter.viewTypeCount != 1) {
-        throw IllegalStateException("Adapter creates more than 1 type of view")
-    }
 
     val tempParent = FrameLayout(context)
     var maxMeasuredWidth = 0
@@ -645,6 +645,9 @@ val SlimSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
 
 val Long.toMilliseconds get() = this / 1000.0
 
+/**
+ * Show a [Toast] on [Dispatchers.Main]
+ */
 suspend fun showToastOnMain(
     context: Context,
     message: CharSequence,
@@ -691,8 +694,8 @@ fun VideoFileData.resolutionName(): CharSequence {
 /**
  * Gets a sort by string for a random sort
  */
-fun getRandomSort(): String {
-    return "random_" + Random.nextInt(1e8.toInt()).toString()
+fun getRandomSort(): Int {
+    return Random.nextInt(1e8.toInt())
 }
 
 val ImageData.isImageClip: Boolean
@@ -734,8 +737,8 @@ fun getDataType(item: Any): DataType? {
             DataType.MARKER
         }
 
-        is MovieData -> {
-            DataType.MOVIE
+        is GroupData -> {
+            DataType.GROUP
         }
 
         is PerformerData -> {
@@ -772,7 +775,7 @@ fun getId(item: Any): String {
             item.id
         }
 
-        is MovieData -> {
+        is GroupData -> {
             item.id
         }
 
@@ -790,4 +793,93 @@ fun getId(item: Any): String {
 
         else -> throw IllegalArgumentException("Item of type ${item.javaClass} is not supported")
     }
+}
+
+/**
+ * Launch in the [Dispatchers.IO] context with an optional [CoroutineExceptionHandler] defaulting to [StashCoroutineExceptionHandler]
+ */
+fun CoroutineScope.launchIO(
+    exceptionHandler: CoroutineExceptionHandler? = StashCoroutineExceptionHandler(),
+    block: suspend CoroutineScope.() -> Unit,
+): Job {
+    return if (exceptionHandler == null) {
+        launch(Dispatchers.IO, block = block)
+    } else {
+        launch(Dispatchers.IO + exceptionHandler, block = block)
+    }
+}
+
+fun Intent.putDataType(dataType: DataType): Intent {
+    return this.putExtra("dataType", dataType.name)
+}
+
+fun Intent.getDataType(): DataType {
+    return DataType.valueOf(getStringExtra("dataType")!!)
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun Intent.putFilterArgs(
+    name: String,
+    filterArgs: FilterArgs,
+): Intent {
+    return putExtra(name, filterArgs, StashParcelable)
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun Intent.getFilterArgs(name: String): FilterArgs? {
+    return getParcelableExtra(name, FilterArgs::class, 0, StashParcelable)
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun Bundle.getFilterArgs(name: String): FilterArgs? {
+    return getParcelable(name, FilterArgs::class, 0, StashParcelable)
+}
+
+fun experimentalFeaturesEnabled(): Boolean {
+    val context = StashApplication.getApplication()
+    return PreferenceManager.getDefaultSharedPreferences(context)
+        .getBoolean(context.getString(R.string.pref_key_experimental_features), false)
+}
+
+fun getUiTabs(
+    context: Context,
+    dataType: DataType,
+): Set<String> {
+    val prefKey: Int
+    val defaultArrayKey: Int
+    when (dataType) {
+        DataType.PERFORMER -> {
+            prefKey = R.string.pref_key_ui_performer_tabs
+            defaultArrayKey = R.array.performer_tabs
+        }
+
+        DataType.GALLERY -> {
+            prefKey = R.string.pref_key_ui_gallery_tabs
+            defaultArrayKey = R.array.gallery_tabs
+        }
+
+        DataType.GROUP -> {
+            prefKey = R.string.pref_key_ui_group_tabs
+            defaultArrayKey = R.array.group_tabs
+        }
+
+        DataType.STUDIO -> {
+            prefKey = R.string.pref_key_ui_studio_tabs
+            defaultArrayKey = R.array.studio_tabs
+        }
+
+        DataType.TAG -> {
+            prefKey = R.string.pref_key_ui_tag_tabs
+            defaultArrayKey = R.array.tag_tabs
+        }
+
+        else -> throw UnsupportedOperationException("$dataType not supported")
+    }
+    val defaultValues = context.resources.getStringArray(defaultArrayKey).toSet()
+    return PreferenceManager.getDefaultSharedPreferences(context)
+        .getStringSet(context.getString(prefKey), defaultValues)!!
+}
+
+fun Optional.Companion.presentIfNotNullOrBlank(value: String?): Optional<String> {
+    return presentIfNotNull(value?.ifBlank { null })
 }

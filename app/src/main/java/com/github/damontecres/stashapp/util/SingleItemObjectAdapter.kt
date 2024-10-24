@@ -15,7 +15,7 @@ class SingleItemObjectAdapter<T : Any>(presenter: StashPresenter<T>) : ObjectAda
         }
 
     override fun size(): Int {
-        return 1
+        return if (item == null) 0 else 1
     }
 
     override fun get(position: Int): Any? {

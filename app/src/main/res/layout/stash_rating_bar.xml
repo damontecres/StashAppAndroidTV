@@ -28,7 +28,7 @@
             android:textAlignment="center"
             tools:text="@string/stashapp_rating" />
 
-        <com.github.damontecres.stashapp.views.DecimalRatingBar
+        <com.github.damontecres.stashapp.views.WrapAroundSeekBar
             android:id="@+id/rating_decimal"
             android:layout_width="match_parent"
             android:minWidth="160dp"

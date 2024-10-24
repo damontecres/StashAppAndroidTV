@@ -13,20 +13,25 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
-import com.apollographql.apollo3.api.Optional
+import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashCustomFilter
+import com.github.damontecres.stashapp.data.toStashFindFilter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.StashNavItemClickListener
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Search for items regardless of data type
+ */
 class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
 
@@ -82,7 +87,7 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                     per_page = Optional.present(perPage),
                     page = Optional.present(1),
                 )
-            val queryEngine = QueryEngine(requireContext(), true)
+            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             DataType.entries.forEach {
                 val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
                 rowsAdapter.set(
@@ -103,12 +108,9 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                     if (results.isNotEmpty()) {
                         adapter.addAll(0, results)
                         val viewAll =
-                            StashCustomFilter(
-                                mode = it.filterMode,
-                                direction = null,
-                                sortBy = null,
-                                description = "'$query' ${getString(it.pluralStringId)}",
-                                query = query,
+                            FilterArgs(
+                                dataType = it,
+                                findFilter = filter.toStashFindFilter(),
                             )
                         adapter.add(viewAll)
                     } else {

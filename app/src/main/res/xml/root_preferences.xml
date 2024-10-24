@@ -47,6 +47,11 @@
             app:summaryOn="Video preview will play when item is selected"
             app:summaryOff="Video previews will not play"
             app:defaultValue="true" />
+
+        <Preference
+            app:key="advancedUiPreferences"
+            app:title="More UI Settings"
+            app:summary="Go to advanced UI settings" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">
@@ -76,12 +81,12 @@
     <PreferenceCategory app:title="@string/stashapp_config_tasks_job_queue">
         <Preference
             app:key="triggerScan"
-            app:title="Trigger Default Library Scan"
+            app:title="Trigger Library Scan"
             app:summary="@string/stashapp_config_tasks_scan_for_content_desc" />
 
         <Preference
             app:key="triggerGenerate"
-            app:title="Trigger Default Generate"
+            app:title="Trigger Generate Task"
             app:summary="@string/stashapp_config_tasks_generate_desc" />
     </PreferenceCategory>
 
