@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui
 
+import android.content.Context
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,27 +25,29 @@ import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.QueryRepository
-import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 @HiltViewModel
 class HomePageViewModel
     @Inject
     constructor(
+        @ApplicationContext private val context: Context,
         private val queryRepository: QueryRepository,
+        private val stashServer: StashServer,
     ) : ViewModel() {
-        private val _rows = mutableStateListOf<FrontPageParser.FrontPageRow>()
-        val rows: SnapshotStateList<FrontPageParser.FrontPageRow> get() = _rows
+        private val _rows = mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
+        val rows: SnapshotStateList<FrontPageParser.FrontPageRow.Success> get() = _rows
 
         suspend fun fetchFrontPage() {
             val config = queryRepository.getServerConfiguration()
@@ -53,18 +56,19 @@ class HomePageViewModel
                     Version.tryFromString(config.version.version) ?: Version.MINIMUM_STASH_VERSION
                 val ui = config.configuration.ui
 
-                ServerPreferences(StashApplication.getApplication()).updatePreferences(config)
+                stashServer.serverPreferences.updatePreferences(config)
 
                 val frontPageContent =
                     (ui as Map<String, *>).getCaseInsensitive("frontPageContent") as List<Map<String, *>>
                 val frontPageParser =
                     FrontPageParser(
-                        QueryEngine(StashApplication.getApplication()),
-                        FilterParser(version),
+                        context,
+                        QueryEngine(stashServer),
+                        FilterParser(stashServer.version),
                     )
                 frontPageParser.parse(frontPageContent).forEach { deferredRow ->
                     val result = deferredRow.await()
-                    if (result.successful) {
+                    if (result is FrontPageParser.FrontPageRow.Success) {
                         _rows.add(result)
                     }
                 }
@@ -105,15 +109,14 @@ fun HomePage(itemOnClick: (Any) -> Unit) {
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun HomePageRow(
-    row: FrontPageParser.FrontPageRow,
+    row: FrontPageParser.FrontPageRow.Success,
     itemOnClick: (Any) -> Unit,
 ) {
-    val rowData = row.data!!
     Column(modifier = Modifier) {
         ProvideTextStyle(MaterialTheme.typography.titleLarge) {
             Text(
                 modifier = Modifier.padding(top = 20.dp, bottom = 10.dp, start = 16.dp),
-                text = rowData.name,
+                text = row.name,
             )
         }
         TvLazyRow(
@@ -124,14 +127,14 @@ fun HomePageRow(
             contentPadding = PaddingValues(start = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            items(rowData.data) { item ->
+            items(row.data) { item ->
                 if (item != null) {
                     StashCard(item, itemOnClick)
                 }
             }
-            if (rowData.data.isNotEmpty()) {
+            if (row.data.isNotEmpty()) {
                 item {
-                    ViewAllCard(filter = row.data.filter, itemOnClick)
+                    ViewAllCard(filter = row.filter, itemOnClick)
                 }
             }
         }

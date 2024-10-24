@@ -33,7 +33,7 @@ fun SceneCard(
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
     dataTypeMap[DataType.TAG] = item.tags.size
     dataTypeMap[DataType.PERFORMER] = item.performers.size
-    dataTypeMap[DataType.MOVIE] = item.movies.size
+    dataTypeMap[DataType.GROUP] = item.groups.size
     dataTypeMap[DataType.MARKER] = item.scene_markers.size
     dataTypeMap[DataType.GALLERY] = item.galleries.size
 

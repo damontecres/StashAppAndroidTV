@@ -22,7 +22,7 @@ fun StudioCard(
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
     dataTypeMap[DataType.SCENE] = item.scene_count
     dataTypeMap[DataType.PERFORMER] = item.performer_count
-    dataTypeMap[DataType.MOVIE] = item.movie_count
+    dataTypeMap[DataType.GROUP] = item.group_count
     dataTypeMap[DataType.IMAGE] = item.image_count
     dataTypeMap[DataType.GALLERY] = item.gallery_count
 

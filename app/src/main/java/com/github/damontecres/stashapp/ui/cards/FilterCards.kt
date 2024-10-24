@@ -14,20 +14,20 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashFilter
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
+import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.presenters.ImagePresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
-import com.github.damontecres.stashapp.presenters.MoviePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun ViewAllCard(
-    filter: StashFilter,
+    filter: FilterArgs,
     itemOnClick: (Any) -> Unit,
 ) {
     val width =
@@ -35,7 +35,7 @@ fun ViewAllCard(
             DataType.GALLERY -> GalleryPresenter.CARD_WIDTH
             DataType.IMAGE -> ImagePresenter.CARD_WIDTH
             DataType.MARKER -> MarkerPresenter.CARD_WIDTH
-            DataType.MOVIE -> MoviePresenter.CARD_WIDTH
+            DataType.GROUP -> GroupPresenter.CARD_WIDTH
             DataType.PERFORMER -> PerformerPresenter.CARD_WIDTH
             DataType.SCENE -> ScenePresenter.CARD_WIDTH
             DataType.STUDIO -> StudioPresenter.CARD_WIDTH
@@ -46,7 +46,7 @@ fun ViewAllCard(
             DataType.GALLERY -> GalleryPresenter.CARD_HEIGHT
             DataType.IMAGE -> ImagePresenter.CARD_HEIGHT
             DataType.MARKER -> MarkerPresenter.CARD_HEIGHT
-            DataType.MOVIE -> MoviePresenter.CARD_HEIGHT
+            DataType.GROUP -> GroupPresenter.CARD_HEIGHT
             DataType.PERFORMER -> PerformerPresenter.CARD_HEIGHT
             DataType.SCENE -> ScenePresenter.CARD_HEIGHT
             DataType.STUDIO -> StudioPresenter.CARD_HEIGHT

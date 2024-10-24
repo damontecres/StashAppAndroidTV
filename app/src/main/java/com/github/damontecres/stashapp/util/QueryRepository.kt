@@ -1,9 +1,9 @@
 package com.github.damontecres.stashapp.util
 
-import com.apollographql.apollo3.ApolloCall
-import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.api.ApolloResponse
-import com.apollographql.apollo3.api.Operation
+import com.apollographql.apollo.ApolloCall
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.Operation
 import com.github.damontecres.stashapp.api.ConfigurationQuery
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

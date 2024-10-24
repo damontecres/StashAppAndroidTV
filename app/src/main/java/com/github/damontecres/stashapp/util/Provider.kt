@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.util
 
 import android.content.Context
-import com.apollographql.apollo3.ApolloClient
+import com.apollographql.apollo.ApolloClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,9 +14,15 @@ import dagger.hilt.android.scopes.ViewModelScoped
 object Provider {
     @Provides
     @ViewModelScoped
-    fun createApolloClient(
+    fun createApolloClient(server: StashServer): ApolloClient {
+        return StashClient.getApolloClient(server)
+    }
+
+    @Provides
+    @ViewModelScoped
+    fun stashServer(
         @ApplicationContext context: Context,
-    ): ApolloClient {
-        return StashClient.getApolloClient(context)
+    ): StashServer {
+        return StashServer.getCurrentStashServer(context)!!
     }
 }

@@ -45,6 +45,8 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.asSlimTagData
 import com.github.damontecres.stashapp.util.asVideoSceneData
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -69,9 +71,10 @@ class SceneViewModel
     @Inject
     constructor(
         @ApplicationContext context: Context,
+        stashServer: StashServer,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
-        private val queryEngine = QueryEngine(context)
+        private val queryEngine = QueryEngine(stashServer)
 
         private val _uiState = MutableLiveData<SceneUiState>(SceneUiState.Loading)
         val uiState: LiveData<SceneUiState> get() = _uiState
@@ -330,8 +333,8 @@ private fun SceneDetails(
         // Movies
         item {
             ItemRow(
-                name = stringResource(R.string.stashapp_movies),
-                items = scene.movies.sortedBy { it.scene_index }.map { it.movie.movieData },
+                name = stringResource(R.string.stashapp_groups),
+                items = scene.groups.sortedBy { it.scene_index }.map { it.group.groupData },
                 itemOnClick,
             )
         }
@@ -409,9 +412,9 @@ fun convertMarker(
         screenshot = m.screenshot,
         seconds = m.seconds,
         preview = "",
-        primary_tag = MarkerData.Primary_tag("", m.primary_tag.tagData),
+        primary_tag = MarkerData.Primary_tag("", m.primary_tag.tagData.asSlimTagData),
         scene = MarkerData.Scene(scene.id, scene.asVideoSceneData),
-        tags = m.tags.map { MarkerData.Tag("", it.tagData) },
+        tags = m.tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
         __typename = "",
     )
 }

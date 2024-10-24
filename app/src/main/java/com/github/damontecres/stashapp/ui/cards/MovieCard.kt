@@ -6,15 +6,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
-import com.github.damontecres.stashapp.api.fragment.MovieData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.presenters.MoviePresenter
+import com.github.damontecres.stashapp.presenters.GroupPresenter
 import java.util.EnumMap
 
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun MovieCard(
-    item: MovieData,
+    item: GroupData,
     onClick: (() -> Unit),
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -28,10 +28,10 @@ fun MovieCard(
         modifier =
             Modifier
                 .padding(0.dp)
-                .width(MoviePresenter.CARD_WIDTH.dp / 2),
+                .width(GroupPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
-        imageWidth = MoviePresenter.CARD_WIDTH.dp / 2,
-        imageHeight = MoviePresenter.CARD_HEIGHT.dp / 2,
+        imageWidth = GroupPresenter.CARD_WIDTH.dp / 2,
+        imageHeight = GroupPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,
         videoUrl = null,
         title = title,

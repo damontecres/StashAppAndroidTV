@@ -21,8 +21,10 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashData
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 
 @Suppress("ktlint:standard:function-naming")
@@ -31,7 +33,7 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 fun TabbedFilterGrid(
     name: String,
     tabs: List<String>,
-    contentProvider: (Int) -> StashPagingSource<out Query.Data, Any, out Query.Data>,
+    contentProvider: (Int) -> StashPagingSource<out Query.Data, StashData, Any, out Query.Data>,
     itemOnClick: (Any) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -84,7 +86,7 @@ fun TabbedFilterGrid(
         }
         val resolvedFilter =
             ResolvedFilterState.Success(
-                ResolvedFilter(DataType.SCENE),
+                FilterArgs(DataType.SCENE),
                 contentProvider(selectedTabIndex),
             )
         ResolvedFilterGrid(

@@ -24,13 +24,13 @@ fun MarkerCard(
 
     val title =
         item.title.ifBlank {
-            item.primary_tag.tagData.name
+            item.primary_tag.slimTagData.name
         } + " - ${item.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
 
     val imageUrl = item.screenshot
     val videoUrl = item.preview
 
-    val details = if (item.title.isNotBlank()) item.primary_tag.tagData.name else ""
+    val details = if (item.title.isNotBlank()) item.primary_tag.slimTagData.name else ""
 
     RootCard(
         modifier =

@@ -50,31 +50,24 @@ import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
-import com.github.damontecres.stashapp.GalleryActivity
+import com.github.damontecres.stashapp.DataTypeActivity
 import com.github.damontecres.stashapp.ImageActivity
-import com.github.damontecres.stashapp.MovieActivity
-import com.github.damontecres.stashapp.PerformerActivity
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SceneDetailsActivity
-import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.POSITION_ARG
-import com.github.damontecres.stashapp.SearchActivity
 import com.github.damontecres.stashapp.SettingsActivity
-import com.github.damontecres.stashapp.StudioActivity
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashCustomFilter
-import com.github.damontecres.stashapp.data.StashDefaultFilter
-import com.github.damontecres.stashapp.data.StashFilter
-import com.github.damontecres.stashapp.data.StashSavedFilter
 import com.github.damontecres.stashapp.playback.PlaybackActivity
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.details.ScenePage
 import com.github.damontecres.stashapp.ui.details.TagPage
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getId
+import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.secondsMs
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 import kotlinx.serialization.Serializable
 import kotlin.reflect.typeOf
 
@@ -140,7 +133,7 @@ sealed class Route : Parcelable {
     data class Playback(val id: String, val position: Long = 0) : Route()
 
     @Serializable
-    data class Filter(val filter: StashFilter) : Route()
+    data class Filter(val filter: @RawValue FilterArgs) : Route()
 
     @Serializable
     data object Home : Route()
@@ -319,7 +312,7 @@ fun App() {
                         Route.Playback(item.scene.videoSceneData.id, item.secondsMs)
                     } else if (dataType != null) {
                         Route.DataTypeRoute(dataType, getId(item))
-                    } else if (item is StashFilter) {
+                    } else if (item is FilterArgs) {
                         item
                     } else {
                         throw IllegalArgumentException("Unknown item clicked: $item")
@@ -331,13 +324,13 @@ fun App() {
             composable<Route.Home> {
                 HomePage(itemOnClick)
             }
-            activity<Route.Search> {
-                activityClass = SearchActivity::class
-                argument(Constants.USE_NAV_CONTROLLER) {
-                    type = NavType.BoolType
-                    defaultValue = true
-                }
-            }
+//            activity<Route.Search> {
+//                activityClass = SearchActivity::class
+//                argument(Constants.USE_NAV_CONTROLLER) {
+//                    type = NavType.BoolType
+//                    defaultValue = true
+//                }
+//            }
             activity<Route.Settings> {
                 activityClass = SettingsActivity::class
                 argument(Constants.USE_NAV_CONTROLLER) {
@@ -355,7 +348,7 @@ fun App() {
                     throw IllegalArgumentException("Cannot pass DataType.Marker in a DataTypeRoute")
                 }
                 if (dataTypeRoute.id.isNullOrBlank()) {
-                    FilterGrid(StashDefaultFilter(dataTypeRoute.dataType), itemOnClick)
+                    FilterGrid(FilterArgs(dataTypeRoute.dataType), itemOnClick)
                 } else {
                     when (dataTypeRoute.dataType) {
                         DataType.SCENE ->
@@ -378,9 +371,10 @@ fun App() {
                             context.startActivity(
                                 Intent(
                                     context,
-                                    PerformerActivity::class.java,
+                                    DataTypeActivity::class.java,
                                 ).putExtra("id", dataTypeRoute.id)
-                                    .putExtra(Constants.USE_NAV_CONTROLLER, true),
+                                    .putExtra(Constants.USE_NAV_CONTROLLER, true)
+                                    .putDataType(DataType.PERFORMER),
                             )
                         }
 
@@ -388,19 +382,21 @@ fun App() {
                             context.startActivity(
                                 Intent(
                                     context,
-                                    StudioActivity::class.java,
+                                    DataTypeActivity::class.java,
                                 ).putExtra("id", dataTypeRoute.id)
-                                    .putExtra(Constants.USE_NAV_CONTROLLER, true),
+                                    .putExtra(Constants.USE_NAV_CONTROLLER, true)
+                                    .putDataType(DataType.STUDIO),
                             )
                         }
 
-                        DataType.MOVIE -> {
+                        DataType.GROUP -> {
                             context.startActivity(
                                 Intent(
                                     context,
-                                    MovieActivity::class.java,
+                                    DataTypeActivity::class.java,
                                 ).putExtra("id", dataTypeRoute.id)
-                                    .putExtra(Constants.USE_NAV_CONTROLLER, true),
+                                    .putExtra(Constants.USE_NAV_CONTROLLER, true)
+                                    .putDataType(DataType.GROUP),
                             )
                         }
 
@@ -418,9 +414,10 @@ fun App() {
                             context.startActivity(
                                 Intent(
                                     context,
-                                    GalleryActivity::class.java,
+                                    DataTypeActivity::class.java,
                                 ).putExtra("id", dataTypeRoute.id)
-                                    .putExtra(Constants.USE_NAV_CONTROLLER, true),
+                                    .putExtra(Constants.USE_NAV_CONTROLLER, true)
+                                    .putDataType(DataType.GALLERY),
                             )
                         }
 
@@ -430,11 +427,11 @@ fun App() {
             }
 
             activity<Route.Playback> {
-                argument(SceneDetailsActivity.MOVIE_ID) {
+                argument("id") {
                     type = NavType.StringType
                     nullable = false
                 }
-                argument(POSITION_ARG) {
+                argument(Constants.POSITION_ARG) {
                     type = NavType.LongType
                     nullable = false
                     defaultValue = 0L
@@ -445,14 +442,11 @@ fun App() {
                 }
                 activityClass = PlaybackActivity::class
             }
-            composable<StashCustomFilter>(typeMap = typeMap) { backStackEntry ->
-                val filter: StashCustomFilter = backStackEntry.toRoute()
-                FilterGrid(startingFilter = filter, itemOnClick = itemOnClick)
-            }
-            composable<StashSavedFilter>(typeMap = typeMap) { backStackEntry ->
-                val filter: StashSavedFilter = backStackEntry.toRoute()
-                FilterGrid(startingFilter = filter, itemOnClick = itemOnClick)
-            }
+            // TODO
+//            composable<FilterArgs>(typeMap = typeMap) { backStackEntry ->
+//                val filter: FilterArgs = backStackEntry.toRoute()
+//                FilterGrid(startingFilter = filter, itemOnClick = itemOnClick)
+//            }
         }
     }
 }

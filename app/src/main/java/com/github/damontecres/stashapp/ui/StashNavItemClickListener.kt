@@ -9,17 +9,16 @@ import androidx.navigation.NavController
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
-import com.github.damontecres.stashapp.data.StashCustomFilter
-import com.github.damontecres.stashapp.data.StashSavedFilter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 
 /**
  * A OnItemViewClickedListener that starts activities for scenes, performers, etc
@@ -46,8 +45,8 @@ class StashNavItemClickListener(
             navController.navigate(Route.DataTypeRoute(DataType.TAG, item.id))
         } else if (item is StudioData) {
             navController.navigate(Route.DataTypeRoute(DataType.STUDIO, item.id))
-        } else if (item is MovieData) {
-            navController.navigate(Route.DataTypeRoute(DataType.MOVIE, item.id))
+        } else if (item is GroupData) {
+            navController.navigate(Route.DataTypeRoute(DataType.GROUP, item.id))
         } else if (item is MarkerData) {
             val route =
                 Route.Playback(item.scene.videoSceneData.id, (item.seconds * 1000).toLong())
@@ -57,10 +56,8 @@ class StashNavItemClickListener(
             navController.navigate(Route.DataTypeRoute(DataType.IMAGE, item.id))
         } else if (item is GalleryData) {
             navController.navigate(Route.DataTypeRoute(DataType.GALLERY, item.id))
-        } else if (item is StashSavedFilter) {
-            throw UnsupportedOperationException()
-        } else if (item is StashCustomFilter) {
-            throw UnsupportedOperationException()
+        } else if (item is FilterArgs) {
+            TODO()
         } else if (item is StashAction) {
             if (actionListener != null) {
                 actionListener.onClicked(item)

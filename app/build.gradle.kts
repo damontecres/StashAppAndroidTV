@@ -14,8 +14,8 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("androidx.navigation.safeargs.kotlin")
     id("com.apollographql.apollo") version "4.0.0"
+    alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version "2.0.0"
-    kotlin("kapt")
 }
 
 fun getVersionCode(): Int {
@@ -140,11 +140,6 @@ tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrin
     outputDirectory = File("$buildDir/generated/res/server")
 }
 
-// Allow references to generated code
-kapt {
-    correctErrorTypes = true
-}
-
 // tasks.preBuild.dependsOn("generateStrings")
 tasks.preBuild.dependsOn("generateStrings")
 
@@ -213,7 +208,7 @@ dependencies {
     implementation("io.noties.markwon:core:4.6.2")
     implementation("com.google.dagger:hilt-android:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    kapt("com.google.dagger:hilt-android-compiler:2.51.1")
+    ksp("com.google.dagger:hilt-android-compiler:2.51.1")
     implementation("com.chrynan.parcelable:parcelable-core:0.9.0")
 
     implementation("ch.acra:acra-http:$acraVersion")

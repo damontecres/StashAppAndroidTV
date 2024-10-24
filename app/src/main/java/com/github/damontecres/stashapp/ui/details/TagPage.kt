@@ -14,10 +14,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.tv.material3.Text
-import com.apollographql.apollo3.api.Optional
-import com.apollographql.apollo3.api.Query
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -28,6 +27,7 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
@@ -37,6 +37,7 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.TagDataSupplier
 import com.github.damontecres.stashapp.ui.TabbedFilterGrid
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashServer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -54,9 +55,10 @@ class TagViewModel
     @Inject
     constructor(
         @ApplicationContext context: Context,
+        stashServer: StashServer,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
-        private val queryEngine = QueryEngine(context)
+        private val queryEngine = QueryEngine(stashServer)
 
         private val _uiState = MutableLiveData<TagUiState>(TagUiState.Loading)
         val uiState: LiveData<TagUiState> get() = _uiState
@@ -126,7 +128,7 @@ private fun getPagingSource(
     index: Int,
     tag: TagData,
     includeSubTags: Boolean = false,
-): StashPagingSource<out Query.Data, Any, out Query.Data> {
+): StashPagingSource<out Query.Data, StashData, Any, out Query.Data> {
     val depth = Optional.present(if (includeSubTags) -1 else 0)
 
     val dataSupplier =
@@ -223,10 +225,10 @@ private fun getPagingSource(
             }
 
             else -> throw IllegalStateException("selectedTabIndex=$index")
-        } as StashPagingSource.DataSupplier<*, Any, *>
+        } as StashPagingSource.DataSupplier<*, StashData, *>
 
     return StashPagingSource(
-        StashApplication.getApplication(),
+        QueryEngine(StashServer.requireCurrentServer()),
         25, // TODO
         dataSupplier = dataSupplier,
         useRandom = false,

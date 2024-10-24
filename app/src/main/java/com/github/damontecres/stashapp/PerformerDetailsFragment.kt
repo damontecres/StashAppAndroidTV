@@ -12,10 +12,10 @@ import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
-import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -23,9 +23,9 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.ageInYears
-import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
+import com.github.damontecres.stashapp.views.models.PerformerViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 import kotlin.math.floor
@@ -35,11 +35,7 @@ import kotlin.math.roundToInt
  * Details for a performer
  */
 class PerformerDetailsFragment() : Fragment(R.layout.performer_view) {
-    constructor(performer: Performer) : this() {
-        this.performer = performer
-    }
-
-    private lateinit var performer: Performer
+    private val performerViewModel: PerformerViewModel by activityViewModels<PerformerViewModel>()
 
     private lateinit var mPerformerImage: ImageView
     private lateinit var table: TableLayout
@@ -54,17 +50,12 @@ class PerformerDetailsFragment() : Fragment(R.layout.performer_view) {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        if (savedInstanceState != null) {
-            performer = savedInstanceState.getParcelable("performer", Performer::class)!!
-        }
-
         mPerformerImage = view.findViewById(R.id.performer_image)
         table = view.findViewById(R.id.performer_table)
         favoriteButton = view.findViewById(R.id.favorite_button)
         favoriteButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
 
-        val performer = requireActivity().intent.getParcelable("performer", Performer::class)
-        if (performer != null) {
+        performerViewModel.performer.observe(viewLifecycleOwner) { performer ->
             val server = StashServer.requireCurrentServer()
             queryEngine = QueryEngine(server)
             mutationEngine = MutationEngine(server)
@@ -207,11 +198,6 @@ class PerformerDetailsFragment() : Fragment(R.layout.performer_view) {
         )
 
         table.addView(row)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putParcelable("performer", performer)
     }
 
     companion object {

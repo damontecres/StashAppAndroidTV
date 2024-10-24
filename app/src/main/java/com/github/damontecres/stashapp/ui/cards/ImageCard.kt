@@ -35,7 +35,7 @@ fun ImageCard(
         }
 
     val details = mutableListOf<String?>()
-    details.add(item.studio?.studioData?.name)
+    details.add(item.studio?.name)
     details.add(item.date)
 
     RootCard(

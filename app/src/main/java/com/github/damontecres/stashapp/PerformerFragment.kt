@@ -7,7 +7,9 @@ import android.os.Bundle
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
+import android.view.View
 import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.ClassPresenterSelector
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -22,41 +24,50 @@ import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
-import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
+import com.github.damontecres.stashapp.views.models.PerformerViewModel
 
 /**
  * Main [TabbedFragment] for a performers which includes [PerformerDetailsFragment] and other tabs
  */
 class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
-    private lateinit var performer: Performer
+    private val performerViewModel: PerformerViewModel by activityViewModels<PerformerViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        performer = requireActivity().intent.getParcelable("performer", Performer::class)!!
         super.onCreate(savedInstanceState)
-        viewModel.title.value =
-            SpannableString("${performer.name} ${performer.disambiguation}").apply {
-                val start = performer.name.length + 1
-                val end = length
-                setSpan(RelativeSizeSpan(.60f), start, end, 0)
-                setSpan(ForegroundColorSpan(Color.GRAY), start, end, 0)
-            }
+        performerViewModel.update(requireActivity().intent.getStringExtra("id")!!)
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        performerViewModel.performer.observe(viewLifecycleOwner) { performer ->
+            viewModel.title.value =
+                SpannableString("${performer.name} ${performer.disambiguation}").apply {
+                    val start = performer.name.length + 1
+                    val end = length
+                    setSpan(RelativeSizeSpan(.60f), start, end, 0)
+                    setSpan(ForegroundColorSpan(Color.GRAY), start, end, 0)
+                }
+        }
     }
 
     override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
+        val performerId = requireActivity().intent.getStringExtra("id")!!
         val performers =
             Optional.present(
                 MultiCriterionInput(
-                    value = Optional.present(listOf(performer.id)),
+                    value = Optional.present(listOf(performerId)),
                     modifier = CriterionModifier.INCLUDES_ALL,
                 ),
             )
@@ -64,7 +75,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         val items =
             listOf(
                 StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
-                    PerformerDetailsFragment(performer)
+                    PerformerDetailsFragment()
                 },
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
                     StashGridFragment(
@@ -101,7 +112,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                         StashGridFragment(
                             FilterArgs(
                                 dataType = DataType.TAG,
-                                override = DataSupplierOverride.PerformerTags(performer.id),
+                                override = DataSupplierOverride.PerformerTags(performerId),
                             ),
                         )
                     fragment.presenterSelector = presenter
@@ -112,7 +123,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                         ClassPresenterSelector()
                             .addClassPresenter(
                                 PerformerData::class.java,
-                                PerformerPresenter(PerformTogetherLongClickCallback(performer)),
+                                PerformerPresenter(PerformTogetherLongClickCallback(performerId)),
                             )
                     val fragment =
                         StashGridFragment(
@@ -122,7 +133,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                     performers =
                                         Optional.present(
                                             MultiCriterionInput(
-                                                value = Optional.present(listOf(performer.id)),
+                                                value = Optional.present(listOf(performerId)),
                                                 modifier = CriterionModifier.INCLUDES_ALL,
                                             ),
                                         ),
@@ -141,7 +152,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         return StashFragmentPagerAdapter(items, fm)
     }
 
-    private class PerformTogetherLongClickCallback(val performer: Performer) :
+    private class PerformTogetherLongClickCallback(val performerId: String) :
         StashPresenter.LongClickCallBack<PerformerData> {
         override fun getPopUpItems(
             context: Context,
@@ -164,8 +175,9 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                 }
 
                 1L -> {
-                    val performerIds = listOf(performer.id, item.id)
-                    val name = "${performer.name} & ${item.name}"
+                    val performerIds = listOf(performerId, item.id)
+//                    val name = "${performer.name} & ${item.name}"
+                    val name = "TODO"
                     val intent =
                         Intent(context, FilterListActivity::class.java)
                             .putFilterArgs(

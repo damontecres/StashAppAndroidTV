@@ -73,9 +73,9 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.MovieData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
@@ -83,9 +83,10 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.ICON_ORDER
 import com.github.damontecres.stashapp.ui.enableMarquee
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.views.getRatingAsDecimalString
+import com.github.damontecres.stashapp.views.getRatingString
 import java.util.EnumMap
 
 @Suppress("ktlint:standard:function-naming")
@@ -102,7 +103,11 @@ fun ImageOverlay(
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (showRatings && rating100 != null && rating100 >= 0) {
-            val ratingText = getRatingAsDecimalString(context, rating100)
+            val ratingText =
+                getRatingString(
+                    rating100,
+                    StashServer.getCurrentStashServer(context)!!.serverPreferences.ratingsAsStars,
+                )
             val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
             val ratingColors = context.resources.obtainTypedArray(R.array.rating_colors)
             val bgColor = ratingColors.getColor(rating100 / 5, Color.WHITE)
@@ -258,7 +263,11 @@ fun RootCard(
                             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
                             layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
 
-                            val exoPlayer = StashExoPlayer.getInstance(context)
+                            val exoPlayer =
+                                StashExoPlayer.getInstance(
+                                    context,
+                                    StashServer.requireCurrentServer(),
+                                )
                             player = exoPlayer
 
                             val mediaItem =
@@ -350,7 +359,7 @@ fun StashCard(
         is ImageData -> ImageCard(item, onClick = { itemOnClick(item) })
         is GalleryData -> GalleryCard(item, onClick = { itemOnClick(item) })
         is MarkerData -> MarkerCard(item, onClick = { itemOnClick(item) })
-        is MovieData -> MovieCard(item, onClick = { itemOnClick(item) })
+        is GroupData -> MovieCard(item, onClick = { itemOnClick(item) })
         is StudioData -> StudioCard(item, onClick = { itemOnClick(item) })
         is TagData -> TagCard(item, onClick = { itemOnClick(item) })
         else -> throw UnsupportedOperationException("Item with class ${item.javaClass} not supported.")

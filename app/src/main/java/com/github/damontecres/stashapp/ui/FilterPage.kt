@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.ui
 
 import android.content.Context
-import android.os.Parcelable
 import android.util.Log
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -46,80 +45,32 @@ import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
-import com.apollographql.apollo3.api.Optional
-import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.api.fragment.SavedFilterData
-import com.github.damontecres.stashapp.api.type.FindFilterType
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
-import com.github.damontecres.stashapp.data.AppFilter
+import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashCustomFilter
-import com.github.damontecres.stashapp.data.StashDefaultFilter
-import com.github.damontecres.stashapp.data.StashFilter
-import com.github.damontecres.stashapp.data.StashSavedFilter
-import com.github.damontecres.stashapp.suppliers.GalleryDataSupplier
-import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
-import com.github.damontecres.stashapp.suppliers.MarkerDataSupplier
-import com.github.damontecres.stashapp.suppliers.MovieDataSupplier
-import com.github.damontecres.stashapp.suppliers.PerformerDataSupplier
-import com.github.damontecres.stashapp.suppliers.SceneDataSupplier
+import com.github.damontecres.stashapp.data.StashData
+import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
-import com.github.damontecres.stashapp.suppliers.StudioDataSupplier
-import com.github.damontecres.stashapp.suppliers.TagDataSupplier
+import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.theme.Material3AppTheme
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.ServerPreferences
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.parseSortDirection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.parcelize.Parcelize
 import javax.inject.Inject
 
 private const val TAG = "FilterPage"
 
-@Parcelize
-data class ResolvedFindFilter(
-    val q: String?,
-    val sort: String?,
-    val direction: SortDirectionEnum?,
-) : Parcelable {
-    val asFindFilterType: FindFilterType
-        get() =
-            FindFilterType(
-                q = Optional.presentIfNotNull(q),
-                sort = Optional.presentIfNotNull(sort),
-                direction = Optional.presentIfNotNull(direction),
-            )
-}
-
-data class ResolvedFilter(
-    val dataType: DataType,
-    val name: String? = null,
-    val findFilter: ResolvedFindFilter? = null,
-    val objectFilter: Any? = null,
-)
-
-fun SavedFilterData.resolve(dataType: DataType): ResolvedFilter =
-    ResolvedFilter(
-        dataType = DataType.fromFilterMode(mode) ?: dataType,
-        name = name,
-        // TODO need to override sort or direction?
-        findFilter =
-            ResolvedFindFilter(
-                find_filter?.q,
-                find_filter?.sort,
-                find_filter?.direction,
-            ),
-        objectFilter = object_filter,
-    )
-
 sealed class ResolvedFilterState {
     data object Loading : ResolvedFilterState()
 
-    data class Success(val filter: ResolvedFilter, val pagingSource: StashPagingSource<*, Any, *>) : ResolvedFilterState()
+    data class Success(
+        val filter: FilterArgs,
+        val pagingSource: StashPagingSource<*, StashData, Any, *>,
+    ) : ResolvedFilterState()
 
     data object Error : ResolvedFilterState()
 }
@@ -129,158 +80,34 @@ class FilterGridViewModel
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
+        stashServer: StashServer,
     ) : ViewModel() {
-        private val queryEngine = QueryEngine(context)
-        private val filterParser = FilterParser(ServerPreferences(context).serverVersion)
+        private val queryEngine = QueryEngine(stashServer)
+        private val filterParser = FilterParser(stashServer.version)
+        private val dataSupplierFactory = DataSupplierFactory(stashServer.version)
 
         private val _resolvedFilterState = MutableLiveData<ResolvedFilterState>()
         val resolvedFilterState: LiveData<ResolvedFilterState> get() = _resolvedFilterState
 
-        private val _savedFilters = mutableStateListOf<ResolvedFilter>()
-        val savedFilters: SnapshotStateList<ResolvedFilter> get() = _savedFilters
+        private val _savedFilters = mutableStateListOf<FilterArgs>()
+        val savedFilters: SnapshotStateList<FilterArgs> get() = _savedFilters
 
         suspend fun fetchSavedFilters(dataType: DataType) {
-            val filters = queryEngine.getSavedFilters(dataType).map { it.resolve(dataType) }
+            val filters =
+                queryEngine.getSavedFilters(dataType).map { it.toFilterArgs(filterParser) }
             _savedFilters.addAll(filters)
         }
 
-        suspend fun updateFilter(filter: StashFilter) {
+        fun updateFilter(filter: FilterArgs) {
             _resolvedFilterState.value = ResolvedFilterState.Loading
-            val resolvedFilter =
-                when (filter) {
-                    is AppFilter -> {
-                        TODO()
-                    }
 
-                    is StashDefaultFilter -> {
-                        val savedFilter = queryEngine.getDefaultFilter(filter.dataType)
-                        if (savedFilter != null) {
-                            savedFilter.resolve(filter.dataType)
-                        } else {
-                            Log.v(TAG, "No default filter for ${filter.dataType}")
-                            val sortAndDirection = filter.dataType.defaultSort
-                            ResolvedFilter(
-                                dataType = filter.dataType,
-                                name = context.getString(filter.dataType.pluralStringId),
-                                findFilter =
-                                    ResolvedFindFilter(
-                                        null,
-                                        sortAndDirection.sort,
-                                        sortAndDirection.direction,
-                                    ),
-                                objectFilter = null,
-                            )
-                        }
-                    }
-
-                    is StashCustomFilter -> {
-                        ResolvedFilter(
-                            dataType = filter.dataType,
-                            name = filter.description,
-                            findFilter = ResolvedFindFilter(filter.query, filter.sortBy, parseSortDirection(filter.direction)),
-                            objectFilter = null,
-                        )
-                    }
-                    is StashSavedFilter -> {
-                        val savedFilter =
-                            queryEngine.getSavedFilter(filter.savedFilterId)
-                        if (savedFilter != null) {
-                            savedFilter.resolve(filter.dataType)
-                        } else {
-                            Log.v(TAG, "No saved filter for id=${filter.savedFilterId}")
-                            _resolvedFilterState.value = ResolvedFilterState.Error
-                            null
-                        }
-                    }
-                    else -> throw IllegalStateException("Unsupported StashFilter type: $filter")
-                }
-
-            if (resolvedFilter != null) {
-                updateFilter(resolvedFilter)
-            }
-        }
-
-        fun updateFilter(resolvedFilter: ResolvedFilter) {
-            _resolvedFilterState.value = ResolvedFilterState.Loading
-            val dataSupplier =
-                when (resolvedFilter.dataType) {
-                    DataType.SCENE -> {
-                        val objectFilter =
-                            filterParser.convertSceneObjectFilter(resolvedFilter.objectFilter)
-                        SceneDataSupplier(
-                            resolvedFilter.findFilter?.asFindFilterType,
-                            objectFilter,
-                        )
-                    }
-                    DataType.TAG -> {
-                        val objectFilter =
-                            filterParser.convertTagObjectFilter(resolvedFilter.objectFilter)
-                        TagDataSupplier(
-                            resolvedFilter.findFilter?.asFindFilterType,
-                            objectFilter,
-                        )
-                    }
-
-                    DataType.STUDIO -> {
-                        val objectFilter =
-                            filterParser.convertStudioObjectFilter(resolvedFilter.objectFilter)
-                        StudioDataSupplier(
-                            resolvedFilter.findFilter?.asFindFilterType,
-                            objectFilter,
-                        )
-                    }
-
-                    DataType.PERFORMER -> {
-                        val objectFilter =
-                            filterParser.convertPerformerObjectFilter(resolvedFilter.objectFilter)
-                        PerformerDataSupplier(
-                            resolvedFilter.findFilter?.asFindFilterType,
-                            objectFilter,
-                        )
-                    }
-
-                    DataType.IMAGE -> {
-                        val objectFilter =
-                            filterParser.convertImageObjectFilter(resolvedFilter.objectFilter)
-                        ImageDataSupplier(
-                            resolvedFilter.findFilter?.asFindFilterType,
-                            objectFilter,
-                        )
-                    }
-
-                    DataType.MARKER -> {
-                        val objectFilter =
-                            filterParser.convertMarkerObjectFilter(resolvedFilter.objectFilter)
-                        MarkerDataSupplier(
-                            resolvedFilter.findFilter?.asFindFilterType,
-                            objectFilter,
-                        )
-                    }
-
-                    DataType.MOVIE -> {
-                        val objectFilter =
-                            filterParser.convertMovieObjectFilter(resolvedFilter.objectFilter)
-                        MovieDataSupplier(
-                            resolvedFilter.findFilter?.asFindFilterType,
-                            objectFilter,
-                        )
-                    }
-
-                    DataType.GALLERY -> {
-                        val objectFilter =
-                            filterParser.convertGalleryObjectFilter(resolvedFilter.objectFilter)
-                        GalleryDataSupplier(
-                            resolvedFilter.findFilter?.asFindFilterType,
-                            objectFilter,
-                        )
-                    }
-                } as StashPagingSource.DataSupplier<*, Any, *>
+            val dataSupplier = dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filter)
 
             _resolvedFilterState.value =
                 ResolvedFilterState.Success(
-                    resolvedFilter,
+                    filter,
                     StashPagingSource(
-                        StashApplication.getApplication(),
+                        queryEngine,
                         25, // TODO
                         dataSupplier = dataSupplier,
                         useRandom = false,
@@ -292,7 +119,7 @@ class FilterGridViewModel
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun FilterGrid(
-    startingFilter: StashFilter,
+    startingFilter: FilterArgs,
     itemOnClick: (item: Any) -> Unit,
 ) {
     Log.v(TAG, "startingFilter=$startingFilter")

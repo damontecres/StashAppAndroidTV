@@ -24,8 +24,8 @@ fun GalleryCard(
     dataTypeMap[DataType.SCENE] = item.scenes.size
     dataTypeMap[DataType.IMAGE] = item.image_count
 
-    val imageUrl = item.cover?.paths?.thumbnail
-    val videoUrl = item.cover?.paths?.preview
+    val imageUrl = item.paths.cover
+    val videoUrl = item.paths.preview
 
     val details = mutableListOf<String?>()
     details.add(item.studio?.name)
