@@ -81,6 +81,9 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     private val animateTime = resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
 
     var videoUrl: String? = null
+        set(value) {
+            field = if (value.isNotNullOrBlank()) value else null
+        }
     var videoPosition = -1L
 
     private var videoView: PlayerView? = null
@@ -165,13 +168,19 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         }
         if (selected) {
             if (videoDelay > 0) {
-                delayJob =
-                    findViewTreeLifecycleOwner()!!.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                        delay(videoDelay)
-                        withContext(Dispatchers.Main) {
-                            hideOverlayAndPlayVideo()
+                val scope = findViewTreeLifecycleOwner()?.lifecycleScope
+                if (scope != null) {
+                    delayJob =
+                        scope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                            delay(videoDelay)
+                            withContext(Dispatchers.Main) {
+                                hideOverlayAndPlayVideo()
+                            }
                         }
-                    }
+                } else {
+                    // No lifecycle scope
+                    hideOverlayAndPlayVideo()
+                }
             } else {
                 // No delay, so do it immediately
                 hideOverlayAndPlayVideo()
@@ -309,7 +318,9 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     }
 
     private fun hideOverlayAndPlayVideo() {
-        videoView?.player?.play()
+        if (videoUrl != null) {
+            videoView?.player?.play()
+        }
         cardOverlay.clearAnimation()
         cardOverlay.animateToInvisible(durationMs = animateTime)
     }
