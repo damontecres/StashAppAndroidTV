@@ -17,7 +17,7 @@ import com.github.damontecres.stashapp.views.parseTimeToString
 /**
  * [AbstractDetailsDescriptionPresenter] for [com.github.damontecres.stashapp.SceneDetailsFragment]
  */
-class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallback) :
+class SceneDetailsPresenter(val ratingCallback: StashRatingBar.RatingCallback) :
     AbstractDetailsDescriptionPresenter() {
     override fun onBindDescription(
         viewHolder: ViewHolder,
@@ -57,7 +57,6 @@ class DetailsDescriptionPresenter(val ratingCallback: StashRatingBar.RatingCallb
             viewHolder.subtitle.text =
                 concatIfNotBlank(
                     " - ",
-                    scene.studio?.studioData?.name,
                     scene.date,
                     duration,
                     resolution,

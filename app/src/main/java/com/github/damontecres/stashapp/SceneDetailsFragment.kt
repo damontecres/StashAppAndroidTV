@@ -48,12 +48,12 @@ import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
-import com.github.damontecres.stashapp.presenters.DetailsDescriptionPresenter
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
 import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
+import com.github.damontecres.stashapp.presenters.SceneDetailsPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
@@ -100,6 +100,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             DataType.STUDIO,
             ListRowManager.SparseArrayRowModifier(mAdapter, STUDIO_POS),
             mStudioAdapter,
+            StashApplication.getApplication().getString(DataType.STUDIO.stringId),
         ) { studioIds ->
             val newStudioId =
                 if (studioIds.isEmpty()) {
@@ -176,7 +177,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private var position = -1L // The position in the video
     private val detailsPresenter =
         FullWidthDetailsOverviewRowPresenter(
-            DetailsDescriptionPresenter { rating100: Int ->
+            SceneDetailsPresenter { rating100: Int ->
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(
                         Toast.makeText(
