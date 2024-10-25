@@ -6,12 +6,12 @@ val isCI = if (System.getenv("CI") != null) System.getenv("CI").toBoolean() else
 val shouldSign = isCI && System.getenv("KEY_ALIAS") != null
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
     id("kotlin-parcelize")
-    id("com.apollographql.apollo") version "4.0.0"
-    kotlin("plugin.serialization") version "2.0.0"
+    alias(libs.plugins.apollo)
+    alias(libs.plugins.kotlin.plugin.serialization)
 }
 
 fun getVersionCode(): Int {
@@ -135,68 +135,66 @@ tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrin
 // tasks.preBuild.dependsOn("generateStrings")
 tasks.preBuild.dependsOn("generateStrings")
 
-val mediaVersion = "1.4.1"
-val glideVersion = "4.16.0"
-val acraVersion = "5.11.3"
-val roomVersion = "2.6.1"
-
 dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.leanback:leanback:1.1.0-rc02")
-    implementation("androidx.leanback:leanback-preference:1.1.0-rc01")
-    implementation("androidx.leanback:leanback-paging:1.1.0-alpha11")
-    implementation("com.github.bumptech.glide:glide:$glideVersion")
-    implementation("com.github.bumptech.glide:okhttp3-integration:$glideVersion")
-    implementation("androidx.leanback:leanback-tab:1.1.0-beta01")
-    implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.test.ext:junit-ktx:1.2.1")
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
-    ksp("com.github.bumptech.glide:ksp:$glideVersion")
-    implementation("com.caverock:androidsvg-aar:1.4")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.leanback)
+    implementation(libs.androidx.leanback.preference)
+    implementation(libs.androidx.leanback.paging)
+    implementation(libs.androidx.leanback.tab)
+
+    implementation(libs.glide)
+    implementation(libs.glide.okhttp3.integration)
+    ksp(libs.glide.ksp)
+
+    implementation(libs.android.material)
+
+    implementation(libs.androidx.swiperefreshlayout)
+
+    implementation(libs.androidsvg.aar)
     implementation(kotlin("reflect"))
 
-    implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.5")
-    implementation("androidx.lifecycle:lifecycle-process:2.8.5")
+    implementation(libs.androidx.preference.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.process)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation(libs.kotlinx.coroutines.android)
 
-    implementation("com.apollographql.apollo:apollo-runtime:4.0.0")
-    implementation("androidx.preference:preference-ktx:1.2.1")
-    implementation("androidx.media3:media3-exoplayer:$mediaVersion")
-    implementation("androidx.media3:media3-ui:$mediaVersion")
-    implementation("androidx.media3:media3-exoplayer-dash:$mediaVersion")
-    implementation("androidx.media3:media3-exoplayer-hls:$mediaVersion")
-    implementation("androidx.media3:media3-datasource-okhttp:$mediaVersion")
-    implementation("androidx.media3:media3-effect:$mediaVersion")
-    implementation("androidx.media3:media3-transformer:$mediaVersion")
-    implementation("com.github.rubensousa:previewseekbar:3.1.1")
-    implementation("com.github.rubensousa:previewseekbar-media3:1.1.1.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation(libs.apollo.runtime)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media3.exoplayer.dash)
+    implementation(libs.androidx.media3.exoplayer.hls)
+    implementation(libs.androidx.media3.datasource.okhttp)
+    implementation(libs.androidx.media3.effect)
+    implementation(libs.androidx.media3.transformer)
+    implementation(libs.previewseekbar)
+    implementation(libs.previewseekbar.media3)
+    implementation(libs.androidx.constraintlayout)
 
-    implementation("com.otaliastudios:zoomlayout:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
-    implementation("io.noties.markwon:core:4.6.2")
-    implementation("com.chrynan.parcelable:parcelable-core:0.9.0")
+    implementation(libs.zoomlayout)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.core)
+    implementation(libs.parcelable.core)
 
-    implementation("ch.acra:acra-http:$acraVersion")
-    implementation("ch.acra:acra-dialog:$acraVersion")
-    implementation("ch.acra:acra-limiter:$acraVersion")
-    compileOnly("com.google.auto.service:auto-service-annotations:1.1.1")
-    ksp("com.google.auto.service:auto-service:1.1.1")
+    implementation(libs.acra.http)
+    implementation(libs.acra.dialog)
+    implementation(libs.acra.limiter)
+    compileOnly(libs.auto.service.annotations)
+    ksp(libs.auto.service)
 
-    implementation("androidx.room:room-runtime:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
-    testImplementation("androidx.test:core-ktx:1.6.1")
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.mockito:mockito-core:5.9.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation(libs.androidx.test.core.ktx)
+    testImplementation(libs.junit)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
 
-    androidTestImplementation("androidx.test:core:1.6.1")
-    androidTestImplementation("androidx.test:runner:1.6.2")
-    androidTestImplementation("androidx.test:rules:1.6.1")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.ext:truth:1.6.0")
+    androidTestImplementation(libs.androidx.test.ext.junit.ktx)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.ext.truth)
 }

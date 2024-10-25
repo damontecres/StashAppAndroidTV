@@ -1,6 +1,6 @@
 plugins {
     id("java-library")
-    id("org.jetbrains.kotlin.jvm")
+    alias(libs.plugins.kotlin.jvm)
 }
 
 java {
@@ -9,6 +9,6 @@ java {
 }
 
 dependencies {
-    implementation("com.apollographql.apollo:apollo-compiler:4.0.0")
-    api("org.jetbrains.kotlinx:kotlinx-serialization-core:1.7.2")
+    implementation(libs.apollo.compiler)
+    api(libs.kotlinx.serialization.core)
 }
