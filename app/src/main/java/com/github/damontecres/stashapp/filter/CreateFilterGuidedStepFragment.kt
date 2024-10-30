@@ -88,6 +88,8 @@ open class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
         )
     }
 
+    fun CriterionModifier.hasTwoValues(): Boolean = this == CriterionModifier.BETWEEN || this == CriterionModifier.NOT_BETWEEN
+
     companion object {
         const val MODIFIER_OFFSET = 3_000_000L
         const val ACTION_ID_REMOVE = -234L
