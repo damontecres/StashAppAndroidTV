@@ -20,6 +20,9 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
     protected var value2: T? = null
     protected var modifier: CriterionModifier = CriterionModifier.EQUALS
 
+    /**
+     * The available [CriterionModifier] options
+     */
     protected open val modifierOptions: List<CriterionModifier>
         get() =
             listOf(
@@ -30,8 +33,6 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
                 CriterionModifier.BETWEEN,
                 CriterionModifier.NOT_BETWEEN,
             )
-
-    abstract val valueInputType: Int
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
@@ -67,7 +68,7 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
                 .title(valueText)
                 .descriptionEditable(true)
                 .descriptionEditInputType(valueInputType)
-                .description(value1?.toString())
+                .description(formatDescription(value1))
                 .build(),
         )
 
@@ -79,7 +80,7 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
                     .title(getString(R.string.stashapp_criterion_less_than))
                     .descriptionEditable(true)
                     .descriptionEditInputType(valueInputType)
-                    .description(value2?.toString())
+                    .description(formatDescription(value2))
                     .build(),
             )
         }
@@ -143,13 +144,31 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
         }
     }
 
+    /**
+     * The input type to use for values
+     */
+    protected abstract val valueInputType: Int
+
+    /**
+     * Parse a string into a value
+     */
     protected abstract fun parseValue(v: String?): T?
 
+    /**
+     * Create the filter from the given values
+     */
     protected abstract fun createCriterionInput(
         value1: T?,
         value2: T?,
         modifier: CriterionModifier,
     ): CriterionInput?
+
+    /**
+     * Format the description of a value. Defaults to using toString()
+     */
+    protected open fun formatDescription(v: T?): String? {
+        return v?.toString()
+    }
 
     companion object {
         const val VALUE_1 = 1L
