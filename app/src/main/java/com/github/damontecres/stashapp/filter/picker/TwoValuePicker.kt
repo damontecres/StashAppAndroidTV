@@ -43,7 +43,7 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
         )
     }
 
-    protected fun createActionList(actions: MutableList<GuidedAction>) {
+    protected open fun createActionList(actions: MutableList<GuidedAction>) {
         val modifierOptions = this.modifierOptions.map(::modifierAction)
         actions.add(
             GuidedAction.Builder(requireContext())
@@ -90,10 +90,8 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
         if (action.id == VALUE_1 || action.id == VALUE_2) {
-            val desc1 = findActionById(VALUE_1)?.description?.toString()?.ifBlank { null }
-            value1 = parseValue(desc1)
-            val desc2 = findActionById(VALUE_2)?.description?.toString()?.ifBlank { null }
-            value2 = parseValue(desc2)
+            value1 = parseAction(if (action.id == VALUE_1) action else findActionById(VALUE_1))
+            value2 = parseAction(if (action.id == VALUE_2) action else findActionById(VALUE_2))
 
             if (modifier.hasTwoValues()) {
                 if (value1 != null && value2 != null) {
@@ -105,10 +103,10 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
                 return GuidedAction.ACTION_ID_CURRENT
             } else {
                 if (action.id == VALUE_1) {
-                    Toast.makeText(requireContext(), "Invalid value: $desc1", Toast.LENGTH_SHORT)
+                    Toast.makeText(requireContext(), "Invalid value", Toast.LENGTH_SHORT)
                         .show()
                 } else {
-                    Toast.makeText(requireContext(), "Invalid value2: $desc2", Toast.LENGTH_SHORT)
+                    Toast.makeText(requireContext(), "Invalid value2", Toast.LENGTH_SHORT)
                         .show()
                 }
             }
@@ -116,6 +114,10 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
             return GuidedAction.ACTION_ID_CURRENT
         }
         return GuidedAction.ACTION_ID_CURRENT
+    }
+
+    protected open fun parseAction(action: GuidedAction?): T? {
+        return parseValue(action?.description?.toString()?.ifBlank { null })
     }
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
@@ -131,10 +133,8 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val value1 =
-                parseValue(findActionById(VALUE_1)?.description.toString().ifBlank { null })
-            val value2 =
-                parseValue(findActionById(VALUE_2)?.description?.toString()?.ifBlank { null })
+            val value1 = parseAction(findActionById(VALUE_1))
+            val value2 = parseAction(findActionById(VALUE_2))
             val newValue = createCriterionInput(value1, value2, modifier)
 
             viewModel.updateFilter(filterOption, newValue)
