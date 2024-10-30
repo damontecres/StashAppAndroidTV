@@ -57,22 +57,22 @@ class OrientationPickerFragment(val filterOption: FilterOption<StashDataFilter, 
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
+        val values =
+            actions.filter { it.id >= ORIENTATION_OFFSET && it.isChecked }
+                .map { OrientationEnum.entries[(it.id - ORIENTATION_OFFSET).toInt()] }
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val values =
-                actions.filter { it.id >= ORIENTATION_OFFSET && it.isChecked }
-                    .map { OrientationEnum.entries[(it.id - ORIENTATION_OFFSET).toInt()] }
             val newFilter = OrientationCriterionInput(value = values)
             viewModel.updateFilter(filterOption, newFilter)
             parentFragmentManager.popBackStack()
+        } else if (action.id >= ORIENTATION_OFFSET) {
+            enableFinish(values.isNotEmpty())
         } else {
             onStandardActionClicked(action, filterOption)
         }
     }
 
     companion object {
-        private const val TAG = "HierarchicalMultiCriterionFragment"
-
-        private const val MODIFIER = 1L
+        private const val TAG = "OrientationPickerFragment"
 
         private const val ORIENTATION_OFFSET = 1_000_000L
     }

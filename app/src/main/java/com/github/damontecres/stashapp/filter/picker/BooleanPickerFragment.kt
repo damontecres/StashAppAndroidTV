@@ -42,13 +42,15 @@ class BooleanPickerFragment(
                 .title(getString(R.string.stashapp_false))
                 .build(),
         )
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(2L)
-                .hasNext(true)
-                .title(getString(R.string.stashapp_actions_remove))
-                .build(),
-        )
+        if (viewModel.getValue(filterOption) != null) {
+            actions.add(
+                GuidedAction.Builder(requireContext())
+                    .id(2L)
+                    .hasNext(true)
+                    .title(getString(R.string.stashapp_actions_remove))
+                    .build(),
+            )
+        }
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_CANCEL)

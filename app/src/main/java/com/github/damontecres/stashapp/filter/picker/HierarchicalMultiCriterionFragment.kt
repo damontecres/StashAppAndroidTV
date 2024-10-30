@@ -176,7 +176,6 @@ class HierarchicalMultiCriterionFragment(
             curVal = curVal.copy(modifier = newModifier)
             findActionById(MODIFIER).description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
-            return true
         } else if (action.id >= EXCLUDE_OFFSET) {
             // Item was clicked, so remove it
             val index = action.id - EXCLUDE_OFFSET
@@ -184,7 +183,6 @@ class HierarchicalMultiCriterionFragment(
             list.removeAt(index.toInt())
             curVal = curVal.copy(excludes = Optional.present(list))
             refreshItemList(list, false)
-            return true
         } else if (action.id >= INCLUDE_OFFSET) {
             // Item was clicked, so remove it
             val index = action.id - INCLUDE_OFFSET
@@ -192,7 +190,6 @@ class HierarchicalMultiCriterionFragment(
             list.removeAt(index.toInt())
             curVal = curVal.copy(value = Optional.present(list))
             refreshItemList(list, true)
-            return true
         } else if (action.id == ADD_INCLUDE_ITEM) {
             // Add a new item
             requireActivity().supportFragmentManager.commit {
@@ -208,6 +205,7 @@ class HierarchicalMultiCriterionFragment(
                             curVal = curVal.copy(value = Optional.present(list))
                             refreshItemList(list, true)
                         }
+                        checkFinish()
                     },
                 )
             }
@@ -226,11 +224,23 @@ class HierarchicalMultiCriterionFragment(
                             curVal = curVal.copy(excludes = Optional.present(list))
                             refreshItemList(list, false)
                         }
+                        checkFinish()
                     },
                 )
             }
         }
-        return false
+        checkFinish()
+        return true
+    }
+
+    private fun checkFinish() {
+        if (curVal.value.getOrNull()?.isNotEmpty() == true ||
+            curVal.excludes.getOrNull()?.isNotEmpty() == true
+        ) {
+            enableFinish(true)
+        } else {
+            enableFinish(false)
+        }
     }
 
     companion object {

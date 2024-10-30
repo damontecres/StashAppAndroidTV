@@ -25,6 +25,7 @@ import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -119,14 +120,14 @@ class SearchPickerFragment(
                 val resultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
                 val sortBy =
                     when (dataType) {
-                        DataType.GALLERY -> "images_count"
-                        else -> "scenes_count"
+                        DataType.GALLERY -> SortOption.IMAGES_COUNT
+                        else -> SortOption.SCENES_COUNT
                     }
                 val filter =
                     FindFilterType(
                         direction = Optional.present(SortDirectionEnum.DESC),
                         per_page = Optional.present(perPage),
-                        sort = Optional.present(sortBy),
+                        sort = Optional.present(sortBy.key),
                     )
                 val results =
                     when (dataType) {
