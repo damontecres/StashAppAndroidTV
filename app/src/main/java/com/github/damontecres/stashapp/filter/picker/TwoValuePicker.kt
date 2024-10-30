@@ -80,10 +80,10 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
         if (action.id == VALUE_1 || action.id == VALUE_2) {
-            val desc1 = findActionById(VALUE_1)?.description
-            value1 = parseValue(desc1?.toString()?.ifBlank { null })
-            val desc2 = findActionById(VALUE_2)?.description
-            value2 = parseValue(desc2?.toString()?.ifBlank { null })
+            val desc1 = findActionById(VALUE_1)?.description?.toString()?.ifBlank { null }
+            value1 = parseValue(desc1)
+            val desc2 = findActionById(VALUE_2)?.description?.toString()?.ifBlank { null }
+            value2 = parseValue(desc2)
 
             if (modifier.hasTwoValues()) {
                 if (value1 != null && value2 != null) {
@@ -98,7 +98,7 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
                     Toast.makeText(requireContext(), "Invalid value: $desc1", Toast.LENGTH_SHORT)
                         .show()
                 } else {
-                    Toast.makeText(requireContext(), "Invalid value: $desc2", Toast.LENGTH_SHORT)
+                    Toast.makeText(requireContext(), "Invalid value2: $desc2", Toast.LENGTH_SHORT)
                         .show()
                 }
             }
@@ -111,16 +111,7 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
         if (action.id >= MODIFIER_OFFSET) {
             modifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
-            findActionById(MODIFIER).description = modifier.getString(requireContext())
-            notifyActionChanged(findActionPositionById(MODIFIER))
-
-//            val value2Action = findActionById(VALUE_2)
-//            if (newModifier.hasTwoValues()) {
-//                value2Action.isEnabled = true
-//            } else {
-//                value2Action.isEnabled = false
-//            }
-//            notifyActionChanged(findActionPositionById(VALUE_2))
+            collapseSubActions()
             val actions = mutableListOf<GuidedAction>()
             createActionList(actions)
             this.actions = actions
@@ -130,8 +121,10 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val value1 = parseValue(findActionById(VALUE_1).description.toString().ifBlank { null })
-            val value2 = parseValue(findActionById(VALUE_2)?.description?.toString()?.ifBlank { null })
+            val value1 =
+                parseValue(findActionById(VALUE_1)?.description.toString().ifBlank { null })
+            val value2 =
+                parseValue(findActionById(VALUE_2)?.description?.toString()?.ifBlank { null })
             val newValue = createCriterionInput(value1, value2, modifier)
 
             viewModel.updateFilter(filterOption, newValue)
