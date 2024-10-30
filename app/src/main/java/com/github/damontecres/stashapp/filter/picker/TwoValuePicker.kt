@@ -20,7 +20,16 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
     protected var value2: T? = null
     protected var modifier: CriterionModifier = CriterionModifier.EQUALS
 
-    abstract val modifierOptions: List<CriterionModifier>
+    protected open val modifierOptions: List<CriterionModifier>
+        get() =
+            listOf(
+                CriterionModifier.EQUALS,
+                CriterionModifier.NOT_EQUALS,
+                CriterionModifier.GREATER_THAN,
+                CriterionModifier.LESS_THAN,
+                CriterionModifier.BETWEEN,
+                CriterionModifier.NOT_BETWEEN,
+            )
 
     abstract val valueInputType: Int
 
