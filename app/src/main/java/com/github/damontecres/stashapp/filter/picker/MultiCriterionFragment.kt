@@ -142,21 +142,18 @@ class MultiCriterionFragment(
             curVal = curVal.copy(modifier = newModifier)
             findActionById(MODIFIER).description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
-            return true
         } else if (action.id >= EXCLUDE_OFFSET) {
             val index = action.id - EXCLUDE_OFFSET
             val list = curVal.excludes.getOrThrow()!!.toMutableList()
             list.removeAt(index.toInt())
             curVal = curVal.copy(excludes = Optional.present(list))
             refreshItemList(list, false)
-            return true
         } else if (action.id >= INCLUDE_OFFSET) {
             val index = action.id - INCLUDE_OFFSET
             val list = curVal.value.getOrThrow()!!.toMutableList()
             list.removeAt(index.toInt())
             curVal = curVal.copy(value = Optional.present(list))
             refreshItemList(list, true)
-            return true
         } else if (action.id == ADD_INCLUDE_ITEM) {
             requireActivity().supportFragmentManager.commit {
                 addToBackStack("picker")
@@ -171,6 +168,7 @@ class MultiCriterionFragment(
                             curVal = curVal.copy(value = Optional.present(list))
                             refreshItemList(list, true)
                         }
+                        checkFinish()
                     },
                 )
             }
@@ -188,11 +186,23 @@ class MultiCriterionFragment(
                             curVal = curVal.copy(excludes = Optional.present(list))
                             refreshItemList(list, false)
                         }
+                        checkFinish()
                     },
                 )
             }
         }
-        return false
+        checkFinish()
+        return true
+    }
+
+    private fun checkFinish() {
+        if (curVal.value.getOrNull()?.isNotEmpty() == true ||
+            curVal.excludes.getOrNull()?.isNotEmpty() == true
+        ) {
+            enableFinish(true)
+        } else {
+            enableFinish(false)
+        }
     }
 
     companion object {

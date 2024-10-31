@@ -16,7 +16,7 @@ import com.github.damontecres.stashapp.filter.displayName
 import com.github.damontecres.stashapp.views.getString
 
 class GenderPickerFragment(val filterOption: FilterOption<StashDataFilter, GenderCriterionInput>) : CreateFilterGuidedStepFragment() {
-    private var curVal = GenderCriterionInput(modifier = CriterionModifier.INCLUDES)
+    private var currentModifier = CriterionModifier.INCLUDES
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
@@ -31,10 +31,19 @@ class GenderPickerFragment(val filterOption: FilterOption<StashDataFilter, Gende
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        curVal =
-            filterOption.getter.invoke(
-                viewModel.objectFilter.value!!,
-            ).getOrNull() ?: GenderCriterionInput(modifier = CriterionModifier.INCLUDES)
+        val curVal = viewModel.getValue(filterOption)
+        val values =
+            if (curVal?.value_list?.getOrNull() != null) {
+                curVal.value_list.getOrNull()!!
+            } else if (curVal?.value?.getOrNull() != null) {
+                listOf(curVal.value.getOrNull()!!)
+            } else {
+                emptyList()
+            }
+
+        if (curVal?.modifier != null) {
+            currentModifier = curVal.modifier
+        }
 
         val modifierOptions =
             buildList {
@@ -48,7 +57,7 @@ class GenderPickerFragment(val filterOption: FilterOption<StashDataFilter, Gende
                 .id(MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
-                .description(curVal.modifier.getString(requireContext()))
+                .description(currentModifier.getString(requireContext()))
                 .subActions(modifierOptions)
                 .build(),
         )
@@ -62,7 +71,7 @@ class GenderPickerFragment(val filterOption: FilterOption<StashDataFilter, Gende
                             .id(GENDER_OFFSET + index)
                             .hasNext(false)
                             .title(name)
-                            .checked(curVal.value_list.getOrNull()?.contains(gender) ?: false)
+                            .checked(values.contains(gender))
                             .checkSetId(GuidedAction.CHECKBOX_CHECK_SET_ID)
                             .build()
                     Pair(name, action)
@@ -78,29 +87,47 @@ class GenderPickerFragment(val filterOption: FilterOption<StashDataFilter, Gende
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
         if (action.id >= MODIFIER_OFFSET) {
-            val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
-            curVal = curVal.copy(modifier = newModifier)
-            findActionById(MODIFIER).description = newModifier.getString(requireContext())
+            currentModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
+            findActionById(MODIFIER).description = currentModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
+            setFinish()
         }
         return true
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val values =
-                actions.filter { it.id >= GENDER_OFFSET && it.isChecked }
-                    .map { GenderEnum.entries[(it.id - GENDER_OFFSET).toInt()] }
-            curVal = curVal.copy(value_list = Optional.present(values))
+            val values = getValues()
+            val curVal =
+                GenderCriterionInput(
+                    value_list = Optional.present(values),
+                    modifier = currentModifier,
+                )
             viewModel.updateFilter(filterOption, curVal)
             parentFragmentManager.popBackStack()
+        } else if (action.id in GENDER_OFFSET..<MODIFIER_OFFSET) {
+            setFinish()
         } else {
             onStandardActionClicked(action, filterOption)
         }
     }
 
+    private fun getValues(): List<GenderEnum>? {
+        return actions.filter { it.id >= GENDER_OFFSET && it.isChecked }
+            .map { GenderEnum.entries[(it.id - GENDER_OFFSET).toInt()] }
+            .ifEmpty { null }
+    }
+
+    private fun setFinish() {
+        if (currentModifier.isNullModifier() || getValues() != null) {
+            enableFinish(true)
+        } else {
+            enableFinish(false)
+        }
+    }
+
     companion object {
-        private const val TAG = "HierarchicalMultiCriterionFragment"
+        private const val TAG = "GenderPickerFragment"
 
         private const val MODIFIER = 1L
 

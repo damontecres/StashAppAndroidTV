@@ -127,6 +127,11 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
             val actions = mutableListOf<GuidedAction>()
             createActionList(actions)
             this.actions = actions
+            if (modifier.hasTwoValues() && (value1 == null || value2 == null)) {
+                enableFinish(false)
+            } else {
+                enableFinish(true)
+            }
         }
         return true
     }
