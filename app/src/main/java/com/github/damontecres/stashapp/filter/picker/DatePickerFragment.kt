@@ -54,11 +54,12 @@ class DatePickerFragment(
         createActionList(actions)
     }
 
-    override fun createActionList(actions: MutableList<GuidedAction>) {
+    override fun createActionList(actions: MutableList<GuidedAction>): List<GuidedAction> {
+        Log.v(TAG, "createActionList: actions.size=${actions.size}")
         val dateLong =
             if (value1 != null) {
                 try {
-                    format.parse(value1)?.time ?: Date().time
+                    format.parse(value1!!)?.time ?: Date().time
                 } catch (ex: ParseException) {
                     Log.w(TAG, "Parse error ($value1)", ex)
                     Date().time
@@ -117,6 +118,8 @@ class DatePickerFragment(
         }
 
         addStandardActions(actions, filterOption)
+
+        return actions
     }
 
     override fun parseAction(action: GuidedAction?): String? {
@@ -137,7 +140,7 @@ class DatePickerFragment(
                 value2 = Optional.presentIfNotNull(value2),
                 modifier = modifier,
             )
-        } else if (modifier == CriterionModifier.IS_NULL || modifier == CriterionModifier.NOT_NULL) {
+        } else if (modifier.isNullModifier()) {
             DateCriterionInput(value = "", modifier = modifier)
         } else {
             null
