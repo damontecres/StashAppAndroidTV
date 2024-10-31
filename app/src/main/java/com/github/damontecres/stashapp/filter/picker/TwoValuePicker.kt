@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.filter.picker
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
@@ -43,7 +44,8 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
         )
     }
 
-    protected open fun createActionList(actions: MutableList<GuidedAction>) {
+    protected open fun createActionList(actions: MutableList<GuidedAction> = mutableListOf()): List<GuidedAction> {
+        Log.v(TAG, "createActionList: actions.size=${actions.size}")
         val modifierOptions = this.modifierOptions.map(::modifierAction)
         actions.add(
             GuidedAction.Builder(requireContext())
@@ -86,9 +88,12 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
         }
 
         addStandardActions(actions, filterOption)
+
+        return actions
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
+        Log.v(TAG, "onGuidedActionEditedAndProceed: ${action.id}")
         if (action.id == VALUE_1 || action.id == VALUE_2) {
             value1 = parseAction(if (action.id == VALUE_1) action else findActionById(VALUE_1))
             value2 = parseAction(if (action.id == VALUE_2) action else findActionById(VALUE_2))
@@ -121,27 +126,30 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
     }
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
+        Log.v(TAG, "onSubGuidedActionClicked: ${action.id}")
         if (action.id >= MODIFIER_OFFSET) {
-            modifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
-            collapseSubActions()
-            val actions = mutableListOf<GuidedAction>()
-            createActionList(actions)
-            this.actions = actions
-            if (modifier.hasTwoValues() && (value1 == null || value2 == null)) {
-                enableFinish(false)
-            } else {
-                enableFinish(true)
+            val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
+            if (modifier != newModifier) {
+                modifier = newModifier
+                // Since the actions are going to be modified before this function returns to collapse the sub actions,
+                // Manually collapse the sub actions, not doing this results in a weird UI reset
+                collapseSubActions()
+                setActionsDiffCallback(null)
+                this.actions = createActionList()
+                if (value1 == null || modifier.hasTwoValues() && value2 == null) {
+                    enableFinish(false)
+                } else {
+                    enableFinish(true)
+                }
             }
         }
         return true
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
+        Log.v(TAG, "onGuidedActionClicked: ${action.id}")
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val value1 = parseAction(findActionById(VALUE_1))
-            val value2 = parseAction(findActionById(VALUE_2))
             val newValue = createCriterionInput(value1, value2, modifier)
-
             viewModel.updateFilter(filterOption, newValue)
             parentFragmentManager.popBackStack()
         } else {
@@ -176,6 +184,8 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
     }
 
     companion object {
+        private const val TAG = "TwoValuePicker"
+
         const val VALUE_1 = 1L
         const val VALUE_2 = 2L
         const val MODIFIER = 3L
