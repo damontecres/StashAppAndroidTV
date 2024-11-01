@@ -7,7 +7,7 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.views.getString
 
-open class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
+abstract class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
     protected val viewModel by activityViewModels<CreateFilterViewModel>()
 
     fun nextStep(step: GuidedStepSupportFragment) {
@@ -60,16 +60,20 @@ open class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
     protected fun <T : Any> addStandardActions(
         actions: MutableList<GuidedAction>,
         filterOption: FilterOption<StashDataFilter, T>,
+        finishEnabled: Boolean? = null,
     ) {
+        val currVal = viewModel.getValue(filterOption)
+
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_FINISH)
                 .hasNext(true)
                 .title(getString(com.github.damontecres.stashapp.R.string.stashapp_actions_save))
+                .enabled(finishEnabled ?: (currVal != null))
                 .build(),
         )
 
-        if (viewModel.getValue(filterOption) != null) {
+        if (currVal != null) {
             actions.add(
                 GuidedAction.Builder(requireContext())
                     .id(ACTION_ID_REMOVE)
@@ -87,6 +91,10 @@ open class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
                 .build(),
         )
     }
+
+    fun CriterionModifier.hasTwoValues(): Boolean = this == CriterionModifier.BETWEEN || this == CriterionModifier.NOT_BETWEEN
+
+    fun CriterionModifier.isNullModifier(): Boolean = this == CriterionModifier.IS_NULL || this == CriterionModifier.NOT_NULL
 
     companion object {
         const val MODIFIER_OFFSET = 3_000_000L

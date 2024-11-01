@@ -54,25 +54,27 @@ class ResolutionPickerFragment(val filterOption: FilterOption<StashDataFilter, R
         )
 
         val options =
-            ResolutionEnum.entries.mapIndexed { index, res ->
-                GuidedAction.Builder(requireContext())
-                    .id(RESOLUTION_OFFSET + index)
-                    .hasNext(false)
-                    .title(resolutionName(res))
-                    .description(resolutionName(curVal.value))
-                    .build()
-            }
+            ResolutionEnum.entries
+                .filter { it != ResolutionEnum.UNKNOWN__ }
+                .mapIndexed { index, res ->
+                    GuidedAction.Builder(requireContext())
+                        .id(RESOLUTION_OFFSET + index)
+                        .hasNext(false)
+                        .title(resolutionName(res))
+                        .build()
+                }
 
         actions.add(
             GuidedAction.Builder(requireContext())
                 .id(RESOLUTION)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))
+                .description(resolutionName(curVal.value))
                 .subActions(options)
                 .build(),
         )
 
-        addStandardActions(actions, filterOption)
+        addStandardActions(actions, filterOption, true)
     }
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {

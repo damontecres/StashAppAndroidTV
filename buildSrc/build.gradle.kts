@@ -3,8 +3,7 @@ repositories {
 }
 
 plugins {
-//    `kotlin-dsl`
-    kotlin("jvm") version "2.0.0"
+    alias(libs.plugins.kotlin.jvm)
 }
 
 java {
@@ -17,5 +16,5 @@ kotlin {
 
 dependencies {
     implementation(gradleApi())
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.2")
+    implementation(libs.kotlinx.serialization.json)
 }

@@ -11,7 +11,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
-import com.github.damontecres.stashapp.filter.CreateFilterGuidedStepFragment
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 import java.text.ParseException
@@ -23,16 +22,17 @@ import java.util.Locale
  * Pick a date value
  */
 class DatePickerFragment(
-    private val filterOption: FilterOption<StashDataFilter, DateCriterionInput>,
-) : CreateFilterGuidedStepFragment() {
-    private var curVal: DateCriterionInput? = null
-
+    filterOption: FilterOption<StashDataFilter, DateCriterionInput>,
+) : TwoValuePicker<String, DateCriterionInput>(filterOption) {
     private val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        curVal = viewModel.getValue(filterOption)
-        super.onCreate(savedInstanceState)
-    }
+    override val modifierOptions: List<CriterionModifier>
+        get() =
+            super.modifierOptions +
+                listOf(
+                    CriterionModifier.IS_NULL,
+                    CriterionModifier.NOT_NULL,
+                )
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
@@ -47,16 +47,21 @@ class DatePickerFragment(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        val currDateStr = curVal?.value?.ifBlank { null }
-        val currDateStr2 = curVal?.value2?.getOrNull()?.ifBlank { null }
-        val curModifier = curVal?.modifier ?: CriterionModifier.EQUALS
+        val curVal = filterOption.getter(viewModel.objectFilter.value!!).getOrNull()
+        value1 = curVal?.value
+        value2 = curVal?.value2?.getOrNull()
+        modifier = curVal?.modifier ?: CriterionModifier.EQUALS
+        createActionList(actions)
+    }
 
+    override fun createActionList(actions: MutableList<GuidedAction>): List<GuidedAction> {
+        Log.v(TAG, "createActionList: actions.size=${actions.size}")
         val dateLong =
-            if (currDateStr != null) {
+            if (value1 != null) {
                 try {
-                    format.parse(currDateStr)?.time ?: Date().time
+                    format.parse(value1!!)?.time ?: Date().time
                 } catch (ex: ParseException) {
-                    Log.w(TAG, "Parse error ($currDateStr)", ex)
+                    Log.w(TAG, "Parse error ($value1)", ex)
                     Date().time
                 }
             } else {
@@ -64,115 +69,92 @@ class DatePickerFragment(
             }
 
         val dateLong2 =
-            if (currDateStr2 != null) {
+            if (value2 != null) {
                 try {
-                    format.parse(currDateStr2)?.time ?: Date().time
+                    format.parse(value2!!)?.time ?: Date().time
                 } catch (ex: ParseException) {
-                    Log.w(TAG, "Parse error ($currDateStr2)", ex)
+                    Log.w(TAG, "Parse error ($value2)", ex)
                     Date().time
                 }
             } else {
                 Date().time
             }
 
-        val modifierOptions =
-            buildList {
-                add(modifierAction(CriterionModifier.EQUALS))
-                add(modifierAction(CriterionModifier.NOT_EQUALS))
-                add(modifierAction(CriterionModifier.GREATER_THAN))
-                add(modifierAction(CriterionModifier.LESS_THAN))
-                add(modifierAction(CriterionModifier.BETWEEN))
-                add(modifierAction(CriterionModifier.NOT_BETWEEN))
-                add(modifierAction(CriterionModifier.IS_NULL))
-                add(modifierAction(CriterionModifier.NOT_NULL))
-            }
+        val modifierOptions = this.modifierOptions.map(::modifierAction)
         actions.add(
             GuidedAction.Builder(requireContext())
-                .id(MODIFIER)
+                .id(TwoValuePicker.MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
-                .description(curModifier.getString(requireContext()))
+                .description(modifier.getString(requireContext()))
                 .subActions(modifierOptions)
                 .build(),
         )
 
+        val valueText =
+            if (modifier.hasTwoValues()) {
+                getString(R.string.stashapp_criterion_greater_than)
+            } else {
+                getString(R.string.stashapp_criterion_value)
+            }
         actions.add(
             GuidedDatePickerAction.Builder(requireContext())
-                .id(VALUE)
+                .id(VALUE_1)
                 .hasNext(true)
-                .title(getString(R.string.stashapp_criterion_value))
+                .title(valueText)
                 .date(dateLong)
                 .build(),
         )
 
-        actions.add(
-            GuidedDatePickerAction.Builder(requireContext())
-                .id(VALUE_2)
-                .hasNext(true)
-                .title(getString(R.string.stashapp_criterion_value))
-                .date(dateLong2)
-                .enabled(curModifier == CriterionModifier.BETWEEN || curModifier == CriterionModifier.NOT_BETWEEN)
-                .build(),
-        )
+        if (modifier.hasTwoValues()) {
+            actions.add(
+                GuidedDatePickerAction.Builder(requireContext())
+                    .id(VALUE_2)
+                    .hasNext(true)
+                    .title(getString(R.string.stashapp_criterion_less_than))
+                    .date(dateLong2)
+                    .build(),
+            )
+        }
 
         addStandardActions(actions, filterOption)
+
+        return actions
     }
 
-    override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
-        val curDate = Date((findActionById(VALUE) as GuidedDatePickerAction).date)
-        if (action.id >= MODIFIER_OFFSET) {
-            val newModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
-            curVal = curVal?.copy(modifier = newModifier) ?: DateCriterionInput(
-                value = curVal?.value ?: format.format(curDate),
-                value2 = curVal?.value2 ?: Optional.absent(),
-                modifier = newModifier,
+    override fun parseAction(action: GuidedAction?): String? {
+        if (action is GuidedDatePickerAction) {
+            return format.format(action.date)
+        }
+        return null
+    }
+
+    override fun createCriterionInput(
+        value1: String?,
+        value2: String?,
+        modifier: CriterionModifier,
+    ): DateCriterionInput? {
+        return if (value1 != null) {
+            DateCriterionInput(
+                value = value1,
+                value2 = Optional.presentIfNotNull(value2),
+                modifier = modifier,
             )
-            findActionById(MODIFIER).description = newModifier.getString(requireContext())
-            notifyActionChanged(findActionPositionById(MODIFIER))
-
-            val value2Action = findActionById(VALUE_2)
-            if (newModifier == CriterionModifier.BETWEEN || newModifier == CriterionModifier.NOT_BETWEEN) {
-                value2Action.isEnabled = true
-            } else {
-                value2Action.isEnabled = false
-            }
-            notifyActionChanged(findActionPositionById(VALUE_2))
+        } else if (modifier.isNullModifier()) {
+            DateCriterionInput(value = "", modifier = modifier)
+        } else {
+            null
         }
-        return true
     }
 
-    override fun onGuidedActionClicked(action: GuidedAction) {
-        if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val curDate = Date((findActionById(VALUE) as GuidedDatePickerAction).date)
-            val dateStr = format.format(curDate)
-            val curDate2 = Date((findActionById(VALUE_2) as GuidedDatePickerAction).date)
-            val dateStr2 = format.format(curDate2)
+    override val valueInputType: Int
+        get() = throw IllegalStateException("Should not call valueInputType")
 
-            val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
-            val newValue =
-                if (modifier == CriterionModifier.IS_NULL || modifier == CriterionModifier.NOT_NULL) {
-                    DateCriterionInput(value = "", modifier = modifier)
-                } else if (modifier == CriterionModifier.BETWEEN || modifier == CriterionModifier.NOT_BETWEEN) {
-                    DateCriterionInput(
-                        value = dateStr,
-                        value2 = Optional.present(dateStr2),
-                        modifier = modifier,
-                    )
-                } else {
-                    DateCriterionInput(value = dateStr, modifier = modifier)
-                }
-
-            viewModel.updateFilter(filterOption, newValue)
-            parentFragmentManager.popBackStack()
-        } else {
-            onStandardActionClicked(action, filterOption)
-        }
+    override fun parseValue(v: String?): String? {
+        throw IllegalStateException("Should not call parseValue")
     }
 
     companion object {
-        private const val TAG = "FloatPickerFragment"
-        private const val VALUE = 1L
-        private const val VALUE_2 = 2L
-        private const val MODIFIER = 3L
+        private const val TAG = "DatePickerFragment"
     }
 }

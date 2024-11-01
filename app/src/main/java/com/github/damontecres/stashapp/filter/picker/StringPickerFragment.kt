@@ -81,15 +81,25 @@ class StringPickerFragment(
             )
             findActionById(MODIFIER).description = newModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
-            if (newModifier == CriterionModifier.IS_NULL || newModifier == CriterionModifier.NOT_NULL) {
+            if (newModifier.isNullModifier()) {
                 findActionById(VALUE).isEnabled = false
                 notifyActionChanged(findActionPositionById(VALUE))
+                enableFinish(true)
             } else {
-                findActionById(VALUE).isEnabled = true
+                val valueAction = findActionById(VALUE)
+                valueAction.isEnabled = true
                 notifyActionChanged(findActionPositionById(VALUE))
+                enableFinish(valueAction.description.isNotNullOrBlank())
             }
         }
         return true
+    }
+
+    override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
+        if (action.id == VALUE) {
+            enableFinish(action.description.isNotNullOrBlank())
+        }
+        return GuidedAction.ACTION_ID_CURRENT
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
@@ -97,10 +107,10 @@ class StringPickerFragment(
             val newString = findActionById(VALUE).description?.toString()
             val modifier = curVal?.modifier ?: CriterionModifier.EQUALS
             val newValue =
-                if (newString.isNotNullOrBlank()) {
-                    StringCriterionInput(value = newString, modifier = modifier)
-                } else if (modifier == CriterionModifier.IS_NULL || modifier == CriterionModifier.NOT_NULL) {
+                if (modifier.isNullModifier()) {
                     StringCriterionInput(value = "", modifier = modifier)
+                } else if (newString.isNotNullOrBlank()) {
+                    StringCriterionInput(value = newString, modifier = modifier)
                 } else {
                     null
                 }

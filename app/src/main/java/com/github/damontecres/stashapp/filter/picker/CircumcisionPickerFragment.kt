@@ -88,21 +88,39 @@ class CircumcisionPickerFragment(val filterOption: FilterOption<StashDataFilter,
             currentModifier = CriterionModifier.entries[(action.id - MODIFIER_OFFSET).toInt()]
             findActionById(MODIFIER).description = currentModifier.getString(requireContext())
             notifyActionChanged(findActionPositionById(MODIFIER))
+            setFinish()
         }
         return true
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
-            val values =
-                actions.filter { it.id >= CIRC_OFFSET && it.isChecked }
-                    .map { CircumisedEnum.entries[(it.id - CIRC_OFFSET).toInt()] }
-                    .ifEmpty { null }
-            val newFilter = CircumcisionCriterionInput(value = Optional.presentIfNotNull(values), modifier = currentModifier)
+            val values = getValues()
+            val newFilter =
+                CircumcisionCriterionInput(
+                    value = Optional.presentIfNotNull(values),
+                    modifier = currentModifier,
+                )
             viewModel.updateFilter(filterOption, newFilter)
             parentFragmentManager.popBackStack()
+        } else if (action.id in CIRC_OFFSET..<MODIFIER_OFFSET) {
+            setFinish()
         } else {
             onStandardActionClicked(action, filterOption)
+        }
+    }
+
+    private fun getValues(): List<CircumisedEnum>? {
+        return actions.filter { it.id >= CIRC_OFFSET && it.isChecked }
+            .map { CircumisedEnum.entries[(it.id - CIRC_OFFSET).toInt()] }
+            .ifEmpty { null }
+    }
+
+    private fun setFinish() {
+        if (currentModifier.isNullModifier() || getValues() != null) {
+            enableFinish(true)
+        } else {
+            enableFinish(false)
         }
     }
 

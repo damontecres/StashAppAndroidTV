@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.filter
 
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -74,6 +75,7 @@ class CreateFilterViewModel : ViewModel() {
         filterOption: FilterOption<StashDataFilter, ValueType>,
         newItem: ValueType?,
     ) {
+        Log.v(TAG, "updateFilter: name=${filterOption.name}, value==null: ${newItem == null}")
         val currFilter = objectFilter.value!!
         val newFilter =
             filterOption.setter(
@@ -87,6 +89,7 @@ class CreateFilterViewModel : ViewModel() {
      * Update the [resultCount] using the current [findFilter] & [objectFilter]
      */
     fun updateCount() {
+        resultCount.value = -1
         countJob?.cancel()
         countJob =
             viewModelScope.launch(
@@ -154,5 +157,9 @@ class CreateFilterViewModel : ViewModel() {
      */
     data class NameDescription(val name: String?, val description: String?) {
         constructor(item: StashData) : this(extractTitle(item), extractDescription(item))
+    }
+
+    companion object {
+        private const val TAG = "CreateFilterViewModel"
     }
 }
