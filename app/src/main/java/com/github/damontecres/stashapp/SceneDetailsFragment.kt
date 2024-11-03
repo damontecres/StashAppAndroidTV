@@ -80,7 +80,6 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -519,6 +518,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 )
             } else if (action == StashAction.PLAY_EXTERNAL) {
                 val scene = Scene.fromFullSceneData(sceneData!!)
+
                 val uri = Uri.parse(sceneData!!.paths.stream)
                 val intent =
                     Intent(Intent.ACTION_VIEW).apply {
@@ -528,32 +528,16 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         // VLC intents: https://wiki.videolan.org/Android_Player_Intents/
                         // mxplayer intents: https://mx.j2inter.com/api
                         if (scene.hasCaptions) {
-                            putExtra("subtitles_location", sceneData!!.paths.caption)
+                            // VLC
+                            // TODO doesn't work?
+                            putExtra("subtitles_location", scene.captions.first().getUrl(scene))
 
-                            val captionBaseUrl = Uri.parse(scene.captionUrl)
-                            val captions =
-                                scene.captions.map {
-                                    val captionUrl =
-                                        captionBaseUrl.buildUpon()
-                                            .appendQueryParameter("lang", it.lang)
-                                            .appendQueryParameter("type", it.type)
-                                            .build()
-                                    val languageName =
-                                        try {
-                                            if (it.lang != "00") {
-                                                Locale(it.lang).displayLanguage
-                                            } else {
-                                                requireContext().getString(R.string.stashapp_display_mode_unknown)
-                                            }
-                                        } catch (ex: Exception) {
-                                            Log.w(TAG, "Error in locale for '${it.lang}'", ex)
-                                            it.lang.uppercase()
-                                        }
-                                    Pair("$languageName (${it.type})", captionUrl)
-                                }
-                            putExtra("subs", captions.map { it.second }.toTypedArray())
-                            putExtra("subs.name", captions.map { it.first }.toTypedArray())
+                            // MX
+                            putExtra("subs", scene.captions.map { it.getUrl(scene) }.toTypedArray())
+                            putExtra("subs.name", scene.captions.map { it.label }.toTypedArray())
                         }
+                        // VLC
+                        putExtra("extra_duration", scene.durationPosition)
                     }
                 try {
                     startActivity(intent)

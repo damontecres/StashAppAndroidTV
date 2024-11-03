@@ -7,9 +7,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.Scene
-import java.util.Locale
 
 private const val TAG = "StreamUtils"
 
@@ -84,26 +82,10 @@ fun buildMediaItem(
         val baseUrl = Uri.parse(scene.captionUrl)
         val subtitles =
             scene.captions.map {
-                val uri =
-                    baseUrl.buildUpon()
-                        .appendQueryParameter("lang", it.lang)
-                        .appendQueryParameter("type", it.type)
-                        .build()
-                val languageName =
-                    try {
-                        if (it.lang != "00") {
-                            Locale(it.lang).displayLanguage
-                        } else {
-                            context.getString(R.string.stashapp_display_mode_unknown)
-                        }
-                    } catch (ex: Exception) {
-                        Log.w(TAG, "Error in locale for '${it.lang}'", ex)
-                        it.lang.uppercase()
-                    }
-                MediaItem.SubtitleConfiguration.Builder(uri)
+                MediaItem.SubtitleConfiguration.Builder(it.getUrl(scene))
                     // The server always provides subtitles as VTT: https://github.com/stashapp/stash/blob/v0.26.2/internal/api/routes_scene.go#L439
                     .setMimeType(MimeTypes.TEXT_VTT)
-                    .setLabel("$languageName (${it.type})")
+                    .setLabel(it.label)
                     .setSelectionFlags(C.SELECTION_FLAG_AUTOSELECT)
                     .build()
             }

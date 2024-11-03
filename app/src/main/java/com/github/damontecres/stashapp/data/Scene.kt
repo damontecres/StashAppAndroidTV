@@ -1,12 +1,17 @@
 package com.github.damontecres.stashapp.data
 
+import android.net.Uri
 import android.os.Parcelable
+import android.util.Log
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import kotlinx.parcelize.Parcelize
+import java.util.Locale
 
 @Parcelize
 data class Scene(
@@ -116,7 +121,35 @@ data class Scene(
 }
 
 @Parcelize
-data class Caption(val lang: String, val type: String) : Parcelable
+data class Caption(val lang: String, val type: String) : Parcelable {
+    val label: String
+        get() {
+            val languageName =
+                try {
+                    if (lang != "00") {
+                        Locale(lang).displayLanguage
+                    } else {
+                        StashApplication.getApplication()
+                            .getString(R.string.stashapp_display_mode_unknown)
+                    }
+                } catch (ex: Exception) {
+                    Log.w("Caption", "Error in locale for '$lang'", ex)
+                    lang.uppercase()
+                }
+            return "$languageName ($type)"
+        }
+
+    fun getUrl(scene: Scene): Uri {
+        return getUrl(Uri.parse(scene.captionUrl))
+    }
+
+    fun getUrl(baseUrl: Uri): Uri {
+        return baseUrl.buildUpon()
+            .appendQueryParameter("lang", lang)
+            .appendQueryParameter("type", type)
+            .build()
+    }
+}
 
 fun SlimSceneData.Caption.toCaption(): Caption {
     return Caption(language_code, caption_type)
