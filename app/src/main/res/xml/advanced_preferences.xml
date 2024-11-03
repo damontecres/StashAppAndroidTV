@@ -104,7 +104,7 @@
             app:defaultValue="true" />
         <SwitchPreference
             app:key="@string/pref_key_playback_external_player"
-            app:title="Always use external player"
+            app:title="Always use external app for playback"
             app:defaultValue="false" />
     </PreferenceCategory>
 

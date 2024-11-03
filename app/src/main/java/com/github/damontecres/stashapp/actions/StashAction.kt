@@ -16,7 +16,7 @@ enum class StashAction(val id: Long, val actionName: String) {
     SHIFT_MARKERS(8L, "Shift marker timestamp"),
     ADD_GALLERY(9L, "Add Gallery"),
     ADD_GROUP(10L, "Add Group"),
-    PLAY_EXTERNAL(11L, "Play External"),
+    PLAY_EXTERNAL(11L, "Play using another App"),
     ;
 
     companion object {
