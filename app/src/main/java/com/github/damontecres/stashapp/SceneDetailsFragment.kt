@@ -32,6 +32,7 @@ import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
@@ -465,6 +466,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             intent.putExtra(FORCE_DIRECT_PLAY, true)
                         }
                         resultLauncher.launch(intent)
+                    } else if (action.id == ACTION_PLAY_SCENE_EXTERNAL) {
+                        playExternal()
                     } else {
                         throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
                     }
@@ -517,37 +520,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     ),
                 )
             } else if (action == StashAction.PLAY_EXTERNAL) {
-                val scene = Scene.fromFullSceneData(sceneData!!)
-
-                val uri = Uri.parse(sceneData!!.paths.stream)
-                val intent =
-                    Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(uri, "video/*")
-                        putExtra("title", sceneData!!.titleOrFilename)
-
-                        // VLC intents: https://wiki.videolan.org/Android_Player_Intents/
-                        // mxplayer intents: https://mx.j2inter.com/api
-                        if (scene.hasCaptions) {
-                            // VLC
-                            // TODO doesn't work?
-                            putExtra("subtitles_location", scene.captions.first().getUrl(scene))
-
-                            // MX
-                            putExtra("subs", scene.captions.map { it.getUrl(scene) }.toTypedArray())
-                            putExtra("subs.name", scene.captions.map { it.label }.toTypedArray())
-                        }
-                        // VLC
-                        putExtra("extra_duration", scene.durationPosition)
-                    }
-                try {
-                    startActivity(intent)
-                } catch (ex: ActivityNotFoundException) {
-                    Toast.makeText(
-                        requireContext(),
-                        "No external player found!",
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                }
+                playExternal()
             }
         }
 
@@ -571,7 +544,16 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private fun setupPlayActionsAdapter() {
         if (sceneData!!.files.isNotEmpty()) {
             val serverPreferences = server.serverPreferences
-            if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
+            val alwaysUseExternalPlayer =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getBoolean(getString(R.string.pref_key_playback_external_player), false)
+            if (alwaysUseExternalPlayer) {
+                playActionsAdapter.set(
+                    0,
+                    Action(ACTION_PLAY_SCENE_EXTERNAL, resources.getString(R.string.play_scene)),
+                )
+                playActionsAdapter.clear(1)
+            } else if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
                 playActionsAdapter.set(
                     0,
                     Action(ACTION_PLAY_SCENE, resources.getString(R.string.play_scene)),
@@ -585,6 +567,40 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             }
         } else {
             playActionsAdapter.clear()
+        }
+    }
+
+    private fun playExternal() {
+        val scene = Scene.fromFullSceneData(sceneData!!)
+
+        val uri = Uri.parse(sceneData!!.paths.stream)
+        val intent =
+            Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "video/*")
+                putExtra("title", sceneData!!.titleOrFilename)
+
+                // VLC intents: https://wiki.videolan.org/Android_Player_Intents/
+                // mxplayer intents: https://mx.j2inter.com/api
+                if (scene.hasCaptions) {
+                    // VLC
+                    // TODO doesn't work?
+                    putExtra("subtitles_location", scene.captions.first().getUrl(scene))
+
+                    // MX
+                    putExtra("subs", scene.captions.map { it.getUrl(scene) }.toTypedArray())
+                    putExtra("subs.name", scene.captions.map { it.label }.toTypedArray())
+                }
+                // VLC
+                putExtra("extra_duration", scene.durationPosition)
+            }
+        try {
+            startActivity(intent)
+        } catch (ex: ActivityNotFoundException) {
+            Toast.makeText(
+                requireContext(),
+                "No external player found!",
+                Toast.LENGTH_SHORT,
+            ).show()
         }
     }
 
@@ -986,6 +1002,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val ACTION_RESUME_SCENE = 2L
         private const val ACTION_TRANSCODE_RESUME_SCENE = 3L
         private const val ACTION_DIRECT_PLAY_RESUME_SCENE = 4L
+        private const val ACTION_PLAY_SCENE_EXTERNAL = 5L
 
         private const val DETAIL_THUMB_WIDTH = ScenePresenter.CARD_WIDTH
         private const val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
