@@ -1,10 +1,12 @@
 package com.github.damontecres.stashapp
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -71,12 +73,14 @@ import com.github.damontecres.stashapp.util.asVideoSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.util.Locale
 import kotlin.math.roundToInt
 
 /**
@@ -303,6 +307,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         sceneActionsAdapter.set(ADD_GROUP_POS, StashAction.ADD_GROUP)
         sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
         sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
+        sceneActionsAdapter.set(PLAY_EXTERNAL_POS, StashAction.PLAY_EXTERNAL)
 
         if (sceneData!!.studio?.studioData != null) {
             studioAdapter.setItems(listOf(sceneData!!.studio!!.studioData))
@@ -512,6 +517,53 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         ACTION_DIRECT_PLAY_RESUME_SCENE,
                     ),
                 )
+            } else if (action == StashAction.PLAY_EXTERNAL) {
+                val scene = Scene.fromFullSceneData(sceneData!!)
+                val uri = Uri.parse(sceneData!!.paths.stream)
+                val intent =
+                    Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(uri, "video/*")
+                        putExtra("title", sceneData!!.titleOrFilename)
+
+                        // VLC intents: https://wiki.videolan.org/Android_Player_Intents/
+                        // mxplayer intents: https://mx.j2inter.com/api
+                        if (scene.hasCaptions) {
+                            putExtra("subtitles_location", sceneData!!.paths.caption)
+
+                            val captionBaseUrl = Uri.parse(scene.captionUrl)
+                            val captions =
+                                scene.captions.map {
+                                    val captionUrl =
+                                        captionBaseUrl.buildUpon()
+                                            .appendQueryParameter("lang", it.lang)
+                                            .appendQueryParameter("type", it.type)
+                                            .build()
+                                    val languageName =
+                                        try {
+                                            if (it.lang != "00") {
+                                                Locale(it.lang).displayLanguage
+                                            } else {
+                                                requireContext().getString(R.string.stashapp_display_mode_unknown)
+                                            }
+                                        } catch (ex: Exception) {
+                                            Log.w(TAG, "Error in locale for '${it.lang}'", ex)
+                                            it.lang.uppercase()
+                                        }
+                                    Pair("$languageName (${it.type})", captionUrl)
+                                }
+                            putExtra("subs", captions.map { it.second }.toTypedArray())
+                            putExtra("subs.name", captions.map { it.first }.toTypedArray())
+                        }
+                    }
+                try {
+                    startActivity(intent)
+                } catch (ex: ActivityNotFoundException) {
+                    Toast.makeText(
+                        requireContext(),
+                        "No external player found!",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
             }
         }
 
@@ -977,6 +1029,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val SET_STUDIO_POS = ADD_GROUP_POS + 1
         private const val FORCE_TRANSCODE_POS = SET_STUDIO_POS + 1
         private const val FORCE_DIRECT_PLAY_POS = FORCE_TRANSCODE_POS + 1
+        private const val PLAY_EXTERNAL_POS = FORCE_DIRECT_PLAY_POS + 1
 
         val REMOVE_POPUP_ITEM =
             StashPresenter.PopUpItem(
