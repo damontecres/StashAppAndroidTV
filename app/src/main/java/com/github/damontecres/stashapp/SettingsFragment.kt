@@ -597,6 +597,40 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
                 newValue == false
             }
+
+            val externalPlayerPref =
+                findPreference<SwitchPreference>(getString(R.string.pref_key_playback_external_player))!!
+            externalPlayerPref.setOnPreferenceChangeListener { _, newValue ->
+                return@setOnPreferenceChangeListener if (newValue == true) {
+                    val app =
+                        Intent(Intent.ACTION_VIEW).apply {
+                            setDataAndType(null, "video/*")
+                        }.resolveActivity(requireContext().packageManager)
+                    if (app == null) {
+                        Toast.makeText(
+                            requireContext(),
+                            "There is no external player available!",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    } else {
+                        ConfirmationDialogFragment(
+                            """Enabling this will always play videos in an external player.
+                                |
+                                |If using server authentication, your API Key will be sent to external app!
+                                |
+                                |Play history will not be recorded.
+                            """.trimMargin(),
+                        ) { _, which ->
+                            if (which == DialogInterface.BUTTON_POSITIVE) {
+                                externalPlayerPref.isChecked = true
+                            }
+                        }.show(childFragmentManager, null)
+                    }
+                    false
+                } else {
+                    newValue == false
+                }
+            }
         }
 
         override fun onViewCreated(

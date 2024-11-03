@@ -102,6 +102,10 @@
             app:summaryOn="Show title &amp; date"
             app:summaryOff="Hide title &amp; date"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_external_player"
+            app:title="Always use external player"
+            app:defaultValue="false" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Scene Video Filters">
