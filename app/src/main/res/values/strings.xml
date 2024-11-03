@@ -75,5 +75,8 @@
     <string name="direct">Direct</string>
     <string name="zero">0</string>
 
+    <string name="external_player_confirmation_dialog">This will play videos using an external App.\n\n
+        If your server requires authentication, your API Key will be shared with the external app!\n\n
+        If your server has play history enabled, it will not be recorded.</string>
 
 </resources>

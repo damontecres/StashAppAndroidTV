@@ -613,14 +613,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                             Toast.LENGTH_LONG,
                         ).show()
                     } else {
-                        ConfirmationDialogFragment(
-                            """Enabling this will always play videos using an external App.
-                                |
-                                |If your server requires authentication, your API Key will be shared with the external app!
-                                |
-                                |If your server has play history enabled, it will not be recorded.
-                            """.trimMargin(),
-                        ) { _, which ->
+                        ConfirmationDialogFragment(getString(R.string.external_player_confirmation_dialog)) { _, which ->
                             if (which == DialogInterface.BUTTON_POSITIVE) {
                                 externalPlayerPref.isChecked = true
                             }
