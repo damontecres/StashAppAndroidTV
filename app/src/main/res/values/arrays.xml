@@ -163,6 +163,7 @@
     </string-array>
 
     <string-array name="studio_tabs">
+        <item>@string/stashapp_details</item>
         <item>@string/stashapp_scenes</item>
         <item>@string/stashapp_galleries</item>
         <item>@string/stashapp_images</item>
@@ -174,6 +175,7 @@
     </string-array>
 
     <string-array name="tag_tabs">
+        <item>@string/stashapp_details</item>
         <item>@string/stashapp_scenes</item>
         <item>@string/stashapp_galleries</item>
         <item>@string/stashapp_images</item>
@@ -181,6 +183,7 @@
         <item>@string/stashapp_performers</item>
         <item>@string/stashapp_studios</item>
         <item>@string/stashapp_sub_tags</item>
+        <item>@string/stashapp_parent_tags</item>
     </string-array>
 
 </resources>

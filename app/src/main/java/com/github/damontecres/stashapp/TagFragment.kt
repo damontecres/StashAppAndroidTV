@@ -35,6 +35,9 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
             )
         val items =
             listOf(
+                PagerEntry(getString(R.string.stashapp_details)) {
+                    TagDetailsFragment()
+                },
                 PagerEntry(DataType.SCENE) {
                     StashGridFragment(
                         dataType = DataType.SCENE,
@@ -75,6 +78,12 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                     StashGridFragment(
                         dataType = DataType.TAG,
                         objectFilter = TagFilterType(parents = tags),
+                    )
+                },
+                PagerEntry(getString(R.string.stashapp_parent_tags)) {
+                    StashGridFragment(
+                        dataType = DataType.TAG,
+                        objectFilter = TagFilterType(children = tags),
                     )
                 },
             ).filter { it.title in getUiTabs(requireContext(), DataType.TAG) }

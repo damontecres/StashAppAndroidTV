@@ -34,6 +34,9 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
             )
         val items =
             listOf(
+                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
+                    StudioDetailsFragment()
+                },
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
                     StashGridFragment(
                         dataType = DataType.SCENE,
