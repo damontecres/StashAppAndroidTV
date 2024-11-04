@@ -18,3 +18,9 @@ mutation CreateTag($input: TagCreateInput!) {
     ...TagData
   }
 }
+
+mutation UpdateTag($input: TagUpdateInput!){
+  tagUpdate(input: $input){
+    ...TagData
+  }
+}

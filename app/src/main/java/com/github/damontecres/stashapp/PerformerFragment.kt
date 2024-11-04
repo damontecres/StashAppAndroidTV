@@ -64,7 +64,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         val items =
             listOf(
                 StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
-                    PerformerDetailsFragment(performer)
+                    PerformerDetailsFragment()
                 },
                 StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
                     StashGridFragment(

@@ -3,6 +3,8 @@ package com.github.damontecres.stashapp.util
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.annotation.ArrayRes
+import androidx.annotation.StringRes
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
@@ -18,6 +20,8 @@ class AppUpgradeHandler(
 
     override fun run() {
         UpdateChecker.cleanup(context)
+
+        Log.i(TAG, "Migrating $previousVersion to $installedVersion")
 
         // Add mpegts as a default force direct play format
         if (previousVersion.isEqualOrBefore(Version.fromString("0.2.9")) &&
@@ -52,6 +56,48 @@ class AppUpgradeHandler(
                 )
             preferences.edit(true) {
                 clear()
+            }
+        }
+
+        if (previousVersion.isEqualOrBefore(Version.fromString("v0.5.2"))) {
+            Log.i(TAG, "Migrating tabs for v0.5.2")
+            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+            preferences.ensureSetHas(
+                context,
+                R.string.pref_key_ui_tag_tabs,
+                R.array.tag_tabs,
+                listOf(
+                    context.getString(R.string.stashapp_details),
+                    context.getString(R.string.stashapp_parent_tags),
+                ),
+            )
+
+            preferences.ensureSetHas(
+                context,
+                R.string.pref_key_ui_studio_tabs,
+                R.array.studio_tabs,
+                listOf(
+                    context.getString(R.string.stashapp_details),
+                ),
+            )
+        }
+    }
+
+    private fun SharedPreferences.ensureSetHas(
+        context: Context,
+        @StringRes prefKey: Int,
+        @ArrayRes defaultValues: Int,
+        newValues: Collection<String>,
+    ) {
+        val key = context.getString(prefKey)
+        val currentValues =
+            getStringSet(
+                key,
+                context.resources.getStringArray(defaultValues).toSet(),
+            )!!.toMutableSet()
+        if (currentValues.addAll(newValues)) {
+            edit(true) {
+                putStringSet(key, currentValues)
             }
         }
     }
