@@ -5,6 +5,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import java.util.EnumMap
 
 class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
@@ -14,12 +15,24 @@ class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
         item: StudioData,
     ) {
         cardView.titleText = item.name
-        cardView.contentText =
+
+        val partOfText =
             if (item.parent_studio != null) {
                 cardView.context.getString(R.string.stashapp_part_of, item.parent_studio.name)
             } else {
                 null
             }
+        val childText =
+            if (item.child_studios.isNotEmpty()) {
+                cardView.context.getString(
+                    R.string.stashapp_parent_of,
+                    item.child_studios.size.toString(),
+                )
+            } else {
+                null
+            }
+
+        cardView.contentText = listOf(childText, partOfText).joinNotNullOrBlank(" - ")
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.SCENE] = item.scene_count
