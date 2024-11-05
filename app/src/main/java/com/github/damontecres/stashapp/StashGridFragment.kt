@@ -73,7 +73,7 @@ class StashGridFragment() : Fragment() {
     private lateinit var sortButton: Button
     private lateinit var playAllButton: Button
     private lateinit var filterButton: Button
-    private lateinit var subTagSwitch: SwitchMaterial
+    private lateinit var subContentSwitch: SwitchMaterial
     private lateinit var positionTextView: TextView
     private lateinit var totalCountTextView: TextView
     private lateinit var noResultsTextView: TextView
@@ -138,14 +138,19 @@ class StashGridFragment() : Fragment() {
     var onItemViewClickedListener: OnItemViewClickedListener? = null
 
     /**
-     * Callback for when the sub tag switch state is updated. Also ensures the switch will be displayed if not null
+     * Callback for when the sub content switch state is updated. Also ensures the switch will be displayed if not null
      */
-    var subTagSwitchCheckedListener: ((isChecked: Boolean) -> Unit)? = null
+    var subContentSwitchCheckedListener: ((isChecked: Boolean) -> Unit)? = null
 
     /**
-     * Sets whether the sub tag switch should start checked or not
+     * Sets whether the sub content switch should start checked or not
      */
-    var subTagSwitchInitialIsChecked: Boolean = false
+    var subContentSwitchInitialIsChecked: Boolean = false
+
+    /**
+     * The initial text on the sub content switch
+     */
+    var subContentText: CharSequence? = null
 
     /**
      * Get or set the currently selected item
@@ -313,7 +318,7 @@ class StashGridFragment() : Fragment() {
         sortButton = root.findViewById(R.id.sort_button)
         playAllButton = root.findViewById(R.id.play_all_button)
         filterButton = root.findViewById(R.id.filter_button)
-        subTagSwitch = root.findViewById(R.id.sub_tag_switch)
+        subContentSwitch = root.findViewById(R.id.sub_content_switch)
         val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         mGridViewHolder.view.isFocusableInTouchMode = false
@@ -394,12 +399,13 @@ class StashGridFragment() : Fragment() {
             }
         }
 
-        subTagSwitch.nextFocusUpId = R.id.tab_layout
-        if (subTagSwitchCheckedListener != null) {
-            subTagSwitch.isChecked = subTagSwitchInitialIsChecked
-            subTagSwitch.visibility = View.VISIBLE
-            subTagSwitch.setOnCheckedChangeListener { _, isChecked ->
-                subTagSwitchCheckedListener?.invoke(isChecked)
+        subContentSwitch.nextFocusUpId = R.id.tab_layout
+        if (subContentSwitchCheckedListener != null) {
+            subContentSwitch.isChecked = subContentSwitchInitialIsChecked
+            subContentSwitch.text = subContentText
+            subContentSwitch.visibility = View.VISIBLE
+            subContentSwitch.setOnCheckedChangeListener { _, isChecked ->
+                subContentSwitchCheckedListener?.invoke(isChecked)
             }
         }
 
