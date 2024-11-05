@@ -7,7 +7,7 @@ import android.os.Bundle
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
-import androidx.fragment.app.FragmentManager
+import android.view.View
 import androidx.leanback.widget.ClassPresenterSelector
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -52,7 +52,12 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
             }
     }
 
-    override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+
         val performers =
             Optional.present(
                 MultiCriterionInput(
@@ -61,7 +66,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                 ),
             )
 
-        val items =
+        viewModel.tabs.value =
             listOf(
                 StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
                     PerformerDetailsFragment()
@@ -138,7 +143,6 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                     )
                 },
             ).filter { it.title in getUiTabs(requireContext(), DataType.PERFORMER) }
-        return StashFragmentPagerAdapter(items, fm)
     }
 
     private class PerformTogetherLongClickCallback(val performer: Performer) :

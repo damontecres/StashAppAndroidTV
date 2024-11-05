@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
-import androidx.fragment.app.FragmentManager
+import android.view.View
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -14,7 +14,6 @@ import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter.PagerEntry
 import com.github.damontecres.stashapp.util.getUiTabs
 
@@ -22,18 +21,22 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
     private lateinit var tagId: String
     private var includeSubTags = false
 
+    override fun getTitleText(): String? {
+        return requireActivity().intent.getStringExtra("tagName")
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         includeSubTags = requireActivity().intent.getBooleanExtra("includeSubTags", false)
         tagId = requireActivity().intent.getStringExtra("tagId")!!
     }
 
-    override fun getTitleText(): String? {
-        return requireActivity().intent.getStringExtra("tagName")
-    }
-
-    override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
-        val items =
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.tabs.value =
             listOf(
                 PagerEntry(getString(R.string.stashapp_details)) {
                     TagDetailsFragment()
@@ -80,8 +83,6 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                     )
                 },
             ).filter { it.title in getUiTabs(requireContext(), DataType.TAG) }
-
-        return StashFragmentPagerAdapter(items, fm)
     }
 
     private fun createStashGridFragment(

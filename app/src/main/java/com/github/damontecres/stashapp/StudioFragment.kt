@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
-import androidx.fragment.app.FragmentManager
+import android.view.View
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -32,8 +32,14 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
         return requireActivity().intent.getStringExtra("studioName")
     }
 
-    override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
-        val items =
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val studioId = requireActivity().intent.getStringExtra("studioId")!!
+        viewModel.tabs.value =
             listOf(
                 StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
                     StudioDetailsFragment()
@@ -97,7 +103,6 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                     }
                 },
             ).filter { it.title in getUiTabs(requireContext(), DataType.STUDIO) }
-        return StashFragmentPagerAdapter(items, fm)
     }
 
     private fun createStashGridFragment(
