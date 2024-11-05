@@ -10,7 +10,6 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo.api.Optional
@@ -52,7 +51,12 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
         viewModel.title.value = gallery.name
     }
 
-    override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+
         val galleries =
             Optional.present(
                 MultiCriterionInput(
@@ -60,7 +64,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                     modifier = CriterionModifier.INCLUDES_ALL,
                 ),
             )
-        val items =
+        viewModel.tabs.value =
             listOf(
                 StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
                     GalleryDetailsFragment(gallery)
@@ -104,7 +108,6 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                     )
                 },
             ).filter { it.title in getUiTabs(requireContext(), DataType.GALLERY) }
-        return StashFragmentPagerAdapter(items, fm)
     }
 
     class GalleryDetailsFragment() : Fragment(R.layout.gallery_view) {

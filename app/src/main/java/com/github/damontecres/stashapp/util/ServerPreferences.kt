@@ -6,7 +6,11 @@ import android.util.Log
 import androidx.core.content.edit
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ConfigurationQuery
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.SortOption
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 
@@ -56,6 +60,18 @@ class ServerPreferences(val server: StashServer) {
 
     private val _defaultFilters = mutableMapOf<DataType, FilterArgs>()
     val defaultFilters: Map<DataType, FilterArgs> = _defaultFilters
+    var defaultGroupSceneFilter: FilterArgs =
+        FilterArgs(
+            DataType.SCENE,
+            findFilter =
+                StashFindFilter(
+                    SortAndDirection(
+                        SortOption.GROUP_SCENE_NUMBER,
+                        SortDirectionEnum.ASC,
+                    ),
+                ),
+        )
+        private set
 
     /**
      * Update the local preferences from the server configuration
@@ -160,15 +176,7 @@ class ServerPreferences(val server: StashServer) {
             val filter =
                 if (filterMap != null) {
                     try {
-                        val findFilterMap = filterMap.getCaseInsensitive("find_filter")
-                        val objectFilterMap = filterMap.getCaseInsensitive("object_filter")
-                        val findFilter = filterParser.convertFindFilter(findFilterMap)
-                        val objectFilter = filterParser.convertFilter(dataType, objectFilterMap)
-                        FilterArgs(
-                            dataType,
-                            findFilter = findFilter,
-                            objectFilter = objectFilter,
-                        )
+                        filterParser.convertFilterMap(dataType, filterMap)
                     } catch (ex: Exception) {
                         Log.w(TAG, "default filter parse error for $dataType", ex)
                         FilterArgs(dataType)
@@ -177,6 +185,17 @@ class ServerPreferences(val server: StashServer) {
                     FilterArgs(dataType)
                 }
             _defaultFilters[dataType] = filter
+        }
+
+        val groupSceneFilterMap =
+            defaultFilters?.getCaseInsensitive("group_scenes") as Map<String, *>?
+        if (groupSceneFilterMap != null) {
+            try {
+                defaultGroupSceneFilter =
+                    filterParser.convertFilterMap(DataType.SCENE, groupSceneFilterMap)
+            } catch (ex: Exception) {
+                Log.w(TAG, "default filter parse error for group_scenes", ex)
+            }
         }
     }
 

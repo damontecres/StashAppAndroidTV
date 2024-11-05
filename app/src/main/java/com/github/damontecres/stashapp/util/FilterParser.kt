@@ -33,6 +33,7 @@ import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
 
 /**
  * Parse a server-side filter from JSON (Map<String, *>)
@@ -318,6 +319,21 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
+    }
+
+    fun convertFilterMap(
+        dataType: DataType,
+        filterMap: Map<String, *>,
+    ): FilterArgs {
+        val findFilterMap = filterMap.getCaseInsensitive("find_filter")
+        val objectFilterMap = filterMap.getCaseInsensitive("object_filter")
+        val findFilter = convertFindFilter(findFilterMap)
+        val objectFilter = convertFilter(dataType, objectFilterMap)
+        return FilterArgs(
+            dataType,
+            findFilter = findFilter,
+            objectFilter = objectFilter,
+        )
     }
 
     fun convertFindFilter(f: Any?): StashFindFilter? {
