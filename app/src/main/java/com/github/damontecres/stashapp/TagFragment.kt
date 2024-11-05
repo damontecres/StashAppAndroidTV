@@ -93,8 +93,9 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                 dataType = dataType,
                 objectFilter = createObjectFilter(createCriterionInput(includeSubTags)),
             )
-        fragment.subTagSwitchInitialIsChecked = includeSubTags
-        fragment.subTagSwitchCheckedListener = { isChecked ->
+        fragment.subContentSwitchInitialIsChecked = includeSubTags
+        fragment.subContentText = getString(R.string.stashapp_include_sub_tag_content)
+        fragment.subContentSwitchCheckedListener = { isChecked ->
             val newFilter =
                 fragment.filterArgs.copy(
                     objectFilter =
