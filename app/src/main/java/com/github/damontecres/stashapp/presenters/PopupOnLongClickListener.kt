@@ -17,6 +17,9 @@ class PopupOnLongClickListener(
     private val popupItemClickListener: AdapterView.OnItemClickListener,
 ) : OnLongClickListener {
     override fun onLongClick(view: View): Boolean {
+        if (popupOptions.isEmpty()) {
+            return true
+        }
         val listPopUp =
             ListPopupWindow(
                 view.context,

@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
+import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 
@@ -41,6 +42,10 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
         favoriteButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
         favoriteButton.isFocusable = true
         ratingBar = view.findViewById(R.id.rating_bar)
+        if (readOnlyModeEnabled()) {
+            favoriteButton.isFocusable = false
+            ratingBar.disable()
+        }
 
         val server = StashServer.requireCurrentServer()
         queryEngine = QueryEngine(server)

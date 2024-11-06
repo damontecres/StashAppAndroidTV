@@ -48,6 +48,7 @@ import com.github.damontecres.stashapp.util.StashPreviewLoader
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.rubensousa.previewseekbar.PreviewBar
@@ -237,27 +238,8 @@ abstract class PlaybackFragment(
             oCounterText.text = getString(R.string.zero)
         }
 
-        oCounterButton.setOnClickListener {
-            viewLifecycleOwner.lifecycleScope.launch(
-                StashCoroutineExceptionHandler(
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.failed_o_counter),
-                        Toast.LENGTH_SHORT,
-                    ),
-                ),
-            ) {
-                val newCounter = mutationEngine.incrementOCounter(scene.id)
-                oCounterText.text = newCounter.count.toString()
-            }
-        }
-        oCounterButton.setOnLongClickListener(
-            PopupOnLongClickListener(
-                listOf(
-                    "Decrement",
-                    "Reset",
-                ),
-            ) { _: AdapterView<*>, _: View, popUpItemPosition: Int, id: Long ->
+        if (readOnlyModeDisabled()) {
+            oCounterButton.setOnClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(
                         Toast.makeText(
@@ -267,32 +249,53 @@ abstract class PlaybackFragment(
                         ),
                     ),
                 ) {
-                    when (popUpItemPosition) {
-                        0 -> {
-                            // Decrement
-                            val newCount = mutationEngine.decrementOCounter(scene.id)
-                            if (newCount.count > 0) {
-                                oCounterText.text = newCount.count.toString()
-                            } else {
+                    val newCounter = mutationEngine.incrementOCounter(scene.id)
+                    oCounterText.text = newCounter.count.toString()
+                }
+            }
+            oCounterButton.setOnLongClickListener(
+                PopupOnLongClickListener(
+                    listOf(
+                        "Decrement",
+                        "Reset",
+                    ),
+                ) { _: AdapterView<*>, _: View, popUpItemPosition: Int, id: Long ->
+                    viewLifecycleOwner.lifecycleScope.launch(
+                        StashCoroutineExceptionHandler(
+                            Toast.makeText(
+                                requireContext(),
+                                getString(R.string.failed_o_counter),
+                                Toast.LENGTH_SHORT,
+                            ),
+                        ),
+                    ) {
+                        when (popUpItemPosition) {
+                            0 -> {
+                                // Decrement
+                                val newCount = mutationEngine.decrementOCounter(scene.id)
+                                if (newCount.count > 0) {
+                                    oCounterText.text = newCount.count.toString()
+                                } else {
+                                    oCounterText.text = getString(R.string.zero)
+                                }
+                            }
+
+                            1 -> {
+                                // Reset
+                                mutationEngine.resetOCounter(scene.id)
                                 oCounterText.text = getString(R.string.zero)
                             }
-                        }
 
-                        1 -> {
-                            // Reset
-                            mutationEngine.resetOCounter(scene.id)
-                            oCounterText.text = getString(R.string.zero)
+                            else ->
+                                Log.w(
+                                    TAG,
+                                    "Unknown position for oCounterButton.setOnLongClickListener: $popUpItemPosition",
+                                )
                         }
-
-                        else ->
-                            Log.w(
-                                TAG,
-                                "Unknown position for oCounterButton.setOnLongClickListener: $popUpItemPosition",
-                            )
                     }
-                }
-            },
-        )
+                },
+            )
+        }
 
         updatePreviewLoader(scene)
         filterViewModel.maybeGetSavedFilter(scene.id)
@@ -470,7 +473,10 @@ abstract class PlaybackFragment(
                         }
                     }
 
-                    if (optionsButtonOptions.dataType == DataType.SCENE && !optionsButtonOptions.isPlayList) {
+                    if (optionsButtonOptions.dataType == DataType.SCENE &&
+                        !optionsButtonOptions.isPlayList &&
+                        readOnlyModeDisabled()
+                    ) {
                         add("Create Marker")
                         callbacks[size - 1] = {
                             // Save current playback state

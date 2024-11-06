@@ -64,8 +64,16 @@ class MutationEngine(
     server: StashServer,
     client: ApolloClient = StashClient.getApolloClient(server),
 ) : StashEngine(server, client) {
-    suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> =
+    private val readOnlyMode = readOnlyModeEnabled()
+
+    suspend fun <D : Mutation.Data> executeMutation(
+        mutation: Mutation<D>,
+        overrideReadOnly: Boolean = false,
+    ): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
+            if (!overrideReadOnly && readOnlyMode) {
+                throw IllegalStateException("Read only mode enabled!")
+            }
             val mutationName = mutation.name()
             val id = MUTATION_ID.getAndIncrement()
 
@@ -108,14 +116,14 @@ class MutationEngine(
                 resume_time = resumeTime,
                 play_duration = playDuration,
             )
-        val result = executeMutation(mutation)
+        val result = executeMutation(mutation, true)
         return result.data!!.sceneSaveActivity
     }
 
     suspend fun incrementPlayCount(sceneId: String): Int {
         Log.v(TAG, "incrementPlayCount on $sceneId")
         val mutation = SceneAddPlayCountMutation(sceneId, emptyList())
-        val result = executeMutation(mutation)
+        val result = executeMutation(mutation, true)
         return result.data!!.sceneAddPlay.count
     }
 

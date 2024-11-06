@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="pref_key_salt">salt</string>
     <string name="pref_key_pin_code" translatable="false">pinCode</string>
     <string name="pref_key_pin_code_auto" translatable="false">pinCodeAuto</string>
     <string name="pref_key_trust_certs" translatable="false">trustAllCerts</string>
@@ -28,4 +29,7 @@
     <string name="pref_key_ui_remember_tab" translatable="false">ui.rememberTab</string>
     <string name="pref_key_ui_card_overlay_delay" translatable="false">ui.card.delayVideoDuration</string>
     <integer name="pref_key_ui_card_overlay_delay_default">1000</integer>
+
+    <string name="pref_key_read_only_mode">readOnlyMode</string>
+    <string name="pref_key_read_only_mode_pin">readOnlyMode.pinCode</string>
 </resources>

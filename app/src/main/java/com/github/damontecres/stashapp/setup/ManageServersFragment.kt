@@ -8,9 +8,11 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 
-class ManageServersFragment : GuidedStepSupportFragment() {
+class ManageServersFragment(private val overrideReadOnly: Boolean = false) :
+    GuidedStepSupportFragment() {
     private val viewModel: ServerViewModel by activityViewModels()
 
     private var currentServer: StashServer? = null
@@ -47,13 +49,15 @@ class ManageServersFragment : GuidedStepSupportFragment() {
                 allServers
             }
 
-        actions.add(
-            GuidedAction.Builder(requireContext())
-                .id(ACTION_ADD_SERVER)
-                .title("Add a new server")
-                .hasNext(true)
-                .build(),
-        )
+        if (overrideReadOnly || readOnlyModeDisabled()) {
+            actions.add(
+                GuidedAction.Builder(requireContext())
+                    .id(ACTION_ADD_SERVER)
+                    .title("Add a new server")
+                    .hasNext(true)
+                    .build(),
+            )
+        }
 
         if (otherServers.isNotEmpty()) {
             val switchActions =
@@ -61,7 +65,6 @@ class ManageServersFragment : GuidedStepSupportFragment() {
                     GuidedAction.Builder(requireContext())
                         .id(ACTION_SWITCH_OFFSET + i)
                         .title(server.url)
-//                .hasNext(true)
                         .build()
                 }
             actions.add(
@@ -72,21 +75,22 @@ class ManageServersFragment : GuidedStepSupportFragment() {
                     .build(),
             )
 
-            val removeActions =
-                otherServers.mapIndexed { i, server ->
+            if (overrideReadOnly || readOnlyModeDisabled()) {
+                val removeActions =
+                    otherServers.mapIndexed { i, server ->
+                        GuidedAction.Builder(requireContext())
+                            .id(ACTION_REMOVE_OFFSET + i)
+                            .title(server.url)
+                            .build()
+                    }
+                actions.add(
                     GuidedAction.Builder(requireContext())
-                        .id(ACTION_REMOVE_OFFSET + i)
-                        .title(server.url)
-//                .hasNext(true)
-                        .build()
-                }
-            actions.add(
-                GuidedAction.Builder(requireContext())
-                    .id(ACTION_REMOVE_OFFSET - 1)
-                    .title("Remove a server")
-                    .subActions(removeActions)
-                    .build(),
-            )
+                        .id(ACTION_REMOVE_OFFSET - 1)
+                        .title("Remove a server")
+                        .subActions(removeActions)
+                        .build(),
+                )
+            }
         }
     }
 
