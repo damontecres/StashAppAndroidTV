@@ -49,6 +49,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
+import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.rubensousa.previewseekbar.PreviewBar
@@ -237,8 +238,9 @@ abstract class PlaybackFragment(
         } else {
             oCounterText.text = getString(R.string.zero)
         }
-
-        if (readOnlyModeDisabled()) {
+        if (readOnlyModeEnabled()) {
+            oCounterButton.isEnabled = false
+        } else {
             oCounterButton.setOnClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(

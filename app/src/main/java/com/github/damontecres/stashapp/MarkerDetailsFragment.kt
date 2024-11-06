@@ -382,7 +382,9 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             item: TagData,
         ): List<StashPresenter.PopUpItem> {
             val items = super.getPopUpItems(context, item).toMutableList()
-            items.add(StashPresenter.PopUpItem(REPLACE_PRIMARY_ID, getString(R.string.replace)))
+            if (readOnlyModeDisabled()) {
+                items.add(StashPresenter.PopUpItem(REPLACE_PRIMARY_ID, getString(R.string.replace)))
+            }
             return items
         }
 
