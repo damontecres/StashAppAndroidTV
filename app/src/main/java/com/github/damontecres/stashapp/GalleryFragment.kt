@@ -28,6 +28,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
@@ -64,50 +65,53 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                     modifier = CriterionModifier.INCLUDES_ALL,
                 ),
             )
-        viewModel.tabs.value =
-            listOf(
-                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
-                    GalleryDetailsFragment(gallery)
-                },
-                StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
-                    StashGridFragment(
-                        dataType = DataType.IMAGE,
-                        objectFilter = ImageFilterType(galleries = galleries),
-                    ).withImageGridClickListener()
-                },
-                StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
-                    StashGridFragment(
-                        dataType = DataType.SCENE,
-                        objectFilter = SceneFilterType(galleries = galleries),
-                    )
-                },
-                StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER) {
-                    val presenter =
-                        ClassPresenterSelector().addClassPresenter(
-                            PerformerData::class.java,
-                            PerformerInScenePresenter(gallery.date),
+        viewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            viewModel.tabs.value =
+                listOf(
+                    StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
+                        GalleryDetailsFragment(gallery)
+                    },
+                    StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
+                        StashGridFragment(
+                            dataType = DataType.IMAGE,
+                            findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.GALLERY_IMAGES).findFilter,
+                            objectFilter = ImageFilterType(galleries = galleries),
+                        ).withImageGridClickListener()
+                    },
+                    StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
+                        StashGridFragment(
+                            dataType = DataType.SCENE,
+                            objectFilter = SceneFilterType(galleries = galleries),
                         )
-                    val fragment =
+                    },
+                    StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER) {
+                        val presenter =
+                            ClassPresenterSelector().addClassPresenter(
+                                PerformerData::class.java,
+                                PerformerInScenePresenter(gallery.date),
+                            )
+                        val fragment =
+                            StashGridFragment(
+                                filterArgs =
+                                    FilterArgs(
+                                        DataType.PERFORMER,
+                                        override = DataSupplierOverride.GalleryPerformer(gallery.id),
+                                    ),
+                            )
+                        fragment.presenterSelector = presenter
+                        fragment
+                    },
+                    StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
                         StashGridFragment(
                             filterArgs =
                                 FilterArgs(
-                                    DataType.PERFORMER,
-                                    override = DataSupplierOverride.GalleryPerformer(gallery.id),
+                                    DataType.TAG,
+                                    override = DataSupplierOverride.GalleryTag(gallery.id),
                                 ),
                         )
-                    fragment.presenterSelector = presenter
-                    fragment
-                },
-                StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
-                    StashGridFragment(
-                        filterArgs =
-                            FilterArgs(
-                                DataType.TAG,
-                                override = DataSupplierOverride.GalleryTag(gallery.id),
-                            ),
-                    )
-                },
-            ).filter { it.title in getUiTabs(requireContext(), DataType.GALLERY) }
+                    },
+                ).filter { it.title in getUiTabs(requireContext(), DataType.GALLERY) }
+        }
     }
 
     class GalleryDetailsFragment() : Fragment(R.layout.gallery_view) {
