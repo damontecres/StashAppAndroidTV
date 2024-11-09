@@ -67,9 +67,9 @@ class ReadOnlyPinEntryFragment(private val callback: () -> Unit) : GuidedStepSup
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
             val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            val enteredPIN = findActionById(ACTION_PIN).editDescription.toString().toIntOrNull()
-            // TODO
-            if (preferences.getInt(getString(R.string.pref_key_read_only_mode_pin), 111) == enteredPIN) {
+            val enteredPIN = findActionById(ACTION_PIN).editDescription.toString().ifBlank { null }
+            val pin = preferences.getString(getString(R.string.pref_key_read_only_mode_pin), null)
+            if (enteredPIN != null && pin == enteredPIN) {
                 callback()
             } else {
                 Toast.makeText(requireContext(), "Incorrect PIN", Toast.LENGTH_SHORT).show()
