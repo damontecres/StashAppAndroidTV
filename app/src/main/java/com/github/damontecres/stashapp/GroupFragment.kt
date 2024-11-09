@@ -12,6 +12,7 @@ import com.github.damontecres.stashapp.data.Group
 import com.github.damontecres.stashapp.data.GroupRelationshipType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.getUiTabs
@@ -30,7 +31,10 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
     ) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            val groupSceneFilter = server.serverPreferences.defaultGroupSceneFilter
+            val groupSceneFilter =
+                server.serverPreferences.getDefaultFilter(PageFilterKey.GROUP_SCENES)
+            val subGroupFilter =
+                server.serverPreferences.getDefaultFilter(PageFilterKey.GROUP_SUB_GROUPS)
             viewModel.tabs.value =
                 listOf(
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
@@ -92,6 +96,7 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                             ),
                         )
                     },
+                    // TODO use subgroup filter
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_sub_groups)) {
                         StashGridFragment(
                             FilterArgs(

@@ -6,11 +6,7 @@ import android.util.Log
 import androidx.core.content.edit
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ConfigurationQuery
-import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.SortAndDirection
-import com.github.damontecres.stashapp.data.SortOption
-import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 
@@ -60,18 +56,7 @@ class ServerPreferences(val server: StashServer) {
 
     private val _defaultFilters = mutableMapOf<DataType, FilterArgs>()
     val defaultFilters: Map<DataType, FilterArgs> = _defaultFilters
-    var defaultGroupSceneFilter: FilterArgs =
-        FilterArgs(
-            DataType.SCENE,
-            findFilter =
-                StashFindFilter(
-                    SortAndDirection(
-                        SortOption.GROUP_SCENE_NUMBER,
-                        SortDirectionEnum.ASC,
-                    ),
-                ),
-        )
-        private set
+    private val defaultPageFilters = mutableMapOf<PageFilterKey, FilterArgs>()
 
     /**
      * Update the local preferences from the server configuration
@@ -187,16 +172,25 @@ class ServerPreferences(val server: StashServer) {
             _defaultFilters[dataType] = filter
         }
 
-        val groupSceneFilterMap =
-            defaultFilters?.getCaseInsensitive("group_scenes") as Map<String, *>?
-        if (groupSceneFilterMap != null) {
-            try {
-                defaultGroupSceneFilter =
-                    filterParser.convertFilterMap(DataType.SCENE, groupSceneFilterMap)
-            } catch (ex: Exception) {
-                Log.w(TAG, "default filter parse error for group_scenes", ex)
-            }
+        PageFilterKey.entries.forEach { key ->
+            val filterMap =
+                defaultFilters?.getCaseInsensitive(key.prefKey) as Map<String, *>?
+            defaultPageFilters[key] =
+                if (filterMap != null) {
+                    try {
+                        filterParser.convertFilterMap(key.dataType, filterMap)
+                    } catch (ex: Exception) {
+                        Log.w(TAG, "default filter parse error for $key", ex)
+                        FilterArgs(key.dataType)
+                    }
+                } else {
+                    FilterArgs(key.dataType)
+                }
         }
+    }
+
+    fun getDefaultFilter(page: PageFilterKey): FilterArgs {
+        return defaultPageFilters[page] ?: FilterArgs(page.dataType)
     }
 
     private fun parseScan(
