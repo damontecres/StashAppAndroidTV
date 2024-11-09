@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.setup
 
 import android.os.Bundle
+import android.text.InputType
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
@@ -22,7 +23,6 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
     private var serverApiKey: CharSequence? = null
 
     private lateinit var guidedActionsServerUrl: GuidedAction
-    private lateinit var guidedActionsServerApiKey: GuidedAction
     private lateinit var guidedActionSubmit: GuidedAction
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,17 +32,6 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                     .id(SetupActivity.ACTION_SERVER_URL)
                     .title("Stash Server URL")
                     .descriptionEditable(true)
-                    .build()
-
-            guidedActionsServerApiKey =
-                GuidedAction.Builder(requireContext())
-                    .id(SetupActivity.ACTION_SERVER_API_KEY)
-                    .title("Stash Server API Key")
-                    .description("API key not set")
-                    .editDescription("")
-                    .descriptionEditable(true)
-                    .enabled(false)
-                    .focusable(false)
                     .build()
 
             guidedActionSubmit =
@@ -79,11 +68,20 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
         super.onCreateActions(actions, savedInstanceState)
 
         actions.add(guidedActionsServerUrl)
-        actions.add(guidedActionsServerApiKey)
+        actions.add(createApiKeyAction())
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(SetupActivity.ACTION_PASSWORD_VISIBLE)
+                .title("API Key visible")
+                .checked(false)
+                .checkSetId(GuidedAction.CHECKBOX_CHECK_SET_ID)
+                .build(),
+        )
         actions.add(guidedActionSubmit)
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
+        val guidedActionsServerApiKey = findActionById(SetupActivity.ACTION_SERVER_API_KEY)
         if (action.id == SetupActivity.ACTION_SERVER_URL) {
             serverUrl = action.description
             guidedActionsServerApiKey.editDescription = ""
@@ -160,6 +158,49 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                     ).show()
                 }
             }
+        } else if (action.id == SetupActivity.ACTION_PASSWORD_VISIBLE) {
+            val newGuidedActionsServerApiKey = createApiKeyAction(action.isChecked)
+            val newActions =
+                listOf(
+                    actions[0],
+                    newGuidedActionsServerApiKey,
+                    actions[2],
+                    actions[3],
+                )
+            super.setActionsDiffCallback(null)
+            actions = newActions
         }
+    }
+
+    private fun createApiKeyAction(isChecked: Boolean = false): GuidedAction {
+        val passwordInputType =
+            if (isChecked) {
+                InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            } else {
+                InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+        val action = findActionById(SetupActivity.ACTION_SERVER_API_KEY)
+
+        return GuidedAction.Builder(requireContext())
+            .id(SetupActivity.ACTION_SERVER_API_KEY)
+            .title("Stash Server API Key")
+            .description(
+                if (serverApiKey.isNotNullOrBlank()) {
+                    "API key set"
+                } else {
+                    "API key not set"
+                },
+            )
+            .editDescription(serverApiKey)
+            .descriptionEditable(true)
+            .descriptionEditInputType(
+                InputType.TYPE_CLASS_TEXT or
+                    InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+                    passwordInputType,
+            )
+            .multilineDescription(true)
+            .enabled(action?.isEnabled ?: false)
+            .focusable(action?.isFocusable ?: false)
+            .build()
     }
 }
