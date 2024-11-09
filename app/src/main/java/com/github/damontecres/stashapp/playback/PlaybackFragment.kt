@@ -629,8 +629,11 @@ abstract class PlaybackFragment(
     }
 
     protected fun maybeAddActivityTracking(exoPlayer: ExoPlayer) {
+        val appTracking =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_playback_track_activity), true)
         val server = StashServer.requireCurrentServer()
-        if (server.serverPreferences.trackActivity && currentScene != null) {
+        if (appTracking && server.serverPreferences.trackActivity && currentScene != null) {
             Log.v(TAG, "Adding TrackActivityPlaybackListener")
             trackActivityListener =
                 TrackActivityPlaybackListener(

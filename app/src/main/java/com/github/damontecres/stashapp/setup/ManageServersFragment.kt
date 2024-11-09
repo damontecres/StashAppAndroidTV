@@ -49,16 +49,6 @@ class ManageServersFragment(private val overrideReadOnly: Boolean = false) :
                 allServers
             }
 
-        if (overrideReadOnly || readOnlyModeDisabled()) {
-            actions.add(
-                GuidedAction.Builder(requireContext())
-                    .id(ACTION_ADD_SERVER)
-                    .title("Add a new server")
-                    .hasNext(true)
-                    .build(),
-            )
-        }
-
         if (otherServers.isNotEmpty()) {
             val switchActions =
                 otherServers.mapIndexed { i, server ->
@@ -74,8 +64,17 @@ class ManageServersFragment(private val overrideReadOnly: Boolean = false) :
                     .subActions(switchActions)
                     .build(),
             )
+        }
 
-            if (overrideReadOnly || readOnlyModeDisabled()) {
+        if (overrideReadOnly || readOnlyModeDisabled()) {
+            actions.add(
+                GuidedAction.Builder(requireContext())
+                    .id(ACTION_ADD_SERVER)
+                    .title("Add a new server")
+                    .hasNext(true)
+                    .build(),
+            )
+            if (otherServers.isNotEmpty()) {
                 val removeActions =
                     otherServers.mapIndexed { i, server ->
                         GuidedAction.Builder(requireContext())

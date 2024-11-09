@@ -22,7 +22,7 @@ class ReadOnlyPinConfigFragment : GuidedStepSupportFragment() {
             "Read Only Mode",
             """Enabling this will prevent the app from making any server side changes.
                 |
-                |If Scene Play history is enabled, that will still be saved to the server.
+                |If Scene Play history is enabled on the server and in app, then it will still be saved to the server.
                 |
                 |Additionally, the PIN will be required to change any app settings.
             """.trimMargin(),
