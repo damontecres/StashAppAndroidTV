@@ -81,6 +81,17 @@ class AppUpgradeHandler(
                 ),
             )
         }
+        if (previousVersion == Version.fromString("v0.5.2-8-gc2c5e6f")) {
+            val key = context.getString(R.string.pref_key_read_only_mode_pin)
+            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+            val readOnlyPin = preferences.getInt(key, -1)
+            if (readOnlyPin >= 0) {
+                preferences.edit(true) {
+                    remove(key)
+                    putString(key, readOnlyPin.toString())
+                }
+            }
+        }
     }
 
     private fun SharedPreferences.ensureSetHas(

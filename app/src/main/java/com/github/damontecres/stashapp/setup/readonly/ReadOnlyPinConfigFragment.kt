@@ -78,10 +78,10 @@ class ReadOnlyPinConfigFragment : GuidedStepSupportFragment() {
             }
         } else if (action.id == ACTION_CONFIRM_PIN) {
             if (action.editDescription.isNotNullOrBlank()) {
-                val pinCode = findActionById(ACTION_PIN).editDescription.toString().toIntOrNull()
-                val confirmPin = action.editDescription.toString().toIntOrNull()
+                val pinCode = findActionById(ACTION_PIN).editDescription.toString().ifBlank { null }
+                val confirmPin = action.editDescription.toString().ifBlank { null }
 
-                if (pinCode != confirmPin) {
+                if (pinCode == null || pinCode != confirmPin) {
                     Toast.makeText(requireContext(), "PINs do not match!", Toast.LENGTH_SHORT)
                         .show()
                     okAction.isEnabled = false
@@ -99,12 +99,12 @@ class ReadOnlyPinConfigFragment : GuidedStepSupportFragment() {
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
-            val pin = findActionById(ACTION_PIN).editDescription.toString().toIntOrNull()
+            val pin = findActionById(ACTION_PIN).editDescription.toString().ifBlank { null }
             val confirmPin =
-                findActionById(ACTION_CONFIRM_PIN).editDescription.toString().toIntOrNull()
+                findActionById(ACTION_CONFIRM_PIN).editDescription.toString().ifBlank { null }
             if (pin == confirmPin && pin != null) {
                 PreferenceManager.getDefaultSharedPreferences(requireContext()).edit(true) {
-                    putInt(getString(R.string.pref_key_read_only_mode_pin), pin)
+                    putString(getString(R.string.pref_key_read_only_mode_pin), pin)
                     putBoolean(getString(R.string.pref_key_read_only_mode), true)
                 }
                 parentFragmentManager.popBackStack()
