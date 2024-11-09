@@ -46,7 +46,14 @@ class StashApplication : Application() {
             buildConfigClass = BuildConfig::class.java
             reportFormat = StringFormat.JSON
             excludeMatchingSharedPreferencesKeys =
-                listOf("^stashApiKey$", "^stashUrl$", "^server_.*", "^apikey_.*", "^pinCode$")
+                listOf(
+                    "^stashApiKey$",
+                    "^stashUrl$",
+                    "^server_.*",
+                    "^apikey_.*",
+                    "^pinCode$",
+                    "^readOnlyMode\\.pinCode$",
+                )
             reportContent =
                 listOf(
                     ReportField.ANDROID_VERSION,

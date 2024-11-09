@@ -14,6 +14,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -133,11 +134,18 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         constructor(id: Int, text: String) : this(id.toLong(), text)
 
         companion object {
+            const val DEFAULT_ID = -1L
+            const val REMOVE_ID = -2L
+
             fun getDefault(context: Context): PopUpItem {
                 return PopUpItem(DEFAULT_ID, context.getString(R.string.go_to))
             }
 
-            const val DEFAULT_ID = 0L
+            val REMOVE_POPUP_ITEM =
+                PopUpItem(
+                    REMOVE_ID,
+                    StashApplication.getApplication().getString(R.string.stashapp_actions_remove),
+                )
         }
     }
 

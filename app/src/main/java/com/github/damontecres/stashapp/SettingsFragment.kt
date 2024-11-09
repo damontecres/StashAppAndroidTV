@@ -33,6 +33,7 @@ import com.github.damontecres.stashapp.api.type.JobStatus
 import com.github.damontecres.stashapp.api.type.JobStatusUpdateType
 import com.github.damontecres.stashapp.data.JobResult
 import com.github.damontecres.stashapp.setup.ManageServersFragment
+import com.github.damontecres.stashapp.setup.readonly.ReadOnlyPinConfigFragment
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -59,7 +60,12 @@ import java.io.File
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
-        startPreferenceFragment(PreferencesFragment(::startPreferenceFragment))
+        startPreferenceFragment(
+            PreferencesFragment(
+                ::startPreferenceFragment,
+                ::startImmersiveFragment,
+            ),
+        )
     }
 
     override fun onPreferenceStartFragment(
@@ -88,7 +94,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         caller: PreferenceFragmentCompat,
         pref: PreferenceScreen,
     ): Boolean {
-        val fragment: Fragment = PreferencesFragment(::startPreferenceFragment)
+        val fragment: Fragment =
+            PreferencesFragment(::startPreferenceFragment, ::startImmersiveFragment)
         val args = Bundle(1)
         args.putString(PreferenceFragmentCompat.ARG_PREFERENCE_ROOT, pref.key)
         fragment.arguments = args
@@ -110,7 +117,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         }
     }
 
-    class PreferencesFragment(val startPreferenceFragmentFunc: (fragment: LeanbackPreferenceFragmentCompat) -> Unit) :
+    class PreferencesFragment(
+        val startPreferenceFragmentFunc: (fragment: LeanbackPreferenceFragmentCompat) -> Unit,
+        val startImmersiveFunc: (fragment: Fragment) -> Unit,
+    ) :
         LeanbackPreferenceFragmentCompat() {
         private val viewModel: ServerViewModel by activityViewModels()
         private var subscriptionJob: Job? = null
@@ -138,7 +148,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             manageServers!!.setOnPreferenceClickListener {
                 GuidedStepSupportFragment.add(
                     requireActivity().supportFragmentManager,
-                    ManageServersFragment(),
+                    ManageServersFragment(overrideReadOnly = true),
                 )
                 true
             }
@@ -152,6 +162,15 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         "PIN is set"
                     }
                 }
+
+            val readOnlyModePref =
+                findPreference<SwitchPreference>(getString(R.string.pref_key_read_only_mode))!!
+            readOnlyModePref.setOnPreferenceChangeListener { _, newValue ->
+                if (newValue == true) {
+                    startImmersiveFunc(ReadOnlyPinConfigFragment())
+                }
+                newValue == false
+            }
 
             val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
             val versionPref = findPreference<Preference>("versionName")!!
@@ -235,6 +254,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             view: View,
             savedInstanceState: Bundle?,
         ) {
+            Log.v(TAG, "onViewCreated: savedInstanceState==null: ${savedInstanceState == null}")
             super.onViewCreated(view, savedInstanceState)
             setTitle(getString(R.string.stashapp_settings))
 
@@ -331,6 +351,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         private fun refresh(currentServer: StashServer) {
             Log.v(TAG, "refresh")
             findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer.url
+
+            findPreference<SwitchPreference>(getString(R.string.pref_key_read_only_mode))!!.isChecked =
+                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .getBoolean(getString(R.string.pref_key_read_only_mode), false)
 
             val queryEngine = QueryEngine(currentServer)
 

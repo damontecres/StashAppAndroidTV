@@ -24,6 +24,7 @@ import com.github.damontecres.stashapp.util.experimentalFeaturesEnabled
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.formatNumber
 import kotlinx.coroutines.launch
 
@@ -102,26 +103,28 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .description(if (count >= 0) "$countStr results" else "Querying...")
                 .build(),
         )
-        if (experimental) {
-            actions.add(
-                GuidedAction.Builder(requireContext())
-                    .id(SAVE_SUBMIT)
-                    .hasNext(true)
-                    .enabled(false)
-                    .title("Save and submit")
-                    .description(getString(R.string.save_and_submit_no_name_desc))
-                    .build(),
-            )
-        } else {
-            actions.add(
-                GuidedAction.Builder(requireContext())
-                    .id(SAVE_SUBMIT)
-                    .hasNext(true)
-                    .enabled(false)
-                    .title("Save and submit")
-                    .description(getString(R.string.save_and_submit_not_enabled))
-                    .build(),
-            )
+        if (readOnlyModeDisabled()) {
+            if (experimental) {
+                actions.add(
+                    GuidedAction.Builder(requireContext())
+                        .id(SAVE_SUBMIT)
+                        .hasNext(true)
+                        .enabled(false)
+                        .title("Save and submit")
+                        .description(getString(R.string.save_and_submit_no_name_desc))
+                        .build(),
+                )
+            } else {
+                actions.add(
+                    GuidedAction.Builder(requireContext())
+                        .id(SAVE_SUBMIT)
+                        .hasNext(true)
+                        .enabled(false)
+                        .title("Save and submit")
+                        .description(getString(R.string.save_and_submit_not_enabled))
+                        .build(),
+                )
+            }
         }
     }
 

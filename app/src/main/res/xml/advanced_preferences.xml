@@ -102,6 +102,12 @@
             app:summaryOn="Show title &amp; date"
             app:summaryOff="Hide title &amp; date"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_track_activity"
+            app:title="Save play history"
+            app:summaryOn="Save if also enabled on server"
+            app:summaryOff="Don't save any history"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Scene Video Filters">

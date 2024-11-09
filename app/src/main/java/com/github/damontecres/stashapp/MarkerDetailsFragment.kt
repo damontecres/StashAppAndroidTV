@@ -53,6 +53,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.convertDpToPixel
 import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashRatingBar
@@ -201,10 +202,13 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
 
         sceneActionsAdapter.set(1, StashAction.ADD_TAG)
         sceneActionsAdapter.set(2, StashAction.SHIFT_MARKERS)
-        mAdapter.set(
-            ACTIONS_POS,
-            ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
-        )
+
+        if (readOnlyModeDisabled()) {
+            mAdapter.set(
+                ACTIONS_POS,
+                ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
+            )
+        }
 
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
             pendingJob?.join()
@@ -378,7 +382,9 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             item: TagData,
         ): List<StashPresenter.PopUpItem> {
             val items = super.getPopUpItems(context, item).toMutableList()
-            items.add(StashPresenter.PopUpItem(REPLACE_PRIMARY_ID, getString(R.string.replace)))
+            if (readOnlyModeDisabled()) {
+                items.add(StashPresenter.PopUpItem(REPLACE_PRIMARY_ID, getString(R.string.replace)))
+            }
             return items
         }
 
@@ -410,12 +416,9 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             item: TagData,
         ): List<StashPresenter.PopUpItem> {
             val items = super.getPopUpItems(context, item).toMutableList()
-            items.add(
-                StashPresenter.PopUpItem(
-                    1000L,
-                    getString(R.string.stashapp_actions_remove),
-                ),
-            )
+            if (readOnlyModeDisabled()) {
+                items.add(StashPresenter.PopUpItem.REMOVE_POPUP_ITEM)
+            }
             return items
         }
 
@@ -425,7 +428,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             popUpItem: StashPresenter.PopUpItem,
         ) {
             when (popUpItem.id) {
-                1000L -> {
+                StashPresenter.PopUpItem.REMOVE_ID -> {
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
                             Log.e(TAG, "Exception setting tags", ex)

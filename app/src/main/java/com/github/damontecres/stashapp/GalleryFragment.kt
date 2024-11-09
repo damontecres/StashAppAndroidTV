@@ -38,6 +38,7 @@ import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
@@ -164,16 +165,24 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                 }
 
                 ratingBar.rating100 = galleryData.rating100 ?: 0
-                ratingBar.setRatingCallback { rating100 ->
-                    val mutationEngine =
-                        MutationEngine(StashServer.requireCurrentServer())
-                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
-                        val result = mutationEngine.updateGallery(galleryData.id, rating100)
-                        if (result != null) {
-                            ratingBar.rating100 = result.rating100 ?: 0
-                            showSetRatingToast(requireContext(), rating100, ratingBar.ratingAsStars)
+                if (readOnlyModeDisabled()) {
+                    ratingBar.setRatingCallback { rating100 ->
+                        val mutationEngine =
+                            MutationEngine(StashServer.requireCurrentServer())
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
+                            val result = mutationEngine.updateGallery(galleryData.id, rating100)
+                            if (result != null) {
+                                ratingBar.rating100 = result.rating100 ?: 0
+                                showSetRatingToast(
+                                    requireContext(),
+                                    rating100,
+                                    ratingBar.ratingAsStars,
+                                )
+                            }
                         }
                     }
+                } else {
+                    ratingBar.disable()
                 }
             }
         }

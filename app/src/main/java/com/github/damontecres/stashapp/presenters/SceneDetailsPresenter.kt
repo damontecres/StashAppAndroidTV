@@ -8,6 +8,7 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.StashRatingBar
@@ -126,6 +127,10 @@ class SceneDetailsPresenter(val ratingCallback: StashRatingBar.RatingCallback) :
 
         val ratingBar = viewHolder.view.findViewById<StashRatingBar>(R.id.rating_bar)
         ratingBar.rating100 = scene.rating100 ?: 0
-        ratingBar.setRatingCallback(ratingCallback)
+        if (readOnlyModeDisabled()) {
+            ratingBar.setRatingCallback(ratingCallback)
+        } else {
+            ratingBar.disable()
+        }
     }
 }

@@ -37,3 +37,9 @@ If you get compile errors such as `java.nio.file.NoSuchFileException: .../StashA
 This project uses [`Glide`](https://github.com/bumptech/glide) for image loading. However, developers should use the `StashGlide` class which handles setting some defaults related to caching.
 
 For example: `Glide.with(context).load(url)` should be `StashGlide.with(context, url)`
+
+### Read only mode
+
+All mutation should be performed using the `MutationEngine` which helps ensure that the read only mode is respected by blocking any mutations.
+
+But for better UI/UX, buttons and other controls that would trigger a mutation should be removed or disabled if read only mode is enabled. This can be checked with `com.github.damontecres.stashapp.util.ConstantsKt#readOnlyModeEnabled`.
