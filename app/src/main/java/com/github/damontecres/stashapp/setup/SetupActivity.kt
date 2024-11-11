@@ -34,6 +34,7 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
     companion object {
         const val ACTION_SERVER_URL = 98L
         const val ACTION_SERVER_API_KEY = 99L
+        const val ACTION_PASSWORD_VISIBLE = 100L
     }
 
     open class SimpleGuidedStepSupportFragment : GuidedStepSupportFragment() {

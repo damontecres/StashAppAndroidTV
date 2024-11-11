@@ -32,6 +32,11 @@
             app:title="Auto submit PIN"
             app:summary="Submit PIN automatically when typed"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_read_only_mode"
+            app:title="Read Only Mode"
+            app:defaultValue="false"
+            />
 
         <ListPreference
             app:key="cardSize"

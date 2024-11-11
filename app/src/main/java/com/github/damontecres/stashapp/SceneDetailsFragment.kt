@@ -61,6 +61,7 @@ import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.SceneDetailsPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem.Companion.REMOVE_POPUP_ITEM
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.Constants
@@ -75,6 +76,7 @@ import com.github.damontecres.stashapp.util.asSlimTagData
 import com.github.damontecres.stashapp.util.asVideoSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
@@ -296,18 +298,20 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         adapter = mAdapter
         initializeBackground()
 
-        sceneActionsAdapter.set(
-            O_COUNTER_POS,
-            OCounter(
-                sceneId,
-                sceneData?.o_counter ?: 0,
-            ),
-        )
-        sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
-        sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
-        sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
-        sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
-        sceneActionsAdapter.set(ADD_GROUP_POS, StashAction.ADD_GROUP)
+        if (readOnlyModeDisabled()) {
+            sceneActionsAdapter.set(
+                O_COUNTER_POS,
+                OCounter(
+                    sceneId,
+                    sceneData?.o_counter ?: 0,
+                ),
+            )
+            sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
+            sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
+            sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
+            sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
+            sceneActionsAdapter.set(ADD_GROUP_POS, StashAction.ADD_GROUP)
+        }
         sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
         sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
         sceneActionsAdapter.set(PLAY_EXTERNAL_POS, StashAction.PLAY_EXTERNAL)
@@ -836,7 +840,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             context: Context,
             item: T,
         ): List<StashPresenter.PopUpItem> {
-            return listOf(REMOVE_POPUP_ITEM)
+            return if (readOnlyModeDisabled()) {
+                listOf(REMOVE_POPUP_ITEM)
+            } else {
+                listOf()
+            }
         }
     }
 
@@ -1054,11 +1062,5 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val FORCE_TRANSCODE_POS = SET_STUDIO_POS + 1
         private const val FORCE_DIRECT_PLAY_POS = FORCE_TRANSCODE_POS + 1
         private const val PLAY_EXTERNAL_POS = FORCE_DIRECT_PLAY_POS + 1
-
-        val REMOVE_POPUP_ITEM =
-            StashPresenter.PopUpItem(
-                0L,
-                StashApplication.getApplication().getString(R.string.stashapp_actions_remove),
-            )
     }
 }

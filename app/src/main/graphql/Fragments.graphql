@@ -20,6 +20,8 @@ fragment TagData on Tag {
   gallery_count
   parent_count
   child_count
+  created_at
+  updated_at
 }
 
 fragment JobData on Job {

@@ -7,7 +7,7 @@
     android:weightSum="5">
 
     <ImageView
-        android:id="@+id/performer_image"
+        android:id="@+id/details_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="16dp"
@@ -16,7 +16,7 @@
         android:layout_weight="3" />
 
     <ScrollView
-        android:id="@+id/performer_scrollview"
+        android:id="@+id/details_scrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="8dp"
@@ -48,11 +48,19 @@
                 android:textSize="24sp"
                 android:textColor="@color/transparent_grey_25" />
 
-            <TableLayout
-                android:id="@+id/performer_table"
-                android:layout_width="match_parent"
+            <com.github.damontecres.stashapp.views.StashRatingBar
+                android:id="@+id/rating_bar"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 app:layout_constraintTop_toBottomOf="@id/favorite_button"
+                app:layout_constraintStart_toStartOf="parent"
+                android:background="@drawable/transparent_button_selector" />
+
+            <TableLayout
+                android:id="@+id/details_table"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/rating_bar"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layout_margin="4dp" />

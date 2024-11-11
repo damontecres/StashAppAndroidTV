@@ -42,6 +42,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -319,7 +320,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                         ListRow(HeaderItem(getString(R.string.results)), searchResultsAdapter),
                     )
                 } else {
-                    if (dataType in DATA_TYPE_ALLOW_CREATE) {
+                    if (dataType in DATA_TYPE_ALLOW_CREATE && readOnlyModeDisabled()) {
                         adapter.set(
                             RESULTS_POS,
                             ListRow(

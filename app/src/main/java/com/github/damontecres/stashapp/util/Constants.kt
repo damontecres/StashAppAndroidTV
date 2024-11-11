@@ -743,6 +743,16 @@ fun experimentalFeaturesEnabled(): Boolean {
         .getBoolean(context.getString(R.string.pref_key_experimental_features), false)
 }
 
+fun readOnlyModeEnabled(): Boolean {
+    val context = StashApplication.getApplication()
+    return PreferenceManager.getDefaultSharedPreferences(context)
+        .getBoolean(context.getString(R.string.pref_key_read_only_mode), false)
+}
+
+fun readOnlyModeDisabled(): Boolean {
+    return !readOnlyModeEnabled()
+}
+
 fun getUiTabs(
     context: Context,
     dataType: DataType,

@@ -10,7 +10,6 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo.api.Optional
@@ -29,6 +28,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
@@ -38,6 +38,7 @@ import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
@@ -52,7 +53,12 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
         viewModel.title.value = gallery.name
     }
 
-    override fun getPagerAdapter(fm: FragmentManager): StashFragmentPagerAdapter {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+
         val galleries =
             Optional.present(
                 MultiCriterionInput(
@@ -60,51 +66,53 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                     modifier = CriterionModifier.INCLUDES_ALL,
                 ),
             )
-        val items =
-            listOf(
-                StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
-                    GalleryDetailsFragment(gallery)
-                },
-                StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
-                    StashGridFragment(
-                        dataType = DataType.IMAGE,
-                        objectFilter = ImageFilterType(galleries = galleries),
-                    ).withImageGridClickListener()
-                },
-                StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
-                    StashGridFragment(
-                        dataType = DataType.SCENE,
-                        objectFilter = SceneFilterType(galleries = galleries),
-                    )
-                },
-                StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER) {
-                    val presenter =
-                        ClassPresenterSelector().addClassPresenter(
-                            PerformerData::class.java,
-                            PerformerInScenePresenter(gallery.date),
+        viewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            viewModel.tabs.value =
+                listOf(
+                    StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
+                        GalleryDetailsFragment(gallery)
+                    },
+                    StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
+                        StashGridFragment(
+                            dataType = DataType.IMAGE,
+                            findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.GALLERY_IMAGES).findFilter,
+                            objectFilter = ImageFilterType(galleries = galleries),
+                        ).withImageGridClickListener()
+                    },
+                    StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
+                        StashGridFragment(
+                            dataType = DataType.SCENE,
+                            objectFilter = SceneFilterType(galleries = galleries),
                         )
-                    val fragment =
+                    },
+                    StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER) {
+                        val presenter =
+                            ClassPresenterSelector().addClassPresenter(
+                                PerformerData::class.java,
+                                PerformerInScenePresenter(gallery.date),
+                            )
+                        val fragment =
+                            StashGridFragment(
+                                filterArgs =
+                                    FilterArgs(
+                                        DataType.PERFORMER,
+                                        override = DataSupplierOverride.GalleryPerformer(gallery.id),
+                                    ),
+                            )
+                        fragment.presenterSelector = presenter
+                        fragment
+                    },
+                    StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
                         StashGridFragment(
                             filterArgs =
                                 FilterArgs(
-                                    DataType.PERFORMER,
-                                    override = DataSupplierOverride.GalleryPerformer(gallery.id),
+                                    DataType.TAG,
+                                    override = DataSupplierOverride.GalleryTag(gallery.id),
                                 ),
                         )
-                    fragment.presenterSelector = presenter
-                    fragment
-                },
-                StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
-                    StashGridFragment(
-                        filterArgs =
-                            FilterArgs(
-                                DataType.TAG,
-                                override = DataSupplierOverride.GalleryTag(gallery.id),
-                            ),
-                    )
-                },
-            ).filter { it.title in getUiTabs(requireContext(), DataType.GALLERY) }
-        return StashFragmentPagerAdapter(items, fm)
+                    },
+                ).filter { it.title in getUiTabs(requireContext(), DataType.GALLERY) }
+        }
     }
 
     class GalleryDetailsFragment() : Fragment(R.layout.gallery_view) {
@@ -157,16 +165,24 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                 }
 
                 ratingBar.rating100 = galleryData.rating100 ?: 0
-                ratingBar.setRatingCallback { rating100 ->
-                    val mutationEngine =
-                        MutationEngine(StashServer.requireCurrentServer())
-                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
-                        val result = mutationEngine.updateGallery(galleryData.id, rating100)
-                        if (result != null) {
-                            ratingBar.rating100 = result.rating100 ?: 0
-                            showSetRatingToast(requireContext(), rating100, ratingBar.ratingAsStars)
+                if (readOnlyModeDisabled()) {
+                    ratingBar.setRatingCallback { rating100 ->
+                        val mutationEngine =
+                            MutationEngine(StashServer.requireCurrentServer())
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
+                            val result = mutationEngine.updateGallery(galleryData.id, rating100)
+                            if (result != null) {
+                                ratingBar.rating100 = result.rating100 ?: 0
+                                showSetRatingToast(
+                                    requireContext(),
+                                    rating100,
+                                    ratingBar.ratingAsStars,
+                                )
+                            }
                         }
                     }
+                } else {
+                    ratingBar.disable()
                 }
             }
         }

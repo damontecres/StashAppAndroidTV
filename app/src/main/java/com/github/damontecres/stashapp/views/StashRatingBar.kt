@@ -161,6 +161,13 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
         decimalRatingBar.onFocusChangeListener = l
     }
 
+    fun disable() {
+        isFocusable = false
+        starRatingBar.setIsIndicator(true)
+        starRatingBar.isFocusable = false
+        decimalRatingBar.isFocusable = false
+    }
+
     private inner class RatingOnClickListener : OnClickListener {
         @SuppressLint("RestrictedApi")
         override fun onClick(v: View) {

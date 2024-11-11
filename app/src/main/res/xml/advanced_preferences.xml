@@ -106,6 +106,12 @@
             app:key="@string/pref_key_playback_external_player"
             app:title="Always use external app for playback"
             app:defaultValue="false" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_track_activity"
+            app:title="Save play history"
+            app:summaryOn="Save if also enabled on server"
+            app:summaryOff="Don't save any history"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Scene Video Filters">

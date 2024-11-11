@@ -27,10 +27,13 @@ import com.github.damontecres.stashapp.api.UpdateGalleryMutation
 import com.github.damontecres.stashapp.api.UpdateImageMutation
 import com.github.damontecres.stashapp.api.UpdateMarkerMutation
 import com.github.damontecres.stashapp.api.UpdatePerformerMutation
+import com.github.damontecres.stashapp.api.UpdateStudioMutation
+import com.github.damontecres.stashapp.api.UpdateTagMutation
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.GalleryUpdateInput
 import com.github.damontecres.stashapp.api.type.GenerateMetadataInput
@@ -46,7 +49,9 @@ import com.github.damontecres.stashapp.api.type.SceneGroupInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerCreateInput
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
 import com.github.damontecres.stashapp.api.type.SceneUpdateInput
+import com.github.damontecres.stashapp.api.type.StudioUpdateInput
 import com.github.damontecres.stashapp.api.type.TagCreateInput
+import com.github.damontecres.stashapp.api.type.TagUpdateInput
 import com.github.damontecres.stashapp.data.OCounter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -59,8 +64,16 @@ class MutationEngine(
     server: StashServer,
     client: ApolloClient = StashClient.getApolloClient(server),
 ) : StashEngine(server, client) {
-    suspend fun <D : Mutation.Data> executeMutation(mutation: Mutation<D>): ApolloResponse<D> =
+    private val readOnlyMode = readOnlyModeEnabled()
+
+    suspend fun <D : Mutation.Data> executeMutation(
+        mutation: Mutation<D>,
+        overrideReadOnly: Boolean = false,
+    ): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
+            if (!overrideReadOnly && readOnlyMode) {
+                throw IllegalStateException("Read only mode enabled!")
+            }
             val mutationName = mutation.name()
             val id = MUTATION_ID.getAndIncrement()
 
@@ -103,14 +116,14 @@ class MutationEngine(
                 resume_time = resumeTime,
                 play_duration = playDuration,
             )
-        val result = executeMutation(mutation)
+        val result = executeMutation(mutation, true)
         return result.data!!.sceneSaveActivity
     }
 
     suspend fun incrementPlayCount(sceneId: String): Int {
         Log.v(TAG, "incrementPlayCount on $sceneId")
         val mutation = SceneAddPlayCountMutation(sceneId, emptyList())
-        val result = executeMutation(mutation)
+        val result = executeMutation(mutation, true)
         return result.data!!.sceneAddPlay.count
     }
 
@@ -363,14 +376,16 @@ class MutationEngine(
         return result.data?.imageUpdate
     }
 
-    suspend fun setPerformerFavorite(
+    suspend fun updatePerformer(
         performerId: String,
-        favorite: Boolean,
+        favorite: Boolean? = null,
+        rating100: Int? = null,
     ): PerformerData? {
         val input =
             PerformerUpdateInput(
                 id = performerId,
-                favorite = Optional.present(favorite),
+                favorite = Optional.presentIfNotNull(favorite),
+                rating100 = Optional.presentIfNotNull(rating100),
             )
         return updatePerformer(input)
     }
@@ -385,6 +400,19 @@ class MutationEngine(
         val mutation = CreateTagMutation(input)
         val result = executeMutation(mutation)
         return result.data?.tagCreate?.tagData
+    }
+
+    suspend fun setTagFavorite(
+        tagId: String,
+        favorite: Boolean,
+    ): TagData? {
+        val input =
+            TagUpdateInput(
+                id = tagId,
+                favorite = Optional.present(favorite),
+            )
+        val mutation = UpdateTagMutation(input)
+        return executeMutation(mutation).data?.tagUpdate?.tagData
     }
 
     suspend fun createPerformer(input: PerformerCreateInput): PerformerData? {
@@ -426,6 +454,21 @@ class MutationEngine(
     suspend fun saveFilter(input: SaveFilterInput): SavedFilterData {
         val mutation = SaveFilterMutation(input)
         return executeMutation(mutation).data!!.saveFilter.savedFilterData
+    }
+
+    suspend fun updateStudio(
+        studioId: String,
+        favorite: Boolean? = null,
+        rating100: Int? = null,
+    ): StudioData? {
+        val input =
+            StudioUpdateInput(
+                id = studioId,
+                favorite = Optional.presentIfNotNull(favorite),
+                rating100 = Optional.presentIfNotNull(rating100),
+            )
+        val mutation = UpdateStudioMutation(input)
+        return executeMutation(mutation).data?.studioUpdate?.studioData
     }
 
     companion object {

@@ -58,6 +58,7 @@ import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.formatNumber
+import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -72,6 +73,7 @@ class StashGridFragment() : Fragment() {
     private lateinit var sortButton: Button
     private lateinit var playAllButton: Button
     private lateinit var filterButton: Button
+    private lateinit var subContentSwitch: SwitchMaterial
     private lateinit var positionTextView: TextView
     private lateinit var totalCountTextView: TextView
     private lateinit var noResultsTextView: TextView
@@ -134,6 +136,21 @@ class StashGridFragment() : Fragment() {
      * The item clicked listener, will default to [StashItemViewClickListener] in [onViewCreated] if not specified before
      */
     var onItemViewClickedListener: OnItemViewClickedListener? = null
+
+    /**
+     * Callback for when the sub content switch state is updated. Also ensures the switch will be displayed if not null
+     */
+    var subContentSwitchCheckedListener: ((isChecked: Boolean) -> Unit)? = null
+
+    /**
+     * Sets whether the sub content switch should start checked or not
+     */
+    var subContentSwitchInitialIsChecked: Boolean = false
+
+    /**
+     * The initial text on the sub content switch
+     */
+    var subContentText: CharSequence? = null
 
     /**
      * Get or set the currently selected item
@@ -301,6 +318,7 @@ class StashGridFragment() : Fragment() {
         sortButton = root.findViewById(R.id.sort_button)
         playAllButton = root.findViewById(R.id.play_all_button)
         filterButton = root.findViewById(R.id.filter_button)
+        subContentSwitch = root.findViewById(R.id.sub_content_switch)
         val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         mGridViewHolder.view.isFocusableInTouchMode = false
@@ -328,7 +346,7 @@ class StashGridFragment() : Fragment() {
 
         if (savedInstanceState == null) {
             Log.v(TAG, "onViewCreated first time")
-            refresh(_filterArgs.sortAndDirection) {
+            refresh(_filterArgs) {
                 if (scrollToNextPage) {
                     Log.v(TAG, "scrolling to next page")
                     currentSelectedPosition =
@@ -341,7 +359,7 @@ class StashGridFragment() : Fragment() {
             val previousPosition = savedInstanceState.getInt("mSelectedPosition")
             Log.v(TAG, "previousPosition=$previousPosition")
 
-            refresh(_filterArgs.sortAndDirection) {
+            refresh(_filterArgs) {
                 if (previousPosition > 0) {
                     positionTextView.text = formatNumber(previousPosition + 1, false)
                     mGridViewHolder.gridView.requestFocus()
@@ -357,7 +375,7 @@ class StashGridFragment() : Fragment() {
             sortButton.visibility = View.VISIBLE
             sortButton.nextFocusUpId = R.id.tab_layout
             SortButtonManager(StashServer.getCurrentServerVersion()) {
-                refresh(it)
+                refresh(_filterArgs.with(it))
             }.setUpSortButton(sortButton, dataType, _filterArgs.sortAndDirection)
         }
         if (playAllButtonEnabled && dataType.supportsPlaylists) {
@@ -378,6 +396,16 @@ class StashGridFragment() : Fragment() {
                         .putDataType(dataType)
                         .putFilterArgs(CreateFilterActivity.INTENT_STARTING_FILTER, filterArgs)
                 requireContext().startActivity(intent)
+            }
+        }
+
+        subContentSwitch.nextFocusUpId = R.id.tab_layout
+        if (subContentSwitchCheckedListener != null) {
+            subContentSwitch.isChecked = subContentSwitchInitialIsChecked
+            subContentSwitch.text = subContentText
+            subContentSwitch.visibility = View.VISIBLE
+            subContentSwitch.setOnCheckedChangeListener { _, isChecked ->
+                subContentSwitchCheckedListener?.invoke(isChecked)
             }
         }
 
@@ -426,16 +454,23 @@ class StashGridFragment() : Fragment() {
 
     /**
      * Update the filter's sort & direction
+     */
+    fun refresh(newSortAndDirection: SortAndDirection) {
+        refresh(_filterArgs.with(newSortAndDirection))
+    }
+
+    /**
+     * Update the filter
      *
      * Specify a callback for when the data is first loaded allowing for scrolling, etc
      */
     fun refresh(
-        newSortAndDirection: SortAndDirection,
+        newFilterArgs: FilterArgs,
         firstPageListener: (() -> Unit)? = null,
     ) {
         Log.v(
             TAG,
-            "refresh: dataType=${_filterArgs.dataType}, newSortAndDirection=$newSortAndDirection",
+            "refresh: dataType=${newFilterArgs.dataType}, newSortAndDirection=$newFilterArgs",
         )
         val pagingAdapter =
             PagingDataAdapter(NullPresenterSelector(presenterSelector), StashComparator)
@@ -445,7 +480,7 @@ class StashGridFragment() : Fragment() {
         val server = StashServer.requireCurrentServer()
         val factory = DataSupplierFactory(server.serverPreferences.serverVersion)
         val dataSupplier =
-            factory.create<Query.Data, StashData, Query.Data>(_filterArgs.with(newSortAndDirection))
+            factory.create<Query.Data, StashData, Query.Data>(newFilterArgs)
         val pagingSource =
             StashPagingSource<Query.Data, StashData, StashData, Query.Data>(
                 QueryEngine(server),
@@ -528,8 +563,8 @@ class StashGridFragment() : Fragment() {
                 pagingAdapter.submitData(it)
             }
         }
-
-        _currentSortAndDirection = newSortAndDirection
+        _filterArgs = newFilterArgs
+        _currentSortAndDirection = newFilterArgs.sortAndDirection
     }
 
     override fun onStart() {

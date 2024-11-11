@@ -56,6 +56,7 @@ class ServerPreferences(val server: StashServer) {
 
     private val _defaultFilters = mutableMapOf<DataType, FilterArgs>()
     val defaultFilters: Map<DataType, FilterArgs> = _defaultFilters
+    private val defaultPageFilters = mutableMapOf<PageFilterKey, FilterArgs>()
 
     /**
      * Update the local preferences from the server configuration
@@ -160,15 +161,7 @@ class ServerPreferences(val server: StashServer) {
             val filter =
                 if (filterMap != null) {
                     try {
-                        val findFilterMap = filterMap.getCaseInsensitive("find_filter")
-                        val objectFilterMap = filterMap.getCaseInsensitive("object_filter")
-                        val findFilter = filterParser.convertFindFilter(findFilterMap)
-                        val objectFilter = filterParser.convertFilter(dataType, objectFilterMap)
-                        FilterArgs(
-                            dataType,
-                            findFilter = findFilter,
-                            objectFilter = objectFilter,
-                        )
+                        filterParser.convertFilterMap(dataType, filterMap)
                     } catch (ex: Exception) {
                         Log.w(TAG, "default filter parse error for $dataType", ex)
                         FilterArgs(dataType)
@@ -178,6 +171,26 @@ class ServerPreferences(val server: StashServer) {
                 }
             _defaultFilters[dataType] = filter
         }
+
+        PageFilterKey.entries.forEach { key ->
+            val filterMap =
+                defaultFilters?.getCaseInsensitive(key.prefKey) as Map<String, *>?
+            defaultPageFilters[key] =
+                if (filterMap != null) {
+                    try {
+                        filterParser.convertFilterMap(key.dataType, filterMap)
+                    } catch (ex: Exception) {
+                        Log.w(TAG, "default filter parse error for $key", ex)
+                        FilterArgs(key.dataType)
+                    }
+                } else {
+                    FilterArgs(key.dataType)
+                }
+        }
+    }
+
+    fun getDefaultFilter(page: PageFilterKey): FilterArgs {
+        return defaultPageFilters[page] ?: FilterArgs(page.dataType)
     }
 
     private fun parseScan(

@@ -35,7 +35,6 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SceneDetailsFragment.Companion.REMOVE_POPUP_ITEM
 import com.github.damontecres.stashapp.SearchForActivity
 import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.StashApplication
@@ -54,6 +53,7 @@ import com.github.damontecres.stashapp.presenters.OCounterPresenter
 import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem.Companion.REMOVE_POPUP_ITEM
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.ListRowManager
@@ -66,6 +66,8 @@ import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.name
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
+import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
@@ -233,10 +235,12 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 ActivityResultContracts.StartActivityForResult(),
                 ResultCallback(),
             )
-        mAdapter.set(
-            ITEM_ACTIONS_POS,
-            ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), itemActionsAdapter),
-        )
+        if (readOnlyModeDisabled()) {
+            mAdapter.set(
+                ITEM_ACTIONS_POS,
+                ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), itemActionsAdapter),
+            )
+        }
         itemActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
         itemActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
         itemActionsAdapter.set(ADD_GALLERY_POS, StashAction.ADD_GALLERY)
@@ -334,11 +338,15 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
             val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
             ratingBar.rating100 = image.rating100 ?: 0
-            ratingBar.setRatingCallback { rating100 ->
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
-                    val result = mutationEngine.updateImage(image.id, rating100 = rating100)
-                    ratingBar.rating100 = result?.rating100 ?: 0
-                    showSetRatingToast(requireContext(), rating100)
+            if (readOnlyModeEnabled()) {
+                ratingBar.disable()
+            } else {
+                ratingBar.setRatingCallback { rating100 ->
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
+                        val result = mutationEngine.updateImage(image.id, rating100 = rating100)
+                        ratingBar.rating100 = result?.rating100 ?: 0
+                        showSetRatingToast(requireContext(), rating100)
+                    }
                 }
             }
 
@@ -442,7 +450,11 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             context: Context,
             item: T,
         ): List<StashPresenter.PopUpItem> {
-            return listOf(REMOVE_POPUP_ITEM)
+            return if (readOnlyModeDisabled()) {
+                listOf(REMOVE_POPUP_ITEM)
+            } else {
+                listOf()
+            }
         }
     }
 
