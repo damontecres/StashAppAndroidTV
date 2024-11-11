@@ -659,7 +659,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         }
                 } else {
                     val localPosition = data.getLongExtra(POSITION_RESULT_ARG, -1)
-                    if (localPosition >= 0) {
+                    if (localPosition >= 0 && readOnlyModeDisabled()) {
                         sceneActionsAdapter.set(
                             CREATE_MARKER_POS,
                             CreateMarkerAction(localPosition),
