@@ -7,7 +7,7 @@ Not all features of Stash are supported, but the basics for browsing, searching,
 The app is not intended to perform administrative functions such as scraping or editing details. Some curation tasks are available though such as adding tags or performers to scenes.
 
 ### Main page
-![main Large](https://github.com/damontecres/StashAppAndroidTV/assets/154766448/79f374cd-ae97-4a8f-bbbe-07a8a25b7148)
+![0_5_3_main](https://github.com/user-attachments/assets/c8d588b8-455a-4ad2-8dda-a79b68680b19)
 
 ## Setup
 
