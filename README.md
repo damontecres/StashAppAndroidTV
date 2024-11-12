@@ -2,7 +2,7 @@
 
 This is an Android TV app for browsing images and playing scenes from a [Stash](https://github.com/stashapp/stash) server. Many devices running Android TV are supported, including Amazon Fire TV devices. See [device compatibility](https://github.com/damontecres/StashAppAndroidTV/wiki/Device-Compatibility) for more information.
 
-Not all features of Stash are supported, but the basics for browsing, searching, and playing scenes work well.
+The app supports browsing, searching, and filtering just about everything including scenes, images, performers, tags, etc. The app also supports video hardware decoding when available so your server can transcode less.
 
 The app is not intended to perform administrative functions such as scraping or editing details. Some curation tasks are available though such as adding tags or performers to scenes.
 
@@ -39,14 +39,6 @@ After the initial install above, the app will automatically check for updates wh
 
 The first time you attempt an update, the Android TV OS should guide you through enabling the required additional permissions for the app to install updates.
 
-#### Develop build
-
-This build is the current work-in-progress. It has the latest features, but may be unstable or have bugs!
-
-You can install the latest development debug build from the [develop pre-release](https://github.com/damontecres/StashAppAndroidTV/releases/tag/develop) using the same methods as above. The short code is `505547` or URL: https://aftv.news/505547
-
-You can also use the in-app updater for development builds by changing the URL in `Settings->Advanced->Update URL` to https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/tags/develop (replace `latest` with `tags/develop`).
-
 ### Configuration
 
 The first time you open the app, follow the prompts to configure the app to connect to your Stash server.
@@ -57,7 +49,7 @@ The first time you open the app, follow the prompts to configure the app to conn
     - If you have configured HTTPS/SSL/TLS, make sure to use `https://` instead of `http://`
 1. If you have enabled authentication on your Stash server, you will be prompted to enter the API Key
     1. Use your phone to browse to your Stash server and copy the API Key from the Settings->Security page (e.g. http://192.168.1.122:9999/settings?tab=security)
-    1. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) to paste the API Key into the TV app
+    1. Use your phone's [virtual remote control](https://support.google.com/chromecast/answer/11221499) or the `Amazon Fire TV` app to paste the API Key into the TV app
 1. If you have trouble submitting the URL or API Key using the virtual remote control, [see some tips here](https://github.com/damontecres/StashAppAndroidTV/wiki/Tips-&-Tricks#i-cant-submit-the-server-url-when-using-a-remote-phone-app)
 
 #### Multiple servers
