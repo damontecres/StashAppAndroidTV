@@ -102,10 +102,12 @@ class SetupStep4Pin(private val setupState: SetupState) :
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
-            val pin = findActionById(ACTION_PIN).editDescription.toString().toIntOrNull()
+            val pin = findActionById(ACTION_PIN).editDescription.ifBlank { null }?.toString()
             val confirmPin =
-                findActionById(ACTION_CONFIRM_PIN).editDescription.toString().toIntOrNull()
-            if (pin == confirmPin) {
+                findActionById(ACTION_CONFIRM_PIN).editDescription.ifBlank { null }?.toString()
+            if (pin != null && pin.toIntOrNull() == null) {
+                Toast.makeText(requireContext(), "PIN must be a number!", Toast.LENGTH_SHORT).show()
+            } else if (pin == confirmPin) {
                 val newState = setupState.copy(pinCode = pin)
                 finishSetup(newState)
             } else {
