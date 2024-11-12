@@ -119,13 +119,14 @@ class StashClient private constructor() {
                     }
             }
             if (useApiKey && server.apiKey.isNotNullOrBlank()) {
+                val cleanedApiKey = server.apiKey.trim()
                 builder =
                     builder.addInterceptor {
                         val request =
                             if (it.request().url.toString().startsWith(serverUrlRoot)) {
                                 // Only set the API Key if the target URL is the stash server
                                 it.request().newBuilder()
-                                    .addHeader(Constants.STASH_API_HEADER, server.apiKey)
+                                    .addHeader(Constants.STASH_API_HEADER, cleanedApiKey)
                                     .build()
                             } else {
                                 it.request()
@@ -331,11 +332,12 @@ class StashClient private constructor() {
                     }
             }
             if (server.apiKey.isNotNullOrBlank()) {
+                val cleanedApiKey = server.apiKey.trim()
                 builder =
                     builder.addInterceptor {
                         val request =
                             it.request().newBuilder()
-                                .addHeader(Constants.STASH_API_HEADER, server.apiKey.trim())
+                                .addHeader(Constants.STASH_API_HEADER, cleanedApiKey)
                                 .build()
                         it.proceed(request)
                     }
