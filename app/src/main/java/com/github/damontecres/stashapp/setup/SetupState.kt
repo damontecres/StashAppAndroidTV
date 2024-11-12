@@ -6,7 +6,7 @@ data class SetupState(
     val serverUrl: String,
     val apiKey: String?,
     val trustCerts: Boolean = false,
-    val pinCode: Int? = null,
+    val pinCode: String? = null,
 ) {
     constructor(serverUrl: CharSequence) : this(serverUrl.toString(), null)
 

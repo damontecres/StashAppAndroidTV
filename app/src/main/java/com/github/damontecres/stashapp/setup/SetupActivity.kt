@@ -45,10 +45,7 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
         fun finishSetup(setupState: SetupState) {
             StashServer.addAndSwitchServer(requireContext(), setupState.stashServer) {
                 if (setupState.pinCode != null) {
-                    it.putString(
-                        getString(R.string.pref_key_pin_code),
-                        setupState.pinCode.toString(),
-                    )
+                    it.putString(getString(R.string.pref_key_pin_code), setupState.pinCode)
                     it.putBoolean(getString(R.string.pref_key_pin_code_auto), true)
                 }
                 it.putBoolean(getString(R.string.pref_key_trust_certs), setupState.trustCerts)
