@@ -81,7 +81,7 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
                 )
             val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             DataType.entries.forEach {
-                val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                val adapter = ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
                 rowsAdapter.set(
                     it.ordinal,
                     ListRow(HeaderItem(getString(it.pluralStringId)), adapter),

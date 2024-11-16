@@ -152,8 +152,8 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
     companion object {
         private const val TAG = "StashPresenter"
 
-        val SELECTOR: ClassPresenterSelector =
-            ClassPresenterSelector()
+        fun defaultClassPresenterSelector(): ClassPresenterSelector {
+            return ClassPresenterSelector()
                 .addClassPresenter(PerformerData::class.java, PerformerPresenter())
                 .addClassPresenter(SlimSceneData::class.java, ScenePresenter())
                 .addClassPresenter(StudioData::class.java, StudioPresenter())
@@ -167,6 +167,7 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 .addClassPresenter(OCounter::class.java, OCounterPresenter())
                 .addClassPresenter(CreateMarkerAction::class.java, CreateMarkerActionPresenter())
                 .addClassPresenter(GroupRelationshipData::class.java, GroupRelationshipPresenter())
+        }
 
         fun glideError(context: Context): RequestBuilder<PictureDrawable> {
             return Glide.with(context).`as`(PictureDrawable::class.java)

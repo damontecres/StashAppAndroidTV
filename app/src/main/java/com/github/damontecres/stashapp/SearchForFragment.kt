@@ -62,7 +62,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
     private var query: String? = null
 
     private val adapter = SparseArrayObjectAdapter(ListRowPresenter())
-    private val searchResultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+    private val searchResultsAdapter = ArrayObjectAdapter()
     private var perPage by Delegates.notNull<Int>()
     private var createNewAdapter =
         SingleItemObjectAdapter(CreateNewPresenter(), StashAction.CREATE_NEW)
@@ -87,7 +87,8 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                 .getInt("maxSearchResults", 25)
         title =
             requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
-        searchResultsAdapter.presenterSelector = StashPresenter.SELECTOR
+
+        searchResultsAdapter.presenterSelector = StashPresenter.defaultClassPresenterSelector()
         adapter.set(
             RESULTS_POS,
             ListRow(HeaderItem(getString(R.string.waiting_for_query)), ArrayObjectAdapter()),
@@ -163,6 +164,8 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
     override fun onResume() {
         super.onResume()
         if (dataType in DATA_TYPE_SUGGESTIONS) {
+            val presenterSelector = StashPresenter.defaultClassPresenterSelector()
+
             viewLifecycleOwner.lifecycleScope.launch(
                 StashCoroutineExceptionHandler {
                     Toast.makeText(
@@ -172,7 +175,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                     )
                 },
             ) {
-                val resultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                val resultsAdapter = ArrayObjectAdapter(presenterSelector)
                 val sortBy =
                     when (dataType) {
                         DataType.GALLERY -> "images_count"
@@ -228,7 +231,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                                     listOf()
                                 }
                             }
-                        val results = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                        val results = ArrayObjectAdapter(presenterSelector)
                         if (items.isNotEmpty()) {
                             Log.v(
                                 TAG,
