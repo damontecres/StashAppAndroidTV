@@ -73,17 +73,11 @@ fragment PerformerData on Performer {
   image_count
   gallery_count
   group_count
-  performer_count
   o_counter
   created_at
   updated_at
   tags {
     ...SlimTagData
-    __typename
-  }
-  stash_ids {
-    stash_id
-    endpoint
     __typename
   }
   rating100
@@ -100,5 +94,6 @@ fragment SlimPerformerData on Performer {
   disambiguation
   gender
   birthdate
+  death_date
   __typename
 }

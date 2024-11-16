@@ -477,7 +477,14 @@ val PerformerData.ageInYears: Int?
         if (birthdate != null) {
             Period.between(
                 LocalDate.parse(birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
-                LocalDate.now(),
+                if (death_date.isNotNullOrBlank()) {
+                    LocalDate.parse(
+                        death_date,
+                        DateTimeFormatter.ISO_LOCAL_DATE,
+                    )
+                } else {
+                    LocalDate.now()
+                },
             ).years
         } else {
             null

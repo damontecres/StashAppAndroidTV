@@ -52,7 +52,7 @@ class SearchPickerFragment(
     private var query: String? = null
 
     private val adapter = SparseArrayObjectAdapter(ListRowPresenter())
-    private val searchResultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+    private val searchResultsAdapter = ArrayObjectAdapter()
     private var perPage by Delegates.notNull<Int>()
 
     private val exceptionHandler =
@@ -72,7 +72,7 @@ class SearchPickerFragment(
                 .getInt("maxSearchResults", 25)
         title =
             requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
-        searchResultsAdapter.presenterSelector = StashPresenter.SELECTOR
+        searchResultsAdapter.presenterSelector = StashPresenter.defaultClassPresenterSelector()
         adapter.set(
             RESULTS_POS,
             ListRow(HeaderItem(getString(R.string.waiting_for_query)), ArrayObjectAdapter()),
@@ -117,7 +117,8 @@ class SearchPickerFragment(
                     )
                 },
             ) {
-                val resultsAdapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                val resultsAdapter =
+                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
                 val sortBy =
                     when (dataType) {
                         DataType.GALLERY -> SortOption.IMAGES_COUNT
@@ -163,7 +164,8 @@ class SearchPickerFragment(
                     Log.v(TAG, "Got ${mostRecentIds.size} recent items")
                     if (mostRecentIds.isNotEmpty()) {
                         val items = queryEngine.getByIds(dataType, mostRecentIds)
-                        val results = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                        val results =
+                            ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
                         if (items.isNotEmpty()) {
                             Log.v(
                                 TAG,

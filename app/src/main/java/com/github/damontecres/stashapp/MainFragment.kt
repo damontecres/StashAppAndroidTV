@@ -282,7 +282,8 @@ class MainFragment : BrowseSupportFragment() {
                                 if (row is FrontPageParser.FrontPageRow.Success) {
                                     filterList.add(row.filter)
 
-                                    val adapter = ArrayObjectAdapter(StashPresenter.SELECTOR)
+                                    val adapter =
+                                        ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
                                     adapter.addAll(0, row.data)
                                     adapter.add(row.filter)
                                     adapters.add(adapter)

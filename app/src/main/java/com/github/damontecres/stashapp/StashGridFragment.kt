@@ -128,9 +128,9 @@ class StashGridFragment() : Fragment() {
     var backPressScrollEnabled = true
 
     /**
-     * The presenter for the items, defaults to [StashPresenter.SELECTOR]
+     * The presenter for the items, defaults to [StashPresenter.defaultClassPresenterSelector]
      */
-    var presenterSelector: PresenterSelector = StashPresenter.SELECTOR
+    var presenterSelector: PresenterSelector = StashPresenter.defaultClassPresenterSelector()
 
     /**
      * The item clicked listener, will default to [StashItemViewClickListener] in [onViewCreated] if not specified before
