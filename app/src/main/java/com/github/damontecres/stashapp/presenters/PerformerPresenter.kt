@@ -1,10 +1,15 @@
 package com.github.damontecres.stashapp.presenters
 
+import android.graphics.Color
 import android.os.Build
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.ageInYears
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
 
 open class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
@@ -13,9 +18,19 @@ open class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null
         cardView: StashImageCardView,
         item: PerformerData,
     ) {
-        val title =
-            item.name + (if (!item.disambiguation.isNullOrBlank()) " (${item.disambiguation})" else "")
-        cardView.titleText = title
+        cardView.titleText =
+            SpannableStringBuilder().apply {
+                append(item.name)
+                val start = length
+                if (item.disambiguation.isNotNullOrBlank()) {
+                    append(" (")
+                    append(item.disambiguation)
+                    append(")")
+                }
+                val end = length
+                setSpan(RelativeSizeSpan(.75f), start, end, 0)
+                setSpan(ForegroundColorSpan(Color.LTGRAY), start, end, 0)
+            }
 
         cardView.contentText = getContentText(cardView, item)
 
@@ -47,6 +62,8 @@ open class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null
         return if (item.birthdate != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val yearsOldStr = cardView.context.getString(R.string.stashapp_years_old)
             "${item.ageInYears} $yearsOldStr"
+        } else if (item.birthdate.isNotNullOrBlank()) {
+            item.birthdate
         } else {
             null
         }

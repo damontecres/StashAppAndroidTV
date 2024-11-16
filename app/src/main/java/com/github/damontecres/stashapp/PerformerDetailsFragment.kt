@@ -99,6 +99,7 @@ class PerformerDetailsFragment : DetailsFragment() {
                 addRow(R.string.stashapp_age, "$age (${perf.birthdate})")
             }
         }
+        addRow(R.string.stashapp_death_date, perf.death_date)
         addRow(R.string.stashapp_country, perf.country)
         addRow(R.string.stashapp_ethnicity, perf.ethnicity)
         addRow(R.string.stashapp_hair_color, perf.hair_color)
