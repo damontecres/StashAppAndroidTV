@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.suppliers
 
 import com.apollographql.apollo.api.Query
-import com.github.damontecres.stashapp.api.CountGroupsQuery
+import com.github.damontecres.stashapp.api.CountGroupRelationshipsQuery
 import com.github.damontecres.stashapp.api.FindGroupRelationshipsQuery
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
@@ -13,7 +13,7 @@ class GroupRelationshipDataSupplier(
     private val groupId: String,
     private val type: GroupRelationshipType,
 ) :
-    StashPagingSource.DataSupplier<FindGroupRelationshipsQuery.Data, GroupRelationshipData, CountGroupsQuery.Data> {
+    StashPagingSource.DataSupplier<FindGroupRelationshipsQuery.Data, GroupRelationshipData, CountGroupRelationshipsQuery.Data> {
     override val dataType: DataType get() = DataType.GROUP
 
     override fun createQuery(filter: FindFilterType?): Query<FindGroupRelationshipsQuery.Data> {
@@ -28,12 +28,15 @@ class GroupRelationshipDataSupplier(
         return DataType.GROUP.asDefaultFindFilterType
     }
 
-    override fun createCountQuery(filter: FindFilterType?): Query<CountGroupsQuery.Data> {
-        return CountGroupsQuery(filter, null, listOf(groupId))
+    override fun createCountQuery(filter: FindFilterType?): Query<CountGroupRelationshipsQuery.Data> {
+        return CountGroupRelationshipsQuery(filter, null, listOf(groupId))
     }
 
-    override fun parseCountQuery(data: CountGroupsQuery.Data): Int {
-        return data.findGroups.count
+    override fun parseCountQuery(data: CountGroupRelationshipsQuery.Data): Int {
+        return when (type) {
+            GroupRelationshipType.SUB -> data.findGroups.groups.firstOrNull()?.sub_group_count
+            GroupRelationshipType.CONTAINING -> data.findGroups.groups.firstOrNull()?.containing_groups?.size
+        } ?: 0
     }
 
     override fun parseQuery(data: FindGroupRelationshipsQuery.Data): List<GroupRelationshipData> {

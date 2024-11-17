@@ -27,6 +27,20 @@ query FindGroupTags($id: ID!) {
   }
 }
 
+query CountGroupRelationships($filter: FindFilterType, $group_filter: GroupFilterType, $ids: [ID!]) {
+  findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
+    groups {
+      id
+      sub_group_count
+      containing_groups {
+        group {
+          id
+        }
+      }
+    }
+  }
+}
+
 query FindGroupRelationships($filter: FindFilterType, $group_filter: GroupFilterType, $ids: [ID!]) {
   findGroups(filter: $filter, group_filter: $group_filter, ids: $ids) {
     groups {
