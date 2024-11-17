@@ -63,11 +63,7 @@ class GroupTagDataSupplier(private val groupId: String) :
     }
 
     override fun parseCountQuery(data: FindGroupTagsQuery.Data): Int {
-        return if (data.findGroup != null) {
-            1
-        } else {
-            0
-        }
+        return data.findGroup?.tags?.size ?: 0
     }
 
     override fun parseQuery(data: FindGroupTagsQuery.Data): List<TagData> {
