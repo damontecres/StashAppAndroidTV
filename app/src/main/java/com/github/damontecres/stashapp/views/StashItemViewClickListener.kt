@@ -119,7 +119,7 @@ class StashItemViewClickListener(
         } else if (item is OCounter) {
             actionListener!!.incrementOCounter(item)
         } else {
-            Log.e(TAG, "Unknown item type: $item")
+            Log.e(TAG, "Unknown item type: ${item.javaClass}")
         }
     }
 
