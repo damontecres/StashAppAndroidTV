@@ -45,7 +45,7 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                             dataType = DataType.SCENE,
                             findFilter = groupSceneFilter.findFilter,
                             objectFilter =
-                                (groupSceneFilter.objectFilter as SceneFilterType?)?.copy(
+                                SceneFilterType(
                                     groups =
                                         Optional.present(
                                             HierarchicalMultiCriterionInput(
