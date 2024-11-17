@@ -23,6 +23,7 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Group
+import com.github.damontecres.stashapp.data.GroupRelationshipData
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.data.Scene
@@ -78,6 +79,11 @@ class StashItemViewClickListener(
             intent.putDataType(DataType.GROUP)
             intent.putExtra("group", Group(item))
             context.startActivity(intent)
+        } else if (item is GroupRelationshipData) {
+            val intent = Intent(context, DataTypeActivity::class.java)
+            intent.putDataType(DataType.GROUP)
+            intent.putExtra("group", Group(item.group))
+            context.startActivity(intent)
         } else if (item is MarkerData) {
             val intent = Intent(context, PlaybackActivity::class.java)
             intent.putDataType(DataType.MARKER)
@@ -113,7 +119,7 @@ class StashItemViewClickListener(
         } else if (item is OCounter) {
             actionListener!!.incrementOCounter(item)
         } else {
-            Log.e(TAG, "Unknown item type: $item")
+            Log.e(TAG, "Unknown item type: ${item.javaClass}")
         }
     }
 
