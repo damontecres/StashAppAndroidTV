@@ -104,7 +104,7 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                 val trustCerts =
                     PreferenceManager.getDefaultSharedPreferences(requireContext())
                         .getBoolean(getString(R.string.pref_key_trust_certs), false)
-                testConnection(serverUrl.toString(), apiKey?.toString(), trustCerts)
+                testConnection(serverUrl, apiKey, trustCerts)
             }
         }
 
