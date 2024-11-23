@@ -2,9 +2,11 @@ package com.github.damontecres.stashapp.setup
 
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
+import androidx.leanback.widget.GuidedActionEditText
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -14,7 +16,7 @@ import kotlinx.coroutines.launch
 
 class SetupStep3ApiKey(private val setupState: SetupState) :
     SetupActivity.SimpleGuidedStepSupportFragment() {
-    private var apiKey: String? = null
+    private var apiKey: String? = ""
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         return GuidanceStylist.Guidance(
@@ -40,54 +42,101 @@ class SetupStep3ApiKey(private val setupState: SetupState) :
                 .checkSetId(GuidedAction.CHECKBOX_CHECK_SET_ID)
                 .build(),
         )
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(GuidedAction.ACTION_ID_OK)
+                .title(R.string.stashapp_actions_submit)
+                .hasNext(true)
+                .enabled(true)
+                .build(),
+        )
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
         if (action.id == SetupActivity.ACTION_SERVER_API_KEY) {
-            apiKey = action.editDescription?.toString()
-            if (apiKey.isNotNullOrBlank()) {
-                action.description = "API key set"
-            } else {
-                action.description = "API key not set"
-            }
-            if (apiKey.isNotNullOrBlank()) {
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val result =
-                        testConnection(
-                            setupState.serverUrl,
-                            apiKey.toString(),
-                            setupState.trustCerts,
-                        )
-                    when (result.status) {
-                        TestResultStatus.AUTH_REQUIRED -> {
-                            // Wrong API key, no-op
-                        }
-
-                        TestResultStatus.SELF_SIGNED_REQUIRED -> {
-                            // This should not happen
-                            nextStep(SetupStep2Ssl(setupState))
-                        }
-
-                        TestResultStatus.SUCCESS, TestResultStatus.UNSUPPORTED_VERSION -> {
-                            nextStep(SetupStep4Pin(setupState.copy(apiKey = apiKey.toString())))
-                        }
-
-                        TestResultStatus.ERROR, TestResultStatus.SSL_REQUIRED -> {
-                            // no-op
-                        }
-                    }
+            updateApiKey(action)
+            testApiKey()
+            action.description =
+                if (apiKey.isNotNullOrBlank()) {
+                    "API key set"
+                } else {
+                    "API key not set"
                 }
-            }
+            notifyActionChanged(findActionPositionById(SetupActivity.ACTION_SERVER_API_KEY))
         }
         return GuidedAction.ACTION_ID_CURRENT
+    }
+
+    override fun onGuidedActionEditCanceled(action: GuidedAction) {
+        if (action.id == SetupActivity.ACTION_SERVER_API_KEY) {
+            updateApiKey(action)
+            action.description =
+                if (apiKey.isNotNullOrBlank()) {
+                    "API key set"
+                } else {
+                    "API key not set"
+                }
+            notifyActionChanged(findActionPositionById(SetupActivity.ACTION_SERVER_API_KEY))
+        }
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == SetupActivity.ACTION_PASSWORD_VISIBLE) {
             val newGuidedActionsServerApiKey = createApiKeyAction(action.isChecked)
-            val newActions = listOf(newGuidedActionsServerApiKey, actions[1])
+            val newActions = listOf(newGuidedActionsServerApiKey, actions[1], actions[2])
             setActionsDiffCallback(null)
             actions = newActions
+        } else if (action.id == GuidedAction.ACTION_ID_OK) {
+            val apiAction = findActionById(SetupActivity.ACTION_SERVER_API_KEY)
+            updateApiKey(apiAction)
+            testApiKey()
+        }
+    }
+
+    private fun updateApiKey(action: GuidedAction) {
+        apiKey = action.editDescription?.toString()
+        if (apiKey.isNullOrBlank()) {
+            // Work around in weird cases where the editDescription isn't updated, but the text field has text
+            // This attempts to find that text field and get its value
+            try {
+                val view = getActionItemView(findActionPositionById(action.id))
+                val descView =
+                    view.findViewById<GuidedActionEditText>(androidx.leanback.R.id.guidedactions_item_description)
+                apiKey = descView.text?.toString()
+            } catch (ex: Exception) {
+                Log.w(TAG, "Exception getting view", ex)
+            }
+        }
+    }
+
+    private fun testApiKey() {
+        if (apiKey.isNotNullOrBlank()) {
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val result =
+                    testConnection(
+                        setupState.serverUrl,
+                        apiKey.toString(),
+                        setupState.trustCerts,
+                    )
+                when (result.status) {
+                    TestResultStatus.AUTH_REQUIRED -> {
+                        // no-op
+                    }
+
+                    TestResultStatus.SELF_SIGNED_REQUIRED -> {
+                        // This should not happen
+                        nextStep(SetupStep2Ssl(setupState))
+                    }
+
+                    TestResultStatus.SUCCESS, TestResultStatus.UNSUPPORTED_VERSION -> {
+                        nextStep(SetupStep4Pin(setupState.copy(apiKey = apiKey.toString())))
+                    }
+
+                    TestResultStatus.ERROR, TestResultStatus.SSL_REQUIRED -> {
+                        // no-op
+                    }
+                }
+            }
         }
     }
 
@@ -109,16 +158,21 @@ class SetupStep3ApiKey(private val setupState: SetupState) :
                     "API key not set"
                 },
             )
-            .editDescription(apiKey ?: "")
+            .editDescription(apiKey)
             .descriptionEditable(true)
             .descriptionEditInputType(
                 InputType.TYPE_CLASS_TEXT or
-                    InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+//                    InputType.TYPE_TEXT_FLAG_MULTI_LINE or
                     passwordInputType,
             )
-            .multilineDescription(true)
+//            .multilineDescription(true)
             .enabled(true)
             .focusable(true)
+            .hasNext(true)
             .build()
+    }
+
+    companion object {
+        private const val TAG = "SetupStep3ApiKey"
     }
 }

@@ -221,7 +221,7 @@ suspend fun testStashConnection(
                             if (showToast) {
                                 Toast.makeText(
                                     context,
-                                    "Connected to server, but an API key is required.",
+                                    "Can connect to server, but API key is required or is incorrect.",
                                     Toast.LENGTH_LONG,
                                 ).show()
                             }
