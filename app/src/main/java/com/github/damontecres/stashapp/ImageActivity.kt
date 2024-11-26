@@ -151,7 +151,10 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                     return true
                 }
             } else if (isDpadKey(event.keyCode)) {
-                if (!overlayIsVisible && imageFragment.isImageZoomedIn()) {
+                if ((event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER) && !overlayIsVisible) {
+                    showOverlay()
+                    return true
+                } else if (!overlayIsVisible && imageFragment.isImageZoomedIn()) {
                     return imageFragment.dispatchKeyEvent(event)
                 } else if (!overlayIsVisible && !imageFragment.isImageZoomedIn()) {
                     // Overlay is not showing and the image is not zoomed in
@@ -166,18 +169,22 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                 }
             }
             if (event.keyCode != KeyEvent.KEYCODE_BACK && !overlayIsVisible) {
-                supportFragmentManager.commitNow {
-                    setCustomAnimations(
-                        androidx.leanback.R.anim.abc_slide_in_bottom,
-                        androidx.leanback.R.anim.abc_slide_out_bottom,
-                    )
-                    show(overlayFragment)
-                }
-                overlayFragment.requestFocus()
+                showOverlay()
                 return true
             }
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    private fun showOverlay() {
+        supportFragmentManager.commitNow {
+            setCustomAnimations(
+                androidx.leanback.R.anim.abc_slide_in_bottom,
+                androidx.leanback.R.anim.abc_slide_out_bottom,
+            )
+            show(overlayFragment)
+        }
+        overlayFragment.requestFocus()
     }
 
     private fun switchImage(newPosition: Int) {
