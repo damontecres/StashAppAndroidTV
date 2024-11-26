@@ -19,34 +19,6 @@ import kotlinx.coroutines.launch
 
 class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
     private val viewModel: ServerViewModel by activityViewModels()
-    private var serverUrl: CharSequence? = null
-    private var serverApiKey: CharSequence? = null
-
-    private lateinit var guidedActionsServerUrl: GuidedAction
-    private lateinit var guidedActionSubmit: GuidedAction
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        if (savedInstanceState == null) {
-            guidedActionsServerUrl =
-                GuidedAction.Builder(requireContext())
-                    .id(SetupActivity.ACTION_SERVER_URL)
-                    .title("Stash Server URL")
-                    .descriptionEditable(true)
-                    .build()
-
-            guidedActionSubmit =
-                GuidedAction.Builder(requireContext())
-                    .id(GuidedAction.ACTION_ID_OK)
-                    .title(getString(R.string.stashapp_actions_submit))
-                    .description("")
-                    .enabled(false)
-                    .focusable(false)
-                    .hasNext(true)
-                    .build()
-        }
-        // Call super.onCreate last because it calls other setup steps
-        super.onCreate(savedInstanceState)
-    }
 
     override fun onProvideTheme(): Int {
         return R.style.Theme_StashAppAndroidTV_GuidedStep
@@ -67,7 +39,13 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
     ) {
         super.onCreateActions(actions, savedInstanceState)
 
-        actions.add(guidedActionsServerUrl)
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(SetupActivity.ACTION_SERVER_URL)
+                .title("Stash Server URL")
+                .descriptionEditable(true)
+                .build(),
+        )
         actions.add(createApiKeyAction())
         actions.add(
             GuidedAction.Builder(requireContext())
@@ -77,59 +55,56 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                 .checkSetId(GuidedAction.CHECKBOX_CHECK_SET_ID)
                 .build(),
         )
-        actions.add(guidedActionSubmit)
+        actions.add(
+            GuidedAction.Builder(requireContext())
+                .id(GuidedAction.ACTION_ID_OK)
+                .title(getString(R.string.stashapp_actions_submit))
+                .description("")
+                .enabled(true)
+                .focusable(true)
+                .hasNext(true)
+                .build(),
+        )
     }
 
-    override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        val guidedActionsServerApiKey = findActionById(SetupActivity.ACTION_SERVER_API_KEY)
-        if (action.id == SetupActivity.ACTION_SERVER_URL) {
-            serverUrl = action.description
-            guidedActionsServerApiKey.editDescription = ""
-            guidedActionsServerApiKey.description = "API key not set"
-            val index = findActionPositionById(guidedActionsServerApiKey.id)
-            notifyActionChanged(index)
-        } else if (action.id == SetupActivity.ACTION_SERVER_API_KEY) {
-            serverApiKey = action.editDescription
+    override fun onGuidedActionEditCanceled(action: GuidedAction) {
+        if (action.id == SetupActivity.ACTION_SERVER_API_KEY) {
+            val serverApiKey = action.editDescription
             if (serverApiKey.isNotNullOrBlank()) {
                 action.description = "API key set"
             } else {
                 action.description = "API key not set"
             }
+            notifyActionChanged(findActionPositionById(action.id))
         }
-        if (serverUrl != null) {
-            val testServerUrl = serverUrl!!
+    }
+
+    override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
+        val guidedActionsServerApiKey = findActionById(SetupActivity.ACTION_SERVER_API_KEY)
+        if (action.id == SetupActivity.ACTION_SERVER_URL) {
+            guidedActionsServerApiKey.editDescription = ""
+            guidedActionsServerApiKey.description = "API key not set"
+            val index = findActionPositionById(guidedActionsServerApiKey.id)
+            notifyActionChanged(index)
+        } else if (action.id == SetupActivity.ACTION_SERVER_API_KEY) {
+            val serverApiKey = action.editDescription
+            if (serverApiKey.isNotNullOrBlank()) {
+                action.description = "API key set"
+            } else {
+                action.description = "API key not set"
+            }
+            notifyActionChanged(findActionPositionById(action.id))
+        }
+
+        val serverUrl = findActionById(SetupActivity.ACTION_SERVER_URL).description?.toString()
+        val apiKey = findActionById(SetupActivity.ACTION_SERVER_API_KEY).editDescription?.toString()
+
+        if (serverUrl.isNotNullOrBlank()) {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val trustCerts =
                     PreferenceManager.getDefaultSharedPreferences(requireContext())
                         .getBoolean(getString(R.string.pref_key_trust_certs), false)
-                val result =
-                    testConnection(testServerUrl.toString(), serverApiKey?.toString(), trustCerts)
-                when (result.status) {
-                    TestResultStatus.SUCCESS, TestResultStatus.UNSUPPORTED_VERSION -> {
-                        guidedActionSubmit.isEnabled = true
-                        guidedActionSubmit.isFocusable = true
-                        val index = findActionPositionById(guidedActionSubmit.id)
-                        notifyActionChanged(index)
-                    }
-
-                    TestResultStatus.AUTH_REQUIRED -> {
-                        guidedActionsServerApiKey.isEnabled = true
-                        guidedActionsServerApiKey.isFocusable = true
-                        val index = findActionPositionById(guidedActionsServerApiKey.id)
-                        notifyActionChanged(index)
-                    }
-
-                    TestResultStatus.ERROR, TestResultStatus.SSL_REQUIRED -> {
-                        guidedActionSubmit.isEnabled = false
-                        guidedActionSubmit.isFocusable = false
-                        val submitIndex = findActionPositionById(guidedActionSubmit.id)
-                        notifyActionChanged(submitIndex)
-                    }
-
-                    TestResultStatus.SELF_SIGNED_REQUIRED -> {
-                        // no-op
-                    }
-                }
+                testConnection(serverUrl, apiKey, trustCerts)
             }
         }
 
@@ -137,26 +112,33 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
-        if (action.id == GuidedAction.ACTION_ID_OK && serverUrl != null) {
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val trustCerts =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
-                        .getBoolean(getString(R.string.pref_key_trust_certs), false)
-                val result =
-                    testConnection(serverUrl!!.toString(), serverApiKey?.toString(), trustCerts)
-                if (result.status == TestResultStatus.SUCCESS) {
-                    val server = StashServer(serverUrl.toString(), serverApiKey?.toString())
-                    // Persist values
-                    StashServer.addAndSwitchServer(requireContext(), server)
-                    viewModel.switchServer(server)
-                    finishGuidedStepSupportFragments()
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Cannot connect to server.",
-                        Toast.LENGTH_LONG,
-                    ).show()
+        if (action.id == GuidedAction.ACTION_ID_OK) {
+            val serverUrl = findActionById(SetupActivity.ACTION_SERVER_URL).description?.toString()
+            val apiKey =
+                findActionById(SetupActivity.ACTION_SERVER_API_KEY).editDescription?.toString()
+            if (serverUrl.isNotNullOrBlank()) {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    val trustCerts =
+                        PreferenceManager.getDefaultSharedPreferences(requireContext())
+                            .getBoolean(getString(R.string.pref_key_trust_certs), false)
+                    val result =
+                        testConnection(serverUrl, apiKey, trustCerts)
+                    if (result.status == TestResultStatus.SUCCESS) {
+                        val server = StashServer(serverUrl, apiKey)
+                        // Persist values
+                        StashServer.addAndSwitchServer(requireContext(), server)
+                        viewModel.switchServer(server)
+                        finishGuidedStepSupportFragments()
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            "Cannot connect to server.",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    }
                 }
+            } else {
+                Toast.makeText(requireContext(), "Enter a server URL", Toast.LENGTH_SHORT).show()
             }
         } else if (action.id == SetupActivity.ACTION_PASSWORD_VISIBLE) {
             val newGuidedActionsServerApiKey = createApiKeyAction(action.isChecked)
@@ -179,28 +161,30 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
             } else {
                 InputType.TYPE_TEXT_VARIATION_PASSWORD
             }
-        val action = findActionById(SetupActivity.ACTION_SERVER_API_KEY)
+        val apiKey =
+            findActionById(SetupActivity.ACTION_SERVER_API_KEY)?.editDescription?.toString()
 
         return GuidedAction.Builder(requireContext())
             .id(SetupActivity.ACTION_SERVER_API_KEY)
             .title("Stash Server API Key")
             .description(
-                if (serverApiKey.isNotNullOrBlank()) {
+                if (apiKey.isNotNullOrBlank()) {
                     "API key set"
                 } else {
                     "API key not set"
                 },
             )
-            .editDescription(serverApiKey)
+            .editDescription(apiKey)
             .descriptionEditable(true)
             .descriptionEditInputType(
                 InputType.TYPE_CLASS_TEXT or
-                    InputType.TYPE_TEXT_FLAG_MULTI_LINE or
+//                    InputType.TYPE_TEXT_FLAG_MULTI_LINE or
                     passwordInputType,
             )
-            .multilineDescription(true)
-            .enabled(action?.isEnabled ?: false)
-            .focusable(action?.isFocusable ?: false)
+//            .multilineDescription(true)
+            .hasNext(true)
+            .enabled(true)
+            .focusable(true)
             .build()
     }
 }
