@@ -152,7 +152,10 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         sweat.setBounds(0, 0, textSize.toInt(), textSize.toInt())
     }
 
-    override fun setSelected(selected: Boolean) {
+    private fun setSelected(
+        selected: Boolean,
+        overrideDelay: Boolean,
+    ) {
         delayJob?.cancel()
         if (playVideoPreviews && videoUrl.isNotNullOrBlank()) {
             if (selected) {
@@ -167,7 +170,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             }
         }
         if (selected) {
-            if (videoDelay > 0) {
+            if (!overrideDelay && videoDelay > 0) {
                 val scope = findViewTreeLifecycleOwner()?.lifecycleScope
                 if (scope != null) {
                     delayJob =
@@ -191,6 +194,17 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         }
         updateCardBackgroundColor(this, selected)
         super.setSelected(selected)
+    }
+
+    override fun setSelected(selected: Boolean) {
+        setSelected(selected, false)
+    }
+
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        super.onWindowFocusChanged(hasWindowFocus)
+        if (hasWindowFocus && isSelected) {
+            setSelected(true, true)
+        }
     }
 
     override fun setMainImageDimensions(
