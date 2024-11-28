@@ -8,7 +8,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
@@ -37,6 +39,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -75,6 +78,8 @@ class StashGridFragment() : Fragment() {
     private lateinit var mGridPresenter: VerticalGridPresenter
     private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
     private lateinit var mAdapter: PagingObjectAdapter
+    private lateinit var jumpToSwitch: SwitchMaterial
+    private lateinit var alphabetFilterLayout: LinearLayout
 
     var titleView: View? = null
 
@@ -326,6 +331,27 @@ class StashGridFragment() : Fragment() {
         if (name == null) {
             name = getString(dataType.pluralStringId)
         }
+
+        alphabetFilterLayout = root.findViewById<LinearLayout>(R.id.alphabet_filter_layout)
+        "#ABCDEFGHIJKLMNOPQRSTUVWXYZ".forEach { letter ->
+            val button =
+                inflater.inflate(R.layout.alphabet_button, alphabetFilterLayout, false) as Button
+            button.text = letter.toString()
+            button.setOnClickListener {
+                Toast.makeText(requireContext(), "Clicked $letter", Toagst.LENGTH_SHORT).show()
+                refresh(AlphabetSearchUtils.transform(letter, filterArgs))
+            }
+            alphabetFilterLayout.addView(button)
+        }
+        jumpToSwitch = root.findViewById(R.id.jump_switch)
+        jumpToSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                alphabetFilterLayout.animateToVisible(400L)
+            } else {
+                alphabetFilterLayout.animateToInvisible(View.GONE, 400L)
+            }
+        }
+
         return root
     }
 
