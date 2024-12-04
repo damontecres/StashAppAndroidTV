@@ -332,18 +332,33 @@ class StashGridFragment() : Fragment() {
             name = getString(dataType.pluralStringId)
         }
 
+        jumpToSwitch = root.findViewById(R.id.jump_switch)
         alphabetFilterLayout = root.findViewById<LinearLayout>(R.id.alphabet_filter_layout)
         "#ABCDEFGHIJKLMNOPQRSTUVWXYZ".forEach { letter ->
             val button =
                 inflater.inflate(R.layout.alphabet_button, alphabetFilterLayout, false) as Button
             button.text = letter.toString()
             button.setOnClickListener {
-                Toast.makeText(requireContext(), "Clicked $letter", Toagst.LENGTH_SHORT).show()
-                refresh(AlphabetSearchUtils.transform(letter, filterArgs))
+                Toast.makeText(requireContext(), "Clicked $letter", Toast.LENGTH_SHORT).show()
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                    val server = StashServer.requireCurrentServer()
+                    val factory = DataSupplierFactory(server.serverPreferences.serverVersion)
+                    val letterPosition =
+                        AlphabetSearchUtils.findPosition(
+                            letter,
+                            filterArgs,
+                            QueryEngine(server),
+                            facgtory,
+                        )
+                    Log.v(TAG, "Found position for $letter: $letterPosition")
+                    jumpToSwitch.toggle()
+                    currentSelectedPosition = letterPosition
+                    mGridViewHolder.gridView.requestFocus()
+                }
             }
             alphabetFilterLayout.addView(button)
         }
-        jumpToSwitch = root.findViewById(R.id.jump_switch)
+
         jumpToSwitch.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 alphabetFilterLayout.animateToVisible(400L)
