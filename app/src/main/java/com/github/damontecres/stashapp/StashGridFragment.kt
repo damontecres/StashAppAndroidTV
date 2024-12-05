@@ -348,7 +348,7 @@ class StashGridFragment() : Fragment() {
                             letter,
                             filterArgs,
                             QueryEngine(server),
-                            facgtory,
+                            factory,
                         )
                     Log.v(TAG, "Found position for $letter: $letterPosition")
                     jumpToSwitch.toggle()
@@ -534,7 +534,6 @@ class StashGridFragment() : Fragment() {
                 NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
             )
         mAdapter = pagingAdapter
-
         if (firstPageListener != null) {
             pagingAdapter.registerObserver(
                 object : ObjectAdapter.DataObserver() {
