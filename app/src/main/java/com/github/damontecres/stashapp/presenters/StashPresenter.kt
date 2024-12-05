@@ -44,9 +44,8 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         viewHolder: ViewHolder,
         item: Any?,
     ) {
+        val cardView = viewHolder.view as StashImageCardView
         if (item != null) {
-            val cardView = viewHolder.view as StashImageCardView
-
             val localCallBack = callback ?: getDefaultLongClickCallBack(cardView)
             val popUpItems = localCallBack.getPopUpItems(cardView.context, item as T)
             cardView.setOnLongClickListener(
@@ -59,6 +58,8 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
 
             cardView.mainImageView.visibility = View.VISIBLE
             doOnBindViewHolder(viewHolder.view as StashImageCardView, item as T)
+        } else if (this is NullPresenter) {
+            bindNull(cardView)
         }
     }
 
