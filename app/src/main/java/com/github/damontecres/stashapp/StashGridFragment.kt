@@ -10,7 +10,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
@@ -26,9 +25,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
 import com.chrynan.parcelable.core.putParcelable
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
@@ -78,7 +79,6 @@ class StashGridFragment() : Fragment() {
     private lateinit var mGridPresenter: VerticalGridPresenter
     private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
     private lateinit var mAdapter: PagingObjectAdapter
-    private lateinit var jumpToSwitch: SwitchMaterial
     private lateinit var alphabetFilterLayout: LinearLayout
 
     var titleView: View? = null
@@ -164,17 +164,16 @@ class StashGridFragment() : Fragment() {
                 if (Math.abs(mSelectedPosition - position) < mGridPresenter.numberOfColumns * 10) {
                     // If new position is close to the current, smooth scroll
                     mGridViewHolder.gridView.setSelectedPositionSmooth(position)
-                    mSelectedPosition = position
+                    gridOnItemSelected(position)
                 } else {
                     // If not, just jump without smooth scrolling
 
                     viewLifecycleOwner.lifecycleScope.launch {
                         mAdapter.prepareForJump(position)
                         mGridViewHolder.gridView.selectedPosition = position
-                        mSelectedPosition = position
+                        gridOnItemSelected(position)
                     }
                 }
-                positionTextView.text = formatNumber(position + 1, false)
             }
         }
 
@@ -253,13 +252,9 @@ class StashGridFragment() : Fragment() {
 
     private fun showOrHideTitle() {
         if (mGridViewHolder.gridView.findViewHolderForAdapterPosition(mSelectedPosition) == null) {
+            Log.v(TAG, "showOrHideTitle: view holder for $mSelectedPosition is null")
             return
         }
-//        if (!mGridViewHolder.gridView.hasPreviousViewInSameRow(mSelectedPosition)) {
-//            showTitle(true)
-//        } else {
-//            showTitle(false)
-//        }
         val shouldShowTitle = mSelectedPosition < mGridPresenter.numberOfColumns
         Log.v(
             TAG,
@@ -331,15 +326,17 @@ class StashGridFragment() : Fragment() {
         if (name == null) {
             name = getString(dataType.pluralStringId)
         }
+        mGridViewHolder.gridView.addOnLayoutCompletedListener {
+            showOrHideTitle()
+        }
 
-        jumpToSwitch = root.findViewById(R.id.jump_switch)
         alphabetFilterLayout = root.findViewById<LinearLayout>(R.id.alphabet_filter_layout)
-        "#ABCDEFGHIJKLMNOPQRSTUVWXYZ".forEach { letter ->
+        AlphabetSearchUtils.LETTERS.forEach { letter ->
             val button =
                 inflater.inflate(R.layout.alphabet_button, alphabetFilterLayout, false) as Button
             button.text = letter.toString()
             button.setOnClickListener {
-                Toast.makeText(requireContext(), "Clicked $letter", Toast.LENGTH_SHORT).show()
+                // TODO add some loading indicator?
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                     val server = StashServer.requireCurrentServer()
                     val factory = DataSupplierFactory(server.serverPreferences.serverVersion)
@@ -351,20 +348,19 @@ class StashGridFragment() : Fragment() {
                             factory,
                         )
                     Log.v(TAG, "Found position for $letter: $letterPosition")
-                    jumpToSwitch.toggle()
-                    currentSelectedPosition = letterPosition
+                    val jumpPosition =
+                        if (currentSortAndDirection.direction == SortDirectionEnum.DESC) {
+                            // Reverse if sorting descending
+                            mAdapter.size() - letterPosition - 1
+                        } else {
+                            letterPosition
+                        }
+
+                    currentSelectedPosition = jumpPosition
                     mGridViewHolder.gridView.requestFocus()
                 }
             }
             alphabetFilterLayout.addView(button)
-        }
-
-        jumpToSwitch.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                alphabetFilterLayout.animateToVisible(400L)
-            } else {
-                alphabetFilterLayout.animateToInvisible(View.GONE, 400L)
-            }
         }
 
         return root
@@ -578,6 +574,11 @@ class StashGridFragment() : Fragment() {
             }
             _filterArgs = newFilterArgs
             _currentSortAndDirection = newFilterArgs.sortAndDirection
+            if (SortOption.isJumpSupported(dataType, _currentSortAndDirection.sort)) {
+                alphabetFilterLayout.animateToVisible(400L)
+            } else {
+                alphabetFilterLayout.animateToInvisible(View.GONE, 400L)
+            }
         }
         if (!showFooter) {
             footerLayout.visibility = View.GONE

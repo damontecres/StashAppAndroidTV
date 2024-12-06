@@ -71,19 +71,6 @@
             android:text="@string/stashapp_include_sub_tag_content"
             app:switchPadding="8dp"
             tools:visibility="visible" />
-
-            <com.google.android.material.switchmaterial.SwitchMaterial
-                android:id="@+id/jump_switch"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_margin="8dp"
-                android:minWidth="0dp"
-                android:padding="8dp"
-                android:visibility="visible"
-                android:textSize="14sp"
-                android:background="@drawable/button_selector"
-                android:text="Jump to"
-                app:switchPadding="8dp" />
     </LinearLayout>
 
         <LinearLayout

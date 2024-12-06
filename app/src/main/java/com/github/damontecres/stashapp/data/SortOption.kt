@@ -76,6 +76,22 @@ enum class SortOption(
             }
         }
 
+        /**
+         * Whether jumping alphabetical is sorted
+         */
+        fun isJumpSupported(
+            dataType: DataType,
+            sortOption: SortOption,
+        ): Boolean {
+            return dataType in
+                setOf(
+                    DataType.TAG,
+                    DataType.GROUP,
+                    DataType.PERFORMER,
+                    DataType.STUDIO,
+                ) && sortOption == NAME
+        }
+
         private val COMMON_SORT_OPTIONS =
             arrayOf(
                 CREATED_AT,

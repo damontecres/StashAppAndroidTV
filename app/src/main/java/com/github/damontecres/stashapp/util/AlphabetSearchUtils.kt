@@ -64,7 +64,7 @@ class AlphabetSearchUtils {
         ): Int {
             val index = LETTERS.indexOf(letter, ignoreCase = true)
             if (index < 0) {
-                TODO()
+                throw IllegalArgumentException("'$letter' is not a valid letter")
             }
             val regex =
                 if (index == 0) {
@@ -103,14 +103,16 @@ class AlphabetSearchUtils {
             val andObjectFilter = findNullAndFilter(initialObjectFilter)
             val transformed =
                 when (filterArgs.dataType) {
-                    // TODO use filename
-                    DataType.SCENE -> (andObjectFilter as SceneFilterType).copy(title = stringCriterion)
                     DataType.GROUP -> (andObjectFilter as GroupFilterType).copy(name = stringCriterion)
                     DataType.PERFORMER -> (andObjectFilter as PerformerFilterType).copy(name = stringCriterion)
                     DataType.STUDIO -> (andObjectFilter as StudioFilterType).copy(name = stringCriterion)
                     DataType.TAG -> (andObjectFilter as TagFilterType).copy(name = stringCriterion)
+
+                    // TODO use filename
+                    DataType.SCENE -> (andObjectFilter as SceneFilterType).copy(title = stringCriterion)
                     DataType.IMAGE -> (andObjectFilter as ImageFilterType).copy(title = stringCriterion)
                     DataType.GALLERY -> (andObjectFilter as GalleryFilterType).copy(title = stringCriterion)
+
                     DataType.MARKER -> TODO()
                 }
 
@@ -119,53 +121,6 @@ class AlphabetSearchUtils {
                 dataSupplierFactory.create<Query.Data, StashData, Query.Data>(newFilter)
             val query = dataSupplier.createCountQuery(filterArgs.findFilter?.toFindFilterType())
             return dataSupplier.parseCountQuery(queryEngine.executeQuery(query).data!!)
-        }
-
-        fun transform(
-            letter: Char,
-            filterArgs: FilterArgs,
-        ): FilterArgs {
-            // TODO, if letter==E, count all starting w/ [0-9A-D] and jump?
-            // TODO, use AND filtering instead?
-            // (^[Aa].*)
-            val regex =
-                if (letter == '#') {
-                    // no-op
-                    return filterArgs
-                } else {
-                    "(^[$letter${letter.lowercase()}].*)"
-                }
-            val stringCrit =
-                Optional.present(
-                    StringCriterionInput(
-                        value = regex,
-                        modifier = CriterionModifier.MATCHES_REGEX,
-                    ),
-                )
-
-            val objectFilter =
-                filterArgs.objectFilter ?: when (filterArgs.dataType) {
-                    DataType.SCENE -> SceneFilterType()
-                    DataType.GROUP -> GroupFilterType()
-                    DataType.MARKER -> SceneMarkerFilterType()
-                    DataType.PERFORMER -> PerformerFilterType()
-                    DataType.STUDIO -> StudioFilterType()
-                    DataType.TAG -> TagFilterType()
-                    DataType.IMAGE -> ImageFilterType()
-                    DataType.GALLERY -> GalleryFilterType()
-                }
-            val transformed =
-                when (filterArgs.dataType) {
-                    DataType.SCENE -> (objectFilter as SceneFilterType).copy(title = stringCrit)
-                    DataType.GROUP -> (objectFilter as GroupFilterType).copy(name = stringCrit)
-                    DataType.MARKER -> TODO()
-                    DataType.PERFORMER -> (objectFilter as PerformerFilterType).copy(name = stringCrit)
-                    DataType.STUDIO -> (objectFilter as StudioFilterType).copy(name = stringCrit)
-                    DataType.TAG -> (objectFilter as TagFilterType).copy(name = stringCrit)
-                    DataType.IMAGE -> (objectFilter as ImageFilterType).copy(title = stringCrit)
-                    DataType.GALLERY -> (objectFilter as GalleryFilterType).copy(title = stringCrit)
-                }
-            return filterArgs.copy(objectFilter = transformed)
         }
     }
 }
