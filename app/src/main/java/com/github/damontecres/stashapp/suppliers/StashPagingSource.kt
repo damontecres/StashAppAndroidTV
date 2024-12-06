@@ -100,7 +100,7 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
                     per_page = Optional.present(loadSize),
                     page = Optional.present(page),
                 )
-            Log.v(TAG, "page=$page, loadSize=$loadSize")
+            if (DEBUG) Log.v(TAG, "page=$page, loadSize=$loadSize")
             val query = dataSupplier.createQuery(filter)
             val queryResult = queryEngine.executeQuery(query)
             if (queryResult.data != null) {
@@ -123,29 +123,21 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
             return@withContext try {
                 // Start refresh at page 1 if undefined.
                 val pageNum = (params.key ?: 1).toInt()
-                // Round requested loadSize down to a multiple of pageSize
-//                val loadSize = params.loadSize / pageSize * pageSize
                 val loadSize = params.loadSize
                 val results = fetchPage(pageNum, loadSize)
 
-                // If the total fetched results is less than the total number of items, then there is a next page
-                // Advance the page by the number of requested items
-//            val nextPageNum =
-//                if (results.size >= loadSize) {
-//                    pageNum + (params.loadSize / pageSize)
-//                } else {
-//                    null
-//                }
                 val itemsBefore =
                     if (pageNum > 0) ((pageNum - 1) * pageSize).coerceAtMost(getCount()) else 0
                 val itemsAfter =
                     (getCount() - ((pageNum - 1) * pageSize + results.size)).coerceAtLeast(0)
                 val nextPageNum = if (itemsAfter > 0) pageNum + (loadSize / pageSize) else null
-                Log.v(
-                    TAG,
-                    "load: pageNum=$pageNum, loadSize=$loadSize, results.size=${results.size}, " +
-                        "nextPageNum=$nextPageNum, itemsBefore=$itemsBefore, itemsAfter=$itemsAfter",
-                )
+                if (DEBUG) {
+                    Log.v(
+                        TAG,
+                        "load: pageNum=$pageNum, loadSize=$loadSize, results.size=${results.size}, " +
+                            "nextPageNum=$nextPageNum, itemsBefore=$itemsBefore, itemsAfter=$itemsAfter",
+                    )
+                }
 
                 LoadResult.Page(
                     data = results,
@@ -171,10 +163,12 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
         //  * nextKey == null -> anchorPage is the last page.
         //  * both prevKey and nextKey are null -> anchorPage is the
         //    initial page, so return null.
-        Log.v(
-            TAG,
-            "getRefreshKey: state.anchorPosition=${state.anchorPosition}, pageSize=$pageSize",
-        )
+        if (DEBUG) {
+            Log.v(
+                TAG,
+                "getRefreshKey: state.anchorPosition=${state.anchorPosition}, pageSize=$pageSize",
+            )
+        }
         return state.anchorPosition?.let { anchorPosition ->
 //            val anchorPage = state.closestPageToPosition(anchorPosition)
 //            Log.v(
@@ -224,6 +218,8 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
         private const val TAG = "StashPagingSource"
         const val INVALID_COUNT = -1
         const val UNSUPPORTED_COUNT = -2
+
+        private const val DEBUG = false
     }
 
     fun interface DataTransform<D, S> {
