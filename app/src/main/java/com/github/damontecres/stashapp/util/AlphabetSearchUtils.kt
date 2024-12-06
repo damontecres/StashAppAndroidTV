@@ -32,7 +32,7 @@ class AlphabetSearchUtils {
          * X AND Y -> Y
          * X AND Y AND Z -> Z
          */
-        fun findNullAndFilter(filter: StashDataFilter): StashDataFilter {
+        fun <T : StashDataFilter> findNullAndFilter(filter: T): T {
             val andFilter =
                 when (filter) {
                     is SceneFilterType -> filter.AND
@@ -46,11 +46,11 @@ class AlphabetSearchUtils {
                     is SceneMarkerFilterType -> throw IllegalArgumentException()
 
                     // TODO, these shouldn't be StashDataFilter I think
-                    is FindFilterType -> throw IllegalArgumentException()
-                    is SavedFindFilterType -> throw IllegalArgumentException()
+                    is FindFilterType, is SavedFindFilterType -> throw IllegalArgumentException()
+                    else -> throw IllegalArgumentException()
                 }.getOrNull()
             return if (andFilter != null) {
-                findNullAndFilter(andFilter)
+                findNullAndFilter(andFilter) as T
             } else {
                 filter
             }
