@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
+import androidx.core.view.isVisible
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.leanback.widget.BrowseFrameLayout
@@ -609,9 +610,12 @@ class StashGridFragment() : Fragment() {
         browseFrameLayout.onFocusSearchListener =
             BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
                 if (direction == View.FOCUS_UP) {
-                    val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
-                    Log.v(TAG, "Found filterButton=$filterButton")
-                    filterButton
+                    if (alphabetFilterLayout.isVisible) {
+                        null
+                    } else {
+                        val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
+                        filterButton
+                    }
                 } else {
                     null
                 }
