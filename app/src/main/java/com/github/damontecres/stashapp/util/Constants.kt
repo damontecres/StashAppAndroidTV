@@ -573,6 +573,8 @@ val ImageData.Visual_file.height: Int?
     get() = onImageFile?.height ?: onVideoFile?.height
 
 fun View.animateToVisible(durationMs: Long? = null) {
+    if (visibility == View.VISIBLE) return
+
     val duration =
         durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
     animate()
@@ -589,6 +591,8 @@ fun View.animateToInvisible(
     @Visibility targetVisibility: Int = View.INVISIBLE,
     durationMs: Long? = null,
 ) {
+    if (visibility == targetVisibility) return
+
     val duration =
         durationMs ?: resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
     animate()

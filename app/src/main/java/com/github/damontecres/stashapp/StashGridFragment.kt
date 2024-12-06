@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
+import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
@@ -80,6 +81,7 @@ class StashGridFragment() : Fragment() {
     private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
     private lateinit var mAdapter: PagingObjectAdapter
     private lateinit var alphabetFilterLayout: LinearLayout
+    private lateinit var loadingProgressBar: ContentLoadingProgressBar
 
     var titleView: View? = null
 
@@ -330,13 +332,15 @@ class StashGridFragment() : Fragment() {
             showOrHideTitle()
         }
 
+        loadingProgressBar = root.findViewById(R.id.loading_progress_bar)
+
         alphabetFilterLayout = root.findViewById<LinearLayout>(R.id.alphabet_filter_layout)
         AlphabetSearchUtils.LETTERS.forEach { letter ->
             val button =
                 inflater.inflate(R.layout.alphabet_button, alphabetFilterLayout, false) as Button
             button.text = letter.toString()
             button.setOnClickListener {
-                // TODO add some loading indicator?
+                loadingProgressBar.show()
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                     val server = StashServer.requireCurrentServer()
                     val factory = DataSupplierFactory(server.serverPreferences.serverVersion)
@@ -358,6 +362,7 @@ class StashGridFragment() : Fragment() {
 
                     currentSelectedPosition = jumpPosition
                     mGridViewHolder.gridView.requestFocus()
+                    loadingProgressBar.hide()
                 }
             }
             alphabetFilterLayout.addView(button)
@@ -508,6 +513,7 @@ class StashGridFragment() : Fragment() {
             TAG,
             "refresh: dataType=${newFilterArgs.dataType}, newSortAndDirection=$newFilterArgs",
         )
+        loadingProgressBar.show()
 
         val pageSize = mGridPresenter.numberOfColumns * 10
         val server = StashServer.requireCurrentServer()
@@ -554,6 +560,15 @@ class StashGridFragment() : Fragment() {
             )
         }
 
+        pagingAdapter.registerObserver(
+            object : ObjectAdapter.DataObserver() {
+                override fun onChanged() {
+                    loadingProgressBar.hide()
+                    pagingAdapter.unregisterObserver(this)
+                }
+            },
+        )
+
         val showFooter =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_show_grid_footer), true)
@@ -566,6 +581,7 @@ class StashGridFragment() : Fragment() {
             if (count == 0) {
                 positionTextView.text = getString(R.string.zero)
                 noResultsTextView.animateToVisible()
+                loadingProgressBar.hide()
             }
             totalCountTextView.text =
                 formatNumber(count, server.serverPreferences.abbreviateCounters)
@@ -574,7 +590,7 @@ class StashGridFragment() : Fragment() {
             }
             _filterArgs = newFilterArgs
             _currentSortAndDirection = newFilterArgs.sortAndDirection
-            if (SortOption.isJumpSupported(dataType, _currentSortAndDirection.sort)) {
+            if (count > 0 && SortOption.isJumpSupported(dataType, _currentSortAndDirection.sort)) {
                 alphabetFilterLayout.animateToVisible(400L)
             } else {
                 alphabetFilterLayout.animateToInvisible(View.GONE, 400L)
