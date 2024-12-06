@@ -243,7 +243,7 @@ class StashGridFragment() : Fragment() {
     @SuppressLint("SetTextI18n")
     private fun gridOnItemSelected(position: Int) {
         if (position != mSelectedPosition) {
-            Log.v(TAG, "gridOnItemSelected=$position")
+            if (DEBUG) Log.v(TAG, "gridOnItemSelected=$position")
             mSelectedPosition = position
             showOrHideTitle()
             positionTextView.text = formatNumber(position + 1, false)
@@ -255,14 +255,16 @@ class StashGridFragment() : Fragment() {
 
     private fun showOrHideTitle() {
         if (mGridViewHolder.gridView.findViewHolderForAdapterPosition(mSelectedPosition) == null) {
-            Log.v(TAG, "showOrHideTitle: view holder for $mSelectedPosition is null")
+            if (DEBUG) Log.v(TAG, "showOrHideTitle: view holder for $mSelectedPosition is null")
             return
         }
         val shouldShowTitle = mSelectedPosition < mGridPresenter.numberOfColumns
-        Log.v(
-            TAG,
-            "showOrHideTitle: mSelectedPosition=$mSelectedPosition, mGridPresenter.numberOfColumns=${mGridPresenter.numberOfColumns}",
-        )
+        if (DEBUG) {
+            Log.v(
+                TAG,
+                "showOrHideTitle: mSelectedPosition=$mSelectedPosition, mGridPresenter.numberOfColumns=${mGridPresenter.numberOfColumns}",
+            )
+        }
         showTitle(shouldShowTitle)
     }
 
@@ -659,6 +661,8 @@ class StashGridFragment() : Fragment() {
 
     companion object {
         private const val TAG = "StashGridFragment"
+
+        private const val DEBUG = false
     }
 
     private class StashGridPresenter :
