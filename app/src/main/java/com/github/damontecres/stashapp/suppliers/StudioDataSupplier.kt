@@ -68,11 +68,7 @@ class StudioTagDataSupplier(private val studioId: String) :
     }
 
     override fun parseCountQuery(data: FindStudioTagsQuery.Data): Int {
-        return if (data.findStudio != null) {
-            1
-        } else {
-            0
-        }
+        return data.findStudio?.tags?.size ?: 0
     }
 
     override fun parseQuery(data: FindStudioTagsQuery.Data): List<TagData> {
