@@ -9,11 +9,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
-import androidx.leanback.paging.PagingDataAdapter
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.ObjectAdapter
@@ -23,9 +21,6 @@ import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
 import com.chrynan.parcelable.core.putParcelable
@@ -35,14 +30,15 @@ import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashComparator
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashParcelable
 import com.github.damontecres.stashapp.util.StashServer
@@ -59,7 +55,6 @@ import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.formatNumber
 import com.google.android.material.switchmaterial.SwitchMaterial
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
 
@@ -79,7 +74,7 @@ class StashGridFragment() : Fragment() {
     private lateinit var noResultsTextView: TextView
     private lateinit var mGridPresenter: VerticalGridPresenter
     private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
-    private lateinit var mAdapter: ObjectAdapter
+    private lateinit var mAdapter: PagingObjectAdapter
 
     var titleView: View? = null
 
@@ -164,14 +159,18 @@ class StashGridFragment() : Fragment() {
                 if (Math.abs(mSelectedPosition - position) < mGridPresenter.numberOfColumns * 10) {
                     // If new position is close to the current, smooth scroll
                     mGridViewHolder.gridView.setSelectedPositionSmooth(position)
+                    mSelectedPosition = position
                 } else {
                     // If not, just jump without smooth scrolling
-                    mGridViewHolder.gridView.selectedPosition = position
-                }
 
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        mAdapter.prepareForJump(position)
+                        mGridViewHolder.gridView.selectedPosition = position
+                        mSelectedPosition = position
+                    }
+                }
                 positionTextView.text = formatNumber(position + 1, false)
             }
-            mSelectedPosition = position
         }
 
     // Unmodifiable properties, current state
@@ -241,9 +240,9 @@ class StashGridFragment() : Fragment() {
             mSelectedPosition = position
             showOrHideTitle()
             positionTextView.text = formatNumber(position + 1, false)
-
             // If on the second row & the back callback exists, enable it
             onBackPressedCallback?.isEnabled = mSelectedPosition >= mGridPresenter.numberOfColumns
+            mAdapter.updatePosition(position)
         }
     }
 
@@ -472,10 +471,7 @@ class StashGridFragment() : Fragment() {
             TAG,
             "refresh: dataType=${newFilterArgs.dataType}, newSortAndDirection=$newFilterArgs",
         )
-        val pagingAdapter =
-            PagingDataAdapter(NullPresenterSelector(presenterSelector), StashComparator)
-        mAdapter = pagingAdapter
-        updateAdapter()
+
         val pageSize = mGridPresenter.numberOfColumns * 10
         val server = StashServer.requireCurrentServer()
         val factory = DataSupplierFactory(server.serverPreferences.serverVersion)
@@ -489,6 +485,15 @@ class StashGridFragment() : Fragment() {
                 useRandom = false,
                 sortByOverride = null,
             )
+        val pagingAdapter =
+            PagingObjectAdapter(
+                pagingSource,
+                pageSize,
+                viewLifecycleOwner.lifecycleScope,
+                NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
+            )
+        mAdapter = pagingAdapter
+
         if (firstPageListener != null) {
             pagingAdapter.registerObserver(
                 object : ObjectAdapter.DataObserver() {
@@ -519,6 +524,8 @@ class StashGridFragment() : Fragment() {
         val footerLayout = requireView().findViewById<View>(R.id.footer_layout)
 
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            mAdapter.init()
+            updateAdapter()
             val count = pagingSource.getCount()
             if (count == 0) {
                 positionTextView.text = getString(R.string.zero)
@@ -529,42 +536,12 @@ class StashGridFragment() : Fragment() {
             if (showFooter) {
                 footerLayout.animateToVisible()
             }
+            _filterArgs = newFilterArgs
+            _currentSortAndDirection = newFilterArgs.sortAndDirection
         }
         if (!showFooter) {
             footerLayout.visibility = View.GONE
         }
-
-//        val pagerSize = mGridPresenter.numberOfColumns * 10
-        val flow =
-            Pager(
-                PagingConfig(
-                    pageSize = pageSize,
-                    prefetchDistance = pageSize,
-                    initialLoadSize = pageSize * 2,
-                    maxSize = pageSize * 6,
-                    jumpThreshold = pageSize * 6,
-                    enablePlaceholders = true,
-                ),
-            ) {
-                pagingSource
-            }.flow
-                .cachedIn(viewLifecycleOwner.lifecycleScope)
-
-        viewLifecycleOwner.lifecycleScope.launch(
-            StashCoroutineExceptionHandler {
-                Toast.makeText(
-                    requireContext(),
-                    "Error loading results: ${it.message}",
-                    Toast.LENGTH_LONG,
-                )
-            },
-        ) {
-            flow.collectLatest {
-                pagingAdapter.submitData(it)
-            }
-        }
-        _filterArgs = newFilterArgs
-        _currentSortAndDirection = newFilterArgs.sortAndDirection
     }
 
     override fun onStart() {

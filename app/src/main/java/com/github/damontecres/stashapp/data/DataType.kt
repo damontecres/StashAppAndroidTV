@@ -133,6 +133,19 @@ enum class DataType(
                 GALLERY -> GalleryPresenter.CARD_WIDTH
             }
 
+    val defaultCardHeight
+        get() =
+            when (this) {
+                SCENE -> ScenePresenter.CARD_HEIGHT
+                GROUP -> GroupPresenter.CARD_HEIGHT
+                MARKER -> MarkerPresenter.CARD_HEIGHT
+                PERFORMER -> PerformerPresenter.CARD_HEIGHT
+                STUDIO -> StudioPresenter.CARD_HEIGHT
+                TAG -> TagPresenter.CARD_HEIGHT
+                IMAGE -> ImagePresenter.CARD_HEIGHT
+                GALLERY -> GalleryPresenter.CARD_HEIGHT
+            }
+
     val filterType
         get() =
             when (this) {
