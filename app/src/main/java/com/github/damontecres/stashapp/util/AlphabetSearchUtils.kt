@@ -56,6 +56,13 @@ class AlphabetSearchUtils {
             }
         }
 
+        /**
+         * Find the position of the first item starting with the given letter in the given filter
+         *
+         * This works by querying using a REGEX to count the items that beginning with the letters
+         * earlier in the alphabet. So if looking for 'D', this will count the items starting with
+         * a digit, A, B, or C (plus relevant symbol characters).
+         */
         suspend fun findPosition(
             letter: Char,
             filterArgs: FilterArgs,
