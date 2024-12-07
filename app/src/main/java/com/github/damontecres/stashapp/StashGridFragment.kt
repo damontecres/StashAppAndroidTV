@@ -319,10 +319,16 @@ class StashGridFragment() : Fragment() {
                 false,
             ) as ViewGroup
         val gridFrame = root.findViewById<View>(androidx.leanback.R.id.grid_frame) as ViewGroup
+        val onFocusChangeListener = StashOnFocusChangeListener(requireContext())
         sortButton = root.findViewById(R.id.sort_button)
+        sortButton.onFocusChangeListener = onFocusChangeListener
         playAllButton = root.findViewById(R.id.play_all_button)
+        playAllButton.onFocusChangeListener = onFocusChangeListener
         filterButton = root.findViewById(R.id.filter_button)
+        filterButton.onFocusChangeListener = onFocusChangeListener
         subContentSwitch = root.findViewById(R.id.sub_content_switch)
+        subContentSwitch.onFocusChangeListener = onFocusChangeListener
+
         val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         mGridViewHolder.view.isFocusableInTouchMode = false

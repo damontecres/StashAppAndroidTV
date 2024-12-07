@@ -58,7 +58,9 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         filterButton.onFocusChangeListener = onFocusChangeListener
 
         sortButton = findViewById(R.id.sort_button)
+        sortButton.onFocusChangeListener = onFocusChangeListener
         playAllButton = findViewById(R.id.play_all_button)
+        playAllButton.onFocusChangeListener = onFocusChangeListener
         titleTextView = findViewById(R.id.list_title)
 
         sortButtonManager =
