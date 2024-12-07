@@ -19,7 +19,6 @@ import androidx.fragment.app.Fragment
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.ObjectAdapter
-import androidx.leanback.widget.OnChildLaidOutListener
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.PresenterSelector
@@ -217,13 +216,6 @@ class StashGridFragment() : Fragment() {
             }
         }
 
-    private val mChildLaidOutListener =
-        OnChildLaidOutListener { parent, view, position, id ->
-            if (position == 0) {
-                showOrHideTitle()
-            }
-        }
-
     constructor(
         filterArgs: FilterArgs,
         columns: Int? = null,
@@ -257,15 +249,12 @@ class StashGridFragment() : Fragment() {
     }
 
     private fun showOrHideTitle() {
-        if (mGridViewHolder.gridView.findViewHolderForAdapterPosition(mSelectedPosition) == null) {
-            if (DEBUG) Log.v(TAG, "showOrHideTitle: view holder for $mSelectedPosition is null")
-            return
-        }
         val shouldShowTitle = mSelectedPosition < mGridPresenter.numberOfColumns
         if (DEBUG) {
             Log.v(
                 TAG,
-                "showOrHideTitle: mSelectedPosition=$mSelectedPosition, mGridPresenter.numberOfColumns=${mGridPresenter.numberOfColumns}",
+                "showOrHideTitle: $shouldShowTitle, mSelectedPosition=$mSelectedPosition, " +
+                    "mGridPresenter.numberOfColumns=${mGridPresenter.numberOfColumns}",
             )
         }
         showTitle(shouldShowTitle)
@@ -336,12 +325,8 @@ class StashGridFragment() : Fragment() {
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         mGridViewHolder.view.isFocusableInTouchMode = false
         gridDock.addView(mGridViewHolder.view)
-        mGridViewHolder.gridView.setOnChildLaidOutListener(mChildLaidOutListener)
         if (name == null) {
             name = getString(dataType.pluralStringId)
-        }
-        mGridViewHolder.gridView.addOnLayoutCompletedListener {
-            showOrHideTitle()
         }
 
         jumpButtonLayout = root.findViewById(R.id.jump_layout)
