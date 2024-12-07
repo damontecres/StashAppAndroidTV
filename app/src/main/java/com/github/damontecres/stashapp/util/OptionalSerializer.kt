@@ -64,7 +64,8 @@ class CustomFieldCriterionInputSerializer : KSerializer<CustomFieldCriterionInpu
         buildClassSerialDescriptor(CustomFieldCriterionInput::class.qualifiedName!!) {
             element<String>("field")
             element<CriterionModifier>("modifier")
-            element<List<Any>?>("value")
+            // TODO
+            // element<List<Any>?>("value")
         }
 
     override fun deserialize(decoder: Decoder): CustomFieldCriterionInput? {
