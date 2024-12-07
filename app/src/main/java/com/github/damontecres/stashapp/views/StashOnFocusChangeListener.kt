@@ -2,17 +2,16 @@ package com.github.damontecres.stashapp.views
 
 import android.content.Context
 import android.view.View
+import androidx.annotation.FractionRes
 
 /**
  * A [View.OnFocusChangeListener] which slightly zooms the view
  */
-open class StashOnFocusChangeListener(val context: Context) : View.OnFocusChangeListener {
-    private val mFocusedZoom =
-        context.resources.getFraction(
-            androidx.leanback.R.fraction.lb_search_orb_focused_zoom,
-            1,
-            1,
-        )
+open class StashOnFocusChangeListener(
+    val context: Context,
+    @FractionRes fraction: Int = androidx.leanback.R.fraction.lb_search_orb_focused_zoom,
+) : View.OnFocusChangeListener {
+    private val mFocusedZoom = context.resources.getFraction(fraction, 1, 1)
 
     private val mScaleDurationMs =
         context.resources.getInteger(

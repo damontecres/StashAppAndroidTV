@@ -57,6 +57,7 @@ import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
+import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.formatNumber
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -341,6 +342,8 @@ class StashGridFragment() : Fragment() {
             val button =
                 inflater.inflate(R.layout.alphabet_button, alphabetFilterLayout, false) as Button
             button.text = letter.toString()
+            button.onFocusChangeListener =
+                StashOnFocusChangeListener(requireContext(), R.fraction.alphabet_zoom)
             button.setOnClickListener {
                 loadingProgressBar.show()
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
