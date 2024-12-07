@@ -52,6 +52,7 @@ fragment MarkerData on SceneMarker {
   stream
   screenshot
   seconds
+  end_seconds
   preview
   primary_tag {
     ...SlimTagData
@@ -74,6 +75,7 @@ fragment FullMarkerData on SceneMarker {
   stream
   screenshot
   seconds
+  end_seconds
   preview
   primary_tag {
     ...TagData

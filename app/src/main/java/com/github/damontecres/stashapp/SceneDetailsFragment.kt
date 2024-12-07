@@ -691,6 +691,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             stream = it.stream,
             screenshot = it.screenshot,
             seconds = it.seconds,
+            end_seconds = it.end_seconds,
             preview = "",
             primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData.asSlimTagData),
             scene = MarkerData.Scene(sceneId, sceneData!!.asVideoSceneData),

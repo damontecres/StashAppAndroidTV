@@ -33,7 +33,9 @@ class PlaylistMarkersFragment :
             val clipConfig =
                 MediaItem.ClippingConfiguration.Builder()
                     .setStartPositionMs(startPos)
-                    .setEndPositionMs(startPos + duration)
+                    .setEndPositionMs(
+                        item.end_seconds?.times(1000)?.toLong() ?: (startPos + duration),
+                    )
                     .build()
             setClippingConfiguration(clipConfig)
         }
