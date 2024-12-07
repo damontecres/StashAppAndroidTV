@@ -12,7 +12,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
-import androidx.core.view.isVisible
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.leanback.widget.BrowseFrameLayout
@@ -612,12 +611,8 @@ class StashGridFragment() : Fragment() {
         browseFrameLayout.onFocusSearchListener =
             BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
                 if (direction == View.FOCUS_UP) {
-                    if (alphabetFilterLayout.isVisible) {
-                        null
-                    } else {
-                        val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
-                        filterButton
-                    }
+                    val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
+                    filterButton
                 } else {
                     null
                 }
@@ -662,7 +657,7 @@ class StashGridFragment() : Fragment() {
     companion object {
         private const val TAG = "StashGridFragment"
 
-        private const val DEBUG = false
+        private const val DEBUG = true
     }
 
     private class StashGridPresenter :
