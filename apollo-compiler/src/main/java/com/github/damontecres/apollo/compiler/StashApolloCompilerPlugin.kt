@@ -3,6 +3,7 @@ package com.github.damontecres.apollo.compiler
 import com.apollographql.apollo.compiler.ApolloCompilerPlugin
 import com.apollographql.apollo.compiler.Transform
 import com.apollographql.apollo.compiler.codegen.kotlin.KotlinOutput
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.DelicateKotlinPoetApi
 import com.squareup.kotlinpoet.FileSpec
@@ -62,20 +63,30 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
         builder.members.replaceAll { member ->
             if (member is TypeSpec) {
                 // Mark as Serializable
-                val typeBuilder =
-                    member.toBuilder()
-                        .addAnnotation(Serializable::class.java)
-                typeBuilder.propertySpecs.replaceAll { prop ->
-                    if (prop.type is ParameterizedTypeName &&
-                        (prop.type as ParameterizedTypeName).rawType.canonicalName == "com.apollographql.apollo.api.Optional"
-                    ) {
-                        // If the property is an Optional (basically all of them), then add a Contextual annotation
-                        // This allows for runtime serialization, because the app defines a serializer for this class
-                        prop.toBuilder()
-                            .addAnnotation(Contextual::class)
+                val annotation =
+                    if (member.name == "CustomFieldCriterionInput") {
+                        AnnotationSpec.builder(Serializable::class)
+                            .addMember("with = com.github.damontecres.stashapp.util.CustomFieldCriterionInputSerializer::class")
                             .build()
                     } else {
-                        prop
+                        AnnotationSpec.builder(Serializable::class).build()
+                    }
+                val typeBuilder =
+                    member.toBuilder()
+                        .addAnnotation(annotation)
+                if (member.name != "CustomFieldCriterionInput") {
+                    typeBuilder.propertySpecs.replaceAll { prop ->
+                        if (prop.type is ParameterizedTypeName &&
+                            (prop.type as ParameterizedTypeName).rawType.canonicalName == "com.apollographql.apollo.api.Optional"
+                        ) {
+                            // If the property is an Optional (basically all of them), then add a Contextual annotation
+                            // This allows for runtime serialization, because the app defines a serializer for this class
+                            prop.toBuilder()
+                                .addAnnotation(Contextual::class)
+                                .build()
+                        } else {
+                            prop
+                        }
                     }
                 }
 
