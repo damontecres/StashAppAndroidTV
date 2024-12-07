@@ -12,7 +12,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
-import androidx.core.view.isVisible
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.leanback.widget.BrowseFrameLayout
@@ -58,6 +57,7 @@ import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
+import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.formatNumber
 import com.google.android.material.switchmaterial.SwitchMaterial
@@ -319,10 +319,16 @@ class StashGridFragment() : Fragment() {
                 false,
             ) as ViewGroup
         val gridFrame = root.findViewById<View>(androidx.leanback.R.id.grid_frame) as ViewGroup
+        val onFocusChangeListener = StashOnFocusChangeListener(requireContext())
         sortButton = root.findViewById(R.id.sort_button)
+        sortButton.onFocusChangeListener = onFocusChangeListener
         playAllButton = root.findViewById(R.id.play_all_button)
+        playAllButton.onFocusChangeListener = onFocusChangeListener
         filterButton = root.findViewById(R.id.filter_button)
+        filterButton.onFocusChangeListener = onFocusChangeListener
         subContentSwitch = root.findViewById(R.id.sub_content_switch)
+        subContentSwitch.onFocusChangeListener = onFocusChangeListener
+
         val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         mGridViewHolder.view.isFocusableInTouchMode = false
@@ -342,6 +348,8 @@ class StashGridFragment() : Fragment() {
             val button =
                 inflater.inflate(R.layout.alphabet_button, alphabetFilterLayout, false) as Button
             button.text = letter.toString()
+            button.onFocusChangeListener =
+                StashOnFocusChangeListener(requireContext(), R.fraction.alphabet_zoom)
             button.setOnClickListener {
                 loadingProgressBar.show()
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
@@ -612,12 +620,8 @@ class StashGridFragment() : Fragment() {
         browseFrameLayout.onFocusSearchListener =
             BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
                 if (direction == View.FOCUS_UP) {
-                    if (alphabetFilterLayout.isVisible) {
-                        null
-                    } else {
-                        val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
-                        filterButton
-                    }
+                    val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
+                    filterButton
                 } else {
                     null
                 }
@@ -662,7 +666,7 @@ class StashGridFragment() : Fragment() {
     companion object {
         private const val TAG = "StashGridFragment"
 
-        private const val DEBUG = false
+        private const val DEBUG = true
     }
 
     private class StashGridPresenter :

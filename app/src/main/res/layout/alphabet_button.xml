@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Button xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="0dp"
-    android:layout_height="24dp"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="20dp"
+    android:layout_height="20dp"
     android:layout_weight="1"
-    android:layout_margin="4dp"
+    android:layout_margin="2dp"
     android:background="@drawable/button_selector"
-    android:textSize="16sp"
-    android:textColor="@android:color/white">
+    android:textSize="12sp"
+    android:textColor="@android:color/white"
+    tools:text="A">
 </Button>
