@@ -12,6 +12,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
+import androidx.core.view.contains
+import androidx.core.view.get
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.leanback.widget.BrowseFrameLayout
@@ -83,6 +85,7 @@ class StashGridFragment() : Fragment() {
     private lateinit var mAdapter: PagingObjectAdapter
     private lateinit var alphabetFilterLayout: LinearLayout
     private lateinit var loadingProgressBar: ContentLoadingProgressBar
+    private lateinit var jumpButtonLayout: LinearLayout
 
     var titleView: View? = null
 
@@ -341,6 +344,7 @@ class StashGridFragment() : Fragment() {
             showOrHideTitle()
         }
 
+        jumpButtonLayout = root.findViewById(R.id.jump_layout)
         loadingProgressBar = root.findViewById(R.id.loading_progress_bar)
 
         alphabetFilterLayout = root.findViewById<LinearLayout>(R.id.alphabet_filter_layout)
@@ -562,9 +566,7 @@ class StashGridFragment() : Fragment() {
             pagingAdapter.registerObserver(
                 object : ObjectAdapter.DataObserver() {
                     override fun onChanged() {
-                        requireView()
-                            .findViewById<View>(androidx.leanback.R.id.grid_frame)
-                            .requestFocus()
+                        mGridViewHolder.gridView.requestFocus()
                         pagingAdapter.unregisterObserver(this)
                     }
                 },
@@ -593,6 +595,8 @@ class StashGridFragment() : Fragment() {
                 positionTextView.text = getString(R.string.zero)
                 noResultsTextView.animateToVisible()
                 loadingProgressBar.hide()
+            } else {
+                setupJumpButtons(count)
             }
             totalCountTextView.text =
                 formatNumber(count, server.serverPreferences.abbreviateCounters)
@@ -612,6 +616,42 @@ class StashGridFragment() : Fragment() {
         }
     }
 
+    private fun setupJumpButtons(count: Int) {
+        val columns = mGridPresenter.numberOfColumns
+        val jump2 =
+            if (count >= 25_000) {
+                columns * 2000
+            } else if (count >= 7_000) {
+                columns * 200
+            } else if (count >= 2_000) {
+                columns * 50
+            } else {
+                columns * 20
+            }
+        val jump1 =
+            if (count >= 25_000) {
+                columns * 500
+            } else if (count >= 7_000) {
+                columns * 50
+            } else if (count >= 2_000) {
+                columns * 15
+            } else {
+                columns * 6
+            }
+        jumpButtonLayout[0].setOnClickListener {
+            currentSelectedPosition = (currentSelectedPosition - jump2).coerceIn(0, count - 1)
+        }
+        jumpButtonLayout[1].setOnClickListener {
+            currentSelectedPosition = (currentSelectedPosition - jump1).coerceIn(0, count - 1)
+        }
+        jumpButtonLayout[2].setOnClickListener {
+            currentSelectedPosition = (currentSelectedPosition + jump1).coerceIn(0, count - 1)
+        }
+        jumpButtonLayout[3].setOnClickListener {
+            currentSelectedPosition = (currentSelectedPosition + jump2).coerceIn(0, count - 1)
+        }
+    }
+
     override fun onStart() {
         super.onStart()
 
@@ -619,7 +659,11 @@ class StashGridFragment() : Fragment() {
             requireView().findViewById<BrowseFrameLayout>(androidx.leanback.R.id.grid_frame)
         browseFrameLayout.onFocusSearchListener =
             BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
-                if (direction == View.FOCUS_UP) {
+                if (focused != null && focused in alphabetFilterLayout && direction == View.FOCUS_RIGHT) {
+                    jumpButtonLayout
+                } else if (focused != null && focused in jumpButtonLayout) {
+                    null
+                } else if (direction == View.FOCUS_UP) {
                     val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
                     filterButton
                 } else {
@@ -666,7 +710,7 @@ class StashGridFragment() : Fragment() {
     companion object {
         private const val TAG = "StashGridFragment"
 
-        private const val DEBUG = true
+        private const val DEBUG = false
     }
 
     private class StashGridPresenter :

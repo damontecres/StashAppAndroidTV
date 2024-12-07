@@ -25,6 +25,10 @@
     <string name="fa_pause" translatable="false">&#xf04c;</string>
     <string name="fa_arrow_down_long" translatable="false">&#xf175;</string>
     <string name="fa_arrow_up_long" translatable="false">&#xf176;</string>
+    <string name="fa_angle_up" translatable="false">&#xf106;</string>
+    <string name="fa_angles_up" translatable="false">&#xf102;</string>
+    <string name="fa_angle_down" translatable="false">&#xf107;</string>
+    <string name="fa_angles_down" translatable="false">&#xf103;</string>
 
 
     <string name="go_to">Go to</string>
