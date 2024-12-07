@@ -44,7 +44,11 @@ class PagingObjectAdapter(
         val pageNumber = position / pageSize + 1
         val page = cachedPages.getIfPresent(pageNumber)
         if (page != null) {
-            return page.items[position % pageSize]
+            return if (page.items.size > position % pageSize) {
+                page.items[position % pageSize]
+            } else {
+                null
+            }
         }
         if (DEBUG) Log.v(TAG, "get: position=$position")
         fetchPage(position, pageNumber)

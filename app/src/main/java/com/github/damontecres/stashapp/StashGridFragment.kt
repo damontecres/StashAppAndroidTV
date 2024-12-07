@@ -8,9 +8,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
+import androidx.core.view.isVisible
+import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
@@ -24,9 +27,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
 import com.chrynan.parcelable.core.putParcelable
+import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
@@ -37,6 +42,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -75,6 +81,8 @@ class StashGridFragment() : Fragment() {
     private lateinit var mGridPresenter: VerticalGridPresenter
     private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
     private lateinit var mAdapter: PagingObjectAdapter
+    private lateinit var alphabetFilterLayout: LinearLayout
+    private lateinit var loadingProgressBar: ContentLoadingProgressBar
 
     var titleView: View? = null
 
@@ -159,17 +167,16 @@ class StashGridFragment() : Fragment() {
                 if (Math.abs(mSelectedPosition - position) < mGridPresenter.numberOfColumns * 10) {
                     // If new position is close to the current, smooth scroll
                     mGridViewHolder.gridView.setSelectedPositionSmooth(position)
-                    mSelectedPosition = position
+                    gridOnItemSelected(position)
                 } else {
                     // If not, just jump without smooth scrolling
 
                     viewLifecycleOwner.lifecycleScope.launch {
                         mAdapter.prepareForJump(position)
                         mGridViewHolder.gridView.selectedPosition = position
-                        mSelectedPosition = position
+                        gridOnItemSelected(position)
                     }
                 }
-                positionTextView.text = formatNumber(position + 1, false)
             }
         }
 
@@ -236,7 +243,7 @@ class StashGridFragment() : Fragment() {
     @SuppressLint("SetTextI18n")
     private fun gridOnItemSelected(position: Int) {
         if (position != mSelectedPosition) {
-            Log.v(TAG, "gridOnItemSelected=$position")
+            if (DEBUG) Log.v(TAG, "gridOnItemSelected=$position")
             mSelectedPosition = position
             showOrHideTitle()
             positionTextView.text = formatNumber(position + 1, false)
@@ -248,18 +255,16 @@ class StashGridFragment() : Fragment() {
 
     private fun showOrHideTitle() {
         if (mGridViewHolder.gridView.findViewHolderForAdapterPosition(mSelectedPosition) == null) {
+            if (DEBUG) Log.v(TAG, "showOrHideTitle: view holder for $mSelectedPosition is null")
             return
         }
-//        if (!mGridViewHolder.gridView.hasPreviousViewInSameRow(mSelectedPosition)) {
-//            showTitle(true)
-//        } else {
-//            showTitle(false)
-//        }
         val shouldShowTitle = mSelectedPosition < mGridPresenter.numberOfColumns
-        Log.v(
-            TAG,
-            "showOrHideTitle: mSelectedPosition=$mSelectedPosition, mGridPresenter.numberOfColumns=${mGridPresenter.numberOfColumns}",
-        )
+        if (DEBUG) {
+            Log.v(
+                TAG,
+                "showOrHideTitle: mSelectedPosition=$mSelectedPosition, mGridPresenter.numberOfColumns=${mGridPresenter.numberOfColumns}",
+            )
+        }
         showTitle(shouldShowTitle)
     }
 
@@ -326,6 +331,46 @@ class StashGridFragment() : Fragment() {
         if (name == null) {
             name = getString(dataType.pluralStringId)
         }
+        mGridViewHolder.gridView.addOnLayoutCompletedListener {
+            showOrHideTitle()
+        }
+
+        loadingProgressBar = root.findViewById(R.id.loading_progress_bar)
+
+        alphabetFilterLayout = root.findViewById<LinearLayout>(R.id.alphabet_filter_layout)
+        AlphabetSearchUtils.LETTERS.forEach { letter ->
+            val button =
+                inflater.inflate(R.layout.alphabet_button, alphabetFilterLayout, false) as Button
+            button.text = letter.toString()
+            button.setOnClickListener {
+                loadingProgressBar.show()
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                    val server = StashServer.requireCurrentServer()
+                    val factory = DataSupplierFactory(server.serverPreferences.serverVersion)
+                    val letterPosition =
+                        AlphabetSearchUtils.findPosition(
+                            letter,
+                            filterArgs,
+                            QueryEngine(server),
+                            factory,
+                        )
+                    Log.v(TAG, "Found position for $letter: $letterPosition")
+                    val jumpPosition =
+                        if (currentSortAndDirection.direction == SortDirectionEnum.DESC) {
+                            // Reverse if sorting descending
+                            mAdapter.size() - letterPosition - 1
+                        } else {
+                            letterPosition
+                        }
+
+                    currentSelectedPosition = jumpPosition
+                    mGridViewHolder.gridView.requestFocus()
+                    loadingProgressBar.hide()
+                }
+            }
+            alphabetFilterLayout.addView(button)
+        }
+
         return root
     }
 
@@ -471,6 +516,7 @@ class StashGridFragment() : Fragment() {
             TAG,
             "refresh: dataType=${newFilterArgs.dataType}, newSortAndDirection=$newFilterArgs",
         )
+        loadingProgressBar.show()
 
         val pageSize = mGridPresenter.numberOfColumns * 10
         val server = StashServer.requireCurrentServer()
@@ -493,7 +539,6 @@ class StashGridFragment() : Fragment() {
                 NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
             )
         mAdapter = pagingAdapter
-
         if (firstPageListener != null) {
             pagingAdapter.registerObserver(
                 object : ObjectAdapter.DataObserver() {
@@ -518,6 +563,15 @@ class StashGridFragment() : Fragment() {
             )
         }
 
+        pagingAdapter.registerObserver(
+            object : ObjectAdapter.DataObserver() {
+                override fun onChanged() {
+                    loadingProgressBar.hide()
+                    pagingAdapter.unregisterObserver(this)
+                }
+            },
+        )
+
         val showFooter =
             PreferenceManager.getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_show_grid_footer), true)
@@ -530,6 +584,7 @@ class StashGridFragment() : Fragment() {
             if (count == 0) {
                 positionTextView.text = getString(R.string.zero)
                 noResultsTextView.animateToVisible()
+                loadingProgressBar.hide()
             }
             totalCountTextView.text =
                 formatNumber(count, server.serverPreferences.abbreviateCounters)
@@ -538,6 +593,11 @@ class StashGridFragment() : Fragment() {
             }
             _filterArgs = newFilterArgs
             _currentSortAndDirection = newFilterArgs.sortAndDirection
+            if (count > 0 && SortOption.isJumpSupported(dataType, _currentSortAndDirection.sort)) {
+                alphabetFilterLayout.animateToVisible(400L)
+            } else {
+                alphabetFilterLayout.animateToInvisible(View.GONE, 400L)
+            }
         }
         if (!showFooter) {
             footerLayout.visibility = View.GONE
@@ -552,9 +612,12 @@ class StashGridFragment() : Fragment() {
         browseFrameLayout.onFocusSearchListener =
             BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
                 if (direction == View.FOCUS_UP) {
-                    val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
-                    Log.v(TAG, "Found filterButton=$filterButton")
-                    filterButton
+                    if (alphabetFilterLayout.isVisible) {
+                        null
+                    } else {
+                        val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
+                        filterButton
+                    }
                 } else {
                     null
                 }
@@ -598,6 +661,8 @@ class StashGridFragment() : Fragment() {
 
     companion object {
         private const val TAG = "StashGridFragment"
+
+        private const val DEBUG = false
     }
 
     private class StashGridPresenter :

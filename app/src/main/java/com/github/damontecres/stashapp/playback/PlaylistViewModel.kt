@@ -9,6 +9,7 @@ import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 
 class PlaylistViewModel : ViewModel() {
     private val _filterArgs = MutableLiveData<FilterArgs>()
@@ -16,23 +17,26 @@ class PlaylistViewModel : ViewModel() {
 
     fun setFilter(filter: FilterArgs) {
         if (filter.dataType == DataType.SCENE) {
-            val objectFilter = filter.objectFilter as SceneFilterType? ?: SceneFilterType()
+            val objectFilter =
+                AlphabetSearchUtils.findNullAndFilter(
+                    filter.objectFilter as SceneFilterType? ?: SceneFilterType(),
+                )
+            // Playlist cannot contain scenes with no files, so modify the filter
             val newObjectFilter =
-                if (objectFilter.file_count.getOrNull() == null) {
-                    // Playlist cannot contain scenes with no files, so modify the filter if necessary
-                    objectFilter.copy(
-                        file_count =
-                            Optional.present(
-                                IntCriterionInput(
-                                    modifier = CriterionModifier.GREATER_THAN,
-                                    value = 0,
-                                ),
+                objectFilter.copy(
+                    AND =
+                        Optional.present(
+                            SceneFilterType(
+                                file_count =
+                                    Optional.present(
+                                        IntCriterionInput(
+                                            modifier = CriterionModifier.GREATER_THAN,
+                                            value = 0,
+                                        ),
+                                    ),
                             ),
-                    )
-                } else {
-                    // TODO it is possible the filter includes scenes without a file which will crash
-                    objectFilter
-                }
+                        ),
+                )
             _filterArgs.value = filter.copy(objectFilter = newObjectFilter)
         } else {
             _filterArgs.value = filter
