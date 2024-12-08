@@ -580,8 +580,10 @@ class StashGridFragment() : Fragment() {
                 positionTextView.text = getString(R.string.zero)
                 noResultsTextView.animateToVisible()
                 loadingProgressBar.hide()
+                jumpButtonLayout.animateToInvisible(View.GONE)
             } else {
                 setupJumpButtons(count)
+                jumpButtonLayout.animateToVisible()
             }
             totalCountTextView.text =
                 formatNumber(count, server.serverPreferences.abbreviateCounters)
