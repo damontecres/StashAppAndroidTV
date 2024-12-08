@@ -14,4 +14,5 @@
 
     <dimen name="filter_seek_bar">250dp</dimen>
     <item name="alphabet_zoom" type="fraction">150%</item>
+    <dimen name="jump_button">24dp</dimen>
 </resources>
