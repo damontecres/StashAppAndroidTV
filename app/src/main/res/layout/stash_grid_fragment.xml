@@ -76,34 +76,54 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal">
 
+            <include
+                layout="@layout/jump_buttons"
+                android:id="@+id/jump_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="0dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <FrameLayout
+                android:id="@+id/browse_grid_dock"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="0dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@id/jump_layout"
+                app:layout_constraintEnd_toStartOf="@id/alphabet_scrollview" />
+
             <androidx.core.widget.NestedScrollView
+                android:id="@+id/alphabet_scrollview"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginTop="8dp"
                 android:layout_marginBottom="8dp"
-                android:layout_gravity="start">
+                app:layout_constraintStart_toEndOf="@id/browse_grid_dock"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
 
                 <LinearLayout
                     android:id="@+id/alphabet_filter_layout"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:orientation="vertical"
-                    android:visibility="gone" />
+                    android:visibility="gone"
+                    tools:layout_width="24dp"
+                    tools:visibility="visible" />
             </androidx.core.widget.NestedScrollView>
 
-            <include layout="@layout/jump_buttons" />
 
-            <FrameLayout
-            android:id="@+id/browse_grid_dock"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
         <include
             layout="@layout/grid_footer_layout"
             android:id="@+id/footer_layout"
