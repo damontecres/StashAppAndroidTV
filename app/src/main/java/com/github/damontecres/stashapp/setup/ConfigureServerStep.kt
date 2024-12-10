@@ -1,9 +1,11 @@
 package com.github.damontecres.stashapp.setup
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.text.InputType
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
@@ -14,6 +16,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
@@ -104,7 +107,10 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                 val trustCerts =
                     PreferenceManager.getDefaultSharedPreferences(requireContext())
                         .getBoolean(getString(R.string.pref_key_trust_certs), false)
-                testConnection(serverUrl, apiKey, trustCerts)
+                val result = testConnection(serverUrl, apiKey, trustCerts)
+                if (result.status == TestResultStatus.SELF_SIGNED_REQUIRED && !trustCerts) {
+                    promptSelfSigned(false)
+                }
             }
         }
 
@@ -113,33 +119,7 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
-            val serverUrl = findActionById(SetupActivity.ACTION_SERVER_URL).description?.toString()
-            val apiKey =
-                findActionById(SetupActivity.ACTION_SERVER_API_KEY).editDescription?.toString()
-            if (serverUrl.isNotNullOrBlank()) {
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val trustCerts =
-                        PreferenceManager.getDefaultSharedPreferences(requireContext())
-                            .getBoolean(getString(R.string.pref_key_trust_certs), false)
-                    val result =
-                        testConnection(serverUrl, apiKey, trustCerts)
-                    if (result.status == TestResultStatus.SUCCESS) {
-                        val server = StashServer(serverUrl, apiKey)
-                        // Persist values
-                        StashServer.addAndSwitchServer(requireContext(), server)
-                        viewModel.switchServer(server)
-                        finishGuidedStepSupportFragments()
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Cannot connect to server.",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-                }
-            } else {
-                Toast.makeText(requireContext(), "Enter a server URL", Toast.LENGTH_SHORT).show()
-            }
+            testAndSubmit()
         } else if (action.id == SetupActivity.ACTION_PASSWORD_VISIBLE) {
             val newGuidedActionsServerApiKey = createApiKeyAction(action.isChecked)
             val newActions =
@@ -152,6 +132,58 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
             super.setActionsDiffCallback(null)
             actions = newActions
         }
+    }
+
+    private fun testAndSubmit() {
+        val serverUrl = findActionById(SetupActivity.ACTION_SERVER_URL).description?.toString()
+        val apiKey =
+            findActionById(SetupActivity.ACTION_SERVER_API_KEY).editDescription?.toString()
+        if (serverUrl.isNotNullOrBlank()) {
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val trustCerts =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        .getBoolean(getString(R.string.pref_key_trust_certs), false)
+                val result =
+                    testConnection(serverUrl, apiKey, trustCerts)
+                if (result.status == TestResultStatus.SUCCESS) {
+                    val server = StashServer(serverUrl, apiKey)
+                    // Persist values
+                    StashServer.addAndSwitchServer(requireContext(), server)
+                    viewModel.switchServer(server)
+                    finishGuidedStepSupportFragments()
+                } else if (result.status == TestResultStatus.SELF_SIGNED_REQUIRED && !trustCerts) {
+                    promptSelfSigned(true)
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "Cannot connect to server: ${result.status}",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+            }
+        } else {
+            Toast.makeText(requireContext(), "Enter a server URL", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun promptSelfSigned(testAndSubmitAfter: Boolean) {
+        ConfirmationDialogFragment(
+            "Server may be using a self-signed certificate.\n\nDo you want to trust all SSL/TLS certificates, including self-signed?",
+        ) { dialog, which ->
+            if (which == DialogInterface.BUTTON_POSITIVE) {
+                PreferenceManager.getDefaultSharedPreferences(requireContext()).edit {
+                    putBoolean(getString(R.string.pref_key_trust_certs), true)
+                }
+                Toast.makeText(
+                    requireContext(),
+                    "Please restart the app after adding the server!",
+                    Toast.LENGTH_LONG,
+                ).show()
+                if (testAndSubmitAfter) {
+                    testAndSubmit()
+                }
+            }
+        }.show(childFragmentManager, "cert")
     }
 
     private fun createApiKeyAction(isChecked: Boolean = false): GuidedAction {
