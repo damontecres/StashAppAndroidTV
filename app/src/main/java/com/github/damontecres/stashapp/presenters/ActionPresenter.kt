@@ -15,7 +15,7 @@ class ActionPresenter(callback: LongClickCallBack<StashAction>? = null) :
     companion object {
         private const val TAG = "ActionPresenter"
 
-        const val CARD_WIDTH = 250
-        const val CARD_HEIGHT = 250
+        const val CARD_WIDTH = 235
+        const val CARD_HEIGHT = 160
     }
 }
