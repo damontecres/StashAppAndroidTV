@@ -646,10 +646,18 @@ class StashGridFragment() : Fragment() {
             requireView().findViewById<BrowseFrameLayout>(androidx.leanback.R.id.grid_frame)
         browseFrameLayout.onFocusSearchListener =
             BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
-                if (focused != null && focused in alphabetFilterLayout && direction == View.FOCUS_LEFT) {
-                    mGridViewHolder.gridView
-                } else if (focused != null && focused in jumpButtonLayout && direction == View.FOCUS_RIGHT) {
-                    mGridViewHolder.gridView
+                if (focused != null && focused in alphabetFilterLayout) {
+                    if (direction == View.FOCUS_LEFT) {
+                        mGridViewHolder.gridView
+                    } else {
+                        null
+                    }
+                } else if (focused != null && focused in jumpButtonLayout) {
+                    if (direction == View.FOCUS_RIGHT) {
+                        mGridViewHolder.gridView
+                    } else {
+                        null
+                    }
                 } else if (direction == View.FOCUS_UP) {
                     val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
                     filterButton
