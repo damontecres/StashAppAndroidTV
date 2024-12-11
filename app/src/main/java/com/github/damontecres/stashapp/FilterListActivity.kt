@@ -322,6 +322,43 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         return fragment?.onKeyUp(keyCode, event) ?: false || super.onKeyUp(keyCode, event)
     }
 
+    override fun onKeyDown(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyDown(keyCode, event) ?: false || super.onKeyDown(keyCode, event)
+    }
+
+    override fun onKeyLongPress(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyLongPress(keyCode, event) ?: false ||
+            super.onKeyLongPress(
+                keyCode,
+                event,
+            )
+    }
+
+    override fun onKeyMultiple(
+        keyCode: Int,
+        repeatCount: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyMultiple(keyCode, repeatCount, event) ?: false ||
+            super.onKeyMultiple(
+                keyCode,
+                repeatCount,
+                event,
+            )
+    }
+
     companion object {
         private const val TAG = "FilterListActivity2"
         const val INTENT_FILTER_ARGS = "$TAG.filterArgs"
