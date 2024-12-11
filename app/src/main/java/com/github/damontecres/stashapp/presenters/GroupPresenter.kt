@@ -103,9 +103,9 @@ class GroupPresenter(callback: LongClickCallBack<GroupData>? = null) :
     }
 
     companion object {
-        private const val TAG = "CardPresenter"
+        private const val TAG = "GroupPresenter"
 
-        const val CARD_HEIGHT = 381
-        const val CARD_WIDTH = CARD_HEIGHT * 2 / 3
+        const val CARD_HEIGHT = TagPresenter.CARD_HEIGHT
+        const val CARD_WIDTH = TagPresenter.CARD_WIDTH
     }
 }

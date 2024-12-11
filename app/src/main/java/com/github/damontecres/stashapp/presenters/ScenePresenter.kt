@@ -137,7 +137,7 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
     companion object {
         private const val TAG = "ScenePresenter"
 
-        const val CARD_WIDTH = 351
-        const val CARD_HEIGHT = 198
+        const val CARD_WIDTH = 345
+        const val CARD_HEIGHT = 194
     }
 }
