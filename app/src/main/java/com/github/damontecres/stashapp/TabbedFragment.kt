@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
 import androidx.core.content.edit
@@ -10,6 +11,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.TabbedGridTitleView
@@ -19,13 +21,17 @@ import com.google.android.material.tabs.TabLayout
 /**
  * A [Fragment] that displays multiple tabs
  */
-abstract class TabbedFragment(val tabKey: String) : Fragment(R.layout.tabbed_grid_view) {
+abstract class TabbedFragment(val tabKey: String) :
+    Fragment(R.layout.tabbed_grid_view),
+    DefaultKeyEventCallback {
     protected val viewModel by activityViewModels<TabbedGridViewModel>()
 
     private lateinit var titleView: TabbedGridTitleView
     private lateinit var tabLayout: LeanbackTabLayout
     private lateinit var adapter: StashFragmentPagerAdapter
     private var currentTabPosition = 0
+
+    private val fragments = mutableMapOf<Int, Fragment>()
 
     override fun onViewCreated(
         view: View,
@@ -60,6 +66,7 @@ abstract class TabbedFragment(val tabKey: String) : Fragment(R.layout.tabbed_gri
                 if (fragment is StashGridFragment) {
                     fragment.titleView = tabLayout
                 }
+                fragments[position] = fragment
             }
             viewPager.adapter = adapter
             tabLayout.setupWithViewPager(viewPager)
@@ -105,6 +112,18 @@ abstract class TabbedFragment(val tabKey: String) : Fragment(R.layout.tabbed_gri
 
     open fun getTitleText(): String? {
         return null
+    }
+
+    override fun onKeyUp(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val tabIndex = currentTabPosition
+        val fragment = fragments[tabIndex]
+        if (fragment != null && fragment is KeyEvent.Callback && fragment.onKeyUp(keyCode, event)) {
+            return true
+        }
+        return super.onKeyUp(keyCode, event)
     }
 
     companion object {

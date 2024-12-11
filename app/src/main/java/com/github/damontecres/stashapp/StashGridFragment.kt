@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,22 +28,29 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
 import com.chrynan.parcelable.core.putParcelable
+import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
+import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -54,6 +62,7 @@ import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
@@ -70,7 +79,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
  *
  * The items are derived from a [FilterArgs] and queried via [DataSupplierFactory].
  */
-class StashGridFragment() : Fragment() {
+class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
     // Views
     private lateinit var sortButton: Button
     private lateinit var playAllButton: Button
@@ -700,6 +709,42 @@ class StashGridFragment() : Fragment() {
         sortButtonEnabled = false
         playAllButtonEnabled = false
         filterButtonEnabled = false
+    }
+
+    override fun onKeyUp(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        // If play is pressed and the page contains scenes or markers and user is focused on a card (ie not a button)
+        if ((keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) &&
+            (dataType == DataType.SCENE || dataType == DataType.MARKER) &&
+            requireActivity().currentFocus is StashImageCardView
+        ) {
+            val position = currentSelectedPosition
+            when (val item = mAdapter.get(position)) {
+                is SlimSceneData -> {
+                    val intent = Intent(context, PlaybackActivity::class.java)
+                    intent.putDataType(DataType.SCENE)
+                    intent.putExtra(Constants.SCENE_ARG, Scene.fromSlimSceneData(item))
+                    if (item.resume_time != null) {
+                        intent.putExtra(Constants.POSITION_ARG, item.resume_position!!)
+                    }
+                    requireContext().startActivity(intent)
+                }
+
+                is MarkerData -> {
+                    val intent = Intent(context, PlaybackActivity::class.java)
+                    intent.putDataType(DataType.MARKER)
+                    intent.putExtra(
+                        Constants.SCENE_ARG,
+                        Scene.fromVideoSceneData(item.scene.videoSceneData),
+                    )
+                    intent.putExtra(Constants.POSITION_ARG, (item.seconds * 1000).toLong())
+                    requireContext().startActivity(intent)
+                }
+            }
+        }
+        return super.onKeyUp(keyCode, event)
     }
 
     companion object {

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -310,6 +311,15 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                 1
             }
         }
+    }
+
+    override fun onKeyUp(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyUp(keyCode, event) ?: false || super.onKeyUp(keyCode, event)
     }
 
     companion object {
