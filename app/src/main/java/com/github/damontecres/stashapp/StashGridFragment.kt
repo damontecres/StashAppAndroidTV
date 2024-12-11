@@ -28,18 +28,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
 import com.chrynan.parcelable.core.putParcelable
-import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
-import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.ScenePresenter
@@ -49,7 +45,6 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -60,9 +55,9 @@ import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
-import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
@@ -721,27 +716,9 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
             requireActivity().currentFocus is StashImageCardView
         ) {
             val position = currentSelectedPosition
-            when (val item = mAdapter.get(position)) {
-                is SlimSceneData -> {
-                    val intent = Intent(context, PlaybackActivity::class.java)
-                    intent.putDataType(DataType.SCENE)
-                    intent.putExtra(Constants.SCENE_ARG, Scene.fromSlimSceneData(item))
-                    if (item.resume_time != null) {
-                        intent.putExtra(Constants.POSITION_ARG, item.resume_position!!)
-                    }
-                    requireContext().startActivity(intent)
-                }
-
-                is MarkerData -> {
-                    val intent = Intent(context, PlaybackActivity::class.java)
-                    intent.putDataType(DataType.MARKER)
-                    intent.putExtra(
-                        Constants.SCENE_ARG,
-                        Scene.fromVideoSceneData(item.scene.videoSceneData),
-                    )
-                    intent.putExtra(Constants.POSITION_ARG, (item.seconds * 1000).toLong())
-                    requireContext().startActivity(intent)
-                }
+            val item = mAdapter.get(position)
+            if (item != null) {
+                maybeStartPlayback(requireContext(), item)
             }
         }
         return super.onKeyUp(keyCode, event)

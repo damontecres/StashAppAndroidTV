@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -18,8 +19,10 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -29,6 +32,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getCaseInsensitive
+import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
@@ -44,7 +48,7 @@ import kotlinx.coroutines.withContext
 /**
  * Loads a grid of cards with groups to browse.
  */
-class MainFragment : BrowseSupportFragment() {
+class MainFragment : BrowseSupportFragment(), DefaultKeyEventCallback {
     private val viewModel: ServerViewModel by activityViewModels()
 
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
@@ -366,6 +370,24 @@ class MainFragment : BrowseSupportFragment() {
             }
         }
         return false
+    }
+
+    override fun onKeyUp(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val item =
+            getCurrentPosition()?.let {
+                val row = rowsAdapter.get(it.row) as ListRow
+                row.adapter.get(it.column)
+            }
+        if ((keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) &&
+            item != null &&
+            requireActivity().currentFocus is StashImageCardView
+        ) {
+            maybeStartPlayback(requireContext(), item)
+        }
+        return super.onKeyUp(keyCode, event)
     }
 
     data class Position(val row: Int, val column: Int)
