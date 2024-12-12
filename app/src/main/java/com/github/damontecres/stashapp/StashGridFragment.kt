@@ -719,9 +719,35 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
             val item = mAdapter.get(position)
             if (item != null) {
                 maybeStartPlayback(requireContext(), item)
+                return true
+            } else {
+                return false
             }
+        } else if (keyCode in
+            setOf(
+                KeyEvent.KEYCODE_PAGE_UP,
+                KeyEvent.KEYCODE_MEDIA_NEXT,
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+                KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD,
+                KeyEvent.KEYCODE_CHANNEL_UP,
+            ) && requireActivity().currentFocus is StashImageCardView
+        ) {
+            jumpButtonLayout[1].callOnClick()
+            return true
+        } else if (keyCode in
+            setOf(
+                KeyEvent.KEYCODE_PAGE_DOWN,
+                KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+                KeyEvent.KEYCODE_MEDIA_REWIND,
+                KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD,
+                KeyEvent.KEYCODE_CHANNEL_DOWN,
+            ) && requireActivity().currentFocus is StashImageCardView
+        ) {
+            jumpButtonLayout[2].callOnClick()
+            return true
+        } else {
+            return super.onKeyUp(keyCode, event)
         }
-        return super.onKeyUp(keyCode, event)
     }
 
     companion object {
