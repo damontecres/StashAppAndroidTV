@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
@@ -41,5 +42,39 @@ class MainActivity : FragmentActivity() {
         if (!fragment.onBackPressed()) {
             super.onBackPressed()
         }
+    }
+
+    override fun onKeyUp(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        return fragment.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event)
+    }
+
+    override fun onKeyDown(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        return fragment.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event)
+    }
+
+    override fun onKeyLongPress(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        return fragment.onKeyLongPress(keyCode, event) || super.onKeyLongPress(keyCode, event)
+    }
+
+    override fun onKeyMultiple(
+        keyCode: Int,
+        repeatCount: Int,
+        event: KeyEvent,
+    ): Boolean {
+        return fragment.onKeyMultiple(keyCode, repeatCount, event) ||
+            super.onKeyMultiple(
+                keyCode,
+                repeatCount,
+                event,
+            )
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -310,6 +311,52 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                 1
             }
         }
+    }
+
+    override fun onKeyUp(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyUp(keyCode, event) ?: false || super.onKeyUp(keyCode, event)
+    }
+
+    override fun onKeyDown(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyDown(keyCode, event) ?: false || super.onKeyDown(keyCode, event)
+    }
+
+    override fun onKeyLongPress(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyLongPress(keyCode, event) ?: false ||
+            super.onKeyLongPress(
+                keyCode,
+                event,
+            )
+    }
+
+    override fun onKeyMultiple(
+        keyCode: Int,
+        repeatCount: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyMultiple(keyCode, repeatCount, event) ?: false ||
+            super.onKeyMultiple(
+                keyCode,
+                repeatCount,
+                event,
+            )
     }
 
     companion object {
