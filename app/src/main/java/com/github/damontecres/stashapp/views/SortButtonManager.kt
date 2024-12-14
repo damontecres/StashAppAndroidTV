@@ -114,6 +114,14 @@ class SortButtonManager(
             listPopUp.show()
             listPopUp.listView?.requestFocus()
         }
+
+        sortButton.setOnLongClickListener {
+            val newSortAndDirection =
+                sortAndDirection.copy(direction = sortAndDirection.direction.toggle())
+            newSortCallback(newSortAndDirection)
+            setUpSortButton(sortButton, dataType, newSortAndDirection)
+            true
+        }
     }
 
     private fun setSortButtonText(
