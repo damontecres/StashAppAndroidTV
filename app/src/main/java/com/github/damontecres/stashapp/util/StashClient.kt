@@ -302,7 +302,7 @@ class StashClient private constructor() {
             var url = Uri.parse(cleanedStashUrl)
             val pathSegments = url.pathSegments.toMutableList()
             if (pathSegments.isNotEmpty() && pathSegments.last() == "graphql") {
-                pathSegments.removeLast()
+                pathSegments.removeAt(pathSegments.size - 1)
             }
             url =
                 url
