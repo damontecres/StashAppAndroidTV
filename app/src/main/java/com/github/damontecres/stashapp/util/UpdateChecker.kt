@@ -56,7 +56,7 @@ class UpdateChecker {
 
         fun getInstalledVersion(activity: Activity): Version {
             val pkgInfo = activity.packageManager.getPackageInfo(activity.packageName, 0)
-            return Version.fromString(pkgInfo.versionName)
+            return Version.fromString(pkgInfo.versionName!!)
         }
 
         suspend fun getLatestRelease(context: Context): Release? {
@@ -70,7 +70,12 @@ class UpdateChecker {
                     )
 
                 val client = OkHttpClient.Builder().build()
-                val request = Request.Builder().url(updateUrl).get().build()
+                val request =
+                    Request
+                        .Builder()
+                        .url(updateUrl)
+                        .get()
+                        .build()
                 client.newCall(request).execute().use {
                     if (it.isSuccessful && it.body != null) {
                         val result = Json.parseToJsonElement(it.body!!.string())
@@ -79,17 +84,24 @@ class UpdateChecker {
                         val publishedAt = result.jsonObject["published_at"]?.jsonPrimitive?.contentOrNull
                         val body = result.jsonObject["body"]?.jsonPrimitive?.contentOrNull
                         val downloadUrl =
-                            result.jsonObject["assets"]?.jsonArray?.firstOrNull { asset ->
-                                val assetName =
-                                    asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull
-                                assetName == ASSET_NAME || assetName == DEBUG_ASSET_NAME
-                            }?.jsonObject?.get("browser_download_url")?.jsonPrimitive?.contentOrNull
+                            result.jsonObject["assets"]
+                                ?.jsonArray
+                                ?.firstOrNull { asset ->
+                                    val assetName =
+                                        asset.jsonObject["name"]?.jsonPrimitive?.contentOrNull
+                                    assetName == ASSET_NAME || assetName == DEBUG_ASSET_NAME
+                                }?.jsonObject
+                                ?.get("browser_download_url")
+                                ?.jsonPrimitive
+                                ?.contentOrNull
                         if (version != null) {
                             val notes =
                                 if (body.isNotNullOrBlank()) {
-                                    NOTE_REGEX.findAll(body).map { m ->
-                                        m.groupValues[1]
-                                    }.toList()
+                                    NOTE_REGEX
+                                        .findAll(body)
+                                        .map { m ->
+                                            m.groupValues[1]
+                                        }.toList()
                                 } else {
                                     listOf()
                                 }
@@ -111,7 +123,12 @@ class UpdateChecker {
         ) {
             withContext(Dispatchers.IO) {
                 val client = OkHttpClient.Builder().build()
-                val request = Request.Builder().url(release.downloadUrl!!).get().build()
+                val request =
+                    Request
+                        .Builder()
+                        .url(release.downloadUrl!!)
+                        .get()
+                        .build()
                 client.newCall(request).execute().use {
                     if (it.isSuccessful && it.body != null) {
                         Log.v(TAG, "Request successful for ${release.downloadUrl}")
@@ -144,11 +161,12 @@ class UpdateChecker {
                                 activity.startActivity(intent)
                             } else {
                                 Log.e(TAG, "Resolver URI is null")
-                                Toast.makeText(
-                                    activity,
-                                    "There was an error downloading the release",
-                                    Toast.LENGTH_LONG,
-                                ).show()
+                                Toast
+                                    .makeText(
+                                        activity,
+                                        "There was an error downloading the release",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
                             }
                         } else {
                             if (ContextCompat.checkSelfPermission(
@@ -196,11 +214,12 @@ class UpdateChecker {
                         }
                     } else {
                         Log.v(TAG, "Request failed for ${release.downloadUrl}: ${it.code}")
-                        Toast.makeText(
-                            activity,
-                            "Error downloading release: ${it.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                activity,
+                                "Error downloading release: ${it.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     }
                 }
             }
@@ -212,22 +231,23 @@ class UpdateChecker {
         fun cleanup(context: Context) {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    context.contentResolver.query(
-                        MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                        arrayOf(
-                            MediaStore.MediaColumns._ID,
-                            MediaStore.Files.FileColumns.DISPLAY_NAME,
-                        ),
-                        "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ? AND ${MediaStore.MediaColumns.MIME_TYPE} = ?",
-                        arrayOf(context.getString(R.string.app_name) + "%", APK_MIME_TYPE),
-                        null,
-                    )?.use { cursor ->
-                        while (cursor.moveToNext()) {
-                            val id = cursor.getString(0)
-                            val displayName = cursor.getString(1)
-                            Log.v(TAG, "id=$id, displayName=$displayName")
+                    context.contentResolver
+                        .query(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            arrayOf(
+                                MediaStore.MediaColumns._ID,
+                                MediaStore.Files.FileColumns.DISPLAY_NAME,
+                            ),
+                            "${MediaStore.MediaColumns.DISPLAY_NAME} LIKE ? AND ${MediaStore.MediaColumns.MIME_TYPE} = ?",
+                            arrayOf(context.getString(R.string.app_name) + "%", APK_MIME_TYPE),
+                            null,
+                        )?.use { cursor ->
+                            while (cursor.moveToNext()) {
+                                val id = cursor.getString(0)
+                                val displayName = cursor.getString(1)
+                                Log.v(TAG, "id=$id, displayName=$displayName")
+                            }
                         }
-                    }
                     val deletedRows =
                         context.contentResolver.delete(
                             MediaStore.Downloads.EXTERNAL_CONTENT_URI,
