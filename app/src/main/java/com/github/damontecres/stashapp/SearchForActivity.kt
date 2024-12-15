@@ -11,8 +11,10 @@ class SearchForActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.main_browse_fragment, SearchForFragment()).commitNow()
+            supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.main_browse_fragment, SearchForFragment())
+                .commitNow()
         }
     }
 }

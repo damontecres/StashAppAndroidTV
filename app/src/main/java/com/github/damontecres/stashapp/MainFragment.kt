@@ -48,7 +48,9 @@ import kotlinx.coroutines.withContext
 /**
  * Loads a grid of cards with groups to browse.
  */
-class MainFragment : BrowseSupportFragment(), DefaultKeyEventCallback {
+class MainFragment :
+    BrowseSupportFragment(),
+    DefaultKeyEventCallback {
     private val viewModel: ServerViewModel by activityViewModels()
 
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
@@ -154,28 +156,31 @@ class MainFragment : BrowseSupportFragment(), DefaultKeyEventCallback {
                             TAG,
                             "Server version is not supported: ${result.serverInfo?.version?.version}",
                         )
-                        Toast.makeText(
-                            requireContext(),
-                            "Server version ${result.serverInfo?.version?.version} is not supported!",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Server version ${result.serverInfo?.version?.version} is not supported!",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     } else {
                         Log.w(TAG, "testStashConnection returned $result")
                         clearData()
                         requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
-                        Toast.makeText(
-                            requireContext(),
-                            "Connection to Stash failed: ${result.status}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Connection to Stash failed: ${result.status}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     }
                 } else {
                     clearData()
-                    Toast.makeText(
-                        requireContext(),
-                        "Stash server not configured!",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Stash server not configured!",
+                            Toast.LENGTH_LONG,
+                        ).show()
                 }
             }
         }
@@ -236,11 +241,12 @@ class MainFragment : BrowseSupportFragment(), DefaultKeyEventCallback {
             Dispatchers.IO +
                 CoroutineExceptionHandler { _, ex ->
                     Log.e(TAG, "Exception in fetchData coroutine", ex)
-                    Toast.makeText(
-                        requireContext(),
-                        "Error fetching data: ${ex.message}",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Error fetching data: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
                 },
         ) {
             try {
@@ -268,15 +274,17 @@ class MainFragment : BrowseSupportFragment(), DefaultKeyEventCallback {
                         val frontPageContent =
                             ui.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
                         if (frontPageContent == null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Unable to find front page content! Check the Web UI.",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Unable to find front page content! Check the Web UI.",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             return@launch
                         }
                         val pageSize =
-                            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                            PreferenceManager
+                                .getDefaultSharedPreferences(requireContext())
                                 .getInt(getString(R.string.pref_key_page_size), 25)
                         val frontPageParser =
                             FrontPageParser(requireContext(), queryEngine, filterParser, pageSize)
@@ -299,31 +307,34 @@ class MainFragment : BrowseSupportFragment(), DefaultKeyEventCallback {
                                     }
                                 } else if (row is FrontPageParser.FrontPageRow.Error) {
                                     withContext(Dispatchers.Main) {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Error loading row $index on front page",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Error loading row $index on front page",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
                                     }
                                 }
                             }
                         }
                     } catch (ex: QueryEngine.StashNotConfiguredException) {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Stash not configured. Please enter the URL in settings!",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Stash not configured. Please enter the URL in settings!",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                         }
                     } catch (ex: QueryEngine.QueryException) {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                requireContext(),
-                                ex.message,
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    ex.message,
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                         }
                     }
@@ -390,7 +401,10 @@ class MainFragment : BrowseSupportFragment(), DefaultKeyEventCallback {
         return super.onKeyUp(keyCode, event)
     }
 
-    data class Position(val row: Int, val column: Int)
+    data class Position(
+        val row: Int,
+        val column: Int,
+    )
 
     companion object {
         private const val TAG = "MainFragment"

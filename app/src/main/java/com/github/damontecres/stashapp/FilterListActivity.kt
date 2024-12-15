@@ -137,11 +137,12 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         // Always show the list for data types supporting create filter
         if (savedFilters.isEmpty() && !createFilterSupported) {
             filterButton.setOnClickListener {
-                Toast.makeText(
-                    context,
-                    "No saved filters found",
-                    Toast.LENGTH_SHORT,
-                ).show()
+                Toast
+                    .makeText(
+                        context,
+                        "No saved filters found",
+                        Toast.LENGTH_SHORT,
+                    ).show()
             }
         } else {
             val listPopUp =
@@ -193,11 +194,12 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                         setup(filterArgs)
                     } catch (ex: Exception) {
                         Log.e(TAG, "Exception parsing filter ${savedFilter.id}", ex)
-                        Toast.makeText(
-                            this@FilterListActivity,
-                            "Error with filter ${savedFilter.id}! Probably a bug: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                this@FilterListActivity,
+                                "Error with filter ${savedFilter.id}! Probably a bug: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     }
                 }
             }
@@ -237,13 +239,12 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
     ) : BaseAdapter() {
         private val inflater = LayoutInflater.from(context)
 
-        override fun getCount(): Int {
-            return if (createEnabled) {
+        override fun getCount(): Int =
+            if (createEnabled) {
                 filters.size + 3
             } else {
                 filters.size
             }
-        }
 
         override fun getItem(position: Int): Any {
             if (createEnabled) {
@@ -263,16 +264,14 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             return filters[position]
         }
 
-        override fun getItemId(position: Int): Long {
-            return position.toLong()
-        }
+        override fun getItemId(position: Int): Long = position.toLong()
 
         override fun getView(
             position: Int,
             convertView: View?,
             parent: ViewGroup?,
-        ): View {
-            return if (convertView != null) {
+        ): View =
+            if (convertView != null) {
                 (convertView as TextView).text = getItem(position).toString()
                 convertView
             } else if (createEnabled && position == 2) {
@@ -286,31 +285,24 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                 view.text = getItem(position).toString()
                 view
             }
-        }
 
-        override fun areAllItemsEnabled(): Boolean {
-            return !createEnabled
-        }
+        override fun areAllItemsEnabled(): Boolean = !createEnabled
 
-        override fun isEnabled(position: Int): Boolean {
-            return !(createEnabled && position == 2)
-        }
+        override fun isEnabled(position: Int): Boolean = !(createEnabled && position == 2)
 
-        override fun getItemViewType(position: Int): Int {
-            return if (isEnabled(position)) {
+        override fun getItemViewType(position: Int): Int =
+            if (isEnabled(position)) {
                 0
             } else {
                 1
             }
-        }
 
-        override fun getViewTypeCount(): Int {
-            return if (createEnabled) {
+        override fun getViewTypeCount(): Int =
+            if (createEnabled) {
                 2
             } else {
                 1
             }
-        }
     }
 
     override fun onKeyUp(

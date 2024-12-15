@@ -74,7 +74,9 @@ import kotlinx.serialization.ExperimentalSerializationApi
  *
  * The items are derived from a [FilterArgs] and queried via [DataSupplierFactory].
  */
-class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
+class StashGridFragment() :
+    Fragment(),
+    DefaultKeyEventCallback {
     // Views
     private lateinit var sortButton: Button
     private lateinit var playAllButton: Button
@@ -295,7 +297,8 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
                 columns
             } else {
                 val cardSize =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    PreferenceManager
+                        .getDefaultSharedPreferences(requireContext())
                         .getInt("cardSize", requireContext().getString(R.string.card_size_default))
                 (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
             }
@@ -305,7 +308,8 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
         setGridPresenter(gridPresenter)
 
         remoteButtonPaging =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_remote_page_buttons), true)
     }
 
@@ -401,7 +405,8 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
                 if (scrollToNextPage) {
                     Log.v(TAG, "scrolling to next page")
                     currentSelectedPosition =
-                        PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        PreferenceManager
+                            .getDefaultSharedPreferences(requireContext())
                             .getInt("maxSearchResults", 25)
                 }
             }
@@ -461,7 +466,8 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
         }
 
         val prefBackPressScrollEnabled =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_back_button_scroll), true)
 
         if (prefBackPressScrollEnabled && backPressScrollEnabled) {
@@ -578,7 +584,8 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
         )
 
         val showFooter =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_show_grid_footer), true)
         val footerLayout = requireView().findViewById<View>(R.id.footer_layout)
 
@@ -729,25 +736,29 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
             } else {
                 return false
             }
-        } else if (remoteButtonPaging && keyCode in
+        } else if (remoteButtonPaging &&
+            keyCode in
             setOf(
                 KeyEvent.KEYCODE_PAGE_UP,
                 KeyEvent.KEYCODE_CHANNEL_UP,
                 KeyEvent.KEYCODE_MEDIA_PREVIOUS,
                 KeyEvent.KEYCODE_MEDIA_REWIND,
                 KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD,
-            ) && requireActivity().currentFocus is StashImageCardView
+            ) &&
+            requireActivity().currentFocus is StashImageCardView
         ) {
             jumpButtonLayout[1].callOnClick()
             return true
-        } else if (remoteButtonPaging && keyCode in
+        } else if (remoteButtonPaging &&
+            keyCode in
             setOf(
                 KeyEvent.KEYCODE_PAGE_DOWN,
                 KeyEvent.KEYCODE_CHANNEL_DOWN,
                 KeyEvent.KEYCODE_MEDIA_NEXT,
                 KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
                 KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD,
-            ) && requireActivity().currentFocus is StashImageCardView
+            ) &&
+            requireActivity().currentFocus is StashImageCardView
         ) {
             jumpButtonLayout[2].callOnClick()
             return true
@@ -762,8 +773,7 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
         private const val DEBUG = false
     }
 
-    private class StashGridPresenter :
-        VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
+    private class StashGridPresenter : VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
         override fun initializeGridViewHolder(vh: ViewHolder?) {
             super.initializeGridViewHolder(vh)
             val gridView = vh!!.gridView
