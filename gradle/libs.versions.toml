@@ -1,7 +1,7 @@
 [versions]
 acra = "5.11.3"
 androidsvg-aar = "1.4"
-android-application = "8.5.2"
+android-application = "8.7.3"
 apollo = "4.0.0"
 androidx-media3 = "1.4.1"
 androidx-test = "1.6.1"
