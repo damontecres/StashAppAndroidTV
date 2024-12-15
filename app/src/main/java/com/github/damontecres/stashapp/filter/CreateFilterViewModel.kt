@@ -110,7 +110,7 @@ class CreateFilterViewModel : ViewModel() {
                         ),
                     )
                 val pagingSource =
-                    StashPagingSource<Query.Data, StashData, Any, Query.Data>(queryEngine, 25, supplier)
+                    StashPagingSource<Query.Data, StashData, Any, Query.Data>(queryEngine, supplier)
                 resultCount.value = pagingSource.getCount()
             }
     }

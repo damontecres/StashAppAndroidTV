@@ -1,8 +1,6 @@
 package com.github.damontecres.stashapp.suppliers
 
 import android.util.Log
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.type.FindFilterType
@@ -18,17 +16,14 @@ import kotlinx.coroutines.withContext
  */
 class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
     private val queryEngine: QueryEngine,
-    private val pageSize: Int,
     private val dataSupplier: DataSupplier<T, D, C>,
     private val transform: DataTransform<D, S>,
-) : PagingSource<Int, S>() {
+) {
     constructor(
         queryEngine: QueryEngine,
-        pageSize: Int,
         dataSupplier: DataSupplier<T, D, C>,
     ) : this(
         queryEngine,
-        pageSize,
         dataSupplier,
         DataTransform { _, _, item -> item as S },
     )
@@ -93,68 +88,6 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
                 return@withContext listOf()
             }
         }
-
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, S> =
-        withContext(Dispatchers.IO) {
-            return@withContext try {
-                // Start refresh at page 1 if undefined.
-                val pageNum = (params.key ?: 1).toInt()
-                val loadSize = params.loadSize
-                val results = fetchPage(pageNum, loadSize)
-
-                val itemsBefore =
-                    if (pageNum > 0) ((pageNum - 1) * pageSize).coerceAtMost(getCount()) else 0
-                val itemsAfter =
-                    (getCount() - ((pageNum - 1) * pageSize + results.size)).coerceAtLeast(0)
-                val nextPageNum = if (itemsAfter > 0) pageNum + (loadSize / pageSize) else null
-                if (DEBUG) {
-                    Log.v(
-                        TAG,
-                        "load: pageNum=$pageNum, loadSize=$loadSize, results.size=${results.size}, " +
-                            "nextPageNum=$nextPageNum, itemsBefore=$itemsBefore, itemsAfter=$itemsAfter",
-                    )
-                }
-
-                LoadResult.Page(
-                    data = results,
-                    // Only a previous page if current page is 2+
-                    prevKey = if (pageNum > 1) pageNum - 1 else null,
-                    nextKey = nextPageNum,
-                    itemsBefore = itemsBefore,
-                    itemsAfter = itemsAfter,
-                )
-            } catch (e: QueryEngine.QueryException) {
-                LoadResult.Error(e)
-            }
-        }
-
-    override val jumpingSupported: Boolean
-        get() = true
-
-    override fun getRefreshKey(state: PagingState<Int, S>): Int? {
-        // Try to find the page key of the closest page to anchorPosition from
-        // either the prevKey or the nextKey; you need to handle nullability
-        // here.
-        //  * prevKey == null -> anchorPage is the first page.
-        //  * nextKey == null -> anchorPage is the last page.
-        //  * both prevKey and nextKey are null -> anchorPage is the
-        //    initial page, so return null.
-        if (DEBUG) {
-            Log.v(
-                TAG,
-                "getRefreshKey: state.anchorPosition=${state.anchorPosition}, pageSize=$pageSize",
-            )
-        }
-        return state.anchorPosition?.let { anchorPosition ->
-//            val anchorPage = state.closestPageToPosition(anchorPosition)
-//            Log.v(
-//                TAG,
-//                "getRefreshKey: state.anchorPosition=${state.anchorPosition}, anchorPage.prevKey=${anchorPage?.prevKey}, anchorPage.nextKey=${anchorPage?.nextKey}, anchorPage.itemsBefore=${anchorPage?.itemsBefore}, anchorPage.itemsAfter=${anchorPage?.itemsAfter}",
-//            )
-//            anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
-            anchorPosition / pageSize + 1
-        }
-    }
 
     suspend fun getCount(): Int =
         withContext(Dispatchers.IO) {

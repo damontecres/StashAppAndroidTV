@@ -147,7 +147,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.leanback)
     implementation(libs.androidx.leanback.preference)
-    implementation(libs.androidx.leanback.paging)
     implementation(libs.androidx.leanback.tab)
 
     implementation(libs.glide)

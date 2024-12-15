@@ -19,7 +19,6 @@ kotlinx-coroutines-android = "1.8.1"
 kotlinx-serialization = "1.7.2"
 ksp = "2.0.21-1.0.26"
 leanback = "1.1.0-rc02"
-leanback-paging = "1.1.0-alpha11"
 leanback-preference = "1.1.0-rc01"
 leanback-tab = "1.1.0-beta01"
 lifecycle-process = "2.8.7"
@@ -53,7 +52,6 @@ androidx-test-rules = { module = "androidx.test:rules", version.ref = "androidx-
 androidx-test-ext-truth = { module = "androidx.test.ext:truth", version.ref = "androidx-test-ext-truth" }
 
 androidx-leanback = { module = "androidx.leanback:leanback", version.ref = "leanback" }
-androidx-leanback-paging = { module = "androidx.leanback:leanback-paging", version.ref = "leanback-paging" }
 androidx-leanback-preference = { module = "androidx.leanback:leanback-preference", version.ref = "leanback-preference" }
 androidx-leanback-tab = { module = "androidx.leanback:leanback-tab", version.ref = "leanback-tab" }
 androidx-media3-effect = { module = "androidx.media3:media3-effect", version.ref = "androidx-media3" }

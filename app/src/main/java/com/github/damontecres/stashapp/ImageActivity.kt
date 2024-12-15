@@ -72,7 +72,6 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                 val pagingSource =
                     StashPagingSource<FindImagesQuery.Data, ImageData, ImageData, CountImagesQuery.Data>(
                         queryEngine,
-                        pageSize,
                         dataSupplier,
                     )
                 pager = StashSparseFilterFetcher(pagingSource, pageSize)

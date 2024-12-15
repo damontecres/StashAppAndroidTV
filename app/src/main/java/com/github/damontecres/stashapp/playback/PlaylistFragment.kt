@@ -135,7 +135,6 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         pagingSource =
             StashPagingSource(
                 QueryEngine(server),
-                PAGE_SIZE,
                 dataSupplier,
             )
         addNextPageToPlaylist()
