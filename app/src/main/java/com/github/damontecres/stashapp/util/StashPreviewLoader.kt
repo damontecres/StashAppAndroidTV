@@ -25,7 +25,8 @@ class StashPreviewLoader(
         max: Long,
     ) {
         Log.d(TAG, "loadPreview: currentPosition=$currentPosition")
-        StashGlide.with(context, scene.spriteUrl!!)
+        StashGlide
+            .with(context, scene.spriteUrl!!)
             .skipMemoryCache(false)
             .override(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
             .transform(
@@ -33,8 +34,7 @@ class StashPreviewLoader(
                     (scene.duration!! * 1000).toLong(),
                     currentPosition,
                 ),
-            )
-            .into(imageView)
+            ).into(imageView)
     }
 
     companion object {
@@ -44,7 +44,10 @@ class StashPreviewLoader(
     /**
      * Extracts the thumbnail scrubber image for a given position of the video (in milliseconds)
      */
-    class GlideThumbnailTransformation(duration: Long, position: Long) : BitmapTransformation() {
+    class GlideThumbnailTransformation(
+        duration: Long,
+        position: Long,
+    ) : BitmapTransformation() {
         private val x: Int
         private val y: Int
 
@@ -67,7 +70,12 @@ class StashPreviewLoader(
 
         override fun updateDiskCacheKey(messageDigest: MessageDigest) {
             messageDigest.update(KEY)
-            val data = ByteBuffer.allocate(8).putInt(x).putInt(y).array()
+            val data =
+                ByteBuffer
+                    .allocate(8)
+                    .putInt(x)
+                    .putInt(y)
+                    .array()
             messageDigest.update(data)
         }
 

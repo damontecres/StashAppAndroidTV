@@ -19,14 +19,13 @@ class StringPickerFragment(
 ) : CreateFilterGuidedStepFragment() {
     private var curVal: StringCriterionInput? = null
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
             "",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
@@ -48,7 +47,8 @@ class StringPickerFragment(
                 add(modifierAction(CriterionModifier.NOT_MATCHES_REGEX))
             }
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
@@ -58,7 +58,8 @@ class StringPickerFragment(
         )
 
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(VALUE)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))

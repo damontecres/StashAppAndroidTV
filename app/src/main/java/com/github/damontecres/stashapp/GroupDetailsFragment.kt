@@ -42,12 +42,14 @@ class GroupDetailsFragment : Fragment(R.layout.group_view) {
 
         val group = requireActivity().intent.getParcelable("group", Group::class)!!
         if (group.frontImagePath != null) {
-            StashGlide.with(requireActivity(), group.frontImagePath)
+            StashGlide
+                .with(requireActivity(), group.frontImagePath)
                 .error(StashPresenter.glideError(requireContext()))
                 .into(frontImage)
         }
         if (group.backImagePath != null) {
-            StashGlide.with(requireActivity(), group.backImagePath)
+            StashGlide
+                .with(requireActivity(), group.backImagePath)
                 .error(StashPresenter.glideError(requireContext()))
                 .into(backImage)
         }

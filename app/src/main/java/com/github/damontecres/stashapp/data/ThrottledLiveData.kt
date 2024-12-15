@@ -10,7 +10,10 @@ import androidx.lifecycle.MediatorLiveData
  *
  * From https://stackoverflow.com/a/62467521
  */
-class ThrottledLiveData<T>(source: LiveData<T>, delayMs: Long) : MediatorLiveData<T>() {
+class ThrottledLiveData<T>(
+    source: LiveData<T>,
+    delayMs: Long,
+) : MediatorLiveData<T>() {
     val handler = Handler(Looper.getMainLooper())
     var delayMs = delayMs
         private set

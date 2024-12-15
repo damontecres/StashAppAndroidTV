@@ -45,7 +45,8 @@ class PlaybackActivity : FragmentActivity() {
             this.scene = scene
             if (savedInstanceState == null) {
                 fragment = PlaybackSceneFragment(scene)
-                supportFragmentManager.beginTransaction()
+                supportFragmentManager
+                    .beginTransaction()
                     .replace(R.id.playback_container, fragment!!)
                     .commit()
             }
@@ -60,7 +61,8 @@ class PlaybackActivity : FragmentActivity() {
                 this@PlaybackActivity.scene = scene
                 if (savedInstanceState == null) {
                     fragment = PlaybackSceneFragment(scene)
-                    supportFragmentManager.beginTransaction()
+                    supportFragmentManager
+                        .beginTransaction()
                         .replace(R.id.playback_container, fragment!!)
                         .commit()
                 }
@@ -73,13 +75,12 @@ class PlaybackActivity : FragmentActivity() {
 
     @OptIn(UnstableApi::class)
     @SuppressLint("RestrictedApi")
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        return if (fragment != null) {
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean =
+        if (fragment != null) {
             fragment!!.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
         } else {
             super.dispatchKeyEvent(event)
         }
-    }
 
     private fun setResultAndFinish() {
         // Return the video's current position to the previous Activity

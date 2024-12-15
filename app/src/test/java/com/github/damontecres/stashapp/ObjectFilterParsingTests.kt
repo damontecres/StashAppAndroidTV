@@ -84,11 +84,18 @@ class ObjectFilterParsingTests {
         Assert.assertEquals(FilterMode.SCENES, savedFilterData.mode)
         Assert.assertEquals(
             "33",
-            sceneFilter.studios.getOrThrow()!!.value.getOrThrow()!!.first(),
+            sceneFilter.studios
+                .getOrThrow()!!
+                .value
+                .getOrThrow()!!
+                .first(),
         )
         Assert.assertEquals(
             listOf("9", "148"),
-            sceneFilter.tags.getOrThrow()!!.value.getOrThrow()!!,
+            sceneFilter.tags
+                .getOrThrow()!!
+                .value
+                .getOrThrow()!!,
         )
         Assert.assertEquals(
             1,
@@ -100,7 +107,10 @@ class ObjectFilterParsingTests {
         )
         Assert.assertEquals(
             9,
-            sceneFilter.resume_time.getOrThrow()!!.value2.getOrThrow()!!,
+            sceneFilter.resume_time
+                .getOrThrow()!!
+                .value2
+                .getOrThrow()!!,
         )
         Assert.assertEquals(
             "2024-01-01 23:00",
@@ -108,11 +118,17 @@ class ObjectFilterParsingTests {
         )
         Assert.assertEquals(
             listOf("1131"),
-            sceneFilter.performers.getOrThrow()!!.value.getOrThrow()!!,
+            sceneFilter.performers
+                .getOrThrow()!!
+                .value
+                .getOrThrow()!!,
         )
         Assert.assertEquals(
             listOf<String>("1"),
-            sceneFilter.groups.getOrThrow()!!.value.getOrThrow()!!,
+            sceneFilter.groups
+                .getOrThrow()!!
+                .value
+                .getOrThrow()!!,
         )
         Assert.assertEquals(
             CriterionModifier.INCLUDES,
@@ -137,17 +153,50 @@ class ObjectFilterParsingTests {
         Assert.assertNotNull(performerFilter!!)
         Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
 
-        Assert.assertEquals(3, performerFilter.tags.getOrThrow()!!.value.getOrThrow()!!.size)
-        Assert.assertEquals(3, performerFilter.studios.getOrThrow()!!.value.getOrThrow()!!.size)
-        Assert.assertEquals(1, performerFilter.studios.getOrThrow()!!.excludes.getOrThrow()!!.size)
+        Assert.assertEquals(
+            3,
+            performerFilter.tags
+                .getOrThrow()!!
+                .value
+                .getOrThrow()!!
+                .size,
+        )
+        Assert.assertEquals(
+            3,
+            performerFilter.studios
+                .getOrThrow()!!
+                .value
+                .getOrThrow()!!
+                .size,
+        )
+        Assert.assertEquals(
+            1,
+            performerFilter.studios
+                .getOrThrow()!!
+                .excludes
+                .getOrThrow()!!
+                .size,
+        )
         Assert.assertEquals(
             "94",
-            performerFilter.studios.getOrThrow()!!.excludes.getOrThrow()!!.first(),
+            performerFilter.studios
+                .getOrThrow()!!
+                .excludes
+                .getOrThrow()!!
+                .first(),
         )
-        Assert.assertNull(performerFilter.gender.getOrThrow()!!.value.getOrNull())
+        Assert.assertNull(
+            performerFilter.gender
+                .getOrThrow()!!
+                .value
+                .getOrNull(),
+        )
         Assert.assertEquals(
             listOf(GenderEnum.MALE, GenderEnum.FEMALE),
-            performerFilter.gender.getOrThrow()!!.value_list.getOrNull(),
+            performerFilter.gender
+                .getOrThrow()!!
+                .value_list
+                .getOrNull(),
         )
     }
 
@@ -159,18 +208,39 @@ class ObjectFilterParsingTests {
         Assert.assertNotNull(performerFilter!!)
         Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
 
-        Assert.assertNull(performerFilter.gender.getOrThrow()!!.value.getOrNull())
-        Assert.assertEquals(3, performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!.size)
+        Assert.assertNull(
+            performerFilter.gender
+                .getOrThrow()!!
+                .value
+                .getOrNull(),
+        )
+        Assert.assertEquals(
+            3,
+            performerFilter.gender
+                .getOrThrow()!!
+                .value_list
+                .getOrThrow()!!
+                .size,
+        )
         Assert.assertTrue(
-            performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!
+            performerFilter.gender
+                .getOrThrow()!!
+                .value_list
+                .getOrThrow()!!
                 .contains(GenderEnum.MALE),
         )
         Assert.assertTrue(
-            performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!
+            performerFilter.gender
+                .getOrThrow()!!
+                .value_list
+                .getOrThrow()!!
                 .contains(GenderEnum.FEMALE),
         )
         Assert.assertTrue(
-            performerFilter.gender.getOrThrow()!!.value_list.getOrThrow()!!
+            performerFilter.gender
+                .getOrThrow()!!
+                .value_list
+                .getOrThrow()!!
                 .contains(GenderEnum.NON_BINARY),
         )
     }
@@ -204,12 +274,27 @@ class ObjectFilterParsingTests {
         Assert.assertNotNull(filter!!)
         Assert.assertEquals(FilterMode.TAGS, savedFilterData.mode)
 
-        Assert.assertEquals(listOf("6"), filter.children.getOrThrow()!!.excludes.getOrThrow()!!)
+        Assert.assertEquals(
+            listOf("6"),
+            filter.children
+                .getOrThrow()!!
+                .excludes
+                .getOrThrow()!!,
+        )
         Assert.assertEquals(
             emptyList<String>(),
-            filter.children.getOrThrow()!!.value.getOrThrow()!!,
+            filter.children
+                .getOrThrow()!!
+                .value
+                .getOrThrow()!!,
         )
-        Assert.assertEquals(-1, filter.children.getOrThrow()!!.depth.getOrThrow())
+        Assert.assertEquals(
+            -1,
+            filter.children
+                .getOrThrow()!!
+                .depth
+                .getOrThrow(),
+        )
         Assert.assertEquals(CriterionModifier.INCLUDES_ALL, filter.children.getOrThrow()!!.modifier)
     }
 
@@ -275,8 +360,8 @@ class ObjectFilterParsingTests {
     private fun compareOptionalList(
         expected: Optional<List<*>?>,
         actual: Optional<List<*>?>,
-    ): Boolean {
-        return if (expected == Optional.Absent && actual == Optional.Absent) {
+    ): Boolean =
+        if (expected == Optional.Absent && actual == Optional.Absent) {
             true
         } else {
             val exList = expected.getOrNull()
@@ -291,7 +376,6 @@ class ObjectFilterParsingTests {
                 false
             }
         }
-    }
 
     @Test
     fun testSceneFilterWriter() {

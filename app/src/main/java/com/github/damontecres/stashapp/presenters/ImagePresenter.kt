@@ -7,7 +7,9 @@ import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
 
-class ImagePresenter(callback: LongClickCallBack<ImageData>? = null) : StashPresenter<ImageData>(callback) {
+class ImagePresenter(
+    callback: LongClickCallBack<ImageData>? = null,
+) : StashPresenter<ImageData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: ImageData,

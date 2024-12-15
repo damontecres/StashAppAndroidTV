@@ -31,7 +31,9 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
 
-abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = null) : Presenter() {
+abstract class StashPresenter<T>(
+    private val callback: LongClickCallBack<T>? = null,
+) : Presenter() {
     final override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         val cardView = StashImageCardView(parent.context)
         cardView.isFocusable = true
@@ -68,7 +70,8 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         url: String,
     ) {
         val cropImages =
-            PreferenceManager.getDefaultSharedPreferences(cardView.context)
+            PreferenceManager
+                .getDefaultSharedPreferences(cardView.context)
                 .getBoolean(cardView.context.getString(R.string.pref_key_crop_card_images), true)
         if (url.contains("default=true")) {
             cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.transparent))
@@ -77,13 +80,15 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         }
         if (cropImages) {
             cardView.mainImageView.scaleType = ImageView.ScaleType.CENTER_CROP
-            StashGlide.with(cardView.context, url)
+            StashGlide
+                .with(cardView.context, url)
                 .optionalCenterCrop()
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
         } else {
             cardView.mainImageView.scaleType = ImageView.ScaleType.FIT_CENTER
-            StashGlide.with(cardView.context, url)
+            StashGlide
+                .with(cardView.context, url)
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
         }
@@ -99,14 +104,12 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         cardView.onUnbindViewHolder()
     }
 
-    open fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<T> {
-        return object : LongClickCallBack<T> {
+    open fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<T> =
+        object : LongClickCallBack<T> {
             override fun getPopUpItems(
                 context: Context,
                 item: T,
-            ): List<PopUpItem> {
-                return listOf(PopUpItem.getDefault(context))
-            }
+            ): List<PopUpItem> = listOf(PopUpItem.getDefault(context))
 
             override fun onItemLongClick(
                 context: Context,
@@ -116,7 +119,6 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 cardView.performClick()
             }
         }
-    }
 
     interface LongClickCallBack<T> {
         fun getPopUpItems(
@@ -131,16 +133,17 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
         )
     }
 
-    data class PopUpItem(val id: Long, val text: String) {
+    data class PopUpItem(
+        val id: Long,
+        val text: String,
+    ) {
         constructor(id: Int, text: String) : this(id.toLong(), text)
 
         companion object {
             const val DEFAULT_ID = -1L
             const val REMOVE_ID = -2L
 
-            fun getDefault(context: Context): PopUpItem {
-                return PopUpItem(DEFAULT_ID, context.getString(R.string.go_to))
-            }
+            fun getDefault(context: Context): PopUpItem = PopUpItem(DEFAULT_ID, context.getString(R.string.go_to))
 
             val REMOVE_POPUP_ITEM =
                 PopUpItem(
@@ -153,8 +156,8 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
     companion object {
         private const val TAG = "StashPresenter"
 
-        fun defaultClassPresenterSelector(): ClassPresenterSelector {
-            return ClassPresenterSelector()
+        fun defaultClassPresenterSelector(): ClassPresenterSelector =
+            ClassPresenterSelector()
                 .addClassPresenter(PerformerData::class.java, PerformerPresenter())
                 .addClassPresenter(SlimSceneData::class.java, ScenePresenter())
                 .addClassPresenter(StudioData::class.java, StudioPresenter())
@@ -168,14 +171,14 @@ abstract class StashPresenter<T>(private val callback: LongClickCallBack<T>? = n
                 .addClassPresenter(OCounter::class.java, OCounterPresenter())
                 .addClassPresenter(CreateMarkerAction::class.java, CreateMarkerActionPresenter())
                 .addClassPresenter(GroupRelationshipData::class.java, GroupRelationshipPresenter())
-        }
 
-        fun glideError(context: Context): RequestBuilder<PictureDrawable> {
-            return Glide.with(context).`as`(PictureDrawable::class.java)
+        fun glideError(context: Context): RequestBuilder<PictureDrawable> =
+            Glide
+                .with(context)
+                .`as`(PictureDrawable::class.java)
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .skipMemoryCache(true)
                 .error(ContextCompat.getDrawable(context, R.drawable.baseline_camera_indoor_48))
                 .listener(SvgSoftwareLayerSetter())
-        }
     }
 }

@@ -11,30 +11,32 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.TestResultStatus
 import kotlinx.coroutines.launch
 
-class SetupStep2Ssl(private val setupState: SetupState) :
-    SetupActivity.SimpleGuidedStepSupportFragment() {
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+class SetupStep2Ssl(
+    private val setupState: SetupState,
+) : SetupActivity.SimpleGuidedStepSupportFragment() {
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             "HTTPS Certificate",
             "Allow self-signed certificates?",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_YES)
                 .title("Yes")
                 .description("Allow self-signed certs")
                 .build(),
         )
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_NO)
                 .title("No")
                 .description("Enter a different URL")

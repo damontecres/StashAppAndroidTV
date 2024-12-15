@@ -12,8 +12,9 @@ import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener.Simp
 /**
  * A [SimpleOnItemViewClickedListener] for images in a [StashGridFragment] to allow for scrolling through the grid's other images
  */
-class ImageGridClickedListener(val fragment: StashGridFragment) :
-    SimpleOnItemViewClickedListener<ImageData> {
+class ImageGridClickedListener(
+    val fragment: StashGridFragment,
+) : SimpleOnItemViewClickedListener<ImageData> {
     override fun onItemClicked(item: ImageData) {
         val position = fragment.currentSelectedPosition
         Log.v(TAG, "position=$position")

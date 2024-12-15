@@ -106,8 +106,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceDisplayDialog(
         caller: PreferenceFragmentCompat,
         pref: Preference,
-    ): Boolean {
-        return if (pref.key == getString(R.string.pref_key_pin_code)) {
+    ): Boolean =
+        if (pref.key == getString(R.string.pref_key_pin_code)) {
             val f = NumberEditTextPreferencesDialog(pref.key)
             f.setTargetFragment(caller, 0)
             startPreferenceFragment(f)
@@ -115,13 +115,11 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         } else {
             super.onPreferenceDisplayDialog(caller, pref)
         }
-    }
 
     class PreferencesFragment(
         val startPreferenceFragmentFunc: (fragment: LeanbackPreferenceFragmentCompat) -> Unit,
         val startImmersiveFunc: (fragment: Fragment) -> Unit,
-    ) :
-        LeanbackPreferenceFragmentCompat() {
+    ) : LeanbackPreferenceFragmentCompat() {
         private val viewModel: ServerViewModel by activityViewModels()
         private var subscriptionJob: Job? = null
 
@@ -199,18 +197,20 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                                     UpdateAppFragment(release),
                                 )
                             } else {
-                                Toast.makeText(
-                                    requireContext(),
-                                    "No update available!",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "No update available!",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
                             }
                         } else {
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to check for updates",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Failed to check for updates",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         }
                     }
                     true
@@ -224,11 +224,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                                 UpdateAppFragment(release),
                             )
                         } else {
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to check for updates",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Failed to check for updates",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         }
                     }
                     true
@@ -264,7 +265,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
             }
 
-            if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+            if (PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
                     .getBoolean("autoCheckForUpdates", true)
             ) {
                 val checkForUpdatePref = findPreference<Preference>("checkForUpdate")
@@ -353,7 +355,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<Preference>(PREF_STASH_URL)!!.summary = currentServer.url
 
             findPreference<SwitchPreference>(getString(R.string.pref_key_read_only_mode))!!.isChecked =
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
                     .getBoolean(getString(R.string.pref_key_read_only_mode), false)
 
             val queryEngine = QueryEngine(currentServer)
@@ -423,11 +426,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         val jobId = MutationEngine(currentServer).triggerScan()
                         // TODO: job could finish between these two lines of code
                         currentServer.serverPreferences.scanJobId = jobId
-                        Toast.makeText(
-                            requireContext(),
-                            "Triggered a library scan",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Triggered a library scan",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     }
                 }
                 true
@@ -443,11 +447,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         currentServer.updateServerPrefs()
                         val jobId = MutationEngine(currentServer).triggerGenerate()
                         currentServer.serverPreferences.generateJobId = jobId
-                        Toast.makeText(
-                            requireContext(),
-                            "Triggered a generate task",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Triggered a generate task",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     }
                 }
                 true
@@ -493,33 +498,37 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                             val result = queryEngine.waitForJob(jobId)
                             withContext(Dispatchers.Main) {
                                 if (result is JobResult.Failure) {
-                                    Toast.makeText(
-                                        requireContext(),
-                                        "Error installing plugin: ${result.message}",
-                                        Toast.LENGTH_LONG,
-                                    ).show()
-                                } else if (result is JobResult.NotFound) {
-                                    Toast.makeText(
-                                        requireContext(),
-                                        "Error installing plugin",
-                                        Toast.LENGTH_LONG,
-                                    ).show()
-                                } else {
-                                    val serverPrefs =
-                                        StashServer.requireCurrentServer().updateServerPrefs()
-                                    if (serverPrefs.companionPluginInstalled) {
-                                        Toast.makeText(
+                                    Toast
+                                        .makeText(
                                             requireContext(),
-                                            "Companion plugin installed!",
-                                            Toast.LENGTH_SHORT,
+                                            "Error installing plugin: ${result.message}",
+                                            Toast.LENGTH_LONG,
                                         ).show()
-                                        setupSendLogsPref()
-                                    } else {
-                                        Toast.makeText(
+                                } else if (result is JobResult.NotFound) {
+                                    Toast
+                                        .makeText(
                                             requireContext(),
                                             "Error installing plugin",
                                             Toast.LENGTH_LONG,
                                         ).show()
+                                } else {
+                                    val serverPrefs =
+                                        StashServer.requireCurrentServer().updateServerPrefs()
+                                    if (serverPrefs.companionPluginInstalled) {
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Companion plugin installed!",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                        setupSendLogsPref()
+                                    } else {
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Error installing plugin",
+                                                Toast.LENGTH_LONG,
+                                            ).show()
                                     }
                                 }
                             }
@@ -587,11 +596,12 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
             networkTimeoutPref.setOnPreferenceChangeListener { _, newValue ->
                 if (newValue == 0) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Warning! A zero network timeout will wait forever!",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Warning! A zero network timeout will wait forever!",
+                            Toast.LENGTH_LONG,
+                        ).show()
                 }
                 true
             }
@@ -650,7 +660,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     requireContext().cacheDir,
                     DiskCache.Factory.DEFAULT_DISK_CACHE_DIR,
                 ).walkTopDown()
-                    .filter { it.isFile }.map { it.length() }.sum() / 1024.0 / 1024.0
+                    .filter { it.isFile }
+                    .map { it.length() }
+                    .sum() / 1024.0 / 1024.0
             val cacheSizeFormatted = String.format("%.2f", cacheSize)
             val glideCacheSizeFormatted = String.format("%.2f", glideCacheSize)
 
@@ -659,8 +671,9 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         }
     }
 
-    class NumberEditTextPreferencesDialog(key: String) :
-        LeanbackEditTextPreferenceDialogFragmentCompat() {
+    class NumberEditTextPreferencesDialog(
+        key: String,
+    ) : LeanbackEditTextPreferenceDialogFragmentCompat() {
         init {
             val args = Bundle(1)
             args.putString(ARG_KEY, key)

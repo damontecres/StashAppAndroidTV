@@ -23,7 +23,8 @@ class PagingObjectAdapter(
     private var totalCount = -1
 
     private val cachedPages =
-        CacheBuilder.newBuilder()
+        CacheBuilder
+            .newBuilder()
             .maximumSize(8)
             .build<Int, Page>()
 
@@ -98,8 +99,8 @@ class PagingObjectAdapter(
     private fun fetchPage(
         position: Int,
         pageNumber: Int,
-    ): Job {
-        return scope.launchIO {
+    ): Job =
+        scope.launchIO {
             try {
                 mutex.lock()
                 if (cachedPages.getIfPresent(pageNumber) == null) {
@@ -114,7 +115,6 @@ class PagingObjectAdapter(
                 mutex.unlock()
             }
         }
-    }
 
     companion object {
         private const val TAG = "PagingObjectAdapter"
@@ -122,5 +122,8 @@ class PagingObjectAdapter(
         private const val DEBUG = false
     }
 
-    private data class Page(val number: Int, val items: List<Any>)
+    private data class Page(
+        val number: Int,
+        val items: List<Any>,
+    )
 }

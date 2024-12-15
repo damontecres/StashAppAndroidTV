@@ -37,7 +37,8 @@ class PinActivity : FragmentActivity() {
                 }
                 if (intent.getBooleanExtra(UpdateBroadcastReceiver.INTENT_APP_UPDATED, false)) {
                     val installedVersion = UpdateChecker.getInstalledVersion(this)
-                    Toast.makeText(this, "App updated to $installedVersion!", Toast.LENGTH_SHORT)
+                    Toast
+                        .makeText(this, "App updated to $installedVersion!", Toast.LENGTH_SHORT)
                         .show()
                 }
             }
@@ -48,7 +49,8 @@ class PinActivity : FragmentActivity() {
         super.onResume()
         val currentServer = StashServer.getCurrentStashServer(this)
         if (currentServer != null) {
-            supportFragmentManager.beginTransaction()
+            supportFragmentManager
+                .beginTransaction()
                 .replace(R.id.main_browse_fragment, PinFragment())
                 .commitNow()
         }
@@ -60,7 +62,8 @@ class PinActivity : FragmentActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             val pinCode =
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
                     .getString("pinCode", "")
             if (pinCode.isNullOrBlank()) {
                 startMainActivity()
@@ -76,7 +79,8 @@ class PinActivity : FragmentActivity() {
             pinEditText = view.findViewById(R.id.pin_edit_text)
 
             val pinCode =
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
                     .getString(getString(R.string.pref_key_pin_code), "")
 
             val submit = view.findViewById<Button>(R.id.pin_submit)
@@ -90,7 +94,8 @@ class PinActivity : FragmentActivity() {
             }
 
             val autoSubmitPin =
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
                     .getBoolean(getString(R.string.pref_key_pin_code_auto), false)
             if (autoSubmitPin) {
                 submit.visibility = View.INVISIBLE

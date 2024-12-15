@@ -36,7 +36,8 @@ class DebugActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.frame_layout)
         if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
+            supportFragmentManager
+                .beginTransaction()
                 .replace(android.R.id.content, DebugFragment())
                 .commitNow()
         }

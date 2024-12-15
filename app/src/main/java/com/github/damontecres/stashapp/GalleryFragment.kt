@@ -156,7 +156,8 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                 addRow(table, R.string.stashapp_photographer, galleryData.photographer)
 
                 if (galleryData.studio?.image_path.isNotNullOrBlank()) {
-                    StashGlide.with(requireContext(), galleryData.studio!!.image_path!!)
+                    StashGlide
+                        .with(requireContext(), galleryData.studio!!.image_path!!)
                         .optionalFitCenter()
                         .error(StashPresenter.glideError(requireContext()))
                         .into(studioImage)

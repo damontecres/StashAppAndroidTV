@@ -30,9 +30,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
         studioId = requireActivity().intent.getStringExtra("studioId")!!
     }
 
-    override fun getTitleText(): String? {
-        return requireActivity().intent.getStringExtra("studioName")
-    }
+    override fun getTitleText(): String? = requireActivity().intent.getStringExtra("studioName")
 
     override fun onViewCreated(
         view: View,
@@ -151,13 +149,12 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
         return fragment
     }
 
-    private fun createCriterionInput(includeSub: Boolean): Optional.Present<HierarchicalMultiCriterionInput> {
-        return Optional.present(
+    private fun createCriterionInput(includeSub: Boolean): Optional.Present<HierarchicalMultiCriterionInput> =
+        Optional.present(
             HierarchicalMultiCriterionInput(
                 value = Optional.present(listOf(studioId)),
                 modifier = CriterionModifier.INCLUDES,
                 depth = Optional.present(if (includeSub) -1 else 0),
             ),
         )
-    }
 }

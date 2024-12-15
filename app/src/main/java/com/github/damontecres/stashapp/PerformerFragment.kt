@@ -153,17 +153,17 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         }
     }
 
-    private class PerformTogetherLongClickCallback(val performer: Performer) :
-        StashPresenter.LongClickCallBack<PerformerData> {
+    private class PerformTogetherLongClickCallback(
+        val performer: Performer,
+    ) : StashPresenter.LongClickCallBack<PerformerData> {
         override fun getPopUpItems(
             context: Context,
             item: PerformerData,
-        ): List<StashPresenter.PopUpItem> {
-            return listOf(
+        ): List<StashPresenter.PopUpItem> =
+            listOf(
                 StashPresenter.PopUpItem.getDefault(context),
                 StashPresenter.PopUpItem(1, "View scenes together"),
             )
-        }
 
         override fun onItemLongClick(
             context: Context,
@@ -203,17 +203,15 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         }
     }
 
-    private class PerformersWithTagLongClickCallback :
-        StashPresenter.LongClickCallBack<TagData> {
+    private class PerformersWithTagLongClickCallback : StashPresenter.LongClickCallBack<TagData> {
         override fun getPopUpItems(
             context: Context,
             item: TagData,
-        ): List<StashPresenter.PopUpItem> {
-            return listOf(
+        ): List<StashPresenter.PopUpItem> =
+            listOf(
                 StashPresenter.PopUpItem.getDefault(context),
                 StashPresenter.PopUpItem(1, "View performers with this tag"),
             )
-        }
 
         override fun onItemLongClick(
             context: Context,

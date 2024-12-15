@@ -47,9 +47,7 @@ class FrontPageFilterTests {
     private fun createSavedFilterData(
         id: String,
         mode: FilterMode,
-    ): SavedFilterData {
-        return SavedFilterData(id, mode, "savedfilter-$id", null, null, null, "SavedFilterData")
-    }
+    ): SavedFilterData = SavedFilterData(id, mode, "savedfilter-$id", null, null, null, "SavedFilterData")
 
     @Test
     fun basicTest() {

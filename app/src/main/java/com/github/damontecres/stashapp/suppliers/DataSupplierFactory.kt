@@ -17,7 +17,9 @@ import kotlinx.serialization.Serializable
 /**
  * A factory to create [StashPagingSource.DataSupplier]s
  */
-class DataSupplierFactory(val serverVersion: Version) {
+class DataSupplierFactory(
+    val serverVersion: Version,
+) {
     /**
      * Create a [StashPagingSource.DataSupplier] for the given [FilterArgs]
      *
@@ -100,23 +102,35 @@ class DataSupplierFactory(val serverVersion: Version) {
 @Serializable
 sealed interface DataSupplierOverride {
     @Serializable
-    data class PerformerTags(val performerId: String) : DataSupplierOverride
+    data class PerformerTags(
+        val performerId: String,
+    ) : DataSupplierOverride
 
     @Serializable
-    data class GroupTags(val groupId: String) : DataSupplierOverride
+    data class GroupTags(
+        val groupId: String,
+    ) : DataSupplierOverride
 
     @Serializable
-    data class StudioTags(val studioId: String) : DataSupplierOverride
+    data class StudioTags(
+        val studioId: String,
+    ) : DataSupplierOverride
 
     @Serializable
-    data class GalleryPerformer(val galleryId: String) : DataSupplierOverride
+    data class GalleryPerformer(
+        val galleryId: String,
+    ) : DataSupplierOverride
 
     @Serializable
-    data class GalleryTag(val galleryId: String) : DataSupplierOverride
+    data class GalleryTag(
+        val galleryId: String,
+    ) : DataSupplierOverride
 
     @Serializable
-    data class GroupRelationship(val groupId: String, val type: GroupRelationshipType) :
-        DataSupplierOverride
+    data class GroupRelationship(
+        val groupId: String,
+        val type: GroupRelationshipType,
+    ) : DataSupplierOverride
 }
 
 /**
@@ -153,22 +167,20 @@ data class FilterArgs(
     /**
      * If the [sortAndDirection] is random, resolve it and return an updated [FilterArgs]
      */
-    fun withResolvedRandom(): FilterArgs {
-        return if (sortAndDirection.isRandom) {
+    fun withResolvedRandom(): FilterArgs =
+        if (sortAndDirection.isRandom) {
             with(sortAndDirection.copy(randomSeed = getRandomSort()))
         } else {
             this
         }
-    }
 }
 
-fun SavedFilterData.Find_filter.toStashFindFilter(): StashFindFilter {
-    return if (sort != null) {
+fun SavedFilterData.Find_filter.toStashFindFilter(): StashFindFilter =
+    if (sort != null) {
         StashFindFilter(q, SortAndDirection.create(sort, direction ?: SortDirectionEnum.ASC))
     } else {
         StashFindFilter(q, null)
     }
-}
 
 fun SavedFilterData.toFilterArgs(filterParser: FilterParser): FilterArgs {
     val dataType = DataType.fromFilterMode(mode)!!

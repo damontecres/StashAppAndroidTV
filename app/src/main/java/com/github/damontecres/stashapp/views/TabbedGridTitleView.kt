@@ -8,12 +8,13 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.leanback.widget.TitleViewAdapter
 import com.github.damontecres.stashapp.R
 
-class TabbedGridTitleView(context: Context, attrs: AttributeSet? = null) : ConstraintLayout(context, attrs), TitleViewAdapter.Provider {
-    override fun getTitleViewAdapter(): TitleViewAdapter {
-        return object : TitleViewAdapter() {
-            override fun getSearchAffordanceView(): View {
-                return findViewById<Button>(R.id.sort_button)
-            }
+class TabbedGridTitleView(
+    context: Context,
+    attrs: AttributeSet? = null,
+) : ConstraintLayout(context, attrs),
+    TitleViewAdapter.Provider {
+    override fun getTitleViewAdapter(): TitleViewAdapter =
+        object : TitleViewAdapter() {
+            override fun getSearchAffordanceView(): View = findViewById<Button>(R.id.sort_button)
         }
-    }
 }

@@ -14,18 +14,18 @@ import com.github.damontecres.stashapp.filter.CreateFilterGuidedStepFragment
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 
-class CircumcisionPickerFragment(val filterOption: FilterOption<StashDataFilter, CircumcisionCriterionInput>) :
-    CreateFilterGuidedStepFragment() {
+class CircumcisionPickerFragment(
+    val filterOption: FilterOption<StashDataFilter, CircumcisionCriterionInput>,
+) : CreateFilterGuidedStepFragment() {
     private var currentModifier = CriterionModifier.INCLUDES
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
             null,
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
@@ -46,7 +46,8 @@ class CircumcisionPickerFragment(val filterOption: FilterOption<StashDataFilter,
                 add(modifierAction(CriterionModifier.NOT_NULL))
             }
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
@@ -65,7 +66,8 @@ class CircumcisionPickerFragment(val filterOption: FilterOption<StashDataFilter,
                             CircumisedEnum.UNKNOWN__ -> "Unknown"
                         }
                     val action =
-                        GuidedAction.Builder(requireContext())
+                        GuidedAction
+                            .Builder(requireContext())
                             .id(CIRC_OFFSET + index)
                             .hasNext(false)
                             .title(name)
@@ -76,8 +78,7 @@ class CircumcisionPickerFragment(val filterOption: FilterOption<StashDataFilter,
                 } else {
                     null
                 }
-            }
-            .sortedBy { it.first }
+            }.sortedBy { it.first }
             .forEach { actions.add(it.second) }
 
         addStandardActions(actions, filterOption)
@@ -110,11 +111,11 @@ class CircumcisionPickerFragment(val filterOption: FilterOption<StashDataFilter,
         }
     }
 
-    private fun getValues(): List<CircumisedEnum>? {
-        return actions.filter { it.id >= CIRC_OFFSET && it.isChecked }
+    private fun getValues(): List<CircumisedEnum>? =
+        actions
+            .filter { it.id >= CIRC_OFFSET && it.isChecked }
             .map { CircumisedEnum.entries[(it.id - CIRC_OFFSET).toInt()] }
             .ifEmpty { null }
-    }
 
     private fun setFinish() {
         if (currentModifier.isNullModifier() || getValues() != null) {

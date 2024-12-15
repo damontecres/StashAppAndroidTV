@@ -140,22 +140,27 @@ class CreateFilterViewModel : ViewModel() {
     fun lookupIds(
         dataType: DataType,
         ids: List<String>,
-    ): Map<String, NameDescription?> {
-        return ids.associateWith { id ->
+    ): Map<String, NameDescription?> =
+        ids.associateWith { id ->
             val key = DataTypeId(dataType, id)
             storedItems[key]
         }
-    }
 
     /**
      * A composite of [DataType] and ID because IDs can be reused between data types
      */
-    data class DataTypeId(val dataType: DataType, val id: String)
+    data class DataTypeId(
+        val dataType: DataType,
+        val id: String,
+    )
 
     /**
      * A name (or title) and description of a [StashData] item
      */
-    data class NameDescription(val name: String?, val description: String?) {
+    data class NameDescription(
+        val name: String?,
+        val description: String?,
+    ) {
         constructor(item: StashData) : this(extractTitle(item), extractDescription(item))
     }
 

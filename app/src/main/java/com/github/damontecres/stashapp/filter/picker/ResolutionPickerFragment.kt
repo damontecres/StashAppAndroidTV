@@ -14,27 +14,28 @@ import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.filter.resolutionName
 import com.github.damontecres.stashapp.views.getString
 
-class ResolutionPickerFragment(val filterOption: FilterOption<StashDataFilter, ResolutionCriterionInput>) :
-    CreateFilterGuidedStepFragment() {
+class ResolutionPickerFragment(
+    val filterOption: FilterOption<StashDataFilter, ResolutionCriterionInput>,
+) : CreateFilterGuidedStepFragment() {
     private var curVal = ResolutionCriterionInput(value = ResolutionEnum.FULL_HD, modifier = CriterionModifier.EQUALS)
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
             null,
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
         curVal =
-            filterOption.getter.invoke(
-                viewModel.objectFilter.value!!,
-            ).getOrNull() ?: ResolutionCriterionInput(value = ResolutionEnum.FULL_HD, modifier = CriterionModifier.EQUALS)
+            filterOption.getter
+                .invoke(
+                    viewModel.objectFilter.value!!,
+                ).getOrNull() ?: ResolutionCriterionInput(value = ResolutionEnum.FULL_HD, modifier = CriterionModifier.EQUALS)
 
         val modifierOptions =
             buildList {
@@ -44,7 +45,8 @@ class ResolutionPickerFragment(val filterOption: FilterOption<StashDataFilter, R
                 add(modifierAction(CriterionModifier.LESS_THAN))
             }
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
@@ -57,7 +59,8 @@ class ResolutionPickerFragment(val filterOption: FilterOption<StashDataFilter, R
             ResolutionEnum.entries
                 .filter { it != ResolutionEnum.UNKNOWN__ }
                 .mapIndexed { index, res ->
-                    GuidedAction.Builder(requireContext())
+                    GuidedAction
+                        .Builder(requireContext())
                         .id(RESOLUTION_OFFSET + index)
                         .hasNext(false)
                         .title(resolutionName(res))
@@ -65,7 +68,8 @@ class ResolutionPickerFragment(val filterOption: FilterOption<StashDataFilter, R
                 }
 
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(RESOLUTION)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_criterion_value))

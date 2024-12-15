@@ -10,8 +10,9 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.FontSpan
 import java.util.EnumMap
 
-class GroupPresenter(callback: LongClickCallBack<GroupData>? = null) :
-    StashPresenter<GroupData>(callback) {
+class GroupPresenter(
+    callback: LongClickCallBack<GroupData>? = null,
+) : StashPresenter<GroupData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: GroupData,

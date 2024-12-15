@@ -5,8 +5,9 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 
-class FilterArgsPresenter(callback: LongClickCallBack<FilterArgs>? = null) :
-    StashPresenter<FilterArgs>(callback) {
+class FilterArgsPresenter(
+    callback: LongClickCallBack<FilterArgs>? = null,
+) : StashPresenter<FilterArgs>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: FilterArgs,

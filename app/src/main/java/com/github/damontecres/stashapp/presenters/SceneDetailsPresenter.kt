@@ -18,8 +18,9 @@ import com.github.damontecres.stashapp.views.parseTimeToString
 /**
  * [AbstractDetailsDescriptionPresenter] for [com.github.damontecres.stashapp.SceneDetailsFragment]
  */
-class SceneDetailsPresenter(val ratingCallback: StashRatingBar.RatingCallback) :
-    AbstractDetailsDescriptionPresenter() {
+class SceneDetailsPresenter(
+    val ratingCallback: StashRatingBar.RatingCallback,
+) : AbstractDetailsDescriptionPresenter() {
     override fun onBindDescription(
         viewHolder: ViewHolder,
         item: Any,

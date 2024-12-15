@@ -29,11 +29,12 @@ class TagDetailsFragment : DetailsFragment() {
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val tag = queryEngine.getTags(listOf(tagId)).firstOrNull()
                 if (tag == null) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Tag not found: $tagId",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Tag not found: $tagId",
+                            Toast.LENGTH_LONG,
+                        ).show()
                     return@launch
                 } else {
                     updateUi(tag)
@@ -50,18 +51,20 @@ class TagDetailsFragment : DetailsFragment() {
                 val newTag = mutationEngine.setTagFavorite(tag.id, !tag.favorite)
                 if (newTag != null) {
                     if (newTag.favorite) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Tag favorited",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Tag favorited",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                     updateUi(newTag)
                 }
             }
         }
         if (tag.image_path != null) {
-            StashGlide.with(requireContext(), tag.image_path)
+            StashGlide
+                .with(requireContext(), tag.image_path)
                 .optionalFitCenter()
                 .error(StashPresenter.glideError(requireContext()))
                 .into(imageView)

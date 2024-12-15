@@ -34,14 +34,13 @@ class DatePickerFragment(
                     CriterionModifier.NOT_NULL,
                 )
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
             "",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
@@ -82,7 +81,8 @@ class DatePickerFragment(
 
         val modifierOptions = this.modifierOptions.map(::modifierAction)
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(TwoValuePicker.MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
@@ -98,7 +98,8 @@ class DatePickerFragment(
                 getString(R.string.stashapp_criterion_value)
             }
         actions.add(
-            GuidedDatePickerAction.Builder(requireContext())
+            GuidedDatePickerAction
+                .Builder(requireContext())
                 .id(VALUE_1)
                 .hasNext(true)
                 .title(valueText)
@@ -108,7 +109,8 @@ class DatePickerFragment(
 
         if (modifier.hasTwoValues()) {
             actions.add(
-                GuidedDatePickerAction.Builder(requireContext())
+                GuidedDatePickerAction
+                    .Builder(requireContext())
                     .id(VALUE_2)
                     .hasNext(true)
                     .title(getString(R.string.stashapp_criterion_less_than))
@@ -133,8 +135,8 @@ class DatePickerFragment(
         value1: String?,
         value2: String?,
         modifier: CriterionModifier,
-    ): DateCriterionInput? {
-        return if (value1 != null) {
+    ): DateCriterionInput? =
+        if (value1 != null) {
             DateCriterionInput(
                 value = value1,
                 value2 = Optional.presentIfNotNull(value2),
@@ -145,14 +147,11 @@ class DatePickerFragment(
         } else {
             null
         }
-    }
 
     override val valueInputType: Int
         get() = throw IllegalStateException("Should not call valueInputType")
 
-    override fun parseValue(v: String?): String? {
-        throw IllegalStateException("Should not call parseValue")
-    }
+    override fun parseValue(v: String?): String? = throw IllegalStateException("Should not call parseValue")
 
     companion object {
         private const val TAG = "DatePickerFragment"

@@ -11,8 +11,7 @@ import com.github.damontecres.stashapp.data.DataType
 class SceneDataSupplier(
     private val findFilter: FindFilterType?,
     private val sceneFilter: SceneFilterType? = null,
-) :
-    StashPagingSource.DataSupplier<FindScenesQuery.Data, SlimSceneData, CountScenesQuery.Data> {
+) : StashPagingSource.DataSupplier<FindScenesQuery.Data, SlimSceneData, CountScenesQuery.Data> {
     constructor(sceneFilter: SceneFilterType? = null) : this(
         DataType.SCENE.asDefaultFindFilterType,
         sceneFilter,
@@ -20,27 +19,18 @@ class SceneDataSupplier(
 
     override val dataType: DataType get() = DataType.SCENE
 
-    override fun createQuery(filter: FindFilterType?): Query<FindScenesQuery.Data> {
-        return FindScenesQuery(
+    override fun createQuery(filter: FindFilterType?): Query<FindScenesQuery.Data> =
+        FindScenesQuery(
             filter = filter,
             scene_filter = sceneFilter,
             ids = null,
         )
-    }
 
-    override fun parseQuery(data: FindScenesQuery.Data): List<SlimSceneData> {
-        return data.findScenes.scenes.map { it.slimSceneData }
-    }
+    override fun parseQuery(data: FindScenesQuery.Data): List<SlimSceneData> = data.findScenes.scenes.map { it.slimSceneData }
 
-    override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: DataType.SCENE.asDefaultFindFilterType
-    }
+    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.SCENE.asDefaultFindFilterType
 
-    override fun createCountQuery(filter: FindFilterType?): Query<CountScenesQuery.Data> {
-        return CountScenesQuery(filter, sceneFilter, null)
-    }
+    override fun createCountQuery(filter: FindFilterType?): Query<CountScenesQuery.Data> = CountScenesQuery(filter, sceneFilter, null)
 
-    override fun parseCountQuery(data: CountScenesQuery.Data): Int {
-        return data.findScenes.count
-    }
+    override fun parseCountQuery(data: CountScenesQuery.Data): Int = data.findScenes.count
 }

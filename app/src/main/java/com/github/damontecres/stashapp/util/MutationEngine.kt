@@ -130,14 +130,13 @@ class MutationEngine(
     private fun getServerBoolean(
         preferenceKey: String,
         defValue: Boolean = false,
-    ): Optional<Boolean> {
-        return Optional.presentIfNotNull(
+    ): Optional<Boolean> =
+        Optional.presentIfNotNull(
             serverPreferences.preferences.getBoolean(
                 preferenceKey,
                 defValue,
             ),
         )
-    }
 
     suspend fun triggerScan(): String {
         val mutation =

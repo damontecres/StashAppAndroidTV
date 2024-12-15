@@ -11,26 +11,24 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 
-class ManageServersFragment(private val overrideReadOnly: Boolean = false) :
-    GuidedStepSupportFragment() {
+class ManageServersFragment(
+    private val overrideReadOnly: Boolean = false,
+) : GuidedStepSupportFragment() {
     private val viewModel: ServerViewModel by activityViewModels()
 
     private var currentServer: StashServer? = null
     private lateinit var allServers: List<StashServer>
     private lateinit var otherServers: List<StashServer>
 
-    override fun onProvideTheme(): Int {
-        return R.style.Theme_StashAppAndroidTV_GuidedStep
-    }
+    override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             "Manage servers",
             "Add, remove, or change servers",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
@@ -52,13 +50,15 @@ class ManageServersFragment(private val overrideReadOnly: Boolean = false) :
         if (otherServers.isNotEmpty()) {
             val switchActions =
                 otherServers.mapIndexed { i, server ->
-                    GuidedAction.Builder(requireContext())
+                    GuidedAction
+                        .Builder(requireContext())
                         .id(ACTION_SWITCH_OFFSET + i)
                         .title(server.url)
                         .build()
                 }
             actions.add(
-                GuidedAction.Builder(requireContext())
+                GuidedAction
+                    .Builder(requireContext())
                     .id(ACTION_SWITCH_OFFSET - 1)
                     .title("Switch to another server")
                     .subActions(switchActions)
@@ -68,7 +68,8 @@ class ManageServersFragment(private val overrideReadOnly: Boolean = false) :
 
         if (overrideReadOnly || readOnlyModeDisabled()) {
             actions.add(
-                GuidedAction.Builder(requireContext())
+                GuidedAction
+                    .Builder(requireContext())
                     .id(ACTION_ADD_SERVER)
                     .title("Add a new server")
                     .hasNext(true)
@@ -77,13 +78,15 @@ class ManageServersFragment(private val overrideReadOnly: Boolean = false) :
             if (otherServers.isNotEmpty()) {
                 val removeActions =
                     otherServers.mapIndexed { i, server ->
-                        GuidedAction.Builder(requireContext())
+                        GuidedAction
+                            .Builder(requireContext())
                             .id(ACTION_REMOVE_OFFSET + i)
                             .title(server.url)
                             .build()
                     }
                 actions.add(
-                    GuidedAction.Builder(requireContext())
+                    GuidedAction
+                        .Builder(requireContext())
                         .id(ACTION_REMOVE_OFFSET - 1)
                         .title("Remove a server")
                         .subActions(removeActions)

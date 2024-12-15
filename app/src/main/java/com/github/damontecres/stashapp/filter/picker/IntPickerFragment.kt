@@ -15,16 +15,14 @@ class IntPickerFragment(
     override val valueInputType: Int
         get() = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED
 
-    override fun parseValue(v: String?): Int? {
-        return v?.toIntOrNull()
-    }
+    override fun parseValue(v: String?): Int? = v?.toIntOrNull()
 
     override fun createCriterionInput(
         value1: Int?,
         value2: Int?,
         modifier: CriterionModifier,
-    ): IntCriterionInput? {
-        return if (value1 != null) {
+    ): IntCriterionInput? =
+        if (value1 != null) {
             IntCriterionInput(
                 value = value1,
                 value2 = Optional.presentIfNotNull(value2),
@@ -35,7 +33,6 @@ class IntPickerFragment(
         } else {
             null
         }
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,

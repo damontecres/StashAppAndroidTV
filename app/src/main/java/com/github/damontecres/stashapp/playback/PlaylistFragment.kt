@@ -36,8 +36,7 @@ import kotlinx.coroutines.withContext
  * A [PlaybackFragment] that manages and plays a playlist/queue of videos
  */
 @OptIn(UnstableApi::class)
-abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
-    PlaybackFragment() {
+abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> : PlaybackFragment() {
     private val playlistViewModel: PlaylistViewModel by activityViewModels()
 
     protected lateinit var pagingSource: StashPagingSource<T, D, D, C>
@@ -281,7 +280,10 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      *
      * This will added as a tag to the [MediaItem]s
      */
-    data class MediaItemTag(val item: Scene, val streamDecision: StreamDecision)
+    data class MediaItemTag(
+        val item: Scene,
+        val streamDecision: StreamDecision,
+    )
 
     companion object {
         private const val TAG = "PlaylistFragment"

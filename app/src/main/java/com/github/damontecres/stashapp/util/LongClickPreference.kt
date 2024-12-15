@@ -6,7 +6,10 @@ import android.view.View
 import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
 
-class LongClickPreference(context: Context, attrs: AttributeSet?) : Preference(context, attrs) {
+class LongClickPreference(
+    context: Context,
+    attrs: AttributeSet?,
+) : Preference(context, attrs) {
     var longClickListener: View.OnLongClickListener? = null
 
     override fun onBindViewHolder(holder: PreferenceViewHolder) {

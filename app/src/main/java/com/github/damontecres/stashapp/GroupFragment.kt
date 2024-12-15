@@ -113,7 +113,5 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
         }
     }
 
-    override fun getTitleText(): String {
-        return group.name
-    }
+    override fun getTitleText(): String = group.name
 }

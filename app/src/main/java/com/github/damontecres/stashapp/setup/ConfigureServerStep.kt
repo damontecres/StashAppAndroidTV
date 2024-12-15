@@ -23,18 +23,15 @@ import kotlinx.coroutines.launch
 class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
     private val viewModel: ServerViewModel by activityViewModels()
 
-    override fun onProvideTheme(): Int {
-        return R.style.Theme_StashAppAndroidTV_GuidedStep
-    }
+    override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(R.string.setup_1_title),
             getString(R.string.setup_1_description),
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
@@ -43,7 +40,8 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
         super.onCreateActions(actions, savedInstanceState)
 
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(SetupActivity.ACTION_SERVER_URL)
                 .title("Stash Server URL")
                 .descriptionEditable(true)
@@ -51,7 +49,8 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
         )
         actions.add(createApiKeyAction())
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(SetupActivity.ACTION_PASSWORD_VISIBLE)
                 .title("API Key visible")
                 .checked(false)
@@ -59,7 +58,8 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                 .build(),
         )
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_OK)
                 .title(getString(R.string.stashapp_actions_submit))
                 .description("")
@@ -105,7 +105,8 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
         if (serverUrl.isNotNullOrBlank()) {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val trustCerts =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    PreferenceManager
+                        .getDefaultSharedPreferences(requireContext())
                         .getBoolean(getString(R.string.pref_key_trust_certs), false)
                 val result = testConnection(serverUrl, apiKey, trustCerts)
                 if (result.status == TestResultStatus.SELF_SIGNED_REQUIRED && !trustCerts) {
@@ -141,7 +142,8 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
         if (serverUrl.isNotNullOrBlank()) {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val trustCerts =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    PreferenceManager
+                        .getDefaultSharedPreferences(requireContext())
                         .getBoolean(getString(R.string.pref_key_trust_certs), false)
                 val result =
                     testConnection(serverUrl, apiKey, trustCerts)
@@ -154,11 +156,12 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                 } else if (result.status == TestResultStatus.SELF_SIGNED_REQUIRED && !trustCerts) {
                     promptSelfSigned(true)
                 } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Cannot connect to server: ${result.status}",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Cannot connect to server: ${result.status}",
+                            Toast.LENGTH_LONG,
+                        ).show()
                 }
             }
         } else {
@@ -174,11 +177,12 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                 PreferenceManager.getDefaultSharedPreferences(requireContext()).edit {
                     putBoolean(getString(R.string.pref_key_trust_certs), true)
                 }
-                Toast.makeText(
-                    requireContext(),
-                    "Please restart the app after adding the server!",
-                    Toast.LENGTH_LONG,
-                ).show()
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Please restart the app after adding the server!",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 if (testAndSubmitAfter) {
                     testAndSubmit()
                 }
@@ -196,7 +200,8 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
         val apiKey =
             findActionById(SetupActivity.ACTION_SERVER_API_KEY)?.editDescription?.toString()
 
-        return GuidedAction.Builder(requireContext())
+        return GuidedAction
+            .Builder(requireContext())
             .id(SetupActivity.ACTION_SERVER_API_KEY)
             .title("Stash Server API Key")
             .description(
@@ -205,8 +210,7 @@ class ConfigureServerStep : SetupActivity.SimpleGuidedStepSupportFragment() {
                 } else {
                     "API key not set"
                 },
-            )
-            .editDescription(apiKey)
+            ).editDescription(apiKey)
             .descriptionEditable(true)
             .descriptionEditInputType(
                 InputType.TYPE_CLASS_TEXT or

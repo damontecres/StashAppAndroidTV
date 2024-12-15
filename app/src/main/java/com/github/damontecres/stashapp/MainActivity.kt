@@ -19,7 +19,8 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
+            supportFragmentManager
+                .beginTransaction()
                 .replace(R.id.main_browse_fragment, fragment)
                 .commitNow()
         }
@@ -28,7 +29,8 @@ class MainActivity : FragmentActivity() {
 
     private fun maybeShowUpdate() {
         val checkForUpdates =
-            PreferenceManager.getDefaultSharedPreferences(this)
+            PreferenceManager
+                .getDefaultSharedPreferences(this)
                 .getBoolean("autoCheckForUpdates", true)
         if (checkForUpdates) {
             lifecycleScope.launch(StashCoroutineExceptionHandler()) {
@@ -47,34 +49,27 @@ class MainActivity : FragmentActivity() {
     override fun onKeyUp(
         keyCode: Int,
         event: KeyEvent,
-    ): Boolean {
-        return fragment.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event)
-    }
+    ): Boolean = fragment.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event)
 
     override fun onKeyDown(
         keyCode: Int,
         event: KeyEvent,
-    ): Boolean {
-        return fragment.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event)
-    }
+    ): Boolean = fragment.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event)
 
     override fun onKeyLongPress(
         keyCode: Int,
         event: KeyEvent,
-    ): Boolean {
-        return fragment.onKeyLongPress(keyCode, event) || super.onKeyLongPress(keyCode, event)
-    }
+    ): Boolean = fragment.onKeyLongPress(keyCode, event) || super.onKeyLongPress(keyCode, event)
 
     override fun onKeyMultiple(
         keyCode: Int,
         repeatCount: Int,
         event: KeyEvent,
-    ): Boolean {
-        return fragment.onKeyMultiple(keyCode, repeatCount, event) ||
+    ): Boolean =
+        fragment.onKeyMultiple(keyCode, repeatCount, event) ||
             super.onKeyMultiple(
                 keyCode,
                 repeatCount,
                 event,
             )
-    }
 }

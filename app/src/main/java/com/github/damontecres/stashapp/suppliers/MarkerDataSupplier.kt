@@ -11,8 +11,7 @@ import com.github.damontecres.stashapp.data.DataType
 class MarkerDataSupplier(
     private val findFilter: FindFilterType?,
     private val markerFilter: SceneMarkerFilterType? = null,
-) :
-    StashPagingSource.DataSupplier<FindMarkersQuery.Data, MarkerData, CountMarkersQuery.Data> {
+) : StashPagingSource.DataSupplier<FindMarkersQuery.Data, MarkerData, CountMarkersQuery.Data> {
     constructor(markerFilter: SceneMarkerFilterType? = null) : this(
         DataType.MARKER.asDefaultFindFilterType,
         markerFilter,
@@ -20,26 +19,17 @@ class MarkerDataSupplier(
 
     override val dataType: DataType get() = DataType.MARKER
 
-    override fun createQuery(filter: FindFilterType?): Query<FindMarkersQuery.Data> {
-        return FindMarkersQuery(
+    override fun createQuery(filter: FindFilterType?): Query<FindMarkersQuery.Data> =
+        FindMarkersQuery(
             filter = filter,
             markerFilter,
         )
-    }
 
-    override fun parseQuery(data: FindMarkersQuery.Data): List<MarkerData> {
-        return data.findSceneMarkers.scene_markers.map { it.markerData }
-    }
+    override fun parseQuery(data: FindMarkersQuery.Data): List<MarkerData> = data.findSceneMarkers.scene_markers.map { it.markerData }
 
-    override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: DataType.MARKER.asDefaultFindFilterType
-    }
+    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.MARKER.asDefaultFindFilterType
 
-    override fun createCountQuery(filter: FindFilterType?): Query<CountMarkersQuery.Data> {
-        return CountMarkersQuery(filter, markerFilter)
-    }
+    override fun createCountQuery(filter: FindFilterType?): Query<CountMarkersQuery.Data> = CountMarkersQuery(filter, markerFilter)
 
-    override fun parseCountQuery(data: CountMarkersQuery.Data): Int {
-        return data.findSceneMarkers.count
-    }
+    override fun parseCountQuery(data: CountMarkersQuery.Data): Int = data.findSceneMarkers.count
 }

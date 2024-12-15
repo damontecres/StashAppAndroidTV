@@ -58,21 +58,16 @@ data class Version(
     /**
      * Is this equal to or before the specified version
      */
-    fun isEqualOrBefore(version: Version): Boolean {
-        return !isGreaterThan(version)
-    }
+    fun isEqualOrBefore(version: Version): Boolean = !isGreaterThan(version)
 
-    private fun compareNumCommits(version: Version): Int {
-        return (this.numCommits ?: 0) - (version.numCommits ?: 0)
-    }
+    private fun compareNumCommits(version: Version): Int = (this.numCommits ?: 0) - (version.numCommits ?: 0)
 
-    override fun toString(): String {
-        return if (numCommits != null && hash != null) {
+    override fun toString(): String =
+        if (numCommits != null && hash != null) {
             "v$major.$minor.$patch-$numCommits-g$hash"
         } else {
             "v$major.$minor.$patch"
         }
-    }
 
     companion object {
         private val VERSION_REGEX = Regex("v?(\\d+)\\.(\\d+)\\.(\\d+)(-(\\d+)-g([a-zA-Z0-9]+))?")

@@ -53,9 +53,7 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
             finishGuidedStepSupportFragments()
         }
 
-        override fun onProvideTheme(): Int {
-            return R.style.Theme_StashAppAndroidTV_GuidedStep
-        }
+        override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep
 
         protected suspend fun testConnection(
             serverUrl: String,

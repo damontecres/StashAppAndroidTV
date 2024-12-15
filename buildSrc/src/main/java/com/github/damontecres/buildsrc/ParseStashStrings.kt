@@ -28,7 +28,8 @@ abstract class ParseStashStrings : DefaultTask() {
         // Parse the main file to get a list of all available keys
         val allowedKeys = convertFile(mainFile, mainDest)
 
-        sourceDirectory.listFiles { dir, name -> name != MAIN_FILE && name.endsWith(".json") }
+        sourceDirectory
+            .listFiles { dir, name -> name != MAIN_FILE && name.endsWith(".json") }
             ?.forEach { file ->
                 // Convert the language into Android's form
                 val lang =
@@ -116,7 +117,11 @@ abstract class ParseStashStrings : DefaultTask() {
         return Entry(key, escaped, matches.iterator().hasNext())
     }
 
-    data class Entry(val key: String, val value: String, val formatted: Boolean) {
+    data class Entry(
+        val key: String,
+        val value: String,
+        val formatted: Boolean,
+    ) {
         val xml get() = "<string name=\"$key\" formatted=\"${formatted}\">$value</string>"
     }
 
@@ -128,6 +133,4 @@ abstract class ParseStashStrings : DefaultTask() {
     }
 }
 
-private operator fun File.div(file: String): File {
-    return File(this, file)
-}
+private operator fun File.div(file: String): File = File(this, file)

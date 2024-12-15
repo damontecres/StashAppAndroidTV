@@ -41,46 +41,36 @@ data class VideoFilter(
         const val HUE_DEFAULT = 0
     }
 
-    fun isRotated(): Boolean {
-        return rotation != 0 && rotation % 360 != 0
-    }
+    fun isRotated(): Boolean = rotation != 0 && rotation % 360 != 0
 
-    fun hasRgb(): Boolean {
-        return red != COLOR_DEFAULT || green != COLOR_DEFAULT || blue != COLOR_DEFAULT
-    }
+    fun hasRgb(): Boolean = red != COLOR_DEFAULT || green != COLOR_DEFAULT || blue != COLOR_DEFAULT
 
-    fun hasBrightness(): Boolean {
-        return brightness != COLOR_DEFAULT
-    }
+    fun hasBrightness(): Boolean = brightness != COLOR_DEFAULT
 
-    fun hasContrast(): Boolean {
-        return contrast != COLOR_DEFAULT
-    }
+    fun hasContrast(): Boolean = contrast != COLOR_DEFAULT
 
-    fun hasHsl(): Boolean {
-        return hue != HUE_DEFAULT || saturation != COLOR_DEFAULT
-    }
+    fun hasHsl(): Boolean = hue != HUE_DEFAULT || saturation != COLOR_DEFAULT
 
-    fun hasBlur(): Boolean {
-        return blur > 0
-    }
+    fun hasBlur(): Boolean = blur > 0
 
     /**
      * Create the list of effects to apply
      */
     @OptIn(UnstableApi::class)
-    fun createEffectList(): List<GlEffect> {
-        return buildList {
+    fun createEffectList(): List<GlEffect> =
+        buildList {
             if (isRotated()) {
                 add(
-                    ScaleAndRotateTransformation.Builder()
+                    ScaleAndRotateTransformation
+                        .Builder()
                         .setRotationDegrees(rotation.toFloat())
                         .build(),
                 )
             }
             if (hasRgb()) {
                 add(
-                    RgbAdjustment.Builder()
+                    RgbAdjustment
+                        .Builder()
                         .setRedScale(red / COLOR_DEFAULT.toFloat())
                         .setGreenScale(green / COLOR_DEFAULT.toFloat())
                         .setBlueScale(blue / COLOR_DEFAULT.toFloat())
@@ -95,7 +85,8 @@ data class VideoFilter(
             }
             if (hasHsl()) {
                 add(
-                    HslAdjustment.Builder()
+                    HslAdjustment
+                        .Builder()
                         .adjustHue(hue.toFloat())
                         .adjustSaturation((saturation - 100).toFloat())
                         .build(),
@@ -105,5 +96,4 @@ data class VideoFilter(
                 add(GaussianBlur(blur / 10f))
             }
         }
-    }
 }

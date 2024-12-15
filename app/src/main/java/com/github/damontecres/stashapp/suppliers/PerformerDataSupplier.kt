@@ -11,8 +11,7 @@ import com.github.damontecres.stashapp.data.DataType
 class PerformerDataSupplier(
     private val findFilter: FindFilterType?,
     private val performerFilter: PerformerFilterType?,
-) :
-    StashPagingSource.DataSupplier<FindPerformersQuery.Data, PerformerData, CountPerformersQuery.Data> {
+) : StashPagingSource.DataSupplier<FindPerformersQuery.Data, PerformerData, CountPerformersQuery.Data> {
     constructor(performerFilter: PerformerFilterType? = null) : this(
         DataType.PERFORMER.asDefaultFindFilterType,
         performerFilter,
@@ -20,27 +19,19 @@ class PerformerDataSupplier(
 
     override val dataType: DataType get() = DataType.PERFORMER
 
-    override fun createQuery(filter: FindFilterType?): Query<FindPerformersQuery.Data> {
-        return FindPerformersQuery(
+    override fun createQuery(filter: FindFilterType?): Query<FindPerformersQuery.Data> =
+        FindPerformersQuery(
             filter = filter,
             performer_filter = performerFilter,
             ids = null,
         )
-    }
 
-    override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: DataType.PERFORMER.asDefaultFindFilterType
-    }
+    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.PERFORMER.asDefaultFindFilterType
 
-    override fun createCountQuery(filter: FindFilterType?): Query<CountPerformersQuery.Data> {
-        return CountPerformersQuery(filter, performerFilter, null)
-    }
+    override fun createCountQuery(filter: FindFilterType?): Query<CountPerformersQuery.Data> =
+        CountPerformersQuery(filter, performerFilter, null)
 
-    override fun parseCountQuery(data: CountPerformersQuery.Data): Int {
-        return data.findPerformers.count
-    }
+    override fun parseCountQuery(data: CountPerformersQuery.Data): Int = data.findPerformers.count
 
-    override fun parseQuery(data: FindPerformersQuery.Data): List<PerformerData> {
-        return data.findPerformers.performers.map { it.performerData }
-    }
+    override fun parseQuery(data: FindPerformersQuery.Data): List<PerformerData> = data.findPerformers.performers.map { it.performerData }
 }

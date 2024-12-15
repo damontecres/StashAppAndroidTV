@@ -16,7 +16,8 @@ class UpdateChangelogActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) {
             setContentView(R.layout.activity_main)
-            supportFragmentManager.beginTransaction()
+            supportFragmentManager
+                .beginTransaction()
                 .replace(R.id.main_browse_fragment, UpdateChangelogFragment())
                 .commitNow()
         }

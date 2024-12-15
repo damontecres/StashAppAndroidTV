@@ -28,11 +28,12 @@ class StudioDetailsFragment : DetailsFragment() {
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val studio = queryEngine.findStudios(studioIds = listOf(studioId)).firstOrNull()
                 if (studio == null) {
-                    Toast.makeText(
-                        requireContext(),
-                        "studio not found: $studioId",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "studio not found: $studioId",
+                            Toast.LENGTH_LONG,
+                        ).show()
                     return@launch
                 } else {
                     updateUi(studio)
@@ -60,18 +61,20 @@ class StudioDetailsFragment : DetailsFragment() {
                 val newStudio = mutationEngine.updateStudio(studio.id, !studio.favorite)
                 if (newStudio != null) {
                     if (newStudio.favorite) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Studio favorited",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Studio favorited",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                     updateUi(newStudio)
                 }
             }
         }
         if (studio.image_path != null) {
-            StashGlide.with(requireContext(), studio.image_path)
+            StashGlide
+                .with(requireContext(), studio.image_path)
                 .optionalFitCenter()
                 .error(StashPresenter.glideError(requireContext()))
                 .into(imageView)

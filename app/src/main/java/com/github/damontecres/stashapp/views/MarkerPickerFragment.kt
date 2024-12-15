@@ -49,7 +49,9 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
 
         val column = PickerColumn()
         column.labelFormat = "%1\$d seconds"
-        column.minValue = viewModel.seconds.value!!.toInt().coerceAtMost(maxShift) * -1
+        column.minValue = viewModel.seconds.value!!
+            .toInt()
+            .coerceAtMost(maxShift) * -1
         column.maxValue = maxShift
         column.currentValue = column.minValue
 

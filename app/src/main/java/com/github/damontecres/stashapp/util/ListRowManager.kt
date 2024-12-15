@@ -121,7 +121,11 @@ class ListRowManager<T : StashData>(
     /**
      * A [RowAdder]/[RowRemover] that adds or removes at the specified position in the specified adapter
      */
-    class SparseArrayRowModifier(private val adapter: SparseArrayObjectAdapter, private val position: Int) : RowAdder, RowRemover {
+    class SparseArrayRowModifier(
+        private val adapter: SparseArrayObjectAdapter,
+        private val position: Int,
+    ) : RowAdder,
+        RowRemover {
         override fun addRow(row: ListRow) {
             adapter.set(position, row)
         }

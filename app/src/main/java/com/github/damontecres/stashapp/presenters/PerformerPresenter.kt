@@ -12,8 +12,9 @@ import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
 
-open class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null) :
-    StashPresenter<PerformerData>(callback) {
+open class PerformerPresenter(
+    callback: LongClickCallBack<PerformerData>? = null,
+) : StashPresenter<PerformerData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: PerformerData,
@@ -58,8 +59,8 @@ open class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null
     open fun getContentText(
         cardView: StashImageCardView,
         item: PerformerData,
-    ): CharSequence? {
-        return if (item.birthdate != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    ): CharSequence? =
+        if (item.birthdate != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val yearsOldStr = cardView.context.getString(R.string.stashapp_years_old)
             "${item.ageInYears} $yearsOldStr"
         } else if (item.birthdate.isNotNullOrBlank()) {
@@ -67,7 +68,6 @@ open class PerformerPresenter(callback: LongClickCallBack<PerformerData>? = null
         } else {
             null
         }
-    }
 
     companion object {
         private const val TAG = "CardPresenter"

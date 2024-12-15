@@ -41,25 +41,23 @@ data class SortAndDirection(
             dataType: DataType,
             sort: String?,
             direction: String?,
-        ): SortAndDirection {
-            return create(
+        ): SortAndDirection =
+            create(
                 dataType,
                 sort,
                 SortDirectionEnum.entries.firstOrNull { it.rawValue == direction },
             )
-        }
 
         fun create(
             dataType: DataType,
             sort: String?,
             direction: SortDirectionEnum?,
-        ): SortAndDirection {
-            return if (sort != null) {
+        ): SortAndDirection =
+            if (sort != null) {
                 create(sort, direction)
             } else {
                 dataType.defaultSort
             }
-        }
 
         fun create(
             sort: String,

@@ -101,13 +101,14 @@ class ImageDetailsFragment : DetailsSupportFragment() {
      */
     private val itemActionsAdapter =
         SparseArrayObjectAdapter(
-            ClassPresenterSelector().addClassPresenter(
-                StashAction::class.java,
-                ActionPresenter(),
-            ).addClassPresenter(
-                OCounter::class.java,
-                OCounterPresenter(OCounterLongClickCallBack()),
-            ),
+            ClassPresenterSelector()
+                .addClassPresenter(
+                    StashAction::class.java,
+                    ActionPresenter(),
+                ).addClassPresenter(
+                    OCounter::class.java,
+                    OCounterPresenter(OCounterLongClickCallBack()),
+                ),
         )
 
     private val mPerformersAdapter =
@@ -403,7 +404,9 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         private const val SET_STUDIO_POS = ADD_GALLERY_POS + 1
     }
 
-    private class ActionViewHolder(button: Button) : ViewHolder(button) {
+    private class ActionViewHolder(
+        button: Button,
+    ) : ViewHolder(button) {
         var mAction: Long? = null
         var mButton: Button = button
     }
@@ -411,7 +414,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
     private inner class DetailsActionsPresenter : Presenter() {
         override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
             val view =
-                LayoutInflater.from(parent.context)
+                LayoutInflater
+                    .from(parent.context)
                     .inflate(R.layout.image_action_button, parent, false) as Button
             view.onFocusChangeListener = StashOnFocusChangeListener(parent.context)
             return ActionViewHolder(view)
@@ -449,13 +453,12 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         override fun getPopUpItems(
             context: Context,
             item: T,
-        ): List<StashPresenter.PopUpItem> {
-            return if (readOnlyModeDisabled()) {
+        ): List<StashPresenter.PopUpItem> =
+            if (readOnlyModeDisabled()) {
                 listOf(REMOVE_POPUP_ITEM)
             } else {
                 listOf()
             }
-        }
     }
 
     private inner class TagLongClickCallBack : DetailsLongClickCallBack<TagData> {
@@ -468,19 +471,21 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception setting tags", ex)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to remove tag: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Failed to remove tag: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     },
                 ) {
                     if (tagsRowManager.remove(item)) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Removed tag '${item.name}' from image",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Removed tag '${item.name}' from image",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }
@@ -499,19 +504,21 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception setting performers", ex)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to remove performer: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Failed to remove performer: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     },
                 ) {
                     if (performersRowManager.remove(item)) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Removed performer '${item.name}' from image",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Removed performer '${item.name}' from image",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }
@@ -528,19 +535,21 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception setting studio", ex)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to remove studio: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Failed to remove studio: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     },
                 ) {
                     if (studioAdapter.remove(item)) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Removed studio from image",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Removed studio from image",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }
@@ -559,19 +568,21 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception setting galleries", ex)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to remove gallery: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Failed to remove gallery: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     },
                 ) {
                     if (galleriesRowManager.remove(item)) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Removed gallery '${item.name}' from image",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Removed gallery '${item.name}' from image",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }
@@ -624,20 +635,22 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
                             Log.e(TAG, "Exception setting tags", ex)
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to add tag: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Failed to add tag: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         },
                     ) {
                         val newTag = tagsRowManager.add(tagId)
                         if (newTag != null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Added tag '${newTag.name}'",
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Added tag '${newTag.name}'",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                         }
                     }
                 } else if (id == StashAction.ADD_PERFORMER.id) {
@@ -646,20 +659,22 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
                             Log.e(TAG, "Exception setting performers", ex)
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to add performer: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Failed to add performer: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         },
                     ) {
                         val newPerformer = performersRowManager.add(performerId)
                         if (newPerformer != null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Added performer '${newPerformer.name}'",
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Added performer '${newPerformer.name}'",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                         }
                     }
                 } else if (id == StashAction.ADD_GALLERY.id) {
@@ -668,20 +683,22 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
                             Log.e(TAG, "Exception setting performers", ex)
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to add performer: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Failed to add performer: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         },
                     ) {
                         val newGallery = galleriesRowManager.add(galleryId)
                         if (newGallery != null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Added gallery '${newGallery.name}'",
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Added gallery '${newGallery.name}'",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                         }
                     }
                 } else if (id == StashAction.SET_STUDIO.id) {
@@ -690,20 +707,22 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
                             Log.e(TAG, "Exception setting studio", ex)
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to set studio: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Failed to set studio: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         },
                     ) {
                         val newStudio = studioAdapter.add(studioId)
                         if (newStudio != null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Set studio to '${newStudio.name}'",
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Set studio to '${newStudio.name}'",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                         }
                     }
                 }
@@ -715,13 +734,12 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         override fun getPopUpItems(
             context: Context,
             item: OCounter,
-        ): List<StashPresenter.PopUpItem> {
-            return listOf(
+        ): List<StashPresenter.PopUpItem> =
+            listOf(
                 StashPresenter.PopUpItem(0L, getString(R.string.increment)),
                 StashPresenter.PopUpItem(1L, getString(R.string.decrement)),
                 StashPresenter.PopUpItem(2L, getString(R.string.reset)),
             )
-        }
 
         override fun onItemLongClick(
             context: Context,
