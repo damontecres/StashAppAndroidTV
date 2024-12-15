@@ -182,7 +182,7 @@ class StashGridFragment() :
                     // If not, just jump without smooth scrolling
 
                     viewLifecycleOwner.lifecycleScope.launch {
-                        mAdapter.prepareForJump(position)
+                        mAdapter.prefetch(position).join()
                         mGridViewHolder.gridView.selectedPosition = position
                         gridOnItemSelected(position)
                     }
@@ -252,7 +252,7 @@ class StashGridFragment() :
             positionTextView.text = formatNumber(position + 1, false)
             // If on the second row & the back callback exists, enable it
             onBackPressedCallback?.isEnabled = mSelectedPosition >= mGridPresenter.numberOfColumns
-            mAdapter.updatePosition(position)
+            mAdapter.maybePrefetch(position)
         }
     }
 
