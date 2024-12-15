@@ -541,8 +541,6 @@ class StashGridFragment() :
                 QueryEngine(server),
                 pageSize,
                 dataSupplier = dataSupplier,
-                useRandom = false,
-                sortByOverride = null,
             )
         val pagingAdapter =
             PagingObjectAdapter(

@@ -88,8 +88,6 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : 
                 QueryEngine(server),
                 pageSize,
                 dataSupplier = dataSupplier,
-                useRandom = false,
-                sortByOverride = null,
             ) { page, index, item ->
                 // Pages are 1 indexed
                 val position = (page - 1) * pageSize + index

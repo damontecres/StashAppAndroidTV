@@ -137,7 +137,6 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 QueryEngine(server),
                 PAGE_SIZE,
                 dataSupplier,
-                useRandom = false,
             )
         addNextPageToPlaylist()
         maybeSetupVideoEffects(player!!)

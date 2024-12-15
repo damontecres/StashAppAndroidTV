@@ -15,35 +15,22 @@ import kotlinx.coroutines.withContext
 
 /**
  * A PagingSource for Stash
- *
- * @property context
- * @property pageSize how many items per page
- * @property dataSupplier how to query and parse data
  */
 class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
     private val queryEngine: QueryEngine,
     private val pageSize: Int,
     private val dataSupplier: DataSupplier<T, D, C>,
-    showToasts: Boolean = false,
-    private val useRandom: Boolean = true,
-    private val sortByOverride: String? = null,
     private val transform: DataTransform<D, S>,
 ) : PagingSource<Int, S>() {
     constructor(
         queryEngine: QueryEngine,
         pageSize: Int,
         dataSupplier: DataSupplier<T, D, C>,
-        showToasts: Boolean = false,
-        useRandom: Boolean = true,
-        sortByOverride: String? = null,
     ) : this(
         queryEngine,
         pageSize,
         dataSupplier,
-        showToasts,
-        useRandom,
-        sortByOverride,
-        DataTransform { page, index, item -> item as S },
+        DataTransform { _, _, item -> item as S },
     )
 
     private var listeners = mutableListOf<Listener<S>>()
@@ -69,9 +56,7 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
         fun parseQuery(data: T): List<D>
 
         /**
-         * Get the default filter
-         *
-         * By default, this sorts by name ascending
+         * Get the default find filter
          */
         fun getDefaultFilter(): FindFilterType
 
@@ -80,22 +65,13 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
         fun parseCountQuery(data: C): Int
     }
 
-    private fun createFindFilter(): FindFilterType {
-        var filter =
-            dataSupplier.getDefaultFilter()
-        if (!sortByOverride.isNullOrBlank()) {
-            filter = filter.copy(sort = Optional.present(sortByOverride))
-        }
-        return queryEngine.updateFilter(filter, useRandom)!!
-    }
-
     suspend fun fetchPage(
         page: Int,
         loadSize: Int,
     ): List<S> =
         withContext(Dispatchers.IO) {
             val filter =
-                createFindFilter().copy(
+                dataSupplier.getDefaultFilter().copy(
                     per_page = Optional.present(loadSize),
                     page = Optional.present(page),
                 )
@@ -185,7 +161,7 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
             if (count != null) {
                 return@withContext count!!
             }
-            val query = dataSupplier.createCountQuery(createFindFilter())
+            val query = dataSupplier.createCountQuery(dataSupplier.getDefaultFilter())
             val queryResult = queryEngine.executeQuery(query).data
             count =
                 if (queryResult != null) {

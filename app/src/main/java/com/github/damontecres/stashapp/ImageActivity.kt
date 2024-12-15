@@ -74,7 +74,6 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                         queryEngine,
                         pageSize,
                         dataSupplier,
-                        useRandom = false,
                     )
                 pager = StashSparseFilterFetcher(pagingSource, pageSize)
                 totalCount = pagingSource.getCount()
