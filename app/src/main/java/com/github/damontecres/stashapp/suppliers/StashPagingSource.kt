@@ -28,8 +28,6 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
         DataTransform { _, _, item -> item as S },
     )
 
-    private var listeners = mutableListOf<Listener<S>>()
-
     private var count: Int? = null
 
     interface DataSupplier<T : Query.Data, D : StashData, C : Query.Data> {
@@ -80,9 +78,6 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
                         .mapIndexed { index, item ->
                             transform.transform(page, index, item)
                         }
-                withContext(Dispatchers.Main) {
-                    listeners.forEach { it.onPageFetch(page, data) }
-                }
                 return@withContext data
             } else {
                 return@withContext listOf()
@@ -104,24 +99,6 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
                 }
             return@withContext count!!
         }
-
-    fun addListener(listener: Listener<S>) {
-        listeners.add(listener)
-    }
-
-    fun removeListener(listener: Listener<S>) {
-        listeners.remove(listener)
-    }
-
-    fun interface Listener<D : Any> {
-        /**
-         * Called on the Main thread whenever a page of data is fetched, but before it is loaded
-         */
-        fun onPageFetch(
-            pageNum: Int,
-            page: List<D>,
-        )
-    }
 
     companion object {
         private const val TAG = "StashPagingSource"
