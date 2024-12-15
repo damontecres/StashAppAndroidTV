@@ -31,6 +31,8 @@
     <string name="pref_key_ui_card_overlay_delay" translatable="false">ui.card.delayVideoDuration</string>
     <integer name="pref_key_ui_card_overlay_delay_default">1000</integer>
 
-    <string name="pref_key_read_only_mode">readOnlyMode</string>
-    <string name="pref_key_read_only_mode_pin">readOnlyMode.pinCode</string>
+    <string name="pref_key_read_only_mode" translatable="false">readOnlyMode</string>
+    <string name="pref_key_read_only_mode_pin" translatable="false">readOnlyMode.pinCode</string>
+
+    <string name="pref_key_remote_page_buttons" translatable="false">paging.remoteButtons</string>
 </resources>

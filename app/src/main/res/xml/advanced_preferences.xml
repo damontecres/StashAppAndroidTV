@@ -43,6 +43,12 @@
             app:summaryOn="Crop center"
             app:summaryOff="Don't crop, scale to fit"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_remote_page_buttons"
+            app:title="Page up/down with remote buttons"
+            app:summaryOn="Fast-forward/rewind/channel buttons will page"
+            app:summaryOff="Disabled"
+            app:defaultValue="true" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Playback">

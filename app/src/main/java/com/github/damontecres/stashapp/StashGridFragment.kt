@@ -92,6 +92,8 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
 
     var titleView: View? = null
 
+    private var remoteButtonPaging: Boolean = true
+
     // Arguments
     private lateinit var _filterArgs: FilterArgs
     private lateinit var _currentSortAndDirection: SortAndDirection
@@ -301,6 +303,10 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
         val gridPresenter = StashGridPresenter()
         gridPresenter.numberOfColumns = calculatedColumns
         setGridPresenter(gridPresenter)
+
+        remoteButtonPaging =
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_remote_page_buttons), true)
     }
 
     override fun onCreateView(
@@ -719,9 +725,35 @@ class StashGridFragment() : Fragment(), DefaultKeyEventCallback {
             val item = mAdapter.get(position)
             if (item != null) {
                 maybeStartPlayback(requireContext(), item)
+                return true
+            } else {
+                return false
             }
+        } else if (remoteButtonPaging && keyCode in
+            setOf(
+                KeyEvent.KEYCODE_PAGE_UP,
+                KeyEvent.KEYCODE_CHANNEL_UP,
+                KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+                KeyEvent.KEYCODE_MEDIA_REWIND,
+                KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD,
+            ) && requireActivity().currentFocus is StashImageCardView
+        ) {
+            jumpButtonLayout[1].callOnClick()
+            return true
+        } else if (remoteButtonPaging && keyCode in
+            setOf(
+                KeyEvent.KEYCODE_PAGE_DOWN,
+                KeyEvent.KEYCODE_CHANNEL_DOWN,
+                KeyEvent.KEYCODE_MEDIA_NEXT,
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+                KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD,
+            ) && requireActivity().currentFocus is StashImageCardView
+        ) {
+            jumpButtonLayout[2].callOnClick()
+            return true
+        } else {
+            return super.onKeyUp(keyCode, event)
         }
-        return super.onKeyUp(keyCode, event)
     }
 
     companion object {
