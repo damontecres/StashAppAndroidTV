@@ -11,7 +11,10 @@ import com.github.damontecres.stashapp.StashExoPlayer
 /**
  * Represents a server
  */
-data class StashServer(val url: String, val apiKey: String?) {
+data class StashServer(
+    val url: String,
+    val apiKey: String?,
+) {
     /**
      * The server side preferences
      *
@@ -43,17 +46,11 @@ data class StashServer(val url: String, val apiKey: String?) {
         private const val SERVER_PREF_PREFIX = "server_"
         private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
 
-        fun getCurrentServerVersion(): Version {
-            return ServerPreferences(requireCurrentServer()).serverVersion
-        }
+        fun getCurrentServerVersion(): Version = ServerPreferences(requireCurrentServer()).serverVersion
 
-        fun requireCurrentServer(): StashServer {
-            return getCurrentStashServer() ?: throw QueryEngine.StashNotConfiguredException()
-        }
+        fun requireCurrentServer(): StashServer = getCurrentStashServer() ?: throw QueryEngine.StashNotConfiguredException()
 
-        fun getCurrentStashServer(): StashServer? {
-            return getCurrentStashServer(StashApplication.getApplication())
-        }
+        fun getCurrentStashServer(): StashServer? = getCurrentStashServer(StashApplication.getApplication())
 
         fun getCurrentStashServer(context: Context): StashServer? {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
@@ -128,20 +125,24 @@ data class StashServer(val url: String, val apiKey: String?) {
         fun getAll(context: Context): List<StashServer> {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
             val keys =
-                manager.all.keys.filter { it.startsWith(SERVER_PREF_PREFIX) }
-                    .sorted().toList()
-            return keys.map {
-                val url = it.replace(SERVER_PREF_PREFIX, "")
-                val apiKeyKey =
-                    it.replace(
-                        SERVER_PREF_PREFIX,
-                        SERVER_APIKEY_PREF_PREFIX,
-                    )
-                val apiKey =
-                    manager.all[apiKeyKey]?.toString()
-                        ?.replace(SERVER_APIKEY_PREF_PREFIX, "")
-                StashServer(url, apiKey)
-            }.sortedBy { it.url }
+                manager.all.keys
+                    .filter { it.startsWith(SERVER_PREF_PREFIX) }
+                    .sorted()
+                    .toList()
+            return keys
+                .map {
+                    val url = it.replace(SERVER_PREF_PREFIX, "")
+                    val apiKeyKey =
+                        it.replace(
+                            SERVER_PREF_PREFIX,
+                            SERVER_APIKEY_PREF_PREFIX,
+                        )
+                    val apiKey =
+                        manager.all[apiKeyKey]
+                            ?.toString()
+                            ?.replace(SERVER_APIKEY_PREF_PREFIX, "")
+                    StashServer(url, apiKey)
+                }.sortedBy { it.url }
         }
     }
 }

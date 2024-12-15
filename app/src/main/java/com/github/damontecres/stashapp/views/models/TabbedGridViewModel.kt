@@ -10,7 +10,9 @@ import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter.PagerEntry
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 
-class TabbedGridViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+class TabbedGridViewModel(
+    private val savedStateHandle: SavedStateHandle,
+) : ViewModel() {
     val title: MutableLiveData<CharSequence?> = savedStateHandle.getLiveData("title", null)
 
     val tabs: MutableLiveData<List<PagerEntry>> = MutableLiveData()

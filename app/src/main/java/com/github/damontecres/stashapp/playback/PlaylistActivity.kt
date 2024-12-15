@@ -29,7 +29,8 @@ class PlaylistActivity : FragmentActivity() {
                     DataType.SCENE -> PlaylistScenesFragment()
                     else -> throw UnsupportedOperationException("${filter.dataType} not supported")
                 }
-            supportFragmentManager.beginTransaction()
+            supportFragmentManager
+                .beginTransaction()
                 .replace(android.R.id.content, fragment!!)
                 .commit()
         }
@@ -38,13 +39,12 @@ class PlaylistActivity : FragmentActivity() {
 
     @OptIn(UnstableApi::class)
     @SuppressLint("RestrictedApi")
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        return if (fragment != null) {
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean =
+        if (fragment != null) {
             fragment!!.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
         } else {
             super.dispatchKeyEvent(event)
         }
-    }
 
     companion object {
         const val TAG = "PlaylistActivity"

@@ -129,9 +129,7 @@ class PlaybackVideoFiltersFragment : Fragment(R.layout.apply_video_filters) {
         saveButton.requestFocus()
     }
 
-    private fun getOrCreateVideoFilter(): VideoFilter {
-        return viewModel.videoFilter.value ?: VideoFilter()
-    }
+    private fun getOrCreateVideoFilter(): VideoFilter = viewModel.videoFilter.value ?: VideoFilter()
 
     companion object {
         const val TAG = "PlaybackFilterFragment"

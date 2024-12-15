@@ -8,7 +8,9 @@ import android.text.style.MetricAffectingSpan
 /**
  * Apply a font to a span
  */
-class FontSpan(private val font: Typeface) : MetricAffectingSpan() {
+class FontSpan(
+    private val font: Typeface,
+) : MetricAffectingSpan() {
     override fun updateMeasureState(textPaint: TextPaint) = setFont(textPaint)
 
     override fun updateDrawState(textPaint: TextPaint) = setFont(textPaint)

@@ -21,8 +21,9 @@ import com.google.android.material.tabs.TabLayout
 /**
  * A [Fragment] that displays multiple tabs
  */
-abstract class TabbedFragment(val tabKey: String) :
-    Fragment(R.layout.tabbed_grid_view),
+abstract class TabbedFragment(
+    val tabKey: String,
+) : Fragment(R.layout.tabbed_grid_view),
     DefaultKeyEventCallback {
     protected val viewModel by activityViewModels<TabbedGridViewModel>()
 
@@ -110,9 +111,7 @@ abstract class TabbedFragment(val tabKey: String) :
         }
     }
 
-    open fun getTitleText(): String? {
-        return null
-    }
+    open fun getTitleText(): String? = null
 
     override fun onKeyUp(
         keyCode: Int,

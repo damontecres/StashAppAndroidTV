@@ -162,8 +162,7 @@ class SortButtonManager(
         items: List<String>,
         var currentIndex: Int,
         var currentDirection: SortDirectionEnum?,
-    ) :
-        ArrayAdapter<String>(context, R.layout.sort_popup_item, R.id.popup_item_text, items) {
+    ) : ArrayAdapter<String>(context, R.layout.sort_popup_item, R.id.popup_item_text, items) {
         override fun getView(
             position: Int,
             convertView: View?,

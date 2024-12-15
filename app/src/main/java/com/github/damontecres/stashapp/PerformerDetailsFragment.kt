@@ -35,11 +35,12 @@ class PerformerDetailsFragment : DetailsFragment() {
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val perf = queryEngine.getPerformer(performer.id)
                 if (perf == null) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Performer not found: ${performer.id}",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Performer not found: ${performer.id}",
+                            Toast.LENGTH_LONG,
+                        ).show()
                     return@launch
                 } else {
                     updateUi(perf)
@@ -56,11 +57,12 @@ class PerformerDetailsFragment : DetailsFragment() {
                 val newPerformer = mutationEngine.updatePerformer(perf.id, !perf.favorite)
                 if (newPerformer != null) {
                     if (newPerformer.favorite) {
-                        Toast.makeText(
-                            requireContext(),
-                            getString(R.string.stashapp_performer_favorite),
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                getString(R.string.stashapp_performer_favorite),
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                     updateUi(newPerformer)
                 }
@@ -79,7 +81,8 @@ class PerformerDetailsFragment : DetailsFragment() {
         }
 
         if (perf.image_path != null) {
-            StashGlide.with(requireContext(), perf.image_path)
+            StashGlide
+                .with(requireContext(), perf.image_path)
                 .optionalFitCenter()
                 .error(StashPresenter.glideError(requireContext()))
                 .into(imageView)

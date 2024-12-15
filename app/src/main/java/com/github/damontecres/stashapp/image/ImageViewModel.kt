@@ -9,7 +9,9 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 /**
  * The [ViewModel] for [ImageActivity] and its fragments
  */
-class ImageViewModel(private val state: SavedStateHandle) : ViewModel() {
+class ImageViewModel(
+    private val state: SavedStateHandle,
+) : ViewModel() {
     var imageController: ImageController? = null
     var videoController: VideoController? = null
 

@@ -7,7 +7,5 @@ import com.apollographql.apollo.compiler.ApolloCompilerPluginProvider
 
 @OptIn(ApolloExperimental::class)
 class StashApolloCompilerPluginProvider : ApolloCompilerPluginProvider {
-    override fun create(environment: ApolloCompilerPluginEnvironment): ApolloCompilerPlugin {
-        return StashApolloCompilerPlugin()
-    }
+    override fun create(environment: ApolloCompilerPluginEnvironment): ApolloCompilerPlugin = StashApolloCompilerPlugin()
 }

@@ -6,7 +6,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.github.damontecres.stashapp.data.Marker
 
-class MarkerDetailsViewModel(private val state: SavedStateHandle) : ViewModel() {
+class MarkerDetailsViewModel(
+    private val state: SavedStateHandle,
+) : ViewModel() {
     val seconds = MutableLiveData<Double>()
 
     val marker: LiveData<Marker> = state.getLiveData("marker")

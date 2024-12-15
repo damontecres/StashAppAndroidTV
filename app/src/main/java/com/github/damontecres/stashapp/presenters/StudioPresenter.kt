@@ -8,8 +8,9 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import java.util.EnumMap
 
-class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
-    StashPresenter<StudioData>(callback) {
+class StudioPresenter(
+    callback: LongClickCallBack<StudioData>? = null,
+) : StashPresenter<StudioData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: StudioData,

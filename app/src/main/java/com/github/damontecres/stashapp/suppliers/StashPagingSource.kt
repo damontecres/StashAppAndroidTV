@@ -28,8 +28,7 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
     private val useRandom: Boolean = true,
     private val sortByOverride: String? = null,
     private val transform: DataTransform<D, S>,
-) :
-    PagingSource<Int, S>() {
+) : PagingSource<Int, S>() {
     constructor(
         queryEngine: QueryEngine,
         pageSize: Int,
@@ -105,7 +104,8 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
             val queryResult = queryEngine.executeQuery(query)
             if (queryResult.data != null) {
                 val data =
-                    dataSupplier.parseQuery(queryResult.data!!)
+                    dataSupplier
+                        .parseQuery(queryResult.data!!)
                         .mapIndexed { index, item ->
                             transform.transform(page, index, item)
                         }

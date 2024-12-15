@@ -16,8 +16,7 @@ import kotlin.properties.Delegates
  * A [PlaylistFragment] that plays [MarkerData] videos
  */
 @OptIn(UnstableApi::class)
-class PlaylistMarkersFragment :
-    PlaylistFragment<FindMarkersQuery.Data, MarkerData, CountMarkersQuery.Data>() {
+class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, MarkerData, CountMarkersQuery.Data>() {
     private var duration by Delegates.notNull<Long>()
 
     override val optionsButtonOptions: OptionsButtonOptions
@@ -26,22 +25,20 @@ class PlaylistMarkersFragment :
     override val previewsEnabled: Boolean
         get() = false
 
-    override fun builderCallback(item: MarkerData): (MediaItem.Builder.() -> Unit) {
-        return {
+    override fun builderCallback(item: MarkerData): (MediaItem.Builder.() -> Unit) =
+        {
             // Clip the media item to a start position & duration
             val startPos = (item.seconds * 1000).toLong()
             val clipConfig =
-                MediaItem.ClippingConfiguration.Builder()
+                MediaItem.ClippingConfiguration
+                    .Builder()
                     .setStartPositionMs(startPos)
                     .setEndPositionMs(startPos + duration)
                     .build()
             setClippingConfiguration(clipConfig)
         }
-    }
 
-    override fun convertToScene(item: MarkerData): Scene {
-        return Scene.fromVideoSceneData(item.scene.videoSceneData)
-    }
+    override fun convertToScene(item: MarkerData): Scene = Scene.fromVideoSceneData(item.scene.videoSceneData)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -39,8 +39,7 @@ import kotlinx.coroutines.launch
 /**
  * Shows a playlist as a scrollable list of [PlaylistItem]s
  */
-class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
-    Fragment(R.layout.playlist_list) {
+class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : Fragment(R.layout.playlist_list) {
     private val viewModel: PlaylistViewModel by activityViewModels()
 
     private val mGridPresenter: VerticalGridPresenter = VerticalGridPresenter()
@@ -163,11 +162,12 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
                             "Requested ${item.index} with ${player.mediaItemCount} media items in player, " +
                                 "but addNextPageToPlaylist returned no additional items",
                         )
-                        Toast.makeText(
-                            requireContext(),
-                            "Unable to find item to play. This might be a bug!",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Unable to find item to play. This might be a bug!",
+                                Toast.LENGTH_LONG,
+                            ).show()
                         return@launch
                     }
                     Log.v(TAG, "after fetch: player.mediaItemCount=${player.mediaItemCount}")
@@ -182,10 +182,11 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
         super.onHiddenChanged(hidden)
         if (!hidden) {
             mGridViewHolder.gridView.scrollToPosition(
-                StashExoPlayer.getInstance(
-                    requireContext(),
-                    StashServer.requireCurrentServer(),
-                ).currentMediaItemIndex,
+                StashExoPlayer
+                    .getInstance(
+                        requireContext(),
+                        StashServer.requireCurrentServer(),
+                    ).currentMediaItemIndex,
             )
         }
     }

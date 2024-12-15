@@ -10,4 +10,9 @@ import java.util.Date
  * Must be identified by server, data type, & ID
  */
 @Entity(tableName = "recent_search_items", primaryKeys = ["serverUrl", "id", "dataType"])
-data class RecentSearchItem(val serverUrl: String, val id: String, val dataType: DataType, val timestamp: Date = Date())
+data class RecentSearchItem(
+    val serverUrl: String,
+    val id: String,
+    val dataType: DataType,
+    val timestamp: Date = Date(),
+)

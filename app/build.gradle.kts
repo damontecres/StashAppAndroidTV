@@ -20,7 +20,11 @@ fun getVersionCode(): Int {
         commandLine = listOf("git", "tag", "--list", "v*")
         standardOutput = stdout
     }
-    return stdout.toString().trim().lines().size
+    return stdout
+        .toString()
+        .trim()
+        .lines()
+        .size
 }
 
 fun getAppVersion(): String {
@@ -29,12 +33,16 @@ fun getAppVersion(): String {
         commandLine = listOf("git", "describe", "--tags", "--long", "--match=v*")
         standardOutput = stdout
     }
-    return stdout.toString().trim().removePrefix("v")
+    return stdout
+        .toString()
+        .trim()
+        .removePrefix("v")
+        .ifBlank { "0.0.0" }
 }
 
 android {
     namespace = "com.github.damontecres.stashapp"
-    compileSdk = 34
+    compileSdk = 35
 
     sourceSets {
         getByName("main") {
@@ -49,7 +57,7 @@ android {
     defaultConfig {
         applicationId = "com.github.damontecres.stashapp"
         minSdk = 23
-        targetSdk = 34
+        targetSdk = 35
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = getVersionCode()
         versionName = getAppVersion()

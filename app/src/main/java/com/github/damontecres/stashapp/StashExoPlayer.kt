@@ -28,10 +28,12 @@ class StashExoPlayer private constructor() {
             server: StashServer,
         ): ExoPlayer {
             val skipForward =
-                PreferenceManager.getDefaultSharedPreferences(context)
+                PreferenceManager
+                    .getDefaultSharedPreferences(context)
                     .getInt("skip_forward_time", 30)
             val skipBack =
-                PreferenceManager.getDefaultSharedPreferences(context)
+                PreferenceManager
+                    .getDefaultSharedPreferences(context)
                     .getInt("skip_back_time", 10)
             return getInstance(context, server, skipForward * 1000L, skipBack * 1000L)
         }
@@ -44,7 +46,8 @@ class StashExoPlayer private constructor() {
             skipBack: Long,
         ): ExoPlayer {
             if (instance == null) {
-                synchronized(this) { // synchronized to avoid concurrency problem
+                synchronized(this) {
+                    // synchronized to avoid concurrency problem
                     if (instance == null) {
                         instance = createInstance(context, server, skipForward, skipBack)
                     }
@@ -64,23 +67,25 @@ class StashExoPlayer private constructor() {
             skipBack: Long,
         ): ExoPlayer {
             val dataSourceFactory =
-                OkHttpDataSource.Factory(StashClient.getStreamHttpClient(server))
+                OkHttpDataSource
+                    .Factory(StashClient.getStreamHttpClient(server))
                     .setCacheControl(CacheControl.FORCE_NETWORK)
 
-            return ExoPlayer.Builder(context)
+            return ExoPlayer
+                .Builder(context)
                 .setMediaSourceFactory(
                     DefaultMediaSourceFactory(context).setDataSourceFactory(
                         dataSourceFactory,
                     ),
-                )
-                .setSeekBackIncrementMs(skipBack)
+                ).setSeekBackIncrementMs(skipBack)
                 .setSeekForwardIncrementMs(skipForward)
                 .build()
         }
 
         fun releasePlayer() {
             if (instance != null) {
-                synchronized(this) { // synchronized to avoid concurrency problem
+                synchronized(this) {
+                    // synchronized to avoid concurrency problem
                     if (instance != null) {
                         listeners.clear()
                         instance!!.release()

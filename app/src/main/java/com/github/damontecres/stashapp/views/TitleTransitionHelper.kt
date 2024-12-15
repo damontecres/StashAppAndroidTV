@@ -8,7 +8,10 @@ import android.transition.TransitionManager
 import android.view.View
 import android.view.ViewGroup
 
-class TitleTransitionHelper(val sceneRoot: ViewGroup, val titleView: View) {
+class TitleTransitionHelper(
+    val sceneRoot: ViewGroup,
+    val titleView: View,
+) {
     private val mTitleUpTransition: Transition
     private val mTitleDownTransition: Transition
     private val mSceneWithTitle: Scene
@@ -16,11 +19,13 @@ class TitleTransitionHelper(val sceneRoot: ViewGroup, val titleView: View) {
 
     init {
         mTitleUpTransition =
-            TransitionInflater.from(sceneRoot.context)
+            TransitionInflater
+                .from(sceneRoot.context)
                 .inflateTransition(androidx.leanback.R.transition.lb_title_out)
 
         mTitleDownTransition =
-            TransitionInflater.from(sceneRoot.context)
+            TransitionInflater
+                .from(sceneRoot.context)
                 .inflateTransition(androidx.leanback.R.transition.lb_title_in)
 
         val sceneTitle = Scene(sceneRoot)

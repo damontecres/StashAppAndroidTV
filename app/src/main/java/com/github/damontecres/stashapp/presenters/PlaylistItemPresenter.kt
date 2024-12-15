@@ -37,7 +37,8 @@ class PlaylistItemPresenter : Presenter() {
             vh.details2View.text = item.details2
 
             if (item.imageUrl.isNotNullOrBlank()) {
-                StashGlide.with(vh.view.context, item.imageUrl)
+                StashGlide
+                    .with(vh.view.context, item.imageUrl)
                     .into(vh.imageView)
             }
         }
@@ -51,7 +52,9 @@ class PlaylistItemPresenter : Presenter() {
         vh.imageView.setImageDrawable(null)
     }
 
-    private class PlaylistItemViewHolder(view: View) : ViewHolder(view) {
+    private class PlaylistItemViewHolder(
+        view: View,
+    ) : ViewHolder(view) {
         val indexView: TextView = view.findViewById(R.id.index)
         val titleView: TextView = view.findViewById(R.id.title)
         val subtitleView: TextView = view.findViewById(R.id.subtitle)

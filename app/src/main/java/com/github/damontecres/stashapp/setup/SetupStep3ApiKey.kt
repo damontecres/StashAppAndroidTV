@@ -14,18 +14,18 @@ import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
 
-class SetupStep3ApiKey(private val setupState: SetupState) :
-    SetupActivity.SimpleGuidedStepSupportFragment() {
+class SetupStep3ApiKey(
+    private val setupState: SetupState,
+) : SetupActivity.SimpleGuidedStepSupportFragment() {
     private var apiKey: String? = ""
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             "API Key",
             "Set the API key",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
@@ -35,7 +35,8 @@ class SetupStep3ApiKey(private val setupState: SetupState) :
             createApiKeyAction(),
         )
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(SetupActivity.ACTION_PASSWORD_VISIBLE)
                 .title("API Key visible")
                 .checked(false)
@@ -43,7 +44,8 @@ class SetupStep3ApiKey(private val setupState: SetupState) :
                 .build(),
         )
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_OK)
                 .title(R.string.stashapp_actions_submit)
                 .hasNext(true)
@@ -148,7 +150,8 @@ class SetupStep3ApiKey(private val setupState: SetupState) :
                 InputType.TYPE_TEXT_VARIATION_PASSWORD
             }
 
-        return GuidedAction.Builder(requireContext())
+        return GuidedAction
+            .Builder(requireContext())
             .id(SetupActivity.ACTION_SERVER_API_KEY)
             .title("Stash Server API Key")
             .description(
@@ -157,8 +160,7 @@ class SetupStep3ApiKey(private val setupState: SetupState) :
                 } else {
                     "API key not set"
                 },
-            )
-            .editDescription(apiKey)
+            ).editDescription(apiKey)
             .descriptionEditable(true)
             .descriptionEditInputType(
                 InputType.TYPE_CLASS_TEXT or

@@ -166,10 +166,9 @@ enum class DataType(
     val supportsPlaylists get() = this == SCENE || this == MARKER
 
     companion object {
-        fun fromFilterMode(mode: FilterMode): DataType? {
-            return DataType.entries.firstOrNull {
+        fun fromFilterMode(mode: FilterMode): DataType? =
+            DataType.entries.firstOrNull {
                 it.filterMode == mode
             }
-        }
     }
 }

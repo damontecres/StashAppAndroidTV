@@ -19,7 +19,10 @@ import com.github.damontecres.stashapp.util.StashServer
  * A [View] for rating which handles displaying either a star or decimal rating based on the server preferences
  */
 @SuppressLint("SetTextI18n")
-class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs) {
+class StashRatingBar(
+    context: Context,
+    attrs: AttributeSet?,
+) : FrameLayout(context, attrs) {
     constructor(context: Context) : this(context, null)
 
     private val starRatingBar: RatingBar
@@ -72,29 +75,30 @@ class StashRatingBar(context: Context, attrs: AttributeSet?) : FrameLayout(conte
 
         var background: Drawable?
 
-        context.theme.obtainStyledAttributes(
-            attrs,
-            R.styleable.StashRatingBar,
-            0,
-            0,
-        ).apply {
-            try {
-                rating100 = getInteger(R.styleable.StashRatingBar_defaultRating100, 0)
-                decimalRatingText.setTextSize(
-                    TypedValue.COMPLEX_UNIT_PX,
-                    getDimension(R.styleable.StashRatingBar_android_textSize, 16f),
-                )
-                decimalRatingText.setTextColor(
-                    getColor(
-                        R.styleable.StashRatingBar_android_textColor,
-                        resources.getColor(android.R.color.white, null),
-                    ),
-                )
-                background = getDrawable(R.styleable.StashRatingBar_android_background)
-            } finally {
-                recycle()
+        context.theme
+            .obtainStyledAttributes(
+                attrs,
+                R.styleable.StashRatingBar,
+                0,
+                0,
+            ).apply {
+                try {
+                    rating100 = getInteger(R.styleable.StashRatingBar_defaultRating100, 0)
+                    decimalRatingText.setTextSize(
+                        TypedValue.COMPLEX_UNIT_PX,
+                        getDimension(R.styleable.StashRatingBar_android_textSize, 16f),
+                    )
+                    decimalRatingText.setTextColor(
+                        getColor(
+                            R.styleable.StashRatingBar_android_textColor,
+                            resources.getColor(android.R.color.white, null),
+                        ),
+                    )
+                    background = getDrawable(R.styleable.StashRatingBar_android_background)
+                } finally {
+                    recycle()
+                }
             }
-        }
 
         starRatingBar.background = background
         decimalLayout.background = background

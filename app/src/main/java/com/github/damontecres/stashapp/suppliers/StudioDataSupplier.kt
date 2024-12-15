@@ -13,8 +13,7 @@ import com.github.damontecres.stashapp.data.DataType
 class StudioDataSupplier(
     private val findFilter: FindFilterType?,
     private val studioFilter: StudioFilterType?,
-) :
-    StashPagingSource.DataSupplier<FindStudiosQuery.Data, StudioData, CountStudiosQuery.Data> {
+) : StashPagingSource.DataSupplier<FindStudiosQuery.Data, StudioData, CountStudiosQuery.Data> {
     constructor(studioFilter: StudioFilterType? = null) : this(
         DataType.STUDIO.asDefaultFindFilterType,
         studioFilter,
@@ -22,56 +21,42 @@ class StudioDataSupplier(
 
     override val dataType: DataType get() = DataType.STUDIO
 
-    override fun createQuery(filter: FindFilterType?): Query<FindStudiosQuery.Data> {
-        return FindStudiosQuery(
+    override fun createQuery(filter: FindFilterType?): Query<FindStudiosQuery.Data> =
+        FindStudiosQuery(
             filter = filter,
             studio_filter = studioFilter,
             ids = null,
         )
-    }
 
-    override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: DataType.STUDIO.asDefaultFindFilterType
-    }
+    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.STUDIO.asDefaultFindFilterType
 
-    override fun createCountQuery(filter: FindFilterType?): Query<CountStudiosQuery.Data> {
-        return CountStudiosQuery(filter, studioFilter)
-    }
+    override fun createCountQuery(filter: FindFilterType?): Query<CountStudiosQuery.Data> = CountStudiosQuery(filter, studioFilter)
 
-    override fun parseCountQuery(data: CountStudiosQuery.Data): Int {
-        return data.findStudios.count
-    }
+    override fun parseCountQuery(data: CountStudiosQuery.Data): Int = data.findStudios.count
 
-    override fun parseQuery(data: FindStudiosQuery.Data): List<StudioData> {
-        return data.findStudios.studios.map { it.studioData }
-    }
+    override fun parseQuery(data: FindStudiosQuery.Data): List<StudioData> = data.findStudios.studios.map { it.studioData }
 }
 
 /**
  * A DataSupplier that returns the tags for a studio
  */
-class StudioTagDataSupplier(private val studioId: String) :
-    StashPagingSource.DataSupplier<FindStudioTagsQuery.Data, TagData, FindStudioTagsQuery.Data> {
+class StudioTagDataSupplier(
+    private val studioId: String,
+) : StashPagingSource.DataSupplier<FindStudioTagsQuery.Data, TagData, FindStudioTagsQuery.Data> {
     override val dataType: DataType
         get() = DataType.TAG
 
-    override fun createQuery(filter: FindFilterType?): Query<FindStudioTagsQuery.Data> {
-        return FindStudioTagsQuery(studioId)
-    }
+    override fun createQuery(filter: FindFilterType?): Query<FindStudioTagsQuery.Data> = FindStudioTagsQuery(studioId)
 
-    override fun getDefaultFilter(): FindFilterType {
-        return DataType.TAG.asDefaultFindFilterType
-    }
+    override fun getDefaultFilter(): FindFilterType = DataType.TAG.asDefaultFindFilterType
 
-    override fun createCountQuery(filter: FindFilterType?): Query<FindStudioTagsQuery.Data> {
-        return createQuery(filter)
-    }
+    override fun createCountQuery(filter: FindFilterType?): Query<FindStudioTagsQuery.Data> = createQuery(filter)
 
-    override fun parseCountQuery(data: FindStudioTagsQuery.Data): Int {
-        return data.findStudio?.tags?.size ?: 0
-    }
+    override fun parseCountQuery(data: FindStudioTagsQuery.Data): Int = data.findStudio?.tags?.size ?: 0
 
-    override fun parseQuery(data: FindStudioTagsQuery.Data): List<TagData> {
-        return data.findStudio?.tags?.map { it.tagData }.orEmpty()
-    }
+    override fun parseQuery(data: FindStudioTagsQuery.Data): List<TagData> =
+        data.findStudio
+            ?.tags
+            ?.map { it.tagData }
+            .orEmpty()
 }

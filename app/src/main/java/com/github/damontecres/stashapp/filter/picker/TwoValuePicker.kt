@@ -15,8 +15,7 @@ import com.github.damontecres.stashapp.views.getString
 
 abstract class TwoValuePicker<T, CriterionInput : Any>(
     val filterOption: FilterOption<StashDataFilter, CriterionInput>,
-) :
-    CreateFilterGuidedStepFragment() {
+) : CreateFilterGuidedStepFragment() {
     protected var value1: T? = null
     protected var value2: T? = null
     protected var modifier: CriterionModifier = CriterionModifier.EQUALS
@@ -35,20 +34,20 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
                 CriterionModifier.NOT_BETWEEN,
             )
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
             "",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     protected open fun createActionList(actions: MutableList<GuidedAction> = mutableListOf()): List<GuidedAction> {
         Log.v(TAG, "createActionList: actions.size=${actions.size}")
         val modifierOptions = this.modifierOptions.map(::modifierAction)
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
@@ -64,7 +63,8 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
                 getString(R.string.stashapp_criterion_value)
             }
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(VALUE_1)
                 .hasNext(true)
                 .title(valueText)
@@ -76,7 +76,8 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
 
         if (modifier.hasTwoValues()) {
             actions.add(
-                GuidedAction.Builder(requireContext())
+                GuidedAction
+                    .Builder(requireContext())
                     .id(VALUE_2)
                     .hasNext(true)
                     .title(getString(R.string.stashapp_criterion_less_than))
@@ -108,10 +109,12 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
                 return GuidedAction.ACTION_ID_CURRENT
             } else {
                 if (action.id == VALUE_1) {
-                    Toast.makeText(requireContext(), "Invalid value", Toast.LENGTH_SHORT)
+                    Toast
+                        .makeText(requireContext(), "Invalid value", Toast.LENGTH_SHORT)
                         .show()
                 } else {
-                    Toast.makeText(requireContext(), "Invalid value2", Toast.LENGTH_SHORT)
+                    Toast
+                        .makeText(requireContext(), "Invalid value2", Toast.LENGTH_SHORT)
                         .show()
                 }
             }
@@ -121,9 +124,7 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
         return GuidedAction.ACTION_ID_CURRENT
     }
 
-    protected open fun parseAction(action: GuidedAction?): T? {
-        return parseValue(action?.description?.toString()?.ifBlank { null })
-    }
+    protected open fun parseAction(action: GuidedAction?): T? = parseValue(action?.description?.toString()?.ifBlank { null })
 
     override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
         Log.v(TAG, "onSubGuidedActionClicked: ${action.id}")
@@ -179,9 +180,7 @@ abstract class TwoValuePicker<T, CriterionInput : Any>(
     /**
      * Format the description of a value. Defaults to using toString()
      */
-    protected open fun formatDescription(v: T?): String? {
-        return v?.toString()
-    }
+    protected open fun formatDescription(v: T?): String? = v?.toString()
 
     companion object {
         private const val TAG = "TwoValuePicker"

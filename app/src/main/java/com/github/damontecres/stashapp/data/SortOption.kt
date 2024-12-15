@@ -68,13 +68,12 @@ enum class SortOption(
     ;
 
     companion object {
-        fun getByKey(key: String): SortOption {
-            return if (key.startsWith("random")) {
+        fun getByKey(key: String): SortOption =
+            if (key.startsWith("random")) {
                 RANDOM
             } else {
                 entries.first { it.key == key }
             }
-        }
 
         /**
          * Whether jumping alphabetical is sorted
@@ -82,15 +81,15 @@ enum class SortOption(
         fun isJumpSupported(
             dataType: DataType,
             sortOption: SortOption,
-        ): Boolean {
-            return dataType in
+        ): Boolean =
+            dataType in
                 setOf(
                     DataType.TAG,
                     DataType.GROUP,
                     DataType.PERFORMER,
                     DataType.STUDIO,
-                ) && sortOption == NAME
-        }
+                ) &&
+                sortOption == NAME
 
         private val COMMON_SORT_OPTIONS =
             arrayOf(

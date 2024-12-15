@@ -6,7 +6,9 @@ import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.name
 import java.util.EnumMap
 
-class GalleryPresenter(callback: LongClickCallBack<GalleryData>? = null) : StashPresenter<GalleryData>(callback) {
+class GalleryPresenter(
+    callback: LongClickCallBack<GalleryData>? = null,
+) : StashPresenter<GalleryData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: GalleryData,

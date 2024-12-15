@@ -23,6 +23,11 @@ open class StashOnFocusChangeListener(
         hasFocus: Boolean,
     ) {
         val zoom = if (hasFocus) mFocusedZoom else 1f
-        v.animate().scaleX(zoom).scaleY(zoom).setDuration(mScaleDurationMs.toLong()).start()
+        v
+            .animate()
+            .scaleX(zoom)
+            .scaleY(zoom)
+            .setDuration(mScaleDurationMs.toLong())
+            .start()
     }
 }

@@ -41,8 +41,8 @@ class FrontPageParser(
         data object NotSupported : FrontPageRow()
     }
 
-    suspend fun parse(frontPageContent: List<Map<String, *>>): List<Deferred<FrontPageRow>> {
-        return frontPageContent.mapIndexed { index, frontPageFilter ->
+    suspend fun parse(frontPageContent: List<Map<String, *>>): List<Deferred<FrontPageRow>> =
+        frontPageContent.mapIndexed { index, frontPageFilter ->
             when (
                 val filterType =
                     frontPageFilter["__typename"] as String
@@ -72,7 +72,6 @@ class FrontPageParser(
                 }
             }
         }
-    }
 
     private suspend fun addCustomFilterRow(
         frontPageFilter: Map<String, *>,
@@ -161,7 +160,8 @@ class FrontPageParser(
                     val result = queryEngine.getSavedFilter(filterId.toString())
                     if (result != null) {
                         val filter =
-                            result.toFilterArgs(filterParser)
+                            result
+                                .toFilterArgs(filterParser)
                                 .withResolvedRandom()
                         val findFilter =
                             filter.findFilter?.toFindFilterType(page = 1, perPage = pageSize)

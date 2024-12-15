@@ -11,7 +11,10 @@ import com.github.damontecres.stashapp.R
 /**
  * An [AppCompatImageButton] that is the stash server icon and clicking returns to [MainActivity]
  */
-class HomeImageButton(context: Context, attrs: AttributeSet?) : AppCompatImageButton(context, attrs) {
+class HomeImageButton(
+    context: Context,
+    attrs: AttributeSet?,
+) : AppCompatImageButton(context, attrs) {
     init {
         setOnClickListener {
             val intent = Intent(context, MainActivity::class.java)

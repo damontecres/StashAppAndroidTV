@@ -55,12 +55,14 @@ class PlaybackSceneFragment() : PlaybackFragment() {
         val streamDecision =
             getStreamDecision(requireContext(), scene, forceTranscode, forceDirectPlay)
         updateDebugInfo(streamDecision, scene)
-        return StashExoPlayer.getInstance(requireContext(), StashServer.requireCurrentServer())
+        return StashExoPlayer
+            .getInstance(requireContext(), StashServer.requireCurrentServer())
             .also { exoPlayer ->
                 maybeAddActivityTracking(exoPlayer)
             }.also { exoPlayer ->
                 val finishedBehavior =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    PreferenceManager
+                        .getDefaultSharedPreferences(requireContext())
                         .getString(
                             "playbackFinishedBehavior",
                             getString(R.string.playback_finished_do_nothing),
@@ -140,11 +142,12 @@ class PlaybackSceneFragment() : PlaybackFragment() {
                     }
                 } else {
                     videoView.useController = false
-                    Toast.makeText(
-                        requireContext(),
-                        "This scene has no video files to play",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "This scene has no video files to play",
+                            Toast.LENGTH_LONG,
+                        ).show()
                 }
             }
     }

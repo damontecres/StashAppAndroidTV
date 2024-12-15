@@ -38,13 +38,15 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 /**
  * Parse a server-side filter from JSON (Map<String, *>)
  */
-class FilterParser(private val serverVersion: Version) {
+class FilterParser(
+    private val serverVersion: Version,
+) {
     companion object {
         const val TAG = "FilterParser"
     }
 
-    private fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? {
-        return if (it != null) {
+    private fun convertIntCriterionInput(it: Map<String, *>?): IntCriterionInput? =
+        if (it != null) {
             val values = it["value"] as Map<String, *>?
             IntCriterionInput(
                 value = values?.get("value")?.toString()?.toInt() ?: 0,
@@ -54,10 +56,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertFloatCriterionInput(it: Map<String, *>?): FloatCriterionInput? {
-        return if (it != null) {
+    private fun convertFloatCriterionInput(it: Map<String, *>?): FloatCriterionInput? =
+        if (it != null) {
             val values = it["value"] as Map<String, *>? // Might be an int or double
             FloatCriterionInput(
                 value = values?.get("value")?.toString()?.toDouble() ?: 0.0,
@@ -67,10 +68,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertStringCriterionInput(it: Map<String, *>?): StringCriterionInput? {
-        return if (it != null) {
+    private fun convertStringCriterionInput(it: Map<String, *>?): StringCriterionInput? =
+        if (it != null) {
             StringCriterionInput(
                 value = it["value"]?.toString() ?: "",
                 modifier = CriterionModifier.valueOf(it["modifier"]!!.toString()),
@@ -78,18 +78,16 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun mapToIds(list: Any?): List<String>? {
-        return if (list != null && list is List<*>) {
+    private fun mapToIds(list: Any?): List<String>? =
+        if (list != null && list is List<*>) {
             list.mapNotNull { (it as Map<*, *>)["id"]?.toString() }.toList()
         } else {
             null
         }
-    }
 
-    private fun convertHierarchicalMultiCriterionInput(it: Map<String, *>?): HierarchicalMultiCriterionInput? {
-        return if (it != null) {
+    private fun convertHierarchicalMultiCriterionInput(it: Map<String, *>?): HierarchicalMultiCriterionInput? =
+        if (it != null) {
             val values = it["value"]!! as Map<String, *>
             val items = mapToIds(values["items"])
             val excludes = mapToIds(values["excluded"])
@@ -102,10 +100,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertMultiCriterionInput(it: Map<String, *>?): MultiCriterionInput? {
-        return if (it != null) {
+    private fun convertMultiCriterionInput(it: Map<String, *>?): MultiCriterionInput? =
+        if (it != null) {
             if (it["value"] != null && it["value"] is Map<*, *>) {
                 val values = it["value"] as Map<String, *>
                 val items = mapToIds(values["items"])
@@ -132,10 +129,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertBoolean(it: Map<String, *>?): Boolean? {
-        return if (it != null) {
+    private fun convertBoolean(it: Map<String, *>?): Boolean? =
+        if (it != null) {
             val value = (it["value"] as String?).toBoolean()
             when (CriterionModifier.valueOf(it["modifier"] as String)) {
                 CriterionModifier.EQUALS -> value
@@ -145,10 +141,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertDateCriterionInput(it: Map<String, *>?): DateCriterionInput? {
-        return if (it != null) {
+    private fun convertDateCriterionInput(it: Map<String, *>?): DateCriterionInput? =
+        if (it != null) {
             val values = it["value"] as Map<String, String?>?
             DateCriterionInput(
                 value = values?.get("value") ?: "",
@@ -158,10 +153,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertTimestampCriterionInput(it: Map<String, *>?): TimestampCriterionInput? {
-        return if (it != null) {
+    private fun convertTimestampCriterionInput(it: Map<String, *>?): TimestampCriterionInput? =
+        if (it != null) {
             val values = it["value"] as Map<String, String?>?
             TimestampCriterionInput(
                 value = values?.get("value") ?: "",
@@ -171,15 +165,15 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertCircumcisionCriterionInput(it: Map<String, *>?): CircumcisionCriterionInput? {
-        return if (it != null) {
+    private fun convertCircumcisionCriterionInput(it: Map<String, *>?): CircumcisionCriterionInput? =
+        if (it != null) {
             val valueList = (it["value"] as List<String>?)
             CircumcisionCriterionInput(
                 value =
                     Optional.presentIfNotNull(
-                        valueList?.map { CircumisedEnum.valueOf(it.uppercase()) }
+                        valueList
+                            ?.map { CircumisedEnum.valueOf(it.uppercase()) }
                             ?.toList(),
                     ),
                 modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
@@ -187,10 +181,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertGenderCriterionInput(it: Map<String, *>?): GenderCriterionInput? {
-        return if (it != null) {
+    private fun convertGenderCriterionInput(it: Map<String, *>?): GenderCriterionInput? =
+        if (it != null) {
             val value = it["value"]
             var values =
                 if (value is List<*>) {
@@ -205,7 +198,8 @@ class FilterParser(private val serverVersion: Version) {
                 }
             values =
                 values.map {
-                    it.uppercase()
+                    it
+                        .uppercase()
                         .replace(" ", "_")
                         .replace("-", "_")
                 }
@@ -218,7 +212,6 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
     private fun convertString(it: Map<String, *>?): String? {
         return if (it != null) {
@@ -228,8 +221,8 @@ class FilterParser(private val serverVersion: Version) {
         }
     }
 
-    private fun convertStashIDCriterionInput(it: Map<String, *>?): StashIDCriterionInput? {
-        return if (it != null) {
+    private fun convertStashIDCriterionInput(it: Map<String, *>?): StashIDCriterionInput? =
+        if (it != null) {
             val values = it["value"] as Map<String, String?>?
             StashIDCriterionInput(
                 endpoint = Optional.presentIfNotNull(values?.get("endpoint")),
@@ -239,10 +232,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertPhashDistanceCriterionInput(it: Map<String, *>?): PhashDistanceCriterionInput? {
-        return if (it != null) {
+    private fun convertPhashDistanceCriterionInput(it: Map<String, *>?): PhashDistanceCriterionInput? =
+        if (it != null) {
             val values = it["value"] as Map<String, *>?
             PhashDistanceCriterionInput(
                 value = values?.get("value") as String? ?: "",
@@ -252,10 +244,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertPHashDuplicationCriterionInput(it: Map<String, *>?): PHashDuplicationCriterionInput? {
-        return if (it != null) {
+    private fun convertPHashDuplicationCriterionInput(it: Map<String, *>?): PHashDuplicationCriterionInput? =
+        if (it != null) {
             PHashDuplicationCriterionInput(
                 duplicated = Optional.presentIfNotNull(it["duplicated"]?.toString()?.toBoolean()),
                 distance = Optional.presentIfNotNull(it["distance"]?.toString()?.toInt()),
@@ -263,10 +254,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertToResolutionEnum(str: String): ResolutionEnum {
-        return when (str) {
+    private fun convertToResolutionEnum(str: String): ResolutionEnum =
+        when (str) {
             "114p" -> ResolutionEnum.VERY_LOW
             "240p" -> ResolutionEnum.LOW
             "360p" -> ResolutionEnum.R360P
@@ -283,10 +273,9 @@ class FilterParser(private val serverVersion: Version) {
             "Huge" -> ResolutionEnum.HUGE
             else -> ResolutionEnum.UNKNOWN__
         }
-    }
 
-    private fun convertResolutionCriterionInput(it: Map<String, *>?): ResolutionCriterionInput? {
-        return if (it != null) {
+    private fun convertResolutionCriterionInput(it: Map<String, *>?): ResolutionCriterionInput? =
+        if (it != null) {
             ResolutionCriterionInput(
                 value = convertToResolutionEnum(it["value"].toString()),
                 modifier = CriterionModifier.valueOf(it["modifier"]!! as String),
@@ -294,10 +283,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    private fun convertOrientationCriterionInput(it: Map<String, *>?): OrientationCriterionInput? {
-        return if (it != null) {
+    private fun convertOrientationCriterionInput(it: Map<String, *>?): OrientationCriterionInput? =
+        if (it != null) {
             val value = it["value"]
             if (value is List<*>) {
                 OrientationCriterionInput(
@@ -319,7 +307,6 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
     fun convertFilterMap(
         dataType: DataType,
@@ -336,8 +323,8 @@ class FilterParser(private val serverVersion: Version) {
         )
     }
 
-    fun convertFindFilter(f: Any?): StashFindFilter? {
-        return if (f is StashFindFilter) {
+    fun convertFindFilter(f: Any?): StashFindFilter? =
+        if (f is StashFindFilter) {
             f
         } else if (f == null) {
             null
@@ -355,13 +342,12 @@ class FilterParser(private val serverVersion: Version) {
                 }
             StashFindFilter(filter.getCaseInsensitive("q"), sortAndDirection)
         }
-    }
 
     fun convertFilter(
         dataType: DataType,
         f: Any?,
-    ): StashDataFilter? {
-        return when (dataType) {
+    ): StashDataFilter? =
+        when (dataType) {
             DataType.TAG -> convertTagFilterType(f)
             DataType.STUDIO -> convertStudioFilterType(f)
             DataType.GROUP -> convertGroupFilterType(f)
@@ -371,10 +357,9 @@ class FilterParser(private val serverVersion: Version) {
             DataType.MARKER -> convertSceneMarkerFilterType(f)
             DataType.PERFORMER -> convertPerformerFilterType(f)
         }
-    }
 
-    fun convertPerformerFilterType(f: Any?): PerformerFilterType? {
-        return if (f != null && f is PerformerFilterType) {
+    fun convertPerformerFilterType(f: Any?): PerformerFilterType? =
+        if (f != null && f is PerformerFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
@@ -430,10 +415,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    fun convertSceneFilterType(f: Any?): SceneFilterType? {
-        return if (f != null && f is SceneFilterType) {
+    fun convertSceneFilterType(f: Any?): SceneFilterType? =
+        if (f != null && f is SceneFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
@@ -504,10 +488,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    fun convertStudioFilterType(f: Any?): StudioFilterType? {
-        return if (f != null && f is StudioFilterType) {
+    fun convertStudioFilterType(f: Any?): StudioFilterType? =
+        if (f != null && f is StudioFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
@@ -540,10 +523,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    fun convertTagFilterType(f: Any?): TagFilterType? {
-        return if (f != null && f is TagFilterType) {
+    fun convertTagFilterType(f: Any?): TagFilterType? =
+        if (f != null && f is TagFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
@@ -578,10 +560,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    fun convertGroupFilterType(f: Any?): GroupFilterType? {
-        return if (f != null && f is GroupFilterType) {
+    fun convertGroupFilterType(f: Any?): GroupFilterType? =
+        if (f != null && f is GroupFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
@@ -618,10 +599,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    fun convertSceneMarkerFilterType(f: Any?): SceneMarkerFilterType? {
-        return if (f != null && f is SceneMarkerFilterType) {
+    fun convertSceneMarkerFilterType(f: Any?): SceneMarkerFilterType? =
+        if (f != null && f is SceneMarkerFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
@@ -640,10 +620,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    fun convertImageFilterType(f: Any?): ImageFilterType? {
-        return if (f != null && f is ImageFilterType) {
+    fun convertImageFilterType(f: Any?): ImageFilterType? =
+        if (f != null && f is ImageFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
@@ -691,10 +670,9 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 
-    fun convertGalleryFilterType(f: Any?): GalleryFilterType? {
-        return if (f != null && f is GalleryFilterType) {
+    fun convertGalleryFilterType(f: Any?): GalleryFilterType? =
+        if (f != null && f is GalleryFilterType) {
             f
         } else if (f != null) {
             val filter = f as Map<String, Map<String, *>>
@@ -749,5 +727,4 @@ class FilterParser(private val serverVersion: Version) {
         } else {
             null
         }
-    }
 }

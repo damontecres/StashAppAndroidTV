@@ -148,34 +148,36 @@ abstract class PlaybackFragment(
         player = null
     }
 
-    private fun createPlayer(): ExoPlayer {
-        return initializePlayer().also { exoPlayer ->
-            exoPlayer.addListener(
-                object : Player.Listener {
-                    override fun onPlayerError(error: PlaybackException) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Playback error: ${error.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    }
-
-                    override fun onPlayerErrorChanged(error: PlaybackException?) {
-                        if (error != null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Playback error: ${error.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+    private fun createPlayer(): ExoPlayer =
+        initializePlayer()
+            .also { exoPlayer ->
+                exoPlayer.addListener(
+                    object : Player.Listener {
+                        override fun onPlayerError(error: PlaybackException) {
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Playback error: ${error.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         }
-                    }
-                },
-            )
-        }.also { exoPlayer ->
-            videoView.player = exoPlayer
-            exoPlayer.addListener(AmbientPlaybackListener())
-        }
-    }
+
+                        override fun onPlayerErrorChanged(error: PlaybackException?) {
+                            if (error != null) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Playback error: ${error.message}",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                            }
+                        }
+                    },
+                )
+            }.also { exoPlayer ->
+                videoView.player = exoPlayer
+                exoPlayer.addListener(AmbientPlaybackListener())
+            }
 
     protected fun updateDebugInfo(
         streamDecision: StreamDecision,
@@ -209,7 +211,8 @@ abstract class PlaybackFragment(
     protected open fun updateUI(scene: Scene) {
         val mutationEngine = MutationEngine(server)
         val showTitle =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
                 .getBoolean("exoShowTitle", true)
         if (showTitle) {
             titleText.text = scene.title
@@ -309,7 +312,8 @@ abstract class PlaybackFragment(
      * Should be called before [Player.prepare]
      */
     protected fun maybeSetupVideoEffects(exoPlayer: ExoPlayer) {
-        if (PreferenceManager.getDefaultSharedPreferences(requireContext())
+        if (PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_video_filters), false)
         ) {
             Log.v(PlaybackSceneFragment.TAG, "Initializing video effects")
@@ -406,7 +410,12 @@ abstract class PlaybackFragment(
         val onFocusChangeListener =
             View.OnFocusChangeListener { v, hasFocus ->
                 val zoom = if (hasFocus) mFocusedZoom else 1f
-                v.animate().scaleX(zoom).scaleY(zoom).setDuration(150.toLong()).start()
+                v
+                    .animate()
+                    .scaleX(zoom)
+                    .scaleY(zoom)
+                    .setDuration(150.toLong())
+                    .start()
             }
 
         val buttons =
@@ -553,7 +562,12 @@ abstract class PlaybackFragment(
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 withContext(Dispatchers.IO) {
                     val client = StashClient.getHttpClient(server)
-                    val request = Request.Builder().url(scene.spriteUrl).get().build()
+                    val request =
+                        Request
+                            .Builder()
+                            .url(scene.spriteUrl)
+                            .get()
+                            .build()
                     client.newCall(request).execute().use {
                         Log.d(
                             TAG,
@@ -613,9 +627,7 @@ abstract class PlaybackFragment(
         previewTimeBar.requestFocus()
     }
 
-    fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        return videoView.dispatchKeyEvent(event)
-    }
+    fun dispatchKeyEvent(event: KeyEvent): Boolean = videoView.dispatchKeyEvent(event)
 
     inner class AmbientPlaybackListener : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -630,7 +642,8 @@ abstract class PlaybackFragment(
 
     protected fun maybeAddActivityTracking(exoPlayer: ExoPlayer) {
         val appTracking =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_playback_track_activity), true)
         val server = StashServer.requireCurrentServer()
         if (appTracking && server.serverPreferences.trackActivity && currentScene != null) {
@@ -646,7 +659,10 @@ abstract class PlaybackFragment(
         }
     }
 
-    data class OptionsButtonOptions(val dataType: DataType, val isPlayList: Boolean)
+    data class OptionsButtonOptions(
+        val dataType: DataType,
+        val isPlayList: Boolean,
+    )
 
     private inner class ResultCallback : ActivityResultCallback<ActivityResult> {
         override fun onActivityResult(result: ActivityResult) {
@@ -659,11 +675,12 @@ abstract class PlaybackFragment(
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
                             Log.e(PlaybackSceneFragment.TAG, "Exception creating marker", ex)
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to create marker: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Failed to create marker: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         },
                     ) {
                         val tagId =
@@ -679,11 +696,12 @@ abstract class PlaybackFragment(
                                 tagId,
                             )!!
                         val dur = durationToString(newMarker.seconds)
-                        Toast.makeText(
-                            requireContext(),
-                            "Created a new marker at $dur with primary tag '${newMarker.primary_tag.tagData.name}'",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Created a new marker at $dur with primary tag '${newMarker.primary_tag.tagData.name}'",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }

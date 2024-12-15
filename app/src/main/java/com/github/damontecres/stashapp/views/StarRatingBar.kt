@@ -8,7 +8,10 @@ import androidx.appcompat.widget.AppCompatRatingBar
 /**
  * Overrides [AppCompatRatingBar] to allow for wrapping around left or right
  */
-class StarRatingBar(context: Context, attrs: AttributeSet?) : AppCompatRatingBar(context, attrs) {
+class StarRatingBar(
+    context: Context,
+    attrs: AttributeSet?,
+) : AppCompatRatingBar(context, attrs) {
     override fun onKeyDown(
         keyCode: Int,
         event: KeyEvent?,

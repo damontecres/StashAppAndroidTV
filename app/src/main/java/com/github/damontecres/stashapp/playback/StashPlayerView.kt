@@ -15,8 +15,11 @@ import androidx.preference.PreferenceManager
 /**
  * A [PlayerView] which overrides button presses
  */
-class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
-    PlayerView(context, attrs, defStyleAttr) {
+class StashPlayerView(
+    context: Context,
+    attrs: AttributeSet?,
+    defStyleAttr: Int,
+) : PlayerView(context, attrs, defStyleAttr) {
     constructor(context: Context, attrs: AttributeSet? = null) : this(context, attrs, 0)
 
     constructor(context: Context) : this(context, null)
@@ -66,7 +69,8 @@ class StashPlayerView(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
             } else {
                 return true
             }
-        } else if (player != null && !fragment.isControllerVisible &&
+        } else if (player != null &&
+            !fragment.isControllerVisible &&
             (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_DPAD_LEFT)
         ) {
             if (event.action == KeyEvent.ACTION_DOWN) {

@@ -14,20 +14,18 @@ abstract class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
         add(requireActivity().supportFragmentManager, step, android.R.id.content)
     }
 
-    override fun onProvideTheme(): Int {
-        return com.github.damontecres.stashapp.R.style.Theme_StashAppAndroidTV_GuidedStep
-    }
+    override fun onProvideTheme(): Int = com.github.damontecres.stashapp.R.style.Theme_StashAppAndroidTV_GuidedStep
 
     /**
      * Create a [GuidedAction] for a [CriterionModifier]
      */
-    protected fun modifierAction(modifier: CriterionModifier): GuidedAction {
-        return GuidedAction.Builder(requireContext())
+    protected fun modifierAction(modifier: CriterionModifier): GuidedAction =
+        GuidedAction
+            .Builder(requireContext())
             .id(MODIFIER_OFFSET + modifier.ordinal)
             .hasNext(false)
             .title(modifier.getString(requireContext()))
             .build()
-    }
 
     /**
      * Enable or disable the "finish" [GuidedAction].
@@ -65,7 +63,8 @@ abstract class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
         val currVal = viewModel.getValue(filterOption)
 
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_FINISH)
                 .hasNext(true)
                 .title(getString(com.github.damontecres.stashapp.R.string.stashapp_actions_save))
@@ -75,7 +74,8 @@ abstract class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
 
         if (currVal != null) {
             actions.add(
-                GuidedAction.Builder(requireContext())
+                GuidedAction
+                    .Builder(requireContext())
                     .id(ACTION_ID_REMOVE)
                     .hasNext(true)
                     .title(getString(com.github.damontecres.stashapp.R.string.stashapp_actions_remove))
@@ -84,7 +84,8 @@ abstract class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
         }
 
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_CANCEL)
                 .hasNext(true)
                 .title(getString(com.github.damontecres.stashapp.R.string.stashapp_actions_cancel))

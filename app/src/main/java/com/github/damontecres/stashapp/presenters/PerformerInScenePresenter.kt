@@ -19,14 +19,15 @@ class PerformerInScenePresenter(
     override fun getContentText(
         cardView: StashImageCardView,
         item: PerformerData,
-    ): CharSequence? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    ): CharSequence? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val ageInScene =
                 if (item.birthdate != null && date != null) {
-                    Period.between(
-                        LocalDate.parse(item.birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
-                        LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE),
-                    ).years
+                    Period
+                        .between(
+                            LocalDate.parse(item.birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
+                            LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE),
+                        ).years
                 } else {
                     null
                 }
@@ -45,5 +46,4 @@ class PerformerInScenePresenter(
         } else {
             super.getContentText(cardView, item)
         }
-    }
 }

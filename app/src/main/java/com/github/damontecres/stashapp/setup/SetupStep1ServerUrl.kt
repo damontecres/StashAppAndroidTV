@@ -15,21 +15,21 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
 
 class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(R.string.stash_server_url),
             getString(R.string.stash_server_url_desc),
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(SetupActivity.ACTION_SERVER_URL)
                 .title("Server URL")
                 .descriptionInputType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
@@ -38,7 +38,8 @@ class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
                 .build(),
         )
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_OK)
                 .title(R.string.stashapp_actions_submit)
                 .hasNext(true)

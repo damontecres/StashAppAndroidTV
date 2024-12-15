@@ -86,9 +86,7 @@ class QueryEngine(
             }
         }
 
-    suspend fun <D : Query.Data> executeQuery(query: Query<D>): ApolloResponse<D> {
-        return executeQuery(client.query(query))
-    }
+    suspend fun <D : Query.Data> executeQuery(query: Query<D>): ApolloResponse<D> = executeQuery(client.query(query))
 
     suspend fun findScenes(
         findFilter: FindFilterType? = null,
@@ -137,9 +135,7 @@ class QueryEngine(
         return performers.orEmpty()
     }
 
-    suspend fun getPerformer(performerId: String): PerformerData? {
-        return findPerformers(performerIds = listOf(performerId)).firstOrNull()
-    }
+    suspend fun getPerformer(performerId: String): PerformerData? = findPerformers(performerIds = listOf(performerId)).firstOrNull()
 
     suspend fun findStudios(
         findFilter: FindFilterType? = null,
@@ -176,7 +172,11 @@ class QueryEngine(
                 ),
             )
         val tags =
-            executeQuery(query).data?.findTags?.tags?.map { it.tagData }
+            executeQuery(query)
+                .data
+                ?.findTags
+                ?.tags
+                ?.map { it.tagData }
         return tags.orEmpty()
     }
 
@@ -193,7 +193,11 @@ class QueryEngine(
                 ),
             )
         val tags =
-            executeQuery(query).data?.findTags?.tags?.map { it.tagData }
+            executeQuery(query)
+                .data
+                ?.findTags
+                ?.tags
+                ?.map { it.tagData }
         return tags.orEmpty()
     }
 
@@ -211,7 +215,12 @@ class QueryEngine(
                     ids = groupIds,
                 ),
             )
-        val tags = executeQuery(query).data?.findGroups?.groups?.map { it.groupData }
+        val tags =
+            executeQuery(query)
+                .data
+                ?.findGroups
+                ?.groups
+                ?.map { it.groupData }
         return tags.orEmpty()
     }
 
@@ -232,7 +241,11 @@ class QueryEngine(
                     scene_marker_filter = markerFilter,
                 ),
             )
-        return executeQuery(query).data?.findSceneMarkers?.scene_markers?.map { it.markerData }
+        return executeQuery(query)
+            .data
+            ?.findSceneMarkers
+            ?.scene_markers
+            ?.map { it.markerData }
             .orEmpty()
     }
 
@@ -250,7 +263,12 @@ class QueryEngine(
                     ids = ids,
                 ),
             )
-        return executeQuery(query).data?.findImages?.images?.map { it.imageData }.orEmpty()
+        return executeQuery(query)
+            .data
+            ?.findImages
+            ?.images
+            ?.map { it.imageData }
+            .orEmpty()
     }
 
     suspend fun getImage(imageId: String): ImageData? {
@@ -277,18 +295,26 @@ class QueryEngine(
                     ids = galleryIds,
                 ),
             )
-        return executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }.orEmpty()
+        return executeQuery(query)
+            .data
+            ?.findGalleries
+            ?.galleries
+            ?.map { it.galleryData }
+            .orEmpty()
     }
 
-    suspend fun getGalleries(galleryIds: List<String>): List<GalleryData> {
-        return if (galleryIds.isEmpty()) {
+    suspend fun getGalleries(galleryIds: List<String>): List<GalleryData> =
+        if (galleryIds.isEmpty()) {
             listOf()
         } else {
             val query = client.query(FindGalleriesQuery(null, null, galleryIds))
-            executeQuery(query).data?.findGalleries?.galleries?.map { it.galleryData }
+            executeQuery(query)
+                .data
+                ?.findGalleries
+                ?.galleries
+                ?.map { it.galleryData }
                 .orEmpty()
         }
-    }
 
     /**
      * Search for a type of data with the given query. Users will need to cast the returned List.
@@ -297,8 +323,8 @@ class QueryEngine(
         type: DataType,
         findFilter: FindFilterType,
         useRandom: Boolean = true,
-    ): List<*> {
-        return when (type) {
+    ): List<*> =
+        when (type) {
             DataType.SCENE -> findScenes(findFilter, useRandom = useRandom)
             DataType.PERFORMER -> findPerformers(findFilter, useRandom = useRandom)
             DataType.TAG -> findTags(findFilter, useRandom = useRandom)
@@ -308,7 +334,6 @@ class QueryEngine(
             DataType.IMAGE -> findImages(findFilter, useRandom = useRandom)
             DataType.GALLERY -> findGalleries(findFilter, useRandom = useRandom)
         }
-    }
 
     /**
      * Search for a type of data with the given query. Users will need to cast the returned List.
@@ -339,7 +364,11 @@ class QueryEngine(
 
     suspend fun getSavedFilters(dataType: DataType): List<SavedFilterData> {
         val query = FindSavedFiltersQuery(dataType.filterMode)
-        return executeQuery(query).data?.findSavedFilters?.map { it.savedFilterData }.orEmpty()
+        return executeQuery(query)
+            .data
+            ?.findSavedFilters
+            ?.map { it.savedFilterData }
+            .orEmpty()
     }
 
     suspend fun getDefaultFilter(type: DataType): SavedFilterData? {
@@ -389,8 +418,8 @@ class QueryEngine(
     fun updateFilter(
         filter: FindFilterType?,
         useRandom: Boolean = true,
-    ): FindFilterType? {
-        return if (filter != null) {
+    ): FindFilterType? =
+        if (filter != null) {
             if (useRandom && filter.sort.getOrNull()?.startsWith("random") == true) {
                 Log.v(TAG, "Updating random filter")
                 filter.copy(sort = Optional.present("random_" + getRandomSort()))
@@ -400,7 +429,6 @@ class QueryEngine(
         } else {
             null
         }
-    }
 
     companion object {
         private const val TAG = "QueryEngine"

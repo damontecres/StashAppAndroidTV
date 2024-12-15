@@ -17,9 +17,7 @@ import java.io.InputStream
 
 @GlideModule
 class StashGlideModule : AppGlideModule() {
-    override fun isManifestParsingEnabled(): Boolean {
-        return false
-    }
+    override fun isManifestParsingEnabled(): Boolean = false
 
     override fun registerComponents(
         context: Context,
