@@ -8,7 +8,7 @@ defaults:
     shell: bash
 
 env:
-  BUILD_TOOLS_VERSION: 34.0.0
+  BUILD_TOOLS_VERSION: 35.0.0
   BUILD_DIRS_ARTIFACT: build-dirs
 
 jobs:

@@ -11,7 +11,7 @@ defaults:
 
 env:
   APK_SHORT_NAME: StashAppAndroidTV.apk
-  BUILD_TOOLS_VERSION: 34.0.0
+  BUILD_TOOLS_VERSION: 35.0.0
 
 jobs:
   publish:

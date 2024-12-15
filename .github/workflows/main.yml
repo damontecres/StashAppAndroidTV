@@ -18,7 +18,7 @@ concurrency:
 env:
   APK_SHORT_NAME: StashAppAndroidTV-debug.apk
   BRANCH_NAME: ${{ github.ref_name }}
-  BUILD_TOOLS_VERSION: 34.0.0
+  BUILD_TOOLS_VERSION: 35.0.0
 
 jobs:
   build:
