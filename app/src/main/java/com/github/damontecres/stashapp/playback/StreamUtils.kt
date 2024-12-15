@@ -30,14 +30,6 @@ data class StreamDecision(
 
 fun buildMediaItem(
     context: Context,
-    scene: Scene,
-): MediaItem {
-    val decision = getStreamDecision(context, scene)
-    return buildMediaItem(context, decision, scene)
-}
-
-fun buildMediaItem(
-    context: Context,
     streamDecision: StreamDecision,
     scene: Scene,
     builderCallback: (MediaItem.Builder.() -> Unit)? = null,
