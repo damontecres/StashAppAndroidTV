@@ -67,7 +67,7 @@ class StashSearchFragment :
         return true
     }
 
-    private suspend fun search(query: String) {
+    private fun search(query: String) {
         if (!TextUtils.isEmpty(query)) {
             rowsAdapter.clear()
 

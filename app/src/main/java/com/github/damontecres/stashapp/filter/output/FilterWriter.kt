@@ -18,8 +18,6 @@ import com.github.damontecres.stashapp.api.type.StashIDCriterionInput
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TimestampCriterionInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashData
-import com.github.damontecres.stashapp.filter.extractTitle
 import kotlin.reflect.full.declaredMemberProperties
 
 /**
@@ -83,11 +81,6 @@ class FilterWriter(
             }
         return objectFilter
     }
-
-    private fun associateIds(items: List<StashData>): Map<String, String> =
-        items.associate {
-            it.id to (extractTitle(it) ?: it.id)
-        }
 
     companion object {
         /**

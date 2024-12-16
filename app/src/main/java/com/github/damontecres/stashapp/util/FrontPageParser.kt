@@ -45,24 +45,10 @@ class FrontPageParser(
         frontPageContent.mapIndexed { index, frontPageFilter ->
             when (
                 val filterType =
-                    frontPageFilter["__typename"] as String
+                    frontPageFilter["__typename"]?.toString()?.lowercase()
             ) {
-                "CustomFilter" -> {
-                    addCustomFilterRow(
-                        frontPageFilter,
-                        queryEngine,
-                    )
-                }
-
-                "SavedFilter" -> {
-                    addSavedFilterRow(
-                        frontPageFilter,
-                        queryEngine,
-                        filterParser,
-                        index,
-                    )
-                }
-
+                "customfilter" -> addCustomFilterRow(frontPageFilter, queryEngine)
+                "savedfilter" -> addSavedFilterRow(frontPageFilter, queryEngine, filterParser)
                 else -> {
                     Log.w(
                         TAG,
@@ -151,7 +137,6 @@ class FrontPageParser(
         frontPageFilter: Map<String, *>,
         queryEngine: QueryEngine,
         filterParser: FilterParser,
-        index: Int,
     ): Deferred<FrontPageRow> =
         withContext(Dispatchers.IO) {
             return@withContext async {

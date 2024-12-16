@@ -136,9 +136,9 @@ fun getStreamDecision(
         return StreamDecision(
             scene.id,
             TranscodeDecision.DIRECT_PLAY,
-            videoSupported,
-            audioSupported,
-            containerSupported,
+            true,
+            true,
+            true,
         )
     } else if (forceDirectPlay) {
         Log.v(

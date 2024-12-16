@@ -57,7 +57,7 @@ abstract class TabbedFragment(
         }
 
         val viewPager = view.findViewById<LeanbackViewPager>(R.id.view_pager)
-        tabLayout = view.findViewById<LeanbackTabLayout>(R.id.tab_layout)
+        tabLayout = view.findViewById(R.id.tab_layout)
 
         viewModel.refreshServer()
 

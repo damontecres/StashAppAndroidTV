@@ -27,7 +27,7 @@ import kotlin.reflect.full.createInstance
  * Tracks state while the user builds a new filter
  */
 class CreateFilterViewModel : ViewModel() {
-    val server = MutableLiveData<StashServer>(StashServer.requireCurrentServer())
+    val server = MutableLiveData(StashServer.requireCurrentServer())
     val abbreviateCounters: Boolean get() = server.value!!.serverPreferences.abbreviateCounters
     val queryEngine = QueryEngine(server.value!!)
 

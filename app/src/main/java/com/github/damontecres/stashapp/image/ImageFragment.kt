@@ -39,7 +39,6 @@ class ImageFragment :
     ImageController {
     private val viewModel: ImageViewModel by activityViewModels<ImageViewModel>()
 
-    private lateinit var parentView: View
     private lateinit var mainImage: StashZoomImageView
 
     private val duration = 200L
@@ -50,7 +49,6 @@ class ImageFragment :
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        parentView = view
         mainImage = view.findViewById(R.id.image_view_image)
 
         mainImage.engine.addListener(

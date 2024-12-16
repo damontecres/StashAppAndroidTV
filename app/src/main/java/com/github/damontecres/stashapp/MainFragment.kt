@@ -264,8 +264,7 @@ class MainFragment :
                 } else {
                     try {
                         val queryEngine = QueryEngine(server)
-                        val filterParser =
-                            FilterParser(serverVersion ?: Version.MINIMUM_STASH_VERSION)
+                        val filterParser = FilterParser(serverVersion)
 
                         val config = queryEngine.getServerConfiguration()
                         server.serverPreferences.updatePreferences(config)

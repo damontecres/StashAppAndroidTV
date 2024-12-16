@@ -35,14 +35,6 @@ class StashRatingBar(
 
     private var ratingCallback: RatingCallback? = null
 
-    val focusableViewId
-        get() =
-            if (ratingAsStars) {
-                starRatingBar.id
-            } else {
-                decimalRatingBar.id
-            }
-
     var rating100: Int = 0
         @SuppressLint("RestrictedApi", "SetTextI18n")
         set(rating100) {

@@ -321,10 +321,10 @@ fun filterSummary(f: PhashDistanceCriterionInput): String {
 fun filterSummary(f: PHashDuplicationCriterionInput): String {
     val duplicated = f.duplicated.getOrNull()
     val distance = f.distance.getOrNull()
-    if (distance != null) {
-        return "$duplicated ($distance)"
+    return if (distance != null) {
+        "$duplicated ($distance)"
     } else {
-        return "$duplicated"
+        "$duplicated"
     }
 }
 
@@ -445,7 +445,7 @@ fun filterSummary(f: DateCriterionInput): String {
 fun filterSummary(f: GenderCriterionInput): String {
     val values = f.value_list.getOrNull() ?: listOfNotNull(f.value.getOrNull())
     val modStr = f.modifier.getString(StashApplication.getApplication())
-    val resolvedTitles = values.map { displayName(StashApplication.getApplication(), it) }.orEmpty()
+    val resolvedTitles = values.map { displayName(StashApplication.getApplication(), it) }
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS,

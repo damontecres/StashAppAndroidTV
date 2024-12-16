@@ -44,8 +44,19 @@ class GroupRelationshipDataSupplier(
         data.findGroups.groups
             .map {
                 when (type) {
-                    GroupRelationshipType.SUB -> it.sub_groups.map { it.groupDescriptionData.toRelationship(type) }
-                    GroupRelationshipType.CONTAINING -> it.containing_groups.map { it.groupDescriptionData.toRelationship(type) }
+                    GroupRelationshipType.SUB ->
+                        it.sub_groups.map { subGroup ->
+                            subGroup.groupDescriptionData.toRelationship(
+                                type,
+                            )
+                        }
+
+                    GroupRelationshipType.CONTAINING ->
+                        it.containing_groups.map { containingGroup ->
+                            containingGroup.groupDescriptionData.toRelationship(
+                                type,
+                            )
+                        }
                 }
             }.flatten()
 }

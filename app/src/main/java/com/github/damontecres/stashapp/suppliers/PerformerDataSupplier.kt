@@ -12,11 +12,6 @@ class PerformerDataSupplier(
     private val findFilter: FindFilterType?,
     private val performerFilter: PerformerFilterType?,
 ) : StashPagingSource.DataSupplier<FindPerformersQuery.Data, PerformerData, CountPerformersQuery.Data> {
-    constructor(performerFilter: PerformerFilterType? = null) : this(
-        DataType.PERFORMER.asDefaultFindFilterType,
-        performerFilter,
-    )
-
     override val dataType: DataType get() = DataType.PERFORMER
 
     override fun createQuery(filter: FindFilterType?): Query<FindPerformersQuery.Data> =

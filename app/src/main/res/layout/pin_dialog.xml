@@ -9,7 +9,8 @@
         android:layout_height="80dp"
         android:text="@string/enter_pin"
         android:textSize="50sp"
-        android:textAlignment="center" />
+        android:textAlignment="center"
+        android:labelFor="@id/pin_edit_text" />
 
     <EditText
         android:id="@+id/pin_edit_text"

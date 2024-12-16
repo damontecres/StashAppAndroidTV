@@ -50,7 +50,6 @@ class SearchPickerFragment(
 ) : SearchSupportFragment(),
     SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
-    private var query: String? = null
 
     private val adapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val searchResultsAdapter = ArrayObjectAdapter()
@@ -220,10 +219,8 @@ class SearchPickerFragment(
         return true
     }
 
-    private suspend fun search(query: String) {
+    private fun search(query: String) {
         searchResultsAdapter.clear()
-
-        this.query = query
         if (!TextUtils.isEmpty(query)) {
             adapter.set(
                 RESULTS_POS,

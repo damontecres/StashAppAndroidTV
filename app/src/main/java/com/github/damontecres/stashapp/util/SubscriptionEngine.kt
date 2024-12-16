@@ -41,9 +41,9 @@ class SubscriptionEngine(
                     SubscriptionException(id, name, msg, ex)
                 }
             } else {
-                val errorMsgs = response.errors!!.joinToString("\n") { it.message }
+                val errorMessages = response.errors!!.joinToString("\n") { it.message }
                 Log.e(TAG, "Errors in $id $name: ${response.errors}")
-                throw SubscriptionException(id, name, "Error in $name: $errorMsgs")
+                throw SubscriptionException(id, name, "Error in $name: $errorMessages")
             }
         }
         Log.v(TAG, "Completed subscription $id $name")

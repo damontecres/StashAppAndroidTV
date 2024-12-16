@@ -90,7 +90,7 @@ fun HierarchicalMultiCriterionInput.toMap(labelMapping: Map<String, String?>): M
         put("modifier", modifier.rawValue)
         put(
             "value",
-            buildMap<String, Any> {
+            buildMap {
                 put("depth", depth.getOrNull() ?: 0)
 
                 val items =
