@@ -32,20 +32,21 @@ class PagingObjectAdapter(
 
     private val mutex = Mutex()
 
-    suspend fun init() {
-        totalCount = source.getCount()
+    suspend fun init(firstPage: Int = 1) {
+        if (totalCount < 0) {
+            totalCount = source.getCount()
+            fetchPage(0, firstPage, false).join()
+            if (DEBUG) Log.v(TAG, "init notify $totalCount")
+            notifyItemRangeInserted(0, totalCount)
+        }
     }
 
-    override fun size(): Int {
-        if (totalCount < 0) {
-            throw IllegalStateException("Must call init() first!")
-        }
-        return totalCount
-    }
+    override fun size(): Int = totalCount
 
     override fun get(position: Int): Any? {
         val pageNumber = position / pageSize + 1
         val page = cachedPages.getIfPresent(pageNumber)
+        if (DEBUG) Log.v(TAG, "get: position=$position")
         if (page != null) {
             return if (page.items.size > position % pageSize) {
                 page.items[position % pageSize]
@@ -53,7 +54,7 @@ class PagingObjectAdapter(
                 null
             }
         }
-        if (DEBUG) Log.v(TAG, "get: position=$position")
+        if (DEBUG) Log.v(TAG, "get: need to fetch page $pageNumber for position=$position")
         fetchPage(position, pageNumber, true)
         return null
     }
@@ -74,7 +75,12 @@ class PagingObjectAdapter(
         val pageNumber = position / pageSize + 1
         val minPage = cachedPages.asMap().keys.minOrNull()
         val maxPage = cachedPages.asMap().keys.maxOrNull()
-        if (DEBUG) Log.v(TAG, "updatePosition: position=$position, minPage=$minPage, maxPage=$maxPage")
+        if (DEBUG) {
+            Log.v(
+                TAG,
+                "maybePrefetch: position=$position, minPage=$minPage, maxPage=$maxPage",
+            )
+        }
         val toFetch =
             if (maxPage != null && pageNumber + 2 > maxPage) {
                 (maxPage + 1).coerceAtMost(totalCount / pageSize + 1)
@@ -99,12 +105,18 @@ class PagingObjectAdapter(
         scope.launchIO {
             mutex.withLock {
                 if (cachedPages.getIfPresent(pageNumber) == null) {
-                    if (DEBUG) Log.v(TAG, "get: fetching $pageNumber")
+                    if (DEBUG) Log.v(TAG, "fetchPage: $pageNumber")
                     val items = source.fetchPage(pageNumber, pageSize)
                     cachedPages.put(pageNumber, Page(pageNumber, items))
                     if (notifyChange) {
                         withContext(Dispatchers.Main) {
-                            notifyItemRangeChanged(position / pageSize * pageSize, pageSize)
+                            if (DEBUG) {
+                                Log.v(
+                                    TAG,
+                                    "fetchPage: notify start=${position / pageSize * pageSize}, items.size=${items.size}",
+                                )
+                            }
+                            notifyItemRangeChanged(position / pageSize * pageSize, items.size)
                         }
                     }
                 }
