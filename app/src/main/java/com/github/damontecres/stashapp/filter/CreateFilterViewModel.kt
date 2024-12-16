@@ -27,7 +27,7 @@ import kotlin.reflect.full.createInstance
  * Tracks state while the user builds a new filter
  */
 class CreateFilterViewModel : ViewModel() {
-    val server = MutableLiveData<StashServer>(StashServer.requireCurrentServer())
+    val server = MutableLiveData(StashServer.requireCurrentServer())
     val abbreviateCounters: Boolean get() = server.value!!.serverPreferences.abbreviateCounters
     val queryEngine = QueryEngine(server.value!!)
 
@@ -110,7 +110,7 @@ class CreateFilterViewModel : ViewModel() {
                         ),
                     )
                 val pagingSource =
-                    StashPagingSource<Query.Data, StashData, Any, Query.Data>(queryEngine, 25, supplier)
+                    StashPagingSource<Query.Data, StashData, Any, Query.Data>(queryEngine, supplier)
                 resultCount.value = pagingSource.getCount()
             }
     }

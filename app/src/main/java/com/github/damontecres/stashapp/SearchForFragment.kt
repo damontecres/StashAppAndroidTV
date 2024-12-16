@@ -288,7 +288,7 @@ class SearchForFragment :
         return true
     }
 
-    private suspend fun search(query: String) {
+    private fun search(query: String) {
         searchResultsAdapter.clear()
 
         this.query = query

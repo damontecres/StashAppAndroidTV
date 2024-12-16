@@ -333,8 +333,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         val performerIds = sceneData!!.performers.map { it.id }
         Log.v(TAG, "fetchData performerIds=$performerIds")
         if (performerIds.isNotEmpty()) {
-            val perfs = queryEngine.findPerformers(performerIds = performerIds)
-            performersRowManager.setItems(perfs)
+            val performers = queryEngine.findPerformers(performerIds = performerIds)
+            performersRowManager.setItems(performers)
         } else {
             performersRowManager.setItems(listOf())
         }

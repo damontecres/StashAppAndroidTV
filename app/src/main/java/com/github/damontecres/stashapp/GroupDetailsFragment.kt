@@ -59,14 +59,14 @@ class GroupDetailsFragment : Fragment(R.layout.group_view) {
 
             addRow(
                 R.string.stashapp_duration,
-                groupData?.duration?.toDuration(DurationUnit.MINUTES)?.toString(),
+                groupData.duration?.toDuration(DurationUnit.MINUTES)?.toString(),
             )
-            addRow(R.string.stashapp_date, groupData?.date)
-            addRow(R.string.stashapp_studio, groupData?.studio?.name)
-            addRow(R.string.stashapp_director, groupData?.director)
-            addRow(R.string.stashapp_synopsis, groupData?.synopsis)
-            addRow(R.string.stashapp_created_at, parseTimeToString(groupData?.created_at))
-            addRow(R.string.stashapp_updated_at, parseTimeToString(groupData?.updated_at))
+            addRow(R.string.stashapp_date, groupData.date)
+            addRow(R.string.stashapp_studio, groupData.studio?.name)
+            addRow(R.string.stashapp_director, groupData.director)
+            addRow(R.string.stashapp_synopsis, groupData.synopsis)
+            addRow(R.string.stashapp_created_at, parseTimeToString(groupData.created_at))
+            addRow(R.string.stashapp_updated_at, parseTimeToString(groupData.updated_at))
             table.setColumnShrinkable(1, true)
         }
     }

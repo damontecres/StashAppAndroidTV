@@ -18,15 +18,12 @@ class StashSparseFilterFetcher<T : Query.Data, D : StashData>(
     private var currentPage = 0
     private var currentPageStart = 0
 
-    private var listeners = mutableListOf<Listener<D>>()
-
     private suspend fun loadDataFor(position: Int = 0) {
         // Pages are 1-indexed
         val pageToLoad = position / pageSize + 1
         Log.v(TAG, "Loading dating for pos=$position, page=$pageToLoad")
         val pageData = source.fetchPage(pageToLoad, pageSize)
 
-        listeners.forEach { it.onPageLoad(firstPage, pageToLoad, pageData) }
         currentPage = pageToLoad
         currentPageData = pageData
         currentPageStart = (currentPage - 1) * pageSize
@@ -54,14 +51,6 @@ class StashSparseFilterFetcher<T : Query.Data, D : StashData>(
             loadDataFor(position)
             get(position)
         }
-    }
-
-    fun addListener(listener: Listener<D>) {
-        listeners.add(listener)
-    }
-
-    fun removeListener(listener: Listener<D>) {
-        listeners.remove(listener)
     }
 
     companion object {

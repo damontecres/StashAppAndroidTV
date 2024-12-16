@@ -3,13 +3,11 @@ package com.github.damontecres.stashapp.util
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MovieFilterType
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
-import com.github.damontecres.stashapp.api.type.SavedFindFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
@@ -45,8 +43,6 @@ class AlphabetSearchUtils {
                     is TagFilterType -> filter.AND
                     is SceneMarkerFilterType -> throw IllegalArgumentException()
 
-                    // TODO, these shouldn't be StashDataFilter I think
-                    is FindFilterType, is SavedFindFilterType -> throw IllegalArgumentException()
                     else -> throw IllegalArgumentException()
                 }.getOrNull()
             return if (andFilter != null) {

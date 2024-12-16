@@ -34,7 +34,7 @@ class CompanionPlugin {
         suspend fun installPlugin(mutationEngine: MutationEngine): String =
             mutationEngine.installPackage(
                 PackageType.Plugin,
-                PackageSpecInput(PLUGIN_ID, SOURCE_URL),
+                PackageSpecInput(id = PLUGIN_ID, sourceURL = SOURCE_URL),
             )
 
         fun getLogCatLines(verbose: Boolean): List<String> {

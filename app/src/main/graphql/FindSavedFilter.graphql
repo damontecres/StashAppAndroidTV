@@ -5,13 +5,6 @@ query FindSavedFilter($id: ID!) {
   }
 }
 
-query FindDefaultFilter($mode: FilterMode!) {
-  findDefaultFilter(mode: $mode) {
-    ...SavedFilterData
-    __typename
-  }
-}
-
 query FindSavedFilters($mode: FilterMode!) {
   findSavedFilters(mode: $mode) {
     ...SavedFilterData

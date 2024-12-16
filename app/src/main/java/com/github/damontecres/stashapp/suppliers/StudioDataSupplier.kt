@@ -14,11 +14,6 @@ class StudioDataSupplier(
     private val findFilter: FindFilterType?,
     private val studioFilter: StudioFilterType?,
 ) : StashPagingSource.DataSupplier<FindStudiosQuery.Data, StudioData, CountStudiosQuery.Data> {
-    constructor(studioFilter: StudioFilterType? = null) : this(
-        DataType.STUDIO.asDefaultFindFilterType,
-        studioFilter,
-    )
-
     override val dataType: DataType get() = DataType.STUDIO
 
     override fun createQuery(filter: FindFilterType?): Query<FindStudiosQuery.Data> =

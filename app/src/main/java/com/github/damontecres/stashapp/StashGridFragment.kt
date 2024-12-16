@@ -68,6 +68,7 @@ import com.github.damontecres.stashapp.views.formatNumber
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlin.math.abs
 
 /**
  * A [Fragment] that shows a grid of items of the same [DataType].
@@ -174,7 +175,7 @@ class StashGridFragment() :
         @SuppressLint("SetTextI18n")
         set(position) {
             if (mGridViewHolder.gridView.adapter != null) {
-                if (Math.abs(mSelectedPosition - position) < mGridPresenter.numberOfColumns * 10) {
+                if (abs(mSelectedPosition - position) < mGridPresenter.numberOfColumns * 10) {
                     // If new position is close to the current, smooth scroll
                     mGridViewHolder.gridView.setSelectedPositionSmooth(position)
                     gridOnItemSelected(position)
@@ -182,7 +183,7 @@ class StashGridFragment() :
                     // If not, just jump without smooth scrolling
 
                     viewLifecycleOwner.lifecycleScope.launch {
-                        mAdapter.prepareForJump(position)
+                        mAdapter.prefetch(position).join()
                         mGridViewHolder.gridView.selectedPosition = position
                         gridOnItemSelected(position)
                     }
@@ -252,7 +253,7 @@ class StashGridFragment() :
             positionTextView.text = formatNumber(position + 1, false)
             // If on the second row & the back callback exists, enable it
             onBackPressedCallback?.isEnabled = mSelectedPosition >= mGridPresenter.numberOfColumns
-            mAdapter.updatePosition(position)
+            mAdapter.maybePrefetch(position)
         }
     }
 
@@ -317,14 +318,13 @@ class StashGridFragment() :
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View? {
+    ): View {
         val root =
             inflater.inflate(
                 R.layout.stash_grid_fragment,
                 container,
                 false,
             ) as ViewGroup
-        val gridFrame = root.findViewById<View>(androidx.leanback.R.id.grid_frame) as ViewGroup
         val onFocusChangeListener = StashOnFocusChangeListener(requireContext())
         sortButton = root.findViewById(R.id.sort_button)
         sortButton.onFocusChangeListener = onFocusChangeListener
@@ -346,7 +346,7 @@ class StashGridFragment() :
         jumpButtonLayout = root.findViewById(R.id.jump_layout)
         loadingProgressBar = root.findViewById(R.id.loading_progress_bar)
 
-        alphabetFilterLayout = root.findViewById<LinearLayout>(R.id.alphabet_filter_layout)
+        alphabetFilterLayout = root.findViewById(R.id.alphabet_filter_layout)
         AlphabetSearchUtils.LETTERS.forEach { letter ->
             val button =
                 inflater.inflate(R.layout.alphabet_button, alphabetFilterLayout, false) as Button
@@ -539,10 +539,7 @@ class StashGridFragment() :
         val pagingSource =
             StashPagingSource<Query.Data, StashData, StashData, Query.Data>(
                 QueryEngine(server),
-                pageSize,
                 dataSupplier = dataSupplier,
-                useRandom = false,
-                sortByOverride = null,
             )
         val pagingAdapter =
             PagingObjectAdapter(

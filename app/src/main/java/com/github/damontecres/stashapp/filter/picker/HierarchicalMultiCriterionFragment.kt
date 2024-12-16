@@ -155,11 +155,12 @@ class HierarchicalMultiCriterionFragment(
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
             val subValuesAction = findActionById(INCLUDE_SUB_VALUES)
-            if (subValuesAction.isChecked) {
-                curVal = curVal.copy(depth = Optional.present(-1))
-            } else {
-                curVal = curVal.copy(depth = Optional.absent())
-            }
+            curVal =
+                if (subValuesAction.isChecked) {
+                    curVal.copy(depth = Optional.present(-1))
+                } else {
+                    curVal.copy(depth = Optional.absent())
+                }
             viewModel.updateFilter(filterOption, curVal)
             parentFragmentManager.popBackStack()
         } else {

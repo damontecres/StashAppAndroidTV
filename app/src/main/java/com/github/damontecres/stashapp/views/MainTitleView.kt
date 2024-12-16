@@ -58,8 +58,6 @@ class MainTitleView(
             override fun getSearchAffordanceView(): View = searchButton
         }
 
-    private val defaultFilters = mutableMapOf<DataType, FilterArgs>()
-
     init {
         val onFocusChangeListener = StashOnFocusChangeListener(context)
 

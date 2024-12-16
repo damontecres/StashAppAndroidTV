@@ -83,7 +83,7 @@ class DatePickerFragment(
         actions.add(
             GuidedAction
                 .Builder(requireContext())
-                .id(TwoValuePicker.MODIFIER)
+                .id(MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
                 .description(modifier.getString(requireContext()))
@@ -151,7 +151,7 @@ class DatePickerFragment(
     override val valueInputType: Int
         get() = throw IllegalStateException("Should not call valueInputType")
 
-    override fun parseValue(v: String?): String? = throw IllegalStateException("Should not call parseValue")
+    override fun parseValue(v: String?): String = throw IllegalStateException("Should not call parseValue")
 
     companion object {
         private const val TAG = "DatePickerFragment"

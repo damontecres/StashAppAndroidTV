@@ -170,7 +170,7 @@ class SortButtonManager(
         ): View {
             val view = super.getView(position, convertView, parent)
             view as LinearLayout
-            (view.get(0) as TextView).text =
+            (view[0] as TextView).text =
                 if (position == currentIndex) {
                     when (currentDirection) {
                         SortDirectionEnum.ASC -> context.getString(R.string.fa_caret_up)

@@ -8,7 +8,6 @@ import com.apollographql.apollo.api.Operation
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.ConfigurationQuery
-import com.github.damontecres.stashapp.api.FindDefaultFilterQuery
 import com.github.damontecres.stashapp.api.FindGalleriesQuery
 import com.github.damontecres.stashapp.api.FindGroupQuery
 import com.github.damontecres.stashapp.api.FindGroupsQuery
@@ -80,9 +79,9 @@ class QueryEngine(
                     QueryException(id, queryName, msg, ex)
                 }
             } else {
-                val errorMsgs = response.errors!!.joinToString("\n") { it.message }
+                val errorMessages = response.errors!!.joinToString("\n") { it.message }
                 Log.e(TAG, "Errors in $id $queryName: ${response.errors}")
-                throw QueryException(id, queryName, "Error in $queryName: $errorMsgs")
+                throw QueryException(id, queryName, "Error in $queryName: $errorMessages")
             }
         }
 
@@ -371,11 +370,6 @@ class QueryEngine(
             .orEmpty()
     }
 
-    suspend fun getDefaultFilter(type: DataType): SavedFilterData? {
-        val query = FindDefaultFilterQuery(type.filterMode)
-        return executeQuery(query).data?.findDefaultFilter?.savedFilterData
-    }
-
     suspend fun getServerConfiguration(): ConfigurationQuery.Data {
         val query = ConfigurationQuery()
         return executeQuery(query).data!!
@@ -403,10 +397,10 @@ class QueryEngine(
             job = getJob(jobId) ?: return JobResult.NotFound
             callback?.invoke(job)
         }
-        if (job?.status == JobStatus.FAILED) {
-            return JobResult.Failure(job.error)
+        return if (job.status == JobStatus.FAILED) {
+            JobResult.Failure(job.error)
         } else {
-            return JobResult.Success
+            JobResult.Success
         }
     }
 

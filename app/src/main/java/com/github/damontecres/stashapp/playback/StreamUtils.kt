@@ -30,14 +30,6 @@ data class StreamDecision(
 
 fun buildMediaItem(
     context: Context,
-    scene: Scene,
-): MediaItem {
-    val decision = getStreamDecision(context, scene)
-    return buildMediaItem(context, decision, scene)
-}
-
-fun buildMediaItem(
-    context: Context,
     streamDecision: StreamDecision,
     scene: Scene,
     builderCallback: (MediaItem.Builder.() -> Unit)? = null,
@@ -144,9 +136,9 @@ fun getStreamDecision(
         return StreamDecision(
             scene.id,
             TranscodeDecision.DIRECT_PLAY,
-            videoSupported,
-            audioSupported,
-            containerSupported,
+            true,
+            true,
+            true,
         )
     } else if (forceDirectPlay) {
         Log.v(

@@ -72,9 +72,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                 val pagingSource =
                     StashPagingSource<FindImagesQuery.Data, ImageData, ImageData, CountImagesQuery.Data>(
                         queryEngine,
-                        pageSize,
                         dataSupplier,
-                        useRandom = false,
                     )
                 pager = StashSparseFilterFetcher(pagingSource, pageSize)
                 totalCount = pagingSource.getCount()

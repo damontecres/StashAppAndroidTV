@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -19,13 +20,14 @@ class PagingObjectAdapter(
     private val pageSize: Int = 25,
     private val scope: CoroutineScope,
     presenterSelector: PresenterSelector,
+    cacheSize: Long = 8,
 ) : ObjectAdapter(presenterSelector) {
     private var totalCount = -1
 
     private val cachedPages =
         CacheBuilder
             .newBuilder()
-            .maximumSize(8)
+            .maximumSize(cacheSize)
             .build<Int, Page>()
 
     private val mutex = Mutex()
@@ -52,23 +54,23 @@ class PagingObjectAdapter(
             }
         }
         if (DEBUG) Log.v(TAG, "get: position=$position")
-        fetchPage(position, pageNumber)
+        fetchPage(position, pageNumber, true)
         return null
     }
 
     /**
-     * Prepare to jump to a position by preloading the necessary page
+     * Prefetch data for the specified position
      */
-    suspend fun prepareForJump(position: Int) {
+    fun prefetch(position: Int): Job {
         // Fetch multiple pages?
         val pageNumber = position / pageSize + 1
-        fetchPage(position, pageNumber).join()
+        return fetchPage(position, pageNumber, false)
     }
 
     /**
      * Notify the adapter of the current UI position which allows for prefetching pages if needed
      */
-    fun updatePosition(position: Int) {
+    fun maybePrefetch(position: Int) {
         val pageNumber = position / pageSize + 1
         val minPage = cachedPages.asMap().keys.minOrNull()
         val maxPage = cachedPages.asMap().keys.maxOrNull()
@@ -82,37 +84,30 @@ class PagingObjectAdapter(
                 null
             }
         if (toFetch != null) {
-            scope.launchIO {
-                try {
-                    mutex.lock()
-                    if (cachedPages.getIfPresent(toFetch) == null) {
-                        val items = source.fetchPage(toFetch, pageSize)
-                        cachedPages.put(toFetch, Page(toFetch, items))
-                    }
-                } finally {
-                    mutex.unlock()
-                }
-            }
+            fetchPage(position, toFetch, false)
         }
     }
 
+    /**
+     * Fetch a page of data and optionally call [notifyItemRangeChanged]
+     */
     private fun fetchPage(
         position: Int,
         pageNumber: Int,
+        notifyChange: Boolean,
     ): Job =
         scope.launchIO {
-            try {
-                mutex.lock()
+            mutex.withLock {
                 if (cachedPages.getIfPresent(pageNumber) == null) {
                     if (DEBUG) Log.v(TAG, "get: fetching $pageNumber")
                     val items = source.fetchPage(pageNumber, pageSize)
                     cachedPages.put(pageNumber, Page(pageNumber, items))
-                    withContext(Dispatchers.Main) {
-                        notifyItemRangeChanged(position / pageSize * pageSize, pageSize)
+                    if (notifyChange) {
+                        withContext(Dispatchers.Main) {
+                            notifyItemRangeChanged(position / pageSize * pageSize, pageSize)
+                        }
                     }
                 }
-            } finally {
-                mutex.unlock()
             }
         }
 

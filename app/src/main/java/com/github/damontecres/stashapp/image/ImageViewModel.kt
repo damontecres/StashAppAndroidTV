@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.github.damontecres.stashapp.api.fragment.ImageData
 
 /**
- * The [ViewModel] for [ImageActivity] and its fragments
+ * The [ViewModel] for [com.github.damontecres.stashapp.ImageActivity] and its fragments
  */
 class ImageViewModel(
     private val state: SavedStateHandle,

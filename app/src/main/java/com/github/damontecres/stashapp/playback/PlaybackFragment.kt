@@ -86,7 +86,7 @@ abstract class PlaybackFragment(
     abstract val optionsButtonOptions: OptionsButtonOptions
 
     /**
-     * Initialize an [ExoPlayer]. Users should start with [StashExoPlayer]!
+     * Initialize an [ExoPlayer]. Users should start with [com.github.damontecres.stashapp.StashExoPlayer]!
      */
     protected abstract fun initializePlayer(): ExoPlayer
 

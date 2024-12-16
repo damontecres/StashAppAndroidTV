@@ -16,11 +16,6 @@ class GalleryDataSupplier(
     private val findFilter: FindFilterType?,
     private val galleryFilter: GalleryFilterType?,
 ) : StashPagingSource.DataSupplier<FindGalleriesQuery.Data, GalleryData, CountGalleriesQuery.Data> {
-    constructor(galleryFilter: GalleryFilterType? = null) : this(
-        DataType.GALLERY.asDefaultFindFilterType,
-        galleryFilter,
-    )
-
     override val dataType: DataType get() = DataType.TAG
 
     override fun createQuery(filter: FindFilterType?): Query<FindGalleriesQuery.Data> =
