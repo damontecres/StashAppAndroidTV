@@ -587,8 +587,8 @@ class StashGridFragment() :
         val footerLayout = requireView().findViewById<View>(R.id.footer_layout)
 
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            mAdapter.init()
             updateAdapter()
+            mAdapter.init()
             val count = pagingSource.getCount()
             if (count == 0) {
                 positionTextView.text = getString(R.string.zero)
