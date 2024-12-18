@@ -445,7 +445,7 @@ class StashGridFragment() :
                     filterArgs
                 },
             )
-        } else if (dataType == DataType.IMAGE) {
+        } else if (playAllButtonEnabled && dataType == DataType.IMAGE) {
             playAllButton.visibility = View.VISIBLE
             playAllButton.nextFocusUpId = R.id.tab_layout
             playAllButton.text = getString(R.string.play_slideshow)
