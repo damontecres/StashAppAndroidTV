@@ -16,6 +16,13 @@
             app:showSeekBarValue="false"
             android:max="5000"
             app:defaultValue="@integer/pref_key_ui_card_overlay_delay_default" />
+        <SeekBarPreference
+            app:key="@string/pref_key_slideshow_duration"
+            app:title="Slideshow duration (seconds)"
+            app:seekBarIncrement="1"
+            app:showSeekBarValue="true"
+            android:max="20"
+            app:defaultValue="@integer/pref_key_slideshow_duration_default" />
     </PreferenceCategory>
 
     <PreferenceCategory

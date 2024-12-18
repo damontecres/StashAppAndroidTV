@@ -17,6 +17,7 @@ import androidx.appcompat.widget.ListPopupWindow
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.filter.FilterOptions
@@ -30,7 +31,9 @@ import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.views.ImageAndFilter
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
+import com.github.damontecres.stashapp.views.SlideshowOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import kotlinx.coroutines.launch
@@ -99,6 +102,17 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                     val fragment =
                         supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
                     fragment.filterArgs
+                },
+            )
+        } else if (startingFilter.dataType == DataType.IMAGE) {
+            playAllButton.visibility = View.VISIBLE
+            playAllButton.text = getString(R.string.play_slideshow)
+            playAllButton.setOnClickListener(
+                SlideshowOnClickListener(this) {
+                    val fragment =
+                        supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
+                    val item = fragment.get(0) as ImageData?
+                    ImageAndFilter(0, item, fragment.filterArgs)
                 },
             )
         }

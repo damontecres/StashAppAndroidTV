@@ -28,6 +28,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
 import com.chrynan.parcelable.core.putParcelable
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
@@ -58,8 +59,10 @@ import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.views.ImageAndFilter
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
+import com.github.damontecres.stashapp.views.SlideshowOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -442,6 +445,16 @@ class StashGridFragment() :
                     filterArgs
                 },
             )
+        } else if (dataType == DataType.IMAGE) {
+            playAllButton.visibility = View.VISIBLE
+            playAllButton.nextFocusUpId = R.id.tab_layout
+            playAllButton.text = getString(R.string.play_slideshow)
+            playAllButton.setOnClickListener(
+                SlideshowOnClickListener(requireContext()) {
+                    val item = mAdapter.get(0) as ImageData?
+                    ImageAndFilter(0, item, filterArgs)
+                },
+            )
         }
         if (filterButtonEnabled) {
             filterButton.visibility = View.VISIBLE
@@ -715,6 +728,8 @@ class StashGridFragment() :
         playAllButtonEnabled = false
         filterButtonEnabled = false
     }
+
+    fun get(index: Int): Any? = mAdapter.get(index)
 
     override fun onKeyUp(
         keyCode: Int,

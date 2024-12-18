@@ -76,6 +76,8 @@
     <string name="force_transcode">Force transcode</string>
     <string name="direct">Direct</string>
     <string name="zero">0</string>
+    <string name="play_slideshow">Play Slideshow</string>
+    <string name="stop_slideshow">Stop Slideshow</string>
 
 
 </resources>
