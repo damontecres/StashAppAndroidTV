@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.image
 
-import android.graphics.Matrix
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
@@ -12,8 +11,10 @@ import androidx.fragment.app.activityViewModels
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.bumptech.glide.request.transition.DrawableCrossFadeFactory
 import com.github.damontecres.stashapp.ImageActivity.Companion.TAG
 import com.github.damontecres.stashapp.ImageActivity.Companion.isDirectionalDpadKey
 import com.github.damontecres.stashapp.ImageActivity.Companion.isDown
@@ -28,7 +29,6 @@ import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashZoomImageView
-import com.otaliastudios.zoom.ZoomEngine
 import kotlin.math.abs
 
 /**
@@ -51,32 +51,6 @@ class ImageFragment :
         super.onViewCreated(view, savedInstanceState)
         mainImage = view.findViewById(R.id.image_view_image)
 
-        mainImage.engine.addListener(
-            object : ZoomEngine.Listener {
-                override fun onIdle(engine: ZoomEngine) {
-                    Log.v(TAG, "onIdle")
-                }
-
-                private val mMatrixValues = FloatArray(9)
-
-                override fun onUpdate(
-                    engine: ZoomEngine,
-                    matrix: Matrix,
-                ) {
-                    matrix.getValues(mMatrixValues)
-                    val panX = mMatrixValues[Matrix.MTRANS_X]
-                    val panY = mMatrixValues[Matrix.MTRANS_Y]
-                    val scaleX = mMatrixValues[Matrix.MSCALE_X]
-                    val scaleY = mMatrixValues[Matrix.MSCALE_Y]
-                    val scale = (scaleX + scaleY) / 2f // These should always be equal.
-                    Log.v(
-                        TAG,
-                        "panX=$panX, panY=$panY, scaleX=$scaleX, scaleY=$scaleY, scale=$scale",
-                    )
-                }
-            },
-        )
-
         viewModel.image.observe(viewLifecycleOwner) { newImage ->
             if (!newImage.isImageClip) {
                 loadImage(newImage)
@@ -87,7 +61,7 @@ class ImageFragment :
 
     private fun loadImage(image: ImageData) {
         reset(false)
-        mainImage.setImageDrawable(null)
+//        mainImage.setImageDrawable(null)
 
         val placeholder =
             object : CircularProgressDrawable(requireContext()) {
@@ -104,8 +78,14 @@ class ImageFragment :
 
         val imageUrl = image.paths.image
         if (imageUrl != null) {
+            val factory =
+                DrawableCrossFadeFactory
+                    .Builder(300)
+                    .setCrossFadeEnabled(true)
+                    .build()
             StashGlide
                 .with(requireContext(), imageUrl, image.maxFileSize)
+                .transition(withCrossFade(factory))
                 .placeholder(placeholder)
                 .listener(
                     object : RequestListener<Drawable?> {
@@ -115,7 +95,7 @@ class ImageFragment :
                             target: Target<Drawable?>,
                             isFirstResource: Boolean,
                         ): Boolean {
-                            Log.v(TAG, "onLoadFailed for $imageUrl")
+                            Log.v(TAG, "onLoadFailed for ${image.id}")
                             Toast
                                 .makeText(
                                     requireContext(),

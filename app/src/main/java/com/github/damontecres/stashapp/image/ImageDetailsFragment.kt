@@ -16,6 +16,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
@@ -204,6 +205,29 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
         detailsPresenter.onActionClickedListener =
             OnActionClickedListener { action ->
+                if (action.id.toInt() == R.string.play_slideshow || action.id.toInt() == R.string.stop_slideshow) {
+                    Log.v(TAG, "Clicked play/stop slideshow")
+                    if (viewModel.slideshow.value!!) {
+                        detailsActionsAdapter.replace(
+                            detailsActionsAdapter.size() - 1,
+                            Action(R.string.play_slideshow.toLong()),
+                        )
+                    } else {
+                        // Start slideshow
+                        detailsActionsAdapter.replace(
+                            detailsActionsAdapter.size() - 1,
+                            Action(R.string.stop_slideshow.toLong()),
+                        )
+                        requireActivity().supportFragmentManager.commit {
+                            hide(this@ImageDetailsFragment)
+                        }
+                    }
+                    detailsActionsAdapter.notifyItemRangeChanged(
+                        detailsActionsAdapter.size() - 1,
+                        1,
+                    )
+                    viewModel.slideshow.value = viewModel.slideshow.value!!.not()
+                }
                 val controller = viewModel.imageController
                 if (controller != null) {
                     when (action.id.toInt()) {
@@ -264,6 +288,11 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_minus.toLong()))
                 detailsActionsAdapter.add(Action(R.string.fa_arrow_right_arrow_left.toLong()))
                 detailsActionsAdapter.add(Action(R.string.stashapp_effect_filters_reset_transforms.toLong()))
+            }
+            if (viewModel.slideshow.value!!) {
+                detailsActionsAdapter.add(Action(R.string.stop_slideshow.toLong()))
+            } else {
+                detailsActionsAdapter.add(Action(R.string.play_slideshow.toLong()))
             }
             detailsRow.actionsAdapter = detailsActionsAdapter
 
@@ -428,7 +457,13 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             val action = item as Action
             val vh = viewHolder as ActionViewHolder
             vh.mAction = action.id
-            if (action.id.toInt() == R.string.stashapp_effect_filters_reset_transforms) {
+            if (action.id.toInt() in
+                setOf(
+                    R.string.stashapp_effect_filters_reset_transforms,
+                    R.string.play_slideshow,
+                    R.string.stop_slideshow,
+                )
+            ) {
                 vh.mButton.typeface = null
             } else if (vh.mButton.typeface == null) {
                 vh.mButton.typeface = StashApplication.getFont(R.font.fa_solid_900)

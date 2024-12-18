@@ -25,6 +25,11 @@ class ImageViewModel(
     val imageId: LiveData<String> = state.getLiveData("imageId")
 
     /**
+     * Whether the slideshow is running or not
+     */
+    val slideshow = MutableLiveData(false)
+
+    /**
      * Set the current image to a new one
      */
     fun setImage(newImage: ImageData) {

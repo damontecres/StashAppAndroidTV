@@ -35,4 +35,7 @@
     <string name="pref_key_read_only_mode_pin" translatable="false">readOnlyMode.pinCode</string>
 
     <string name="pref_key_remote_page_buttons" translatable="false">paging.remoteButtons</string>
+
+    <string name="pref_key_slideshow_duration" translatable="false">image.slideshow.duration</string>
+    <integer name="pref_key_slideshow_duration_default">5</integer>
 </resources>

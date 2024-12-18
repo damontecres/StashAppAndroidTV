@@ -19,6 +19,10 @@ class SettingsUiFragment : LeanbackPreferenceFragmentCompat() {
             setVideoDelaySummary(videoDelayPref, newValue)
             true
         }
+
+        val slideshowDurationPref =
+            findPreference<SeekBarPreference>(getString(R.string.pref_key_slideshow_duration))!!
+        slideshowDurationPref.min = 1
     }
 
     private fun setVideoDelaySummary(
