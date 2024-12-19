@@ -16,17 +16,11 @@ data class CodecSupport(
     val audioCodecs: Set<String>,
     val containers: Set<String>,
 ) {
-    fun isVideoSupported(videoCodec: String?): Boolean {
-        return videoCodecs.contains(videoCodec)
-    }
+    fun isVideoSupported(videoCodec: String?): Boolean = videoCodecs.contains(videoCodec)
 
-    fun isAudioSupported(audioCodec: String?): Boolean {
-        return audioCodec.isNullOrBlank() || audioCodecs.contains(audioCodec)
-    }
+    fun isAudioSupported(audioCodec: String?): Boolean = audioCodec.isNullOrBlank() || audioCodecs.contains(audioCodec)
 
-    fun isContainerFormatSupported(format: String?): Boolean {
-        return containers.contains(format)
-    }
+    fun isContainerFormatSupported(format: String?): Boolean = containers.contains(format)
 
     companion object {
         private const val TAG = "CodecSupport"

@@ -15,14 +15,13 @@ class CreateFindFilterFragment(
     val dataType: DataType,
     private var currFindFilter: StashFindFilter,
 ) : CreateFilterGuidedStepFragment() {
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(R.string.sort_by),
             "",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
@@ -31,13 +30,13 @@ class CreateFindFilterFragment(
         val sortOptions =
             dataType.sortOptions
                 .mapIndexed { index, sortOption ->
-                    GuidedAction.Builder(requireContext())
+                    GuidedAction
+                        .Builder(requireContext())
                         .id(SORT_OFFSET + index)
                         .hasNext(false)
                         .title(getString(sortOption.nameStringId))
                         .build()
-                }
-                .sortedBy { it.title.toString() }
+                }.sortedBy { it.title.toString() }
 
         val currSortOption = currFindFilter.sortAndDirection?.sort
         val sortDesc =
@@ -47,7 +46,8 @@ class CreateFindFilterFragment(
                 null
             }
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(SORT)
                 .hasNext(true)
                 .subActions(sortOptions)
@@ -59,14 +59,16 @@ class CreateFindFilterFragment(
         val directionOptions =
             buildList {
                 add(
-                    GuidedAction.Builder(requireContext())
+                    GuidedAction
+                        .Builder(requireContext())
                         .id(DIRECTION_OFFSET + SortDirectionEnum.ASC.ordinal)
                         .hasNext(false)
                         .title(getString(R.string.stashapp_ascending))
                         .build(),
                 )
                 add(
-                    GuidedAction.Builder(requireContext())
+                    GuidedAction
+                        .Builder(requireContext())
                         .id(DIRECTION_OFFSET + SortDirectionEnum.DESC.ordinal)
                         .hasNext(false)
                         .title(getString(R.string.stashapp_descending))
@@ -75,7 +77,8 @@ class CreateFindFilterFragment(
             }
 
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(DIRECTION)
                 .hasNext(true)
                 .subActions(directionOptions)
@@ -85,7 +88,8 @@ class CreateFindFilterFragment(
         )
 
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(QUERY)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_component_tagger_noun_query))
@@ -96,14 +100,16 @@ class CreateFindFilterFragment(
         )
 
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_FINISH)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_actions_save))
                 .build(),
         )
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_CANCEL)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_actions_cancel))
@@ -143,13 +149,12 @@ class CreateFindFilterFragment(
         }
     }
 
-    private fun getDirectionString(direction: SortDirectionEnum?): String? {
-        return when (direction) {
+    private fun getDirectionString(direction: SortDirectionEnum?): String? =
+        when (direction) {
             SortDirectionEnum.ASC -> getString(R.string.stashapp_ascending)
             SortDirectionEnum.DESC -> getString(R.string.stashapp_descending)
             else -> null
         }
-    }
 
     companion object {
         private const val TAG = "CreateFindFilterFragment"

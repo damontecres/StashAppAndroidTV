@@ -24,18 +24,26 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                 val stashDataInterface = ClassName("$packageName.data", "StashData")
                 val stashFilterInterface = ClassName("$packageName.api.type", "StashDataFilter")
                 val stashFilterFileSpec =
-                    FileSpec.builder(stashFilterInterface)
+                    FileSpec
+                        .builder(stashFilterInterface)
                         .addType(
-                            TypeSpec.interfaceBuilder(stashFilterInterface)
+                            TypeSpec
+                                .interfaceBuilder(stashFilterInterface)
                                 .addModifiers(KModifier.SEALED)
                                 .addAnnotation(Serializable::class)
                                 .build(),
-                        )
-                        .build()
+                        ).build()
 
                 val newFileSpecs =
                     input.fileSpecs.map { file ->
-                        if (file.name.endsWith("FilterType") || file.name.endsWith("CriterionInput")) {
+                        if (file.name.endsWith("FilterType") &&
+                            file.name !in
+                            setOf(
+                                "FindFilterType",
+                                "SavedFindFilterType",
+                            ) ||
+                            file.name.endsWith("CriterionInput")
+                        ) {
                             // Modify filter or filter input types
                             handleFilterInput(file, stashFilterInterface)
                         } else if (file.name.endsWith("Data")) {
@@ -65,14 +73,16 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                 // Mark as Serializable
                 val annotation =
                     if (member.name == "CustomFieldCriterionInput") {
-                        AnnotationSpec.builder(Serializable::class)
+                        AnnotationSpec
+                            .builder(Serializable::class)
                             .addMember("with = com.github.damontecres.stashapp.util.CustomFieldCriterionInputSerializer::class")
                             .build()
                     } else {
                         AnnotationSpec.builder(Serializable::class).build()
                     }
                 val typeBuilder =
-                    member.toBuilder()
+                    member
+                        .toBuilder()
                         .addAnnotation(annotation)
                 if (member.name != "CustomFieldCriterionInput") {
                     typeBuilder.propertySpecs.replaceAll { prop ->
@@ -81,7 +91,8 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
                         ) {
                             // If the property is an Optional (basically all of them), then add a Contextual annotation
                             // This allows for runtime serialization, because the app defines a serializer for this class
-                            prop.toBuilder()
+                            prop
+                                .toBuilder()
                                 .addAnnotation(Contextual::class)
                                 .build()
                         } else {
@@ -112,12 +123,14 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
             if (member is TypeSpec && member.propertySpecs.find { it.name == "id" } != null) {
                 // Mark the type with the data interface
                 val memberBuilder =
-                    member.toBuilder()
+                    member
+                        .toBuilder()
                         .addSuperinterface(stashDataInterface)
                 memberBuilder.propertySpecs.replaceAll {
                     if (it.name == "id") {
                         // If the property is named id, need to add override due to the super interface
-                        it.toBuilder()
+                        it
+                            .toBuilder()
                             .addModifiers(KModifier.OVERRIDE)
                             .build()
                     } else {

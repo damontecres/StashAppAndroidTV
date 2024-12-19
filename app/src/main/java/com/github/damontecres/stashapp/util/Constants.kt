@@ -37,6 +37,7 @@ import com.github.damontecres.stashapp.api.ServerInfoQuery
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
@@ -44,6 +45,8 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
@@ -92,7 +95,8 @@ object Constants {
 
     fun getNetworkCache(context: Context): Cache {
         val cacheSize =
-            PreferenceManager.getDefaultSharedPreferences(context)
+            PreferenceManager
+                .getDefaultSharedPreferences(context)
                 .getLong("networkCache", 100) * 1024 * 1024
         return Cache(File(context.cacheDir, OK_HTTP_CACHE_DIR), cacheSize)
     }
@@ -101,13 +105,12 @@ object Constants {
 fun joinValueNotNull(
     prefix: String,
     value: String?,
-): String? {
-    return if (value.isNotNullOrBlank()) {
+): String? =
+    if (value.isNotNullOrBlank()) {
         "$prefix/$value"
     } else {
         null
     }
-}
 
 /**
  * Create a [GlideUrl], adding the API key to the headers if needed
@@ -115,18 +118,18 @@ fun joinValueNotNull(
 fun createGlideUrl(
     url: String,
     apiKey: String?,
-): GlideUrl {
-    return if (apiKey.isNullOrBlank()) {
+): GlideUrl =
+    if (apiKey.isNullOrBlank()) {
         GlideUrl(url)
     } else {
         GlideUrl(
             url,
-            LazyHeaders.Builder()
+            LazyHeaders
+                .Builder()
                 .addHeader(STASH_API_HEADER, apiKey.trim())
                 .build(),
         )
     }
-}
 
 /**
  * Create a [GlideUrl], adding the API key to the headers if needed
@@ -136,7 +139,8 @@ fun createGlideUrl(
     context: Context,
 ): GlideUrl {
     val apiKey =
-        PreferenceManager.getDefaultSharedPreferences(context)
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
             .getString("stashApiKey", "")
     return createGlideUrl(url, apiKey)
 }
@@ -150,7 +154,10 @@ enum class TestResultStatus {
     SELF_SIGNED_REQUIRED,
 }
 
-data class TestResult(val status: TestResultStatus, val serverInfo: ServerInfoQuery.Data?) {
+data class TestResult(
+    val status: TestResultStatus,
+    val serverInfo: ServerInfoQuery.Data?,
+) {
     constructor(status: TestResultStatus) : this(status, null)
 }
 
@@ -166,11 +173,12 @@ suspend fun testStashConnection(
 ): TestResult {
     if (client == null) {
         if (showToast) {
-            Toast.makeText(
-                context,
-                "Stash server URL is not set.",
-                Toast.LENGTH_LONG,
-            ).show()
+            Toast
+                .makeText(
+                    context,
+                    "Stash server URL is not set.",
+                    Toast.LENGTH_LONG,
+                ).show()
         }
     } else {
         try {
@@ -184,22 +192,24 @@ suspend fun testStashConnection(
                 if (!Version.isStashVersionSupported(serverVersion)) {
                     if (showToast) {
                         val version = info.data?.version?.version
-                        Toast.makeText(
-                            context,
-                            "Connected to unsupported Stash version $version!",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                context,
+                                "Connected to unsupported Stash version $version!",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                     return TestResult(TestResultStatus.UNSUPPORTED_VERSION, info.data)
                 } else {
                     if (showToast) {
                         val version = info.data?.version?.version
                         val sceneCount = info.data?.findScenes?.count
-                        Toast.makeText(
-                            context,
-                            "Connected to Stash ($version) with $sceneCount scenes!",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                context,
+                                "Connected to Stash ($version) with $sceneCount scenes!",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                     return TestResult(TestResultStatus.SUCCESS, info.data)
                 }
@@ -210,29 +220,32 @@ suspend fun testStashConnection(
                         if (ex.statusCode == 400) {
                             // Server returns 400 with body "Client sent an HTTP request to an HTTPS server.", but apollo doesn't record the body
                             if (showToast) {
-                                Toast.makeText(
-                                    context,
-                                    "Connected to server, but server may require using HTTPS.",
-                                    Toast.LENGTH_LONG,
-                                ).show()
+                                Toast
+                                    .makeText(
+                                        context,
+                                        "Connected to server, but server may require using HTTPS.",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
                             }
                             return TestResult(TestResultStatus.SSL_REQUIRED)
                         } else if (ex.statusCode == 401 || ex.statusCode == 403) {
                             if (showToast) {
-                                Toast.makeText(
-                                    context,
-                                    "Can connect to server, but API key is required or is incorrect.",
-                                    Toast.LENGTH_LONG,
-                                ).show()
+                                Toast
+                                    .makeText(
+                                        context,
+                                        "Can connect to server, but API key is required or is incorrect.",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
                             }
                             return TestResult(TestResultStatus.AUTH_REQUIRED)
                         } else {
                             if (showToast) {
-                                Toast.makeText(
-                                    context,
-                                    "Connected to Stash, but got HTTP ${ex.statusCode}: '${ex.message}'",
-                                    Toast.LENGTH_LONG,
-                                ).show()
+                                Toast
+                                    .makeText(
+                                        context,
+                                        "Connected to Stash, but got HTTP ${ex.statusCode}: '${ex.message}'",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
                             }
                             return TestResult(TestResultStatus.ERROR)
                         }
@@ -248,11 +261,12 @@ suspend fun testStashConnection(
                                     is IOException -> cause.localizedMessage
                                     else -> ex.localizedMessage
                                 }
-                            Toast.makeText(
-                                context,
-                                "Failed to connect to Stash: $message",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    context,
+                                    "Failed to connect to Stash: $message",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         }
                         if (ex.cause is SSLHandshakeException) {
                             return TestResult(TestResultStatus.SELF_SIGNED_REQUIRED)
@@ -262,33 +276,36 @@ suspend fun testStashConnection(
                     else -> {
                         Log.e(Constants.TAG, "Exception", ex)
                         if (showToast) {
-                            Toast.makeText(
-                                context,
-                                "Failed to connect to Stash: ${ex?.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    context,
+                                    "Failed to connect to Stash: ${ex?.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         }
                         return TestResult(TestResultStatus.ERROR)
                     }
                 }
             } else {
                 if (showToast) {
-                    Toast.makeText(
-                        context,
-                        "Connected to Stash, but server returned an error: ${info.errors}",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            context,
+                            "Connected to Stash, but server returned an error: ${info.errors}",
+                            Toast.LENGTH_LONG,
+                        ).show()
                 }
                 Log.w(Constants.TAG, "Errors in ServerInfoQuery: ${info.errors}")
             }
         } catch (ex: Exception) {
             Log.e(Constants.TAG, "Exception", ex)
             if (showToast) {
-                Toast.makeText(
-                    context,
-                    "Failed to connect to Stash: ${ex.message}",
-                    Toast.LENGTH_LONG,
-                ).show()
+                Toast
+                    .makeText(
+                        context,
+                        "Failed to connect to Stash: ${ex.message}",
+                        Toast.LENGTH_LONG,
+                    ).show()
             }
             return TestResult(TestResultStatus.ERROR)
         }
@@ -316,30 +333,23 @@ fun TextView.enableMarquee(selected: Boolean = false) {
 fun concatIfNotBlank(
     sep: CharSequence,
     vararg strings: CharSequence?,
-): String {
-    return strings.filter { it.isNotNullOrBlank() }.joinToString(sep)
-}
+): String = strings.filter { it.isNotNullOrBlank() }.joinToString(sep)
 
 fun concatIfNotBlank(
     sep: CharSequence,
     strings: List<CharSequence?>,
-): String {
-    return strings.joinNotNullOrBlank(sep)
-}
+): String = strings.joinNotNullOrBlank(sep)
 
-fun List<CharSequence?>.joinNotNullOrBlank(sep: CharSequence): String {
-    return this.filter { it.isNotNullOrBlank() }.joinToString(sep)
-}
+fun List<CharSequence?>.joinNotNullOrBlank(sep: CharSequence): String = this.filter { it.isNotNullOrBlank() }.joinToString(sep)
 
-fun cacheDurationPrefToDuration(value: Int): Duration? {
-    return when (value) {
+fun cacheDurationPrefToDuration(value: Int): Duration? =
+    when (value) {
         0 -> null
         1 -> 1.toDuration(DurationUnit.HOURS)
         2 -> 4.toDuration(DurationUnit.HOURS)
         3 -> 12.toDuration(DurationUnit.HOURS)
         else -> (value - 3).toDuration(DurationUnit.DAYS)
     }
-}
 
 fun convertDpToPixel(
     context: Context,
@@ -475,17 +485,18 @@ val PerformerData.ageInYears: Int?
     @RequiresApi(Build.VERSION_CODES.O)
     get() =
         if (birthdate != null) {
-            Period.between(
-                LocalDate.parse(birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
-                if (death_date.isNotNullOrBlank()) {
-                    LocalDate.parse(
-                        death_date,
-                        DateTimeFormatter.ISO_LOCAL_DATE,
-                    )
-                } else {
-                    LocalDate.now()
-                },
-            ).years
+            Period
+                .between(
+                    LocalDate.parse(birthdate, DateTimeFormatter.ISO_LOCAL_DATE),
+                    if (death_date.isNotNullOrBlank()) {
+                        LocalDate.parse(
+                            death_date,
+                            DateTimeFormatter.ISO_LOCAL_DATE,
+                        )
+                    } else {
+                        LocalDate.now()
+                    },
+                ).years
         } else {
             null
         }
@@ -523,16 +534,12 @@ fun NestedScrollView.onlyScrollIfNeeded() {
 fun SharedPreferences.getStringNotNull(
     key: String,
     defValue: String,
-): String {
-    return getString(key, defValue)!!
-}
+): String = getString(key, defValue)!!
 
 fun SharedPreferences.getInt(
     key: String,
     defValue: String,
-): Int {
-    return getStringNotNull(key, defValue).toInt()
-}
+): Int = getStringNotNull(key, defValue).toInt()
 
 fun ArrayObjectAdapter.isEmpty(): Boolean = size() == 0
 
@@ -541,7 +548,10 @@ fun ArrayObjectAdapter.isNotEmpty(): Boolean = !isEmpty()
 val ImageData.maxFileSize: Int
     get() =
         visual_files.maxOfOrNull {
-            it.onBaseFile?.size?.toString()?.toInt() ?: -1
+            it.onBaseFile
+                ?.size
+                ?.toString()
+                ?.toInt() ?: -1
         } ?: -1
 
 fun ImageData.addToIntent(intent: Intent): Intent {
@@ -559,11 +569,12 @@ fun showSetRatingToast(
     val asStars =
         ratingsAsStars ?: StashServer.requireCurrentServer().serverPreferences.ratingsAsStars
     val ratingStr = getRatingString(rating100, asStars)
-    Toast.makeText(
-        context,
-        "Set rating to $ratingStr!",
-        Toast.LENGTH_SHORT,
-    ).show()
+    Toast
+        .makeText(
+            context,
+            "Set rating to $ratingStr!",
+            Toast.LENGTH_SHORT,
+        ).show()
 }
 
 val ImageData.Visual_file.width: Int?
@@ -699,9 +710,7 @@ fun VideoFileData.resolutionName(): CharSequence {
 /**
  * Gets a sort by string for a random sort
  */
-fun getRandomSort(): Int {
-    return Random.nextInt(1e8.toInt())
-}
+fun getRandomSort(): Int = Random.nextInt(1e8.toInt())
 
 val ImageData.isImageClip: Boolean
     get() =
@@ -714,55 +723,44 @@ val ImageData.isImageClip: Boolean
 fun CoroutineScope.launchIO(
     exceptionHandler: CoroutineExceptionHandler? = StashCoroutineExceptionHandler(),
     block: suspend CoroutineScope.() -> Unit,
-): Job {
-    return if (exceptionHandler == null) {
+): Job =
+    if (exceptionHandler == null) {
         launch(Dispatchers.IO, block = block)
     } else {
         launch(Dispatchers.IO + exceptionHandler, block = block)
     }
-}
 
-fun Intent.putDataType(dataType: DataType): Intent {
-    return this.putExtra("dataType", dataType.name)
-}
+fun Intent.putDataType(dataType: DataType): Intent = this.putExtra("dataType", dataType.name)
 
-fun Intent.getDataType(): DataType {
-    return DataType.valueOf(getStringExtra("dataType")!!)
-}
+fun Intent.getDataType(): DataType = DataType.valueOf(getStringExtra("dataType")!!)
 
 @OptIn(ExperimentalSerializationApi::class)
 fun Intent.putFilterArgs(
     name: String,
     filterArgs: FilterArgs,
-): Intent {
-    return putExtra(name, filterArgs, StashParcelable)
-}
+): Intent = putExtra(name, filterArgs, StashParcelable)
 
 @OptIn(ExperimentalSerializationApi::class)
-fun Intent.getFilterArgs(name: String): FilterArgs? {
-    return getParcelableExtra(name, FilterArgs::class, 0, StashParcelable)
-}
+fun Intent.getFilterArgs(name: String): FilterArgs? = getParcelableExtra(name, FilterArgs::class, 0, StashParcelable)
 
 @OptIn(ExperimentalSerializationApi::class)
-fun Bundle.getFilterArgs(name: String): FilterArgs? {
-    return getParcelable(name, FilterArgs::class, 0, StashParcelable)
-}
+fun Bundle.getFilterArgs(name: String): FilterArgs? = getParcelable(name, FilterArgs::class, 0, StashParcelable)
 
 fun experimentalFeaturesEnabled(): Boolean {
     val context = StashApplication.getApplication()
-    return PreferenceManager.getDefaultSharedPreferences(context)
+    return PreferenceManager
+        .getDefaultSharedPreferences(context)
         .getBoolean(context.getString(R.string.pref_key_experimental_features), false)
 }
 
 fun readOnlyModeEnabled(): Boolean {
     val context = StashApplication.getApplication()
-    return PreferenceManager.getDefaultSharedPreferences(context)
+    return PreferenceManager
+        .getDefaultSharedPreferences(context)
         .getBoolean(context.getString(R.string.pref_key_read_only_mode), false)
 }
 
-fun readOnlyModeDisabled(): Boolean {
-    return !readOnlyModeEnabled()
-}
+fun readOnlyModeDisabled(): Boolean = !readOnlyModeEnabled()
 
 fun getUiTabs(
     context: Context,
@@ -798,10 +796,37 @@ fun getUiTabs(
         else -> throw UnsupportedOperationException("$dataType not supported")
     }
     val defaultValues = context.resources.getStringArray(defaultArrayKey).toSet()
-    return PreferenceManager.getDefaultSharedPreferences(context)
+    return PreferenceManager
+        .getDefaultSharedPreferences(context)
         .getStringSet(context.getString(prefKey), defaultValues)!!
 }
 
-fun Optional.Companion.presentIfNotNullOrBlank(value: String?): Optional<String> {
-    return presentIfNotNull(value?.ifBlank { null })
+fun Optional.Companion.presentIfNotNullOrBlank(value: String?): Optional<String> = presentIfNotNull(value?.ifBlank { null })
+
+fun maybeStartPlayback(
+    context: Context,
+    item: Any,
+) {
+    when (item) {
+        is SlimSceneData -> {
+            val intent = Intent(context, PlaybackActivity::class.java)
+            intent.putDataType(DataType.SCENE)
+            intent.putExtra(Constants.SCENE_ARG, Scene.fromSlimSceneData(item))
+            if (item.resume_time != null) {
+                intent.putExtra(Constants.POSITION_ARG, item.resume_position!!)
+            }
+            context.startActivity(intent)
+        }
+
+        is MarkerData -> {
+            val intent = Intent(context, PlaybackActivity::class.java)
+            intent.putDataType(DataType.MARKER)
+            intent.putExtra(
+                Constants.SCENE_ARG,
+                Scene.fromVideoSceneData(item.scene.videoSceneData),
+            )
+            intent.putExtra(Constants.POSITION_ARG, (item.seconds * 1000).toLong())
+            context.startActivity(intent)
+        }
+    }
 }

@@ -41,28 +41,14 @@ class FrontPageParser(
         data object NotSupported : FrontPageRow()
     }
 
-    suspend fun parse(frontPageContent: List<Map<String, *>>): List<Deferred<FrontPageRow>> {
-        return frontPageContent.mapIndexed { index, frontPageFilter ->
+    suspend fun parse(frontPageContent: List<Map<String, *>>): List<Deferred<FrontPageRow>> =
+        frontPageContent.mapIndexed { index, frontPageFilter ->
             when (
                 val filterType =
-                    frontPageFilter["__typename"] as String
+                    frontPageFilter["__typename"]?.toString()?.lowercase()
             ) {
-                "CustomFilter" -> {
-                    addCustomFilterRow(
-                        frontPageFilter,
-                        queryEngine,
-                    )
-                }
-
-                "SavedFilter" -> {
-                    addSavedFilterRow(
-                        frontPageFilter,
-                        queryEngine,
-                        filterParser,
-                        index,
-                    )
-                }
-
+                "customfilter" -> addCustomFilterRow(frontPageFilter, queryEngine)
+                "savedfilter" -> addSavedFilterRow(frontPageFilter, queryEngine, filterParser)
                 else -> {
                     Log.w(
                         TAG,
@@ -72,7 +58,6 @@ class FrontPageParser(
                 }
             }
         }
-    }
 
     private suspend fun addCustomFilterRow(
         frontPageFilter: Map<String, *>,
@@ -152,7 +137,6 @@ class FrontPageParser(
         frontPageFilter: Map<String, *>,
         queryEngine: QueryEngine,
         filterParser: FilterParser,
-        index: Int,
     ): Deferred<FrontPageRow> =
         withContext(Dispatchers.IO) {
             return@withContext async {
@@ -161,7 +145,8 @@ class FrontPageParser(
                     val result = queryEngine.getSavedFilter(filterId.toString())
                     if (result != null) {
                         val filter =
-                            result.toFilterArgs(filterParser)
+                            result
+                                .toFilterArgs(filterParser)
                                 .withResolvedRandom()
                         val findFilter =
                             filter.findFilter?.toFindFilterType(page = 1, perPage = pageSize)

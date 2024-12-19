@@ -6,7 +6,9 @@ import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.name
 import java.util.EnumMap
 
-class GalleryPresenter(callback: LongClickCallBack<GalleryData>? = null) : StashPresenter<GalleryData>(callback) {
+class GalleryPresenter(
+    callback: LongClickCallBack<GalleryData>? = null,
+) : StashPresenter<GalleryData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: GalleryData,
@@ -36,7 +38,7 @@ class GalleryPresenter(callback: LongClickCallBack<GalleryData>? = null) : Stash
     companion object {
         private const val TAG = "GalleryPresenter"
 
-        const val CARD_WIDTH = 351
-        const val CARD_HEIGHT = 237
+        const val CARD_WIDTH = ImagePresenter.CARD_WIDTH
+        const val CARD_HEIGHT = ImagePresenter.CARD_HEIGHT
     }
 }

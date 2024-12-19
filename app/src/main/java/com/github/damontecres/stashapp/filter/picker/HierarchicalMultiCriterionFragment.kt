@@ -24,34 +24,36 @@ class HierarchicalMultiCriterionFragment(
 ) : CreateFilterGuidedStepFragment() {
     private var curVal = HierarchicalMultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
             "Click to remove an item",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        curVal = filterOption.getter.invoke(
-            viewModel.objectFilter.value!!,
-        ).getOrNull() ?: HierarchicalMultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
+        curVal = filterOption.getter
+            .invoke(
+                viewModel.objectFilter.value!!,
+            ).getOrNull() ?: HierarchicalMultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
 
         val modifierOptions =
             buildList {
                 add(
-                    GuidedAction.Builder(requireContext())
+                    GuidedAction
+                        .Builder(requireContext())
                         .id(MODIFIER_OFFSET + CriterionModifier.INCLUDES.ordinal.toLong())
                         .hasNext(false)
                         .title(CriterionModifier.INCLUDES.getString(requireContext()))
                         .build(),
                 )
                 add(
-                    GuidedAction.Builder(requireContext())
+                    GuidedAction
+                        .Builder(requireContext())
                         .id(MODIFIER_OFFSET + CriterionModifier.INCLUDES_ALL.ordinal.toLong())
                         .hasNext(false)
                         .title(CriterionModifier.INCLUDES_ALL.getString(requireContext()))
@@ -59,7 +61,8 @@ class HierarchicalMultiCriterionFragment(
                 )
             }
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
@@ -70,7 +73,8 @@ class HierarchicalMultiCriterionFragment(
 
         val includeItems = createItemList(curVal.value.getOrNull().orEmpty(), true)
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(INCLUDE_LIST)
                 .hasNext(false)
                 .title(getString(dataType.pluralStringId))
@@ -80,7 +84,8 @@ class HierarchicalMultiCriterionFragment(
         )
         val excludeItems = createItemList(curVal.excludes.getOrNull().orEmpty(), false)
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(EXCLUDE_LIST)
                 .hasNext(false)
                 .title(
@@ -93,8 +98,7 @@ class HierarchicalMultiCriterionFragment(
                             it.toString()
                         }
                     },
-                )
-                .description("${excludeItems.size - 1} ${getString(dataType.pluralStringId)}")
+                ).description("${excludeItems.size - 1} ${getString(dataType.pluralStringId)}")
                 .subActions(excludeItems)
                 .build(),
         )
@@ -108,7 +112,8 @@ class HierarchicalMultiCriterionFragment(
             }
 
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(INCLUDE_SUB_VALUES)
                 .hasNext(false)
                 .title(subValueTitle)
@@ -126,32 +131,36 @@ class HierarchicalMultiCriterionFragment(
     ): List<GuidedAction> =
         buildList {
             add(
-                GuidedAction.Builder(requireContext())
+                GuidedAction
+                    .Builder(requireContext())
                     .id(if (include) ADD_INCLUDE_ITEM else ADD_EXCLUDE_ITEM)
                     .title("Add")
                     .build(),
             )
             addAll(
-                ids.mapIndexed { index, id ->
-                    val nameDesc =
-                        viewModel.storedItems[CreateFilterViewModel.DataTypeId(dataType, id)]
-                    GuidedAction.Builder(requireContext())
-                        .id(index + if (include) INCLUDE_OFFSET else EXCLUDE_OFFSET)
-                        .title(nameDesc?.name)
-                        .description(nameDesc?.description)
-                        .build()
-                }.sortedBy { it.title.toString() },
+                ids
+                    .mapIndexed { index, id ->
+                        val nameDesc =
+                            viewModel.storedItems[CreateFilterViewModel.DataTypeId(dataType, id)]
+                        GuidedAction
+                            .Builder(requireContext())
+                            .id(index + if (include) INCLUDE_OFFSET else EXCLUDE_OFFSET)
+                            .title(nameDesc?.name)
+                            .description(nameDesc?.description)
+                            .build()
+                    }.sortedBy { it.title.toString() },
             )
         }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
             val subValuesAction = findActionById(INCLUDE_SUB_VALUES)
-            if (subValuesAction.isChecked) {
-                curVal = curVal.copy(depth = Optional.present(-1))
-            } else {
-                curVal = curVal.copy(depth = Optional.absent())
-            }
+            curVal =
+                if (subValuesAction.isChecked) {
+                    curVal.copy(depth = Optional.present(-1))
+                } else {
+                    curVal.copy(depth = Optional.absent())
+                }
             viewModel.updateFilter(filterOption, curVal)
             parentFragmentManager.popBackStack()
         } else {

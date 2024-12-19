@@ -3,8 +3,9 @@ package com.github.damontecres.stashapp.presenters
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.views.durationToString
 
-class CreateMarkerActionPresenter(callback: LongClickCallBack<CreateMarkerAction>? = null) :
-    StashPresenter<CreateMarkerAction>(callback) {
+class CreateMarkerActionPresenter(
+    callback: LongClickCallBack<CreateMarkerAction>? = null,
+) : StashPresenter<CreateMarkerAction>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: CreateMarkerAction,

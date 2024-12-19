@@ -31,7 +31,9 @@ class VideoFilterViewModel : ViewModel() {
         if (saveVideoFilter && serverUrl != null) {
             viewModelScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 val vf =
-                    StashApplication.getDatabase().playbackEffectsDao()
+                    StashApplication
+                        .getDatabase()
+                        .playbackEffectsDao()
                         .getPlaybackEffect(serverUrl, sceneId)
                 if (vf != null) {
                     Log.d(TAG, "Loaded VideoFilter for scene $sceneId")
@@ -54,7 +56,9 @@ class VideoFilterViewModel : ViewModel() {
             viewModelScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 val vf = videoFilter.value
                 if (vf != null) {
-                    StashApplication.getDatabase().playbackEffectsDao()
+                    StashApplication
+                        .getDatabase()
+                        .playbackEffectsDao()
                         .insert(PlaybackEffect(serverUrl, sceneId, vf))
                     Log.d(TAG, "Saved VideoFilter for scene $sceneId")
                 }

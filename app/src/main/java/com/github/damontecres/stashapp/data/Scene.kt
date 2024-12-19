@@ -35,7 +35,8 @@ data class Scene(
         fun fromFullSceneData(data: FullSceneData): Scene {
             val streams =
                 data.sceneStreams
-                    .filter { it.label != null }.associate {
+                    .filter { it.label != null }
+                    .associate {
                         Pair(it.label.toString(), it.url)
                     }
             val fileData = data.files.firstOrNull()?.videoFileData
@@ -62,7 +63,8 @@ data class Scene(
         fun fromSlimSceneData(data: SlimSceneData): Scene {
             val streams =
                 data.sceneStreams
-                    .filter { it.label != null }.associate {
+                    .filter { it.label != null }
+                    .associate {
                         Pair(it.label.toString(), it.url)
                     }
             val fileData = data.files.firstOrNull()?.videoFileData
@@ -89,7 +91,8 @@ data class Scene(
         fun fromVideoSceneData(data: VideoSceneData): Scene {
             val streams =
                 data.sceneStreams
-                    .filter { it.label != null }.associate {
+                    .filter { it.label != null }
+                    .associate {
                         Pair(it.label.toString(), it.url)
                     }
             val fileData = data.files.firstOrNull()?.videoFileData
@@ -116,12 +119,11 @@ data class Scene(
 }
 
 @Parcelize
-data class Caption(val lang: String, val type: String) : Parcelable
+data class Caption(
+    val lang: String,
+    val type: String,
+) : Parcelable
 
-fun SlimSceneData.Caption.toCaption(): Caption {
-    return Caption(language_code, caption_type)
-}
+fun SlimSceneData.Caption.toCaption(): Caption = Caption(language_code, caption_type)
 
-fun FullSceneData.Caption.toCaption(): Caption {
-    return Caption(language_code, caption_type)
-}
+fun FullSceneData.Caption.toCaption(): Caption = Caption(language_code, caption_type)

@@ -9,7 +9,10 @@ import androidx.appcompat.widget.AppCompatSeekBar
 /**
  * Overrides [AppCompatSeekBar] to allow for wrapping around left or right
  */
-class WrapAroundSeekBar(context: Context, attrs: AttributeSet?) : AppCompatSeekBar(context, attrs) {
+class WrapAroundSeekBar(
+    context: Context,
+    attrs: AttributeSet?,
+) : AppCompatSeekBar(context, attrs) {
     override fun onKeyDown(
         keyCode: Int,
         event: KeyEvent?,

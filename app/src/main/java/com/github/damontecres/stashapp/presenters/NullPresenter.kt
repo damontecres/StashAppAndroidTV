@@ -5,7 +5,10 @@ import com.github.damontecres.stashapp.data.DataType
 /**
  * A no-op implementation of [StashPresenter] that accepts a null item
  */
-class NullPresenter(private val width: Int, private val height: Int) : StashPresenter<Any?>() {
+class NullPresenter(
+    private val width: Int,
+    private val height: Int,
+) : StashPresenter<Any?>() {
     constructor(dataType: DataType) : this(dataType.defaultCardWidth, dataType.defaultCardHeight)
 
     override fun doOnBindViewHolder(

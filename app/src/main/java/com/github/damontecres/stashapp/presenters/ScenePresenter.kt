@@ -17,8 +17,9 @@ import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
 import java.util.EnumMap
 
-class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
-    StashPresenter<SlimSceneData>(callback) {
+class ScenePresenter(
+    callback: LongClickCallBack<SlimSceneData>? = null,
+) : StashPresenter<SlimSceneData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: SlimSceneData,
@@ -78,13 +79,13 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
         }
     }
 
-    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<SlimSceneData> {
-        return object : LongClickCallBack<SlimSceneData> {
+    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<SlimSceneData> =
+        object : LongClickCallBack<SlimSceneData> {
             override fun getPopUpItems(
                 context: Context,
                 item: SlimSceneData,
-            ): List<PopUpItem> {
-                return if (item.resume_time != null && item.resume_time > 0) {
+            ): List<PopUpItem> =
+                if (item.resume_time != null && item.resume_time > 0) {
                     // Has resume
                     listOf(
                         PopUpItem.getDefault(context),
@@ -97,7 +98,6 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                         PopUpItem(2, "Play Scene"),
                     )
                 }
-            }
 
             override fun onItemLongClick(
                 context: Context,
@@ -132,12 +132,11 @@ class ScenePresenter(callback: LongClickCallBack<SlimSceneData>? = null) :
                 }
             }
         }
-    }
 
     companion object {
         private const val TAG = "ScenePresenter"
 
-        const val CARD_WIDTH = 351
-        const val CARD_HEIGHT = 198
+        const val CARD_WIDTH = 345
+        const val CARD_HEIGHT = 194
     }
 }

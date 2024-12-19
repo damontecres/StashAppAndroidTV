@@ -8,14 +8,17 @@ enum class GroupRelationshipType {
     SUB,
 }
 
-data class GroupRelationshipData(val group: GroupData, val type: GroupRelationshipType, val description: String?) : StashData {
+data class GroupRelationshipData(
+    val group: GroupData,
+    val type: GroupRelationshipType,
+    val description: String?,
+) : StashData {
     override val id: String = group.id
 }
 
-fun GroupDescriptionData.toRelationship(type: GroupRelationshipType): GroupRelationshipData {
-    return GroupRelationshipData(
+fun GroupDescriptionData.toRelationship(type: GroupRelationshipType): GroupRelationshipData =
+    GroupRelationshipData(
         group.groupData,
         type,
         description,
     )
-}

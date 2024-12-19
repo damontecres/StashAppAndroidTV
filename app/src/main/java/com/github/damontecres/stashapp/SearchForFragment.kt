@@ -57,7 +57,9 @@ import kotlin.properties.Delegates
  *
  * Will load recently used items via [com.github.damontecres.stashapp.data.room.RecentSearchItemsDao]
  */
-class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
+class SearchForFragment :
+    SearchSupportFragment(),
+    SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
     private var query: String? = null
 
@@ -70,7 +72,8 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
     private val exceptionHandler =
         CoroutineExceptionHandler { _: CoroutineContext, ex: Throwable ->
             Log.e(TAG, "Exception in search", ex)
-            Toast.makeText(requireContext(), "Search failed: ${ex.message}", Toast.LENGTH_LONG)
+            Toast
+                .makeText(requireContext(), "Search failed: ${ex.message}", Toast.LENGTH_LONG)
                 .show()
         }
 
@@ -83,7 +86,8 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
         super.onCreate(savedInstanceState)
         dataType = requireActivity().intent.getDataType()
         perPage =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 25)
         title =
             requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
@@ -96,10 +100,10 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
 
         setSearchResultProvider(this)
         setOnItemViewClickedListener {
-                itemViewHolder: Presenter.ViewHolder,
-                item: Any,
-                rowViewHolder: RowPresenter.ViewHolder?,
-                row: Row?,
+            itemViewHolder: Presenter.ViewHolder,
+            item: Any,
+            rowViewHolder: RowPresenter.ViewHolder?,
+            row: Row?,
             ->
             if (item == StashAction.CREATE_NEW) {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
@@ -134,11 +138,12 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                     else -> throw IllegalArgumentException("Unsupported datatype $dataType")
                 }
             if (item != null) {
-                Toast.makeText(
-                    requireContext(),
-                    "Created new ${getString(dataType.stringId)}: $name",
-                    Toast.LENGTH_LONG,
-                ).show()
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Created new ${getString(dataType.stringId)}: $name",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 returnId(item)
             }
         }
@@ -150,7 +155,9 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
             val currentServer = StashServer.getCurrentStashServer(requireContext())
             if (dataType in DATA_TYPE_SUGGESTIONS && currentServer != null) {
                 viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                    StashApplication.getDatabase().recentSearchItemsDao()
+                    StashApplication
+                        .getDatabase()
+                        .recentSearchItemsDao()
                         .insert(RecentSearchItem(currentServer.url, item.id, dataType))
                 }
             }
@@ -216,8 +223,11 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
                 val currentServer = StashServer.getCurrentStashServer(requireContext())
                 if (currentServer != null) {
                     val mostRecentIds =
-                        StashApplication.getDatabase().recentSearchItemsDao()
-                            .getMostRecent(perPage, currentServer.url, dataType).map { it.id }
+                        StashApplication
+                            .getDatabase()
+                            .recentSearchItemsDao()
+                            .getMostRecent(perPage, currentServer.url, dataType)
+                            .map { it.id }
                     Log.v(TAG, "Got ${mostRecentIds.size} recent items")
                     if (mostRecentIds.isNotEmpty()) {
                         val items =
@@ -253,16 +263,15 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
         }
     }
 
-    override fun getResultsAdapter(): ObjectAdapter {
-        return adapter
-    }
+    override fun getResultsAdapter(): ObjectAdapter = adapter
 
     override fun onQueryTextChange(newQuery: String): Boolean {
         taskJob?.cancel()
         taskJob =
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val searchDelay =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    PreferenceManager
+                        .getDefaultSharedPreferences(requireContext())
                         .getInt("searchDelay", 500)
                 delay(searchDelay.toLong())
                 search(newQuery)
@@ -279,7 +288,7 @@ class SearchForFragment : SearchSupportFragment(), SearchSupportFragment.SearchR
         return true
     }
 
-    private suspend fun search(query: String) {
+    private fun search(query: String) {
         searchResultsAdapter.clear()
 
         this.query = query

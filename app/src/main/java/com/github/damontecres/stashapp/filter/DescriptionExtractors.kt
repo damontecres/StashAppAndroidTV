@@ -54,8 +54,8 @@ import kotlin.reflect.full.declaredMemberProperties
 /**
  * Get the default title for a [StashData] item usable as a sub-filter label
  */
-fun extractTitle(item: StashData): String? {
-    return when (item) {
+fun extractTitle(item: StashData): String? =
+    when (item) {
         is TagData -> item.name
         is PerformerData -> item.name
         is StudioData -> item.name
@@ -67,13 +67,12 @@ fun extractTitle(item: StashData): String? {
         is FullSceneData -> item.titleOrFilename
         else -> throw IllegalArgumentException("${item::class.qualifiedName} not supported")
     }
-}
 
 /**
  * Get the default description for a [StashData] item
  */
-fun extractDescription(item: StashData): String? {
-    return when (item) {
+fun extractDescription(item: StashData): String? =
+    when (item) {
         is TagData -> item.description?.ifBlank { null }
         is PerformerData -> item.disambiguation
         is StudioData -> null
@@ -85,13 +84,12 @@ fun extractDescription(item: StashData): String? {
         is FullSceneData -> item.date
         else -> throw IllegalArgumentException("${item::class.qualifiedName} not supported")
     }
-}
 
 fun displayName(
     context: Context,
     gender: GenderEnum,
-): String {
-    return when (gender) {
+): String =
+    when (gender) {
         GenderEnum.MALE -> context.getString(R.string.stashapp_gender_types_MALE)
         GenderEnum.FEMALE -> context.getString(R.string.stashapp_gender_types_FEMALE)
         GenderEnum.TRANSGENDER_MALE -> context.getString(R.string.stashapp_gender_types_TRANSGENDER_MALE)
@@ -100,12 +98,11 @@ fun displayName(
         GenderEnum.NON_BINARY -> context.getString(R.string.stashapp_gender_types_NON_BINARY)
         GenderEnum.UNKNOWN__ -> ""
     }
-}
 
-fun displayName(orientation: OrientationEnum): String {
-    return orientation.rawValue.lowercase()
+fun displayName(orientation: OrientationEnum): String =
+    orientation.rawValue
+        .lowercase()
         .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-}
 
 fun findFilterSummary(
     context: Context,
@@ -141,11 +138,16 @@ fun filterSummary(
             else -> throw IllegalArgumentException("${f.modifier}")
         }.ifBlank { null }
 
-    val resolvedExcludes = f.excludes.getOrNull()?.map { itemMap[it]?.name ?: it }.orEmpty()
+    val resolvedExcludes =
+        f.excludes
+            .getOrNull()
+            ?.map { itemMap[it]?.name ?: it }
+            .orEmpty()
     val excludeStr =
         if (resolvedExcludes.isNotEmpty()) {
             val str =
-                StashApplication.getApplication()
+                StashApplication
+                    .getApplication()
                     .getString(R.string.stashapp_criterion_modifier_excludes)
             "$str $resolvedExcludes"
         } else {
@@ -184,11 +186,16 @@ fun filterSummary(
         } else {
             null
         }
-    val resolvedExcludes = f.excludes.getOrNull()?.map { itemMap[it]?.name ?: it }.orEmpty()
+    val resolvedExcludes =
+        f.excludes
+            .getOrNull()
+            ?.map { itemMap[it]?.name ?: it }
+            .orEmpty()
     val excludeStr =
         if (resolvedExcludes.isNotEmpty()) {
             val str =
-                StashApplication.getApplication()
+                StashApplication
+                    .getApplication()
                     .getString(R.string.stashapp_criterion_modifier_excludes)
             "$str $resolvedExcludes"
         } else {
@@ -230,7 +237,8 @@ fun filterSummaryRating(f: IntCriterionInput): String {
                 val value2Str = getRatingAsDecimalString(value2!!, ratingsAsStars)
                 if (ratingsAsStars) {
                     val starsStr =
-                        StashApplication.getApplication()
+                        StashApplication
+                            .getApplication()
                             .getString(R.string.stashapp_config_ui_editing_rating_system_type_options_stars)
                     "$valueStr & $value2Str $starsStr"
                 } else {
@@ -313,15 +321,15 @@ fun filterSummary(f: PhashDistanceCriterionInput): String {
 fun filterSummary(f: PHashDuplicationCriterionInput): String {
     val duplicated = f.duplicated.getOrNull()
     val distance = f.distance.getOrNull()
-    if (distance != null) {
-        return "$duplicated ($distance)"
+    return if (distance != null) {
+        "$duplicated ($distance)"
     } else {
-        return "$duplicated"
+        "$duplicated"
     }
 }
 
-fun resolutionName(res: ResolutionEnum): String {
-    return when (res) {
+fun resolutionName(res: ResolutionEnum): String =
+    when (res) {
         ResolutionEnum.VERY_LOW -> "144p"
         ResolutionEnum.LOW -> "240p"
         ResolutionEnum.R360P -> "360p"
@@ -339,7 +347,6 @@ fun resolutionName(res: ResolutionEnum): String {
         ResolutionEnum.HUGE -> "8K+"
         ResolutionEnum.UNKNOWN__ -> "Unknown"
     }
-}
 
 fun filterSummary(f: ResolutionCriterionInput): String {
     val modStr = f.modifier.getString(StashApplication.getApplication())
@@ -347,12 +354,13 @@ fun filterSummary(f: ResolutionCriterionInput): String {
     return "$modStr $name"
 }
 
-fun filterSummary(f: OrientationCriterionInput): String {
-    return f.value.map { v ->
-        v.name.lowercase()
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-    }.toString()
-}
+fun filterSummary(f: OrientationCriterionInput): String =
+    f.value
+        .map { v ->
+            v.name
+                .lowercase()
+                .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        }.toString()
 
 fun filterSummary(f: StashIDCriterionInput): String {
     val modStr = f.modifier.getString(StashApplication.getApplication())
@@ -437,7 +445,7 @@ fun filterSummary(f: DateCriterionInput): String {
 fun filterSummary(f: GenderCriterionInput): String {
     val values = f.value_list.getOrNull() ?: listOfNotNull(f.value.getOrNull())
     val modStr = f.modifier.getString(StashApplication.getApplication())
-    val resolvedTitles = values.map { displayName(StashApplication.getApplication(), it) }.orEmpty()
+    val resolvedTitles = values.map { displayName(StashApplication.getApplication(), it) }
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS,
@@ -472,8 +480,8 @@ fun filterSummary(
     filterDataType: DataType,
     value: Any,
     idLookup: (DataType, List<String>) -> Map<String, CreateFilterViewModel.NameDescription?>,
-): String {
-    return if (name == "rating100") {
+): String =
+    if (name == "rating100") {
         filterSummaryRating(value as IntCriterionInput)
     } else {
         when (value) {
@@ -505,7 +513,6 @@ fun filterSummary(
             else -> value.toString()
         }
     }
-}
 
 /**
  * Summarize a filter
@@ -523,23 +530,24 @@ fun filterSummary(
 ): String {
     val filterOptionNames = FilterOptions[dataType]!!.associateBy { it.name }
     val params =
-        type.declaredMemberProperties.mapNotNull { param ->
-            val obj = param.get(f) as Optional<*>
-            val value = obj.getOrNull()
-            if (value != null) {
-                val nameStringId = filterOptionNames[param.name]?.nameStringId
-                val valueStr = filterSummary(param.name, dataType, value, idLookup)
-                val key =
-                    if (nameStringId != null) {
-                        StashApplication.getApplication().getString(nameStringId)
-                    } else {
-                        param.name
-                    }
-                key to valueStr
-            } else {
-                null
-            }
-        }.sortedBy { it.first }
+        type.declaredMemberProperties
+            .mapNotNull { param ->
+                val obj = param.get(f) as Optional<*>
+                val value = obj.getOrNull()
+                if (value != null) {
+                    val nameStringId = filterOptionNames[param.name]?.nameStringId
+                    val valueStr = filterSummary(param.name, dataType, value, idLookup)
+                    val key =
+                        if (nameStringId != null) {
+                            StashApplication.getApplication().getString(nameStringId)
+                        } else {
+                            param.name
+                        }
+                    key to valueStr
+                } else {
+                    null
+                }
+            }.sortedBy { it.first }
     val text =
         params.joinToString("\n") {
             "${it.first} ${it.second}"

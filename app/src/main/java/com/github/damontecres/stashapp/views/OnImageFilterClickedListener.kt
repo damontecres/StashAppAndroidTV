@@ -37,5 +37,8 @@ class OnImageFilterClickedListener(
         context.startActivity(intent)
     }
 
-    data class FilterPosition(val filter: FilterArgs, val position: Int)
+    data class FilterPosition(
+        val filter: FilterArgs,
+        val position: Int,
+    )
 }

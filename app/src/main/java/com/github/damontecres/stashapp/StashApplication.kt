@@ -116,7 +116,7 @@ class StashApplication : Application() {
                     AppUpgradeHandler(
                         this@StashApplication,
                         Version.fromString(currentVersion),
-                        Version.fromString(pkgInfo.versionName),
+                        Version.fromString(pkgInfo.versionName!!),
                     ).run()
                 }
             }
@@ -128,7 +128,8 @@ class StashApplication : Application() {
     private fun setupDB() {
         val dbName = getString(R.string.app_name)
         database =
-            Room.databaseBuilder(this, AppDatabase::class.java, dbName)
+            Room
+                .databaseBuilder(this, AppDatabase::class.java, dbName)
                 .fallbackToDestructiveMigration()
                 .build()
     }
@@ -230,9 +231,7 @@ class StashApplication : Application() {
 
         private val fontCache = mutableMapOf<Int, Typeface>()
 
-        fun getApplication(): StashApplication {
-            return application
-        }
+        fun getApplication(): StashApplication = application
 
         fun getFont(
             @FontRes fontId: Int,
@@ -242,9 +241,7 @@ class StashApplication : Application() {
             }
         }
 
-        fun getDatabase(): AppDatabase {
-            return database
-        }
+        fun getDatabase(): AppDatabase = database
 
         const val TAG = "StashApplication"
         const val VERSION_NAME_PREVIOUS_KEY = "VERSION_NAME_PREVIOUS_NAME"

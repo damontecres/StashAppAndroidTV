@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ import androidx.appcompat.widget.ListPopupWindow
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.filter.FilterOptions
@@ -29,7 +31,9 @@ import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.views.ImageAndFilter
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
+import com.github.damontecres.stashapp.views.SlideshowOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import kotlinx.coroutines.launch
@@ -58,7 +62,9 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         filterButton.onFocusChangeListener = onFocusChangeListener
 
         sortButton = findViewById(R.id.sort_button)
+        sortButton.onFocusChangeListener = onFocusChangeListener
         playAllButton = findViewById(R.id.play_all_button)
+        playAllButton.onFocusChangeListener = onFocusChangeListener
         titleTextView = findViewById(R.id.list_title)
 
         sortButtonManager =
@@ -98,6 +104,17 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                     fragment.filterArgs
                 },
             )
+        } else if (startingFilter.dataType == DataType.IMAGE) {
+            playAllButton.visibility = View.VISIBLE
+            playAllButton.text = getString(R.string.play_slideshow)
+            playAllButton.setOnClickListener(
+                SlideshowOnClickListener(this) {
+                    val fragment =
+                        supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
+                    val item = fragment.get(0) as ImageData?
+                    ImageAndFilter(0, item, fragment.filterArgs)
+                },
+            )
         }
 
         lifecycleScope.launch(StashCoroutineExceptionHandler()) {
@@ -134,11 +151,12 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         // Always show the list for data types supporting create filter
         if (savedFilters.isEmpty() && !createFilterSupported) {
             filterButton.setOnClickListener {
-                Toast.makeText(
-                    context,
-                    "No saved filters found",
-                    Toast.LENGTH_SHORT,
-                ).show()
+                Toast
+                    .makeText(
+                        context,
+                        "No saved filters found",
+                        Toast.LENGTH_SHORT,
+                    ).show()
             }
         } else {
             val listPopUp =
@@ -190,11 +208,12 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                         setup(filterArgs)
                     } catch (ex: Exception) {
                         Log.e(TAG, "Exception parsing filter ${savedFilter.id}", ex)
-                        Toast.makeText(
-                            this@FilterListActivity,
-                            "Error with filter ${savedFilter.id}! Probably a bug: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                this@FilterListActivity,
+                                "Error with filter ${savedFilter.id}! Probably a bug: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     }
                 }
             }
@@ -234,13 +253,12 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
     ) : BaseAdapter() {
         private val inflater = LayoutInflater.from(context)
 
-        override fun getCount(): Int {
-            return if (createEnabled) {
+        override fun getCount(): Int =
+            if (createEnabled) {
                 filters.size + 3
             } else {
                 filters.size
             }
-        }
 
         override fun getItem(position: Int): Any {
             if (createEnabled) {
@@ -260,16 +278,14 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
             return filters[position]
         }
 
-        override fun getItemId(position: Int): Long {
-            return position.toLong()
-        }
+        override fun getItemId(position: Int): Long = position.toLong()
 
         override fun getView(
             position: Int,
             convertView: View?,
             parent: ViewGroup?,
-        ): View {
-            return if (convertView != null) {
+        ): View =
+            if (convertView != null) {
                 (convertView as TextView).text = getItem(position).toString()
                 convertView
             } else if (createEnabled && position == 2) {
@@ -283,31 +299,70 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                 view.text = getItem(position).toString()
                 view
             }
-        }
 
-        override fun areAllItemsEnabled(): Boolean {
-            return !createEnabled
-        }
+        override fun areAllItemsEnabled(): Boolean = !createEnabled
 
-        override fun isEnabled(position: Int): Boolean {
-            return !(createEnabled && position == 2)
-        }
+        override fun isEnabled(position: Int): Boolean = !(createEnabled && position == 2)
 
-        override fun getItemViewType(position: Int): Int {
-            return if (isEnabled(position)) {
+        override fun getItemViewType(position: Int): Int =
+            if (isEnabled(position)) {
                 0
             } else {
                 1
             }
-        }
 
-        override fun getViewTypeCount(): Int {
-            return if (createEnabled) {
+        override fun getViewTypeCount(): Int =
+            if (createEnabled) {
                 2
             } else {
                 1
             }
-        }
+    }
+
+    override fun onKeyUp(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyUp(keyCode, event) ?: false || super.onKeyUp(keyCode, event)
+    }
+
+    override fun onKeyDown(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyDown(keyCode, event) ?: false || super.onKeyDown(keyCode, event)
+    }
+
+    override fun onKeyLongPress(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyLongPress(keyCode, event) ?: false ||
+            super.onKeyLongPress(
+                keyCode,
+                event,
+            )
+    }
+
+    override fun onKeyMultiple(
+        keyCode: Int,
+        repeatCount: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+        return fragment?.onKeyMultiple(keyCode, repeatCount, event) ?: false ||
+            super.onKeyMultiple(
+                keyCode,
+                repeatCount,
+                event,
+            )
     }
 
     companion object {

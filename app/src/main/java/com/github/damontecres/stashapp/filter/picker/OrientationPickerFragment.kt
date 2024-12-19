@@ -12,29 +12,35 @@ import com.github.damontecres.stashapp.filter.CreateFilterGuidedStepFragment
 import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.filter.displayName
 
-class OrientationPickerFragment(val filterOption: FilterOption<StashDataFilter, OrientationCriterionInput>) :
-    CreateFilterGuidedStepFragment() {
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+class OrientationPickerFragment(
+    val filterOption: FilterOption<StashDataFilter, OrientationCriterionInput>,
+) : CreateFilterGuidedStepFragment() {
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
             null,
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        val curVal = filterOption.getter.invoke(viewModel.objectFilter.value!!).getOrNull()?.value.orEmpty()
+        val curVal =
+            filterOption.getter
+                .invoke(viewModel.objectFilter.value!!)
+                .getOrNull()
+                ?.value
+                .orEmpty()
 
         OrientationEnum.entries
             .mapIndexedNotNull { index, orientation ->
                 if (orientation != OrientationEnum.UNKNOWN__) {
                     val name = displayName(orientation)
                     val action =
-                        GuidedAction.Builder(requireContext())
+                        GuidedAction
+                            .Builder(requireContext())
                             .id(ORIENTATION_OFFSET + index)
                             .hasNext(false)
                             .title(name)
@@ -45,20 +51,18 @@ class OrientationPickerFragment(val filterOption: FilterOption<StashDataFilter, 
                 } else {
                     null
                 }
-            }
-            .sortedBy { it.first }
+            }.sortedBy { it.first }
             .forEach { actions.add(it.second) }
 
         addStandardActions(actions, filterOption)
     }
 
-    override fun onSubGuidedActionClicked(action: GuidedAction): Boolean {
-        return true
-    }
+    override fun onSubGuidedActionClicked(action: GuidedAction): Boolean = true
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         val values =
-            actions.filter { it.id >= ORIENTATION_OFFSET && it.isChecked }
+            actions
+                .filter { it.id >= ORIENTATION_OFFSET && it.isChecked }
                 .map { OrientationEnum.entries[(it.id - ORIENTATION_OFFSET).toInt()] }
         if (action.id == GuidedAction.ACTION_ID_FINISH) {
             val newFilter = OrientationCriterionInput(value = values)

@@ -13,21 +13,16 @@ import com.github.damontecres.stashapp.data.Scene
  * A [PlaylistFragment] that plays [SlimSceneData] videos
  */
 @OptIn(UnstableApi::class)
-class PlaylistScenesFragment :
-    PlaylistFragment<FindScenesQuery.Data, SlimSceneData, CountScenesQuery.Data>() {
+class PlaylistScenesFragment : PlaylistFragment<FindScenesQuery.Data, SlimSceneData, CountScenesQuery.Data>() {
     override val previewsEnabled: Boolean
         get() = true
 
     override val optionsButtonOptions: OptionsButtonOptions
         get() = OptionsButtonOptions(DataType.SCENE, true)
 
-    override fun builderCallback(item: SlimSceneData): (MediaItem.Builder.() -> Unit)? {
-        return null
-    }
+    override fun builderCallback(item: SlimSceneData): (MediaItem.Builder.() -> Unit)? = null
 
-    override fun convertToScene(item: SlimSceneData): Scene {
-        return Scene.fromSlimSceneData(item)
-    }
+    override fun convertToScene(item: SlimSceneData): Scene = Scene.fromSlimSceneData(item)
 
     companion object {
         private const val TAG = "PlaylistScenesFragment"

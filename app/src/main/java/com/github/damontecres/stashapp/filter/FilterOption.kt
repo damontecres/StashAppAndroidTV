@@ -864,6 +864,5 @@ val FilterOptions =
         DataType.GROUP to GroupFilterOptions,
     )
 
-fun getFilterOptions(dataType: DataType): List<FilterOption<out StashDataFilter, out Any>> {
-    return FilterOptions[dataType] ?: throw UnsupportedOperationException("$dataType")
-}
+fun getFilterOptions(dataType: DataType): List<FilterOption<out StashDataFilter, out Any>> =
+    FilterOptions[dataType] ?: throw UnsupportedOperationException("$dataType")

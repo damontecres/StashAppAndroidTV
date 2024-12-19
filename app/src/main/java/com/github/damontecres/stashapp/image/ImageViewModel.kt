@@ -7,9 +7,11 @@ import androidx.lifecycle.ViewModel
 import com.github.damontecres.stashapp.api.fragment.ImageData
 
 /**
- * The [ViewModel] for [ImageActivity] and its fragments
+ * The [ViewModel] for [com.github.damontecres.stashapp.ImageActivity] and its fragments
  */
-class ImageViewModel(private val state: SavedStateHandle) : ViewModel() {
+class ImageViewModel(
+    private val state: SavedStateHandle,
+) : ViewModel() {
     var imageController: ImageController? = null
     var videoController: VideoController? = null
 
@@ -21,6 +23,11 @@ class ImageViewModel(private val state: SavedStateHandle) : ViewModel() {
     val image: LiveData<ImageData> = _image
 
     val imageId: LiveData<String> = state.getLiveData("imageId")
+
+    /**
+     * Whether the slideshow is running or not
+     */
+    val slideshow = MutableLiveData(false)
 
     /**
      * Set the current image to a new one

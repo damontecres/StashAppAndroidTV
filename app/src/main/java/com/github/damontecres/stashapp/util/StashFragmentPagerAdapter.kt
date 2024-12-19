@@ -15,9 +15,7 @@ class StashFragmentPagerAdapter(
 ) : FragmentStatePagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
     var fragmentCreatedListener: ((Fragment, Int) -> Unit)? = null
 
-    override fun getCount(): Int {
-        return items.size
-    }
+    override fun getCount(): Int = items.size
 
     override fun getItem(position: Int): Fragment {
         val newFragment = items[position].createFragment.invoke()
@@ -25,14 +23,15 @@ class StashFragmentPagerAdapter(
         return newFragment
     }
 
-    override fun getPageTitle(position: Int): CharSequence {
-        return items[position].title
-    }
+    override fun getPageTitle(position: Int): CharSequence = items[position].title
 
     /**
      * Represents a tab with an title
      */
-    data class PagerEntry(val title: String, val createFragment: () -> Fragment) {
+    data class PagerEntry(
+        val title: String,
+        val createFragment: () -> Fragment,
+    ) {
         constructor(dataType: DataType, createFragment: () -> Fragment) : this(
             StashApplication.getApplication().getString(dataType.pluralStringId),
             createFragment,

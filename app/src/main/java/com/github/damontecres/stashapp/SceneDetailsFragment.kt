@@ -158,16 +158,17 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private val galleriesAdapter = ArrayObjectAdapter(GalleryPresenter())
     private val sceneActionsAdapter =
         SparseArrayObjectAdapter(
-            ClassPresenterSelector().addClassPresenter(
-                StashAction::class.java,
-                ActionPresenter(),
-            ).addClassPresenter(
-                OCounter::class.java,
-                OCounterPresenter(OCounterLongClickCallBack()),
-            ).addClassPresenter(
-                CreateMarkerAction::class.java,
-                CreateMarkerActionPresenter(),
-            ),
+            ClassPresenterSelector()
+                .addClassPresenter(
+                    StashAction::class.java,
+                    ActionPresenter(),
+                ).addClassPresenter(
+                    OCounter::class.java,
+                    OCounterPresenter(OCounterLongClickCallBack()),
+                ).addClassPresenter(
+                    CreateMarkerAction::class.java,
+                    CreateMarkerActionPresenter(),
+                ),
         )
 
     private var detailsOverviewRow: DetailsOverviewRow? = null
@@ -332,8 +333,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         val performerIds = sceneData!!.performers.map { it.id }
         Log.v(TAG, "fetchData performerIds=$performerIds")
         if (performerIds.isNotEmpty()) {
-            val perfs = queryEngine.findPerformers(performerIds = performerIds)
-            performersRowManager.setItems(perfs)
+            val performers = queryEngine.findPerformers(performerIds = performerIds)
+            performersRowManager.setItems(performers)
         } else {
             performersRowManager.setItems(listOf())
         }
@@ -367,7 +368,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             val screenshotUrl = sceneData!!.paths.screenshot
 
             if (screenshotUrl.isNotNullOrBlank()) {
-                StashGlide.withBitmap(requireActivity(), screenshotUrl)
+                StashGlide
+                    .withBitmap(requireActivity(), screenshotUrl)
                     .optionalCenterCrop()
                     .error(R.drawable.baseline_camera_indoor_48)
                     .into<CustomTarget<Bitmap>>(
@@ -397,7 +399,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             row.item = sceneData
             val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
             val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
-            StashGlide.with(requireActivity(), screenshotUrl)
+            StashGlide
+                .with(requireActivity(), screenshotUrl)
                 .optionalCenterCrop()
                 .error(StashPresenter.glideError(requireContext()))
                 .into<CustomTarget<Drawable>>(
@@ -566,11 +569,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         viewLifecycleOwner.lifecycleScope.launch(
                             CoroutineExceptionHandler { _, ex ->
                                 Log.e(TAG, "Exception", ex)
-                                Toast.makeText(
-                                    requireContext(),
-                                    "Failed to update scene: ${ex.message}",
-                                    Toast.LENGTH_LONG,
-                                ).show()
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Failed to update scene: ${ex.message}",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
                             },
                         ) {
                             // This will be called before other lifecycle methods, so refresh data if needed
@@ -582,44 +586,48 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                 StashAction.ADD_TAG.id -> {
                                     val newTag = tagsRowManager.add(newId)
                                     if (newTag != null) {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Added tag '${newTag.name}' to scene",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Added tag '${newTag.name}' to scene",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
                                     }
                                 }
 
                                 StashAction.ADD_PERFORMER.id -> {
                                     val newPerformer = performersRowManager.add(newId)
                                     if (newPerformer != null) {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Added performer '${newPerformer.name}' to scene",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Added performer '${newPerformer.name}' to scene",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
                                     }
                                 }
 
                                 StashAction.SET_STUDIO.id -> {
                                     val newStudio = studioAdapter.add(newId)
                                     if (newStudio != null) {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Set studio to '${newStudio.name}'",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Set studio to '${newStudio.name}'",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
                                     }
                                 }
 
                                 StashAction.ADD_GROUP.id -> {
                                     val newGroup = groupsRowManager.add(newId)
                                     if (newGroup != null) {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Added to '${newGroup.name}'",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Added to '${newGroup.name}'",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
                                     }
                                 }
 
@@ -635,7 +643,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                             newId,
                                         )!!
                                     val index =
-                                        markersAdapter.unmodifiableList<MarkerData>()
+                                        markersAdapter
+                                            .unmodifiableList<MarkerData>()
                                             .indexOfFirst {
                                                 newMarker.seconds < it.seconds
                                             }.coerceAtLeast(0)
@@ -649,11 +658,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                             ),
                                         )
                                     }
-                                    Toast.makeText(
-                                        requireContext(),
-                                        "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
+                                    Toast
+                                        .makeText(
+                                            requireContext(),
+                                            "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
                                 }
                             }
                         }
@@ -682,8 +692,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private fun convertMarker(it: FullSceneData.Scene_marker): MarkerData {
-        return MarkerData(
+    private fun convertMarker(it: FullSceneData.Scene_marker): MarkerData =
+        MarkerData(
             id = it.id,
             title = it.title,
             created_at = "",
@@ -698,19 +708,17 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             tags = it.tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
             __typename = "",
         )
-    }
 
     private inner class OCounterLongClickCallBack : StashPresenter.LongClickCallBack<OCounter> {
         override fun getPopUpItems(
             context: Context,
             item: OCounter,
-        ): List<StashPresenter.PopUpItem> {
-            return listOf(
+        ): List<StashPresenter.PopUpItem> =
+            listOf(
                 StashPresenter.PopUpItem(0L, getString(R.string.increment)),
                 StashPresenter.PopUpItem(1L, getString(R.string.decrement)),
                 StashPresenter.PopUpItem(2L, getString(R.string.reset)),
             )
-        }
 
         override fun onItemLongClick(
             context: Context,
@@ -765,13 +773,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         override fun getPopUpItems(
             context: Context,
             item: T,
-        ): List<StashPresenter.PopUpItem> {
-            return if (readOnlyModeDisabled()) {
+        ): List<StashPresenter.PopUpItem> =
+            if (readOnlyModeDisabled()) {
                 listOf(REMOVE_POPUP_ITEM)
             } else {
                 listOf()
             }
-        }
     }
 
     private inner class TagLongClickCallBack : DetailsLongClickCallBack<TagData> {
@@ -784,19 +791,21 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception setting tags", ex)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to remove tag: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Failed to remove tag: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     },
                 ) {
                     if (tagsRowManager.remove(item)) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Removed tag '${item.name}' from scene",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Removed tag '${item.name}' from scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }
@@ -813,19 +822,21 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception setting groups", ex)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to remove group: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Failed to remove group: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     },
                 ) {
                     if (groupsRowManager.remove(item)) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Removed group '${item.name}' from scene",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Removed group '${item.name}' from scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }
@@ -836,12 +847,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         override fun getPopUpItems(
             context: Context,
             item: MarkerData,
-        ): List<StashPresenter.PopUpItem> {
-            return listOf(
+        ): List<StashPresenter.PopUpItem> =
+            listOf(
                 StashPresenter.PopUpItem(177L, getString(R.string.stashapp_details)),
                 REMOVE_POPUP_ITEM,
             )
-        }
 
         override fun onItemLongClick(
             context: Context,
@@ -860,11 +870,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
                             Log.e(TAG, "Exception setting tags", ex)
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to remove tag: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Failed to remove tag: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         },
                     ) {
                         val mutResult = mutationEngine.deleteMarker(item.id)
@@ -873,11 +884,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             if (markersAdapter.size() == 0) {
                                 mAdapter.clear(MARKER_POS)
                             }
-                            Toast.makeText(
-                                requireContext(),
-                                "Removed marker from scene",
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Removed marker from scene",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                         }
                     }
                 }
@@ -904,19 +916,21 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception setting performers", ex)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to remove performer: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Failed to remove performer: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     },
                 ) {
                     if (performersRowManager.remove(item)) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Removed performer '${item.name}' from scene",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Removed performer '${item.name}' from scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }
@@ -933,19 +947,21 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 viewLifecycleOwner.lifecycleScope.launch(
                     CoroutineExceptionHandler { _, ex ->
                         Log.e(TAG, "Exception setting studio", ex)
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to remove studio: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Failed to remove studio: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     },
                 ) {
                     if (studioAdapter.remove(item)) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Removed studio from scene",
-                            Toast.LENGTH_SHORT,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Removed studio from scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
                     }
                 }
             }

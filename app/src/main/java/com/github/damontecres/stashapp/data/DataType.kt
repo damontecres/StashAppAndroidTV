@@ -159,17 +159,12 @@ enum class DataType(
                 GALLERY -> GalleryFilterType::class
             } as KClass<StashDataFilter>
 
-    val defaultCardRatio
-        get() =
-            ScenePresenter.CARD_WIDTH.toDouble() / defaultCardWidth
-
     val supportsPlaylists get() = this == SCENE || this == MARKER
 
     companion object {
-        fun fromFilterMode(mode: FilterMode): DataType? {
-            return DataType.entries.firstOrNull {
+        fun fromFilterMode(mode: FilterMode): DataType? =
+            DataType.entries.firstOrNull {
                 it.filterMode == mode
             }
-        }
     }
 }

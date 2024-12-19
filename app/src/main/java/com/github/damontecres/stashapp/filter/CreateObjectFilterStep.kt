@@ -55,8 +55,7 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                         null
                     }
                 createAction(index, filterOption.nameStringId, description)
-            }
-            .sortedBy { it.title.toString() }
+            }.sortedBy { it.title.toString() }
     }
 
     override fun onResume() {
@@ -110,7 +109,8 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         savedInstanceState: Bundle?,
     ) {
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(SUBMIT)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_actions_continue))
@@ -122,14 +122,14 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         index: Int,
         @StringRes nameId: Int,
         description: String?,
-    ): GuidedAction {
-        return GuidedAction.Builder(requireContext())
+    ): GuidedAction =
+        GuidedAction
+            .Builder(requireContext())
             .id(index.toLong())
             .hasNext(true)
             .title(nameId)
             .description(description)
             .build()
-    }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         val dataType = viewModel.dataType.value!!

@@ -9,14 +9,11 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.leanback.paging.PagingDataAdapter
 import androidx.leanback.widget.ObjectAdapter
+import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
@@ -28,19 +25,17 @@ import com.github.damontecres.stashapp.data.toPlayListItem
 import com.github.damontecres.stashapp.presenters.PlaylistItemPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
-import com.github.damontecres.stashapp.util.PlaylistItemComparator
+import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
  * Shows a playlist as a scrollable list of [PlaylistItem]s
  */
-class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
-    Fragment(R.layout.playlist_list) {
+class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : Fragment(R.layout.playlist_list) {
     private val viewModel: PlaylistViewModel by activityViewModels()
 
     private val mGridPresenter: VerticalGridPresenter = VerticalGridPresenter()
@@ -82,16 +77,9 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
             }
 
         val dataSupplier = DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, Count>(filter)
-        val pagingAdapter = PagingDataAdapter(PlaylistItemPresenter(), PlaylistItemComparator)
-        val pageSize = 10
+        val pageSize = 25
         val pagingSource =
-            StashPagingSource(
-                QueryEngine(server),
-                pageSize,
-                dataSupplier = dataSupplier,
-                useRandom = false,
-                sortByOverride = null,
-            ) { page, index, item ->
+            StashPagingSource(QueryEngine(server), dataSupplier) { page, index, item ->
                 // Pages are 1 indexed
                 val position = (page - 1) * pageSize + index
                 when (item) {
@@ -100,6 +88,13 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
                     else -> throw UnsupportedOperationException()
                 }
             }
+        val pagingAdapter =
+            PagingObjectAdapter(
+                pagingSource,
+                pageSize,
+                viewLifecycleOwner.lifecycleScope,
+                SinglePresenterSelector(PlaylistItemPresenter()),
+            )
         pagingAdapter.registerObserver(
             object : ObjectAdapter.DataObserver() {
                 override fun onChanged() {
@@ -111,34 +106,9 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
             },
         )
 
-        val flow =
-            Pager(
-                PagingConfig(
-                    pageSize = pageSize,
-                    prefetchDistance = pageSize * 2,
-                    initialLoadSize = pageSize * 2,
-                    maxSize = pageSize * 6,
-                ),
-            ) {
-                pagingSource
-            }.flow
-                .cachedIn(viewLifecycleOwner.lifecycleScope)
-
-        viewLifecycleOwner.lifecycleScope.launch(
-            StashCoroutineExceptionHandler {
-                Toast.makeText(
-                    requireContext(),
-                    "Error loading results: ${it.message}",
-                    Toast.LENGTH_LONG,
-                )
-            },
-        ) {
-            flow.collectLatest {
-                pagingAdapter.submitData(it)
-            }
-        }
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            val count = pagingSource.getCount()
+            pagingAdapter.init()
+            val count = pagingAdapter.size()
             playlistTitleView.text = playlistTitleView.text.toString() + " ($count)"
         }
 
@@ -163,11 +133,12 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
                             "Requested ${item.index} with ${player.mediaItemCount} media items in player, " +
                                 "but addNextPageToPlaylist returned no additional items",
                         )
-                        Toast.makeText(
-                            requireContext(),
-                            "Unable to find item to play. This might be a bug!",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Unable to find item to play. This might be a bug!",
+                                Toast.LENGTH_LONG,
+                            ).show()
                         return@launch
                     }
                     Log.v(TAG, "after fetch: player.mediaItemCount=${player.mediaItemCount}")
@@ -182,10 +153,11 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> :
         super.onHiddenChanged(hidden)
         if (!hidden) {
             mGridViewHolder.gridView.scrollToPosition(
-                StashExoPlayer.getInstance(
-                    requireContext(),
-                    StashServer.requireCurrentServer(),
-                ).currentMediaItemIndex,
+                StashExoPlayer
+                    .getInstance(
+                        requireContext(),
+                        StashServer.requireCurrentServer(),
+                    ).currentMediaItemIndex,
             )
         }
     }

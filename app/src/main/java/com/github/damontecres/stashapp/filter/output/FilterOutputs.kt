@@ -90,7 +90,7 @@ fun HierarchicalMultiCriterionInput.toMap(labelMapping: Map<String, String?>): M
         put("modifier", modifier.rawValue)
         put(
             "value",
-            buildMap<String, Any> {
+            buildMap {
                 put("depth", depth.getOrNull() ?: 0)
 
                 val items =
@@ -242,12 +242,14 @@ fun CircumcisionCriterionInput.toMap(): Map<String, Any> =
     buildMap {
         put("modifier", modifier.rawValue)
         val values =
-            value.getOrNull()?.map {
-                when (it) {
-                    CircumisedEnum.CUT -> "Cut"
-                    CircumisedEnum.UNCUT -> "Uncut"
-                    CircumisedEnum.UNKNOWN__ -> "Unknown"
-                }
-            }.orEmpty()
+            value
+                .getOrNull()
+                ?.map {
+                    when (it) {
+                        CircumisedEnum.CUT -> "Cut"
+                        CircumisedEnum.UNCUT -> "Uncut"
+                        CircumisedEnum.UNKNOWN__ -> "Unknown"
+                    }
+                }.orEmpty()
         put("value", values)
     }

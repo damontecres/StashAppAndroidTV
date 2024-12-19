@@ -23,9 +23,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
     private lateinit var tagId: String
     private var includeSubTags = false
 
-    override fun getTitleText(): String? {
-        return requireActivity().intent.getStringExtra("tagName")
-    }
+    override fun getTitleText(): String? = requireActivity().intent.getStringExtra("tagName")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,13 +128,12 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
         return fragment
     }
 
-    private fun createCriterionInput(subTags: Boolean): Optional.Present<HierarchicalMultiCriterionInput> {
-        return Optional.present(
+    private fun createCriterionInput(subTags: Boolean): Optional.Present<HierarchicalMultiCriterionInput> =
+        Optional.present(
             HierarchicalMultiCriterionInput(
                 value = Optional.present(listOf(tagId)),
                 modifier = CriterionModifier.INCLUDES_ALL,
                 depth = Optional.present(if (subTags) -1 else 0),
             ),
         )
-    }
 }

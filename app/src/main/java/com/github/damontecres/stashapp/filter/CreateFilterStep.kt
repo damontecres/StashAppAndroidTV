@@ -62,7 +62,8 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
 
     private fun updateActions(actions: MutableList<GuidedAction>) {
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(FILTER_NAME)
                 .hasNext(false)
                 .title(getString(R.string.stashapp_filter_name))
@@ -78,7 +79,8 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 viewModel.findFilter.value!!,
             )
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(SORT_OPTION)
                 .hasNext(true)
                 .title(getString(R.string.sort_by))
@@ -87,7 +89,8 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         )
 
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(FILTER_OPTIONS)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_filters))
@@ -96,7 +99,8 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         val count = viewModel.resultCount.value ?: -1
         val countStr = formatNumber(count, viewModel.abbreviateCounters)
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(SUBMIT)
                 .hasNext(true)
                 .title("Submit without saving")
@@ -106,7 +110,8 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         if (readOnlyModeDisabled()) {
             if (experimental) {
                 actions.add(
-                    GuidedAction.Builder(requireContext())
+                    GuidedAction
+                        .Builder(requireContext())
                         .id(SAVE_SUBMIT)
                         .hasNext(true)
                         .enabled(false)
@@ -116,7 +121,8 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 )
             } else {
                 actions.add(
-                    GuidedAction.Builder(requireContext())
+                    GuidedAction
+                        .Builder(requireContext())
                         .id(SAVE_SUBMIT)
                         .hasNext(true)
                         .enabled(false)
@@ -182,13 +188,15 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 // If there is a name, try to save it to the server
                 if (experimentalFeaturesEnabled() &&
-                    action.id == SAVE_SUBMIT && filterArgs.name.isNotNullOrBlank()
+                    action.id == SAVE_SUBMIT &&
+                    filterArgs.name.isNotNullOrBlank()
                 ) {
                     val queryEngine = QueryEngine(viewModel.server.value!!)
                     // Save it
                     val filterWriter =
                         FilterWriter(dataType) { dataType, ids ->
-                            queryEngine.getByIds(dataType, ids)
+                            queryEngine
+                                .getByIds(dataType, ids)
                                 .associate { it.id to extractTitle(it) }
                         }
                     val findFilter =

@@ -114,6 +114,14 @@ class SortButtonManager(
             listPopUp.show()
             listPopUp.listView?.requestFocus()
         }
+
+        sortButton.setOnLongClickListener {
+            val newSortAndDirection =
+                sortAndDirection.copy(direction = sortAndDirection.direction.toggle())
+            newSortCallback(newSortAndDirection)
+            setUpSortButton(sortButton, dataType, newSortAndDirection)
+            true
+        }
     }
 
     private fun setSortButtonText(
@@ -154,8 +162,7 @@ class SortButtonManager(
         items: List<String>,
         var currentIndex: Int,
         var currentDirection: SortDirectionEnum?,
-    ) :
-        ArrayAdapter<String>(context, R.layout.sort_popup_item, R.id.popup_item_text, items) {
+    ) : ArrayAdapter<String>(context, R.layout.sort_popup_item, R.id.popup_item_text, items) {
         override fun getView(
             position: Int,
             convertView: View?,
@@ -163,7 +170,7 @@ class SortButtonManager(
         ): View {
             val view = super.getView(position, convertView, parent)
             view as LinearLayout
-            (view.get(0) as TextView).text =
+            (view[0] as TextView).text =
                 if (position == currentIndex) {
                     when (currentDirection) {
                         SortDirectionEnum.ASC -> context.getString(R.string.fa_caret_up)

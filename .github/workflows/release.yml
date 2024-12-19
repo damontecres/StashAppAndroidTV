@@ -11,7 +11,7 @@ defaults:
 
 env:
   APK_SHORT_NAME: StashAppAndroidTV.apk
-  BUILD_TOOLS_VERSION: 34.0.0
+  BUILD_TOOLS_VERSION: 35.0.0
 
 jobs:
   publish:
@@ -32,7 +32,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: '17'
+          java-version: '21'
           cache: 'gradle'
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3

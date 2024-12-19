@@ -11,31 +11,21 @@ import com.github.damontecres.stashapp.data.DataType
 class TagDataSupplier(
     private val findFilter: FindFilterType?,
     private val tagFilter: TagFilterType?,
-) :
-    StashPagingSource.DataSupplier<FindTagsQuery.Data, TagData, CountTagsQuery.Data> {
+) : StashPagingSource.DataSupplier<FindTagsQuery.Data, TagData, CountTagsQuery.Data> {
     override val dataType: DataType get() = DataType.TAG
 
-    override fun createQuery(filter: FindFilterType?): Query<FindTagsQuery.Data> {
-        return FindTagsQuery(
+    override fun createQuery(filter: FindFilterType?): Query<FindTagsQuery.Data> =
+        FindTagsQuery(
             filter = filter,
             tag_filter = tagFilter,
             ids = null,
         )
-    }
 
-    override fun getDefaultFilter(): FindFilterType {
-        return findFilter ?: DataType.TAG.asDefaultFindFilterType
-    }
+    override fun getDefaultFilter(): FindFilterType = findFilter ?: DataType.TAG.asDefaultFindFilterType
 
-    override fun createCountQuery(filter: FindFilterType?): Query<CountTagsQuery.Data> {
-        return CountTagsQuery(filter, tagFilter)
-    }
+    override fun createCountQuery(filter: FindFilterType?): Query<CountTagsQuery.Data> = CountTagsQuery(filter, tagFilter)
 
-    override fun parseCountQuery(data: CountTagsQuery.Data): Int {
-        return data.findTags.count
-    }
+    override fun parseCountQuery(data: CountTagsQuery.Data): Int = data.findTags.count
 
-    override fun parseQuery(data: FindTagsQuery.Data): List<TagData> {
-        return data.findTags.tags.map { it.tagData }
-    }
+    override fun parseQuery(data: FindTagsQuery.Data): List<TagData> = data.findTags.tags.map { it.tagData }
 }

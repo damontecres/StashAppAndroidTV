@@ -16,8 +16,9 @@ import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
 import java.util.EnumMap
 
-class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
-    StashPresenter<TagData>(callback) {
+class TagPresenter(
+    callback: LongClickCallBack<TagData>? = null,
+) : StashPresenter<TagData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: TagData,
@@ -60,16 +61,14 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
         }
     }
 
-    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<TagData> {
-        return DefaultTagLongClickCallBack()
-    }
+    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<TagData> = DefaultTagLongClickCallBack()
 
     open class DefaultTagLongClickCallBack : LongClickCallBack<TagData> {
         override fun getPopUpItems(
             context: Context,
             item: TagData,
-        ): List<PopUpItem> {
-            return buildList {
+        ): List<PopUpItem> =
+            buildList {
                 add(PopUpItem.getDefault(context))
                 if (item.child_count > 0) {
                     // TODO, combining two i18n strings is rarely the correct thing
@@ -86,7 +85,6 @@ class TagPresenter(callback: LongClickCallBack<TagData>? = null) :
                     add(PopUpItem(POPUP_CHILDREN_ID, str))
                 }
             }
-        }
 
         override fun onItemLongClick(
             context: Context,

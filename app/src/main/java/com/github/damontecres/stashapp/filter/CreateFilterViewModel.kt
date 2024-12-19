@@ -27,7 +27,7 @@ import kotlin.reflect.full.createInstance
  * Tracks state while the user builds a new filter
  */
 class CreateFilterViewModel : ViewModel() {
-    val server = MutableLiveData<StashServer>(StashServer.requireCurrentServer())
+    val server = MutableLiveData(StashServer.requireCurrentServer())
     val abbreviateCounters: Boolean get() = server.value!!.serverPreferences.abbreviateCounters
     val queryEngine = QueryEngine(server.value!!)
 
@@ -110,7 +110,7 @@ class CreateFilterViewModel : ViewModel() {
                         ),
                     )
                 val pagingSource =
-                    StashPagingSource<Query.Data, StashData, Any, Query.Data>(queryEngine, 25, supplier)
+                    StashPagingSource<Query.Data, StashData, Any, Query.Data>(queryEngine, supplier)
                 resultCount.value = pagingSource.getCount()
             }
     }
@@ -140,22 +140,27 @@ class CreateFilterViewModel : ViewModel() {
     fun lookupIds(
         dataType: DataType,
         ids: List<String>,
-    ): Map<String, NameDescription?> {
-        return ids.associateWith { id ->
+    ): Map<String, NameDescription?> =
+        ids.associateWith { id ->
             val key = DataTypeId(dataType, id)
             storedItems[key]
         }
-    }
 
     /**
      * A composite of [DataType] and ID because IDs can be reused between data types
      */
-    data class DataTypeId(val dataType: DataType, val id: String)
+    data class DataTypeId(
+        val dataType: DataType,
+        val id: String,
+    )
 
     /**
      * A name (or title) and description of a [StashData] item
      */
-    data class NameDescription(val name: String?, val description: String?) {
+    data class NameDescription(
+        val name: String?,
+        val description: String?,
+    ) {
         constructor(item: StashData) : this(extractTitle(item), extractDescription(item))
     }
 

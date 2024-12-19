@@ -31,12 +31,11 @@ class CompanionPlugin {
         const val CRASH_TASK_NAME = "crash_report"
         const val LOGCAT_TASK_NAME = "logcat"
 
-        suspend fun installPlugin(mutationEngine: MutationEngine): String {
-            return mutationEngine.installPackage(
+        suspend fun installPlugin(mutationEngine: MutationEngine): String =
+            mutationEngine.installPackage(
                 PackageType.Plugin,
-                PackageSpecInput(PLUGIN_ID, SOURCE_URL),
+                PackageSpecInput(id = PLUGIN_ID, sourceURL = SOURCE_URL),
             )
-        }
 
         fun getLogCatLines(verbose: Boolean): List<String> {
             val lineCount = if (verbose) 500 else 200
@@ -116,11 +115,12 @@ class CompanionPlugin {
                         } else if (result is JobResult.NotFound) {
                             Toast.makeText(context, "Error sending logs", Toast.LENGTH_LONG).show()
                         } else if (result is JobResult.Failure) {
-                            Toast.makeText(
-                                context,
-                                "Error sending logs: ${result.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    context,
+                                    "Error sending logs: ${result.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         }
                     }
                 } else {
@@ -129,11 +129,12 @@ class CompanionPlugin {
             } catch (ex: Exception) {
                 Log.e(TAG, "Error sending logs", ex)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        context,
-                        "Error sending logs: ${ex.message}",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            context,
+                            "Error sending logs: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
                 }
             }
         }

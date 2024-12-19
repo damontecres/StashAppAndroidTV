@@ -27,6 +27,7 @@
         android:layout_margin="4dp"
         android:gravity="center"
         android:background="@android:color/black"
+        android:contentDescription="@string/stashapp_actions_preview"
         tools:src="@drawable/baseline_camera_indoor_48"
         tools:layout_width="175dp"
         tools:layout_height="100dp"

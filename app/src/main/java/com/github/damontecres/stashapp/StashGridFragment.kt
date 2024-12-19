@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,13 +13,13 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
-import androidx.core.view.isVisible
+import androidx.core.view.contains
+import androidx.core.view.get
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.ObjectAdapter
-import androidx.leanback.widget.OnChildLaidOutListener
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.PresenterSelector
@@ -27,6 +28,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
 import com.chrynan.parcelable.core.putParcelable
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
@@ -38,11 +40,13 @@ import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
+import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -52,24 +56,31 @@ import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
+import com.github.damontecres.stashapp.views.ImageAndFilter
 import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
+import com.github.damontecres.stashapp.views.SlideshowOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
+import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.formatNumber
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlin.math.abs
 
 /**
  * A [Fragment] that shows a grid of items of the same [DataType].
  *
  * The items are derived from a [FilterArgs] and queried via [DataSupplierFactory].
  */
-class StashGridFragment() : Fragment() {
+class StashGridFragment() :
+    Fragment(),
+    DefaultKeyEventCallback {
     // Views
     private lateinit var sortButton: Button
     private lateinit var playAllButton: Button
@@ -83,8 +94,11 @@ class StashGridFragment() : Fragment() {
     private lateinit var mAdapter: PagingObjectAdapter
     private lateinit var alphabetFilterLayout: LinearLayout
     private lateinit var loadingProgressBar: ContentLoadingProgressBar
+    private lateinit var jumpButtonLayout: LinearLayout
 
     var titleView: View? = null
+
+    private var remoteButtonPaging: Boolean = true
 
     // Arguments
     private lateinit var _filterArgs: FilterArgs
@@ -164,7 +178,7 @@ class StashGridFragment() : Fragment() {
         @SuppressLint("SetTextI18n")
         set(position) {
             if (mGridViewHolder.gridView.adapter != null) {
-                if (Math.abs(mSelectedPosition - position) < mGridPresenter.numberOfColumns * 10) {
+                if (abs(mSelectedPosition - position) < mGridPresenter.numberOfColumns * 10) {
                     // If new position is close to the current, smooth scroll
                     mGridViewHolder.gridView.setSelectedPositionSmooth(position)
                     gridOnItemSelected(position)
@@ -172,7 +186,7 @@ class StashGridFragment() : Fragment() {
                     // If not, just jump without smooth scrolling
 
                     viewLifecycleOwner.lifecycleScope.launch {
-                        mAdapter.prepareForJump(position)
+                        mAdapter.prefetch(position).join()
                         mGridViewHolder.gridView.selectedPosition = position
                         gridOnItemSelected(position)
                     }
@@ -214,13 +228,6 @@ class StashGridFragment() : Fragment() {
             }
         }
 
-    private val mChildLaidOutListener =
-        OnChildLaidOutListener { parent, view, position, id ->
-            if (position == 0) {
-                showOrHideTitle()
-            }
-        }
-
     constructor(
         filterArgs: FilterArgs,
         columns: Int? = null,
@@ -249,20 +256,17 @@ class StashGridFragment() : Fragment() {
             positionTextView.text = formatNumber(position + 1, false)
             // If on the second row & the back callback exists, enable it
             onBackPressedCallback?.isEnabled = mSelectedPosition >= mGridPresenter.numberOfColumns
-            mAdapter.updatePosition(position)
+            mAdapter.maybePrefetch(position)
         }
     }
 
     private fun showOrHideTitle() {
-        if (mGridViewHolder.gridView.findViewHolderForAdapterPosition(mSelectedPosition) == null) {
-            if (DEBUG) Log.v(TAG, "showOrHideTitle: view holder for $mSelectedPosition is null")
-            return
-        }
         val shouldShowTitle = mSelectedPosition < mGridPresenter.numberOfColumns
         if (DEBUG) {
             Log.v(
                 TAG,
-                "showOrHideTitle: mSelectedPosition=$mSelectedPosition, mGridPresenter.numberOfColumns=${mGridPresenter.numberOfColumns}",
+                "showOrHideTitle: $shouldShowTitle, mSelectedPosition=$mSelectedPosition, " +
+                    "mGridPresenter.numberOfColumns=${mGridPresenter.numberOfColumns}",
             )
         }
         showTitle(shouldShowTitle)
@@ -297,7 +301,8 @@ class StashGridFragment() : Fragment() {
                 columns
             } else {
                 val cardSize =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    PreferenceManager
+                        .getDefaultSharedPreferences(requireContext())
                         .getInt("cardSize", requireContext().getString(R.string.card_size_default))
                 (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
             }
@@ -305,43 +310,52 @@ class StashGridFragment() : Fragment() {
         val gridPresenter = StashGridPresenter()
         gridPresenter.numberOfColumns = calculatedColumns
         setGridPresenter(gridPresenter)
+
+        remoteButtonPaging =
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_remote_page_buttons), true)
     }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View? {
+    ): View {
         val root =
             inflater.inflate(
                 R.layout.stash_grid_fragment,
                 container,
                 false,
             ) as ViewGroup
-        val gridFrame = root.findViewById<View>(androidx.leanback.R.id.grid_frame) as ViewGroup
+        val onFocusChangeListener = StashOnFocusChangeListener(requireContext())
         sortButton = root.findViewById(R.id.sort_button)
+        sortButton.onFocusChangeListener = onFocusChangeListener
         playAllButton = root.findViewById(R.id.play_all_button)
+        playAllButton.onFocusChangeListener = onFocusChangeListener
         filterButton = root.findViewById(R.id.filter_button)
+        filterButton.onFocusChangeListener = onFocusChangeListener
         subContentSwitch = root.findViewById(R.id.sub_content_switch)
+        subContentSwitch.onFocusChangeListener = onFocusChangeListener
+
         val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         mGridViewHolder.view.isFocusableInTouchMode = false
         gridDock.addView(mGridViewHolder.view)
-        mGridViewHolder.gridView.setOnChildLaidOutListener(mChildLaidOutListener)
         if (name == null) {
             name = getString(dataType.pluralStringId)
         }
-        mGridViewHolder.gridView.addOnLayoutCompletedListener {
-            showOrHideTitle()
-        }
 
+        jumpButtonLayout = root.findViewById(R.id.jump_layout)
         loadingProgressBar = root.findViewById(R.id.loading_progress_bar)
 
-        alphabetFilterLayout = root.findViewById<LinearLayout>(R.id.alphabet_filter_layout)
+        alphabetFilterLayout = root.findViewById(R.id.alphabet_filter_layout)
         AlphabetSearchUtils.LETTERS.forEach { letter ->
             val button =
                 inflater.inflate(R.layout.alphabet_button, alphabetFilterLayout, false) as Button
             button.text = letter.toString()
+            button.onFocusChangeListener =
+                StashOnFocusChangeListener(requireContext(), R.fraction.alphabet_zoom)
             button.setOnClickListener {
                 loadingProgressBar.show()
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
@@ -394,7 +408,8 @@ class StashGridFragment() : Fragment() {
                 if (scrollToNextPage) {
                     Log.v(TAG, "scrolling to next page")
                     currentSelectedPosition =
-                        PreferenceManager.getDefaultSharedPreferences(requireContext())
+                        PreferenceManager
+                            .getDefaultSharedPreferences(requireContext())
                             .getInt("maxSearchResults", 25)
                 }
             }
@@ -430,6 +445,16 @@ class StashGridFragment() : Fragment() {
                     filterArgs
                 },
             )
+        } else if (playAllButtonEnabled && dataType == DataType.IMAGE) {
+            playAllButton.visibility = View.VISIBLE
+            playAllButton.nextFocusUpId = R.id.tab_layout
+            playAllButton.text = getString(R.string.play_slideshow)
+            playAllButton.setOnClickListener(
+                SlideshowOnClickListener(requireContext()) {
+                    val item = mAdapter.get(0) as ImageData?
+                    ImageAndFilter(0, item, filterArgs)
+                },
+            )
         }
         if (filterButtonEnabled) {
             filterButton.visibility = View.VISIBLE
@@ -454,7 +479,8 @@ class StashGridFragment() : Fragment() {
         }
 
         val prefBackPressScrollEnabled =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_back_button_scroll), true)
 
         if (prefBackPressScrollEnabled && backPressScrollEnabled) {
@@ -526,10 +552,7 @@ class StashGridFragment() : Fragment() {
         val pagingSource =
             StashPagingSource<Query.Data, StashData, StashData, Query.Data>(
                 QueryEngine(server),
-                pageSize,
                 dataSupplier = dataSupplier,
-                useRandom = false,
-                sortByOverride = null,
             )
         val pagingAdapter =
             PagingObjectAdapter(
@@ -554,9 +577,7 @@ class StashGridFragment() : Fragment() {
             pagingAdapter.registerObserver(
                 object : ObjectAdapter.DataObserver() {
                     override fun onChanged() {
-                        requireView()
-                            .findViewById<View>(androidx.leanback.R.id.grid_frame)
-                            .requestFocus()
+                        mGridViewHolder.gridView.requestFocus()
                         pagingAdapter.unregisterObserver(this)
                     }
                 },
@@ -573,18 +594,23 @@ class StashGridFragment() : Fragment() {
         )
 
         val showFooter =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_show_grid_footer), true)
         val footerLayout = requireView().findViewById<View>(R.id.footer_layout)
 
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            mAdapter.init()
             updateAdapter()
+            mAdapter.init()
             val count = pagingSource.getCount()
             if (count == 0) {
                 positionTextView.text = getString(R.string.zero)
                 noResultsTextView.animateToVisible()
                 loadingProgressBar.hide()
+                jumpButtonLayout.animateToInvisible(View.GONE)
+            } else {
+                setupJumpButtons(count)
+                jumpButtonLayout.animateToVisible()
             }
             totalCountTextView.text =
                 formatNumber(count, server.serverPreferences.abbreviateCounters)
@@ -604,6 +630,42 @@ class StashGridFragment() : Fragment() {
         }
     }
 
+    private fun setupJumpButtons(count: Int) {
+        val columns = mGridPresenter.numberOfColumns
+        val jump2 =
+            if (count >= 25_000) {
+                columns * 2000
+            } else if (count >= 7_000) {
+                columns * 200
+            } else if (count >= 2_000) {
+                columns * 50
+            } else {
+                columns * 20
+            }
+        val jump1 =
+            if (count >= 25_000) {
+                columns * 500
+            } else if (count >= 7_000) {
+                columns * 50
+            } else if (count >= 2_000) {
+                columns * 15
+            } else {
+                columns * 6
+            }
+        jumpButtonLayout[0].setOnClickListener {
+            currentSelectedPosition = (currentSelectedPosition - jump2).coerceIn(0, count - 1)
+        }
+        jumpButtonLayout[1].setOnClickListener {
+            currentSelectedPosition = (currentSelectedPosition - jump1).coerceIn(0, count - 1)
+        }
+        jumpButtonLayout[2].setOnClickListener {
+            currentSelectedPosition = (currentSelectedPosition + jump1).coerceIn(0, count - 1)
+        }
+        jumpButtonLayout[3].setOnClickListener {
+            currentSelectedPosition = (currentSelectedPosition + jump2).coerceIn(0, count - 1)
+        }
+    }
+
     override fun onStart() {
         super.onStart()
 
@@ -611,13 +673,21 @@ class StashGridFragment() : Fragment() {
             requireView().findViewById<BrowseFrameLayout>(androidx.leanback.R.id.grid_frame)
         browseFrameLayout.onFocusSearchListener =
             BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
-                if (direction == View.FOCUS_UP) {
-                    if (alphabetFilterLayout.isVisible) {
-                        null
+                if (focused != null && focused in alphabetFilterLayout) {
+                    if (direction == View.FOCUS_LEFT) {
+                        mGridViewHolder.gridView
                     } else {
-                        val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
-                        filterButton
+                        null
                     }
+                } else if (focused != null && focused in jumpButtonLayout) {
+                    if (direction == View.FOCUS_RIGHT) {
+                        mGridViewHolder.gridView
+                    } else {
+                        null
+                    }
+                } else if (direction == View.FOCUS_UP) {
+                    val filterButton = requireActivity().findViewById<View>(R.id.filter_button)
+                    filterButton
                 } else {
                     null
                 }
@@ -659,21 +729,70 @@ class StashGridFragment() : Fragment() {
         filterButtonEnabled = false
     }
 
+    fun get(index: Int): Any? = mAdapter.get(index)
+
+    override fun onKeyUp(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        // If play is pressed and the page contains scenes or markers and user is focused on a card (ie not a button)
+        if ((keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) &&
+            (dataType == DataType.SCENE || dataType == DataType.MARKER) &&
+            requireActivity().currentFocus is StashImageCardView
+        ) {
+            val position = currentSelectedPosition
+            val item = mAdapter.get(position)
+            if (item != null) {
+                maybeStartPlayback(requireContext(), item)
+                return true
+            } else {
+                return false
+            }
+        } else if (remoteButtonPaging &&
+            keyCode in
+            setOf(
+                KeyEvent.KEYCODE_PAGE_UP,
+                KeyEvent.KEYCODE_CHANNEL_UP,
+                KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+                KeyEvent.KEYCODE_MEDIA_REWIND,
+                KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD,
+            ) &&
+            requireActivity().currentFocus is StashImageCardView
+        ) {
+            jumpButtonLayout[1].callOnClick()
+            return true
+        } else if (remoteButtonPaging &&
+            keyCode in
+            setOf(
+                KeyEvent.KEYCODE_PAGE_DOWN,
+                KeyEvent.KEYCODE_CHANNEL_DOWN,
+                KeyEvent.KEYCODE_MEDIA_NEXT,
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+                KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD,
+            ) &&
+            requireActivity().currentFocus is StashImageCardView
+        ) {
+            jumpButtonLayout[2].callOnClick()
+            return true
+        } else {
+            return super.onKeyUp(keyCode, event)
+        }
+    }
+
     companion object {
         private const val TAG = "StashGridFragment"
 
         private const val DEBUG = false
     }
 
-    private class StashGridPresenter :
-        VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
+    private class StashGridPresenter : VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
         override fun initializeGridViewHolder(vh: ViewHolder?) {
             super.initializeGridViewHolder(vh)
             val gridView = vh!!.gridView
             val top = 10 // gridView.paddingTop
             val bottom = gridView.paddingBottom
-            val right = 20
-            val left = 20
+            val right = 14
+            val left = 14
             gridView.setPadding(left, top, right, bottom)
         }
     }

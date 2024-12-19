@@ -15,28 +15,29 @@ import com.github.damontecres.stashapp.filter.FilterOption
 class BooleanPickerFragment(
     private val filterOption: FilterOption<StashDataFilter, Boolean>,
 ) : CreateFilterGuidedStepFragment() {
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
             "",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(0L)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_true))
                 .build(),
         )
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(1L)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_false))
@@ -44,7 +45,8 @@ class BooleanPickerFragment(
         )
         if (viewModel.getValue(filterOption) != null) {
             actions.add(
-                GuidedAction.Builder(requireContext())
+                GuidedAction
+                    .Builder(requireContext())
                     .id(2L)
                     .hasNext(true)
                     .title(getString(R.string.stashapp_actions_remove))
@@ -52,7 +54,8 @@ class BooleanPickerFragment(
             )
         }
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_CANCEL)
                 .hasNext(true)
                 .title(getString(R.string.stashapp_actions_cancel))

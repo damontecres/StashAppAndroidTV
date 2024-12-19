@@ -29,7 +29,9 @@ import kotlinx.coroutines.launch
 /**
  * Search for items regardless of data type
  */
-class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
+class StashSearchFragment :
+    SearchSupportFragment(),
+    SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
 
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
@@ -40,16 +42,15 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
         setOnItemViewClickedListener(StashItemViewClickListener(requireActivity()))
     }
 
-    override fun getResultsAdapter(): ObjectAdapter {
-        return rowsAdapter
-    }
+    override fun getResultsAdapter(): ObjectAdapter = rowsAdapter
 
     override fun onQueryTextChange(newQuery: String): Boolean {
         taskJob?.cancel()
         taskJob =
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val searchDelay =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    PreferenceManager
+                        .getDefaultSharedPreferences(requireContext())
                         .getInt("searchDelay", 500)
                 delay(searchDelay.toLong())
                 search(newQuery)
@@ -66,12 +67,13 @@ class StashSearchFragment : SearchSupportFragment(), SearchSupportFragment.Searc
         return true
     }
 
-    private suspend fun search(query: String) {
+    private fun search(query: String) {
         if (!TextUtils.isEmpty(query)) {
             rowsAdapter.clear()
 
             val perPage =
-                PreferenceManager.getDefaultSharedPreferences(requireContext())
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
                     .getInt("maxSearchResults", 25)
             val filter =
                 FindFilterType(

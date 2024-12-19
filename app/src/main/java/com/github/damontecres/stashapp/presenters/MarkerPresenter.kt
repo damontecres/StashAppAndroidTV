@@ -15,8 +15,9 @@ import java.util.EnumMap
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
-    StashPresenter<MarkerData>(callback) {
+class MarkerPresenter(
+    callback: LongClickCallBack<MarkerData>? = null,
+) : StashPresenter<MarkerData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: MarkerData,
@@ -41,18 +42,17 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
         cardView.videoUrl = item.stream
     }
 
-    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<MarkerData> {
-        return object : LongClickCallBack<MarkerData> {
+    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<MarkerData> =
+        object : LongClickCallBack<MarkerData> {
             override fun getPopUpItems(
                 context: Context,
                 item: MarkerData,
-            ): List<PopUpItem> {
-                return listOf(
+            ): List<PopUpItem> =
+                listOf(
                     PopUpItem(0L, context.getString(R.string.go_to)),
                     PopUpItem(1L, context.getString(R.string.go_to_scene)),
                     PopUpItem(2L, context.getString(R.string.stashapp_details)),
                 )
-            }
 
             override fun onItemLongClick(
                 context: Context,
@@ -84,12 +84,11 @@ class MarkerPresenter(callback: LongClickCallBack<MarkerData>? = null) :
                 }
             }
         }
-    }
 
     companion object {
         private const val TAG = "MarkerPresenter"
 
-        const val CARD_WIDTH = 351
-        const val CARD_HEIGHT = 198
+        const val CARD_WIDTH = ScenePresenter.CARD_WIDTH
+        const val CARD_HEIGHT = ScenePresenter.CARD_HEIGHT
     }
 }

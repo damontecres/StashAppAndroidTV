@@ -76,9 +76,7 @@ class StashClient private constructor() {
             return createOkHttpClient(server, false, true)
         }
 
-        fun getStreamHttpClient(server: StashServer): OkHttpClient {
-            return createOkHttpClient(server, true, false)
-        }
+        fun getStreamHttpClient(server: StashServer): OkHttpClient = createOkHttpClient(server, true, false)
 
         private fun createOkHttpClient(
             server: StashServer,
@@ -97,12 +95,16 @@ class StashClient private constructor() {
 
             Log.v(TAG, "User-Agent=$userAgent")
             var builder =
-                OkHttpClient.Builder()
+                OkHttpClient
+                    .Builder()
                     .readTimeout(networkTimeout, TimeUnit.SECONDS)
                     .writeTimeout(networkTimeout, TimeUnit.SECONDS)
                     .addNetworkInterceptor {
                         it.proceed(
-                            it.request().newBuilder().header("User-Agent", userAgent)
+                            it
+                                .request()
+                                .newBuilder()
+                                .header("User-Agent", userAgent)
                                 .build(),
                         )
                     }
@@ -111,21 +113,29 @@ class StashClient private constructor() {
                 val sslContext = SSLContext.getInstance("SSL")
                 sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
                 builder =
-                    builder.sslSocketFactory(
-                        sslContext.socketFactory,
-                        TRUST_ALL_CERTS,
-                    ).hostnameVerifier { _, _ ->
-                        true
-                    }
+                    builder
+                        .sslSocketFactory(
+                            sslContext.socketFactory,
+                            TRUST_ALL_CERTS,
+                        ).hostnameVerifier { _, _ ->
+                            true
+                        }
             }
             if (useApiKey && server.apiKey.isNotNullOrBlank()) {
                 val cleanedApiKey = server.apiKey.trim()
                 builder =
                     builder.addInterceptor {
                         val request =
-                            if (it.request().url.toString().startsWith(serverUrlRoot)) {
+                            if (it
+                                    .request()
+                                    .url
+                                    .toString()
+                                    .startsWith(serverUrlRoot)
+                            ) {
                                 // Only set the API Key if the target URL is the stash server
-                                it.request().newBuilder()
+                                it
+                                    .request()
+                                    .newBuilder()
                                     .addHeader(Constants.STASH_API_HEADER, cleanedApiKey)
                                     .build()
                             } else {
@@ -171,13 +181,15 @@ class StashClient private constructor() {
                 builder =
                     builder.addInterceptor {
                         val request =
-                            it.request().newBuilder()
+                            it
+                                .request()
+                                .newBuilder()
                                 .cacheControl(
-                                    CacheControl.Builder()
+                                    CacheControl
+                                        .Builder()
                                         .maxAge(cacheDuration.toInt(DurationUnit.HOURS), TimeUnit.HOURS)
                                         .build(),
-                                )
-                                .build()
+                                ).build()
                         it.proceed(request)
                     }
             }
@@ -238,17 +250,18 @@ class StashClient private constructor() {
         private fun createApolloClient(server: StashServer): ApolloClient {
             val url = cleanServerUrl(server.url)
             val httpClient = getHttpClient(server)
-            return ApolloClient.Builder()
+            return ApolloClient
+                .Builder()
                 .serverUrl(url)
                 .httpEngine(DefaultHttpEngine(httpClient))
                 .subscriptionNetworkTransport(
-                    WebSocketNetworkTransport.Builder()
+                    WebSocketNetworkTransport
+                        .Builder()
                         .serverUrl(url)
                         .wsProtocol(GraphQLWsProtocol())
                         .webSocketEngine(WebSocketEngine(httpClient))
                         .build(),
-                )
-                .build()
+                ).build()
         }
 
         /**
@@ -268,7 +281,8 @@ class StashClient private constructor() {
                 pathSegments.add("graphql")
             }
             url =
-                url.buildUpon()
+                url
+                    .buildUpon()
                     .path(pathSegments.joinToString("/")) // Ensure the URL is the graphql endpoint
                     .build()
             return url.toString()
@@ -288,10 +302,11 @@ class StashClient private constructor() {
             var url = Uri.parse(cleanedStashUrl)
             val pathSegments = url.pathSegments.toMutableList()
             if (pathSegments.isNotEmpty() && pathSegments.last() == "graphql") {
-                pathSegments.removeLast()
+                pathSegments.removeAt(pathSegments.size - 1)
             }
             url =
-                url.buildUpon()
+                url
+                    .buildUpon()
                     .path(pathSegments.joinToString("/"))
                     .build()
             return url.toString()
@@ -310,12 +325,16 @@ class StashClient private constructor() {
             val url = cleanServerUrl(server.url)
             val userAgent = createUserAgent(context)
             var builder =
-                OkHttpClient.Builder()
+                OkHttpClient
+                    .Builder()
                     .readTimeout(30, TimeUnit.SECONDS)
                     .writeTimeout(30, TimeUnit.SECONDS)
                     .addNetworkInterceptor {
                         it.proceed(
-                            it.request().newBuilder().header("User-Agent", userAgent)
+                            it
+                                .request()
+                                .newBuilder()
+                                .header("User-Agent", userAgent)
                                 .build(),
                         )
                     }
@@ -324,26 +343,30 @@ class StashClient private constructor() {
                 val sslContext = SSLContext.getInstance("SSL")
                 sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
                 builder =
-                    builder.sslSocketFactory(
-                        sslContext.socketFactory,
-                        TRUST_ALL_CERTS,
-                    ).hostnameVerifier { _, _ ->
-                        true
-                    }
+                    builder
+                        .sslSocketFactory(
+                            sslContext.socketFactory,
+                            TRUST_ALL_CERTS,
+                        ).hostnameVerifier { _, _ ->
+                            true
+                        }
             }
             if (server.apiKey.isNotNullOrBlank()) {
                 val cleanedApiKey = server.apiKey.trim()
                 builder =
                     builder.addInterceptor {
                         val request =
-                            it.request().newBuilder()
+                            it
+                                .request()
+                                .newBuilder()
                                 .addHeader(Constants.STASH_API_HEADER, cleanedApiKey)
                                 .build()
                         it.proceed(request)
                     }
             }
             val httpClient = builder.build()
-            return ApolloClient.Builder()
+            return ApolloClient
+                .Builder()
                 .serverUrl(url)
                 .httpEngine(DefaultHttpEngine(httpClient))
                 .build()
@@ -366,9 +389,7 @@ class StashClient private constructor() {
                 ) {
                 }
 
-                override fun getAcceptedIssuers(): Array<X509Certificate> {
-                    return arrayOf()
-                }
+                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
             }
     }
 }

@@ -7,7 +7,9 @@ import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
 
-class ImagePresenter(callback: LongClickCallBack<ImageData>? = null) : StashPresenter<ImageData>(callback) {
+class ImagePresenter(
+    callback: LongClickCallBack<ImageData>? = null,
+) : StashPresenter<ImageData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: ImageData,
@@ -42,7 +44,7 @@ class ImagePresenter(callback: LongClickCallBack<ImageData>? = null) : StashPres
     companion object {
         private const val TAG = "ImagePresenter"
 
-        const val CARD_WIDTH = 351
-        const val CARD_HEIGHT = 237
+        const val CARD_WIDTH = ScenePresenter.CARD_WIDTH
+        const val CARD_HEIGHT = CARD_WIDTH * 3 / 4
     }
 }

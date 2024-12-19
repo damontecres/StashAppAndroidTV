@@ -33,17 +33,18 @@ val StashParcelable =
  *
  * Basically just writes a boolean for whether the [Optional] is present or absent before the value
  */
-class OptionalSerializer<T>(private val dataSerializer: KSerializer<T>) : KSerializer<Optional<T>> {
+class OptionalSerializer<T>(
+    private val dataSerializer: KSerializer<T>,
+) : KSerializer<Optional<T>> {
     override val descriptor: SerialDescriptor
         get() = dataSerializer.descriptor
 
-    override fun deserialize(decoder: Decoder): Optional<T> {
-        return if (decoder.decodeBoolean()) {
+    override fun deserialize(decoder: Decoder): Optional<T> =
+        if (decoder.decodeBoolean()) {
             Optional.present(dataSerializer.deserialize(decoder))
         } else {
             Optional.Absent
         }
-    }
 
     override fun serialize(
         encoder: Encoder,
@@ -68,8 +69,8 @@ class CustomFieldCriterionInputSerializer : KSerializer<CustomFieldCriterionInpu
             // element<List<Any>?>("value")
         }
 
-    override fun deserialize(decoder: Decoder): CustomFieldCriterionInput? {
-        return if (decoder.decodeNotNullMark()) {
+    override fun deserialize(decoder: Decoder): CustomFieldCriterionInput? =
+        if (decoder.decodeNotNullMark()) {
             val field = decoder.decodeString()
             val modifier = CriterionModifier.entries[decoder.decodeInt()]
             val value =
@@ -102,7 +103,6 @@ class CustomFieldCriterionInputSerializer : KSerializer<CustomFieldCriterionInpu
         } else {
             decoder.decodeNull()
         }
-    }
 
     override fun serialize(
         encoder: Encoder,

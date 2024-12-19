@@ -31,8 +31,10 @@ import com.github.damontecres.stashapp.views.models.ServerViewModel
  *
  * Clicking them goes to the default filter for that [DataType]
  */
-class MainTitleView(context: Context, attrs: AttributeSet) :
-    RelativeLayout(context, attrs),
+class MainTitleView(
+    context: Context,
+    attrs: AttributeSet,
+) : RelativeLayout(context, attrs),
     TitleViewAdapter.Provider {
     private val serverViewModel by lazy {
         ViewModelProvider(findFragment<Fragment>().requireActivity())[ServerViewModel::class]
@@ -53,12 +55,8 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
 
     private val mTitleViewAdapter =
         object : TitleViewAdapter() {
-            override fun getSearchAffordanceView(): View {
-                return searchButton
-            }
+            override fun getSearchAffordanceView(): View = searchButton
         }
-
-    private val defaultFilters = mutableMapOf<DataType, FilterArgs>()
 
     init {
         val onFocusChangeListener = StashOnFocusChangeListener(context)
@@ -118,9 +116,7 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         refreshMenuItems()
     }
 
-    override fun getTitleViewAdapter(): TitleViewAdapter {
-        return mTitleViewAdapter
-    }
+    override fun getTitleViewAdapter(): TitleViewAdapter = mTitleViewAdapter
 
     private fun getMenuItems(): Set<String> {
         val server = StashServer.getCurrentStashServer()
@@ -136,13 +132,12 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
     fun refreshMenuItems() {
         val menuItems = getMenuItems()
 
-        fun getVis(key: String): Int {
-            return if (key in menuItems) {
+        fun getVis(key: String): Int =
+            if (key in menuItems) {
                 View.VISIBLE
             } else {
                 View.GONE
             }
-        }
         scenesButton.visibility = getVis("scenes")
         imagesButton.visibility = getVis("images")
         performersButton.visibility = getVis("performers")
@@ -158,7 +153,9 @@ class MainTitleView(context: Context, attrs: AttributeSet) :
         galleriesButton.visibility = getVis("galleries")
     }
 
-    private inner class ClickListener(private val dataType: DataType) : OnClickListener {
+    private inner class ClickListener(
+        private val dataType: DataType,
+    ) : OnClickListener {
         override fun onClick(v: View) {
             val intent = Intent(v.context, FilterListActivity::class.java)
 

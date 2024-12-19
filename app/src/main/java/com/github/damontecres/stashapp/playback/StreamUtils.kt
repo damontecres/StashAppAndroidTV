@@ -30,14 +30,6 @@ data class StreamDecision(
 
 fun buildMediaItem(
     context: Context,
-    scene: Scene,
-): MediaItem {
-    val decision = getStreamDecision(context, scene)
-    return buildMediaItem(context, decision, scene)
-}
-
-fun buildMediaItem(
-    context: Context,
     streamDecision: StreamDecision,
     scene: Scene,
     builderCallback: (MediaItem.Builder.() -> Unit)? = null,
@@ -48,7 +40,8 @@ fun buildMediaItem(
     val format =
         when (streamDecision.transcodeDecision) {
             TranscodeDecision.TRANSCODE, TranscodeDecision.FORCED_TRANSCODE -> {
-                PreferenceManager.getDefaultSharedPreferences(context)
+                PreferenceManager
+                    .getDefaultSharedPreferences(context)
                     .getString("stream_choice", "HLS")
             }
             TranscodeDecision.DIRECT_PLAY, TranscodeDecision.FORCED_DIRECT_PLAY -> {
@@ -75,7 +68,8 @@ fun buildMediaItem(
             else -> null
         }
     val builder =
-        MediaItem.Builder()
+        MediaItem
+            .Builder()
             .setUri(url)
             .setMimeType(mimeType)
             .setMediaId(scene.id)
@@ -85,7 +79,8 @@ fun buildMediaItem(
         val subtitles =
             scene.captions.map {
                 val uri =
-                    baseUrl.buildUpon()
+                    baseUrl
+                        .buildUpon()
                         .appendQueryParameter("lang", it.lang)
                         .appendQueryParameter("type", it.type)
                         .build()
@@ -100,7 +95,8 @@ fun buildMediaItem(
                         Log.w(TAG, "Error in locale for '${it.lang}'", ex)
                         it.lang.uppercase()
                     }
-                MediaItem.SubtitleConfiguration.Builder(uri)
+                MediaItem.SubtitleConfiguration
+                    .Builder(uri)
                     // The server always provides subtitles as VTT: https://github.com/stashapp/stash/blob/v0.26.2/internal/api/routes_scene.go#L439
                     .setMimeType(MimeTypes.TEXT_VTT)
                     .setLabel("$languageName (${it.type})")
@@ -140,9 +136,9 @@ fun getStreamDecision(
         return StreamDecision(
             scene.id,
             TranscodeDecision.DIRECT_PLAY,
-            videoSupported,
-            audioSupported,
-            containerSupported,
+            true,
+            true,
+            true,
         )
     } else if (forceDirectPlay) {
         Log.v(

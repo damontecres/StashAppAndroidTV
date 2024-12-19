@@ -15,17 +15,18 @@ import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.filter.displayName
 import com.github.damontecres.stashapp.views.getString
 
-class GenderPickerFragment(val filterOption: FilterOption<StashDataFilter, GenderCriterionInput>) : CreateFilterGuidedStepFragment() {
+class GenderPickerFragment(
+    val filterOption: FilterOption<StashDataFilter, GenderCriterionInput>,
+) : CreateFilterGuidedStepFragment() {
     private var currentModifier = CriterionModifier.INCLUDES
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(filterOption.nameStringId),
             null,
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
@@ -53,7 +54,8 @@ class GenderPickerFragment(val filterOption: FilterOption<StashDataFilter, Gende
                 add(modifierAction(CriterionModifier.NOT_NULL))
             }
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(MODIFIER)
                 .hasNext(false)
                 .title("Modifier")
@@ -67,7 +69,8 @@ class GenderPickerFragment(val filterOption: FilterOption<StashDataFilter, Gende
                 if (gender != GenderEnum.UNKNOWN__) {
                     val name = displayName(requireContext(), gender)
                     val action =
-                        GuidedAction.Builder(requireContext())
+                        GuidedAction
+                            .Builder(requireContext())
                             .id(GENDER_OFFSET + index)
                             .hasNext(false)
                             .title(name)
@@ -78,8 +81,7 @@ class GenderPickerFragment(val filterOption: FilterOption<StashDataFilter, Gende
                 } else {
                     null
                 }
-            }
-            .sortedBy { it.first }
+            }.sortedBy { it.first }
             .forEach { actions.add(it.second) }
 
         addStandardActions(actions, filterOption)
@@ -112,11 +114,11 @@ class GenderPickerFragment(val filterOption: FilterOption<StashDataFilter, Gende
         }
     }
 
-    private fun getValues(): List<GenderEnum>? {
-        return actions.filter { it.id >= GENDER_OFFSET && it.isChecked }
+    private fun getValues(): List<GenderEnum>? =
+        actions
+            .filter { it.id >= GENDER_OFFSET && it.isChecked }
             .map { GenderEnum.entries[(it.id - GENDER_OFFSET).toInt()] }
             .ifEmpty { null }
-    }
 
     private fun setFinish() {
         if (currentModifier.isNullModifier() || getValues() != null) {

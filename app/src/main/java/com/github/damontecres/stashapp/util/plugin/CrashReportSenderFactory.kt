@@ -18,13 +18,9 @@ class CrashReportSenderFactory : ReportSenderFactory {
     override fun create(
         context: Context,
         config: CoreConfiguration,
-    ): ReportSender {
-        return CrashReportSender()
-    }
+    ): ReportSender = CrashReportSender()
 
-    override fun enabled(config: CoreConfiguration): Boolean {
-        return true
-    }
+    override fun enabled(config: CoreConfiguration): Boolean = true
 
     class CrashReportSender : ReportSender {
         override fun send(

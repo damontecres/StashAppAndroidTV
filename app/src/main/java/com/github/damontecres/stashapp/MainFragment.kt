@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -18,8 +19,10 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -29,6 +32,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getCaseInsensitive
+import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
@@ -44,7 +48,9 @@ import kotlinx.coroutines.withContext
 /**
  * Loads a grid of cards with groups to browse.
  */
-class MainFragment : BrowseSupportFragment() {
+class MainFragment :
+    BrowseSupportFragment(),
+    DefaultKeyEventCallback {
     private val viewModel: ServerViewModel by activityViewModels()
 
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
@@ -150,28 +156,31 @@ class MainFragment : BrowseSupportFragment() {
                             TAG,
                             "Server version is not supported: ${result.serverInfo?.version?.version}",
                         )
-                        Toast.makeText(
-                            requireContext(),
-                            "Server version ${result.serverInfo?.version?.version} is not supported!",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Server version ${result.serverInfo?.version?.version} is not supported!",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     } else {
                         Log.w(TAG, "testStashConnection returned $result")
                         clearData()
                         requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
-                        Toast.makeText(
-                            requireContext(),
-                            "Connection to Stash failed: ${result.status}",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Connection to Stash failed: ${result.status}",
+                                Toast.LENGTH_LONG,
+                            ).show()
                     }
                 } else {
                     clearData()
-                    Toast.makeText(
-                        requireContext(),
-                        "Stash server not configured!",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Stash server not configured!",
+                            Toast.LENGTH_LONG,
+                        ).show()
                 }
             }
         }
@@ -232,11 +241,12 @@ class MainFragment : BrowseSupportFragment() {
             Dispatchers.IO +
                 CoroutineExceptionHandler { _, ex ->
                     Log.e(TAG, "Exception in fetchData coroutine", ex)
-                    Toast.makeText(
-                        requireContext(),
-                        "Error fetching data: ${ex.message}",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Error fetching data: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
                 },
         ) {
             try {
@@ -254,8 +264,7 @@ class MainFragment : BrowseSupportFragment() {
                 } else {
                     try {
                         val queryEngine = QueryEngine(server)
-                        val filterParser =
-                            FilterParser(serverVersion ?: Version.MINIMUM_STASH_VERSION)
+                        val filterParser = FilterParser(serverVersion)
 
                         val config = queryEngine.getServerConfiguration()
                         server.serverPreferences.updatePreferences(config)
@@ -264,15 +273,17 @@ class MainFragment : BrowseSupportFragment() {
                         val frontPageContent =
                             ui.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
                         if (frontPageContent == null) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Unable to find front page content! Check the Web UI.",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Unable to find front page content! Check the Web UI.",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             return@launch
                         }
                         val pageSize =
-                            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                            PreferenceManager
+                                .getDefaultSharedPreferences(requireContext())
                                 .getInt(getString(R.string.pref_key_page_size), 25)
                         val frontPageParser =
                             FrontPageParser(requireContext(), queryEngine, filterParser, pageSize)
@@ -295,31 +306,34 @@ class MainFragment : BrowseSupportFragment() {
                                     }
                                 } else if (row is FrontPageParser.FrontPageRow.Error) {
                                     withContext(Dispatchers.Main) {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Error loading row $index on front page",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Error loading row $index on front page",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
                                     }
                                 }
                             }
                         }
                     } catch (ex: QueryEngine.StashNotConfiguredException) {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Stash not configured. Please enter the URL in settings!",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Stash not configured. Please enter the URL in settings!",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                         }
                     } catch (ex: QueryEngine.QueryException) {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                requireContext(),
-                                ex.message,
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    ex.message,
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                         }
                     }
@@ -368,7 +382,28 @@ class MainFragment : BrowseSupportFragment() {
         return false
     }
 
-    data class Position(val row: Int, val column: Int)
+    override fun onKeyUp(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        val item =
+            getCurrentPosition()?.let {
+                val row = rowsAdapter.get(it.row) as ListRow
+                row.adapter.get(it.column)
+            }
+        if ((keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) &&
+            item != null &&
+            requireActivity().currentFocus is StashImageCardView
+        ) {
+            maybeStartPlayback(requireContext(), item)
+        }
+        return super.onKeyUp(keyCode, event)
+    }
+
+    data class Position(
+        val row: Int,
+        val column: Int,
+    )
 
     companion object {
         private const val TAG = "MainFragment"

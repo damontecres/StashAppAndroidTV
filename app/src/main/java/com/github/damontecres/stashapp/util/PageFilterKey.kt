@@ -2,7 +2,10 @@ package com.github.damontecres.stashapp.util
 
 import com.github.damontecres.stashapp.data.DataType
 
-enum class PageFilterKey(val dataType: DataType, val prefKey: String) {
+enum class PageFilterKey(
+    val dataType: DataType,
+    val prefKey: String,
+) {
     TAG_MARKERS(DataType.MARKER, "tag_markers"),
     TAG_GALLERIES(DataType.GALLERY, "tag_galleries"),
     TAG_SCENES(DataType.SCENE, "tag_scenes"),

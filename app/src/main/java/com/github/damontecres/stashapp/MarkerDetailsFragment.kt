@@ -136,16 +136,16 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     intent.putExtra(SearchForFragment.ID_KEY, action.id)
                     resultLauncher.launch(intent)
                 } else if (action == StashAction.SHIFT_MARKERS) {
-                    requireActivity().supportFragmentManager.beginTransaction()
+                    requireActivity()
+                        .supportFragmentManager
+                        .beginTransaction()
                         .addToBackStack("picker")
                         .replace(android.R.id.content, MarkerPickerFragment::class.java, null)
                         .commit()
                 }
             }
 
-            override fun incrementOCounter(counter: OCounter) {
-                throw IllegalStateException()
-            }
+            override fun incrementOCounter(counter: OCounter): Unit = throw IllegalStateException()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -261,7 +261,8 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     requireActivity(),
                     ScenePresenter.CARD_HEIGHT,
                 )
-            StashGlide.with(requireActivity(), screenshotUrl)
+            StashGlide
+                .with(requireActivity(), screenshotUrl)
                 .optionalCenterCrop()
                 .error(StashPresenter.glideError(requireContext()))
                 .into<CustomTarget<Drawable>>(
@@ -307,7 +308,8 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             val screenshotUrl = marker.screenshot
 
             if (screenshotUrl.isNotNullOrBlank()) {
-                StashGlide.withBitmap(requireActivity(), screenshotUrl)
+                StashGlide
+                    .withBitmap(requireActivity(), screenshotUrl)
                     .optionalCenterCrop()
                     .error(R.drawable.baseline_camera_indoor_48)
                     .into<CustomTarget<Bitmap>>(
@@ -350,22 +352,24 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                                 REPLACE_PRIMARY_ID -> {
                                     val newPrimaryTag = primaryTagRowManager.add(newTagId)
                                     if (newPrimaryTag != null) {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Changed primary tag to '${newPrimaryTag.name}'",
-                                            Toast.LENGTH_LONG,
-                                        ).show()
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Changed primary tag to '${newPrimaryTag.name}'",
+                                                Toast.LENGTH_LONG,
+                                            ).show()
                                     }
                                 }
 
                                 StashAction.ADD_TAG.id -> {
                                     val newTagData = tagsRowManager.add(newTagId)
                                     if (newTagData != null) {
-                                        Toast.makeText(
-                                            requireContext(),
-                                            "Added tag '${newTagData.name}' to marker",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
+                                        Toast
+                                            .makeText(
+                                                requireContext(),
+                                                "Added tag '${newTagData.name}' to marker",
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
                                     }
                                 }
                             }
@@ -375,8 +379,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private inner class PrimaryTagLongClickListener :
-        TagPresenter.DefaultTagLongClickCallBack() {
+    private inner class PrimaryTagLongClickListener : TagPresenter.DefaultTagLongClickCallBack() {
         override fun getPopUpItems(
             context: Context,
             item: TagData,
@@ -432,19 +435,21 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
                             Log.e(TAG, "Exception setting tags", ex)
-                            Toast.makeText(
-                                requireContext(),
-                                "Failed to remove tag: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Failed to remove tag: ${ex.message}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                         },
                     ) {
                         if (tagsRowManager.remove(item)) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Removed tag '${item.name}' from scene",
-                                Toast.LENGTH_SHORT,
-                            ).show()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Removed tag '${item.name}' from scene",
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                         }
                     }
                 }

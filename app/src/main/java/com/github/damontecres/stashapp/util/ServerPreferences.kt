@@ -15,7 +15,9 @@ import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
  *
  * Configuration is loaded into a SharedPreferences and made available throughout the app
  */
-class ServerPreferences(val server: StashServer) {
+class ServerPreferences(
+    val server: StashServer,
+) {
     val preferences: SharedPreferences =
         StashApplication.getApplication().getSharedPreferences(
             server.url.replace(Regex("[^\\w.]"), "_"),
@@ -138,7 +140,9 @@ class ServerPreferences(val server: StashServer) {
                 }
 
                 val menuItems =
-                    config.configuration.`interface`.menuItems?.map(String::lowercase)?.toSet()
+                    config.configuration.`interface`.menuItems
+                        ?.map(String::lowercase)
+                        ?.toSet()
                 putStringSet(PREF_INTERFACE_MENU_ITEMS, menuItems)
 
                 putBoolean(
@@ -189,15 +193,13 @@ class ServerPreferences(val server: StashServer) {
         }
     }
 
-    fun getDefaultFilter(page: PageFilterKey): FilterArgs {
-        return defaultPageFilters[page] ?: FilterArgs(page.dataType)
-    }
+    fun getDefaultFilter(page: PageFilterKey): FilterArgs = defaultPageFilters[page] ?: FilterArgs(page.dataType)
 
     private fun parseScan(
         defaultScan: ConfigurationQuery.Scan?,
         uiTaskDefaults: Map<String, *>?,
-    ): SharedPreferences.Editor.() -> Unit {
-        return {
+    ): SharedPreferences.Editor.() -> Unit =
+        {
             val scan = uiTaskDefaults?.getCaseInsensitive("scan") as Map<String, *>?
             putBoolean(
                 PREF_SCAN_GENERATE_COVERS,
@@ -240,13 +242,12 @@ class ServerPreferences(val server: StashServer) {
                 ),
             )
         }
-    }
 
     private fun parseGenerate(
         defaultGenerate: ConfigurationQuery.Generate?,
         uiTaskDefaults: Map<String, *>?,
-    ): SharedPreferences.Editor.() -> Unit {
-        return {
+    ): SharedPreferences.Editor.() -> Unit =
+        {
             val generate = uiTaskDefaults?.getCaseInsensitive("generate") as Map<String, *>?
             putBoolean(
                 PREF_GEN_CLIP_PREVIEWS,
@@ -301,15 +302,12 @@ class ServerPreferences(val server: StashServer) {
                 generate.getBoolean("transcodes", defaultGenerate?.transcodes, false),
             )
         }
-    }
 
     private fun Map<String, *>?.getBoolean(
         key: String,
         defaultsValue: Boolean?,
         default: Boolean,
-    ): Boolean {
-        return this?.getCaseInsensitive(key)?.toString()?.toBoolean() ?: defaultsValue ?: default
-    }
+    ): Boolean = this?.getCaseInsensitive(key)?.toString()?.toBoolean() ?: defaultsValue ?: default
 
     var scanJobId: String?
         get() = preferences.getString(PREF_JOB_SCAN, null)

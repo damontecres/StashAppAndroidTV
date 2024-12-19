@@ -17,7 +17,9 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import kotlinx.coroutines.launch
 
-class UpdateAppFragment(private val release: UpdateChecker.Release) : GuidedStepSupportFragment() {
+class UpdateAppFragment(
+    private val release: UpdateChecker.Release,
+) : GuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
         val serverVersion = StashServer.getCurrentServerVersion()
@@ -44,7 +46,8 @@ class UpdateAppFragment(private val release: UpdateChecker.Release) : GuidedStep
     ) {
         super.onCreateActions(actions, savedInstanceState)
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_YES)
                 .title("Download & Install")
                 .description("${release.version}")
@@ -53,7 +56,8 @@ class UpdateAppFragment(private val release: UpdateChecker.Release) : GuidedStep
         )
         if (release.body.isNotNullOrBlank()) {
             actions.add(
-                GuidedAction.Builder(requireContext())
+                GuidedAction
+                    .Builder(requireContext())
                     .id(1000L)
                     .title("See changelog")
                     .hasNext(false)
@@ -61,7 +65,8 @@ class UpdateAppFragment(private val release: UpdateChecker.Release) : GuidedStep
             )
         }
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .clickAction(GuidedAction.ACTION_ID_CANCEL)
                 .hasNext(false)
                 .build(),
@@ -99,7 +104,5 @@ class UpdateAppFragment(private val release: UpdateChecker.Release) : GuidedStep
         }
     }
 
-    override fun onProvideTheme(): Int {
-        return R.style.Theme_StashAppAndroidTV_GuidedStep
-    }
+    override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep
 }

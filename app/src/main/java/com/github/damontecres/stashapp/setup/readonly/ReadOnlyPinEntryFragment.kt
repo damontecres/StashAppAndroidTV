@@ -10,26 +10,26 @@ import androidx.leanback.widget.GuidedAction
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 
-class ReadOnlyPinEntryFragment(private val callback: () -> Unit) : GuidedStepSupportFragment() {
-    override fun onProvideTheme(): Int {
-        return R.style.Theme_StashAppAndroidTV_GuidedStep
-    }
+class ReadOnlyPinEntryFragment(
+    private val callback: () -> Unit,
+) : GuidedStepSupportFragment() {
+    override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             "Enter PIN",
             "PIN for settings access",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(ACTION_PIN)
                 .title("Enter PIN")
                 .description("")
@@ -39,7 +39,8 @@ class ReadOnlyPinEntryFragment(private val callback: () -> Unit) : GuidedStepSup
                 .build(),
         )
         actions.add(
-            GuidedAction.Builder(requireContext())
+            GuidedAction
+                .Builder(requireContext())
                 .id(GuidedAction.ACTION_ID_OK)
                 .title("Submit")
                 .hasNext(true)

@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.image
 
-import android.graphics.Matrix
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
@@ -12,8 +11,10 @@ import androidx.fragment.app.activityViewModels
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import com.bumptech.glide.request.transition.DrawableCrossFadeFactory
 import com.github.damontecres.stashapp.ImageActivity.Companion.TAG
 import com.github.damontecres.stashapp.ImageActivity.Companion.isDirectionalDpadKey
 import com.github.damontecres.stashapp.ImageActivity.Companion.isDown
@@ -28,16 +29,16 @@ import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashZoomImageView
-import com.otaliastudios.zoom.ZoomEngine
 import kotlin.math.abs
 
 /**
  * Display an image
  */
-class ImageFragment : Fragment(R.layout.image_layout), ImageController {
+class ImageFragment :
+    Fragment(R.layout.image_layout),
+    ImageController {
     private val viewModel: ImageViewModel by activityViewModels<ImageViewModel>()
 
-    private lateinit var parentView: View
     private lateinit var mainImage: StashZoomImageView
 
     private val duration = 200L
@@ -48,34 +49,7 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        parentView = view
         mainImage = view.findViewById(R.id.image_view_image)
-
-        mainImage.engine.addListener(
-            object : ZoomEngine.Listener {
-                override fun onIdle(engine: ZoomEngine) {
-                    Log.v(TAG, "onIdle")
-                }
-
-                private val mMatrixValues = FloatArray(9)
-
-                override fun onUpdate(
-                    engine: ZoomEngine,
-                    matrix: Matrix,
-                ) {
-                    matrix.getValues(mMatrixValues)
-                    val panX = mMatrixValues[Matrix.MTRANS_X]
-                    val panY = mMatrixValues[Matrix.MTRANS_Y]
-                    val scaleX = mMatrixValues[Matrix.MSCALE_X]
-                    val scaleY = mMatrixValues[Matrix.MSCALE_Y]
-                    val scale = (scaleX + scaleY) / 2f // These should always be equal.
-                    Log.v(
-                        TAG,
-                        "panX=$panX, panY=$panY, scaleX=$scaleX, scaleY=$scaleY, scale=$scale",
-                    )
-                }
-            },
-        )
 
         viewModel.image.observe(viewLifecycleOwner) { newImage ->
             if (!newImage.isImageClip) {
@@ -87,19 +61,15 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
 
     private fun loadImage(image: ImageData) {
         reset(false)
-        mainImage.setImageDrawable(null)
+//        mainImage.setImageDrawable(null)
 
         val placeholder =
             object : CircularProgressDrawable(requireContext()) {
                 // ZoomImageView requires that drawables have an intrinsic height/width
                 // So override it here to be the size of the view since the default implementation is -1
-                override fun getIntrinsicHeight(): Int {
-                    return 250
-                }
+                override fun getIntrinsicHeight(): Int = 250
 
-                override fun getIntrinsicWidth(): Int {
-                    return 250
-                }
+                override fun getIntrinsicWidth(): Int = 250
             }
         placeholder.strokeWidth = 3f
         placeholder.centerRadius = 12f
@@ -108,7 +78,14 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
 
         val imageUrl = image.paths.image
         if (imageUrl != null) {
-            StashGlide.with(requireContext(), imageUrl, image.maxFileSize)
+            val factory =
+                DrawableCrossFadeFactory
+                    .Builder(300)
+                    .setCrossFadeEnabled(true)
+                    .build()
+            StashGlide
+                .with(requireContext(), imageUrl, image.maxFileSize)
+                .transition(withCrossFade(factory))
                 .placeholder(placeholder)
                 .listener(
                     object : RequestListener<Drawable?> {
@@ -118,12 +95,13 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
                             target: Target<Drawable?>,
                             isFirstResource: Boolean,
                         ): Boolean {
-                            Log.v(TAG, "onLoadFailed for $imageUrl")
-                            Toast.makeText(
-                                requireContext(),
-                                "Image loading failed!",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                            Log.v(TAG, "onLoadFailed for ${image.id}")
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Image loading failed!",
+                                    Toast.LENGTH_LONG,
+                                ).show()
                             return true
                         }
 
@@ -133,12 +111,9 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
                             target: Target<Drawable?>?,
                             dataSource: DataSource,
                             isFirstResource: Boolean,
-                        ): Boolean {
-                            return false
-                        }
+                        ): Boolean = false
                     },
-                )
-                .into(mainImage)
+                ).into(mainImage)
         }
     }
 
@@ -190,15 +165,15 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
             val flipY = if (mainImage.scaleY < 0) -1f else 1f
             val flipX = if (mainImage.scaleX < 0) -1f else 1f
 
-            mainImage.animate()
+            mainImage
+                .animate()
                 .rotationBy(rotation)
                 .setDuration(duration)
                 .scaleX(scale * flipX)
                 .scaleY(scale * flipY)
                 .withEndAction {
                     duringAnimation = false
-                }
-                .start()
+                }.start()
         }
     }
 
@@ -211,8 +186,16 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
         val image = viewModel.image.value!!
 
         // Adapted from https://github.com/stashapp/stash/blob/v0.26.2/ui/v2.5/src/components/Scenes/SceneDetails/SceneVideoFilterPanel.tsx#L529
-        val imageWidth = image.visual_files.first().width!!.toFloat()
-        val imageHeight = image.visual_files.first().height!!.toFloat()
+        val imageWidth =
+            image.visual_files
+                .first()
+                .width!!
+                .toFloat()
+        val imageHeight =
+            image.visual_files
+                .first()
+                .height!!
+                .toFloat()
         val imageAspectRatio = imageWidth / imageHeight
         val imageNewAspectRatio = imageHeight / imageWidth
 
@@ -250,15 +233,14 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
         return scaleFactor
     }
 
-    override fun isImageZoomedIn(): Boolean {
-        return (mainImage.zoom * 100).toInt() > 100
-    }
+    override fun isImageZoomedIn(): Boolean = (mainImage.zoom * 100).toInt() > 100
 
     override fun flip() {
         if (!duringAnimation) {
             duringAnimation = true
             val animator =
-                mainImage.animate()
+                mainImage
+                    .animate()
                     .setDuration(duration)
                     .withEndAction {
                         duringAnimation = false
@@ -281,15 +263,15 @@ class ImageFragment : Fragment(R.layout.image_layout), ImageController {
             if (!duringAnimation) {
                 resetZoom()
                 duringAnimation = true
-                mainImage.animate()
+                mainImage
+                    .animate()
                     .rotation(0f)
                     .setDuration(duration)
                     .scaleX(1f)
                     .scaleY(1f)
                     .withEndAction {
                         duringAnimation = false
-                    }
-                    .start()
+                    }.start()
             }
         } else {
             mainImage.cancelAnimations()

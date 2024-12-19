@@ -4,8 +4,9 @@ import androidx.appcompat.content.res.AppCompatResources
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.OCounter
 
-class OCounterPresenter(callback: LongClickCallBack<OCounter>? = null) :
-    StashPresenter<OCounter>(callback) {
+class OCounterPresenter(
+    callback: LongClickCallBack<OCounter>? = null,
+) : StashPresenter<OCounter>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: OCounter,

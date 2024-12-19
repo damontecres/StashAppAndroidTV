@@ -34,8 +34,10 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.isImageClip
 import kotlinx.coroutines.launch
+import java.util.Timer
 
 class ImageActivity : FragmentActivity(R.layout.activity_image) {
+    private var timer: Timer? = null
     private val viewModel: ImageViewModel by viewModels<ImageViewModel>()
 
     private lateinit var pager: StashSparseFilterFetcher<FindImagesQuery.Data, ImageData>
@@ -53,6 +55,8 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel.slideshow.value = intent.getBooleanExtra(INTENT_IMAGE_SLIDESHOW, false)
+
         lifecycleScope.launch(StashCoroutineExceptionHandler()) {
             val imageId = intent.getStringExtra(INTENT_IMAGE_ID)!!
 
@@ -61,7 +65,8 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
             viewModel.setImage(image)
 
             val pageSize =
-                PreferenceManager.getDefaultSharedPreferences(this@ImageActivity)
+                PreferenceManager
+                    .getDefaultSharedPreferences(this@ImageActivity)
                     .getInt("maxSearchResults", 25)
 
             currentPosition = intent.getIntExtra(INTENT_POSITION, -1)
@@ -71,9 +76,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                 val pagingSource =
                     StashPagingSource<FindImagesQuery.Data, ImageData, ImageData, CountImagesQuery.Data>(
                         queryEngine,
-                        pageSize,
                         dataSupplier,
-                        useRandom = false,
                     )
                 pager = StashSparseFilterFetcher(pagingSource, pageSize)
                 totalCount = pagingSource.getCount()
@@ -101,6 +104,33 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                 hide(overlayFragment)
             }
         }
+
+        val delay =
+            PreferenceManager.getDefaultSharedPreferences(this).getInt(
+                getString(R.string.pref_key_slideshow_duration),
+                resources.getInteger(R.integer.pref_key_slideshow_duration_default),
+            ) * 1000L
+        viewModel.slideshow.observe(this) { newValue ->
+            timer?.cancel()
+            if (newValue) {
+                timer =
+                    kotlin.concurrent.timer(
+                        name = "imageSlideshow",
+                        daemon = true,
+                        initialDelay = delay,
+                        period = delay,
+                    ) {
+                        if (!overlayIsVisible) {
+                            switchImage(currentPosition + 1, false)
+                        }
+                    }
+            }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        timer?.cancel()
     }
 
     private fun createDataSupplier(): ImageDataSupplier? {
@@ -187,12 +217,18 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
         overlayFragment.requestFocus()
     }
 
-    private fun switchImage(newPosition: Int) {
+    private fun switchImage(
+        newPosition: Int,
+        showToast: Boolean = true,
+    ) {
         Log.v(TAG, "switchImage $currentPosition => $newPosition")
         if (canScrollImages) {
             if (totalCount != null && newPosition > totalCount!!) {
-                Toast.makeText(this@ImageActivity, "No more images", Toast.LENGTH_SHORT)
-                    .show()
+                if (showToast) {
+                    Toast
+                        .makeText(this@ImageActivity, "No more images", Toast.LENGTH_SHORT)
+                        .show()
+                }
             } else if (newPosition >= 0) {
                 lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     val image = pager.get(newPosition)
@@ -200,11 +236,14 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                         currentPosition = newPosition
                         viewModel.setImage(image)
                     } else if (image == null) {
-                        Toast.makeText(this@ImageActivity, "No more images", Toast.LENGTH_SHORT)
-                            .show()
+                        if (showToast) {
+                            Toast
+                                .makeText(this@ImageActivity, "No more images", Toast.LENGTH_SHORT)
+                                .show()
+                        }
                     }
                 }
-            } else {
+            } else if (showToast) {
                 Toast.makeText(this, "Already at beginning", Toast.LENGTH_SHORT).show()
             }
         }
@@ -215,19 +254,19 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
         const val INTENT_IMAGE_ID = "image.id"
         const val INTENT_IMAGE_URL = "image.url"
         const val INTENT_IMAGE_SIZE = "image.size"
+        const val INTENT_IMAGE_SLIDESHOW = "image.slideshow"
 
         const val INTENT_POSITION = "position"
         const val INTENT_GALLERY_ID = "gallery.id"
 
         const val INTENT_FILTER_ARGS = "filterArgs"
 
-        fun isDpadKey(keyCode: Int): Boolean {
-            return isDirectionalDpadKey(keyCode) ||
+        fun isDpadKey(keyCode: Int): Boolean =
+            isDirectionalDpadKey(keyCode) ||
                 keyCode == KeyEvent.KEYCODE_DPAD_CENTER
-        }
 
-        fun isDirectionalDpadKey(keyCode: Int): Boolean {
-            return keyCode == KeyEvent.KEYCODE_DPAD_UP ||
+        fun isDirectionalDpadKey(keyCode: Int): Boolean =
+            keyCode == KeyEvent.KEYCODE_DPAD_UP ||
                 keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
                 keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
                 keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
@@ -238,38 +277,37 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                         keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
                         keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
                 )
-        }
 
-        fun isLeft(keyCode: Int): Boolean {
-            return keyCode == KeyEvent.KEYCODE_DPAD_LEFT || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+        fun isLeft(keyCode: Int): Boolean =
+            keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                 (
                     keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT ||
                         keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
                 )
-        }
 
-        fun isRight(keyCode: Int): Boolean {
-            return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+        fun isRight(keyCode: Int): Boolean =
+            keyCode == KeyEvent.KEYCODE_DPAD_RIGHT ||
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                 (
                     keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
                         keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT
                 )
-        }
 
-        fun isUp(keyCode: Int): Boolean {
-            return keyCode == KeyEvent.KEYCODE_DPAD_UP || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+        fun isUp(keyCode: Int): Boolean =
+            keyCode == KeyEvent.KEYCODE_DPAD_UP ||
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                 (
                     keyCode == KeyEvent.KEYCODE_DPAD_UP_RIGHT ||
                         keyCode == KeyEvent.KEYCODE_DPAD_UP_LEFT
                 )
-        }
 
-        fun isDown(keyCode: Int): Boolean {
-            return keyCode == KeyEvent.KEYCODE_DPAD_DOWN || Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+        fun isDown(keyCode: Int): Boolean =
+            keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                 (
                     keyCode == KeyEvent.KEYCODE_DPAD_DOWN_RIGHT ||
                         keyCode == KeyEvent.KEYCODE_DPAD_DOWN_LEFT
                 )
-        }
     }
 }

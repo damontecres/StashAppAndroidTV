@@ -8,8 +8,9 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import java.util.EnumMap
 
-class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
-    StashPresenter<StudioData>(callback) {
+class StudioPresenter(
+    callback: LongClickCallBack<StudioData>? = null,
+) : StashPresenter<StudioData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: StudioData,
@@ -60,7 +61,7 @@ class StudioPresenter(callback: LongClickCallBack<StudioData>? = null) :
     companion object {
         private const val TAG = "StudioPresenter"
 
-        const val CARD_WIDTH = 351
-        const val CARD_HEIGHT = 198
+        const val CARD_WIDTH = ScenePresenter.CARD_WIDTH
+        const val CARD_HEIGHT = ScenePresenter.CARD_HEIGHT
     }
 }

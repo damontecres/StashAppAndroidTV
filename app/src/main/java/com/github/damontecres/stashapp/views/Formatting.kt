@@ -16,23 +16,23 @@ import kotlin.time.toDuration
 /**
  * Converts seconds into a Duration string where fractional seconds are removed
  */
-fun durationToString(duration: Double): String {
-    return duration
-        .times(100L).toLong()
-        .div(100L).toDuration(DurationUnit.SECONDS)
+fun durationToString(duration: Double): String =
+    duration
+        .times(100L)
+        .toLong()
+        .div(100L)
+        .toDuration(DurationUnit.SECONDS)
         .toString()
-}
 
 fun getRatingAsDecimalString(
     rating100: Int,
     ratingsAsStars: Boolean,
-): String {
-    return if (ratingsAsStars) {
+): String =
+    if (ratingsAsStars) {
         (rating100 / 20.0).toString()
     } else {
         (rating100 / 10.0).toString()
     }
-}
 
 fun getRatingString(
     rating100: Int,
@@ -41,7 +41,8 @@ fun getRatingString(
     val decimal = getRatingAsDecimalString(rating100, ratingsAsStars)
     return if (ratingsAsStars) {
         val starsStr =
-            StashApplication.getApplication()
+            StashApplication
+                .getApplication()
                 .getString(R.string.stashapp_config_ui_editing_rating_system_type_options_stars)
         "$decimal $starsStr"
     } else {
@@ -49,8 +50,8 @@ fun getRatingString(
     }
 }
 
-fun parseTimeToString(ts: Any?): String? {
-    return if (ts == null) {
+fun parseTimeToString(ts: Any?): String? =
+    if (ts == null) {
         null
     } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         try {
@@ -67,7 +68,6 @@ fun parseTimeToString(ts: Any?): String? {
     } else {
         ts.toString()
     }
-}
 
 val String.fileNameFromPath
     get() = this.replace(Regex("""^.*[\\/]"""), "")
@@ -117,10 +117,11 @@ fun abbreviateCounter(counter: Int): String {
 fun formatNumber(
     number: Int,
     abbreviateCounters: Boolean = StashServer.requireCurrentServer().serverPreferences.abbreviateCounters,
-): String {
-    return if (abbreviateCounters) {
+): String =
+    if (abbreviateCounters) {
         abbreviateCounter(number)
     } else {
-        java.text.NumberFormat.getNumberInstance().format(number)
+        java.text.NumberFormat
+            .getNumberInstance()
+            .format(number)
     }
-}

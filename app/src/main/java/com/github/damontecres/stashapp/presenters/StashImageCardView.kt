@@ -52,7 +52,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.EnumMap
 
-class StashImageCardView(context: Context) : ImageCardView(context) {
+class StashImageCardView(
+    context: Context,
+) : ImageCardView(context) {
     companion object {
         private const val TAG = "StashImageCardView"
 
@@ -99,16 +101,17 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
     private var imageDimensionsSet = false
 
     private val playVideoPreviews =
-        PreferenceManager.getDefaultSharedPreferences(context)
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
             .getBoolean("playVideoPreviews", true)
 
     private val videoDelay =
-        PreferenceManager.getDefaultSharedPreferences(context)
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
             .getInt(
                 context.getString(R.string.pref_key_ui_card_overlay_delay),
                 context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
-            )
-            .toLong()
+            ).toLong()
 
     private val listener =
         object : Player.Listener {
@@ -212,7 +215,8 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         height: Int,
     ) {
         val cardSize =
-            PreferenceManager.getDefaultSharedPreferences(context)
+            PreferenceManager
+                .getDefaultSharedPreferences(context)
                 .getInt("cardSize", context.getString(R.string.card_size_default))
         val scaledWidth = (width * 5.0 / cardSize).toInt()
         val scaledHeight = (height * 5.0 / cardSize).toInt()
@@ -237,7 +241,8 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
 
     private fun initPlayer() {
         val mediaItem =
-            MediaItem.Builder()
+            MediaItem
+                .Builder()
                 .setUri(Uri.parse(videoUrl))
                 .setMimeType(MimeTypes.VIDEO_MP4)
                 .build()
@@ -247,14 +252,16 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         if (videoView == null) {
             // Create the PlayerView on demand
             videoView =
-                LayoutInflater.from(context)
+                LayoutInflater
+                    .from(context)
                     .inflate(R.layout.stash_card_player_view, mainView, false) as PlayerView
             mainView.addView(videoView)
         }
 
         videoView!!.player = player
         player.setMediaItem(mediaItem, if (videoPosition > 0) videoPosition else C.TIME_UNSET)
-        if (PreferenceManager.getDefaultSharedPreferences(context)
+        if (PreferenceManager
+                .getDefaultSharedPreferences(context)
                 .getBoolean("videoPreviewAudio", false)
         ) {
             player.volume = 1f
@@ -339,9 +346,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
         cardOverlay.animateToInvisible(durationMs = animateTime)
     }
 
-    fun getTextOverlay(position: OverlayPosition): TextView {
-        return textOverlays[position]!!
-    }
+    fun getTextOverlay(position: OverlayPosition): TextView = textOverlays[position]!!
 
     fun setTextOverlayText(
         position: OverlayPosition,
@@ -362,7 +367,8 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
 
     fun setRating100(rating100: Int?) {
         val showRatings =
-            PreferenceManager.getDefaultSharedPreferences(context)
+            PreferenceManager
+                .getDefaultSharedPreferences(context)
                 .getBoolean(context.getString(R.string.pref_key_show_rating), true)
         if (rating100 != null && rating100 > 0 && showRatings) {
             val serverPrefs = StashServer.requireCurrentServer().serverPreferences
@@ -417,7 +423,8 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
             lp.height = 50
             topRightImageOverlay.layoutParams = lp
 
-            StashGlide.with(context, imageUrl)
+            StashGlide
+                .with(context, imageUrl)
                 .listener(
                     object : RequestListener<Drawable> {
                         override fun onLoadFailed(
@@ -446,8 +453,7 @@ class StashImageCardView(context: Context) : ImageCardView(context) {
                             return false
                         }
                     },
-                )
-                .into(topRightImageOverlay)
+                ).into(topRightImageOverlay)
         } else if (fallbackText != null) {
             setTextOverlayText(
                 OverlayPosition.TOP_RIGHT,

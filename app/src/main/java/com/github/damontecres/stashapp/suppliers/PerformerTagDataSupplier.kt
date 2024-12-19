@@ -9,32 +9,34 @@ import com.github.damontecres.stashapp.data.DataType
 /**
  * A DataSupplier that returns the tags for a performer
  */
-class PerformerTagDataSupplier(private val performerId: String) :
-    StashPagingSource.DataSupplier<FindPerformerTagsQuery.Data, TagData, FindPerformerTagsQuery.Data> {
+class PerformerTagDataSupplier(
+    private val performerId: String,
+) : StashPagingSource.DataSupplier<FindPerformerTagsQuery.Data, TagData, FindPerformerTagsQuery.Data> {
     override val dataType: DataType
         get() = DataType.TAG
 
-    override fun createQuery(filter: FindFilterType?): Query<FindPerformerTagsQuery.Data> {
-        return FindPerformerTagsQuery(
+    override fun createQuery(filter: FindFilterType?): Query<FindPerformerTagsQuery.Data> =
+        FindPerformerTagsQuery(
             filter = filter,
             performer_filter = null,
             ids = listOf(performerId),
         )
-    }
 
-    override fun getDefaultFilter(): FindFilterType {
-        return DataType.TAG.asDefaultFindFilterType
-    }
+    override fun getDefaultFilter(): FindFilterType = DataType.TAG.asDefaultFindFilterType
 
-    override fun createCountQuery(filter: FindFilterType?): Query<FindPerformerTagsQuery.Data> {
-        return createQuery(filter)
-    }
+    override fun createCountQuery(filter: FindFilterType?): Query<FindPerformerTagsQuery.Data> = createQuery(filter)
 
-    override fun parseCountQuery(data: FindPerformerTagsQuery.Data): Int {
-        return data.findPerformers.performers.firstOrNull()?.tags?.size ?: 0
-    }
+    override fun parseCountQuery(data: FindPerformerTagsQuery.Data): Int =
+        data.findPerformers.performers
+            .firstOrNull()
+            ?.tags
+            ?.size ?: 0
 
-    override fun parseQuery(data: FindPerformerTagsQuery.Data): List<TagData> {
-        return data.findPerformers.performers.firstOrNull()?.tags?.map { it.tagData }.orEmpty()
-    }
+    override fun parseQuery(data: FindPerformerTagsQuery.Data): List<TagData> =
+        data.findPerformers.performers
+            .firstOrNull()
+            ?.tags
+            ?.map {
+                it.tagData
+            }.orEmpty()
 }

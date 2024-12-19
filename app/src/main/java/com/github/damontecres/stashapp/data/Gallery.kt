@@ -6,8 +6,10 @@ import com.github.damontecres.stashapp.util.name
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class Gallery(val id: String, val name: String?, val date: String?) : Parcelable
+data class Gallery(
+    val id: String,
+    val name: String?,
+    val date: String?,
+) : Parcelable
 
-fun GalleryData.toGallery(): Gallery {
-    return Gallery(id, name, date)
-}
+fun GalleryData.toGallery(): Gallery = Gallery(id, name, date)

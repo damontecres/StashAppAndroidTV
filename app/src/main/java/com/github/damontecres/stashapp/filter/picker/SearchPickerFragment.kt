@@ -47,9 +47,9 @@ import kotlin.properties.Delegates
 class SearchPickerFragment(
     private val dataType: DataType,
     private val addItem: (StashData) -> Unit,
-) : SearchSupportFragment(), SearchSupportFragment.SearchResultProvider {
+) : SearchSupportFragment(),
+    SearchSupportFragment.SearchResultProvider {
     private var taskJob: Job? = null
-    private var query: String? = null
 
     private val adapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val searchResultsAdapter = ArrayObjectAdapter()
@@ -58,7 +58,8 @@ class SearchPickerFragment(
     private val exceptionHandler =
         CoroutineExceptionHandler { _: CoroutineContext, ex: Throwable ->
             Log.e(TAG, "Exception in search", ex)
-            Toast.makeText(requireContext(), "Search failed: ${ex.message}", Toast.LENGTH_LONG)
+            Toast
+                .makeText(requireContext(), "Search failed: ${ex.message}", Toast.LENGTH_LONG)
                 .show()
         }
 
@@ -68,7 +69,8 @@ class SearchPickerFragment(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         perPage =
-            PreferenceManager.getDefaultSharedPreferences(requireContext())
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 25)
         title =
             requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
@@ -80,10 +82,10 @@ class SearchPickerFragment(
 
         setSearchResultProvider(this)
         setOnItemViewClickedListener {
-                itemViewHolder: Presenter.ViewHolder,
-                item: Any,
-                rowViewHolder: RowPresenter.ViewHolder?,
-                row: Row?,
+            itemViewHolder: Presenter.ViewHolder,
+            item: Any,
+            rowViewHolder: RowPresenter.ViewHolder?,
+            row: Row?,
             ->
             if (item is StashData) {
                 returnId(item)
@@ -97,7 +99,9 @@ class SearchPickerFragment(
         val currentServer = StashServer.getCurrentStashServer(requireContext())
         if (dataType in DATA_TYPE_SUGGESTIONS && currentServer != null) {
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                StashApplication.getDatabase().recentSearchItemsDao()
+                StashApplication
+                    .getDatabase()
+                    .recentSearchItemsDao()
                     .insert(RecentSearchItem(currentServer.url, item.id, dataType))
             }
         }
@@ -159,8 +163,11 @@ class SearchPickerFragment(
                 val currentServer = StashServer.getCurrentStashServer(requireContext())
                 if (currentServer != null) {
                     val mostRecentIds =
-                        StashApplication.getDatabase().recentSearchItemsDao()
-                            .getMostRecent(perPage, currentServer.url, dataType).map { it.id }
+                        StashApplication
+                            .getDatabase()
+                            .recentSearchItemsDao()
+                            .getMostRecent(perPage, currentServer.url, dataType)
+                            .map { it.id }
                     Log.v(TAG, "Got ${mostRecentIds.size} recent items")
                     if (mostRecentIds.isNotEmpty()) {
                         val items = queryEngine.getByIds(dataType, mostRecentIds)
@@ -187,16 +194,15 @@ class SearchPickerFragment(
         }
     }
 
-    override fun getResultsAdapter(): ObjectAdapter {
-        return adapter
-    }
+    override fun getResultsAdapter(): ObjectAdapter = adapter
 
     override fun onQueryTextChange(newQuery: String): Boolean {
         taskJob?.cancel()
         taskJob =
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
                 val searchDelay =
-                    PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    PreferenceManager
+                        .getDefaultSharedPreferences(requireContext())
                         .getInt("searchDelay", 500)
                 delay(searchDelay.toLong())
                 search(newQuery)
@@ -213,10 +219,8 @@ class SearchPickerFragment(
         return true
     }
 
-    private suspend fun search(query: String) {
+    private fun search(query: String) {
         searchResultsAdapter.clear()
-
-        this.query = query
         if (!TextUtils.isEmpty(query)) {
             adapter.set(
                 RESULTS_POS,

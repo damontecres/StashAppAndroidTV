@@ -27,7 +27,9 @@ class RatingPickerFragment(
         get() = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        ratingsAsStars = viewModel.server.value!!.serverPreferences.ratingsAsStars
+        ratingsAsStars =
+            viewModel.server.value!!
+                .serverPreferences.ratingsAsStars
         super.onCreate(savedInstanceState)
     }
 
@@ -50,8 +52,8 @@ class RatingPickerFragment(
         value1: Int?,
         value2: Int?,
         modifier: CriterionModifier,
-    ): IntCriterionInput? {
-        return if (value1 != null) {
+    ): IntCriterionInput? =
+        if (value1 != null) {
             IntCriterionInput(
                 value = value1,
                 value2 = Optional.presentIfNotNull(value2),
@@ -62,7 +64,6 @@ class RatingPickerFragment(
         } else {
             null
         }
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
@@ -75,13 +76,12 @@ class RatingPickerFragment(
         createActionList(actions)
     }
 
-    override fun formatDescription(v: Int?): String? {
-        return if (ratingsAsStars) {
+    override fun formatDescription(v: Int?): String? =
+        if (ratingsAsStars) {
             v?.div(20.0)
         } else {
             v?.div(10.0)
         }?.toString()
-    }
 
     companion object {
         private const val TAG = "RatingPickerFragment"

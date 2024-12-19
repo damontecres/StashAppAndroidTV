@@ -36,11 +36,12 @@ class StashCoroutineExceptionHandler(
         toast?.show()
         makeToast?.let { it(exception).show() }
         if (autoToast) {
-            Toast.makeText(
-                StashApplication.getApplication(),
-                "Error: ${exception.message}",
-                Toast.LENGTH_LONG,
-            ).show()
+            Toast
+                .makeText(
+                    StashApplication.getApplication(),
+                    "Error: ${exception.message}",
+                    Toast.LENGTH_LONG,
+                ).show()
         }
     }
 

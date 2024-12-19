@@ -39,8 +39,8 @@ fun MarkerData.toPlayListItem(index: Int): PlaylistItem {
     )
 }
 
-fun SlimSceneData.toPlayListItem(index: Int): PlaylistItem {
-    return PlaylistItem(
+fun SlimSceneData.toPlayListItem(index: Int): PlaylistItem =
+    PlaylistItem(
         index,
         title = titleOrFilename,
         subtitle = studio?.name,
@@ -48,4 +48,3 @@ fun SlimSceneData.toPlayListItem(index: Int): PlaylistItem {
         details2 = date,
         imageUrl = paths.screenshot,
     )
-}

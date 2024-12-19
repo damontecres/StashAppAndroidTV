@@ -5,7 +5,10 @@ package com.github.damontecres.stashapp.actions
  *
  * This is sort of a catch-all, but [com.github.damontecres.stashapp.presenters.ActionPresenter] can render them
  */
-enum class StashAction(val id: Long, val actionName: String) {
+enum class StashAction(
+    val id: Long,
+    val actionName: String,
+) {
     ADD_TAG(1L, "Add Tag"),
     ADD_PERFORMER(2L, "Add Performer"),
     FORCE_TRANSCODE(3L, "Play with Transcoding"),
