@@ -133,7 +133,7 @@
 
     <PreferenceCategory app:title="Search">
         <SeekBarPreference
-            app:key="maxSearchResults"
+            app:key="@string/pref_key_max_search_results"
             app:title="Maximum number of search results"
             app:seekBarIncrement="1"
             app:showSeekBarValue="true"

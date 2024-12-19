@@ -30,6 +30,9 @@ import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
+import com.apollographql.apollo.api.Optional
+import com.apollographql.apollo.api.Query
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
@@ -39,12 +42,19 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
+import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
@@ -59,6 +69,9 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem.Companion.REMOVE_POPUP_ITEM
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -86,6 +99,7 @@ import kotlin.math.roundToInt
  */
 class SceneDetailsFragment : DetailsSupportFragment() {
     private var pendingJob: Job? = null
+    private var suggestionsFetched = false
 
     private lateinit var sceneId: String
     private var sceneData: FullSceneData? = null
@@ -358,6 +372,96 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             }
         } else {
             mAdapter.clear(GALLERY_POS)
+        }
+
+        if (!suggestionsFetched) {
+            suggestionsFetched = true
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val scene = sceneData!!
+                val studioFilter =
+                    if (scene.studio?.studioData != null) {
+                        SceneFilterType(
+                            studios =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(listOf(scene.studio.studioData.id)),
+                                        modifier = CriterionModifier.EQUALS,
+                                    ),
+                                ),
+                        )
+                    } else {
+                        null
+                    }
+
+                val performersFilter =
+                    if (scene.performers.isNotEmpty()) {
+                        SceneFilterType(
+                            performers =
+                                Optional.presentIfNotNull(
+                                    MultiCriterionInput(
+                                        value = Optional.present(scene.performers.map { it.id }),
+                                        modifier = CriterionModifier.INCLUDES,
+                                    ),
+                                ),
+                        )
+                    } else {
+                        null
+                    }
+
+                val tagsFilter =
+                    if (scene.tags.isNotEmpty()) {
+                        SceneFilterType(
+                            tags =
+                                Optional.present(
+                                    HierarchicalMultiCriterionInput(
+                                        value = Optional.present(scene.tags.map { it.tagData.id }),
+                                        modifier = CriterionModifier.INCLUDES,
+                                    ),
+                                ),
+                        )
+                    } else {
+                        null
+                    }
+
+                val filters =
+                    listOfNotNull(tagsFilter, performersFilter, studioFilter).toMutableList()
+                if (filters.isNotEmpty()) {
+                    for (i in (1..<filters.size).reversed()) {
+                        filters[i - 1] = filters[i - 1].copy(OR = Optional.present(filters[i]))
+                    }
+                    val objectFilter = filters.first()
+                    val filterArgs =
+                        FilterArgs(
+                            DataType.SCENE,
+                            objectFilter = objectFilter,
+                            findFilter = StashFindFilter(sortAndDirection = SortAndDirection.random()),
+                        ).withResolvedRandom()
+                    val pageSize =
+                        PreferenceManager
+                            .getDefaultSharedPreferences(requireContext())
+                            .getInt(getString(R.string.pref_key_max_search_results), 25)
+                    val supplier =
+                        DataSupplierFactory(server.version).create<Query.Data, SlimSceneData, Query.Data>(
+                            filterArgs,
+                        )
+                    val items =
+                        StashPagingSource<Query.Data, SlimSceneData, SlimSceneData, Query.Data>(
+                            QueryEngine(StashServer.requireCurrentServer()),
+                            supplier,
+                        ).fetchPage(1, pageSize)
+                    if (items.isEmpty()) {
+                        mAdapter.clear(SIMILAR_POS)
+                    } else {
+                        val adapter =
+                            ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
+                        adapter.addAll(0, items)
+                        mAdapter.set(
+                            SIMILAR_POS,
+                            ListRow(HeaderItem(getString(R.string.more_like_this_scene)), adapter),
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -991,6 +1095,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val TAG_POS = PERFORMER_POS + 1
         private const val GALLERY_POS = TAG_POS + 1
         private const val ACTIONS_POS = GALLERY_POS + 1
+        private const val SIMILAR_POS = ACTIONS_POS + 1
 
         // Actions row order
         private const val O_COUNTER_POS = 1
