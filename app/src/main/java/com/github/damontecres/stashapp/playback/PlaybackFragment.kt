@@ -8,7 +8,6 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.AdapterView
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
@@ -40,8 +39,8 @@ import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.ThrottledLiveData
-import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
@@ -244,62 +243,16 @@ abstract class PlaybackFragment(
         if (readOnlyModeEnabled()) {
             oCounterButton.isEnabled = false
         } else {
-            oCounterButton.setOnClickListener {
-                viewLifecycleOwner.lifecycleScope.launch(
-                    StashCoroutineExceptionHandler(
-                        Toast.makeText(
-                            requireContext(),
-                            getString(R.string.failed_o_counter),
-                            Toast.LENGTH_SHORT,
-                        ),
-                    ),
-                ) {
-                    val newCounter = mutationEngine.incrementOCounter(scene.id)
+            val listener =
+                OCounterLongClickCallBack(
+                    scene.id,
+                    mutationEngine,
+                    viewLifecycleOwner.lifecycleScope,
+                ) { newCounter ->
                     oCounterText.text = newCounter.count.toString()
                 }
-            }
-            oCounterButton.setOnLongClickListener(
-                PopupOnLongClickListener(
-                    listOf(
-                        "Decrement",
-                        "Reset",
-                    ),
-                ) { _: AdapterView<*>, _: View, popUpItemPosition: Int, id: Long ->
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        StashCoroutineExceptionHandler(
-                            Toast.makeText(
-                                requireContext(),
-                                getString(R.string.failed_o_counter),
-                                Toast.LENGTH_SHORT,
-                            ),
-                        ),
-                    ) {
-                        when (popUpItemPosition) {
-                            0 -> {
-                                // Decrement
-                                val newCount = mutationEngine.decrementOCounter(scene.id)
-                                if (newCount.count > 0) {
-                                    oCounterText.text = newCount.count.toString()
-                                } else {
-                                    oCounterText.text = getString(R.string.zero)
-                                }
-                            }
-
-                            1 -> {
-                                // Reset
-                                mutationEngine.resetOCounter(scene.id)
-                                oCounterText.text = getString(R.string.zero)
-                            }
-
-                            else ->
-                                Log.w(
-                                    TAG,
-                                    "Unknown position for oCounterButton.setOnLongClickListener: $popUpItemPosition",
-                                )
-                        }
-                    }
-                },
-            )
+            oCounterButton.setOnClickListener(listener)
+            oCounterButton.setOnLongClickListener(listener)
         }
 
         updatePreviewLoader(scene)

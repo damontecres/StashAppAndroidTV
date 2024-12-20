@@ -76,6 +76,7 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.RemoveLongClickListener
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -179,20 +180,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         }
 
     private val galleriesAdapter = ArrayObjectAdapter(GalleryPresenter())
-    private val sceneActionsAdapter =
-        SparseArrayObjectAdapter(
-            ClassPresenterSelector()
-                .addClassPresenter(
-                    StashAction::class.java,
-                    ActionPresenter(),
-                ).addClassPresenter(
-                    OCounter::class.java,
-                    OCounterPresenter(OCounterLongClickCallBack()),
-                ).addClassPresenter(
-                    CreateMarkerAction::class.java,
-                    CreateMarkerActionPresenter(),
-                ),
-        )
+    private lateinit var sceneActionsAdapter: SparseArrayObjectAdapter
 
     private var detailsOverviewRow: DetailsOverviewRow? = null
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
@@ -259,10 +247,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             }
 
         setupDetailsOverviewRowPresenter()
-        mAdapter.set(
-            ACTIONS_POS,
-            ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
-        )
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
         return super.onCreateView(inflater, container, savedInstanceState)
     }
@@ -287,6 +271,35 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        sceneActionsAdapter =
+            SparseArrayObjectAdapter(
+                ClassPresenterSelector()
+                    .addClassPresenter(
+                        StashAction::class.java,
+                        ActionPresenter(),
+                    ).addClassPresenter(
+                        OCounter::class.java,
+                        OCounterPresenter(
+                            OCounterLongClickCallBack(
+                                sceneId,
+                                mutationEngine,
+                                viewLifecycleOwner.lifecycleScope,
+                            ) { newCount ->
+                                sceneActionsAdapter.set(O_COUNTER_POS, newCount)
+                                sceneData = sceneData!!.copy(o_counter = newCount.count)
+                            },
+                        ),
+                    ).addClassPresenter(
+                        CreateMarkerAction::class.java,
+                        CreateMarkerActionPresenter(),
+                    ),
+            )
+        mAdapter.set(
+            ACTIONS_POS,
+            ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
+        )
+
         configRowManager(tagsRowManager, ::TagPresenter)
         configRowManager(studioRowManager, ::StudioPresenter)
         configRowManager(groupsRowManager, ::GroupPresenter)
@@ -844,63 +857,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             tags = it.tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
             __typename = "",
         )
-
-    private inner class OCounterLongClickCallBack : StashPresenter.LongClickCallBack<OCounter> {
-        override fun getPopUpItems(
-            context: Context,
-            item: OCounter,
-        ): List<StashPresenter.PopUpItem> =
-            listOf(
-                StashPresenter.PopUpItem(0L, getString(R.string.increment)),
-                StashPresenter.PopUpItem(1L, getString(R.string.decrement)),
-                StashPresenter.PopUpItem(2L, getString(R.string.reset)),
-            )
-
-        override fun onItemLongClick(
-            context: Context,
-            item: OCounter,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            viewLifecycleOwner.lifecycleScope.launch(
-                StashCoroutineExceptionHandler(
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.failed_o_counter),
-                        Toast.LENGTH_SHORT,
-                    ),
-                ),
-            ) {
-                when (popUpItem.id) {
-                    0L -> {
-                        // Increment
-                        val newCount = mutationEngine.incrementOCounter(sceneId)
-                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
-                        sceneData = sceneData!!.copy(o_counter = newCount.count)
-                    }
-
-                    1L -> {
-                        // Decrement
-                        val newCount = mutationEngine.decrementOCounter(sceneId)
-                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
-                        sceneData = sceneData!!.copy(o_counter = newCount.count)
-                    }
-
-                    2L -> {
-                        // Reset
-                        val newCount = mutationEngine.resetOCounter(sceneId)
-                        sceneData = sceneData!!.copy(o_counter = newCount.count)
-                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
-                    }
-
-                    else ->
-                        Log.w(
-                            TAG,
-                            "Unknown position for OCounterLongClickCallBack: $popUpItem",
-                        )
-                }
-            }
-        }
-    }
 
     companion object {
         private const val TAG = "SceneDetailsFragment"
