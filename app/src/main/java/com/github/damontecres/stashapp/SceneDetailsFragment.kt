@@ -47,6 +47,7 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
+import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
@@ -378,9 +379,17 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             suggestionsFetched = true
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val scene = sceneData!!
+                val idFilter =
+                    Optional.present(
+                        IntCriterionInput(
+                            value = scene.id.toInt(),
+                            modifier = CriterionModifier.NOT_EQUALS,
+                        ),
+                    )
                 val studioFilter =
                     if (scene.studio?.studioData != null) {
                         SceneFilterType(
+                            id = idFilter,
                             studios =
                                 Optional.present(
                                     HierarchicalMultiCriterionInput(
@@ -396,6 +405,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 val performersFilter =
                     if (scene.performers.isNotEmpty()) {
                         SceneFilterType(
+                            id = idFilter,
                             performers =
                                 Optional.presentIfNotNull(
                                     MultiCriterionInput(
@@ -411,6 +421,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 val tagsFilter =
                     if (scene.tags.isNotEmpty()) {
                         SceneFilterType(
+                            id = idFilter,
                             tags =
                                 Optional.present(
                                     HierarchicalMultiCriterionInput(
