@@ -386,56 +386,65 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             modifier = CriterionModifier.NOT_EQUALS,
                         ),
                     )
-                val studioFilter =
-                    if (scene.studio?.studioData != null) {
-                        SceneFilterType(
-                            id = idFilter,
-                            studios =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(listOf(scene.studio.studioData.id)),
-                                        modifier = CriterionModifier.EQUALS,
-                                    ),
-                                ),
-                        )
-                    } else {
-                        null
-                    }
-
-                val performersFilter =
-                    if (scene.performers.isNotEmpty()) {
-                        SceneFilterType(
-                            id = idFilter,
-                            performers =
-                                Optional.presentIfNotNull(
-                                    MultiCriterionInput(
-                                        value = Optional.present(scene.performers.map { it.id }),
-                                        modifier = CriterionModifier.INCLUDES,
-                                    ),
-                                ),
-                        )
-                    } else {
-                        null
-                    }
-
-                val tagsFilter =
-                    if (scene.tags.isNotEmpty()) {
-                        SceneFilterType(
-                            id = idFilter,
-                            tags =
-                                Optional.present(
-                                    HierarchicalMultiCriterionInput(
-                                        value = Optional.present(scene.tags.map { it.tagData.id }),
-                                        modifier = CriterionModifier.INCLUDES,
-                                    ),
-                                ),
-                        )
-                    } else {
-                        null
-                    }
-
                 val filters =
-                    listOfNotNull(tagsFilter, performersFilter, studioFilter).toMutableList()
+                    buildList {
+                        if (scene.tags.isNotEmpty()) {
+                            add(
+                                SceneFilterType(
+                                    id = idFilter,
+                                    tags =
+                                        Optional.present(
+                                            HierarchicalMultiCriterionInput(
+                                                value = Optional.present(scene.tags.map { it.tagData.id }),
+                                                modifier = CriterionModifier.INCLUDES,
+                                            ),
+                                        ),
+                                ),
+                            )
+                        }
+                        if (scene.performers.isNotEmpty()) {
+                            add(
+                                SceneFilterType(
+                                    id = idFilter,
+                                    performers =
+                                        Optional.presentIfNotNull(
+                                            MultiCriterionInput(
+                                                value = Optional.present(scene.performers.map { it.id }),
+                                                modifier = CriterionModifier.INCLUDES,
+                                            ),
+                                        ),
+                                ),
+                            )
+                        }
+                        if (scene.studio?.studioData != null) {
+                            add(
+                                SceneFilterType(
+                                    id = idFilter,
+                                    studios =
+                                        Optional.present(
+                                            HierarchicalMultiCriterionInput(
+                                                value = Optional.present(listOf(scene.studio.studioData.id)),
+                                                modifier = CriterionModifier.EQUALS,
+                                            ),
+                                        ),
+                                ),
+                            )
+                        }
+                        if (scene.groups.isNotEmpty()) {
+                            add(
+                                SceneFilterType(
+                                    id = idFilter,
+                                    groups =
+                                        Optional.present(
+                                            HierarchicalMultiCriterionInput(
+                                                value = Optional.present(scene.groups.map { it.group.groupData.id }),
+                                                modifier = CriterionModifier.INCLUDES,
+                                            ),
+                                        ),
+                                ),
+                            )
+                        }
+                    }.toMutableList()
                 if (filters.isNotEmpty()) {
                     for (i in (1..<filters.size).reversed()) {
                         filters[i - 1] = filters[i - 1].copy(OR = Optional.present(filters[i]))
