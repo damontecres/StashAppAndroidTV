@@ -517,6 +517,22 @@ val GalleryData.name: String?
             null
         }
 
+fun FullSceneData.Scene_marker.asMarkerData(scene: FullSceneData): MarkerData =
+    MarkerData(
+        id = id,
+        title = title,
+        created_at = created_at,
+        updated_at = updated_at,
+        stream = stream,
+        screenshot = screenshot,
+        seconds = seconds,
+        preview = preview,
+        primary_tag = MarkerData.Primary_tag("", primary_tag.tagData.asSlimTagData),
+        scene = MarkerData.Scene(scene.id, scene.asVideoSceneData),
+        tags = tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
+        __typename = "",
+    )
+
 fun ScrollView.onlyScrollIfNeeded() {
     viewTreeObserver.addOnGlobalLayoutListener {
         val childHeight = getChildAt(0).height

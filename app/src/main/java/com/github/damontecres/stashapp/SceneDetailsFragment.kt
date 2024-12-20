@@ -55,6 +55,7 @@ import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.presenters.ActionPresenter
@@ -67,7 +68,6 @@ import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.SceneDetailsPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem.Companion.REMOVE_POPUP_ITEM
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
@@ -76,13 +76,14 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.RemoveLongClickListener
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.asSlimTagData
-import com.github.damontecres.stashapp.util.asVideoSceneData
+import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
@@ -111,12 +112,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private val mPresenterSelector = ClassPresenterSelector()
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
 
-    private val mStudioAdapter = ArrayObjectAdapter(StudioPresenter(StudioLongClickCallBack()))
-    private val studioAdapter =
+    private val studioRowManager =
         ListRowManager<StudioData>(
             DataType.STUDIO,
             ListRowManager.SparseArrayRowModifier(mAdapter, STUDIO_POS),
-            mStudioAdapter,
+            ArrayObjectAdapter(),
             StashApplication.getApplication().getString(DataType.STUDIO.stringId),
         ) { studioIds ->
             val newStudioId =
@@ -137,13 +137,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             }
         }
 
-    // Presenter is set in fetchData because it requires mSelectedGroup
-    private val mPerformersAdapter = ArrayObjectAdapter()
     private val performersRowManager =
         ListRowManager<PerformerData>(
             DataType.PERFORMER,
             ListRowManager.SparseArrayRowModifier(mAdapter, PERFORMER_POS),
-            mPerformersAdapter,
+            ArrayObjectAdapter(),
         ) { performerIds ->
             val result = mutationEngine.setPerformersOnScene(sceneId, performerIds)
             result?.performers?.map { it.performerData }.orEmpty()
@@ -153,7 +151,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         ListRowManager<TagData>(
             DataType.TAG,
             ListRowManager.SparseArrayRowModifier(mAdapter, TAG_POS),
-            ArrayObjectAdapter(TagPresenter(TagLongClickCallBack())),
+            ArrayObjectAdapter(),
         ) { tagIds ->
             val result = mutationEngine.setTagsOnScene(sceneId, tagIds)
             result?.tags?.map { it.tagData }.orEmpty()
@@ -163,28 +161,25 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         ListRowManager<GroupData>(
             DataType.GROUP,
             ListRowManager.SparseArrayRowModifier(mAdapter, GROUP_POS),
-            ArrayObjectAdapter(GroupPresenter(GroupLongClickCallBack())),
+            ArrayObjectAdapter(),
         ) { groupIds ->
             val result = mutationEngine.setGroupsOnScene(sceneData!!.id, groupIds)
             result?.groups?.map { it.group.groupData }.orEmpty()
         }
 
-    private val markersAdapter = ArrayObjectAdapter(MarkerPresenter(MarkerLongClickCallBack()))
+    private val markersRowManager =
+        ListRowManager<MarkerData>(
+            DataType.MARKER,
+            ListRowManager.SparseArrayRowModifier(mAdapter, MARKER_POS),
+            ArrayObjectAdapter(),
+        ) { markerIds ->
+            val removed = sceneData!!.scene_markers.map { it.id } - markerIds.toSet()
+            removed.forEach { mutationEngine.deleteMarker(it) }
+            queryEngine.findMarkersInScene(sceneData!!.id)
+        }
+
     private val galleriesAdapter = ArrayObjectAdapter(GalleryPresenter())
-    private val sceneActionsAdapter =
-        SparseArrayObjectAdapter(
-            ClassPresenterSelector()
-                .addClassPresenter(
-                    StashAction::class.java,
-                    ActionPresenter(),
-                ).addClassPresenter(
-                    OCounter::class.java,
-                    OCounterPresenter(OCounterLongClickCallBack()),
-                ).addClassPresenter(
-                    CreateMarkerAction::class.java,
-                    CreateMarkerActionPresenter(),
-                ),
-        )
+    private lateinit var sceneActionsAdapter: SparseArrayObjectAdapter
 
     private var detailsOverviewRow: DetailsOverviewRow? = null
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
@@ -251,12 +246,23 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             }
 
         setupDetailsOverviewRowPresenter()
-        mAdapter.set(
-            ACTIONS_POS,
-            ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
-        )
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
         return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    private fun <T : StashData> configRowManager(
+        rowManager: ListRowManager<T>,
+        presenter: (StashPresenter.LongClickCallBack<T>) -> StashPresenter<T>,
+    ) {
+        rowManager.adapter.presenterSelector =
+            SinglePresenterSelector(
+                presenter.invoke(
+                    RemoveLongClickListener(
+                        viewLifecycleOwner.lifecycleScope,
+                        rowManager,
+                    ),
+                ),
+            )
     }
 
     override fun onViewCreated(
@@ -264,6 +270,57 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        sceneActionsAdapter =
+            SparseArrayObjectAdapter(
+                ClassPresenterSelector()
+                    .addClassPresenter(
+                        StashAction::class.java,
+                        ActionPresenter(),
+                    ).addClassPresenter(
+                        OCounter::class.java,
+                        OCounterPresenter(
+                            OCounterLongClickCallBack(
+                                sceneId,
+                                mutationEngine,
+                                viewLifecycleOwner.lifecycleScope,
+                            ) { newCount ->
+                                sceneActionsAdapter.set(O_COUNTER_POS, newCount)
+                                sceneData = sceneData!!.copy(o_counter = newCount.count)
+                            },
+                        ),
+                    ).addClassPresenter(
+                        CreateMarkerAction::class.java,
+                        CreateMarkerActionPresenter(),
+                    ),
+            )
+        mAdapter.set(
+            ACTIONS_POS,
+            ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
+        )
+
+        configRowManager(tagsRowManager, ::TagPresenter)
+        configRowManager(studioRowManager, ::StudioPresenter)
+        configRowManager(groupsRowManager, ::GroupPresenter)
+
+        markersRowManager.adapter.presenterSelector =
+            SinglePresenterSelector(
+                MarkerPresenter(
+                    RemoveLongClickListener(
+                        viewLifecycleOwner.lifecycleScope,
+                        markersRowManager,
+                        listOf(MARKER_DETAILS_POPUP),
+                    ) { context, item, popUpItem ->
+                        if (popUpItem.id == MARKER_DETAILS_POPUP.id) {
+                            val intent = Intent(context, DataTypeActivity::class.java)
+                            intent.putDataType(DataType.MARKER)
+                            intent.putExtra("marker", Marker(item))
+                            context.startActivity(intent)
+                        }
+                    },
+                ),
+            )
+
         if (sceneData == null) {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
                 fetchData(sceneId)
@@ -283,13 +340,9 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         pendingJob = null
         sceneData = queryEngine.getScene(sceneId)
         if (sceneData != null) {
-            mPerformersAdapter.presenterSelector =
-                SinglePresenterSelector(
-                    PerformerInScenePresenter(
-                        sceneData!!.date,
-                        PerformerLongClickCallBack(),
-                    ),
-                )
+            configRowManager(performersRowManager) { callback ->
+                PerformerInScenePresenter(sceneData!!.date, callback)
+            }
         }
 
         // Need to check position because the activity result callback happens before onResume
@@ -325,25 +378,16 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
 
         if (sceneData!!.studio?.studioData != null) {
-            studioAdapter.setItems(listOf(sceneData!!.studio!!.studioData))
+            studioRowManager.setItems(listOf(sceneData!!.studio!!.studioData))
         }
 
         tagsRowManager.setItems(sceneData!!.tags.map { it.tagData })
 
-        if (sceneData!!.scene_markers.isNotEmpty()) {
-            if (mAdapter.lookup(MARKER_POS) == null) {
-                mAdapter.set(
-                    MARKER_POS,
-                    ListRow(HeaderItem(getString(R.string.stashapp_markers)), markersAdapter),
-                )
-            }
-            markersAdapter.setItems(
-                sceneData!!.scene_markers.map(::convertMarker),
-                StashDiffCallback,
-            )
-        } else {
-            mAdapter.clear(MARKER_POS)
-        }
+        markersRowManager.setItems(
+            sceneData!!.scene_markers.map {
+                it.asMarkerData(sceneData!!)
+            },
+        )
 
         val performerIds = sceneData!!.performers.map { it.id }
         Log.v(TAG, "fetchData performerIds=$performerIds")
@@ -732,7 +776,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                 }
 
                                 StashAction.SET_STUDIO.id -> {
-                                    val newStudio = studioAdapter.add(newId)
+                                    val newStudio = studioRowManager.add(newId)
                                     if (newStudio != null) {
                                         Toast
                                             .makeText(
@@ -766,22 +810,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                             position,
                                             newId,
                                         )!!
-                                    val index =
-                                        markersAdapter
-                                            .unmodifiableList<MarkerData>()
-                                            .indexOfFirst {
-                                                newMarker.seconds < it.seconds
-                                            }.coerceAtLeast(0)
-                                    markersAdapter.add(index, newMarker)
-                                    if (mAdapter.lookup(MARKER_POS) == null) {
-                                        mAdapter.set(
-                                            MARKER_POS,
-                                            ListRow(
-                                                HeaderItem(getString(R.string.stashapp_markers)),
-                                                markersAdapter,
-                                            ),
-                                        )
-                                    }
+                                    markersRowManager.add(newMarker.id)
                                     Toast
                                         .makeText(
                                             requireContext(),
@@ -811,281 +840,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
                     position = localPosition
                     setupPlayActionsAdapter()
-                }
-            }
-        }
-    }
-
-    private fun convertMarker(it: FullSceneData.Scene_marker): MarkerData =
-        MarkerData(
-            id = it.id,
-            title = it.title,
-            created_at = "",
-            updated_at = "",
-            stream = it.stream,
-            screenshot = it.screenshot,
-            seconds = it.seconds,
-            preview = "",
-            primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData.asSlimTagData),
-            scene = MarkerData.Scene(sceneId, sceneData!!.asVideoSceneData),
-            tags = it.tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
-            __typename = "",
-        )
-
-    private inner class OCounterLongClickCallBack : StashPresenter.LongClickCallBack<OCounter> {
-        override fun getPopUpItems(
-            context: Context,
-            item: OCounter,
-        ): List<StashPresenter.PopUpItem> =
-            listOf(
-                StashPresenter.PopUpItem(0L, getString(R.string.increment)),
-                StashPresenter.PopUpItem(1L, getString(R.string.decrement)),
-                StashPresenter.PopUpItem(2L, getString(R.string.reset)),
-            )
-
-        override fun onItemLongClick(
-            context: Context,
-            item: OCounter,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            viewLifecycleOwner.lifecycleScope.launch(
-                StashCoroutineExceptionHandler(
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.failed_o_counter),
-                        Toast.LENGTH_SHORT,
-                    ),
-                ),
-            ) {
-                when (popUpItem.id) {
-                    0L -> {
-                        // Increment
-                        val newCount = mutationEngine.incrementOCounter(sceneId)
-                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
-                        sceneData = sceneData!!.copy(o_counter = newCount.count)
-                    }
-
-                    1L -> {
-                        // Decrement
-                        val newCount = mutationEngine.decrementOCounter(sceneId)
-                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
-                        sceneData = sceneData!!.copy(o_counter = newCount.count)
-                    }
-
-                    2L -> {
-                        // Reset
-                        val newCount = mutationEngine.resetOCounter(sceneId)
-                        sceneData = sceneData!!.copy(o_counter = newCount.count)
-                        sceneActionsAdapter.set(O_COUNTER_POS, newCount)
-                    }
-
-                    else ->
-                        Log.w(
-                            TAG,
-                            "Unknown position for OCounterLongClickCallBack: $popUpItem",
-                        )
-                }
-            }
-        }
-    }
-
-    /**
-     * Just a convenience interface for tags, performers, & markers since they all use the same popup items
-     */
-    private interface DetailsLongClickCallBack<T> : StashPresenter.LongClickCallBack<T> {
-        override fun getPopUpItems(
-            context: Context,
-            item: T,
-        ): List<StashPresenter.PopUpItem> =
-            if (readOnlyModeDisabled()) {
-                listOf(REMOVE_POPUP_ITEM)
-            } else {
-                listOf()
-            }
-    }
-
-    private inner class TagLongClickCallBack : DetailsLongClickCallBack<TagData> {
-        override fun onItemLongClick(
-            context: Context,
-            item: TagData,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            if (popUpItem == REMOVE_POPUP_ITEM) {
-                viewLifecycleOwner.lifecycleScope.launch(
-                    CoroutineExceptionHandler { _, ex ->
-                        Log.e(TAG, "Exception setting tags", ex)
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Failed to remove tag: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                    },
-                ) {
-                    if (tagsRowManager.remove(item)) {
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Removed tag '${item.name}' from scene",
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                    }
-                }
-            }
-        }
-    }
-
-    private inner class GroupLongClickCallBack : DetailsLongClickCallBack<GroupData> {
-        override fun onItemLongClick(
-            context: Context,
-            item: GroupData,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            if (popUpItem == REMOVE_POPUP_ITEM) {
-                viewLifecycleOwner.lifecycleScope.launch(
-                    CoroutineExceptionHandler { _, ex ->
-                        Log.e(TAG, "Exception setting groups", ex)
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Failed to remove group: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                    },
-                ) {
-                    if (groupsRowManager.remove(item)) {
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Removed group '${item.name}' from scene",
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                    }
-                }
-            }
-        }
-    }
-
-    private inner class MarkerLongClickCallBack : StashPresenter.LongClickCallBack<MarkerData> {
-        override fun getPopUpItems(
-            context: Context,
-            item: MarkerData,
-        ): List<StashPresenter.PopUpItem> =
-            listOf(
-                StashPresenter.PopUpItem(177L, getString(R.string.stashapp_details)),
-                REMOVE_POPUP_ITEM,
-            )
-
-        override fun onItemLongClick(
-            context: Context,
-            item: MarkerData,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            when (popUpItem.id) {
-                177L -> {
-                    val intent = Intent(context, DataTypeActivity::class.java)
-                    intent.putDataType(DataType.MARKER)
-                    intent.putExtra("marker", Marker(item))
-                    context.startActivity(intent)
-                }
-
-                REMOVE_POPUP_ITEM.id -> {
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception setting tags", ex)
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Failed to remove tag: ${ex.message}",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                        },
-                    ) {
-                        val mutResult = mutationEngine.deleteMarker(item.id)
-                        if (mutResult) {
-                            markersAdapter.remove(item)
-                            if (markersAdapter.size() == 0) {
-                                mAdapter.clear(MARKER_POS)
-                            }
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Removed marker from scene",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                        }
-                    }
-                }
-
-                else -> {
-                    throw IllegalArgumentException("Unknown id ${popUpItem.id}")
-                }
-            }
-        }
-    }
-
-    private inner class PerformerLongClickCallBack : DetailsLongClickCallBack<PerformerData> {
-        override fun onItemLongClick(
-            context: Context,
-            item: PerformerData,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            if (popUpItem == REMOVE_POPUP_ITEM) {
-                val performerId = item.id
-                Log.d(
-                    TAG,
-                    "Removing performer $performerId to scene ${sceneData?.id}",
-                )
-                viewLifecycleOwner.lifecycleScope.launch(
-                    CoroutineExceptionHandler { _, ex ->
-                        Log.e(TAG, "Exception setting performers", ex)
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Failed to remove performer: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                    },
-                ) {
-                    if (performersRowManager.remove(item)) {
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Removed performer '${item.name}' from scene",
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                    }
-                }
-            }
-        }
-    }
-
-    private inner class StudioLongClickCallBack : DetailsLongClickCallBack<StudioData> {
-        override fun onItemLongClick(
-            context: Context,
-            item: StudioData,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            if (popUpItem == REMOVE_POPUP_ITEM) {
-                viewLifecycleOwner.lifecycleScope.launch(
-                    CoroutineExceptionHandler { _, ex ->
-                        Log.e(TAG, "Exception setting studio", ex)
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Failed to remove studio: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                    },
-                ) {
-                    if (studioAdapter.remove(item)) {
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Removed studio from scene",
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                    }
                 }
             }
         }
@@ -1126,5 +880,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         private const val SET_STUDIO_POS = ADD_GROUP_POS + 1
         private const val FORCE_TRANSCODE_POS = SET_STUDIO_POS + 1
         private const val FORCE_DIRECT_PLAY_POS = FORCE_TRANSCODE_POS + 1
+
+        private val MARKER_DETAILS_POPUP =
+            StashPresenter.PopUpItem(
+                177,
+                StashApplication.getApplication().getString(R.string.stashapp_details),
+            )
     }
 }

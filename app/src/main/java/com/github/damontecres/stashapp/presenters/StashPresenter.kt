@@ -145,6 +145,12 @@ abstract class StashPresenter<T>(
 
             fun getDefault(context: Context): PopUpItem = PopUpItem(DEFAULT_ID, context.getString(R.string.go_to))
 
+            val GO_TO_POPUP_ITEM =
+                PopUpItem(
+                    DEFAULT_ID,
+                    StashApplication.getApplication().getString(R.string.go_to),
+                )
+
             val REMOVE_POPUP_ITEM =
                 PopUpItem(
                     REMOVE_ID,

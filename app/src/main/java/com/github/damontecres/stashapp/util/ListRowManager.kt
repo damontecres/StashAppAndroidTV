@@ -15,7 +15,7 @@ import com.github.damontecres.stashapp.data.StashData
 class ListRowManager<T : StashData>(
     dataType: DataType,
     rowModifier: SparseArrayRowModifier,
-    private val adapter: ArrayObjectAdapter,
+    val adapter: ArrayObjectAdapter,
     rowHeaderName: String? = null,
     private val setItemsCallback: SetIdsForItemCallback<T>,
 ) {
