@@ -55,7 +55,6 @@ import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.SortAndDirection
-import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.presenters.ActionPresenter
@@ -84,6 +83,7 @@ import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
+import com.github.damontecres.stashapp.util.configRowManager
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
@@ -250,21 +250,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
-    private fun <T : StashData> configRowManager(
-        rowManager: ListRowManager<T>,
-        presenter: (StashPresenter.LongClickCallBack<T>) -> StashPresenter<T>,
-    ) {
-        rowManager.adapter.presenterSelector =
-            SinglePresenterSelector(
-                presenter.invoke(
-                    RemoveLongClickListener(
-                        viewLifecycleOwner.lifecycleScope,
-                        rowManager,
-                    ),
-                ),
-            )
-    }
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -281,6 +266,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         OCounter::class.java,
                         OCounterPresenter(
                             OCounterLongClickCallBack(
+                                DataType.SCENE,
                                 sceneId,
                                 mutationEngine,
                                 viewLifecycleOwner.lifecycleScope,
@@ -299,9 +285,9 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
         )
 
-        configRowManager(tagsRowManager, ::TagPresenter)
-        configRowManager(studioRowManager, ::StudioPresenter)
-        configRowManager(groupsRowManager, ::GroupPresenter)
+        configRowManager(viewLifecycleOwner.lifecycleScope, tagsRowManager, ::TagPresenter)
+        configRowManager(viewLifecycleOwner.lifecycleScope, studioRowManager, ::StudioPresenter)
+        configRowManager(viewLifecycleOwner.lifecycleScope, groupsRowManager, ::GroupPresenter)
 
         markersRowManager.adapter.presenterSelector =
             SinglePresenterSelector(
@@ -340,7 +326,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         pendingJob = null
         sceneData = queryEngine.getScene(sceneId)
         if (sceneData != null) {
-            configRowManager(performersRowManager) { callback ->
+            configRowManager(viewLifecycleOwner.lifecycleScope, performersRowManager) { callback ->
                 PerformerInScenePresenter(sceneData!!.date, callback)
             }
         }

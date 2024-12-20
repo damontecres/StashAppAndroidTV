@@ -3,11 +3,14 @@ package com.github.damontecres.stashapp.util
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
+import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashData
+import com.github.damontecres.stashapp.presenters.StashPresenter
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * Manages a [ListRow] handling adding/removing items, or even the adding/remove the row itself
@@ -134,4 +137,13 @@ class ListRowManager<T : StashData>(
             adapter.clear(position)
         }
     }
+}
+
+fun <T : StashData> configRowManager(
+    scope: CoroutineScope,
+    rowManager: ListRowManager<T>,
+    presenter: (StashPresenter.LongClickCallBack<T>) -> StashPresenter<T>,
+) {
+    rowManager.adapter.presenterSelector =
+        SinglePresenterSelector(presenter.invoke(RemoveLongClickListener(scope, rowManager)))
 }

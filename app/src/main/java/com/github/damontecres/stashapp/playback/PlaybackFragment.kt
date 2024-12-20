@@ -245,6 +245,7 @@ abstract class PlaybackFragment(
         } else {
             val listener =
                 OCounterLongClickCallBack(
+                    DataType.SCENE,
                     scene.id,
                     mutationEngine,
                     viewLifecycleOwner.lifecycleScope,
