@@ -44,6 +44,8 @@ import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFileData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
+import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackActivity
@@ -71,6 +73,8 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.math.roundToInt
 import kotlin.random.Random
+import kotlin.reflect.full.cast
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -830,3 +834,37 @@ fun maybeStartPlayback(
         }
     }
 }
+
+/**
+ * Turns a [StashDataFilter] into a more readable string by excluding absent optional fields
+ *
+ * This is useful for debugging
+ */
+fun <T : StashDataFilter> toReadableString(
+    dataType: DataType,
+    filter: T,
+): String =
+    buildString {
+        append(filter::class.simpleName)
+        append("(")
+        val params =
+            dataType.filterType.declaredMemberProperties
+                .map { param ->
+                    val obj = param.get(filter) as Optional<*>
+                    val value = obj.getOrNull()
+                    if (value != null) {
+                        if (param.name in setOf("AND", "OR", "NOT")) {
+                            val str = toReadableString(dataType, dataType.filterType.cast(value))
+                            "${param.name}=$str"
+                        } else {
+                            "${param.name}=$value"
+                        }
+                    } else {
+                        null
+                    }
+                }.joinNotNullOrBlank(", ")
+        append(params)
+        append(")")
+    }.replace(Optional.absent().toString(), "Absent")
+
+fun SceneFilterType.toReadableString(): String = toReadableString(DataType.SCENE, this)
