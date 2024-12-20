@@ -128,7 +128,10 @@ fragment FullSceneData on Scene {
     id
     title
     seconds
+    created_at
+    updated_at
     stream
+    preview
     primary_tag {
       ...TagData
     }

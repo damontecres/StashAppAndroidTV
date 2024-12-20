@@ -83,8 +83,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.asSlimTagData
-import com.github.damontecres.stashapp.util.asVideoSceneData
+import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
@@ -384,7 +383,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
         tagsRowManager.setItems(sceneData!!.tags.map { it.tagData })
 
-        markersRowManager.setItems(sceneData!!.scene_markers.map(::convertMarker))
+        markersRowManager.setItems(
+            sceneData!!.scene_markers.map {
+                it.asMarkerData(sceneData!!)
+            },
+        )
 
         val performerIds = sceneData!!.performers.map { it.id }
         Log.v(TAG, "fetchData performerIds=$performerIds")
@@ -841,22 +844,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             }
         }
     }
-
-    private fun convertMarker(it: FullSceneData.Scene_marker): MarkerData =
-        MarkerData(
-            id = it.id,
-            title = it.title,
-            created_at = "",
-            updated_at = "",
-            stream = it.stream,
-            screenshot = it.screenshot,
-            seconds = it.seconds,
-            preview = "",
-            primary_tag = MarkerData.Primary_tag("", it.primary_tag.tagData.asSlimTagData),
-            scene = MarkerData.Scene(sceneId, sceneData!!.asVideoSceneData),
-            tags = it.tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
-            __typename = "",
-        )
 
     companion object {
         private const val TAG = "SceneDetailsFragment"
