@@ -6,6 +6,7 @@ import android.view.View.OnClickListener
 import android.view.View.OnLongClickListener
 import android.widget.Toast
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -16,7 +17,8 @@ import kotlinx.coroutines.launch
  * Handles modifying the O-Counter for a scene
  */
 class OCounterLongClickCallBack(
-    private val sceneId: String,
+    private val dataType: DataType,
+    private val id: String,
     private val mutationEngine: MutationEngine,
     private val scope: CoroutineScope,
     private val callBack: (newOCounter: OCounter) -> Unit,
@@ -49,9 +51,26 @@ class OCounterLongClickCallBack(
         ) {
             val newOCounter =
                 when (popUpItem.id) {
-                    1000L -> mutationEngine.incrementOCounter(sceneId)
-                    1001L -> mutationEngine.decrementOCounter(sceneId)
-                    1002L -> mutationEngine.resetOCounter(sceneId)
+                    1000L ->
+                        if (dataType == DataType.SCENE) {
+                            mutationEngine.incrementOCounter(id)
+                        } else {
+                            mutationEngine.incrementImageOCounter(id)
+                        }
+
+                    1001L ->
+                        if (dataType == DataType.SCENE) {
+                            mutationEngine.decrementOCounter(id)
+                        } else {
+                            mutationEngine.decrementImageOCounter(id)
+                        }
+
+                    1002L ->
+                        if (dataType == DataType.SCENE) {
+                            mutationEngine.resetOCounter(id)
+                        } else {
+                            mutationEngine.resetImageOCounter(id)
+                        }
                     else -> throw IllegalArgumentException("Unknown id ${popUpItem.id}")
                 }
             callBack(newOCounter)
