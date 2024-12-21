@@ -24,6 +24,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
+import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
 import com.github.damontecres.stashapp.views.formatNumber
 import kotlinx.coroutines.launch
 
@@ -186,34 +187,63 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                             filterArgs.dataType.defaultSort,
                         )
                     val objectFilterMap = filterWriter.convertFilter(objectFilter)
-                    val mutationEngine = MutationEngine(StashServer.requireCurrentServer())
                     val existingId =
                         viewModel.getSavedFilterId(filterNameAction.description?.toString())
-                    val newSavedFilter =
-                        mutationEngine.saveFilter(
-                            SaveFilterInput(
-                                id = Optional.presentIfNotNull(existingId),
-                                mode = dataType.filterMode,
-                                name = filterNameAction.description.toString(),
-                                find_filter =
-                                    Optional.presentIfNotNull(
-                                        findFilter.toFindFilterType(1, 40),
-                                    ),
-                                object_filter = Optional.presentIfNotNull(objectFilterMap),
-                                ui_options = Optional.absent(),
-                            ),
+                    val newFilterInput =
+                        SaveFilterInput(
+                            id = Optional.presentIfNotNull(existingId),
+                            mode = dataType.filterMode,
+                            name = filterNameAction.description.toString(),
+                            find_filter =
+                                Optional.presentIfNotNull(
+                                    findFilter.toFindFilterType(1, 40),
+                                ),
+                            object_filter = Optional.presentIfNotNull(objectFilterMap),
+                            ui_options = Optional.absent(),
                         )
-                    Log.i(TAG, "New SavedFilter: ${newSavedFilter.id}")
+                    if (existingId.isNotNullOrBlank()) {
+                        // Filter exists, so prompt for confirmation
+                        ConfirmationDialogFragment.show(
+                            childFragmentManager,
+                            getString(
+                                R.string.stashapp_dialogs_overwrite_filter_confirm,
+                                filterNameAction.description.toString(),
+                            ),
+                        ) {
+                            viewLifecycleOwner.lifecycleScope.launch(
+                                StashCoroutineExceptionHandler(
+                                    autoToast = true,
+                                ),
+                            ) {
+                                saveAndFinish(filterArgs, newFilterInput)
+                            }
+                        }
+                    } else {
+                        saveAndFinish(filterArgs, newFilterInput)
+                    }
+                } else {
+                    // Just show the results without saving
+                    saveAndFinish(filterArgs, null)
                 }
-                // Finish & start the filter list activity
-                finishGuidedStepSupportFragments()
-                val intent =
-                    Intent(requireContext(), FilterListActivity::class.java)
-                        .putDataType(filterArgs.dataType)
-                        .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
-                requireContext().startActivity(intent)
             }
         }
+    }
+
+    private suspend fun saveAndFinish(
+        filterArgs: FilterArgs,
+        newFilterInput: SaveFilterInput?,
+    ) {
+        if (newFilterInput != null) {
+            val mutationEngine = MutationEngine(StashServer.requireCurrentServer())
+            val newSavedFilter = mutationEngine.saveFilter(newFilterInput)
+            Log.i(TAG, "New SavedFilter: ${newSavedFilter.id}")
+        }
+        finishGuidedStepSupportFragments()
+        val intent =
+            Intent(requireContext(), FilterListActivity::class.java)
+                .putDataType(filterArgs.dataType)
+                .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
+        requireContext().startActivity(intent)
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
