@@ -20,7 +20,6 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.experimentalFeaturesEnabled
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
@@ -35,8 +34,6 @@ import kotlinx.coroutines.launch
  */
 class CreateFilterStep : CreateFilterGuidedStepFragment() {
     private lateinit var queryEngine: QueryEngine
-
-    private val experimental = experimentalFeaturesEnabled()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,29 +105,16 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .build(),
         )
         if (readOnlyModeDisabled()) {
-            if (experimental) {
-                actions.add(
-                    GuidedAction
-                        .Builder(requireContext())
-                        .id(SAVE_SUBMIT)
-                        .hasNext(true)
-                        .enabled(false)
-                        .title("Save and submit")
-                        .description(getString(R.string.save_and_submit_no_name_desc))
-                        .build(),
-                )
-            } else {
-                actions.add(
-                    GuidedAction
-                        .Builder(requireContext())
-                        .id(SAVE_SUBMIT)
-                        .hasNext(true)
-                        .enabled(false)
-                        .title("Save and submit")
-                        .description(getString(R.string.save_and_submit_not_enabled))
-                        .build(),
-                )
-            }
+            actions.add(
+                GuidedAction
+                    .Builder(requireContext())
+                    .id(SAVE_SUBMIT)
+                    .hasNext(true)
+                    .enabled(false)
+                    .title("Save and submit")
+                    .description(getString(R.string.save_and_submit_no_name_desc))
+                    .build(),
+            )
         }
     }
 
@@ -187,10 +171,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 ).withResolvedRandom()
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 // If there is a name, try to save it to the server
-                if (experimentalFeaturesEnabled() &&
-                    action.id == SAVE_SUBMIT &&
-                    filterArgs.name.isNotNullOrBlank()
-                ) {
+                if (action.id == SAVE_SUBMIT && filterArgs.name.isNotNullOrBlank()) {
                     val queryEngine = QueryEngine(viewModel.server.value!!)
                     // Save it
                     val filterWriter =
@@ -206,9 +187,12 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                         )
                     val objectFilterMap = filterWriter.convertFilter(objectFilter)
                     val mutationEngine = MutationEngine(StashServer.requireCurrentServer())
+                    val existingId =
+                        viewModel.getSavedFilterId(filterNameAction.description?.toString())
                     val newSavedFilter =
                         mutationEngine.saveFilter(
                             SaveFilterInput(
+                                id = Optional.presentIfNotNull(existingId),
                                 mode = dataType.filterMode,
                                 name = filterNameAction.description.toString(),
                                 find_filter =
@@ -233,12 +217,15 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        if (action.id == FILTER_NAME && experimental) {
+        if (action.id == FILTER_NAME) {
             val submitAction = findActionById(SAVE_SUBMIT)
+            val id = viewModel.getSavedFilterId(action.description?.toString())
             submitAction.isEnabled = action.description.isNotNullOrBlank()
             submitAction.description =
-                if (submitAction.isEnabled) {
-                    getString(R.string.save_and_submit_desc)
+                if (submitAction.isEnabled && id.isNotNullOrBlank()) {
+                    getString(R.string.save_and_submit_overwrite)
+                } else if (submitAction.isEnabled) {
+                    getString(R.string.stashapp_actions_save_filter)
                 } else {
                     getString(R.string.save_and_submit_no_name_desc)
                 }

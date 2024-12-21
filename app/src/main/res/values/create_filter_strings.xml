@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="save_and_submit_not_enabled">Experimental! Enable in settings.</string>
-    <string name="save_and_submit_no_name_desc">Experimental! Enter a name to save.</string>
-    <string name="save_and_submit_desc">Experimental!</string>
+    <string name="save_and_submit_no_name_desc">Enter a name to save.</string>
+    <string name="save_and_submit_overwrite">Overwrite existing saved filter</string>
 </resources>

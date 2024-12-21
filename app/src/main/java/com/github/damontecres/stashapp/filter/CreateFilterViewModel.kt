@@ -40,6 +40,8 @@ class CreateFilterViewModel : ViewModel() {
     val resultCount = MutableLiveData(-1)
     private var countJob: Job? = null
 
+    private val currentSavedFilters = mutableMapOf<String, String>()
+
     /**
      * Initialize the state
      */
@@ -65,6 +67,11 @@ class CreateFilterViewModel : ViewModel() {
                 }
             }
             callback()
+        }
+        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+            queryEngine.getSavedFilters(dataType).forEach {
+                currentSavedFilters[it.name] = it.id
+            }
         }
     }
 
@@ -145,6 +152,8 @@ class CreateFilterViewModel : ViewModel() {
             val key = DataTypeId(dataType, id)
             storedItems[key]
         }
+
+    fun getSavedFilterId(name: String?): String? = currentSavedFilters[name]
 
     /**
      * A composite of [DataType] and ID because IDs can be reused between data types
