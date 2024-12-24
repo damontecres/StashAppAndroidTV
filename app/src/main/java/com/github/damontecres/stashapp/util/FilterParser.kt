@@ -311,10 +311,11 @@ class FilterParser(
     fun convertFilterMap(
         dataType: DataType,
         filterMap: Map<String, *>,
+        useRandomSeed: Boolean = true,
     ): FilterArgs {
         val findFilterMap = filterMap.getCaseInsensitive("find_filter")
         val objectFilterMap = filterMap.getCaseInsensitive("object_filter")
-        val findFilter = convertFindFilter(findFilterMap)
+        val findFilter = convertFindFilter(findFilterMap, useRandomSeed)
         val objectFilter = convertFilter(dataType, objectFilterMap)
         return FilterArgs(
             dataType,
@@ -323,7 +324,10 @@ class FilterParser(
         )
     }
 
-    fun convertFindFilter(f: Any?): StashFindFilter? =
+    fun convertFindFilter(
+        f: Any?,
+        useRandomSeed: Boolean,
+    ): StashFindFilter? =
         if (f is StashFindFilter) {
             f
         } else if (f == null) {
@@ -336,7 +340,7 @@ class FilterParser(
                     ?: SortDirectionEnum.ASC
             val sortAndDirection =
                 if (sort.isNotNullOrBlank()) {
-                    SortAndDirection.create(sort, direction)
+                    SortAndDirection.create(sort, direction, useRandomSeed)
                 } else {
                     null
                 }
