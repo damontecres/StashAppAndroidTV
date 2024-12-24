@@ -113,7 +113,7 @@ fun findFilterSummary(
     findFilter: StashFindFilter,
 ): String {
     val sortAndDirection = findFilter.sortAndDirection ?: dataType.defaultSort
-    val sortName = context.getString(sortAndDirection.sort.nameStringId)
+    val sortName = sortAndDirection.sort.getString(context)
     val directionName =
         when (sortAndDirection.direction) {
             SortDirectionEnum.ASC -> context.getString(R.string.stashapp_ascending)

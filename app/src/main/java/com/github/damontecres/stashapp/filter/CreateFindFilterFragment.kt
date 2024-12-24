@@ -34,17 +34,11 @@ class CreateFindFilterFragment(
                         .Builder(requireContext())
                         .id(SORT_OFFSET + index)
                         .hasNext(false)
-                        .title(getString(sortOption.nameStringId))
+                        .title(sortOption.getString(requireContext()))
                         .build()
                 }.sortedBy { it.title.toString() }
 
-        val currSortOption = currFindFilter.sortAndDirection?.sort
-        val sortDesc =
-            if (currSortOption != null) {
-                getString(currSortOption.nameStringId)
-            } else {
-                null
-            }
+        val sortDesc = currFindFilter.sortAndDirection?.sort?.getString(requireContext())
         actions.add(
             GuidedAction
                 .Builder(requireContext())
@@ -121,7 +115,7 @@ class CreateFindFilterFragment(
         if (action.id >= SORT_OFFSET) {
             val newSort = dataType.sortOptions[(action.id - SORT_OFFSET).toInt()]
             currFindFilter = currFindFilter.withSort(newSort.key)
-            findActionById(SORT).description = getString(newSort.nameStringId)
+            findActionById(SORT).description = newSort.getString(requireContext())
             notifyActionChanged(findActionPositionById(SORT))
         } else if (action.id >= DIRECTION_OFFSET) {
             val newDirection = SortDirectionEnum.entries[(action.id - DIRECTION_OFFSET).toInt()]
