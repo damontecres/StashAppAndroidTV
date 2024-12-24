@@ -141,7 +141,7 @@ class StashApplication : Application() {
         intent.putExtra("wasResumed", true)
         intent.putExtra("mainDestroyed", mainDestroyed)
         mainDestroyed = false
-        startActivity(intent)
+//        startActivity(intent)
     }
 
     fun showPinActivityIfNeeded() {
@@ -218,7 +218,7 @@ class StashApplication : Application() {
         }
 
         override fun onActivityDestroyed(activity: Activity) {
-            Log.v(TAG, "onActivityDestroyed: $activity")
+            Log.d(TAG, "onActivityDestroyed: $activity")
             if (activity is MainActivity) {
                 mainDestroyed = true
             }
