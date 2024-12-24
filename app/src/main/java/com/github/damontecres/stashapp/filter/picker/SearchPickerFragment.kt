@@ -125,8 +125,8 @@ class SearchPickerFragment(
                     ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
                 val sortBy =
                     when (dataType) {
-                        DataType.GALLERY -> SortOption.IMAGES_COUNT
-                        else -> SortOption.SCENES_COUNT
+                        DataType.GALLERY -> SortOption.ImagesCount
+                        else -> SortOption.ScenesCount
                     }
                 val filter =
                     FindFilterType(

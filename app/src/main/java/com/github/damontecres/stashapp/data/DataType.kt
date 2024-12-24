@@ -57,7 +57,7 @@ enum class DataType(
         R.string.stashapp_scene,
         R.string.stashapp_scenes,
         R.string.fa_circle_play,
-        SortAndDirection(SortOption.DATE, SortDirectionEnum.DESC),
+        SortAndDirection(SortOption.Date, SortDirectionEnum.DESC),
         SortOption.SCENE_SORT_OPTIONS,
     ),
     GROUP(
@@ -73,7 +73,7 @@ enum class DataType(
         R.string.stashapp_markers,
         R.string.stashapp_markers,
         R.string.fa_location_dot,
-        SortAndDirection(SortOption.TITLE, SortDirectionEnum.ASC),
+        SortAndDirection(SortOption.Title, SortDirectionEnum.ASC),
         SortOption.MARKER_SORT_OPTIONS,
     ),
     PERFORMER(
