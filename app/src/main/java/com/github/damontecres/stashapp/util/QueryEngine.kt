@@ -35,12 +35,14 @@ import com.github.damontecres.stashapp.api.fragment.SavedFilterData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.FindJobInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.JobStatus
+import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
@@ -247,6 +249,20 @@ class QueryEngine(
             ?.map { it.markerData }
             .orEmpty()
     }
+
+    suspend fun findMarkersInScene(sceneId: String): List<MarkerData> =
+        findMarkers(
+            markerFilter =
+                SceneMarkerFilterType(
+                    scenes =
+                        Optional.present(
+                            MultiCriterionInput(
+                                value = Optional.present(listOf(sceneId)),
+                                modifier = CriterionModifier.INCLUDES_ALL,
+                            ),
+                        ),
+                ),
+        ).sortedBy { it.seconds }
 
     suspend fun findImages(
         findFilter: FindFilterType? = null,

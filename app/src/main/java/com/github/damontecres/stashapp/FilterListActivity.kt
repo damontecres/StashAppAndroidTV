@@ -51,6 +51,8 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
 
     private lateinit var sortButtonManager: SortButtonManager
 
+    private lateinit var dataType: DataType
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -88,6 +90,7 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
         }
 
         val startingFilter = intent.getFilterArgs(INTENT_FILTER_ARGS)!!
+        dataType = startingFilter.dataType
         if (savedInstanceState == null) {
             setup(startingFilter, first = true)
         }
@@ -116,9 +119,12 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
                 },
             )
         }
+    }
 
+    override fun onResume() {
+        super.onResume()
         lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            populateSavedFilters(startingFilter.dataType)
+            populateSavedFilters(dataType)
         }
     }
 

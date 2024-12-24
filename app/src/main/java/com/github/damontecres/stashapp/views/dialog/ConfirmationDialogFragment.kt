@@ -5,6 +5,7 @@ import android.content.DialogInterface
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.FragmentManager
 import com.github.damontecres.stashapp.R
 
 /**
@@ -21,4 +22,18 @@ class ConfirmationDialogFragment(
             .setPositiveButton(getString(R.string.stashapp_actions_confirm), onClickListener)
             .setNegativeButton(getString(R.string.stashapp_actions_cancel), onClickListener)
             .create()
+
+    companion object {
+        fun show(
+            fm: FragmentManager,
+            message: String,
+            onConfirm: () -> Unit,
+        ) {
+            ConfirmationDialogFragment(message) { _, which ->
+                if (which == DialogInterface.BUTTON_POSITIVE) {
+                    onConfirm.invoke()
+                }
+            }.show(fm, null)
+        }
+    }
 }
