@@ -33,6 +33,9 @@ class StashApplication : Application() {
 
         application = this
 
+        val pkgInfo = packageManager.getPackageInfo(packageName, 0)
+        val versionNameStr = pkgInfo.versionName ?: "Unknown version"
+
         initAcra {
             buildConfigClass = BuildConfig::class.java
             reportFormat = StringFormat.JSON
@@ -65,7 +68,8 @@ class StashApplication : Application() {
                 )
             dialog {
                 text =
-                    "StashAppAndroidTV has crashed! Would you like to attempt to send a crash report to your Stash server?" +
+                    "StashAppAndroidTV ($versionNameStr) has crashed! Would you like to attempt to " +
+                    "send a crash report to your Stash server?" +
                     "\n\nThis will only work if you have already installed the companion plugin."
                 title = "StashAppAndroidTV Crash Report"
                 positiveButtonText = "Send"
@@ -78,8 +82,6 @@ class StashApplication : Application() {
 
         registerActivityLifecycleCallbacks(ActivityLifecycleCallbacksImpl())
         ProcessLifecycleOwner.get().lifecycle.addObserver(LifecycleObserverImpl())
-
-        val pkgInfo = packageManager.getPackageInfo(packageName, 0)
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val currentVersion = prefs.getString(VERSION_NAME_CURRENT_KEY, null)
