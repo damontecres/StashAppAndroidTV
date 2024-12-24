@@ -1,5 +1,8 @@
 package com.github.damontecres.stashapp.util
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Version(
     val major: Int,
     val minor: Int,

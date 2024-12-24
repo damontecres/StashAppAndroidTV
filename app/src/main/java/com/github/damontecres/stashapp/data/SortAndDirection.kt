@@ -24,18 +24,18 @@ data class SortAndDirection(
     /**
      * Is this sorting by random?
      */
-    val isRandom get() = sort == SortOption.RANDOM
+    val isRandom get() = sort == SortOption.Random
 
     val sortKey get() = if (isRandom && randomSeed >= 0) "random_$randomSeed" else sort.key
 
     companion object {
-        val NAME_ASC = SortAndDirection(SortOption.NAME, SortDirectionEnum.ASC)
-        val PATH_ASC = SortAndDirection(SortOption.PATH, SortDirectionEnum.ASC)
+        val NAME_ASC = SortAndDirection(SortOption.Name, SortDirectionEnum.ASC)
+        val PATH_ASC = SortAndDirection(SortOption.Path, SortDirectionEnum.ASC)
 
         /**
          * Create a random sort
          */
-        fun random() = SortAndDirection(SortOption.RANDOM, SortDirectionEnum.ASC)
+        fun random() = SortAndDirection(SortOption.Random, SortDirectionEnum.ASC)
 
         fun create(
             dataType: DataType,
@@ -76,7 +76,7 @@ data class SortAndDirection(
         ): SortAndDirection {
             val sortOption = SortOption.getByKey(sort)
             val randomSeed =
-                if (sortOption == SortOption.RANDOM && sort.contains("_") && useRandomSeed) {
+                if (sortOption == SortOption.Random && sort.contains("_") && useRandomSeed) {
                     sort.split("_")[1].toInt()
                 } else {
                     -1
