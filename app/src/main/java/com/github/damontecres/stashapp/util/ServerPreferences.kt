@@ -182,7 +182,7 @@ class ServerPreferences(
             defaultPageFilters[key] =
                 if (filterMap != null) {
                     try {
-                        filterParser.convertFilterMap(key.dataType, filterMap)
+                        filterParser.convertFilterMap(key.dataType, filterMap, false)
                     } catch (ex: Exception) {
                         Log.w(TAG, "default filter parse error for $key", ex)
                         FilterArgs(key.dataType)
