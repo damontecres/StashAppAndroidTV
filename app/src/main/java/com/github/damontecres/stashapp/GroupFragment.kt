@@ -30,12 +30,12 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.currentServer.observe(viewLifecycleOwner) { server ->
+        tabViewModel.currentServer.observe(viewLifecycleOwner) { server ->
             val groupSceneFilter =
                 server.serverPreferences.getDefaultFilter(PageFilterKey.GROUP_SCENES)
             val subGroupFilter =
                 server.serverPreferences.getDefaultFilter(PageFilterKey.GROUP_SUB_GROUPS)
-            viewModel.tabs.value =
+            tabViewModel.tabs.value =
                 listOf(
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
                         GroupDetailsFragment()

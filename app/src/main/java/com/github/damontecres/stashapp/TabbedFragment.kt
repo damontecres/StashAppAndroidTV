@@ -25,7 +25,7 @@ abstract class TabbedFragment(
     val tabKey: String,
 ) : Fragment(R.layout.tabbed_grid_view),
     DefaultKeyEventCallback {
-    protected val viewModel by activityViewModels<TabbedGridViewModel>()
+    protected val tabViewModel by activityViewModels<TabbedGridViewModel>()
 
     private lateinit var titleView: TabbedGridTitleView
     private lateinit var tabLayout: LeanbackTabLayout
@@ -48,20 +48,20 @@ abstract class TabbedFragment(
 
         titleView = view.findViewById(R.id.browse_title_group)
         val gridTitle = view.findViewById<TextView>(R.id.grid_title)
-        viewModel.title.observe(viewLifecycleOwner) {
+        tabViewModel.title.observe(viewLifecycleOwner) {
             gridTitle.text = it
         }
         val title = getTitleText()
         if (title.isNotNullOrBlank()) {
-            viewModel.title.value = getTitleText()
+            tabViewModel.title.value = getTitleText()
         }
 
         val viewPager = view.findViewById<LeanbackViewPager>(R.id.view_pager)
         tabLayout = view.findViewById(R.id.tab_layout)
 
-        viewModel.refreshServer()
+        tabViewModel.refreshServer()
 
-        viewModel.tabs.observe(viewLifecycleOwner) { pages ->
+        tabViewModel.tabs.observe(viewLifecycleOwner) { pages ->
             adapter = StashFragmentPagerAdapter(pages, childFragmentManager)
             adapter.fragmentCreatedListener = { fragment, position ->
                 if (fragment is StashGridFragment) {

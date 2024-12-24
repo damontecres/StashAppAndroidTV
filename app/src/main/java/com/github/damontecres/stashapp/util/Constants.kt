@@ -30,6 +30,7 @@ import com.bumptech.glide.load.model.LazyHeaders
 import com.chrynan.parcelable.core.getParcelable
 import com.chrynan.parcelable.core.getParcelableExtra
 import com.chrynan.parcelable.core.putExtra
+import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
@@ -48,6 +49,8 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
@@ -765,6 +768,16 @@ fun Intent.getFilterArgs(name: String): FilterArgs? = getParcelableExtra(name, F
 
 @OptIn(ExperimentalSerializationApi::class)
 fun Bundle.getFilterArgs(name: String): FilterArgs? = getParcelable(name, FilterArgs::class, 0, StashParcelable)
+
+@OptIn(ExperimentalSerializationApi::class)
+fun Bundle.putDestination(destination: Destination): Bundle {
+    putParcelable(NavigationManager.DESTINATION_ARG, destination, StashParcelable)
+    return this
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun <T : Destination> Bundle.getDestination(): T =
+    getParcelable(NavigationManager.DESTINATION_ARG, Destination::class, 0, StashParcelable) as T
 
 fun experimentalFeaturesEnabled(): Boolean {
     val context = StashApplication.getApplication()

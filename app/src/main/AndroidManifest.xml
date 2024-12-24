@@ -31,13 +31,11 @@
         android:theme="@style/Theme.StashAppAndroidTV"
         android:usesCleartextTraffic="true">
         <activity
-            android:name=".PinActivity"
+            android:name=".RootActivity"
             android:banner="@mipmap/stash_logo"
             android:exported="true"
             android:icon="@mipmap/stash_logo"
-            android:logo="@mipmap/stash_logo"
-            android:noHistory="true"
-            android:theme="@style/NoTitleTheme">
+            android:logo="@mipmap/stash_logo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

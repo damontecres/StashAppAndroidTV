@@ -39,8 +39,8 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
         super.onViewCreated(view, savedInstanceState)
 
         val studioId = requireActivity().intent.getStringExtra("studioId")!!
-        viewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            viewModel.tabs.value =
+        tabViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            tabViewModel.tabs.value =
                 listOf(
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
                         StudioDetailsFragment()

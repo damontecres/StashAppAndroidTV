@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.views
 import android.content.Context
 import android.content.Intent
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
@@ -15,15 +14,14 @@ import androidx.fragment.app.findFragment
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
 import androidx.lifecycle.ViewModelProvider
-import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 /**
@@ -157,17 +155,9 @@ class MainTitleView(
         private val dataType: DataType,
     ) : OnClickListener {
         override fun onClick(v: View) {
-            val intent = Intent(v.context, FilterListActivity::class.java)
-
             val serverPrefs = serverViewModel.currentServer.value!!.serverPreferences
-            val filter = serverPrefs.defaultFilters[dataType]
-            if (filter != null) {
-                intent.putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filter)
-            } else {
-                Log.w(TAG, "ServerPreferences.defaultFilters is missing $dataType")
-                intent.putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, FilterArgs(dataType))
-            }
-            startActivity(v.context, intent, null)
+            val filter = serverPrefs.defaultFilters[dataType] ?: FilterArgs(dataType)
+            serverViewModel.navigationManager.navigate(Destination.Filter(filter, false))
         }
     }
 

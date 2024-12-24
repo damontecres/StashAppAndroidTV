@@ -19,6 +19,7 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -38,7 +39,6 @@ import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.MainTitleView
 import com.github.damontecres.stashapp.views.OnImageFilterClickedListener
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -72,6 +72,11 @@ class MainFragment :
         setupEventListeners()
 
         adapter = rowsAdapter
+
+        if (savedInstanceState == null) {
+            Log.v(TAG, "onViewCreated setting up observers")
+            setupObservers()
+        }
     }
 
     override fun onViewCreated(
@@ -90,17 +95,16 @@ class MainFragment :
                     null
                 }
             }
-        setupObservers()
     }
 
     override fun onResume() {
         super.onResume()
-        viewModel.refresh()
+//        viewModel.refresh()
     }
 
     private fun setupObservers() {
         var firstTime = true
-        viewModel.currentSettingsHash.observe(viewLifecycleOwner) {
+        viewModel.currentSettingsHash.observe(this) {
             viewLifecycleOwner.lifecycleScope.launch(
                 StashCoroutineExceptionHandler { ex ->
                     Toast.makeText(
@@ -126,7 +130,7 @@ class MainFragment :
             }
         }
 
-        viewModel.currentServer.observe(viewLifecycleOwner) { newServer ->
+        viewModel.currentServer.observe(this) { newServer ->
             viewLifecycleOwner.lifecycleScope.launch(
                 StashCoroutineExceptionHandler { ex ->
                     Toast.makeText(
@@ -146,9 +150,9 @@ class MainFragment :
                         )
                     if (result.status == TestResultStatus.SUCCESS) {
                         newServer.updateServerPrefs()
-                        val mainTitleView =
-                            requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-                        mainTitleView.refreshMenuItems()
+//                        val mainTitleView =
+//                            requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
+//                        mainTitleView.refreshMenuItems()
                         fetchData(newServer)
                     } else if (result.status == TestResultStatus.UNSUPPORTED_VERSION) {
                         clearData()
@@ -209,10 +213,11 @@ class MainFragment :
         }
 
         onItemViewClickedListener =
-            ClassOnItemViewClickedListener(StashItemViewClickListener(requireActivity()))
+            ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(viewModel.navigationManager))
                 .addListenerForClass(
                     ImageData::class.java,
                     OnImageFilterClickedListener(requireContext()) { image: ImageData ->
+                        TODO()
                         val position = getCurrentPosition()
                         if (position != null) {
                             val filter = filterList[position.row]

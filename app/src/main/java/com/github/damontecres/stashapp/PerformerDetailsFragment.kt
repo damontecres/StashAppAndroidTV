@@ -4,16 +4,16 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
-import com.github.damontecres.stashapp.data.Performer
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.ageInYears
-import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.models.PerformerViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 import kotlin.math.floor
@@ -23,28 +23,16 @@ import kotlin.math.roundToInt
  * Details for a performer
  */
 class PerformerDetailsFragment : DetailsFragment() {
+    private val viewModel: PerformerViewModel by activityViewModels<PerformerViewModel>()
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-
-        val performer = requireActivity().intent.getParcelable("performer", Performer::class)
-        if (performer != null) {
-            val exceptionHandler = StashCoroutineExceptionHandler(autoToast = true)
-            viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                val perf = queryEngine.getPerformer(performer.id)
-                if (perf == null) {
-                    Toast
-                        .makeText(
-                            requireContext(),
-                            "Performer not found: ${performer.id}",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    return@launch
-                } else {
-                    updateUi(perf)
-                }
+        viewModel.performer.observe(viewLifecycleOwner) { performer ->
+            if (performer != null) {
+                updateUi(performer)
             }
         }
     }

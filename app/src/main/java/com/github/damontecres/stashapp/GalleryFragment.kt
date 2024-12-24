@@ -50,7 +50,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
     override fun onCreate(savedInstanceState: Bundle?) {
         gallery = requireActivity().intent.getParcelable(INTENT_GALLERY_OBJ, Gallery::class)!!
         super.onCreate(savedInstanceState)
-        viewModel.title.value = gallery.name
+        tabViewModel.title.value = gallery.name
     }
 
     override fun onViewCreated(
@@ -66,8 +66,8 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                     modifier = CriterionModifier.INCLUDES_ALL,
                 ),
             )
-        viewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            viewModel.tabs.value =
+        tabViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            tabViewModel.tabs.value =
                 listOf(
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
                         GalleryDetailsFragment(gallery)

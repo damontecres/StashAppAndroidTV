@@ -16,6 +16,7 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
 import androidx.leanback.widget.Action
@@ -56,6 +57,7 @@ import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackActivity
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
@@ -84,12 +86,14 @@ import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.configRowManager
+import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -100,6 +104,8 @@ import kotlin.math.roundToInt
  * Fragment to show a scene's details and actions
  */
 class SceneDetailsFragment : DetailsSupportFragment() {
+    private val serverViewModel: ServerViewModel by activityViewModels<ServerViewModel>()
+
     private var pendingJob: Job? = null
     private var suggestionsFetched = false
 
@@ -200,7 +206,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         ),
                     ),
                 ) {
-                    MutationEngine(server).setRating(
+                    mutationEngine.setRating(
                         sceneId,
                         rating100,
                     )
@@ -209,17 +215,14 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             },
         )
 
-    private val server = StashServer.requireCurrentServer()
-    private val serverPreferences = server.serverPreferences
-
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
-        sceneId = requireActivity().intent.getStringExtra(Constants.SCENE_ID_ARG)!!
+        sceneId = requireArguments().getDestination<Destination.Item>().id
 
-        queryEngine = QueryEngine(server)
-        mutationEngine = MutationEngine(server)
+        queryEngine = QueryEngine(serverViewModel.requireServer())
+        mutationEngine = MutationEngine(serverViewModel.requireServer())
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         resultLauncher =
@@ -333,7 +336,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
         // Need to check position because the activity result callback happens before onResume
         if (position <= 0 &&
-            serverPreferences.trackActivity &&
+            serverViewModel.requireServer().serverPreferences.trackActivity &&
             sceneData?.resume_time != null &&
             sceneData?.resume_time!! > 0
         ) {
@@ -491,7 +494,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             .getDefaultSharedPreferences(requireContext())
                             .getInt(getString(R.string.pref_key_max_search_results), 25)
                     val supplier =
-                        DataSupplierFactory(server.version).create<Query.Data, SlimSceneData, Query.Data>(
+                        DataSupplierFactory(serverViewModel.requireServer().version).create<Query.Data, SlimSceneData, Query.Data>(
                             filterArgs,
                         )
                     val items =
@@ -695,7 +698,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
     private fun setupPlayActionsAdapter() {
         if (sceneData!!.files.isNotEmpty()) {
-            val serverPreferences = server.serverPreferences
+            val serverPreferences = serverViewModel.requireServer().serverPreferences
             if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
                 playActionsAdapter.set(
                     0,
@@ -814,7 +817,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             CreateMarkerAction(localPosition),
                         )
                     }
-                    if (serverPreferences.trackActivity) {
+                    if (serverViewModel.requireServer().serverPreferences.trackActivity) {
                         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                             Log.v(TAG, "ResultCallback saveSceneActivity start")
                             mutationEngine.saveSceneActivity(

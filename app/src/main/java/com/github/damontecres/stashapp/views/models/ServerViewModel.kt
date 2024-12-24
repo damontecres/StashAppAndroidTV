@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getInt
 import java.util.Objects
@@ -12,13 +13,17 @@ import java.util.Objects
 /**
  * Tracks the current server
  */
-class ServerViewModel : ViewModel() {
+open class ServerViewModel : ViewModel() {
     private val _currentServer =
         EqualityMutableLiveData<StashServer?>(StashServer.getCurrentStashServer(StashApplication.getApplication()))
     val currentServer: LiveData<StashServer?> = _currentServer
 
+    fun requireServer(): StashServer = currentServer.value!!
+
     private val _currentSettingsHash = EqualityMutableLiveData(computeSettingsHash())
     val currentSettingsHash: LiveData<Int> = _currentSettingsHash
+
+    lateinit var navigationManager: NavigationManager
 
     fun switchServer(newServer: StashServer) {
         StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)

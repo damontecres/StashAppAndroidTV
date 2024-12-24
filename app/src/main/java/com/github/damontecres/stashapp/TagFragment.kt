@@ -36,8 +36,8 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            viewModel.tabs.value =
+        tabViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            tabViewModel.tabs.value =
                 listOf(
                     PagerEntry(getString(R.string.stashapp_details)) {
                         TagDetailsFragment()
