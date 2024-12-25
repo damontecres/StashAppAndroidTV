@@ -46,10 +46,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".playback.PlaylistActivity"
-            android:exported="false"
-            android:theme="@style/PlaybackTheme" />
-        <activity
             android:name=".SettingsActivity"
             android:exported="false" />
         <activity

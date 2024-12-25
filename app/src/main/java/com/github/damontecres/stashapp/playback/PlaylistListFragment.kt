@@ -9,14 +9,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.leanback.widget.ObjectAdapter
+import androidx.fragment.app.viewModels
 import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.PlaylistItem
@@ -30,13 +29,15 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
 /**
  * Shows a playlist as a scrollable list of [PlaylistItem]s
  */
 class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : Fragment(R.layout.playlist_list) {
-    private val viewModel: PlaylistViewModel by activityViewModels()
+    private val serverViewModel: ServerViewModel by activityViewModels()
+    private val viewModel: PlaylistViewModel by viewModels(ownerProducer = { requireParentFragment() })
 
     private val mGridPresenter: VerticalGridPresenter = VerticalGridPresenter()
     private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
@@ -65,7 +66,8 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : 
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val server = StashServer.requireCurrentServer()
+        val parent = (parentFragment as PlaylistFragment<*, *, *>)
+        val server = serverViewModel.requireServer()
         val filter = viewModel.filterArgs.value!!
 
         val playlistTitleView = view.findViewById<TextView>(R.id.playlist_title)
@@ -95,16 +97,6 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : 
                 viewLifecycleOwner.lifecycleScope,
                 SinglePresenterSelector(PlaylistItemPresenter()),
             )
-        pagingAdapter.registerObserver(
-            object : ObjectAdapter.DataObserver() {
-                override fun onChanged() {
-                    // Kind of hacky, but this will always return the same instance
-                    val player = StashExoPlayer.getInstance(requireContext(), server)
-                    mGridViewHolder.gridView.selectedPosition = player.currentMediaItemIndex
-                    pagingAdapter.unregisterObserver(this)
-                }
-            },
-        )
 
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
             pagingAdapter.init()
@@ -116,7 +108,6 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : 
         mGridPresenter.setOnItemViewClickedListener { itemViewHolder, item, rowViewHolder, row ->
             item as PlaylistItem
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val parent = (parentFragment as PlaylistFragment<*, *, *>)
                 val player = parent.player!!
                 Log.v(
                     TAG,
@@ -152,13 +143,8 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {
-            mGridViewHolder.gridView.scrollToPosition(
-                StashExoPlayer
-                    .getInstance(
-                        requireContext(),
-                        StashServer.requireCurrentServer(),
-                    ).currentMediaItemIndex,
-            )
+            val parent = (parentFragment as PlaylistFragment<*, *, *>)
+            mGridViewHolder.gridView.selectedPosition = parent.player!!.currentMediaItemIndex
         }
     }
 

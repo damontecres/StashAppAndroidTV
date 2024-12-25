@@ -81,7 +81,7 @@ class ImageClipFragment :
         }
     }
 
-    override fun initializePlayer(): ExoPlayer {
+    override fun createPlayer(): ExoPlayer {
         val skipForward =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
@@ -96,11 +96,13 @@ class ImageClipFragment :
                 StashServer.requireCurrentServer(),
                 skipForward * 1000L,
                 skipBack * 1000L,
-            ).also { exoPlayer ->
-                exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
-                exoPlayer.prepare()
-                exoPlayer.play()
-            }
+            )
+    }
+
+    override fun postCreatePlayer(player: Player) {
+        player.repeatMode = Player.REPEAT_MODE_ONE
+        player.prepare()
+        player.play()
     }
 
     override fun play() {

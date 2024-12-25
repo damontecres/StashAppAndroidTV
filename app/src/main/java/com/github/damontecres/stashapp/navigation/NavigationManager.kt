@@ -22,6 +22,8 @@ import com.github.damontecres.stashapp.TagFragment
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.image.ImageFragment
 import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
+import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
+import com.github.damontecres.stashapp.playback.PlaylistScenesFragment
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
@@ -103,7 +105,13 @@ class NavigationManager(
                 is Destination.UpdateMarker -> MarkerPickerFragment()
 
                 is Destination.Playback -> PlaybackSceneFragment()
-                is Destination.Playlist -> TODO()
+                is Destination.Playlist -> {
+                    when (destination.filterArgs.dataType) {
+                        DataType.SCENE -> PlaylistScenesFragment()
+                        DataType.MARKER -> PlaylistMarkersFragment()
+                        else -> throw IllegalArgumentException("Playlist for ${destination.filterArgs.dataType} not supported")
+                    }
+                }
             }
         val args = Bundle().putDestination(destination)
         fragment.arguments = args

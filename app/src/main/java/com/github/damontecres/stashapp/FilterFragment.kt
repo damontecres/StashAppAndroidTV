@@ -106,7 +106,7 @@ class FilterFragment :
         }
 
         val playAllListener =
-            PlayAllOnClickListener(requireContext(), serverViewModel.navigationManager, dataType) {
+            PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
                 val fragment =
                     childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
                 FilterAndPosition(fragment.filterArgs, 0)

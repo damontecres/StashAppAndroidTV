@@ -26,71 +26,69 @@ class PlaybackSceneFragment : PlaybackFragment() {
     override val optionsButtonOptions: OptionsButtonOptions
         get() = OptionsButtonOptions(DataType.SCENE, false)
 
+    override fun createPlayer(): ExoPlayer = StashExoPlayer.createInstance(requireContext(), serverViewModel.requireServer())
+
     @OptIn(UnstableApi::class)
-    override fun initializePlayer(): ExoPlayer {
-        player!!
-            .also { exoPlayer ->
-                maybeAddActivityTracking(exoPlayer)
-            }.also { exoPlayer ->
-                val finishedBehavior =
-                    PreferenceManager
-                        .getDefaultSharedPreferences(requireContext())
-                        .getString(
-                            "playbackFinishedBehavior",
-                            getString(R.string.playback_finished_do_nothing),
-                        )
-                when (finishedBehavior) {
-                    getString(R.string.playback_finished_repeat) -> {
-                        StashExoPlayer.addListener(
-                            object :
-                                Player.Listener {
-                                override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
-                                    if (Player.COMMAND_SET_REPEAT_MODE in availableCommands) {
-                                        Log.v(
-                                            TAG,
-                                            "Listener setting repeatMode to REPEAT_MODE_ONE",
-                                        )
-                                        exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
-                                        exoPlayer.removeListener(this)
-                                    }
-                                }
-                            },
-                        )
-                    }
+    override fun postCreatePlayer(player: Player) {
+        maybeAddActivityTracking(player)
 
-                    getString(R.string.playback_finished_return) ->
-                        StashExoPlayer.addListener(
-                            object :
-                                Player.Listener {
-                                override fun onPlaybackStateChanged(playbackState: Int) {
-                                    if (playbackState == Player.STATE_ENDED) {
-                                        Log.v(TAG, "Finishing activity")
-                                        setFragmentResult(
-                                            Constants.POSITION_REQUEST_KEY,
-                                            bundleOf(Constants.POSITION_REQUEST_KEY to 0L),
-                                        )
-                                    }
-                                }
-                            },
-                        )
-
-                    getString(R.string.playback_finished_do_nothing) -> {
-                        StashExoPlayer.addListener(
-                            object :
-                                Player.Listener {
-                                override fun onPlaybackStateChanged(playbackState: Int) {
-                                    if (playbackState == Player.STATE_ENDED) {
-                                        videoView.showController()
-                                    }
-                                }
-                            },
-                        )
-                    }
-
-                    else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
-                }
+        val finishedBehavior =
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
+                .getString(
+                    "playbackFinishedBehavior",
+                    getString(R.string.playback_finished_do_nothing),
+                )
+        when (finishedBehavior) {
+            getString(R.string.playback_finished_repeat) -> {
+                StashExoPlayer.addListener(
+                    object :
+                        Player.Listener {
+                        override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
+                            if (Player.COMMAND_SET_REPEAT_MODE in availableCommands) {
+                                Log.v(
+                                    TAG,
+                                    "Listener setting repeatMode to REPEAT_MODE_ONE",
+                                )
+                                player.repeatMode = Player.REPEAT_MODE_ONE
+                                player.removeListener(this)
+                            }
+                        }
+                    },
+                )
             }
-        return player!!
+
+            getString(R.string.playback_finished_return) ->
+                StashExoPlayer.addListener(
+                    object :
+                        Player.Listener {
+                        override fun onPlaybackStateChanged(playbackState: Int) {
+                            if (playbackState == Player.STATE_ENDED) {
+                                Log.v(TAG, "Finishing activity")
+                                setFragmentResult(
+                                    Constants.POSITION_REQUEST_KEY,
+                                    bundleOf(Constants.POSITION_REQUEST_KEY to 0L),
+                                )
+                            }
+                        }
+                    },
+                )
+
+            getString(R.string.playback_finished_do_nothing) -> {
+                StashExoPlayer.addListener(
+                    object :
+                        Player.Listener {
+                        override fun onPlaybackStateChanged(playbackState: Int) {
+                            if (playbackState == Player.STATE_ENDED) {
+                                videoView.showController()
+                            }
+                        }
+                    },
+                )
+            }
+
+            else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
+        }
     }
 
     @OptIn(UnstableApi::class)

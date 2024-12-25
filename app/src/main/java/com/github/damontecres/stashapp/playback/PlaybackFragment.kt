@@ -91,9 +91,14 @@ abstract class PlaybackFragment(
     abstract val optionsButtonOptions: OptionsButtonOptions
 
     /**
-     * Initialize an [ExoPlayer]. Users should start with [com.github.damontecres.stashapp.StashExoPlayer]!
+     * Create an [ExoPlayer]. Users should start with [com.github.damontecres.stashapp.StashExoPlayer]!
      */
-    protected abstract fun initializePlayer(): ExoPlayer
+    protected abstract fun createPlayer(): ExoPlayer
+
+    /**
+     * Called after creating the player
+     */
+    protected abstract fun postCreatePlayer(player: Player)
 
     var player: ExoPlayer? = null
         private set
@@ -153,9 +158,8 @@ abstract class PlaybackFragment(
         StashExoPlayer.releasePlayer()
     }
 
-    private fun createPlayer(): ExoPlayer =
-        StashExoPlayer
-            .getInstance(requireContext(), StashServer.requireCurrentServer())
+    private fun preparePlayer(): ExoPlayer =
+        createPlayer()
             .also { exoPlayer ->
                 exoPlayer.addListener(
                     object : Player.Listener {
@@ -183,7 +187,7 @@ abstract class PlaybackFragment(
             }.also { exoPlayer ->
                 videoView.player = exoPlayer
                 exoPlayer.addListener(AmbientPlaybackListener())
-            }
+            }.also(::postCreatePlayer)
 
     protected fun updateDebugInfo(
         streamDecision: StreamDecision,
@@ -579,7 +583,7 @@ abstract class PlaybackFragment(
     override fun onStart() {
         super.onStart()
         if (Util.SDK_INT > 23) {
-            player = createPlayer()
+            player = preparePlayer()
         }
     }
 
@@ -587,7 +591,7 @@ abstract class PlaybackFragment(
     override fun onResume() {
         super.onResume()
         if ((Util.SDK_INT <= 23 || player == null)) {
-            player = createPlayer()
+            player = preparePlayer()
         }
     }
 
@@ -645,7 +649,7 @@ abstract class PlaybackFragment(
         }
     }
 
-    protected fun maybeAddActivityTracking(exoPlayer: ExoPlayer) {
+    protected fun maybeAddActivityTracking(exoPlayer: Player) {
         val appTracking =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())

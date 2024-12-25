@@ -1,7 +1,5 @@
 package com.github.damontecres.stashapp.views
 
-import android.content.Context
-import android.content.Intent
 import android.view.View
 import android.view.View.OnClickListener
 import com.github.damontecres.stashapp.data.DataType
@@ -9,14 +7,11 @@ import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationManager
-import com.github.damontecres.stashapp.playback.PlaylistActivity
-import com.github.damontecres.stashapp.util.putFilterArgs
 
 /**
  * The "Play All" button clicker which starts playback for multiple scenes or markers or slideshow for images
  */
 class PlayAllOnClickListener(
-    private val context: Context,
     private val navigationManager: NavigationManager,
     private val dataType: DataType,
     private val getFilter: () -> FilterAndPosition,
@@ -48,7 +43,13 @@ class PlayAllOnClickListener(
                             6 -> 20 * 60_000L
                             else -> 30_000L
                         }
-                    TODO()
+                    navigationManager.navigate(
+                        Destination.Playlist(
+                            filterAndPosition.filter,
+                            0,
+                            duration,
+                        ),
+                    )
                 }
             }
 
@@ -60,10 +61,7 @@ class PlayAllOnClickListener(
                             1 -> filterAndPosition.filter.with(SortAndDirection.random())
                             else -> throw IllegalStateException("$it")
                         }
-                    TODO()
-                    val intent = Intent(context, PlaylistActivity::class.java)
-                    intent.putFilterArgs(PlaylistActivity.INTENT_FILTER, filter)
-                    context.startActivity(intent)
+                    navigationManager.navigate(Destination.Playlist(filter, 0))
                 }
             }
 

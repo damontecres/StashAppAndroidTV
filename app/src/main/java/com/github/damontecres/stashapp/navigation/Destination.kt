@@ -68,6 +68,7 @@ sealed interface Destination {
     data class Playlist(
         val filterArgs: FilterArgs,
         val position: Int,
+        val duration: Long? = null,
     ) : Destination
 
     @Serializable

@@ -446,7 +446,7 @@ class StashGridFragment() :
         }
 
         val playAllListener =
-            PlayAllOnClickListener(requireContext(), serverViewModel.navigationManager, dataType) {
+            PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
                 FilterAndPosition(filterArgs, 0)
             }
         playAllButton.setOnClickListener(playAllListener)
