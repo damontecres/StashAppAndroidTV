@@ -210,7 +210,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             viewModel.maybeSaveCurrentPosition()
         }
 
-        setFragmentResultListener(SearchForFragment.REQUEST_KEY) { _, bundle ->
+        setFragmentResultListener(SceneDetailsFragment::class.simpleName!!) { _, bundle ->
             val sourceId = bundle.getLong(SearchForFragment.RESULT_ID_KEY)
             val dataType = bundle.getDataType()
             val newId = bundle.getString(SearchForFragment.RESULT_ITEM_ID_KEY)
@@ -301,7 +301,9 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         val actionListener = SceneActionListener()
         onItemViewClickedListener =
             ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
-                .addListenerForClass(CreateMarkerAction::class.java) { _ ->
+                .addListenerForClass(StashAction::class.java) { item ->
+                    actionListener.onClicked(item)
+                }.addListenerForClass(CreateMarkerAction::class.java) { _ ->
                     actionListener.onClicked(StashAction.CREATE_MARKER)
                 }
 
@@ -629,6 +631,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     if (action == StashAction.CREATE_MARKER) "for primary tag for scene marker" else null
                 serverViewModel.navigationManager.navigate(
                     Destination.SearchFor(
+                        SceneDetailsFragment::class.simpleName!!,
                         action.id,
                         dataType,
                         title,

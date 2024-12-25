@@ -72,9 +72,10 @@ sealed interface Destination {
 
     @Serializable
     data class SearchFor(
+        val requestKey: String,
         val sourceId: Long,
         val dataType: DataType,
-        val title: String?,
+        val title: String? = null,
     ) : Destination
 
     companion object {

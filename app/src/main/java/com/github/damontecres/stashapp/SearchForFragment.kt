@@ -168,7 +168,7 @@ class SearchForFragment :
                 }
             }
             setFragmentResult(
-                REQUEST_KEY,
+                searchFor.requestKey,
                 bundleOf(
                     RESULT_ID_KEY to searchFor.sourceId,
                     RESULT_ITEM_ID_KEY to item.id,
@@ -384,7 +384,6 @@ class SearchForFragment :
         const val TAG = "SearchForFragment"
 
         const val ID_KEY = "id"
-        const val REQUEST_KEY = TAG
         const val RESULT_ID_KEY = "$TAG.sourceId"
         const val RESULT_ITEM_ID_KEY = "$TAG.resultId"
 

@@ -1,7 +1,5 @@
 package com.github.damontecres.stashapp.image
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -9,11 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
@@ -33,7 +28,6 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SearchForActivity
 import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.actions.StashAction
@@ -45,6 +39,8 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
 import com.github.damontecres.stashapp.presenters.OCounterPresenter
@@ -59,6 +55,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.configRowManager
+import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -68,18 +65,19 @@ import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.width
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
+import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.models.ImageViewModel
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 
 /**
  * An overlay for details about an image
  */
 class ImageDetailsFragment : DetailsSupportFragment() {
+    private val serverViewModel: ServerViewModel by activityViewModels()
     private val viewModel: ImageViewModel by viewModels(ownerProducer = { requireParentFragment() })
 
     private lateinit var queryEngine: QueryEngine
@@ -93,7 +91,6 @@ class ImageDetailsFragment : DetailsSupportFragment() {
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
 
     private lateinit var firstButton: Button
-    private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
     private val itemPresenter =
         ClassPresenterSelector().addClassPresenter(StashAction::class.java, ActionPresenter())
@@ -163,6 +160,79 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             }
         }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val detailsBackground = DetailsSupportFragmentBackgroundController(this)
+        detailsBackground.enableParallax()
+
+        // Since this fragment is a child of ImageFragment, need to explicitly use the activity's fragment manager
+        requireActivity().supportFragmentManager.setFragmentResultListener(
+            ImageDetailsFragment::class.simpleName!!,
+            this,
+        ) { _, bundle ->
+            val sourceId = bundle.getLong(SearchForFragment.RESULT_ID_KEY)
+            val dataType = bundle.getDataType()
+            val newId = bundle.getString(SearchForFragment.RESULT_ITEM_ID_KEY)
+            Log.v(TAG, "Adding $dataType: $newId")
+            if (newId != null) {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    when (dataType) {
+                        DataType.PERFORMER -> {
+                            val newPerformer = performersRowManager.add(newId)
+                            if (newPerformer != null) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Added performer '${newPerformer.name}' to scene",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                            }
+                        }
+
+                        DataType.STUDIO -> {
+                            val newStudio = studioRowManager.add(newId)
+                            if (newStudio != null) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Set studio to '${newStudio.name}'",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                            }
+                        }
+
+                        DataType.TAG -> {
+                            val newTag = tagsRowManager.add(newId)
+                            if (newTag != null) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Added tag '${newTag.name}' to scene",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                            }
+                        }
+
+                        DataType.GALLERY -> {
+                            val newGallery = galleriesRowManager.add(newId)
+                            if (newGallery != null) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Added gallery '${newGallery.name}'",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                            }
+                        }
+
+                        DataType.GROUP, DataType.SCENE, DataType.MARKER, DataType.IMAGE -> throw IllegalArgumentException()
+                    }
+                }
+            }
+        }
+    }
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -188,11 +258,6 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 requireActivity(),
                 R.color.transparent_default_card_background_50,
             )
-
-        val detailsBackground = DetailsSupportFragmentBackgroundController(this)
-//        detailsBackground.solidColor =
-//            ContextCompat.getColor(requireActivity(), R.color.transparent_black_75)
-        detailsBackground.enableParallax()
 
         val detailsActionsAdapter = ArrayObjectAdapter(DetailsActionsPresenter())
 
@@ -246,11 +311,6 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 }
             }
 
-        resultLauncher =
-            registerForActivityResult(
-                ActivityResultContracts.StartActivityForResult(),
-                ResultCallback(),
-            )
         if (readOnlyModeDisabled()) {
             mAdapter.set(
                 ITEM_ACTIONS_POS,
@@ -263,7 +323,11 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         itemActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
 
         val actionListener = ItemActionListener()
-        onItemViewClickedListener = StashItemViewClickListener(requireContext(), actionListener)
+        onItemViewClickedListener =
+            ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
+                .addListenerForClass(StashAction::class.java) { item ->
+                    actionListener.onClicked(item)
+                }
 
         viewModel.image.observe(viewLifecycleOwner) { newImage ->
 
@@ -491,7 +555,6 @@ class ImageDetailsFragment : DetailsSupportFragment() {
     private inner class ItemActionListener : StashActionClickedListener {
         override fun onClicked(action: StashAction) {
             if (action in StashAction.SEARCH_FOR_ACTIONS) {
-                val intent = Intent(requireActivity(), SearchForActivity::class.java)
                 val dataType =
                     when (action) {
                         StashAction.ADD_TAG -> DataType.TAG
@@ -501,9 +564,13 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
                         else -> throw RuntimeException("Unsupported search for type $action")
                     }
-                intent.putExtra("dataType", dataType.name)
-                intent.putExtra(SearchForFragment.ID_KEY, action.id)
-                resultLauncher.launch(intent)
+                serverViewModel.navigationManager.navigate(
+                    Destination.SearchFor(
+                        ImageDetailsFragment::class.simpleName!!,
+                        0L,
+                        dataType,
+                    ),
+                )
             }
         }
 
@@ -519,112 +586,6 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             ) {
                 val newCounter = mutationEngine.incrementImageOCounter(counter.id)
                 itemActionsAdapter.set(O_COUNTER_POS, newCounter)
-            }
-        }
-    }
-
-    private inner class ResultCallback : ActivityResultCallback<ActivityResult> {
-        override fun onActivityResult(result: ActivityResult) {
-            if (result.resultCode == Activity.RESULT_OK) {
-                val data: Intent? = result.data
-                val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
-                if (id == StashAction.ADD_TAG.id) {
-                    val tagId = data.getStringExtra(SearchForFragment.RESULT_ITEM_ID_KEY)!!
-                    Log.d(TAG, "Adding tag $tagId")
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception setting tags", ex)
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Failed to add tag: ${ex.message}",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                        },
-                    ) {
-                        val newTag = tagsRowManager.add(tagId)
-                        if (newTag != null) {
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Added tag '${newTag.name}'",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                        }
-                    }
-                } else if (id == StashAction.ADD_PERFORMER.id) {
-                    val performerId = data.getStringExtra(SearchForFragment.RESULT_ITEM_ID_KEY)!!
-                    Log.d(TAG, "Adding performer $performerId")
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception setting performers", ex)
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Failed to add performer: ${ex.message}",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                        },
-                    ) {
-                        val newPerformer = performersRowManager.add(performerId)
-                        if (newPerformer != null) {
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Added performer '${newPerformer.name}'",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                        }
-                    }
-                } else if (id == StashAction.ADD_GALLERY.id) {
-                    val galleryId = data.getStringExtra(SearchForFragment.RESULT_ITEM_ID_KEY)!!
-                    Log.d(TAG, "Adding gallery $galleryId")
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception setting performers", ex)
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Failed to add performer: ${ex.message}",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                        },
-                    ) {
-                        val newGallery = galleriesRowManager.add(galleryId)
-                        if (newGallery != null) {
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Added gallery '${newGallery.name}'",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                        }
-                    }
-                } else if (id == StashAction.SET_STUDIO.id) {
-                    val studioId = data.getStringExtra(SearchForFragment.RESULT_ITEM_ID_KEY)!!
-                    Log.d(TAG, "Setting studio to $studioId")
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception setting studio", ex)
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Failed to set studio: ${ex.message}",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                        },
-                    ) {
-                        val newStudio = studioRowManager.add(studioId)
-                        if (newStudio != null) {
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Set studio to '${newStudio.name}'",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                        }
-                    }
-                }
             }
         }
     }
