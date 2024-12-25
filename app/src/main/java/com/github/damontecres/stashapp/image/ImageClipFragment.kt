@@ -24,7 +24,7 @@ import com.github.damontecres.stashapp.util.isImageClip
 class ImageClipFragment :
     PlaybackFragment(),
     VideoController {
-    private val viewModel: ImageViewModel by activityViewModels<ImageViewModel>()
+    private val imageViewModel: ImageViewModel by activityViewModels<ImageViewModel>()
 
     override val previewsEnabled: Boolean
         get() = false
@@ -41,9 +41,9 @@ class ImageClipFragment :
         videoView.useController = false
         hideControlsIfVisible()
 
-        viewModel.videoController = this
+        imageViewModel.videoController = this
 
-        viewModel.image.observe(viewLifecycleOwner) { imageData ->
+        imageViewModel.image.observe(viewLifecycleOwner) { imageData ->
             if (imageData.isImageClip) {
                 val videoFile = imageData.visual_files.firstOrNull()?.onVideoFile
 

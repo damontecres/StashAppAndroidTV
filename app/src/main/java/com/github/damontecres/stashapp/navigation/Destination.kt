@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashData
+import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import kotlinx.serialization.Serializable
 
@@ -33,6 +34,7 @@ sealed interface Destination {
     data class Playback(
         val sceneId: String,
         val position: Long,
+        val mode: PlaybackMode,
     ) : Destination
 
     @Serializable

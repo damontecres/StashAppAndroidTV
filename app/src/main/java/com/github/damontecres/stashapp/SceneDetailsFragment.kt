@@ -31,9 +31,6 @@ import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
-import com.apollographql.apollo.api.Optional
-import com.apollographql.apollo.api.Query
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
@@ -43,22 +40,13 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
-import com.github.damontecres.stashapp.api.type.CriterionModifier
-import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
-import com.github.damontecres.stashapp.api.type.IntCriterionInput
-import com.github.damontecres.stashapp.api.type.MultiCriterionInput
-import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.data.OCounter
-import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.data.SortAndDirection
-import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.playback.PlaybackActivity
+import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
@@ -71,10 +59,6 @@ import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
-import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
-import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.suppliers.StashPagingSource
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
@@ -83,7 +67,6 @@ import com.github.damontecres.stashapp.util.RemoveLongClickListener
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.configRowManager
 import com.github.damontecres.stashapp.util.getDestination
@@ -93,9 +76,9 @@ import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
+import com.github.damontecres.stashapp.views.models.SceneViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -105,6 +88,7 @@ import kotlin.math.roundToInt
  */
 class SceneDetailsFragment : DetailsSupportFragment() {
     private val serverViewModel: ServerViewModel by activityViewModels<ServerViewModel>()
+    private val viewModel by activityViewModels<SceneViewModel>()
 
     private var pendingJob: Job? = null
     private var suggestionsFetched = false
@@ -193,7 +177,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
     private val playActionsAdapter = SparseArrayObjectAdapter()
-    private var position = -1L // The position in the video
+
     private val detailsPresenter =
         FullWidthDetailsOverviewRowPresenter(
             SceneDetailsPresenter { rating100: Int ->
@@ -310,87 +294,83 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 ),
             )
 
-        if (sceneData == null) {
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
-                fetchData(sceneId)
-            }
-        }
+        setupObservers()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.v(TAG, "onStart")
     }
 
     override fun onResume() {
         super.onResume()
-        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
-            fetchData(sceneId)
-        }
+        Log.v(TAG, "onResume")
+        viewModel.init(sceneId, true)
     }
 
-    private suspend fun fetchData(sceneId: String) {
-        pendingJob?.join()
-        pendingJob = null
-        sceneData = queryEngine.getScene(sceneId)
-        if (sceneData != null) {
-            configRowManager(viewLifecycleOwner.lifecycleScope, performersRowManager) { callback ->
+    private fun setupObservers() {
+        viewModel.scene.observe(viewLifecycleOwner) { sceneData ->
+            Log.v(TAG, "Got new scene")
+            if (sceneData == null) {
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "No scene with ID $sceneId found",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                return@observe
+            }
+
+            configRowManager(
+                viewLifecycleOwner.lifecycleScope,
+                performersRowManager,
+            ) { callback ->
                 PerformerInScenePresenter(sceneData!!.date, callback)
             }
-        }
 
-        // Need to check position because the activity result callback happens before onResume
-        if (position <= 0 &&
-            serverViewModel.requireServer().serverPreferences.trackActivity &&
-            sceneData?.resume_time != null &&
-            sceneData?.resume_time!! > 0
-        ) {
-            position = (sceneData?.resume_time!! * 1000).toLong()
-        }
-        setupPlayActionsAdapter()
+            setupDetailsOverviewRow(sceneData)
 
-        setupDetailsOverviewRow()
+            adapter = mAdapter
+            initializeBackground(sceneData)
 
-        adapter = mAdapter
-        initializeBackground()
+            if (readOnlyModeDisabled()) {
+                sceneActionsAdapter.set(
+                    O_COUNTER_POS,
+                    OCounter(
+                        sceneId,
+                        sceneData.o_counter ?: 0,
+                    ),
+                )
+                sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
+                sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
+                sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
+                sceneActionsAdapter.set(ADD_GROUP_POS, StashAction.ADD_GROUP)
+            }
+            sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
+            sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
 
-        if (readOnlyModeDisabled()) {
-            sceneActionsAdapter.set(
-                O_COUNTER_POS,
-                OCounter(
-                    sceneId,
-                    sceneData?.o_counter ?: 0,
-                ),
+            if (sceneData!!.studio?.studioData != null) {
+                studioRowManager.setItems(listOf(sceneData.studio!!.studioData))
+            }
+
+            tagsRowManager.setItems(sceneData.tags.map { it.tagData })
+
+            markersRowManager.setItems(
+                sceneData.scene_markers.map {
+                    it.asMarkerData(sceneData)
+                },
             )
-            sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
-            sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
-            sceneActionsAdapter.set(CREATE_MARKER_POS, CreateMarkerAction(position))
-            sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
-            sceneActionsAdapter.set(ADD_GROUP_POS, StashAction.ADD_GROUP)
-        }
-        sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
-        sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
 
-        if (sceneData!!.studio?.studioData != null) {
-            studioRowManager.setItems(listOf(sceneData!!.studio!!.studioData))
+            groupsRowManager.setItems(sceneData.groups.map { it.group.groupData })
+            this@SceneDetailsFragment.sceneData = sceneData
         }
 
-        tagsRowManager.setItems(sceneData!!.tags.map { it.tagData })
-
-        markersRowManager.setItems(
-            sceneData!!.scene_markers.map {
-                it.asMarkerData(sceneData!!)
-            },
-        )
-
-        val performerIds = sceneData!!.performers.map { it.id }
-        Log.v(TAG, "fetchData performerIds=$performerIds")
-        if (performerIds.isNotEmpty()) {
-            val performers = queryEngine.findPerformers(performerIds = performerIds)
+        viewModel.performers.observe(viewLifecycleOwner) { performers ->
             performersRowManager.setItems(performers)
-        } else {
-            performersRowManager.setItems(listOf())
         }
 
-        groupsRowManager.setItems(sceneData!!.groups.map { it.group.groupData })
-
-        if (sceneData!!.galleries.isNotEmpty()) {
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+        viewModel.galleries.observe(viewLifecycleOwner) { galleries ->
+            if (galleries.isNotEmpty()) {
                 if (mAdapter.lookup(GALLERY_POS) == null) {
                     mAdapter.set(
                         GALLERY_POS,
@@ -400,129 +380,56 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         ),
                     )
                 }
-                val galleries =
-                    queryEngine.getGalleries(sceneData!!.galleries.map { it.id })
                 galleriesAdapter.setItems(galleries, StashDiffCallback)
+            } else {
+                mAdapter.clear(GALLERY_POS)
             }
-        } else {
-            mAdapter.clear(GALLERY_POS)
         }
 
-        if (!suggestionsFetched) {
-            suggestionsFetched = true
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val scene = sceneData!!
-                val idFilter =
-                    Optional.present(
-                        IntCriterionInput(
-                            value = scene.id.toInt(),
-                            modifier = CriterionModifier.NOT_EQUALS,
-                        ),
-                    )
-                val filters =
-                    buildList {
-                        if (scene.tags.isNotEmpty()) {
-                            add(
-                                SceneFilterType(
-                                    id = idFilter,
-                                    tags =
-                                        Optional.present(
-                                            HierarchicalMultiCriterionInput(
-                                                value = Optional.present(scene.tags.map { it.tagData.id }),
-                                                modifier = CriterionModifier.INCLUDES,
-                                            ),
-                                        ),
-                                ),
-                            )
-                        }
-                        if (scene.performers.isNotEmpty()) {
-                            add(
-                                SceneFilterType(
-                                    id = idFilter,
-                                    performers =
-                                        Optional.presentIfNotNull(
-                                            MultiCriterionInput(
-                                                value = Optional.present(scene.performers.map { it.id }),
-                                                modifier = CriterionModifier.INCLUDES,
-                                            ),
-                                        ),
-                                ),
-                            )
-                        }
-                        if (scene.studio?.studioData != null) {
-                            add(
-                                SceneFilterType(
-                                    id = idFilter,
-                                    studios =
-                                        Optional.present(
-                                            HierarchicalMultiCriterionInput(
-                                                value = Optional.present(listOf(scene.studio.studioData.id)),
-                                                modifier = CriterionModifier.EQUALS,
-                                            ),
-                                        ),
-                                ),
-                            )
-                        }
-                        if (scene.groups.isNotEmpty()) {
-                            add(
-                                SceneFilterType(
-                                    id = idFilter,
-                                    groups =
-                                        Optional.present(
-                                            HierarchicalMultiCriterionInput(
-                                                value = Optional.present(scene.groups.map { it.group.groupData.id }),
-                                                modifier = CriterionModifier.INCLUDES,
-                                            ),
-                                        ),
-                                ),
-                            )
-                        }
-                    }.toMutableList()
-                if (filters.isNotEmpty()) {
-                    for (i in (1..<filters.size).reversed()) {
-                        filters[i - 1] = filters[i - 1].copy(OR = Optional.present(filters[i]))
-                    }
-                    val objectFilter = filters.first()
-                    val filterArgs =
-                        FilterArgs(
-                            DataType.SCENE,
-                            objectFilter = objectFilter,
-                            findFilter = StashFindFilter(sortAndDirection = SortAndDirection.random()),
-                        ).withResolvedRandom()
-                    val pageSize =
-                        PreferenceManager
-                            .getDefaultSharedPreferences(requireContext())
-                            .getInt(getString(R.string.pref_key_max_search_results), 25)
-                    val supplier =
-                        DataSupplierFactory(serverViewModel.requireServer().version).create<Query.Data, SlimSceneData, Query.Data>(
-                            filterArgs,
-                        )
-                    val items =
-                        StashPagingSource<Query.Data, SlimSceneData, SlimSceneData, Query.Data>(
-                            QueryEngine(StashServer.requireCurrentServer()),
-                            supplier,
-                        ).fetchPage(1, pageSize)
-                    if (items.isEmpty()) {
-                        mAdapter.clear(SIMILAR_POS)
-                    } else {
-                        val adapter =
-                            ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
-                        adapter.addAll(0, items)
-                        mAdapter.set(
-                            SIMILAR_POS,
-                            ListRow(HeaderItem(getString(R.string.more_like_this_scene)), adapter),
-                        )
-                    }
-                }
+        viewModel.suggestedScenes.observe(viewLifecycleOwner) { items ->
+            if (items.isEmpty()) {
+                mAdapter.clear(SIMILAR_POS)
+            } else {
+                val adapter =
+                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
+                adapter.addAll(0, items)
+                mAdapter.set(
+                    SIMILAR_POS,
+                    ListRow(
+                        HeaderItem(getString(R.string.more_like_this_scene)),
+                        adapter,
+                    ),
+                )
             }
+        }
+
+        viewModel.currentPosition.observe(viewLifecycleOwner) { localPosition ->
+            if (localPosition >= 0 && readOnlyModeDisabled()) {
+                sceneActionsAdapter.set(
+                    CREATE_MARKER_POS,
+                    CreateMarkerAction(localPosition),
+                )
+            }
+            // TODO
+//            if (serverViewModel.requireServer().serverPreferences.trackActivity) {
+//                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+//                    Log.v(TAG, "SaveSceneActivity start")
+//                    mutationEngine.saveSceneActivity(
+//                        sceneId,
+//                        localPosition,
+//                    )
+//                }
+//            }
+
+            setupPlayActionsAdapter(localPosition)
         }
     }
 
-    private fun initializeBackground() {
+    private fun initializeBackground(sceneData: FullSceneData) {
         if (mDetailsBackground.coverBitmap == null) {
             mDetailsBackground.enableParallax()
 
-            val screenshotUrl = sceneData!!.paths.screenshot
+            val screenshotUrl = sceneData.paths.screenshot
 
             if (screenshotUrl.isNotNullOrBlank()) {
                 StashGlide
@@ -548,10 +455,10 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private fun setupDetailsOverviewRow() {
+    private fun setupDetailsOverviewRow(sceneData: FullSceneData) {
         val row = detailsOverviewRow ?: DetailsOverviewRow(sceneData)
 
-        val screenshotUrl = sceneData?.paths?.screenshot
+        val screenshotUrl = sceneData.paths.screenshot
         if ((detailsOverviewRow == null || sceneData != row.item) && !screenshotUrl.isNullOrBlank()) {
             row.item = sceneData
             val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
@@ -599,7 +506,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
         detailsPresenter.onActionClickedListener =
             OnActionClickedListener { action ->
-                if (sceneData != null) {
+                if (this.sceneData != null) {
                     if (action.id in
                         longArrayOf(
                             ACTION_PLAY_SCENE,
@@ -608,23 +515,26 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             ACTION_DIRECT_PLAY_RESUME_SCENE,
                         )
                     ) {
-                        val intent = Intent(requireActivity(), PlaybackActivity::class.java)
-                        intent.putExtra(
-                            Constants.SCENE_ARG,
-                            Scene.fromFullSceneData(sceneData!!),
-                        )
-                        if (action.id == ACTION_RESUME_SCENE ||
-                            action.id == ACTION_TRANSCODE_RESUME_SCENE ||
-                            action.id == ACTION_DIRECT_PLAY_RESUME_SCENE
-                        ) {
-                            intent.putExtra(Constants.POSITION_ARG, position)
-                        }
-                        if (action.id == ACTION_TRANSCODE_RESUME_SCENE) {
-                            intent.putExtra(FORCE_TRANSCODE, true)
-                        } else if (action.id == ACTION_DIRECT_PLAY_RESUME_SCENE) {
-                            intent.putExtra(FORCE_DIRECT_PLAY, true)
-                        }
-                        resultLauncher.launch(intent)
+                        val position =
+                            if (action.id == ACTION_RESUME_SCENE ||
+                                action.id == ACTION_TRANSCODE_RESUME_SCENE ||
+                                action.id == ACTION_DIRECT_PLAY_RESUME_SCENE
+                            ) {
+                                viewModel.currentPosition.value ?: 0L
+                            } else {
+                                0L
+                            }
+                        val mode =
+                            if (action.id == ACTION_TRANSCODE_RESUME_SCENE) {
+                                PlaybackMode.FORCED_TRANSCODE
+                            } else if (action.id == ACTION_DIRECT_PLAY_RESUME_SCENE) {
+                                PlaybackMode.FORCED_DIRECT_PLAY
+                            } else {
+                                PlaybackMode.CHOOSE
+                            }
+
+                        val playbackDest = Destination.Playback(sceneId, position, mode)
+                        serverViewModel.navigationManager.navigate(playbackDest)
                     } else {
                         throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
                     }
@@ -696,8 +606,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private fun setupPlayActionsAdapter() {
-        if (sceneData!!.files.isNotEmpty()) {
+    private fun setupPlayActionsAdapter(position: Long) {
+        if (position >= 0L) {
             val serverPreferences = serverViewModel.requireServer().serverPreferences
             if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {
                 playActionsAdapter.set(
@@ -734,10 +644,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                     ).show()
                             },
                         ) {
-                            // This will be called before other lifecycle methods, so refresh data if needed
-                            if (sceneData == null) {
-                                fetchData(sceneId)
-                            }
                             val newId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
                             when (id) {
                                 StashAction.ADD_TAG.id -> {
@@ -789,6 +695,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                 }
 
                                 StashAction.CREATE_MARKER.id -> {
+                                    val position = viewModel.currentPosition.value ?: 0L
                                     Log.d(
                                         TAG,
                                         "Adding marker at $position with tagId=$newId to scene ${sceneData?.id}",
@@ -810,25 +717,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             }
                         }
                 } else {
-                    val localPosition = data.getLongExtra(POSITION_RESULT_ARG, -1)
-                    if (localPosition >= 0 && readOnlyModeDisabled()) {
-                        sceneActionsAdapter.set(
-                            CREATE_MARKER_POS,
-                            CreateMarkerAction(localPosition),
-                        )
-                    }
-                    if (serverViewModel.requireServer().serverPreferences.trackActivity) {
-                        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                            Log.v(TAG, "ResultCallback saveSceneActivity start")
-                            mutationEngine.saveSceneActivity(
-                                sceneId,
-                                localPosition,
-                            )
-                        }
-                    }
-
-                    position = localPosition
-                    setupPlayActionsAdapter()
                 }
             }
         }

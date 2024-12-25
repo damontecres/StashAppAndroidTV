@@ -44,11 +44,12 @@ class PlaybackActivity : FragmentActivity() {
         if (scene != null) {
             this.scene = scene
             if (savedInstanceState == null) {
-                fragment = PlaybackSceneFragment(scene)
-                supportFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.playback_container, fragment!!)
-                    .commit()
+                TODO()
+//                fragment = PlaybackSceneFragment(scene)
+//                supportFragmentManager
+//                    .beginTransaction()
+//                    .replace(R.id.playback_container, fragment!!)
+//                    .commit()
             }
         } else {
             // TODO remove?
@@ -60,11 +61,12 @@ class PlaybackActivity : FragmentActivity() {
                 val scene = Scene.fromFullSceneData(fullScene)
                 this@PlaybackActivity.scene = scene
                 if (savedInstanceState == null) {
-                    fragment = PlaybackSceneFragment(scene)
-                    supportFragmentManager
-                        .beginTransaction()
-                        .replace(R.id.playback_container, fragment!!)
-                        .commit()
+                    TODO()
+//                    fragment = PlaybackSceneFragment(scene)
+//                    supportFragmentManager
+//                        .beginTransaction()
+//                        .replace(R.id.playback_container, fragment!!)
+//                        .commit()
                 }
             }
         }

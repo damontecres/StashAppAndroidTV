@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.setup
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import androidx.leanback.app.GuidedStepSupportFragment
@@ -25,8 +24,9 @@ class SetupActivity : FragmentActivity(R.layout.frame_layout) {
     override fun onPause() {
         super.onPause()
         if (isFinishing && StashServer.getCurrentStashServer(this) != null) {
-            val intent = Intent(this, PinActivity::class.java)
-            startActivity(intent)
+//            val intent = Intent(this, PinActivity::class.java)
+//            startActivity(intent)
+            TODO()
         }
     }
 

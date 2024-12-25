@@ -9,9 +9,17 @@ import androidx.media3.common.MimeTypes
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.Scene
+import kotlinx.serialization.Serializable
 import java.util.Locale
 
 private const val TAG = "StreamUtils"
+
+@Serializable
+enum class PlaybackMode {
+    FORCED_DIRECT_PLAY,
+    FORCED_TRANSCODE,
+    CHOOSE,
+}
 
 enum class TranscodeDecision {
     DIRECT_PLAY,
