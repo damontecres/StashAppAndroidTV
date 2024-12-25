@@ -7,11 +7,15 @@ import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.models.ServerViewModel
+import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
 class RootActivity :
@@ -19,7 +23,7 @@ class RootActivity :
     NavigationManager.NavigationListener {
     private val serverViewModel: ServerViewModel by viewModels<ServerViewModel>()
 
-    private lateinit var navigationManager: NavigationManager
+    lateinit var navigationManager: NavigationManager
 
     private var appHasPin by Delegates.notNull<Boolean>()
 
@@ -55,6 +59,20 @@ class RootActivity :
             navigationManager.restoreInstanceState(savedInstanceState)
             if (appHasPin) {
                 navigationManager.navigate(Destination.Pin)
+            }
+        }
+
+        maybeShowUpdate()
+    }
+
+    private fun maybeShowUpdate() {
+        val checkForUpdates =
+            PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getBoolean("autoCheckForUpdates", true)
+        if (checkForUpdates) {
+            lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                UpdateChecker.checkForUpdate(this@RootActivity, false)
             }
         }
     }

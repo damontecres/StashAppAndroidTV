@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
 import com.github.damontecres.stashapp.FilterFragment
 import com.github.damontecres.stashapp.GalleryFragment
@@ -14,6 +13,7 @@ import com.github.damontecres.stashapp.MainFragment
 import com.github.damontecres.stashapp.MarkerDetailsFragment
 import com.github.damontecres.stashapp.PerformerFragment
 import com.github.damontecres.stashapp.PinFragment
+import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.StashSearchFragment
@@ -26,7 +26,7 @@ import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.putDestination
 
 class NavigationManager(
-    activity: FragmentActivity,
+    private val activity: RootActivity,
 ) {
     private val fragmentManager = activity.supportFragmentManager
     private val onBackPressedDispatcher = activity.onBackPressedDispatcher
@@ -37,19 +37,30 @@ class NavigationManager(
 
     init {
         onBackPressedCallback =
-            onBackPressedDispatcher.addCallback(activity, false) {
+            onBackPressedDispatcher.addCallback(activity, true) {
+                Log.v(
+                    TAG,
+                    "fragmentManager.backStackEntryCount=${fragmentManager.backStackEntryCount}, " +
+                        "destinationStack.lastOrNull()=${destinationStack.lastOrNull()}",
+                )
                 if (fragmentManager.backStackEntryCount > 0) {
-                    // Prevent backing out from PIN
-                    if (destinationStack.last() != Destination.Pin) {
+                    if (destinationStack.last() == Destination.Main) {
+                        activity.finish()
+                    } else if (destinationStack.last() != Destination.Pin) {
+                        // Prevent backing out from PIN
                         destinationStack.removeLast()
                         fragmentManager.popBackStack()
                         val fragment =
                             fragmentManager.findFragmentByTag(
                                 destinationStack.lastOrNull()?.toString(),
-                            )!!
-                        Log.v(TAG, "back: fragment=$fragment")
-                        listeners.forEach { it.onNavigate(destinationStack.last(), fragment) }
+                            )
+                        if (fragment != null) {
+                            Log.v(TAG, "back: fragment=$fragment")
+                            notifyListeners(destinationStack.last(), fragment)
+                        }
                     }
+                } else {
+                    activity.finish()
                 }
             }
     }
@@ -92,7 +103,6 @@ class NavigationManager(
             }
         val args = Bundle().putDestination(destination)
         fragment.arguments = args
-
         fragmentManager.commit {
             addToBackStack(destination.toString())
             // TODO animation
@@ -100,13 +110,22 @@ class NavigationManager(
         }
         Log.v(TAG, "next: fragment=$fragment")
         destinationStack.addLast(destination)
-        listeners.forEach { it.onNavigate(destination, fragment) }
-
-        onBackPressedCallback.isEnabled = fragmentManager.backStackEntryCount > 0
+        notifyListeners(destination, fragment)
     }
 
     fun goBack() {
         onBackPressedCallback.handleOnBackPressed()
+    }
+
+    fun goToMain() {
+        fragmentManager.popBackStack(Destination.Main.toString(), 0)
+        destinationStack.removeAll { true }
+        destinationStack.addLast(Destination.Main)
+        val fragment =
+            fragmentManager.findFragmentByTag(
+                destinationStack.last().toString(),
+            )!!
+        notifyListeners(destinationStack.last(), fragment)
     }
 
     fun clearPinFragment() {
@@ -119,7 +138,7 @@ class NavigationManager(
                     fragmentManager.findFragmentByTag(
                         destinationStack.lastOrNull()?.toString(),
                     )!!
-                listeners.forEach { it.onNavigate(destinationStack.last(), fragment) }
+                notifyListeners(destinationStack.last(), fragment)
                 onBackPressedCallback.isEnabled = fragmentManager.backStackEntryCount > 0
             } else {
                 navigate(Destination.Main)
@@ -129,6 +148,13 @@ class NavigationManager(
 
     fun addListener(listener: NavigationListener) {
         listeners.add(listener)
+    }
+
+    private fun notifyListeners(
+        destination: Destination,
+        fragment: Fragment,
+    ) {
+        listeners.forEach { it.onNavigate(destination, fragment) }
     }
 
     fun saveInstanceState(bundle: Bundle) {

@@ -1,12 +1,14 @@
 package com.github.damontecres.stashapp.views
 
 import android.content.Context
-import android.content.Intent
 import android.util.AttributeSet
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatImageButton
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.findFragment
 import com.github.damontecres.stashapp.MainActivity
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.RootActivity
 
 /**
  * An [AppCompatImageButton] that is the stash server icon and clicking returns to [MainActivity]
@@ -17,9 +19,8 @@ class HomeImageButton(
 ) : AppCompatImageButton(context, attrs) {
     init {
         setOnClickListener {
-            val intent = Intent(context, MainActivity::class.java)
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            context.startActivity(intent)
+            val activity = findFragment<Fragment>().requireActivity() as RootActivity
+            activity.navigationManager.goToMain()
         }
         setBackgroundDrawable(AppCompatResources.getDrawable(context, R.drawable.icon_button_selector))
     }
