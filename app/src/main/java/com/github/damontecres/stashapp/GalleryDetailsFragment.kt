@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
@@ -9,6 +8,7 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo.api.Optional
@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.MutationEngine
@@ -23,15 +24,16 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.models.GalleryViewModel
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
 class GalleryDetailsFragment : Fragment(R.layout.gallery_view) {
+    private val serverViewModel: ServerViewModel by activityViewModels()
     private val viewModel: GalleryViewModel by viewModels(ownerProducer = { requireParentFragment() })
 
     private lateinit var studioImage: ImageView
@@ -146,10 +148,7 @@ class GalleryDetailsFragment : Fragment(R.layout.gallery_view) {
                         name = viewModel.item.value!!.photographer,
                         objectFilter = objectFilter,
                     )
-                val intent =
-                    Intent(requireContext(), FilterListActivity::class.java)
-                        .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
-                requireContext().startActivity(intent)
+                serverViewModel.navigationManager.navigate(Destination.Filter(filterArgs))
             }
         }
 

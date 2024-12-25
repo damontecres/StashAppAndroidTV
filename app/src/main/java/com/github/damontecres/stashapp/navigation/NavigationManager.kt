@@ -112,6 +112,13 @@ class NavigationManager(
                         else -> throw IllegalArgumentException("Playlist for ${destination.filterArgs.dataType} not supported")
                     }
                 }
+
+                is Destination.Fragment -> {
+                    fragmentManager.fragmentFactory.instantiate(
+                        activity.classLoader,
+                        destination.className,
+                    )
+                }
             }
         val args = Bundle().putDestination(destination)
         fragment.arguments = args

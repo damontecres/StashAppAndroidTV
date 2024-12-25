@@ -8,7 +8,6 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.getDestination
@@ -132,7 +131,7 @@ class ImageFragment :
                 imageViewFragment.resetZoom()
                 return true
             }
-        } else if (ImageActivity.isDpadKey(keyCode)) {
+        } else if (isDpadKey(keyCode)) {
             if ((keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) && !overlayIsVisible) {
                 showOverlay()
                 return true
@@ -141,10 +140,10 @@ class ImageFragment :
             } else if (!overlayIsVisible && !imageViewFragment.isImageZoomedIn()) {
                 // Overlay is not showing and the image is not zoomed in
                 // So maybe move to another image if left or right
-                if (ImageActivity.isLeft(event.keyCode)) {
+                if (isLeft(event.keyCode)) {
                     viewModel.previousImage()
                     return true
-                } else if (ImageActivity.isRight(event.keyCode)) {
+                } else if (isRight(event.keyCode)) {
                     viewModel.nextImage()
                     return true
                 }

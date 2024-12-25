@@ -8,7 +8,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.ImageActivity.Companion.TAG
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.CountImagesQuery
 import com.github.damontecres.stashapp.api.FindImagesQuery
@@ -27,7 +26,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 
 /**
- * The [ViewModel] for [com.github.damontecres.stashapp.ImageActivity] and its fragments
+ * The [ViewModel] for images
  */
 class ImageViewModel(
     private val state: SavedStateHandle,
@@ -146,5 +145,9 @@ class ImageViewModel(
                     Toast.LENGTH_SHORT,
                 ).show()
         }
+    }
+
+    companion object {
+        private const val TAG = "ImageViewModel"
     }
 }

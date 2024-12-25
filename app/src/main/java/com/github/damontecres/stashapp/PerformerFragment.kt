@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.text.SpannableString
@@ -34,7 +33,6 @@ import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.getUiTabs
-import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.models.PerformerViewModel
 
@@ -174,7 +172,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         }
     }
 
-    private class PerformTogetherLongClickCallback(
+    private inner class PerformTogetherLongClickCallback(
         val performer: PerformerData,
     ) : StashPresenter.LongClickCallBack<PerformerData> {
         override fun getPopUpItems(
@@ -199,32 +197,28 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                 1L -> {
                     val performerIds = listOf(performer.id, item.id)
                     val name = "${performer.name} & ${item.name}"
-                    val intent =
-                        Intent(context, FilterListActivity::class.java)
-                            .putFilterArgs(
-                                FilterListActivity.INTENT_FILTER_ARGS,
-                                FilterArgs(
-                                    dataType = DataType.SCENE,
-                                    name = name,
-                                    objectFilter =
-                                        SceneFilterType(
-                                            performers =
-                                                Optional.present(
-                                                    MultiCriterionInput(
-                                                        value = Optional.present(performerIds),
-                                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                                    ),
-                                                ),
+                    val filter =
+                        FilterArgs(
+                            dataType = DataType.SCENE,
+                            name = name,
+                            objectFilter =
+                                SceneFilterType(
+                                    performers =
+                                        Optional.present(
+                                            MultiCriterionInput(
+                                                value = Optional.present(performerIds),
+                                                modifier = CriterionModifier.INCLUDES_ALL,
+                                            ),
                                         ),
                                 ),
-                            )
-                    context.startActivity(intent)
+                        )
+                    serverViewModel.navigationManager.navigate(Destination.Filter(filter))
                 }
             }
         }
     }
 
-    private class PerformersWithTagLongClickCallback : StashPresenter.LongClickCallBack<TagData> {
+    private inner class PerformersWithTagLongClickCallback : StashPresenter.LongClickCallBack<TagData> {
         override fun getPopUpItems(
             context: Context,
             item: TagData,
@@ -246,27 +240,23 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
 
                 1L -> {
                     val name = "Performers with ${item.name}"
-                    val intent =
-                        Intent(context, FilterListActivity::class.java)
-                            .putFilterArgs(
-                                FilterListActivity.INTENT_FILTER_ARGS,
-                                FilterArgs(
-                                    dataType = DataType.PERFORMER,
-                                    name = name,
-                                    objectFilter =
-                                        PerformerFilterType(
-                                            tags =
-                                                Optional.present(
-                                                    HierarchicalMultiCriterionInput(
-                                                        value = Optional.present(listOf(item.id)),
-                                                        modifier = CriterionModifier.INCLUDES_ALL,
-                                                        depth = Optional.absent(),
-                                                    ),
-                                                ),
+                    val filter =
+                        FilterArgs(
+                            dataType = DataType.PERFORMER,
+                            name = name,
+                            objectFilter =
+                                PerformerFilterType(
+                                    tags =
+                                        Optional.present(
+                                            HierarchicalMultiCriterionInput(
+                                                value = Optional.present(listOf(item.id)),
+                                                modifier = CriterionModifier.INCLUDES_ALL,
+                                                depth = Optional.absent(),
+                                            ),
                                         ),
                                 ),
-                            )
-                    context.startActivity(intent)
+                        )
+                    serverViewModel.navigationManager.navigate(Destination.Filter(filter))
                 }
             }
         }

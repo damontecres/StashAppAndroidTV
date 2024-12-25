@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.annotation.SuppressLint
 import android.content.DialogInterface
-import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
@@ -32,6 +31,7 @@ import com.github.damontecres.stashapp.api.fragment.JobData
 import com.github.damontecres.stashapp.api.type.JobStatus
 import com.github.damontecres.stashapp.api.type.JobStatusUpdateType
 import com.github.damontecres.stashapp.data.JobResult
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.setup.readonly.ReadOnlyPinConfigFragment
 import com.github.damontecres.stashapp.util.Constants
@@ -177,7 +177,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             versionPref.setOnPreferenceClickListener {
                 if (clickCount > 2) {
                     clickCount = 0
-                    startActivity(Intent(requireContext(), DebugActivity::class.java))
+                    viewModel.navigationManager.navigate(Destination.Fragment(DebugFragment::class.qualifiedName!!))
                 } else {
                     clickCount++
                 }
@@ -545,6 +545,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
     }
 
     class AdvancedPreferencesFragment : LeanbackPreferenceFragmentCompat() {
+        private val serverViewModel: ServerViewModel by activityViewModels()
+
         override fun onCreatePreferences(
             savedInstanceState: Bundle?,
             rootKey: String?,
@@ -578,7 +580,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
 
             findPreference<Preference>("license")!!.setOnPreferenceClickListener {
-                startActivity(Intent(requireContext(), LicenseActivity::class.java))
+                serverViewModel.navigationManager.navigate(Destination.Fragment(LicenseFragment::class.qualifiedName!!))
                 true
             }
 

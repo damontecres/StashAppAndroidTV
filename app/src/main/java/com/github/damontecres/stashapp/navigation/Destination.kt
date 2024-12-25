@@ -61,7 +61,7 @@ sealed interface Destination {
     @Serializable
     data class Filter(
         val filterArgs: FilterArgs,
-        val scrollToNextPage: Boolean,
+        val scrollToNextPage: Boolean = false,
     ) : Destination
 
     @Serializable
@@ -83,6 +83,14 @@ sealed interface Destination {
     data class UpdateMarker(
         val markerId: String,
         val sceneId: String,
+    ) : Destination
+
+    /**
+     * An arbitrary fragment that requires no arguments
+     */
+    @Serializable
+    data class Fragment(
+        val className: String,
     ) : Destination
 
     companion object {

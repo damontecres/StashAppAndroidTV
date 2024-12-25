@@ -53,25 +53,9 @@
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".ImageActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".DebugActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
-            android:name=".LicenseActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
             android:name=".setup.SetupActivity"
             android:exported="false"
             android:theme="@style/Theme.StashAppAndroidTV.GuidedStep" />
-        <activity
-            android:name=".UpdateChangelogActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
         <activity
             android:name=".filter.CreateFilterActivity"
             android:exported="false"

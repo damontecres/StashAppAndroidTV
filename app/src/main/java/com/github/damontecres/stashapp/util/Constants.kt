@@ -31,7 +31,6 @@ import com.chrynan.parcelable.core.getParcelable
 import com.chrynan.parcelable.core.getParcelableExtra
 import com.chrynan.parcelable.core.putExtra
 import com.chrynan.parcelable.core.putParcelable
-import com.github.damontecres.stashapp.ImageActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
@@ -579,13 +578,6 @@ val ImageData.maxFileSize: Int
                 ?.toString()
                 ?.toInt() ?: -1
         } ?: -1
-
-fun ImageData.addToIntent(intent: Intent): Intent {
-    intent.putExtra(ImageActivity.INTENT_IMAGE_ID, id)
-    intent.putExtra(ImageActivity.INTENT_IMAGE_URL, paths.image)
-    intent.putExtra(ImageActivity.INTENT_IMAGE_SIZE, maxFileSize)
-    return intent
-}
 
 fun showSetRatingToast(
     context: Context,
