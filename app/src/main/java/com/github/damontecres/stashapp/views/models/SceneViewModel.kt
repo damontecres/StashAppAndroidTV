@@ -23,13 +23,14 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 
 class SceneViewModel : ServerViewModel() {
-    private val _scene = MutableLiveData<FullSceneData>()
+    private val _scene = EqualityMutableLiveData<FullSceneData?>()
     val scene: LiveData<FullSceneData?> = _scene
 
     val currentPosition = MutableLiveData<Long>()
@@ -43,6 +44,23 @@ class SceneViewModel : ServerViewModel() {
     private val _suggestedScenes = MutableLiveData<List<SlimSceneData>>()
     val suggestedScenes: LiveData<List<SlimSceneData>> = _suggestedScenes
 
+    /**
+     * Saves the current position for the current scene if enabled in settings
+     */
+    fun maybeSaveCurrentPosition() {
+        // TODO check app settings for tracking
+        if (requireServer().serverPreferences.trackActivity) {
+            val currentScene = scene.value
+            val position = currentPosition.value
+            if (currentScene != null && position != null) {
+                viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                    val mutationEngine = MutationEngine(requireServer())
+                    mutationEngine.saveSceneActivity(currentScene.id, position)
+                }
+            }
+        }
+    }
+
     fun init(
         id: String,
         fetchAll: Boolean,
@@ -50,9 +68,12 @@ class SceneViewModel : ServerViewModel() {
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
             val queryEngine = QueryEngine(requireServer())
             val newScene = queryEngine.getScene(id)
+            _scene.value = newScene
             if (newScene != null) {
-                _scene.value = newScene
-                currentPosition.value = (newScene.resume_time ?: 0.0).times(1000L).toLong()
+                val currPos = currentPosition.value
+                if (currPos == null || currPos <= 0L) {
+                    currentPosition.value = (newScene.resume_time ?: 0.0).times(1000L).toLong()
+                }
 
                 if (fetchAll) {
                     val performerIds = newScene.performers.map { it.id }

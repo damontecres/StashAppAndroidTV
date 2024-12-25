@@ -88,6 +88,10 @@ import kotlin.time.toDuration
  * Now it's mostly a dumping ground for various extension functions
  */
 object Constants {
+    private const val REQUEST_KEY = "requestKey"
+
+    const val POSITION_REQUEST_KEY = "$REQUEST_KEY.position"
+
     /**
      * The name of the header for authenticating to Stash
      */

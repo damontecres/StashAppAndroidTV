@@ -17,6 +17,8 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener
+import androidx.fragment.app.viewModels
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
 import androidx.leanback.widget.Action
@@ -59,6 +61,7 @@ import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
@@ -88,10 +91,9 @@ import kotlin.math.roundToInt
  */
 class SceneDetailsFragment : DetailsSupportFragment() {
     private val serverViewModel: ServerViewModel by activityViewModels<ServerViewModel>()
-    private val viewModel by activityViewModels<SceneViewModel>()
+    private val viewModel by viewModels<SceneViewModel>()
 
     private var pendingJob: Job? = null
-    private var suggestionsFetched = false
 
     private lateinit var sceneId: String
     private var sceneData: FullSceneData? = null
@@ -209,11 +211,19 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         mutationEngine = MutationEngine(serverViewModel.requireServer())
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
+        mDetailsBackground.enableParallax()
         resultLauncher =
             registerForActivityResult(
                 ActivityResultContracts.StartActivityForResult(),
                 ResultCallback(),
             )
+
+        setFragmentResultListener(Constants.POSITION_REQUEST_KEY) { _, bundle ->
+            val position = bundle.getLong(Constants.POSITION_REQUEST_KEY)
+            Log.v(TAG, "setFragmentResultListener: position=$position")
+            viewModel.currentPosition.value = position
+            viewModel.maybeSaveCurrentPosition()
+        }
     }
 
     override fun onCreateView(
@@ -310,7 +320,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
     private fun setupObservers() {
         viewModel.scene.observe(viewLifecycleOwner) { sceneData ->
-            Log.v(TAG, "Got new scene")
             if (sceneData == null) {
                 Toast
                     .makeText(
@@ -426,32 +435,29 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun initializeBackground(sceneData: FullSceneData) {
-        if (mDetailsBackground.coverBitmap == null) {
-            mDetailsBackground.enableParallax()
+        val screenshotUrl = sceneData.paths.screenshot
+        if (screenshotUrl.isNotNullOrBlank()) {
+            StashGlide
+                .withBitmap(requireActivity(), screenshotUrl)
+                .optionalCenterCrop()
+                .error(R.drawable.baseline_camera_indoor_48)
+                .into<CustomTarget<Bitmap>>(
+                    object : CustomTarget<Bitmap>() {
+                        override fun onResourceReady(
+                            bitmap: Bitmap,
+                            transition: Transition<in Bitmap>?,
+                        ) {
+                            mDetailsBackground.coverBitmap = bitmap
+                            mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
+                        }
 
-            val screenshotUrl = sceneData.paths.screenshot
-
-            if (screenshotUrl.isNotNullOrBlank()) {
-                StashGlide
-                    .withBitmap(requireActivity(), screenshotUrl)
-                    .optionalCenterCrop()
-                    .error(R.drawable.baseline_camera_indoor_48)
-                    .into<CustomTarget<Bitmap>>(
-                        object : CustomTarget<Bitmap>() {
-                            override fun onResourceReady(
-                                bitmap: Bitmap,
-                                transition: Transition<in Bitmap>?,
-                            ) {
-                                mDetailsBackground.coverBitmap = bitmap
-                                mAdapter.notifyArrayItemRangeChanged(0, mAdapter.size())
-                            }
-
-                            override fun onLoadCleared(placeholder: Drawable?) {
-                                mDetailsBackground.coverBitmap = null
-                            }
-                        },
-                    )
-            }
+                        override fun onLoadCleared(placeholder: Drawable?) {
+                            mDetailsBackground.coverBitmap = null
+                        }
+                    },
+                )
+        } else {
+            mDetailsBackground.coverBitmap = null
         }
     }
 
@@ -607,6 +613,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupPlayActionsAdapter(position: Long) {
+        Log.v(TAG, "setupPlayActionsAdapter: position=$position")
         if (position >= 0L) {
             val serverPreferences = serverViewModel.requireServer().serverPreferences
             if (position <= 0L || serverPreferences.alwaysStartFromBeginning) {

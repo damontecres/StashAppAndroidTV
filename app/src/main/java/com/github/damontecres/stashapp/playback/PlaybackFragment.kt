@@ -19,11 +19,13 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
+import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -142,10 +144,12 @@ abstract class PlaybackFragment(
         trackActivityListener?.release(currentVideoPosition)
         trackActivityListener = null
         player?.let { exoPlayer ->
+
             playbackPosition = exoPlayer.currentPosition
             exoPlayer.release()
         }
         player = null
+        StashExoPlayer.releasePlayer()
     }
 
     private fun createPlayer(): ExoPlayer =
@@ -567,6 +571,7 @@ abstract class PlaybackFragment(
     @OptIn(UnstableApi::class)
     override fun onPause() {
         super.onPause()
+        setFragmentResult("position", bundleOf("position" to currentVideoPosition))
         if (Util.SDK_INT <= 23) {
             releasePlayer()
         }
@@ -669,5 +674,7 @@ abstract class PlaybackFragment(
 
     companion object {
         private const val TAG = "PlaybackFragment"
+
+        const val POSITION_REQUEST_KEY = "$TAG.position"
     }
 }

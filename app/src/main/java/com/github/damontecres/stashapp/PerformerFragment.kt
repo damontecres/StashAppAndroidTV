@@ -42,6 +42,7 @@ import com.github.damontecres.stashapp.views.models.PerformerViewModel
  * Main [TabbedFragment] for a performers which includes [PerformerDetailsFragment] and other tabs
  */
 class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
+    // TODO scope this better
     private val viewModel: PerformerViewModel by activityViewModels<PerformerViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
