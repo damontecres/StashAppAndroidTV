@@ -45,7 +45,6 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
@@ -295,10 +294,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         listOf(MARKER_DETAILS_POPUP),
                     ) { context, item, popUpItem ->
                         if (popUpItem.id == MARKER_DETAILS_POPUP.id) {
-                            val intent = Intent(context, DataTypeActivity::class.java)
-                            intent.putDataType(DataType.MARKER)
-                            intent.putExtra("marker", Marker(item))
-                            context.startActivity(intent)
+                            serverViewModel.navigationManager.navigate(
+                                Destination.MarkerDetails(
+                                    item.id,
+                                    item.scene.videoSceneData.id,
+                                ),
+                            )
                         }
                     },
                 ),

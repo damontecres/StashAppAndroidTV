@@ -48,10 +48,9 @@ import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
-import com.github.damontecres.stashapp.playback.PlaybackActivity
+import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
@@ -865,24 +864,23 @@ fun maybeStartPlayback(
 ) {
     when (item) {
         is SlimSceneData -> {
-            val intent = Intent(context, PlaybackActivity::class.java)
-            intent.putDataType(DataType.SCENE)
-            intent.putExtra(Constants.SCENE_ARG, Scene.fromSlimSceneData(item))
-            if (item.resume_time != null) {
-                intent.putExtra(Constants.POSITION_ARG, item.resume_position!!)
-            }
-            context.startActivity(intent)
+            StashApplication.navigationManager.navigate(
+                Destination.Playback(
+                    item.id,
+                    item.resume_position ?: 0L,
+                    PlaybackMode.CHOOSE,
+                ),
+            )
         }
 
         is MarkerData -> {
-            val intent = Intent(context, PlaybackActivity::class.java)
-            intent.putDataType(DataType.MARKER)
-            intent.putExtra(
-                Constants.SCENE_ARG,
-                Scene.fromVideoSceneData(item.scene.videoSceneData),
+            StashApplication.navigationManager.navigate(
+                Destination.Playback(
+                    item.scene.videoSceneData.id,
+                    (item.seconds * 1000).toLong(),
+                    PlaybackMode.CHOOSE,
+                ),
             )
-            intent.putExtra(Constants.POSITION_ARG, (item.seconds * 1000).toLong())
-            context.startActivity(intent)
         }
     }
 }

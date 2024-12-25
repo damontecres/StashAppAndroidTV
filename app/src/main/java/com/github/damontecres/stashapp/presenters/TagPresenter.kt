@@ -1,19 +1,16 @@
 package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
-import android.content.Intent
 import com.apollographql.apollo.api.Optional
-import com.github.damontecres.stashapp.DataTypeActivity
-import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.util.putDataType
-import com.github.damontecres.stashapp.util.putFilterArgs
 import java.util.EnumMap
 
 class TagPresenter(
@@ -70,12 +67,6 @@ class TagPresenter(
         ): List<PopUpItem> =
             buildList {
                 add(PopUpItem.getDefault(context))
-                if (item.child_count > 0) {
-                    // TODO, combining two i18n strings is rarely the correct thing
-                    val str =
-                        context.getString(R.string.go_to) + " " + context.getString(R.string.stashapp_sub_tags)
-                    add(PopUpItem(POPUP_GOTO_WITH_SUB_ID, str))
-                }
                 if (item.parent_count > 0) {
                     val str = context.getString(R.string.stashapp_parent_tags)
                     add(PopUpItem(POPUP_PARENTS_ID, str))
@@ -91,75 +82,57 @@ class TagPresenter(
             item: TagData,
             popUpItem: PopUpItem,
         ) {
-            when (popUpItem.id) {
-                PopUpItem.DEFAULT_ID -> {
-                    val intent = Intent(context, DataTypeActivity::class.java)
-                    intent.putDataType(DataType.TAG)
-                    intent.putExtra("tagId", item.id)
-                    intent.putExtra("tagName", item.name)
-                    intent.putExtra("includeSubTags", false)
-                    context.startActivity(intent)
-                }
+            val destination =
+                when (popUpItem.id) {
+                    PopUpItem.DEFAULT_ID -> {
+                        Destination.fromStashData(item)
+                    }
 
-                POPUP_GOTO_WITH_SUB_ID -> {
-                    val intent = Intent(context, DataTypeActivity::class.java)
-                    intent.putDataType(DataType.TAG)
-                    intent.putExtra("tagId", item.id)
-                    intent.putExtra("tagName", item.name)
-                    intent.putExtra("includeSubTags", true)
-                    context.startActivity(intent)
-                }
-
-                POPUP_PARENTS_ID -> {
-                    val name = context.getString(R.string.stashapp_parent_of, item.name)
-                    val intent =
-                        Intent(context, FilterListActivity::class.java)
-                            .putFilterArgs(
-                                FilterListActivity.INTENT_FILTER_ARGS,
-                                FilterArgs(
-                                    dataType = DataType.TAG,
-                                    name = name,
-                                    objectFilter =
-                                        TagFilterType(
-                                            children =
-                                                Optional.present(
-                                                    HierarchicalMultiCriterionInput(
-                                                        value = Optional.present(listOf(item.id)),
-                                                        modifier = CriterionModifier.INCLUDES,
-                                                        depth = Optional.present(-1),
-                                                    ),
+                    POPUP_PARENTS_ID -> {
+                        Destination.Filter(
+                            FilterArgs(
+                                dataType = DataType.TAG,
+                                name = context.getString(R.string.stashapp_parent_of, item.name),
+                                objectFilter =
+                                    TagFilterType(
+                                        children =
+                                            Optional.present(
+                                                HierarchicalMultiCriterionInput(
+                                                    value = Optional.present(listOf(item.id)),
+                                                    modifier = CriterionModifier.INCLUDES,
+                                                    depth = Optional.present(-1),
                                                 ),
-                                        ),
-                                ),
-                            )
-                    context.startActivity(intent)
-                }
+                                            ),
+                                    ),
+                            ),
+                            false,
+                        )
+                    }
 
-                POPUP_CHILDREN_ID -> {
-                    val name = context.getString(R.string.stashapp_sub_tag_of, item.name)
-                    val intent =
-                        Intent(context, FilterListActivity::class.java)
-                            .putFilterArgs(
-                                FilterListActivity.INTENT_SCROLL_NEXT_PAGE,
-                                FilterArgs(
-                                    dataType = DataType.TAG,
-                                    name = name,
-                                    objectFilter =
-                                        TagFilterType(
-                                            parents =
-                                                Optional.present(
-                                                    HierarchicalMultiCriterionInput(
-                                                        value = Optional.present(listOf(item.id)),
-                                                        modifier = CriterionModifier.INCLUDES,
-                                                        depth = Optional.present(-1),
-                                                    ),
+                    POPUP_CHILDREN_ID -> {
+                        Destination.Filter(
+                            FilterArgs(
+                                dataType = DataType.TAG,
+                                name = context.getString(R.string.stashapp_sub_tag_of, item.name),
+                                objectFilter =
+                                    TagFilterType(
+                                        parents =
+                                            Optional.present(
+                                                HierarchicalMultiCriterionInput(
+                                                    value = Optional.present(listOf(item.id)),
+                                                    modifier = CriterionModifier.INCLUDES,
+                                                    depth = Optional.present(-1),
                                                 ),
-                                        ),
-                                ),
-                            )
-                    context.startActivity(intent)
+                                            ),
+                                    ),
+                            ),
+                            false,
+                        )
+                    }
+
+                    else -> throw IllegalStateException("Unsupported tags popup: ${popUpItem.id}")
                 }
-            }
+            StashApplication.navigationManager.navigate(destination)
         }
     }
 
@@ -171,6 +144,5 @@ class TagPresenter(
 
         const val POPUP_PARENTS_ID = 100L
         const val POPUP_CHILDREN_ID = 101L
-        const val POPUP_GOTO_WITH_SUB_ID = 102L
     }
 }
