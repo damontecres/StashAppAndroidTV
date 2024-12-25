@@ -45,7 +45,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
     private val viewModel: PerformerViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        viewModel.init(requireArguments().getDestination<Destination.Item>().id)
+        viewModel.init(requireArguments())
         super.onCreate(savedInstanceState)
     }
 
@@ -54,7 +54,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.performer.observe(viewLifecycleOwner) { performer ->
+        viewModel.item.observe(viewLifecycleOwner) { performer ->
             if (performer == null) {
                 Toast
                     .makeText(

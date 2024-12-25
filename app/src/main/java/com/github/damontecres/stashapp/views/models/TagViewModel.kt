@@ -1,11 +1,11 @@
 package com.github.damontecres.stashapp.views.models
 
-import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.util.QueryEngine
 
-class PerformerViewModel : ItemViewModel<PerformerData>() {
+class TagViewModel : ItemViewModel<TagData>() {
     override suspend fun fetch(
         queryEngine: QueryEngine,
         id: String,
-    ): PerformerData? = queryEngine.getPerformer(id)
+    ): TagData? = queryEngine.getTags(listOf(id)).firstOrNull()
 }

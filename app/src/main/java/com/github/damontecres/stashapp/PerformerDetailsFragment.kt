@@ -30,7 +30,7 @@ class PerformerDetailsFragment : DetailsFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.performer.observe(viewLifecycleOwner) { performer ->
+        viewModel.item.observe(viewLifecycleOwner) { performer ->
             if (performer != null) {
                 updateUi(performer)
             }

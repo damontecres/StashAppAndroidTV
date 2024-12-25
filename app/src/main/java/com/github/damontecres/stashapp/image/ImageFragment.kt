@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashZoomImageView
+import com.github.damontecres.stashapp.views.models.ImageViewModel
 import kotlin.math.abs
 
 /**

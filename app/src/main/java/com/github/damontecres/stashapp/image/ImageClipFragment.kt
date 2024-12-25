@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackFragment
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
+import com.github.damontecres.stashapp.views.models.ImageViewModel
 
 /**
  * Playback for an image clip (a video)

@@ -1,10 +1,12 @@
-package com.github.damontecres.stashapp.image
+package com.github.damontecres.stashapp.views.models
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.image.ImageController
+import com.github.damontecres.stashapp.image.VideoController
 
 /**
  * The [ViewModel] for [com.github.damontecres.stashapp.ImageActivity] and its fragments

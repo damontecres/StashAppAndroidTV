@@ -23,7 +23,6 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.image.ImageClipFragment
 import com.github.damontecres.stashapp.image.ImageDetailsFragment
 import com.github.damontecres.stashapp.image.ImageFragment
-import com.github.damontecres.stashapp.image.ImageViewModel
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -33,6 +32,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.isImageClip
+import com.github.damontecres.stashapp.views.models.ImageViewModel
 import kotlinx.coroutines.launch
 import java.util.Timer
 

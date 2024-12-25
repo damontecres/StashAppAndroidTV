@@ -6,6 +6,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
+import com.github.damontecres.stashapp.FilterFragment
 import com.github.damontecres.stashapp.GalleryFragment
 import com.github.damontecres.stashapp.GroupFragment
 import com.github.damontecres.stashapp.MainFragment
@@ -14,7 +15,6 @@ import com.github.damontecres.stashapp.PerformerFragment
 import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.SearchForFragment
-import com.github.damontecres.stashapp.StashGridFragment
 import com.github.damontecres.stashapp.StashSearchFragment
 import com.github.damontecres.stashapp.StudioFragment
 import com.github.damontecres.stashapp.TagFragment
@@ -74,7 +74,7 @@ class NavigationManager(
                     }
                 }
 
-                is Destination.Filter -> StashGridFragment(destination.filterArgs, null, destination.scrollToNextPage)
+                is Destination.Filter -> FilterFragment()
 
                 is Destination.SearchFor -> SearchForFragment()
 

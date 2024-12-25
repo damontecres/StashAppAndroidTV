@@ -17,6 +17,7 @@ import androidx.core.view.contains
 import androidx.core.view.get
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
 import androidx.leanback.widget.ObjectAdapter
@@ -37,6 +38,7 @@ import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.ScenePresenter
@@ -64,10 +66,10 @@ import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SlideshowOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.formatNumber
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -81,6 +83,8 @@ import kotlin.math.abs
 class StashGridFragment() :
     Fragment(),
     DefaultKeyEventCallback {
+    private val serverViewModel: ServerViewModel by activityViewModels()
+
     // Views
     private lateinit var sortButton: Button
     private lateinit var playAllButton: Button
@@ -150,7 +154,7 @@ class StashGridFragment() :
     var presenterSelector: PresenterSelector = StashPresenter.defaultClassPresenterSelector()
 
     /**
-     * The item clicked listener, will default to [StashItemViewClickListener] in [onViewCreated] if not specified before
+     * The item clicked listener, will default to [NavigationOnItemViewClickedListener] in [onViewCreated] if not specified before
      */
     var onItemViewClickedListener: OnItemViewClickedListener? = null
 
@@ -400,7 +404,8 @@ class StashGridFragment() :
         noResultsTextView = view.findViewById(R.id.no_results_text)
 
         mGridPresenter.onItemViewClickedListener =
-            onItemViewClickedListener ?: StashItemViewClickListener(requireContext())
+            onItemViewClickedListener
+                ?: NavigationOnItemViewClickedListener(serverViewModel.navigationManager)
 
         if (savedInstanceState == null) {
             Log.v(TAG, "onViewCreated first time")

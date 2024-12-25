@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.ImageView
@@ -10,10 +9,10 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo.api.Optional
-import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -22,35 +21,33 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Gallery
 import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.getParcelable
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
+import com.github.damontecres.stashapp.views.models.GalleryViewModel
 import kotlinx.coroutines.launch
 
 class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
-    private lateinit var gallery: Gallery
+    private val viewModel: GalleryViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        gallery = requireActivity().intent.getParcelable(INTENT_GALLERY_OBJ, Gallery::class)!!
         super.onCreate(savedInstanceState)
-        tabViewModel.title.value = gallery.name
+        viewModel.init(requireArguments())
     }
 
     override fun onViewCreated(
@@ -59,23 +56,36 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val galleries =
-            Optional.present(
-                MultiCriterionInput(
-                    value = Optional.present(listOf(gallery.id)),
-                    modifier = CriterionModifier.INCLUDES_ALL,
-                ),
-            )
-        tabViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+        viewModel.item.observe(viewLifecycleOwner) { gallery ->
+            if (gallery == null) {
+                TODO()
+                return@observe
+            }
+            tabViewModel.title.value = gallery.name
+
+            val galleries =
+                Optional.present(
+                    MultiCriterionInput(
+                        value = Optional.present(listOf(gallery.id)),
+                        modifier = CriterionModifier.INCLUDES_ALL,
+                    ),
+                )
+
             tabViewModel.tabs.value =
                 listOf(
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
-                        GalleryDetailsFragment(gallery)
+                        GalleryDetailsFragment()
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
                         StashGridFragment(
                             dataType = DataType.IMAGE,
-                            findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.GALLERY_IMAGES).findFilter,
+                            findFilter =
+                                serverViewModel
+                                    .requireServer()
+                                    .serverPreferences
+                                    .getDefaultFilter(
+                                        PageFilterKey.GALLERY_IMAGES,
+                                    ).findFilter,
                             objectFilter = ImageFilterType(galleries = galleries),
                         ).withImageGridClickListener()
                     },
@@ -115,17 +125,12 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
         }
     }
 
-    class GalleryDetailsFragment() : Fragment(R.layout.gallery_view) {
-        private lateinit var gallery: Gallery
-        private lateinit var galleryData: GalleryData
+    class GalleryDetailsFragment : Fragment(R.layout.gallery_view) {
+        private val viewModel: GalleryViewModel by viewModels()
 
         private lateinit var studioImage: ImageView
         private lateinit var ratingBar: StashRatingBar
         private lateinit var table: TableLayout
-
-        constructor(gallery: Gallery) : this() {
-            this.gallery = gallery
-        }
 
         override fun onViewCreated(
             view: View,
@@ -133,23 +138,14 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
         ) {
             super.onViewCreated(view, savedInstanceState)
 
-            if (savedInstanceState != null) {
-                val gallery = savedInstanceState.getParcelable("gallery", Gallery::class)
-                if (gallery != null) {
-                    this.gallery = gallery
-                } else {
-                    Log.w(TAG, "savedInstanceState != null but gallery was null")
-                }
-            }
-
             studioImage = view.findViewById(R.id.studio_image)
             ratingBar = view.findViewById(R.id.gallery_rating_bar)
             table = view.findViewById(R.id.gallery_table)
 
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
-                val queryEngine = QueryEngine(StashServer.requireCurrentServer())
-                galleryData = queryEngine.getGalleries(listOf(gallery.id)).first()
-
+            viewModel.item.observe(viewLifecycleOwner) { galleryData ->
+                if (galleryData == null) {
+                    return@observe
+                }
                 addRow(table, R.string.stashapp_details, galleryData.details)
                 addRow(table, R.string.stashapp_date, galleryData.date)
                 addRow(table, R.string.stashapp_scene_code, galleryData.code)
@@ -233,7 +229,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                             photographer =
                                 Optional.present(
                                     StringCriterionInput(
-                                        value = galleryData.photographer!!,
+                                        value = viewModel.item.value!!.photographer!!,
                                         modifier = CriterionModifier.EQUALS,
                                     ),
                                 ),
@@ -241,7 +237,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                     val filterArgs =
                         FilterArgs(
                             dataType = DataType.GALLERY,
-                            name = galleryData.photographer,
+                            name = viewModel.item.value!!.photographer,
                             objectFilter = objectFilter,
                         )
                     val intent =
@@ -253,11 +249,6 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
 
             table.addView(row)
         }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putParcelable("gallery", gallery)
     }
 
     companion object {
