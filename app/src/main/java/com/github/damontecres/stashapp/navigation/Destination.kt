@@ -78,6 +78,12 @@ sealed interface Destination {
         val title: String? = null,
     ) : Destination
 
+    @Serializable
+    data class UpdateMarker(
+        val markerId: String,
+        val sceneId: String,
+    ) : Destination
+
     companion object {
         fun fromStashData(item: StashData): Item = Item(getDataType(item), item.id)
 

@@ -109,13 +109,13 @@ class PlaybackSceneFragment : PlaybackFragment() {
             if (scene == null) {
                 return@observe
             }
-
             val position =
                 if (playbackPosition >= 0) {
                     playbackPosition
                 } else {
                     playback.position
                 }
+            Log.d(TAG, "playbackPosition=$playbackPosition, playback.position=${playback.position}")
             val forceTranscode = playback.mode == PlaybackMode.FORCED_TRANSCODE
             val forceDirectPlay = playback.mode == PlaybackMode.FORCED_DIRECT_PLAY
             val streamDecision =
@@ -136,6 +136,8 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     if (videoView.controllerShowTimeoutMs > 0) {
                         videoView.hideController()
                     }
+                    exoPlayer.prepare()
+                    exoPlayer.playWhenReady = true
                 } else {
                     videoView.useController = false
                     Toast

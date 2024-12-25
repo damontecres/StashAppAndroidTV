@@ -25,7 +25,7 @@ class NavigationOnItemViewClickedListener(
                 is MarkerData ->
                     Destination.Playback(
                         item.scene.videoSceneData.id,
-                        (item.seconds + 1000L).toLong(),
+                        (item.seconds * 1000L).toLong(),
                         PlaybackMode.CHOOSE,
                     )
 

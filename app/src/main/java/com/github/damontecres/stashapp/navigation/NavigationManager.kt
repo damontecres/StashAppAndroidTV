@@ -24,6 +24,7 @@ import com.github.damontecres.stashapp.image.ImageFragment
 import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.putDestination
+import com.github.damontecres.stashapp.views.MarkerPickerFragment
 
 class NavigationManager(
     private val activity: RootActivity,
@@ -99,6 +100,7 @@ class NavigationManager(
                 is Destination.Filter -> FilterFragment()
 
                 is Destination.SearchFor -> SearchForFragment()
+                is Destination.UpdateMarker -> MarkerPickerFragment()
 
                 is Destination.Playback -> PlaybackSceneFragment()
                 is Destination.Playlist -> TODO()

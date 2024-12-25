@@ -182,10 +182,7 @@ abstract class PlaybackFragment(
                 )
             }.also { exoPlayer ->
                 videoView.player = exoPlayer
-                Log.v(PlaybackSceneFragment.TAG, "Preparing playback")
-                exoPlayer.prepare()
                 exoPlayer.addListener(AmbientPlaybackListener())
-                exoPlayer.playWhenReady = true
             }
 
     protected fun updateDebugInfo(

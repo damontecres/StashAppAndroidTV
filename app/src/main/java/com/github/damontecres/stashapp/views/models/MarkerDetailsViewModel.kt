@@ -14,10 +14,10 @@ import kotlinx.coroutines.launch
 class MarkerDetailsViewModel : ViewModel() {
     val seconds = MutableLiveData<Double>()
 
-    private val _item = MutableLiveData<FullSceneData.Scene_marker?>()
+    private val _item = EqualityMutableLiveData<FullSceneData.Scene_marker?>()
     val item: LiveData<FullSceneData.Scene_marker?> = _item
 
-    private val _scene = MutableLiveData<FullSceneData?>()
+    private val _scene = EqualityMutableLiveData<FullSceneData?>()
     val scene: LiveData<FullSceneData?> = _scene
 
     fun init(

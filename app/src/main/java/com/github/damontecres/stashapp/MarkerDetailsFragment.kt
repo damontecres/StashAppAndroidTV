@@ -12,6 +12,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResultListener
+import androidx.fragment.app.viewModels
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
@@ -53,7 +54,6 @@ import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
-import com.github.damontecres.stashapp.views.MarkerPickerFragment
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
@@ -77,7 +77,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     private var pendingJob: Job? = null
 
     private val serverViewModel by activityViewModels<ServerViewModel>()
-    private val viewModel by activityViewModels<MarkerDetailsViewModel>()
+    private val viewModel by viewModels<MarkerDetailsViewModel>()
 
     private val mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
     private val mPresenterSelector =
@@ -144,12 +144,12 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                         ),
                     )
                 } else if (action == StashAction.SHIFT_MARKERS) {
-                    requireActivity()
-                        .supportFragmentManager
-                        .beginTransaction()
-                        .addToBackStack("picker")
-                        .replace(android.R.id.content, MarkerPickerFragment::class.java, null)
-                        .commit()
+                    serverViewModel.navigationManager.navigate(
+                        Destination.UpdateMarker(
+                            viewModel.item.value!!.id,
+                            viewModel.scene.value!!.id,
+                        ),
+                    )
                 }
             }
 
@@ -158,9 +158,6 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val markerDetailsDest = requireArguments().getDestination<Destination.MarkerDetails>()
-        viewModel.init(markerDetailsDest.id, markerDetailsDest.sceneId)
 
         primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
         val server = StashServer.requireCurrentServer()
@@ -212,6 +209,12 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val markerDetailsDest = requireArguments().getDestination<Destination.MarkerDetails>()
+        viewModel.init(markerDetailsDest.id, markerDetailsDest.sceneId)
     }
 
     override fun onViewCreated(
