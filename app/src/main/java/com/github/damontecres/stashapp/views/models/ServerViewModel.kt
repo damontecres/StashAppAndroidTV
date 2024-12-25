@@ -59,6 +59,7 @@ open class ServerViewModel : ViewModel() {
         _currentSettingsHash.value = newHash
 
         val currentServer = StashServer.getCurrentStashServer(StashApplication.getApplication())
+        StashApplication.currentServer = currentServer
         _currentServer.value = currentServer
     }
 }

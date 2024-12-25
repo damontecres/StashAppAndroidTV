@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.views.models
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
@@ -29,7 +30,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
 
-class SceneViewModel : ServerViewModel() {
+class SceneViewModel : ViewModel() {
     private val _scene = EqualityMutableLiveData<FullSceneData?>()
     val scene: LiveData<FullSceneData?> = _scene
 
@@ -49,12 +50,12 @@ class SceneViewModel : ServerViewModel() {
      */
     fun maybeSaveCurrentPosition() {
         // TODO check app settings for tracking
-        if (requireServer().serverPreferences.trackActivity) {
+        if (StashServer.requireCurrentServer().serverPreferences.trackActivity) {
             val currentScene = scene.value
             val position = currentPosition.value
             if (currentScene != null && position != null) {
                 viewModelScope.launch(StashCoroutineExceptionHandler()) {
-                    val mutationEngine = MutationEngine(requireServer())
+                    val mutationEngine = MutationEngine(StashServer.requireCurrentServer())
                     mutationEngine.saveSceneActivity(currentScene.id, position)
                 }
             }
@@ -66,7 +67,7 @@ class SceneViewModel : ServerViewModel() {
         fetchAll: Boolean,
     ) {
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
-            val queryEngine = QueryEngine(requireServer())
+            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             val newScene = queryEngine.getScene(id)
             _scene.value = newScene
             if (newScene != null) {
@@ -178,7 +179,9 @@ class SceneViewModel : ServerViewModel() {
                                         25,
                                     )
                             val supplier =
-                                DataSupplierFactory(requireServer().version).create<Query.Data, SlimSceneData, Query.Data>(
+                                DataSupplierFactory(
+                                    StashServer.requireCurrentServer().version,
+                                ).create<Query.Data, SlimSceneData, Query.Data>(
                                     filterArgs,
                                 )
                             _suggestedScenes.value =

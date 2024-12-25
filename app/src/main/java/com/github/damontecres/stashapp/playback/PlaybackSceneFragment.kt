@@ -1,23 +1,22 @@
 package com.github.damontecres.stashapp.playback
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.core.os.bundleOf
+import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SceneDetailsFragment
-import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.getDestination
 
 @OptIn(UnstableApi::class)
@@ -64,20 +63,12 @@ class PlaybackSceneFragment : PlaybackFragment() {
                             object :
                                 Player.Listener {
                                 override fun onPlaybackStateChanged(playbackState: Int) {
-                                    TODO()
                                     if (playbackState == Player.STATE_ENDED) {
                                         Log.v(TAG, "Finishing activity")
-                                        val result = Intent()
-                                        result.putExtra(
-                                            SearchForFragment.ID_KEY,
-                                            -1L,
+                                        setFragmentResult(
+                                            Constants.POSITION_REQUEST_KEY,
+                                            bundleOf(Constants.POSITION_REQUEST_KEY to 0L),
                                         )
-                                        result.putExtra(
-                                            SceneDetailsFragment.POSITION_RESULT_ARG,
-                                            0L,
-                                        )
-                                        requireActivity().setResult(Activity.RESULT_OK, result)
-                                        requireActivity().finish()
                                     }
                                 }
                             },
@@ -131,7 +122,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 getStreamDecision(requireContext(), scene, forceTranscode, forceDirectPlay)
             updateDebugInfo(streamDecision, scene)
 
-            player?.also { exoPlayer ->
+            player!!.also { exoPlayer ->
                 if (scene.streams.isNotEmpty()) {
                     maybeSetupVideoEffects(exoPlayer)
                     exoPlayer.setMediaItem(

@@ -13,6 +13,7 @@ import com.github.damontecres.stashapp.MarkerDetailsFragment
 import com.github.damontecres.stashapp.PerformerFragment
 import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.SceneDetailsFragment
+import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.StashGridFragment
 import com.github.damontecres.stashapp.StashSearchFragment
 import com.github.damontecres.stashapp.StudioFragment
@@ -75,6 +76,8 @@ class NavigationManager(
 
                 is Destination.Filter -> StashGridFragment(destination.filterArgs, null, destination.scrollToNextPage)
 
+                is Destination.SearchFor -> SearchForFragment()
+
                 is Destination.Playback -> PlaybackSceneFragment()
                 is Destination.Playlist -> TODO()
             }
@@ -89,6 +92,10 @@ class NavigationManager(
             replace(android.R.id.content, fragment)
         }
         onBackPressedCallback.isEnabled = fragmentManager.backStackEntryCount > 0
+    }
+
+    fun goBack() {
+        onBackPressedCallback.handleOnBackPressed()
     }
 
     fun clearPinFragment() {

@@ -761,6 +761,13 @@ fun Intent.putDataType(dataType: DataType): Intent = this.putExtra("dataType", d
 
 fun Intent.getDataType(): DataType = DataType.valueOf(getStringExtra("dataType")!!)
 
+fun Bundle.putDataType(dataType: DataType): Bundle {
+    this.putString("dataType", dataType.name)
+    return this
+}
+
+fun Bundle.getDataType(): DataType = DataType.valueOf(getString("dataType")!!)
+
 @OptIn(ExperimentalSerializationApi::class)
 fun Intent.putFilterArgs(
     name: String,

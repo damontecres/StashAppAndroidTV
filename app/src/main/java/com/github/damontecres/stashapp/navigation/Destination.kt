@@ -1,8 +1,16 @@
 package com.github.damontecres.stashapp.navigation
 
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
+import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SlimPerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.SlimTagData
+import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashData
@@ -49,14 +57,26 @@ sealed interface Destination {
         val position: Int,
     ) : Destination
 
+    @Serializable
+    data class SearchFor(
+        val dataType: DataType,
+        val title: String?,
+    ) : Destination
+
     companion object {
         fun fromStashData(item: StashData): Item = Item(getDataType(item), item.id)
 
         fun getDataType(item: StashData): DataType =
             when (item) {
                 is SlimSceneData, is FullSceneData, is VideoSceneData -> DataType.SCENE
-                is PerformerData -> DataType.PERFORMER
-                else -> TODO()
+                is PerformerData, is SlimPerformerData -> DataType.PERFORMER
+                is TagData, is SlimTagData -> DataType.TAG
+                is GroupData -> DataType.GROUP
+                is ImageData -> DataType.IMAGE
+                is GalleryData -> DataType.GALLERY
+                is StudioData -> DataType.STUDIO
+                is MarkerData -> DataType.MARKER
+                else -> throw IllegalArgumentException("Class not mapped: ${item::class}")
             }
     }
 }

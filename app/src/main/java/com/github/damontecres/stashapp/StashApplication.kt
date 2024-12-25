@@ -16,7 +16,9 @@ import androidx.preference.PreferenceManager
 import androidx.room.Room
 import com.github.damontecres.stashapp.data.room.AppDatabase
 import com.github.damontecres.stashapp.util.AppUpgradeHandler
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.Version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -180,10 +182,13 @@ class StashApplication : Application() {
     companion object {
         private lateinit var application: StashApplication
         private lateinit var database: AppDatabase
+        var currentServer: StashServer? = null
 
         private val fontCache = mutableMapOf<Int, Typeface>()
 
         fun getApplication(): StashApplication = application
+
+        fun requireCurrentServer(): StashServer = currentServer ?: throw QueryEngine.StashNotConfiguredException()
 
         fun getFont(
             @FontRes fontId: Int,

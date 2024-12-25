@@ -134,7 +134,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
             DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, C>(filter)
         pagingSource =
             StashPagingSource(
-                QueryEngine(viewModel.requireServer()),
+                QueryEngine(serverViewModel.requireServer()),
                 dataSupplier,
             )
         addNextPageToPlaylist()

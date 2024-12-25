@@ -568,18 +568,19 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         StashAction.ADD_GROUP -> DataType.GROUP
                         StashAction.SET_STUDIO -> DataType.STUDIO
                         StashAction.CREATE_MARKER -> {
-                            intent.putExtra(
-                                SearchForFragment.TITLE_KEY,
-                                "for primary tag for scene marker",
-                            )
+//                            intent.putExtra(
+//                                SearchForFragment.TITLE_KEY,
+//                                "for primary tag for scene marker",
+//                            )
                             DataType.TAG
                         }
 
                         else -> throw RuntimeException("Unsupported search for type $action")
                     }
                 intent.putDataType(dataType)
-                intent.putExtra(SearchForFragment.ID_KEY, action.id)
+//                intent.putExtra(SearchForFragment.ID_KEY, action.id)
                 resultLauncher.launch(intent)
+                TODO()
             } else if (action == StashAction.FORCE_TRANSCODE) {
                 detailsPresenter.onActionClickedListener.onActionClicked(
                     Action(
@@ -636,8 +637,9 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private inner class ResultCallback : ActivityResultCallback<ActivityResult> {
         override fun onActivityResult(result: ActivityResult) {
             if (result.resultCode == Activity.RESULT_OK) {
-                val data: Intent? = result.data
-                val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
+                val data: Intent = result.data!!
+//                val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
+                val id = -1L
                 if (id in StashAction.SEARCH_FOR_ACTIONS.map { it.id }) {
                     pendingJob =
                         viewLifecycleOwner.lifecycleScope.launch(

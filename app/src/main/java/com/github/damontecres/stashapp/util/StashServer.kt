@@ -50,7 +50,7 @@ data class StashServer(
 
         fun requireCurrentServer(): StashServer = getCurrentStashServer() ?: throw QueryEngine.StashNotConfiguredException()
 
-        fun getCurrentStashServer(): StashServer? = getCurrentStashServer(StashApplication.getApplication())
+        fun getCurrentStashServer(): StashServer? = StashApplication.currentServer
 
         fun getCurrentStashServer(context: Context): StashServer? {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
@@ -74,6 +74,7 @@ data class StashServer(
             }
             StashClient.invalidate()
             StashExoPlayer.releasePlayer()
+            StashApplication.currentServer = server
         }
 
         fun removeStashServer(

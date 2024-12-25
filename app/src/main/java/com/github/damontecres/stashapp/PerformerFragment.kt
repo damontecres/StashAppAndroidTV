@@ -9,7 +9,7 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.view.View
 import android.widget.Toast
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.leanback.widget.ClassPresenterSelector
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -42,8 +42,7 @@ import com.github.damontecres.stashapp.views.models.PerformerViewModel
  * Main [TabbedFragment] for a performers which includes [PerformerDetailsFragment] and other tabs
  */
 class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
-    // TODO scope this better
-    private val viewModel: PerformerViewModel by activityViewModels<PerformerViewModel>()
+    private val viewModel: PerformerViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         viewModel.init(requireArguments().getDestination<Destination.Item>().id)
@@ -81,7 +80,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                     ),
                 )
 
-            val server = viewModel.requireServer()
+            val server = serverViewModel.requireServer()
             tabViewModel.tabs.value =
                 listOf(
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {

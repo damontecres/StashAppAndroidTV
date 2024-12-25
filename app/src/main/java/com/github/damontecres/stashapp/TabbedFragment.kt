@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.TabbedGridTitleView
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.models.TabbedGridViewModel
 import com.google.android.material.tabs.TabLayout
 
@@ -25,6 +26,7 @@ abstract class TabbedFragment(
     val tabKey: String,
 ) : Fragment(R.layout.tabbed_grid_view),
     DefaultKeyEventCallback {
+    protected val serverViewModel by activityViewModels<ServerViewModel>()
     protected val tabViewModel by activityViewModels<TabbedGridViewModel>()
 
     private lateinit var titleView: TabbedGridTitleView

@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.playback
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -13,10 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
 import androidx.core.os.bundleOf
@@ -26,6 +22,8 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.setFragmentResultListener
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -35,13 +33,13 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SearchForActivity
 import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.StashExoPlayer
-import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.ThrottledLiveData
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.StashClient
@@ -50,14 +48,16 @@ import com.github.damontecres.stashapp.util.StashPreviewLoader
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
+import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
+import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.models.PlaybackViewModel
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.rubensousa.previewseekbar.PreviewBar
 import com.github.rubensousa.previewseekbar.media3.PreviewTimeBar
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -73,8 +73,9 @@ import java.time.format.DateTimeParseException
 abstract class PlaybackFragment(
     @LayoutRes layoutId: Int = R.layout.video_playback,
 ) : Fragment(layoutId) {
-    protected val viewModel: PlaybackViewModel by activityViewModels()
-    protected val filterViewModel: VideoFilterViewModel by activityViewModels()
+    protected val serverViewModel: ServerViewModel by activityViewModels()
+    protected val viewModel: PlaybackViewModel by viewModels()
+    protected val filterViewModel: VideoFilterViewModel by viewModels()
 
     protected var trackActivityListener: TrackActivityPlaybackListener? = null
     protected val controllerVisibilityListener = ControllerVisibilityListenerList()
@@ -217,7 +218,7 @@ abstract class PlaybackFragment(
     }
 
     protected open fun updateUI(scene: Scene) {
-        val mutationEngine = MutationEngine(viewModel.requireServer())
+        val mutationEngine = MutationEngine(serverViewModel.requireServer())
         val showTitle =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
@@ -315,11 +316,35 @@ abstract class PlaybackFragment(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        resultLauncher =
-            registerForActivityResult(
-                ActivityResultContracts.StartActivityForResult(),
-                ResultCallback(),
-            )
+
+        setFragmentResultListener(SearchForFragment.REQUEST_KEY) { _, bundle ->
+            val itemId = bundle.getString(SearchForFragment.RESULT_ID_KEY)
+            val dataType = bundle.getDataType()
+
+            if (itemId != null && dataType == DataType.TAG) {
+                val videoPos = currentVideoPosition
+                playbackPosition = videoPos
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                    Log.d(
+                        PlaybackSceneFragment.TAG,
+                        "Adding marker at $videoPos with tagId=$itemId to scene ${currentScene!!.id}",
+                    )
+                    val newMarker =
+                        MutationEngine(serverViewModel.requireServer()).createMarker(
+                            currentScene!!.id,
+                            videoPos,
+                            itemId,
+                        )!!
+                    val dur = durationToString(newMarker.seconds)
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Created a new marker at $dur with primary tag '${newMarker.primary_tag.tagData.name}'",
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                }
+            }
+        }
     }
 
     @OptIn(UnstableApi::class)
@@ -458,14 +483,13 @@ abstract class PlaybackFragment(
                                 playbackPosition = exoPlayer.currentPosition
                                 wasPlayingBeforeResultLauncher = exoPlayer.isPlaying
                             }
-                            val intent = Intent(requireActivity(), SearchForActivity::class.java)
-                            intent.putExtra(
-                                SearchForFragment.TITLE_KEY,
-                                "for primary tag for scene marker",
+                            player?.pause()
+                            serverViewModel.navigationManager.navigate(
+                                Destination.SearchFor(
+                                    DataType.MARKER,
+                                    "for primary tag for scene marker",
+                                ),
                             )
-                            intent.putExtra("dataType", DataType.TAG.name)
-                            intent.putExtra(SearchForFragment.ID_KEY, StashAction.CREATE_MARKER.id)
-                            resultLauncher.launch(intent)
                         }
                     }
 
@@ -524,7 +548,7 @@ abstract class PlaybackFragment(
             // Usually even if not null, there may not be sprites and the server will return a 404
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 withContext(Dispatchers.IO) {
-                    val client = StashClient.getHttpClient(viewModel.requireServer())
+                    val client = StashClient.getHttpClient(serverViewModel.requireServer())
                     val request =
                         Request
                             .Builder()
@@ -571,7 +595,25 @@ abstract class PlaybackFragment(
     @OptIn(UnstableApi::class)
     override fun onPause() {
         super.onPause()
-        setFragmentResult("position", bundleOf("position" to currentVideoPosition))
+
+        val sceneDuration = viewModel.scene.value?.duration
+        val position = currentVideoPosition
+        val maxPlayPercent = 98 // Hard coded on the server
+        val positionToSave =
+            if (sceneDuration == null || (position.toMilliseconds / sceneDuration) * 100 < maxPlayPercent) {
+                position
+            } else {
+                Log.v(
+                    TAG,
+                    "Setting position to 0 since played percent (${(position.toMilliseconds / sceneDuration) * 100} >= $maxPlayPercent",
+                )
+                0L
+            }
+        setFragmentResult(
+            Constants.POSITION_REQUEST_KEY,
+            bundleOf(Constants.POSITION_REQUEST_KEY to positionToSave),
+        )
+
         if (Util.SDK_INT <= 23) {
             releasePlayer()
         }
@@ -628,53 +670,7 @@ abstract class PlaybackFragment(
         val isPlayList: Boolean,
     )
 
-    private inner class ResultCallback : ActivityResultCallback<ActivityResult> {
-        override fun onActivityResult(result: ActivityResult) {
-            if (result.resultCode == Activity.RESULT_OK) {
-                val data: Intent? = result.data
-                val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
-                if (id == StashAction.CREATE_MARKER.id) {
-                    val videoPos = currentVideoPosition
-                    playbackPosition = videoPos
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(PlaybackSceneFragment.TAG, "Exception creating marker", ex)
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Failed to create marker: ${ex.message}",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                        },
-                    ) {
-                        val tagId =
-                            data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
-                        Log.d(
-                            PlaybackSceneFragment.TAG,
-                            "Adding marker at $videoPos with tagId=$tagId to scene ${currentScene!!.id}",
-                        )
-                        val newMarker =
-                            MutationEngine(viewModel.requireServer()).createMarker(
-                                currentScene!!.id,
-                                videoPos,
-                                tagId,
-                            )!!
-                        val dur = durationToString(newMarker.seconds)
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Created a new marker at $dur with primary tag '${newMarker.primary_tag.tagData.name}'",
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                    }
-                }
-            }
-        }
-    }
-
     companion object {
         private const val TAG = "PlaybackFragment"
-
-        const val POSITION_REQUEST_KEY = "$TAG.position"
     }
 }

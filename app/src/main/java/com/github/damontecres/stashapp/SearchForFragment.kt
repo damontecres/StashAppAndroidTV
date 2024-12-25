@@ -1,11 +1,12 @@
 package com.github.damontecres.stashapp
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
+import androidx.core.os.bundleOf
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResult
 import androidx.leanback.app.SearchSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.HeaderItem
@@ -31,6 +32,7 @@ import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.ActionPresenter.Companion.CARD_HEIGHT
 import com.github.damontecres.stashapp.presenters.ActionPresenter.Companion.CARD_WIDTH
 import com.github.damontecres.stashapp.presenters.StashImageCardView
@@ -40,9 +42,11 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.SingleItemObjectAdapter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.getDataType
+import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -60,6 +64,8 @@ import kotlin.properties.Delegates
 class SearchForFragment :
     SearchSupportFragment(),
     SearchSupportFragment.SearchResultProvider {
+    private val serverViewModel by activityViewModels<ServerViewModel>()
+
     private var taskJob: Job? = null
     private var query: String? = null
 
@@ -84,13 +90,13 @@ class SearchForFragment :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        dataType = requireActivity().intent.getDataType()
+        val searchFor = requireArguments().getDestination<Destination.SearchFor>()
+        dataType = searchFor.dataType
         perPage =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 25)
-        title =
-            requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
+        title = searchFor.title ?: getString(dataType.pluralStringId)
 
         searchResultsAdapter.presenterSelector = StashPresenter.defaultClassPresenterSelector()
         adapter.set(
@@ -151,8 +157,7 @@ class SearchForFragment :
 
     private fun returnId(item: StashData?) {
         if (item != null) {
-            val result = Intent()
-            val currentServer = StashServer.getCurrentStashServer(requireContext())
+            val currentServer = serverViewModel.currentServer.value
             if (dataType in DATA_TYPE_SUGGESTIONS && currentServer != null) {
                 viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                     StashApplication
@@ -161,10 +166,12 @@ class SearchForFragment :
                         .insert(RecentSearchItem(currentServer.url, item.id, dataType))
                 }
             }
-            result.putExtra(RESULT_ID_KEY, item.id)
-            result.putExtra(ID_KEY, requireActivity().intent.getLongExtra("id", -1))
-            requireActivity().setResult(Activity.RESULT_OK, result)
-            requireActivity().finish()
+            setFragmentResult(
+                REQUEST_KEY,
+                bundleOf(
+                    RESULT_ID_KEY to item.id,
+                ).putDataType(dataType),
+            )
         }
     }
 
@@ -374,8 +381,8 @@ class SearchForFragment :
         const val TAG = "SearchForFragment"
 
         const val ID_KEY = "id"
-        const val RESULT_ID_KEY = "resultId"
-        const val TITLE_KEY = "title"
+        const val REQUEST_KEY = TAG
+        const val RESULT_ID_KEY = "$TAG.resultId"
 
         private const val RESULTS_POS = 0
         private const val SUGGESTIONS_POS = RESULTS_POS + 1
