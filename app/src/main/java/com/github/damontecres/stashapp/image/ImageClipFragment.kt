@@ -3,7 +3,7 @@ package com.github.damontecres.stashapp.image
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.OptIn
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -25,7 +25,7 @@ import com.github.damontecres.stashapp.views.models.ImageViewModel
 class ImageClipFragment :
     PlaybackFragment(),
     VideoController {
-    private val imageViewModel: ImageViewModel by activityViewModels<ImageViewModel>()
+    private val imageViewModel: ImageViewModel by viewModels(ownerProducer = { requireParentFragment() })
 
     override val previewsEnabled: Boolean
         get() = false

@@ -46,6 +46,13 @@ sealed interface Destination {
     ) : Destination
 
     @Serializable
+    data class Slideshow(
+        val filterArgs: FilterArgs,
+        val position: Int,
+        val automatic: Boolean,
+    ) : Destination
+
+    @Serializable
     data class Filter(
         val filterArgs: FilterArgs,
         val scrollToNextPage: Boolean,

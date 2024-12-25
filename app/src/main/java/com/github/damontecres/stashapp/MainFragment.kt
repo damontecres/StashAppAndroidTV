@@ -18,7 +18,6 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -36,9 +35,7 @@ import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.testStashConnection
-import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.MainTitleView
-import com.github.damontecres.stashapp.views.OnImageFilterClickedListener
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -213,22 +210,15 @@ class MainFragment :
         }
 
         onItemViewClickedListener =
-            ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(viewModel.navigationManager))
-                .addListenerForClass(
-                    ImageData::class.java,
-                    OnImageFilterClickedListener(requireContext()) { image: ImageData ->
-                        TODO()
-                        val position = getCurrentPosition()
-                        if (position != null) {
-                            val filter = filterList[position.row]
-                            return@OnImageFilterClickedListener OnImageFilterClickedListener.FilterPosition(
-                                filter,
-                                position.column,
-                            )
-                        }
-                        null
-                    },
-                )
+            NavigationOnItemViewClickedListener(viewModel.navigationManager) {
+                val position = getCurrentPosition()
+                if (position != null) {
+                    val filter = filterList[position.row]
+                    NavigationOnItemViewClickedListener.FilterAndPosition(filter, position.column)
+                } else {
+                    null
+                }
+            }
     }
 
     private fun clearData() {

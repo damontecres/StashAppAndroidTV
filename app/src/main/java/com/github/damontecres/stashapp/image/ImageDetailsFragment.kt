@@ -14,8 +14,8 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
+import androidx.fragment.app.viewModels
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
@@ -81,7 +81,7 @@ import kotlinx.coroutines.launch
  * An overlay for details about an image
  */
 class ImageDetailsFragment : DetailsSupportFragment() {
-    private val viewModel: ImageViewModel by activityViewModels<ImageViewModel>()
+    private val viewModel: ImageViewModel by viewModels(ownerProducer = { requireParentFragment() })
 
     private lateinit var queryEngine: QueryEngine
     private lateinit var mutationEngine: MutationEngine

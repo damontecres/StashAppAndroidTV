@@ -22,7 +22,7 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.image.ImageClipFragment
 import com.github.damontecres.stashapp.image.ImageDetailsFragment
-import com.github.damontecres.stashapp.image.ImageFragment
+import com.github.damontecres.stashapp.image.ImageViewFragment
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.ImageDataSupplier
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -47,7 +47,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
 
     private var canScrollImages = false
 
-    private val imageFragment = ImageFragment()
+    private val imageViewFragment = ImageViewFragment()
     private val imageClipFragment = ImageClipFragment()
     private val imageDetailsFragment = ImageDetailsFragment()
 
@@ -85,7 +85,7 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
         }
 
         supportFragmentManager.commit {
-            listOf(imageFragment, imageClipFragment, imageDetailsFragment).forEach {
+            listOf(imageViewFragment, imageClipFragment, imageDetailsFragment).forEach {
                 add(android.R.id.content, it, it::class.java.simpleName)
                 hide(it)
             }
@@ -95,11 +95,11 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
             supportFragmentManager.commit {
                 setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
                 if (newImage.isImageClip) {
-                    hide(imageFragment)
+                    hide(imageViewFragment)
                     show(imageClipFragment)
                 } else {
                     hide(imageClipFragment)
-                    show(imageFragment)
+                    show(imageViewFragment)
                 }
                 hide(overlayFragment)
             }
@@ -176,17 +176,17 @@ class ImageActivity : FragmentActivity(R.layout.activity_image) {
                         hide(overlayFragment)
                     }
                     return true
-                } else if (imageFragment.isImageZoomedIn()) {
-                    imageFragment.resetZoom()
+                } else if (imageViewFragment.isImageZoomedIn()) {
+                    imageViewFragment.resetZoom()
                     return true
                 }
             } else if (isDpadKey(event.keyCode)) {
                 if ((event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER) && !overlayIsVisible) {
                     showOverlay()
                     return true
-                } else if (!overlayIsVisible && imageFragment.isImageZoomedIn()) {
-                    return imageFragment.dispatchKeyEvent(event)
-                } else if (!overlayIsVisible && !imageFragment.isImageZoomedIn()) {
+                } else if (!overlayIsVisible && imageViewFragment.isImageZoomedIn()) {
+                    return imageViewFragment.dispatchKeyEvent(event)
+                } else if (!overlayIsVisible && !imageViewFragment.isImageZoomedIn()) {
                     // Overlay is not showing and the image is not zoomed in
                     // So maybe move to another image if left or right
                     if (isLeft(event.keyCode)) {

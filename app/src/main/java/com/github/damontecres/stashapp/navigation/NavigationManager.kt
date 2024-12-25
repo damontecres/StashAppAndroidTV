@@ -19,6 +19,7 @@ import com.github.damontecres.stashapp.StashSearchFragment
 import com.github.damontecres.stashapp.StudioFragment
 import com.github.damontecres.stashapp.TagFragment
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.image.ImageFragment
 import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.putDestination
@@ -70,9 +71,11 @@ class NavigationManager(
                         DataType.STUDIO -> StudioFragment()
                         DataType.GALLERY -> GalleryFragment()
                         DataType.MARKER -> MarkerDetailsFragment()
-                        DataType.IMAGE -> TODO()
+                        DataType.IMAGE -> throw IllegalArgumentException("Image not supported here")
                     }
                 }
+
+                is Destination.Slideshow -> ImageFragment()
 
                 is Destination.Filter -> FilterFragment()
 
