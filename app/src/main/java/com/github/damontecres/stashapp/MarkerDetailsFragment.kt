@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -9,12 +8,10 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
@@ -38,6 +35,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
@@ -50,11 +48,12 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.convertDpToPixel
+import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
+import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
@@ -137,11 +136,13 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         object : StashActionClickedListener {
             override fun onClicked(action: StashAction) {
                 if (action == StashAction.ADD_TAG) {
-                    val intent = Intent(requireActivity(), SearchForActivity::class.java)
-                    val dataType = DataType.TAG
-                    intent.putExtra("dataType", dataType.name)
-                    intent.putExtra(SearchForFragment.ID_KEY, action.id)
-                    resultLauncher.launch(intent)
+                    serverViewModel.navigationManager.navigate(
+                        Destination.SearchFor(
+                            MarkerDetailsFragment::class.simpleName!!,
+                            StashAction.ADD_TAG.id,
+                            DataType.TAG,
+                        ),
+                    )
                 } else if (action == StashAction.SHIFT_MARKERS) {
                     requireActivity()
                         .supportFragmentManager
@@ -166,11 +167,51 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         queryEngine = QueryEngine(server)
         mutationEngine = MutationEngine(server)
 
-        resultLauncher =
-            registerForActivityResult(
-                ActivityResultContracts.StartActivityForResult(),
-                ResultCallback(),
-            )
+        setFragmentResultListener(MarkerDetailsFragment::class.simpleName!!) { _, bundle ->
+            val sourceId = bundle.getLong(SearchForFragment.RESULT_ID_KEY)
+            val dataType = bundle.getDataType()
+            val newId = bundle.getString(SearchForFragment.RESULT_ITEM_ID_KEY)
+            Log.v(TAG, "Adding $dataType: $newId")
+            if (newId != null) {
+                viewLifecycleOwner.lifecycleScope.launch(
+                    StashCoroutineExceptionHandler { ex ->
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to update: ${ex.message}",
+                            Toast.LENGTH_LONG,
+                        )
+                    },
+                ) {
+                    when (sourceId) {
+                        REPLACE_PRIMARY_ID -> {
+                            val newPrimaryTag = primaryTagRowManager.add(newId)
+                            if (newPrimaryTag != null) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Changed primary tag to '${newPrimaryTag.name}'",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                            }
+                        }
+
+                        StashAction.ADD_TAG.id -> {
+                            val newTagData = tagsRowManager.add(newId)
+                            if (newTagData != null) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Added tag '${newTagData.name}' to marker",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                            }
+                        }
+
+                        else -> throw IllegalArgumentException("Unknown action id $sourceId")
+                    }
+                }
+            }
+        }
     }
 
     override fun onViewCreated(
@@ -179,6 +220,12 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
         adapter = mAdapter
+
+        onItemViewClickedListener =
+            ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
+                .addListenerForClass(StashAction::class.java) { item ->
+                    actionClickListener.onClicked(item)
+                }
 
         viewModel.item.observe(viewLifecycleOwner) { marker ->
             if (marker == null) {
@@ -223,9 +270,6 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                         ),
                     )
                 }
-
-            onItemViewClickedListener =
-                StashItemViewClickListener(requireContext(), actionClickListener)
 
             sceneActionsAdapter.set(1, StashAction.ADD_TAG)
             sceneActionsAdapter.set(2, StashAction.SHIFT_MARKERS)
@@ -334,54 +378,6 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private inner class ResultCallback : ActivityResultCallback<ActivityResult> {
-        override fun onActivityResult(result: ActivityResult) {
-            if (result.resultCode == Activity.RESULT_OK) {
-                val data: Intent? = result.data
-                val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
-                val newTagId = data.getStringExtra(SearchForFragment.RESULT_ITEM_ID_KEY)
-                if (newTagId != null) {
-                    pendingJob =
-                        viewLifecycleOwner.lifecycleScope.launch(
-                            StashCoroutineExceptionHandler { ex ->
-                                Toast.makeText(
-                                    requireContext(),
-                                    "Failed to update: ${ex.message}",
-                                    Toast.LENGTH_LONG,
-                                )
-                            },
-                        ) {
-                            when (id) {
-                                REPLACE_PRIMARY_ID -> {
-                                    val newPrimaryTag = primaryTagRowManager.add(newTagId)
-                                    if (newPrimaryTag != null) {
-                                        Toast
-                                            .makeText(
-                                                requireContext(),
-                                                "Changed primary tag to '${newPrimaryTag.name}'",
-                                                Toast.LENGTH_LONG,
-                                            ).show()
-                                    }
-                                }
-
-                                StashAction.ADD_TAG.id -> {
-                                    val newTagData = tagsRowManager.add(newTagId)
-                                    if (newTagData != null) {
-                                        Toast
-                                            .makeText(
-                                                requireContext(),
-                                                "Added tag '${newTagData.name}' to marker",
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                    }
-                                }
-                            }
-                        }
-                }
-            }
-        }
-    }
-
     private inner class PrimaryTagLongClickListener : TagPresenter.DefaultTagLongClickCallBack() {
         override fun getPopUpItems(
             context: Context,
@@ -402,11 +398,13 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             when (popUpItem.id) {
                 REPLACE_PRIMARY_ID -> {
                     // Replace
-                    val intent = Intent(requireActivity(), SearchForActivity::class.java)
-                    val dataType = DataType.TAG
-                    intent.putExtra("dataType", dataType.name)
-                    intent.putExtra(SearchForFragment.ID_KEY, REPLACE_PRIMARY_ID)
-                    resultLauncher.launch(intent)
+                    serverViewModel.navigationManager.navigate(
+                        Destination.SearchFor(
+                            MarkerDetailsFragment::class.simpleName!!,
+                            REPLACE_PRIMARY_ID,
+                            DataType.TAG,
+                        ),
+                    )
                 }
 
                 else -> {

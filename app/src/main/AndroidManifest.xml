@@ -61,10 +61,6 @@
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
         <activity
-            android:name=".SearchForActivity"
-            android:exported="false"
-            android:theme="@style/NoTitleTheme" />
-        <activity
             android:name=".DebugActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />
