@@ -46,6 +46,7 @@ class RootActivity :
         serverViewModel.refresh()
         navigationManager = NavigationManager(this)
         navigationManager.addListener(this)
+        StashApplication.navigationManager = navigationManager
 
         serverViewModel.navigationManager = navigationManager
 

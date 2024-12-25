@@ -92,6 +92,8 @@ class NavigationManager(
                     }
                 }
 
+                is Destination.MarkerDetails -> MarkerDetailsFragment()
+
                 is Destination.Slideshow -> ImageFragment()
 
                 is Destination.Filter -> FilterFragment()

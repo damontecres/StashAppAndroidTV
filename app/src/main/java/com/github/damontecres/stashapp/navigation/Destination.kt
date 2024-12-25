@@ -39,6 +39,12 @@ sealed interface Destination {
     ) : Destination
 
     @Serializable
+    data class MarkerDetails(
+        val id: String,
+        val sceneId: String,
+    ) : Destination
+
+    @Serializable
     data class Playback(
         val sceneId: String,
         val position: Long,

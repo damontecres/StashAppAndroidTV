@@ -33,17 +33,16 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.data.OCounter
-import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.playback.PlaybackActivity
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
-import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -51,7 +50,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.convertDpToPixel
-import com.github.damontecres.stashapp.util.getParcelable
+import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
@@ -59,6 +58,7 @@ import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -77,6 +77,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
 
     private var pendingJob: Job? = null
 
+    private val serverViewModel by activityViewModels<ServerViewModel>()
     private val viewModel by activityViewModels<MarkerDetailsViewModel>()
 
     private val mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
@@ -94,10 +95,15 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             ArrayObjectAdapter(TagPresenter(PrimaryTagLongClickListener())),
         ) { tagIds ->
             // Kind of hacky
-            val marker = viewModel.marker.value!!
-            val result = mutationEngine.setTagsOnMarker(marker.id, tagIds[1], marker.tagIds)
-            viewModel.setMarker(marker.copy(primaryTagId = tagIds[1]))
-            listOfNotNull(result?.primary_tag?.tagData)
+            val marker = viewModel.item.value!!
+            val result =
+                mutationEngine.setTagsOnMarker(
+                    marker.id,
+                    tagIds[1],
+                    marker.tags.map { it.tagData.id },
+                )
+            viewModel.setMarker(result!!)
+            listOfNotNull(result.primary_tag.tagData)
         }
 
     private val tagsRowManager =
@@ -106,10 +112,11 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             ListRowManager.SparseArrayRowModifier(mAdapter, TAG_POS),
             ArrayObjectAdapter(TagPresenter(TagLongClickListener())),
         ) { tagIds ->
-            val marker = viewModel.marker.value!!
-            val result = mutationEngine.setTagsOnMarker(marker.id, marker.primaryTagId, tagIds)
-            viewModel.setMarker(marker.copy(tagIds = tagIds))
-            result?.tags?.map { it.tagData }.orEmpty()
+            val marker = viewModel.item.value!!
+            val result =
+                mutationEngine.setTagsOnMarker(marker.id, marker.primary_tag.tagData.id, tagIds)
+            viewModel.setMarker(result!!)
+            result.tags.map { it.tagData }
         }
 
     private val sceneActionsAdapter =
@@ -151,8 +158,8 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val marker = requireActivity().intent.getParcelable("marker", Marker::class)!!
-        viewModel.setMarker(marker)
+        val markerDetailsDest = requireArguments().getDestination<Destination.MarkerDetails>()
+        viewModel.init(markerDetailsDest.id, markerDetailsDest.sceneId)
 
         primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
         val server = StashServer.requireCurrentServer()
@@ -164,26 +171,6 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                 ActivityResultContracts.StartActivityForResult(),
                 ResultCallback(),
             )
-
-        detailsPresenter =
-            FullWidthDetailsOverviewRowPresenter(
-                object : AbstractDetailsDescriptionPresenter() {
-                    override fun onBindDescription(
-                        vh: ViewHolder,
-                        item: Any,
-                    ) {
-                        val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
-                        ratingBar.visibility = View.GONE
-
-                        vh.title.text =
-                            if (marker.title.isNotNullOrBlank()) {
-                                marker.title
-                            } else {
-                                marker.primaryTagName
-                            }
-                    }
-                },
-            )
     }
 
     override fun onViewCreated(
@@ -192,48 +179,66 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
         adapter = mAdapter
-        val marker = viewModel.marker.value!!
-        initializeBackground(marker)
-        setupDetailsOverviewRowPresenter()
-        setupDetailsOverviewRow(marker)
 
-        onItemViewClickedListener =
-            StashItemViewClickListener(requireContext(), actionClickListener)
+        viewModel.item.observe(viewLifecycleOwner) { marker ->
+            if (marker == null) {
+                TODO()
+                return@observe
+            }
+            val sceneData = viewModel.scene.value!!
 
-        sceneActionsAdapter.set(1, StashAction.ADD_TAG)
-        sceneActionsAdapter.set(2, StashAction.SHIFT_MARKERS)
+            detailsPresenter =
+                FullWidthDetailsOverviewRowPresenter(
+                    object : AbstractDetailsDescriptionPresenter() {
+                        override fun onBindDescription(
+                            vh: ViewHolder,
+                            item: Any,
+                        ) {
+                            val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
+                            ratingBar.visibility = View.GONE
 
-        if (readOnlyModeDisabled()) {
-            mAdapter.set(
-                ACTIONS_POS,
-                ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
-            )
-        }
+                            vh.title.text =
+                                if (marker.title.isNotNullOrBlank()) {
+                                    marker.title
+                                } else {
+                                    marker.primary_tag.tagData.name
+                                }
+                        }
+                    },
+                )
+            initializeBackground(marker.screenshot)
+            setupDetailsOverviewRowPresenter()
+            setupDetailsOverviewRow(marker)
 
-        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            pendingJob?.join()
-            pendingJob = null
-            val marker = viewModel.marker.value!!
-            val sceneData = queryEngine.getScene(marker.sceneId)!!
-            val markerData = sceneData.scene_markers.first { it.id == marker.id }
-
-            primaryTagRowManager.setItems(listOf(markerData.primary_tag.tagData))
-            tagsRowManager.setItems(markerData.tags.map { it.tagData })
+            primaryTagRowManager.setItems(listOf(marker.primary_tag.tagData))
+            tagsRowManager.setItems(marker.tags.map { it.tagData })
 
             detailsPresenter.onActionClickedListener =
                 OnActionClickedListener { _ ->
-                    val intent = Intent(requireActivity(), PlaybackActivity::class.java)
-                    intent.putExtra(
-                        Constants.SCENE_ARG,
-                        Scene.fromFullSceneData(sceneData),
+                    serverViewModel.navigationManager.navigate(
+                        Destination.Playback(
+                            sceneData.id,
+                            (viewModel.seconds.value!! * 1000).toLong(),
+                            PlaybackMode.CHOOSE,
+                        ),
                     )
-                    intent.putExtra(
-                        Constants.POSITION_ARG,
-                        (viewModel.seconds.value!! * 1000).toLong(),
-                    )
-
-                    requireContext().startActivity(intent)
                 }
+
+            onItemViewClickedListener =
+                StashItemViewClickListener(requireContext(), actionClickListener)
+
+            sceneActionsAdapter.set(1, StashAction.ADD_TAG)
+            sceneActionsAdapter.set(2, StashAction.SHIFT_MARKERS)
+
+            if (readOnlyModeDisabled()) {
+                mAdapter.set(
+                    ACTIONS_POS,
+                    ListRow(
+                        HeaderItem(getString(R.string.stashapp_actions_name)),
+                        sceneActionsAdapter,
+                    ),
+                )
+            }
         }
     }
 
@@ -245,7 +250,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
     }
 
-    private fun setupDetailsOverviewRow(marker: Marker) {
+    private fun setupDetailsOverviewRow(marker: FullSceneData.Scene_marker) {
         val row = DetailsOverviewRow(marker)
 
         val screenshotUrl = marker.screenshot
@@ -301,11 +306,9 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         mAdapter.set(1, row)
     }
 
-    private fun initializeBackground(marker: Marker) {
+    private fun initializeBackground(screenshotUrl: String?) {
         if (mDetailsBackground.coverBitmap == null) {
             mDetailsBackground.enableParallax()
-
-            val screenshotUrl = marker.screenshot
 
             if (screenshotUrl.isNotNullOrBlank()) {
                 StashGlide
