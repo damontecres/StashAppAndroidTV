@@ -245,9 +245,6 @@ class FilterFragment :
     ) {
         val scrollToNextPage = requireArguments().getDestination<Destination.Filter>().scrollToNextPage
         val fragment = StashGridFragment(filter, null, scrollToNextPage)
-        if (filter.dataType == DataType.IMAGE) {
-            fragment.withImageGridClickListener()
-        }
         fragment.name = filter.name
         fragment.disableButtons()
         fragment.requestFocus = true

@@ -62,7 +62,6 @@ import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.ImageAndFilter
-import com.github.damontecres.stashapp.views.ImageGridClickedListener
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SlideshowOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
@@ -405,7 +404,12 @@ class StashGridFragment() :
 
         mGridPresenter.onItemViewClickedListener =
             onItemViewClickedListener
-                ?: NavigationOnItemViewClickedListener(serverViewModel.navigationManager)
+                ?: NavigationOnItemViewClickedListener(serverViewModel.navigationManager) {
+                    NavigationOnItemViewClickedListener.FilterAndPosition(
+                        filterArgs,
+                        currentSelectedPosition,
+                    )
+                }
 
         if (savedInstanceState == null) {
             Log.v(TAG, "onViewCreated first time")
@@ -708,21 +712,6 @@ class StashGridFragment() :
         } else {
             titleView?.animateToInvisible(View.GONE)
         }
-    }
-
-    /**
-     * Use a [ImageGridClickedListener] for the [onItemViewClickedListener] which will supply the [ImageActivity] with the filter info to scroll images
-     *
-     * The [dataType] must be [DataType.IMAGE] or an exception will be thrown
-     *
-     * @return this for chaining
-     */
-    fun withImageGridClickListener(): StashGridFragment {
-        if (dataType != DataType.IMAGE) {
-            throw IllegalStateException("Cannot setup ${ImageGridClickedListener::class.java.simpleName} for dataType=$dataType")
-        }
-        onItemViewClickedListener = ImageGridClickedListener(this)
-        return this
     }
 
     /**

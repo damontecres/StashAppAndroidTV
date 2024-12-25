@@ -77,7 +77,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                             server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_IMAGES).findFilter,
                         ) { tags ->
                             ImageFilterType(tags = tags)
-                        }.withImageGridClickListener()
+                        }
                     },
                     PagerEntry(DataType.MARKER) {
                         createStashGridFragment(

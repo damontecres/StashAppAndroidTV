@@ -105,7 +105,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                             dataType = DataType.IMAGE,
                             findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_IMAGES).findFilter,
                             objectFilter = ImageFilterType(performers = performers),
-                        ).withImageGridClickListener()
+                        )
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.GROUP) {
                         StashGridFragment(

@@ -77,7 +77,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                             server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_IMAGES).findFilter,
                         ) { studios ->
                             ImageFilterType(studios = studios)
-                        }.withImageGridClickListener()
+                        }
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER) {
                         createStashGridFragment(

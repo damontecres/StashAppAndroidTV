@@ -237,9 +237,6 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
     ) {
         val scrollToNextPage = first && intent.getBooleanExtra(INTENT_SCROLL_NEXT_PAGE, false)
         val fragment = StashGridFragment(filter, null, scrollToNextPage)
-        if (filter.dataType == DataType.IMAGE) {
-            fragment.withImageGridClickListener()
-        }
         fragment.name = filter.name
         fragment.disableButtons()
         fragment.requestFocus = true

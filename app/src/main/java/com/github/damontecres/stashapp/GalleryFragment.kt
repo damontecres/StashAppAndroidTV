@@ -65,7 +65,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                                         PageFilterKey.GALLERY_IMAGES,
                                     ).findFilter,
                             objectFilter = ImageFilterType(galleries = galleries),
-                        ).withImageGridClickListener()
+                        )
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
                         StashGridFragment(
