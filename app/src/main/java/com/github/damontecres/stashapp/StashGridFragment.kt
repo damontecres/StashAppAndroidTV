@@ -118,7 +118,7 @@ class StashGridFragment() :
     /**
      * Request that the grid receive focus in [onStart]
      */
-    var requestFocus: Boolean = false
+    var requestFocus: Boolean = true
 
     /**
      * An optional name for this fragment, not used in this View

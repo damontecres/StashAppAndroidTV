@@ -27,6 +27,7 @@ abstract class TabbedFragment(
     val tabKey: String,
 ) : Fragment(R.layout.tabbed_grid_view),
     DefaultKeyEventCallback {
+    private lateinit var viewPager: LeanbackViewPager
     protected val serverViewModel by activityViewModels<ServerViewModel>()
     protected val tabViewModel by viewModels<TabbedGridViewModel>()
 
@@ -37,11 +38,8 @@ abstract class TabbedFragment(
 
     private val fragments = mutableMapOf<Int, Fragment>()
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-    ) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
         val rememberTab =
@@ -49,22 +47,9 @@ abstract class TabbedFragment(
         val rememberTabKey = getString(R.string.pref_key_ui_remember_tab) + ".$tabKey"
         val rememberedTabIndex = if (rememberTab) preferences.getInt(rememberTabKey, 0) else 0
 
-        titleView = view.findViewById(R.id.browse_title_group)
-        val gridTitle = view.findViewById<TextView>(R.id.grid_title)
-        tabViewModel.title.observe(viewLifecycleOwner) {
-            gridTitle.text = it
-        }
-        val title = getTitleText()
-        if (title.isNotNullOrBlank()) {
-            tabViewModel.title.value = getTitleText()
-        }
+        var firstTime = true
 
-        val viewPager = view.findViewById<LeanbackViewPager>(R.id.view_pager)
-        tabLayout = view.findViewById(R.id.tab_layout)
-
-        tabViewModel.refreshServer()
-
-        tabViewModel.tabs.observe(viewLifecycleOwner) { pages ->
+        tabViewModel.tabs.observe(this) { pages ->
             adapter = StashFragmentPagerAdapter(pages, childFragmentManager)
             adapter.fragmentCreatedListener = { fragment, position ->
                 if (fragment is StashGridFragment) {
@@ -73,8 +58,7 @@ abstract class TabbedFragment(
                 fragments[position] = fragment
             }
             viewPager.adapter = adapter
-            tabLayout.setupWithViewPager(viewPager)
-            if (savedInstanceState == null && tabLayout.childCount > 0) {
+            if (savedInstanceState == null && tabLayout.childCount > 0 && firstTime) {
                 tabLayout.getChildAt(0).requestFocus()
             }
 
@@ -104,14 +88,37 @@ abstract class TabbedFragment(
                 },
             )
 
-            if (rememberTab) {
+            if (firstTime && rememberTab) {
                 val tabIndex =
                     if (rememberedTabIndex < tabLayout.tabCount) rememberedTabIndex else 0
                 val tab = tabLayout.getTabAt(tabIndex)
                 tabLayout.selectTab(tab, true)
                 tab?.view?.requestFocus()
             }
+            firstTime = false
         }
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        Log.v(TAG, "savedInstanceState is null? ${savedInstanceState == null}")
+
+        titleView = view.findViewById(R.id.browse_title_group)
+        val gridTitle = view.findViewById<TextView>(R.id.grid_title)
+        tabViewModel.title.observe(viewLifecycleOwner) {
+            gridTitle.text = it
+        }
+        val title = getTitleText()
+        if (title.isNotNullOrBlank()) {
+            tabViewModel.title.value = getTitleText()
+        }
+
+        viewPager = view.findViewById(R.id.view_pager)
+        tabLayout = view.findViewById(R.id.tab_layout)
+        tabLayout.setupWithViewPager(viewPager)
     }
 
     open fun getTitleText(): String? = null
