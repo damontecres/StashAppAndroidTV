@@ -3,11 +3,13 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.views.models.TagViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 
@@ -15,6 +17,8 @@ import kotlinx.coroutines.launch
  * Details for a tag
  */
 class TagDetailsFragment : DetailsFragment() {
+    private val viewModel: TagViewModel by viewModels(ownerProducer = { requireParentFragment() })
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -23,22 +27,12 @@ class TagDetailsFragment : DetailsFragment() {
         // Tags do not have a rating
         ratingBar.visibility = View.GONE
 
-        val tagId = requireActivity().intent.getStringExtra("tagId")
-        if (tagId != null) {
-            val exceptionHandler = StashCoroutineExceptionHandler(autoToast = true)
-            viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                val tag = queryEngine.getTags(listOf(tagId)).firstOrNull()
-                if (tag == null) {
-                    Toast
-                        .makeText(
-                            requireContext(),
-                            "Tag not found: $tagId",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    return@launch
-                } else {
-                    updateUi(tag)
-                }
+        viewModel.item.observe(viewLifecycleOwner) { tag ->
+            if (tag == null) {
+                TODO()
+                return@observe
+            } else {
+                updateUi(tag)
             }
         }
     }

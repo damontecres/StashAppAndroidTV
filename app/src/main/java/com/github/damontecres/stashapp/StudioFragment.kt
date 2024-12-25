@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.view.View
+import androidx.fragment.app.viewModels
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -21,16 +22,17 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getUiTabs
+import com.github.damontecres.stashapp.views.models.StudioViewModel
 
 class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
-    private lateinit var studioId: String
+    private val viewModel: StudioViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        studioId = requireActivity().intent.getStringExtra("studioId")!!
+        viewModel.init(requireArguments())
     }
 
-    override fun getTitleText(): String? = requireActivity().intent.getStringExtra("studioName")
+    override fun getTitleText(): String? = null
 
     override fun onViewCreated(
         view: View,
@@ -38,8 +40,13 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val studioId = requireActivity().intent.getStringExtra("studioId")!!
-        tabViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+        viewModel.item.observe(viewLifecycleOwner) { studio ->
+            if (studio == null) {
+                TODO()
+                return@observe
+            }
+            tabViewModel.title.value = studio.name
+            val server = serverViewModel.requireServer()
             tabViewModel.tabs.value =
                 listOf(
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
@@ -47,6 +54,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
                         createStashGridFragment(
+                            studio.id,
                             DataType.SCENE,
                             server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_SCENES).findFilter,
                         ) { studios ->
@@ -55,6 +63,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY) {
                         createStashGridFragment(
+                            studio.id,
                             DataType.GALLERY,
                             server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_GALLERIES).findFilter,
                         ) { studios ->
@@ -63,6 +72,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
                         createStashGridFragment(
+                            studio.id,
                             DataType.IMAGE,
                             server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_IMAGES).findFilter,
                         ) { studios ->
@@ -71,6 +81,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER) {
                         createStashGridFragment(
+                            studio.id,
                             DataType.PERFORMER,
                             server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_PERFORMERS).findFilter,
                         ) { studios ->
@@ -79,6 +90,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.GROUP) {
                         createStashGridFragment(
+                            studio.id,
                             DataType.GROUP,
                             server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_GROUPS).findFilter,
                         ) { studios ->
@@ -89,7 +101,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                         StashGridFragment(
                             FilterArgs(
                                 DataType.TAG,
-                                override = DataSupplierOverride.StudioTags(studioId),
+                                override = DataSupplierOverride.StudioTags(studio.id),
                             ),
                         )
                     },
@@ -102,7 +114,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                                     parents =
                                         Optional.present(
                                             MultiCriterionInput(
-                                                value = Optional.present(listOf(studioId)),
+                                                value = Optional.present(listOf(studio.id)),
                                                 modifier = CriterionModifier.INCLUDES,
                                             ),
                                         ),
@@ -110,7 +122,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                         )
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
-                        createStashGridFragment(DataType.MARKER, null) { studios ->
+                        createStashGridFragment(studio.id, DataType.MARKER, null) { studios ->
                             SceneMarkerFilterType(
                                 scene_filter =
                                     Optional.present(
@@ -124,6 +136,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
     }
 
     private fun createStashGridFragment(
+        studioId: String,
         dataType: DataType,
         defaultFindFilter: StashFindFilter?,
         createObjectFilter: (Optional<HierarchicalMultiCriterionInput>) -> StashDataFilter,
@@ -132,7 +145,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
             StashGridFragment(
                 dataType = dataType,
                 findFilter = defaultFindFilter,
-                objectFilter = createObjectFilter(createCriterionInput(false)),
+                objectFilter = createObjectFilter(createCriterionInput(false, studioId)),
             )
         fragment.subContentSwitchInitialIsChecked = false
         fragment.subContentText = getString(R.string.stashapp_include_sub_studio_content)
@@ -141,7 +154,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                 fragment.filterArgs.copy(
                     objectFilter =
                         createObjectFilter(
-                            createCriterionInput(isChecked),
+                            createCriterionInput(isChecked, studioId),
                         ),
                 )
             fragment.refresh(newFilter)
@@ -149,7 +162,10 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
         return fragment
     }
 
-    private fun createCriterionInput(includeSub: Boolean): Optional.Present<HierarchicalMultiCriterionInput> =
+    private fun createCriterionInput(
+        includeSub: Boolean,
+        studioId: String,
+    ): Optional.Present<HierarchicalMultiCriterionInput> =
         Optional.present(
             HierarchicalMultiCriterionInput(
                 value = Optional.present(listOf(studioId)),

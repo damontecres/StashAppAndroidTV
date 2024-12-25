@@ -3,12 +3,14 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.models.StudioViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 
@@ -16,28 +18,19 @@ import kotlinx.coroutines.launch
  * Details for a studio
  */
 class StudioDetailsFragment : DetailsFragment() {
+    private val viewModel: StudioViewModel by viewModels(ownerProducer = { requireParentFragment() })
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val studioId = requireActivity().intent.getStringExtra("studioId")
-        if (studioId != null) {
-            val exceptionHandler = StashCoroutineExceptionHandler(autoToast = true)
-            viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                val studio = queryEngine.findStudios(studioIds = listOf(studioId)).firstOrNull()
-                if (studio == null) {
-                    Toast
-                        .makeText(
-                            requireContext(),
-                            "studio not found: $studioId",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    return@launch
-                } else {
-                    updateUi(studio)
-                }
+        viewModel.item.observe(viewLifecycleOwner) { studio ->
+            if (studio == null) {
+                return@observe
+            } else {
+                updateUi(studio)
             }
         }
     }

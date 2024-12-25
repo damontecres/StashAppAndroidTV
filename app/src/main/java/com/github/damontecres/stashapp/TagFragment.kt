@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.view.View
+import androidx.fragment.app.viewModels
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -18,17 +19,19 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter.PagerEntry
 import com.github.damontecres.stashapp.util.getUiTabs
+import com.github.damontecres.stashapp.views.models.TagViewModel
 
 class TagFragment : TabbedFragment(DataType.TAG.name) {
-    private lateinit var tagId: String
+    private val viewModel: TagViewModel by viewModels()
+
     private var includeSubTags = false
 
-    override fun getTitleText(): String? = requireActivity().intent.getStringExtra("tagName")
+    override fun getTitleText(): String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        includeSubTags = requireActivity().intent.getBooleanExtra("includeSubTags", false)
-        tagId = requireActivity().intent.getStringExtra("tagId")!!
+//        includeSubTags = requireActivity().intent.getBooleanExtra("includeSubTags", false)
+        viewModel.init(requireArguments())
     }
 
     override fun onViewCreated(
@@ -36,7 +39,14 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        tabViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+        viewModel.item.observe(viewLifecycleOwner) { tag ->
+            if (tag == null) {
+                TODO()
+                return@observe
+            }
+            tabViewModel.title.value = tag.name
+
+            val server = serverViewModel.requireServer()
             tabViewModel.tabs.value =
                 listOf(
                     PagerEntry(getString(R.string.stashapp_details)) {
@@ -44,6 +54,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                     },
                     PagerEntry(DataType.SCENE) {
                         createStashGridFragment(
+                            tag.id,
                             dataType = DataType.SCENE,
                             server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_SCENES).findFilter,
                         ) { tags ->
@@ -52,6 +63,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                     },
                     PagerEntry(DataType.GALLERY) {
                         createStashGridFragment(
+                            tag.id,
                             dataType = DataType.GALLERY,
                             server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_GALLERIES).findFilter,
                         ) { tags ->
@@ -60,6 +72,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                     },
                     PagerEntry(DataType.IMAGE) {
                         createStashGridFragment(
+                            tag.id,
                             dataType = DataType.IMAGE,
                             server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_IMAGES).findFilter,
                         ) { tags ->
@@ -68,6 +81,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                     },
                     PagerEntry(DataType.MARKER) {
                         createStashGridFragment(
+                            tag.id,
                             dataType = DataType.MARKER,
                             server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_MARKERS).findFilter,
                         ) { tags ->
@@ -76,6 +90,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                     },
                     PagerEntry(DataType.PERFORMER) {
                         createStashGridFragment(
+                            tag.id,
                             dataType = DataType.PERFORMER,
                             server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_PERFORMERS).findFilter,
                         ) { tags ->
@@ -83,19 +98,26 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                         }
                     },
                     PagerEntry(DataType.STUDIO) {
-                        createStashGridFragment(dataType = DataType.STUDIO, null) { tags ->
+                        createStashGridFragment(tag.id, dataType = DataType.STUDIO, null) { tags ->
                             StudioFilterType(tags = tags)
                         }
                     },
                     PagerEntry(getString(R.string.stashapp_sub_tags)) {
-                        createStashGridFragment(dataType = DataType.TAG, null) { tags ->
+                        createStashGridFragment(tag.id, dataType = DataType.TAG, null) { tags ->
                             TagFilterType(parents = tags)
                         }
                     },
                     PagerEntry(getString(R.string.stashapp_parent_tags)) {
                         StashGridFragment(
                             dataType = DataType.TAG,
-                            objectFilter = TagFilterType(children = createCriterionInput(false)),
+                            objectFilter =
+                                TagFilterType(
+                                    children =
+                                        createCriterionInput(
+                                            false,
+                                            tag.id,
+                                        ),
+                                ),
                         )
                     },
                 ).filter { it.title in getUiTabs(requireContext(), DataType.TAG) }
@@ -103,6 +125,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
     }
 
     private fun createStashGridFragment(
+        tagId: String,
         dataType: DataType,
         defaultFindFilter: StashFindFilter?,
         createObjectFilter: (Optional<HierarchicalMultiCriterionInput>) -> StashDataFilter,
@@ -111,7 +134,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
             StashGridFragment(
                 dataType = dataType,
                 findFilter = defaultFindFilter,
-                objectFilter = createObjectFilter(createCriterionInput(includeSubTags)),
+                objectFilter = createObjectFilter(createCriterionInput(includeSubTags, tagId)),
             )
         fragment.subContentSwitchInitialIsChecked = includeSubTags
         fragment.subContentText = getString(R.string.stashapp_include_sub_tag_content)
@@ -120,7 +143,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                 fragment.filterArgs.copy(
                     objectFilter =
                         createObjectFilter(
-                            createCriterionInput(isChecked),
+                            createCriterionInput(isChecked, tagId),
                         ),
                 )
             fragment.refresh(newFilter)
@@ -128,7 +151,10 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
         return fragment
     }
 
-    private fun createCriterionInput(subTags: Boolean): Optional.Present<HierarchicalMultiCriterionInput> =
+    private fun createCriterionInput(
+        subTags: Boolean,
+        tagId: String,
+    ): Optional.Present<HierarchicalMultiCriterionInput> =
         Optional.present(
             HierarchicalMultiCriterionInput(
                 value = Optional.present(listOf(tagId)),
