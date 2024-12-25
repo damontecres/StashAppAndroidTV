@@ -2,8 +2,10 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.viewModels
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
@@ -20,6 +22,8 @@ class RootActivity :
     private lateinit var navigationManager: NavigationManager
 
     private var appHasPin by Delegates.notNull<Boolean>()
+
+    private var currentFragment: Fragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,15 +78,70 @@ class RootActivity :
         super.onRestoreInstanceState(savedInstanceState)
     }
 
-    override fun onNavigate(destination: Destination) {
-//        val titleView = findViewById<MainTitleView>(R.id.browse_title_group)
+    override fun onNavigate(
+        destination: Destination,
+        fragment: Fragment,
+    ) {
         Log.v(TAG, "onNavigate: destination=$destination")
+        currentFragment = fragment
         if (destination == Destination.Main) {
             setTheme(R.style.Theme_StashAppAndroidTV)
-//            titleView.animateToVisible()
         } else {
             setTheme(R.style.NoTitleTheme)
-//            titleView.animateToInvisible(View.GONE)
+        }
+    }
+
+    override fun onKeyDown(
+        keyCode: Int,
+        event: KeyEvent?,
+    ): Boolean {
+        val fragment = currentFragment
+        return if (fragment != null && fragment is KeyEvent.Callback) {
+            fragment.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event)
+        } else {
+            super.onKeyDown(keyCode, event)
+        }
+    }
+
+    override fun onKeyUp(
+        keyCode: Int,
+        event: KeyEvent?,
+    ): Boolean {
+        val fragment = currentFragment
+        return if (fragment != null && fragment is KeyEvent.Callback) {
+            fragment.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event)
+        } else {
+            super.onKeyUp(keyCode, event)
+        }
+    }
+
+    override fun onKeyLongPress(
+        keyCode: Int,
+        event: KeyEvent?,
+    ): Boolean {
+        val fragment = currentFragment
+        return if (fragment != null && fragment is KeyEvent.Callback) {
+            fragment.onKeyLongPress(keyCode, event) || super.onKeyLongPress(keyCode, event)
+        } else {
+            super.onKeyLongPress(keyCode, event)
+        }
+    }
+
+    override fun onKeyMultiple(
+        keyCode: Int,
+        repeatCount: Int,
+        event: KeyEvent?,
+    ): Boolean {
+        val fragment = currentFragment
+        return if (fragment != null && fragment is KeyEvent.Callback) {
+            fragment.onKeyMultiple(keyCode, repeatCount, event) ||
+                super.onKeyMultiple(
+                    keyCode,
+                    repeatCount,
+                    event,
+                )
+        } else {
+            super.onKeyMultiple(keyCode, repeatCount, event)
         }
     }
 

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commit
 import com.github.damontecres.stashapp.FilterFragment
@@ -42,7 +43,12 @@ class NavigationManager(
                     if (destinationStack.last() != Destination.Pin) {
                         destinationStack.removeLast()
                         fragmentManager.popBackStack()
-                        listeners.forEach { it.onNavigate(destinationStack.last()) }
+                        val fragment =
+                            fragmentManager.findFragmentByTag(
+                                destinationStack.lastOrNull()?.toString(),
+                            )!!
+                        Log.v(TAG, "back: fragment=$fragment")
+                        listeners.forEach { it.onNavigate(destinationStack.last(), fragment) }
                     }
                 }
             }
@@ -87,13 +93,15 @@ class NavigationManager(
         val args = Bundle().putDestination(destination)
         fragment.arguments = args
 
-        destinationStack.addLast(destination)
-        listeners.forEach { it.onNavigate(destination) }
         fragmentManager.commit {
             addToBackStack(destination.toString())
             // TODO animation
-            replace(android.R.id.content, fragment)
+            replace(android.R.id.content, fragment, destination.toString())
         }
+        Log.v(TAG, "next: fragment=$fragment")
+        destinationStack.addLast(destination)
+        listeners.forEach { it.onNavigate(destination, fragment) }
+
         onBackPressedCallback.isEnabled = fragmentManager.backStackEntryCount > 0
     }
 
@@ -107,7 +115,11 @@ class NavigationManager(
             destinationStack.removeLast()
             fragmentManager.popBackStack()
             if (destinationStack.isNotEmpty()) {
-                listeners.forEach { it.onNavigate(destinationStack.last()) }
+                val fragment =
+                    fragmentManager.findFragmentByTag(
+                        destinationStack.lastOrNull()?.toString(),
+                    )!!
+                listeners.forEach { it.onNavigate(destinationStack.last(), fragment) }
                 onBackPressedCallback.isEnabled = fragmentManager.backStackEntryCount > 0
             } else {
                 navigate(Destination.Main)
@@ -133,7 +145,10 @@ class NavigationManager(
     }
 
     interface NavigationListener {
-        fun onNavigate(destination: Destination)
+        fun onNavigate(
+            destination: Destination,
+            fragment: Fragment,
+        )
     }
 
     companion object {
