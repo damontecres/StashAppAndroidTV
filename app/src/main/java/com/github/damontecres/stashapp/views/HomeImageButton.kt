@@ -6,12 +6,11 @@ import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatImageButton
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
-import com.github.damontecres.stashapp.MainActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 
 /**
- * An [AppCompatImageButton] that is the stash server icon and clicking returns to [MainActivity]
+ * An [AppCompatImageButton] that is the stash server icon and clicking returns to the main page
  */
 class HomeImageButton(
     context: Context,

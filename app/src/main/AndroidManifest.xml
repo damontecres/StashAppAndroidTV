@@ -46,10 +46,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
-            android:exported="false"
-            android:launchMode="singleTop" />
-        <activity
             android:name=".playback.PlaybackActivity"
             android:exported="false"
             android:theme="@style/PlaybackTheme" />
