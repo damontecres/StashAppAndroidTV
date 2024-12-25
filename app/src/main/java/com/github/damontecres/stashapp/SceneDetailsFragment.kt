@@ -1,8 +1,6 @@
 package com.github.damontecres.stashapp
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -11,10 +9,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResultListener
@@ -47,6 +41,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
@@ -71,16 +66,14 @@ import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.configRowManager
+import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.models.SceneViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -175,8 +168,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private var detailsOverviewRow: DetailsOverviewRow? = null
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
 
-    private lateinit var resultLauncher: ActivityResultLauncher<Intent>
-
     private val playActionsAdapter = SparseArrayObjectAdapter()
 
     private val detailsPresenter =
@@ -211,17 +202,94 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         mDetailsBackground.enableParallax()
-        resultLauncher =
-            registerForActivityResult(
-                ActivityResultContracts.StartActivityForResult(),
-                ResultCallback(),
-            )
 
         setFragmentResultListener(Constants.POSITION_REQUEST_KEY) { _, bundle ->
             val position = bundle.getLong(Constants.POSITION_REQUEST_KEY)
             Log.v(TAG, "setFragmentResultListener: position=$position")
             viewModel.currentPosition.value = position
             viewModel.maybeSaveCurrentPosition()
+        }
+
+        setFragmentResultListener(SearchForFragment.REQUEST_KEY) { _, bundle ->
+            val sourceId = bundle.getLong(SearchForFragment.RESULT_ID_KEY)
+            val dataType = bundle.getDataType()
+            val newId = bundle.getString(SearchForFragment.RESULT_ITEM_ID_KEY)
+            if (newId != null) {
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    when (dataType) {
+                        DataType.GROUP -> {
+                            val newGroup = groupsRowManager.add(newId)
+                            if (newGroup != null) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Added to '${newGroup.name}'",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                            }
+                        }
+
+                        DataType.PERFORMER -> {
+                            val newPerformer = performersRowManager.add(newId)
+                            if (newPerformer != null) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Added performer '${newPerformer.name}' to scene",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                            }
+                        }
+
+                        DataType.STUDIO -> {
+                            val newStudio = studioRowManager.add(newId)
+                            if (newStudio != null) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Set studio to '${newStudio.name}'",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                            }
+                        }
+
+                        DataType.TAG -> {
+                            if (sourceId == StashAction.ADD_TAG.id) {
+                                val newTag = tagsRowManager.add(newId)
+                                if (newTag != null) {
+                                    Toast
+                                        .makeText(
+                                            requireContext(),
+                                            "Added tag '${newTag.name}' to scene",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                }
+                            } else if (sourceId == StashAction.CREATE_MARKER.id) {
+                                val position = viewModel.currentPosition.value ?: 0L
+                                Log.d(
+                                    TAG,
+                                    "Adding marker at $position with tagId=$newId to scene ${sceneData?.id}",
+                                )
+                                val newMarker =
+                                    mutationEngine.createMarker(
+                                        sceneId,
+                                        position,
+                                        newId,
+                                    )!!
+                                markersRowManager.add(newMarker.id)
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                            }
+                        }
+
+                        DataType.SCENE, DataType.MARKER, DataType.IMAGE, DataType.GALLERY -> throw IllegalArgumentException()
+                    }
+                }
+            }
         }
     }
 
@@ -232,14 +300,10 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     ): View? {
         val actionListener = SceneActionListener()
         onItemViewClickedListener =
-            ClassOnItemViewClickedListener(
-                StashItemViewClickListener(
-                    requireActivity(),
-                    actionListener,
-                ),
-            ).addListenerForClass(CreateMarkerAction::class.java) { _ ->
-                actionListener.onClicked(StashAction.CREATE_MARKER)
-            }
+            ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
+                .addListenerForClass(CreateMarkerAction::class.java) { _ ->
+                    actionListener.onClicked(StashAction.CREATE_MARKER)
+                }
 
         setupDetailsOverviewRowPresenter()
         mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
@@ -420,16 +484,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     CreateMarkerAction(localPosition),
                 )
             }
-            // TODO
-//            if (serverViewModel.requireServer().serverPreferences.trackActivity) {
-//                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-//                    Log.v(TAG, "SaveSceneActivity start")
-//                    mutationEngine.saveSceneActivity(
-//                        sceneId,
-//                        localPosition,
-//                    )
-//                }
-//            }
 
             setupPlayActionsAdapter(localPosition)
         }
@@ -561,27 +615,25 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private inner class SceneActionListener : StashActionClickedListener {
         override fun onClicked(action: StashAction) {
             if (action in StashAction.SEARCH_FOR_ACTIONS) {
-                val intent = Intent(requireActivity(), SearchForActivity::class.java)
                 val dataType =
                     when (action) {
                         StashAction.ADD_TAG -> DataType.TAG
                         StashAction.ADD_PERFORMER -> DataType.PERFORMER
                         StashAction.ADD_GROUP -> DataType.GROUP
                         StashAction.SET_STUDIO -> DataType.STUDIO
-                        StashAction.CREATE_MARKER -> {
-//                            intent.putExtra(
-//                                SearchForFragment.TITLE_KEY,
-//                                "for primary tag for scene marker",
-//                            )
-                            DataType.TAG
-                        }
+                        StashAction.CREATE_MARKER -> DataType.TAG
 
                         else -> throw RuntimeException("Unsupported search for type $action")
                     }
-                intent.putDataType(dataType)
-//                intent.putExtra(SearchForFragment.ID_KEY, action.id)
-                resultLauncher.launch(intent)
-                TODO()
+                val title =
+                    if (action == StashAction.CREATE_MARKER) "for primary tag for scene marker" else null
+                serverViewModel.navigationManager.navigate(
+                    Destination.SearchFor(
+                        action.id,
+                        dataType,
+                        title,
+                    ),
+                )
             } else if (action == StashAction.FORCE_TRANSCODE) {
                 detailsPresenter.onActionClickedListener.onActionClicked(
                     Action(
@@ -635,103 +687,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         }
     }
 
-    private inner class ResultCallback : ActivityResultCallback<ActivityResult> {
-        override fun onActivityResult(result: ActivityResult) {
-            if (result.resultCode == Activity.RESULT_OK) {
-                val data: Intent = result.data!!
-//                val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
-                val id = -1L
-                if (id in StashAction.SEARCH_FOR_ACTIONS.map { it.id }) {
-                    pendingJob =
-                        viewLifecycleOwner.lifecycleScope.launch(
-                            CoroutineExceptionHandler { _, ex ->
-                                Log.e(TAG, "Exception", ex)
-                                Toast
-                                    .makeText(
-                                        requireContext(),
-                                        "Failed to update scene: ${ex.message}",
-                                        Toast.LENGTH_LONG,
-                                    ).show()
-                            },
-                        ) {
-                            val newId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
-                            when (id) {
-                                StashAction.ADD_TAG.id -> {
-                                    val newTag = tagsRowManager.add(newId)
-                                    if (newTag != null) {
-                                        Toast
-                                            .makeText(
-                                                requireContext(),
-                                                "Added tag '${newTag.name}' to scene",
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                    }
-                                }
-
-                                StashAction.ADD_PERFORMER.id -> {
-                                    val newPerformer = performersRowManager.add(newId)
-                                    if (newPerformer != null) {
-                                        Toast
-                                            .makeText(
-                                                requireContext(),
-                                                "Added performer '${newPerformer.name}' to scene",
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                    }
-                                }
-
-                                StashAction.SET_STUDIO.id -> {
-                                    val newStudio = studioRowManager.add(newId)
-                                    if (newStudio != null) {
-                                        Toast
-                                            .makeText(
-                                                requireContext(),
-                                                "Set studio to '${newStudio.name}'",
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                    }
-                                }
-
-                                StashAction.ADD_GROUP.id -> {
-                                    val newGroup = groupsRowManager.add(newId)
-                                    if (newGroup != null) {
-                                        Toast
-                                            .makeText(
-                                                requireContext(),
-                                                "Added to '${newGroup.name}'",
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                    }
-                                }
-
-                                StashAction.CREATE_MARKER.id -> {
-                                    val position = viewModel.currentPosition.value ?: 0L
-                                    Log.d(
-                                        TAG,
-                                        "Adding marker at $position with tagId=$newId to scene ${sceneData?.id}",
-                                    )
-                                    val newMarker =
-                                        mutationEngine.createMarker(
-                                            sceneId,
-                                            position,
-                                            newId,
-                                        )!!
-                                    markersRowManager.add(newMarker.id)
-                                    Toast
-                                        .makeText(
-                                            requireContext(),
-                                            "Created a new marker with primary tag '${newMarker.primary_tag.tagData.name}'",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                }
-                            }
-                        }
-                } else {
-                }
-            }
-        }
-    }
-
     companion object {
         private const val TAG = "SceneDetailsFragment"
 
@@ -742,10 +697,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
         private const val DETAIL_THUMB_WIDTH = ScenePresenter.CARD_WIDTH
         private const val DETAIL_THUMB_HEIGHT = ScenePresenter.CARD_HEIGHT
-
-        const val POSITION_RESULT_ARG = "position.result"
-        const val FORCE_TRANSCODE = "forceTranscode"
-        const val FORCE_DIRECT_PLAY = "forceDirectPlay"
 
         // Row order
         private const val DETAILS_POS = 1

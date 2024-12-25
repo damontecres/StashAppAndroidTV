@@ -86,11 +86,12 @@ class SearchForFragment :
     private val server = StashServer.requireCurrentServer()
     private val queryEngine = QueryEngine(server)
 
+    private lateinit var searchFor: Destination.SearchFor
     private lateinit var dataType: DataType
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val searchFor = requireArguments().getDestination<Destination.SearchFor>()
+        searchFor = requireArguments().getDestination<Destination.SearchFor>()
         dataType = searchFor.dataType
         perPage =
             PreferenceManager
@@ -169,9 +170,11 @@ class SearchForFragment :
             setFragmentResult(
                 REQUEST_KEY,
                 bundleOf(
-                    RESULT_ID_KEY to item.id,
+                    RESULT_ID_KEY to searchFor.sourceId,
+                    RESULT_ITEM_ID_KEY to item.id,
                 ).putDataType(dataType),
             )
+            serverViewModel.navigationManager.goBack()
         }
     }
 
@@ -382,7 +385,8 @@ class SearchForFragment :
 
         const val ID_KEY = "id"
         const val REQUEST_KEY = TAG
-        const val RESULT_ID_KEY = "$TAG.resultId"
+        const val RESULT_ID_KEY = "$TAG.sourceId"
+        const val RESULT_ITEM_ID_KEY = "$TAG.resultId"
 
         private const val RESULTS_POS = 0
         private const val SUGGESTIONS_POS = RESULTS_POS + 1

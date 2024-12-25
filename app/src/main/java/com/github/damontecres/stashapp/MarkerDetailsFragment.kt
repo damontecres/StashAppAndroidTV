@@ -339,7 +339,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             if (result.resultCode == Activity.RESULT_OK) {
                 val data: Intent? = result.data
                 val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
-                val newTagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)
+                val newTagId = data.getStringExtra(SearchForFragment.RESULT_ITEM_ID_KEY)
                 if (newTagId != null) {
                     pendingJob =
                         viewLifecycleOwner.lifecycleScope.launch(

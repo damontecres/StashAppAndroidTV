@@ -318,7 +318,7 @@ abstract class PlaybackFragment(
         super.onCreate(savedInstanceState)
 
         setFragmentResultListener(SearchForFragment.REQUEST_KEY) { _, bundle ->
-            val itemId = bundle.getString(SearchForFragment.RESULT_ID_KEY)
+            val itemId = bundle.getString(SearchForFragment.RESULT_ITEM_ID_KEY)
             val dataType = bundle.getDataType()
 
             if (itemId != null && dataType == DataType.TAG) {
@@ -486,6 +486,7 @@ abstract class PlaybackFragment(
                             player?.pause()
                             serverViewModel.navigationManager.navigate(
                                 Destination.SearchFor(
+                                    1L,
                                     DataType.MARKER,
                                     "for primary tag for scene marker",
                                 ),

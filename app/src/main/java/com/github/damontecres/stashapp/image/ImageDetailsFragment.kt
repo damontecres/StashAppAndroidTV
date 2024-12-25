@@ -529,7 +529,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 val data: Intent? = result.data
                 val id = data!!.getLongExtra(SearchForFragment.ID_KEY, -1)
                 if (id == StashAction.ADD_TAG.id) {
-                    val tagId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
+                    val tagId = data.getStringExtra(SearchForFragment.RESULT_ITEM_ID_KEY)!!
                     Log.d(TAG, "Adding tag $tagId")
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
@@ -553,7 +553,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                         }
                     }
                 } else if (id == StashAction.ADD_PERFORMER.id) {
-                    val performerId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
+                    val performerId = data.getStringExtra(SearchForFragment.RESULT_ITEM_ID_KEY)!!
                     Log.d(TAG, "Adding performer $performerId")
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
@@ -577,7 +577,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                         }
                     }
                 } else if (id == StashAction.ADD_GALLERY.id) {
-                    val galleryId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
+                    val galleryId = data.getStringExtra(SearchForFragment.RESULT_ITEM_ID_KEY)!!
                     Log.d(TAG, "Adding gallery $galleryId")
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
@@ -601,7 +601,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                         }
                     }
                 } else if (id == StashAction.SET_STUDIO.id) {
-                    val studioId = data.getStringExtra(SearchForFragment.RESULT_ID_KEY)!!
+                    val studioId = data.getStringExtra(SearchForFragment.RESULT_ITEM_ID_KEY)!!
                     Log.d(TAG, "Setting studio to $studioId")
                     viewLifecycleOwner.lifecycleScope.launch(
                         CoroutineExceptionHandler { _, ex ->
