@@ -4,7 +4,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
@@ -23,7 +23,7 @@ import kotlin.math.roundToInt
  * Details for a performer
  */
 class PerformerDetailsFragment : DetailsFragment() {
-    private val viewModel: PerformerViewModel by activityViewModels<PerformerViewModel>()
+    private val viewModel: PerformerViewModel by viewModels(ownerProducer = { requireParentFragment() })
 
     override fun onViewCreated(
         view: View,

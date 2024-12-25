@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import androidx.preference.PreferenceManager
@@ -27,7 +28,7 @@ abstract class TabbedFragment(
 ) : Fragment(R.layout.tabbed_grid_view),
     DefaultKeyEventCallback {
     protected val serverViewModel by activityViewModels<ServerViewModel>()
-    protected val tabViewModel by activityViewModels<TabbedGridViewModel>()
+    protected val tabViewModel by viewModels<TabbedGridViewModel>()
 
     private lateinit var titleView: TabbedGridTitleView
     private lateinit var tabLayout: LeanbackTabLayout
