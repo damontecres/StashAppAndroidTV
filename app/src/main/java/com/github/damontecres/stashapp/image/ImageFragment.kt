@@ -98,6 +98,18 @@ class ImageFragment :
         overlayFragment.requestFocus()
     }
 
+    fun hideOverlay() {
+        if (overlayIsVisible) {
+            childFragmentManager.commit {
+                setCustomAnimations(
+                    androidx.leanback.R.anim.abc_slide_in_bottom,
+                    androidx.leanback.R.anim.abc_slide_out_bottom,
+                )
+                hide(overlayFragment)
+            }
+        }
+    }
+
     override fun onKeyDown(
         keyCode: Int,
         event: KeyEvent?,
@@ -114,13 +126,7 @@ class ImageFragment :
     ): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (overlayIsVisible) {
-                childFragmentManager.commit {
-                    setCustomAnimations(
-                        androidx.leanback.R.anim.abc_slide_in_bottom,
-                        androidx.leanback.R.anim.abc_slide_out_bottom,
-                    )
-                    hide(overlayFragment)
-                }
+                hideOverlay()
                 return true
             } else if (imageViewFragment.isImageZoomedIn()) {
                 imageViewFragment.resetZoom()

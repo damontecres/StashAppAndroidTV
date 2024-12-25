@@ -6,20 +6,23 @@ import android.view.View
 import android.view.View.OnClickListener
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaylistActivity
-import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
-import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.putFilterArgs
 
 /**
- * The "Play All" button clicker which starts playback for multiple scenes or markers
+ * The "Play All" button clicker which starts playback for multiple scenes or markers or slideshow for images
  */
 class PlayAllOnClickListener(
     private val context: Context,
+    private val navigationManager: NavigationManager,
     private val dataType: DataType,
-    private val getFilter: () -> FilterArgs,
+    private val getFilter: () -> FilterAndPosition,
 ) : OnClickListener {
     override fun onClick(v: View) {
+        val filterAndPosition = getFilter()
         when (dataType) {
             DataType.MARKER -> {
                 showSimpleListPopupWindow(
@@ -45,10 +48,7 @@ class PlayAllOnClickListener(
                             6 -> 20 * 60_000L
                             else -> 30_000L
                         }
-                    val intent = Intent(context, PlaylistActivity::class.java)
-                    intent.putFilterArgs(PlaylistActivity.INTENT_FILTER, getFilter())
-                    intent.putExtra(PlaylistMarkersFragment.INTENT_DURATION_ID, duration)
-                    context.startActivity(intent)
+                    TODO()
                 }
             }
 
@@ -56,14 +56,25 @@ class PlayAllOnClickListener(
                 showSimpleListPopupWindow(v, listOf("In order", "Shuffle")) {
                     val filter =
                         when (it) {
-                            0 -> getFilter()
-                            1 -> getFilter().with(SortAndDirection.random())
+                            0 -> filterAndPosition.filter
+                            1 -> filterAndPosition.filter.with(SortAndDirection.random())
                             else -> throw IllegalStateException("$it")
                         }
+                    TODO()
                     val intent = Intent(context, PlaylistActivity::class.java)
                     intent.putFilterArgs(PlaylistActivity.INTENT_FILTER, filter)
                     context.startActivity(intent)
                 }
+            }
+
+            DataType.IMAGE -> {
+                navigationManager.navigate(
+                    Destination.Slideshow(
+                        filterAndPosition.filter,
+                        filterAndPosition.position,
+                        true,
+                    ),
+                )
             }
 
             else -> throw UnsupportedOperationException("DataType $dataType")

@@ -32,7 +32,6 @@ import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.ImageAndFilter
-import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SlideshowOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -97,16 +96,16 @@ class FilterListActivity : FragmentActivity(R.layout.filter_list) {
 
         if (startingFilter.dataType.supportsPlaylists) {
             playAllButton.visibility = View.VISIBLE
-            playAllButton.setOnClickListener(
-                PlayAllOnClickListener(
-                    this,
-                    startingFilter.dataType,
-                ) {
-                    val fragment =
-                        supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
-                    fragment.filterArgs
-                },
-            )
+//            playAllButton.setOnClickListener(
+//                PlayAllOnClickListener(
+//                    this,
+//                    startingFilter.dataType,
+//                ) {
+//                    val fragment =
+//                        supportFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
+//                    fragment.filterArgs
+//                },
+//            )
         } else if (startingFilter.dataType == DataType.IMAGE) {
             playAllButton.visibility = View.VISIBLE
             playAllButton.text = getString(R.string.play_slideshow)

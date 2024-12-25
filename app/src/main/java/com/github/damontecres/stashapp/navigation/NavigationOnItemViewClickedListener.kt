@@ -5,7 +5,9 @@ import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.StashData
+import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 
 class NavigationOnItemViewClickedListener(
@@ -18,33 +20,34 @@ class NavigationOnItemViewClickedListener(
         rowViewHolder: RowPresenter.ViewHolder?,
         row: Row?,
     ) {
-        when (item) {
-            is StashData -> {
-                if (imageFilterLookup != null && item is ImageData) {
-                    val filterAndPosition = imageFilterLookup.invoke(item)
+        val destination =
+            when (item) {
+                is MarkerData ->
+                    Destination.Playback(
+                        item.scene.videoSceneData.id,
+                        (item.seconds + 1000L).toLong(),
+                        PlaybackMode.CHOOSE,
+                    )
+
+                is ImageData -> {
+                    val filterAndPosition = imageFilterLookup!!.invoke(item)
                     if (filterAndPosition != null) {
-                        navigationManager.navigate(
-                            Destination.Slideshow(
-                                filterAndPosition.filter,
-                                filterAndPosition.position,
-                                false,
-                            ),
+                        Destination.Slideshow(
+                            filterAndPosition.filter,
+                            filterAndPosition.position,
+                            false,
                         )
                     } else {
                         TODO()
                     }
-                } else {
-                    navigationManager.navigate(Destination.fromStashData(item))
                 }
+
+                is StashData -> Destination.fromStashData(item)
+
+                is FilterArgs -> Destination.Filter(item, true)
+
+                else -> TODO()
             }
-
-            is FilterArgs -> navigationManager.navigate(Destination.Filter(item, true))
-            else -> TODO()
-        }
+        navigationManager.navigate(destination)
     }
-
-    data class FilterAndPosition(
-        val filter: FilterArgs,
-        val position: Int,
-    )
 }

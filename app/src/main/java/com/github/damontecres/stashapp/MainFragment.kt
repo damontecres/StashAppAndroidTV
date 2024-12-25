@@ -18,6 +18,7 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -214,7 +215,7 @@ class MainFragment :
                 val position = getCurrentPosition()
                 if (position != null) {
                     val filter = filterList[position.row]
-                    NavigationOnItemViewClickedListener.FilterAndPosition(filter, position.column)
+                    FilterAndPosition(filter, position.column)
                 } else {
                     null
                 }

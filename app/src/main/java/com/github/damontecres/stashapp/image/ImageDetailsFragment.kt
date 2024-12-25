@@ -14,7 +14,6 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.leanback.app.DetailsSupportFragment
 import androidx.leanback.app.DetailsSupportFragmentBackgroundController
@@ -212,9 +211,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                             detailsActionsAdapter.size() - 1,
                             Action(R.string.stop_slideshow.toLong()),
                         )
-                        requireActivity().supportFragmentManager.commit {
-                            hide(this@ImageDetailsFragment)
-                        }
+                        (requireParentFragment() as ImageFragment).hideOverlay()
                     }
                     detailsActionsAdapter.notifyItemRangeChanged(
                         detailsActionsAdapter.size() - 1,

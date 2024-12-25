@@ -29,7 +29,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
 import com.chrynan.parcelable.core.putParcelable
-import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
@@ -38,6 +37,7 @@ import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
@@ -61,9 +61,7 @@ import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.putFilterArgs
-import com.github.damontecres.stashapp.views.ImageAndFilter
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
-import com.github.damontecres.stashapp.views.SlideshowOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
@@ -405,7 +403,7 @@ class StashGridFragment() :
         mGridPresenter.onItemViewClickedListener =
             onItemViewClickedListener
                 ?: NavigationOnItemViewClickedListener(serverViewModel.navigationManager) {
-                    NavigationOnItemViewClickedListener.FilterAndPosition(
+                    FilterAndPosition(
                         filterArgs,
                         currentSelectedPosition,
                     )
@@ -446,25 +444,22 @@ class StashGridFragment() :
                 refresh(_filterArgs.with(it))
             }.setUpSortButton(sortButton, dataType, _filterArgs.sortAndDirection)
         }
+
+        val playAllListener =
+            PlayAllOnClickListener(requireContext(), serverViewModel.navigationManager, dataType) {
+                FilterAndPosition(filterArgs, 0)
+            }
+        playAllButton.setOnClickListener(playAllListener)
+
         if (playAllButtonEnabled && dataType.supportsPlaylists) {
             playAllButton.visibility = View.VISIBLE
             playAllButton.nextFocusUpId = R.id.tab_layout
-            playAllButton.setOnClickListener(
-                PlayAllOnClickListener(requireContext(), dataType) {
-                    filterArgs
-                },
-            )
         } else if (playAllButtonEnabled && dataType == DataType.IMAGE) {
             playAllButton.visibility = View.VISIBLE
             playAllButton.nextFocusUpId = R.id.tab_layout
             playAllButton.text = getString(R.string.play_slideshow)
-            playAllButton.setOnClickListener(
-                SlideshowOnClickListener(requireContext()) {
-                    val item = mAdapter.get(0) as ImageData?
-                    ImageAndFilter(0, item, filterArgs)
-                },
-            )
         }
+
         if (filterButtonEnabled) {
             filterButton.visibility = View.VISIBLE
             filterButton.nextFocusUpId = R.id.tab_layout
