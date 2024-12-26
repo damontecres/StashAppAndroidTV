@@ -10,7 +10,6 @@ import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
-import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.BrowseFrameLayout
@@ -56,7 +55,6 @@ class MainFragment :
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()
     private val filterList = ArrayList<FilterArgs>()
-    private lateinit var mBackgroundManager: BackgroundManager
     private lateinit var backCallback: OnBackPressedCallback
 
     private var currentPosition = Position(-1, -1)
@@ -68,10 +66,7 @@ class MainFragment :
         super.onCreate(savedInstanceState)
         headersState = HEADERS_DISABLED
 
-        prepareBackgroundManager()
-
         setupUIElements()
-
         setupEventListeners()
 
         adapter = rowsAdapter
@@ -213,11 +208,6 @@ class MainFragment :
                 }
             }
         }
-    }
-
-    private fun prepareBackgroundManager() {
-        mBackgroundManager = BackgroundManager.getInstance(activity)
-        mBackgroundManager.attach(requireActivity().window)
     }
 
     private fun setupUIElements() {

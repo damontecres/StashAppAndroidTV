@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.leanback.app.GuidedStepSupportFragment
 import com.github.damontecres.stashapp.FilterFragment
@@ -58,9 +59,10 @@ class NavigationManager(
     }
 
     fun navigate(destination: Destination) {
+        if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
         val current = getCurrentFragment()
         if (destination == Destination.Pin && current is PinFragment) {
-            Log.v(TAG, "Ignore navigate to ${Destination.Pin}")
+            if (DEBUG) Log.v(TAG, "Ignore navigate to ${Destination.Pin}")
             return
         }
         if (destination == Destination.Pin) {
@@ -135,6 +137,7 @@ class NavigationManager(
                 replace(R.id.main_browse_fragment, fragment, destination.fragmentTag)
             }
         }
+        notifyListeners(destination, fragment)
     }
 
     fun goBack() {
@@ -142,14 +145,8 @@ class NavigationManager(
     }
 
     fun goToMain() {
-        fragmentManager.popBackStack(Destination.Main.fragmentTag, 0)
-        val fragment = getCurrentFragment()
-        if (fragment == null) {
-            // From setup
-            navigate(Destination.Main)
-        } else {
-            notifyListeners(Destination.Main, fragment)
-        }
+        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        navigate(Destination.Main)
     }
 
     fun clearPinFragment() {

@@ -24,11 +24,8 @@ class RootActivity :
     FragmentActivity(R.layout.activity_main),
     NavigationManager.NavigationListener {
     private val serverViewModel: ServerViewModel by viewModels<ServerViewModel>()
-
-    lateinit var navigationManager: NavigationManager
-
+    private lateinit var navigationManager: NavigationManager
     private var appHasPin by Delegates.notNull<Boolean>()
-
     private var currentFragment: Fragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
