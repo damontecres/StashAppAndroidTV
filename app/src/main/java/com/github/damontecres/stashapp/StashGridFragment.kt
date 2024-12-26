@@ -84,6 +84,7 @@ class StashGridFragment() :
     private lateinit var playAllButton: Button
     private lateinit var filterButton: Button
     private lateinit var subContentSwitch: SwitchMaterial
+    private lateinit var footerLayout: View
     private lateinit var positionTextView: TextView
     private lateinit var totalCountTextView: TextView
     private lateinit var noResultsTextView: TextView
@@ -336,6 +337,8 @@ class StashGridFragment() :
         subContentSwitch = root.findViewById(R.id.sub_content_switch)
         subContentSwitch.onFocusChangeListener = onFocusChangeListener
 
+        footerLayout = root.findViewById(R.id.footer_layout)
+
         val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
         mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
         mGridViewHolder.view.isFocusableInTouchMode = false
@@ -407,14 +410,20 @@ class StashGridFragment() :
                 }
 
         if (savedInstanceState == null) {
-            Log.v(TAG, "onViewCreated first time")
-            refresh(_filterArgs) {
-                if (scrollToNextPage) {
-                    Log.v(TAG, "scrolling to next page")
-                    currentSelectedPosition =
-                        PreferenceManager
-                            .getDefaultSharedPreferences(requireContext())
-                            .getInt("maxSearchResults", 25)
+            if (this::mAdapter.isInitialized) {
+                Log.v(TAG, "onViewCreated adapter is initialized")
+                updateAdapter()
+                showOrHideViews()
+            } else {
+                Log.v(TAG, "onViewCreated first time")
+                refresh(_filterArgs) {
+                    if (scrollToNextPage) {
+                        Log.v(TAG, "scrolling to next page")
+                        currentSelectedPosition =
+                            PreferenceManager
+                                .getDefaultSharedPreferences(requireContext())
+                                .getInt("maxSearchResults", 25)
+                    }
                 }
             }
         } else {
@@ -595,39 +604,50 @@ class StashGridFragment() :
             },
         )
 
+        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            mAdapter.init()
+            updateAdapter()
+            _filterArgs = newFilterArgs
+            _currentSortAndDirection = newFilterArgs.sortAndDirection
+            showOrHideViews()
+        }
+    }
+
+    private fun showOrHideViews() {
+        val count = mAdapter.size()
+        if (count <= 0) {
+            positionTextView.text = getString(R.string.zero)
+            noResultsTextView.animateToVisible()
+            loadingProgressBar.hide()
+            jumpButtonLayout.animateToInvisible(View.GONE)
+        } else {
+            setupJumpButtons(count)
+            jumpButtonLayout.animateToVisible()
+        }
+        if (count > 0 && mSelectedPosition >= 0) {
+            positionTextView.text = formatNumber(mSelectedPosition + 1, false)
+            positionTextView
+        }
+        totalCountTextView.text =
+            formatNumber(
+                count,
+                serverViewModel.requireServer().serverPreferences.abbreviateCounters,
+            )
+
+        if (count > 0 && SortOption.isJumpSupported(dataType, _currentSortAndDirection.sort)) {
+            alphabetFilterLayout.animateToVisible(400L)
+        } else {
+            alphabetFilterLayout.animateToInvisible(View.GONE, 400L)
+        }
+
         val showFooter =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_show_grid_footer), true)
-        val footerLayout = requireView().findViewById<View>(R.id.footer_layout)
 
-        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            updateAdapter()
-            mAdapter.init()
-            val count = pagingSource.getCount()
-            if (count == 0) {
-                positionTextView.text = getString(R.string.zero)
-                noResultsTextView.animateToVisible()
-                loadingProgressBar.hide()
-                jumpButtonLayout.animateToInvisible(View.GONE)
-            } else {
-                setupJumpButtons(count)
-                jumpButtonLayout.animateToVisible()
-            }
-            totalCountTextView.text =
-                formatNumber(count, server.serverPreferences.abbreviateCounters)
-            if (showFooter) {
-                footerLayout.animateToVisible()
-            }
-            _filterArgs = newFilterArgs
-            _currentSortAndDirection = newFilterArgs.sortAndDirection
-            if (count > 0 && SortOption.isJumpSupported(dataType, _currentSortAndDirection.sort)) {
-                alphabetFilterLayout.animateToVisible(400L)
-            } else {
-                alphabetFilterLayout.animateToInvisible(View.GONE, 400L)
-            }
-        }
-        if (!showFooter) {
+        if (showFooter) {
+            footerLayout.animateToVisible()
+        } else {
             footerLayout.visibility = View.GONE
         }
     }
