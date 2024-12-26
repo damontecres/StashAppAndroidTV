@@ -72,7 +72,7 @@ class MainFragment :
         adapter = rowsAdapter
 
         if (savedInstanceState == null) {
-            Log.v(TAG, "onViewCreated setting up observers")
+            Log.v(TAG, "Setting up observers")
             setupObservers()
         }
     }
@@ -148,9 +148,9 @@ class MainFragment :
                         )
                     if (result.status == TestResultStatus.SUCCESS) {
                         newServer.updateServerPrefs()
-//                        val mainTitleView =
-//                            requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-//                        mainTitleView.refreshMenuItems()
+                        val mainTitleView =
+                            requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
+                        mainTitleView.refreshMenuItems()
                         fetchData(newServer)
                     } else if (result.status == TestResultStatus.UNSUPPORTED_VERSION) {
                         clearData()

@@ -43,27 +43,31 @@ class RootActivity :
                 .getString("pinCode", "")
                 .isNotNullOrBlank()
 
-        serverViewModel.refresh()
         navigationManager = NavigationManager(this)
         navigationManager.addListener(this)
         StashApplication.navigationManager = navigationManager
 
         serverViewModel.navigationManager = navigationManager
 
-        if (savedInstanceState == null) {
-            if (appHasPin) {
-                navigationManager.navigate(Destination.Pin)
+        if (serverViewModel.refresh()) {
+            if (savedInstanceState == null) {
+                if (appHasPin) {
+                    navigationManager.navigate(Destination.Pin)
+                } else {
+                    navigationManager.navigate(Destination.Main)
+                }
             } else {
-                navigationManager.navigate(Destination.Main)
+                navigationManager.restoreInstanceState(savedInstanceState)
+                if (appHasPin) {
+                    navigationManager.navigate(Destination.Pin)
+                }
             }
-        } else {
-            navigationManager.restoreInstanceState(savedInstanceState)
-            if (appHasPin) {
-                navigationManager.navigate(Destination.Pin)
-            }
-        }
 
-        maybeShowUpdate()
+            maybeShowUpdate()
+        } else {
+            // No server configured
+            navigationManager.navigate(Destination.Setup)
+        }
     }
 
     private fun maybeShowUpdate() {

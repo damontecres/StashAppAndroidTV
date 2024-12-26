@@ -6,7 +6,7 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
 
-class SetupStep0 : SetupActivity.SimpleGuidedStepSupportFragment() {
+class SetupFragment : SetupGuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
         GuidanceStylist.Guidance(
             getString(R.string.app_name_long),
@@ -31,5 +31,11 @@ class SetupStep0 : SetupActivity.SimpleGuidedStepSupportFragment() {
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         nextStep(SetupStep1ServerUrl())
+    }
+
+    companion object {
+        const val ACTION_SERVER_URL = 98L
+        const val ACTION_SERVER_API_KEY = 99L
+        const val ACTION_PASSWORD_VISIBLE = 100L
     }
 }

@@ -27,6 +27,9 @@ sealed class Destination {
     val fragmentTag = "${this::class.simpleName}_$destId"
 
     @Serializable
+    data object Setup : Destination()
+
+    @Serializable
     data object Main : Destination()
 
     @Serializable

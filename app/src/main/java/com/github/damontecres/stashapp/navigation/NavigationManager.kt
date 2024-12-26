@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
 import com.github.damontecres.stashapp.playback.PlaylistScenesFragment
 import com.github.damontecres.stashapp.setup.ManageServersFragment
+import com.github.damontecres.stashapp.setup.SetupFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.putDestination
@@ -82,6 +83,7 @@ class NavigationManager(
                 Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()
                 Destination.SettingsPin -> SettingsPinEntryFragment()
+                Destination.Setup -> SetupFragment()
 
                 is Destination.UpdateApp -> UpdateAppFragment()
                 is Destination.ManageServers -> ManageServersFragment()
@@ -147,12 +149,17 @@ class NavigationManager(
     fun goToMain() {
         fragmentManager.popBackStack(Destination.Main.fragmentTag, 0)
         destinationStack.removeAll { true }
-        destinationStack.addLast(Destination.Main)
         val fragment =
             fragmentManager.findFragmentByTag(
-                destinationStack.last().fragmentTag,
-            )!!
-        notifyListeners(destinationStack.last(), fragment)
+                Destination.Main.fragmentTag,
+            )
+        if (fragment == null) {
+            // From setup
+            navigate(Destination.Main)
+        } else {
+            destinationStack.addLast(Destination.Main)
+            notifyListeners(destinationStack.last(), fragment)
+        }
     }
 
     fun clearPinFragment() {

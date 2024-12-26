@@ -45,10 +45,6 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".setup.SetupActivity"
-            android:exported="false"
-            android:theme="@style/Theme.StashAppAndroidTV.GuidedStep" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

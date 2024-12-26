@@ -54,12 +54,13 @@ open class ServerViewModel : ViewModel() {
         )
     }
 
-    fun refresh() {
+    fun refresh(): Boolean {
         val newHash = computeSettingsHash()
         _currentSettingsHash.value = newHash
 
         val currentServer = StashServer.getCurrentStashServer(StashApplication.getApplication())
         StashApplication.currentServer = currentServer
         _currentServer.value = currentServer
+        return currentServer != null
     }
 }

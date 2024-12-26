@@ -9,7 +9,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.getDestination
 
-class CreateFilterFragment : Fragment(R.layout.create_filter) {
+class CreateFilterFragment : Fragment(R.layout.frame) {
     private val viewModel by activityViewModels<CreateFilterViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,7 +34,7 @@ class CreateFilterFragment : Fragment(R.layout.create_filter) {
                 GuidedStepSupportFragment.add(
                     childFragmentManager,
                     CreateFilterStep(),
-                    R.id.create_filter_content,
+                    R.id.frame_content,
                 )
             }
         }
