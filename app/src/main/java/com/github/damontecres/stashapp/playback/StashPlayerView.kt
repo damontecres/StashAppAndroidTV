@@ -62,6 +62,10 @@ class StashPlayerView(
                         KeyEvent.KEYCODE_MEDIA_PLAY -> Util.handlePlayButtonAction(player)
                     }
                     return true
+                } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+                    player!!.pause()
+                    showController()
+                    return true
                 } else {
                     // Not paused, so allow normal handling
                     return super.dispatchKeyEvent(event)

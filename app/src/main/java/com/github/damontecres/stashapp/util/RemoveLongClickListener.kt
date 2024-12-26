@@ -43,7 +43,7 @@ class RemoveLongClickListener<T : StashData>(
             StashPresenter.PopUpItem.REMOVE_ID -> {
                 if (readOnlyModeDisabled()) {
                     scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                        Log.v(TAG, "Removing ${item.id} (${item::class.simpleName})")
+                        Log.v(TAG, "Removing id=${item.id} (${item::class.simpleName})")
                         if (rowManager.remove(item)) {
                             val name = extractTitle(item)
                             Toast.makeText(context, "Removed '$name'", Toast.LENGTH_SHORT).show()

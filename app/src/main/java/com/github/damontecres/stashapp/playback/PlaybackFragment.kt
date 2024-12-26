@@ -322,8 +322,7 @@ abstract class PlaybackFragment(
             val dataType = bundle.getDataType()
 
             if (itemId != null && dataType == DataType.TAG) {
-                val videoPos = currentVideoPosition
-                playbackPosition = videoPos
+                val videoPos = playbackPosition
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                     Log.d(
                         PlaybackSceneFragment.TAG,
