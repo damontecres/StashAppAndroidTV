@@ -5,6 +5,8 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
@@ -55,6 +57,9 @@ class MainFragment :
     private val adapters = ArrayList<ArrayObjectAdapter>()
     private val filterList = ArrayList<FilterArgs>()
     private lateinit var mBackgroundManager: BackgroundManager
+    private lateinit var backCallback: OnBackPressedCallback
+
+    private var currentPosition = Position(-1, -1)
 
     @Volatile
     private var fetchingData = false
@@ -93,11 +98,33 @@ class MainFragment :
                     null
                 }
             }
-    }
-
-    override fun onResume() {
-        super.onResume()
-//        viewModel.refresh()
+        if (!this::backCallback.isInitialized) {
+            backCallback =
+                requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, false) {
+                    val pos = currentPosition
+                    if (pos != null) {
+                        if (pos.column > 0) {
+                            selectedPosition = pos.row
+                            (selectedRowViewHolder as ListRowPresenter.ViewHolder)
+                                .gridView.selectedPosition = 0
+                        } else if (pos.row > 0) {
+                            selectedPosition = 0
+                        }
+                    }
+                }
+            (titleView as MainTitleView).focusListener.addListener { _, isFocused ->
+                backCallback.isEnabled = !isFocused
+            }
+        }
+        setOnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
+            val rowNum = rowsAdapter.indexOf(row)
+            val col =
+                (rowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition
+            val pos = Position(rowNum, col)
+//            Log.v(TAG, "$pos")
+            backCallback.isEnabled = pos.row > 0 || pos.column > 0
+            currentPosition = pos
+        }
     }
 
     private fun setupObservers() {
@@ -212,7 +239,7 @@ class MainFragment :
 
         onItemViewClickedListener =
             NavigationOnItemViewClickedListener(viewModel.navigationManager) {
-                val position = getCurrentPosition()
+                val position = currentPosition
                 if (position != null) {
                     val filter = filterList[position.row]
                     FilterAndPosition(filter, position.column)
@@ -347,52 +374,19 @@ class MainFragment :
         }
     }
 
-    private fun getCurrentPosition(): Position? {
-        val rowPos = selectedPosition
-        if (rowPos >= 0 && selectedRowViewHolder != null) {
-            val columnPos =
-                (selectedRowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition
-            if (columnPos >= 0) {
-                Log.v(TAG, "row=$rowPos, column=$columnPos")
-                return Position(rowPos, columnPos)
-            }
-        }
-        return null
-    }
-
-    /**
-     * Return true if back was handled
-     */
-    fun onBackPressed(): Boolean {
-        // TODO connect this method
-        val pos = getCurrentPosition()
-        if (pos != null) {
-            if (pos.column > 0) {
-                selectedPosition = pos.row
-                (selectedRowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition = 0
-                return true
-            } else if (pos.row > 0) {
-                selectedPosition = 0
-                return true
-            }
-        }
-        return false
-    }
-
     override fun onKeyUp(
         keyCode: Int,
         event: KeyEvent,
     ): Boolean {
-        val item =
-            getCurrentPosition()?.let {
-                val row = rowsAdapter.get(it.row) as ListRow
-                row.adapter.get(it.column)
+        if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            val item =
+                currentPosition?.let {
+                    val row = rowsAdapter.get(it.row) as ListRow
+                    row.adapter.get(it.column)
+                }
+            if (item != null && requireActivity().currentFocus is StashImageCardView) {
+                maybeStartPlayback(requireContext(), item)
             }
-        if ((keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) &&
-            item != null &&
-            requireActivity().currentFocus is StashImageCardView
-        ) {
-            maybeStartPlayback(requireContext(), item)
         }
         return super.onKeyUp(keyCode, event)
     }

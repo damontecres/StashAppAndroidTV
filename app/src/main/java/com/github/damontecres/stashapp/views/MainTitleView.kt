@@ -52,8 +52,26 @@ class MainTitleView(
             override fun getSearchAffordanceView(): View = searchButton
         }
 
+    class FocusListener : View.OnFocusChangeListener {
+        private val listeners = mutableListOf<View.OnFocusChangeListener>()
+
+        override fun onFocusChange(
+            v: View,
+            hasFocus: Boolean,
+        ) {
+            listeners.forEach { it.onFocusChange(v, hasFocus) }
+        }
+
+        fun addListener(listener: View.OnFocusChangeListener) {
+            listeners.add(listener)
+        }
+    }
+
+    val focusListener = FocusListener()
+
     init {
-        val onFocusChangeListener = StashOnFocusChangeListener(context)
+        val onFocusChangeListener = focusListener
+        focusListener.addListener(StashOnFocusChangeListener(context))
 
         val root = LayoutInflater.from(context).inflate(R.layout.title, this)
         iconButton = root.findViewById(R.id.icon)

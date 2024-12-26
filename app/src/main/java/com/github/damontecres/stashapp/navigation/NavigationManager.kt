@@ -40,10 +40,9 @@ class NavigationManager(
     private val activity: RootActivity,
 ) {
     private val fragmentManager = activity.supportFragmentManager
-    private val onBackPressedDispatcher = activity.onBackPressedDispatcher
     private val listeners = mutableListOf<NavigationListener>()
     private val onBackPressedCallback: OnBackPressedCallback =
-        onBackPressedDispatcher.addCallback(activity, false) {
+        activity.onBackPressedDispatcher.addCallback(activity, false) {
             activity.finish()
         }
 
