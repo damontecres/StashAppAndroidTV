@@ -364,6 +364,7 @@ class MainFragment :
      * Return true if back was handled
      */
     fun onBackPressed(): Boolean {
+        // TODO connect this method
         val pos = getCurrentPosition()
         if (pos != null) {
             if (pos.column > 0) {

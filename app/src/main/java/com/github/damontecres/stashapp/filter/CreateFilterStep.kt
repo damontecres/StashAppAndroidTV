@@ -35,13 +35,6 @@ import kotlinx.coroutines.launch
 class CreateFilterStep : CreateFilterGuidedStepFragment() {
     private val serverViewModel: ServerViewModel by activityViewModels()
 
-    private lateinit var queryEngine: QueryEngine
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        queryEngine = QueryEngine(StashServer.requireCurrentServer())
-    }
-
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val text =
             filterSummary(

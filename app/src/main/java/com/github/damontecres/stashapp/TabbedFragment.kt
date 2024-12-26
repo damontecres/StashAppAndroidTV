@@ -14,8 +14,6 @@ import androidx.leanback.tab.LeanbackViewPager
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.views.TabbedGridTitleView
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.models.TabbedGridViewModel
 import com.google.android.material.tabs.TabLayout
@@ -31,7 +29,6 @@ abstract class TabbedFragment(
     protected val serverViewModel by activityViewModels<ServerViewModel>()
     protected val tabViewModel by viewModels<TabbedGridViewModel>()
 
-    private lateinit var titleView: TabbedGridTitleView
     private lateinit var tabLayout: LeanbackTabLayout
     private lateinit var adapter: StashFragmentPagerAdapter
     private var currentTabPosition = 0
@@ -104,24 +101,16 @@ abstract class TabbedFragment(
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        Log.v(TAG, "savedInstanceState is null? ${savedInstanceState == null}")
 
-        titleView = view.findViewById(R.id.browse_title_group)
         val gridTitle = view.findViewById<TextView>(R.id.grid_title)
         tabViewModel.title.observe(viewLifecycleOwner) {
             gridTitle.text = it
-        }
-        val title = getTitleText()
-        if (title.isNotNullOrBlank()) {
-            tabViewModel.title.value = getTitleText()
         }
 
         viewPager = view.findViewById(R.id.view_pager)
         tabLayout = view.findViewById(R.id.tab_layout)
         tabLayout.setupWithViewPager(viewPager)
     }
-
-    open fun getTitleText(): String? = null
 
     override fun onKeyUp(
         keyCode: Int,

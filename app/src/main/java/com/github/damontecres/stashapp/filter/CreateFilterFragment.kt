@@ -41,7 +41,6 @@ class CreateFilterFragment : Fragment(R.layout.frame) {
     }
 
     companion object {
-        private const val TAG = "CreateFilterActivity"
-        const val INTENT_STARTING_FILTER = "$TAG.startingFilter"
+        private const val TAG = "CreateFilterFragment"
     }
 }

@@ -72,8 +72,7 @@ class SearchPickerFragment(
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 25)
-        title =
-            requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
+        title = getString(dataType.pluralStringId)
         searchResultsAdapter.presenterSelector = StashPresenter.defaultClassPresenterSelector()
         adapter.set(
             RESULTS_POS,

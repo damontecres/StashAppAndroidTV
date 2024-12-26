@@ -75,7 +75,6 @@ import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.models.SceneViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -85,8 +84,6 @@ import kotlin.math.roundToInt
 class SceneDetailsFragment : DetailsSupportFragment() {
     private val serverViewModel: ServerViewModel by activityViewModels<ServerViewModel>()
     private val viewModel by viewModels<SceneViewModel>()
-
-    private var pendingJob: Job? = null
 
     private lateinit var sceneId: String
     private var sceneData: FullSceneData? = null

@@ -119,6 +119,4 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                 ).filter { it.title in getUiTabs(requireContext(), DataType.GROUP) }
         }
     }
-
-    override fun getTitleText(): String? = null
 }

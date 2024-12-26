@@ -14,7 +14,6 @@ import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
-import com.github.damontecres.stashapp.data.Marker
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -26,7 +25,7 @@ import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
 /**
- * Select a value to shift a [Marker]'s seconds by
+ * Select a value to shift a Marker's seconds by
  */
 class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
     private val serverViewModel by activityViewModels<ServerViewModel>()

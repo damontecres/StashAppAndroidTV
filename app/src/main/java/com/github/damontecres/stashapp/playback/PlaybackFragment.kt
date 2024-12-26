@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.playback
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -12,7 +11,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.addCallback
-import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
 import androidx.core.os.bundleOf
@@ -121,7 +119,6 @@ abstract class PlaybackFragment(
 
     // Track whether the video is playing before calling the resultLauncher
     protected var wasPlayingBeforeResultLauncher: Boolean? = null
-    private lateinit var resultLauncher: ActivityResultLauncher<Intent>
     private val videoFilterFragment = PlaybackVideoFiltersFragment()
 
     protected var playbackPosition = -1L

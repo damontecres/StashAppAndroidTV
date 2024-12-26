@@ -8,7 +8,6 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import kotlinx.parcelize.Parcelize
 
-@Parcelize
 data class Scene(
     val id: String,
     val title: String?,
@@ -26,7 +25,7 @@ data class Scene(
     val oCounter: Int?,
     val captionUrl: String?,
     val captions: List<Caption>,
-) : Parcelable {
+) {
     val durationPosition get() = duration?.times(1000L)?.toLong()
 
     val hasCaptions get() = captionUrl.isNotNullOrBlank() && captions.isNotEmpty()

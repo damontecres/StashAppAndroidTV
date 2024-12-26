@@ -33,8 +33,6 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
         viewModel.init(requireArguments())
     }
 
-    override fun getTitleText(): String? = null
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,

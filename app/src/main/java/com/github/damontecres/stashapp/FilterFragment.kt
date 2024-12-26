@@ -355,8 +355,6 @@ class FilterFragment :
     }
 
     companion object {
-        private const val TAG = "FilterListActivity2"
-        const val INTENT_FILTER_ARGS = "$TAG.filterArgs"
-        const val INTENT_SCROLL_NEXT_PAGE = "$TAG.scrollToNextPage"
+        private const val TAG = "FilterFragment"
     }
 }

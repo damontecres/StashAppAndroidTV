@@ -107,6 +107,5 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
 
     companion object {
         private const val TAG = "GalleryFragment"
-        const val INTENT_GALLERY_OBJ = "gallery"
     }
 }

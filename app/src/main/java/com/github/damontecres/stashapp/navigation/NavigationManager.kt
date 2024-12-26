@@ -221,8 +221,6 @@ class NavigationManager(
         )
     }
 
-    private fun Destination?.isPin() = this != null && (this == Destination.Pin || this == Destination.SettingsPin)
-
     companion object {
         const val DESTINATION_ARG = "destination"
         private const val TAG = "NavigationManager"

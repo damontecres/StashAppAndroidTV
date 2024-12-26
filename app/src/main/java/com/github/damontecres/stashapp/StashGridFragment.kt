@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -36,7 +35,7 @@ import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
-import com.github.damontecres.stashapp.filter.CreateFilterFragment
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.NullPresenter
@@ -59,8 +58,6 @@ import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.maybeStartPlayback
-import com.github.damontecres.stashapp.util.putDataType
-import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -464,11 +461,12 @@ class StashGridFragment() :
             filterButton.visibility = View.VISIBLE
             filterButton.nextFocusUpId = R.id.tab_layout
             filterButton.setOnClickListener {
-                val intent =
-                    Intent(requireContext(), CreateFilterFragment::class.java)
-                        .putDataType(dataType)
-                        .putFilterArgs(CreateFilterFragment.INTENT_STARTING_FILTER, filterArgs)
-                requireContext().startActivity(intent)
+                serverViewModel.navigationManager.navigate(
+                    Destination.CreateFilter(
+                        dataType,
+                        filterArgs,
+                    ),
+                )
             }
         }
 

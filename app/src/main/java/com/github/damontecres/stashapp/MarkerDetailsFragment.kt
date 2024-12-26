@@ -1,14 +1,12 @@
 package com.github.damontecres.stashapp
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResultListener
@@ -44,10 +42,8 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.convertDpToPixel
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getDestination
@@ -59,7 +55,6 @@ import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class MarkerDetailsFragment : DetailsSupportFragment() {
@@ -73,8 +68,6 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         private const val TAG_POS = PRIMARY_TAG_POS + 1
         private const val ACTIONS_POS = TAG_POS + 1
     }
-
-    private var pendingJob: Job? = null
 
     private val serverViewModel by activityViewModels<ServerViewModel>()
     private val viewModel by viewModels<MarkerDetailsViewModel>()
@@ -126,9 +119,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             ),
         )
 
-    private lateinit var queryEngine: QueryEngine
     private lateinit var mutationEngine: MutationEngine
-    private lateinit var resultLauncher: ActivityResultLauncher<Intent>
 
     private lateinit var detailsPresenter: FullWidthDetailsOverviewRowPresenter
 
@@ -160,9 +151,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         super.onCreate(savedInstanceState)
 
         primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
-        val server = StashServer.requireCurrentServer()
-        queryEngine = QueryEngine(server)
-        mutationEngine = MutationEngine(server)
+        mutationEngine = MutationEngine(serverViewModel.requireServer())
 
         setFragmentResultListener(MarkerDetailsFragment::class.simpleName!!) { _, bundle ->
             val sourceId = bundle.getLong(SearchForFragment.RESULT_ID_KEY)

@@ -11,7 +11,6 @@ import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
@@ -27,7 +26,6 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
     protected lateinit var favoriteButton: Button
     protected lateinit var ratingBar: StashRatingBar
 
-    protected lateinit var queryEngine: QueryEngine
     protected lateinit var mutationEngine: MutationEngine
 
     override fun onViewCreated(
@@ -48,7 +46,6 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
         }
 
         val server = StashServer.requireCurrentServer()
-        queryEngine = QueryEngine(server)
         mutationEngine = MutationEngine(server)
     }
 

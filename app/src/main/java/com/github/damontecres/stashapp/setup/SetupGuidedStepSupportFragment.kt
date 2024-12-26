@@ -9,7 +9,7 @@ import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 open class SetupGuidedStepSupportFragment : GuidedStepSupportFragment() {
-    private val serverViewModel: ServerViewModel by activityViewModels()
+    protected val serverViewModel: ServerViewModel by activityViewModels()
 
     fun nextStep(step: GuidedStepSupportFragment) {
         add(requireActivity().supportFragmentManager, step, android.R.id.content)

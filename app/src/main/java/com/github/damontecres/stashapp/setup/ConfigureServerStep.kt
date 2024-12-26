@@ -6,7 +6,6 @@ import android.text.InputType
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
-import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
@@ -17,12 +16,9 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
-import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
 class ConfigureServerStep : SetupGuidedStepSupportFragment() {
-    private val viewModel: ServerViewModel by activityViewModels()
-
     override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
@@ -151,7 +147,7 @@ class ConfigureServerStep : SetupGuidedStepSupportFragment() {
                     val server = StashServer(serverUrl, apiKey)
                     // Persist values
                     StashServer.addAndSwitchServer(requireContext(), server)
-                    viewModel.switchServer(server)
+                    serverViewModel.switchServer(server)
                     finishGuidedStepSupportFragments()
                 } else if (result.status == TestResultStatus.SELF_SIGNED_REQUIRED && !trustCerts) {
                     promptSelfSigned(true)

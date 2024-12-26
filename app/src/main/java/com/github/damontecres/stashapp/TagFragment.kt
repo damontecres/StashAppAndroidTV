@@ -27,11 +27,8 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
 
     private var includeSubTags = false
 
-    override fun getTitleText(): String? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-//        includeSubTags = requireActivity().intent.getBooleanExtra("includeSubTags", false)
         viewModel.init(requireArguments())
     }
 

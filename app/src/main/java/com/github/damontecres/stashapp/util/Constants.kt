@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.util
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
@@ -28,8 +27,6 @@ import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.chrynan.parcelable.core.getParcelable
-import com.chrynan.parcelable.core.getParcelableExtra
-import com.chrynan.parcelable.core.putExtra
 import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
@@ -96,11 +93,6 @@ object Constants {
     const val STASH_API_HEADER = "ApiKey"
     const val TAG = "Constants"
     private const val OK_HTTP_CACHE_DIR = "okhttpcache"
-
-    const val ARG = "arg"
-    const val SCENE_ARG = "$ARG.scene"
-    const val SCENE_ID_ARG = "$ARG.scene.id"
-    const val POSITION_ARG = "$ARG.position"
 
     fun getNetworkCache(context: Context): Cache {
         val cacheSize =
@@ -748,25 +740,12 @@ fun CoroutineScope.launchIO(
         launch(Dispatchers.IO + exceptionHandler, block = block)
     }
 
-fun Intent.putDataType(dataType: DataType): Intent = this.putExtra("dataType", dataType.name)
-
-fun Intent.getDataType(): DataType = DataType.valueOf(getStringExtra("dataType")!!)
-
 fun Bundle.putDataType(dataType: DataType): Bundle {
     this.putString("dataType", dataType.name)
     return this
 }
 
 fun Bundle.getDataType(): DataType = DataType.valueOf(getString("dataType")!!)
-
-@OptIn(ExperimentalSerializationApi::class)
-fun Intent.putFilterArgs(
-    name: String,
-    filterArgs: FilterArgs,
-): Intent = putExtra(name, filterArgs, StashParcelable)
-
-@OptIn(ExperimentalSerializationApi::class)
-fun Intent.getFilterArgs(name: String): FilterArgs? = getParcelableExtra(name, FilterArgs::class, 0, StashParcelable)
 
 @OptIn(ExperimentalSerializationApi::class)
 fun Bundle.getFilterArgs(name: String): FilterArgs? = getParcelable(name, FilterArgs::class, 0, StashParcelable)
