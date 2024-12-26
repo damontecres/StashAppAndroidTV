@@ -29,7 +29,6 @@ class TagDetailsFragment : DetailsFragment() {
 
         viewModel.item.observe(viewLifecycleOwner) { tag ->
             if (tag == null) {
-                TODO()
                 return@observe
             } else {
                 updateUi(tag)

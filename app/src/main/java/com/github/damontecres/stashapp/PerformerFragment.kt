@@ -31,7 +31,6 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
-import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.models.PerformerViewModel
@@ -54,12 +53,8 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.item.observe(viewLifecycleOwner) { performer ->
             if (performer == null) {
-                Toast
-                    .makeText(
-                        requireContext(),
-                        "No performer found with ID ${requireArguments().getDestination<Destination.Item>().id}",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                Toast.makeText(requireContext(), "Performer not found", Toast.LENGTH_LONG).show()
+                serverViewModel.navigationManager.goBack()
                 return@observe
             }
             tabViewModel.title.value =

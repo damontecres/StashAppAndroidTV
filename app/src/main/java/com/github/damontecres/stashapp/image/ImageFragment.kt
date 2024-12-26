@@ -46,7 +46,12 @@ class ImageFragment :
 
         viewModel.image.observe(this) { newImage ->
             childFragmentManager.commit {
-                setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                setCustomAnimations(
+                    R.animator.fade_in,
+                    R.animator.fade_out,
+                    R.animator.fade_in,
+                    R.animator.fade_out,
+                )
                 if (newImage.isImageClip) {
                     hide(imageViewFragment)
                     show(imageClipFragment)

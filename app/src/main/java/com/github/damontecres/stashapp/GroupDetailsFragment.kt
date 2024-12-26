@@ -35,7 +35,6 @@ class GroupDetailsFragment : Fragment(R.layout.group_view) {
         table = view.findViewById(R.id.group_table)
         viewModel.item.observe(viewLifecycleOwner) { groupData ->
             if (groupData == null) {
-                TODO()
                 return@observe
             }
 

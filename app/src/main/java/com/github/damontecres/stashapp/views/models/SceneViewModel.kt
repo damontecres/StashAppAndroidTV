@@ -46,18 +46,15 @@ class SceneViewModel : ViewModel() {
     val suggestedScenes: LiveData<List<SlimSceneData>> = _suggestedScenes
 
     /**
-     * Saves the current position for the current scene if enabled in settings
+     * Saves the current position for the current scene
      */
-    fun maybeSaveCurrentPosition() {
-        // TODO check app settings for tracking
-        if (StashServer.requireCurrentServer().serverPreferences.trackActivity) {
-            val currentScene = scene.value
-            val position = currentPosition.value
-            if (currentScene != null && position != null) {
-                viewModelScope.launch(StashCoroutineExceptionHandler()) {
-                    val mutationEngine = MutationEngine(StashServer.requireCurrentServer())
-                    mutationEngine.saveSceneActivity(currentScene.id, position)
-                }
+    fun saveCurrentPosition() {
+        val currentScene = scene.value
+        val position = currentPosition.value
+        if (currentScene != null && position != null) {
+            viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                val mutationEngine = MutationEngine(StashServer.requireCurrentServer())
+                mutationEngine.saveSceneActivity(currentScene.id, position)
             }
         }
     }

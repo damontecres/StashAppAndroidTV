@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.MainFragment
 import com.github.damontecres.stashapp.MarkerDetailsFragment
 import com.github.damontecres.stashapp.PerformerFragment
 import com.github.damontecres.stashapp.PinFragment
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.SearchForFragment
@@ -134,7 +135,12 @@ class NavigationManager(
         } else {
             fragmentManager.commit {
                 addToBackStack(destination.fragmentTag)
-                // TODO animation
+                setCustomAnimations(
+                    R.animator.fade_in,
+                    R.animator.fade_out,
+                    R.animator.fade_in,
+                    R.animator.fade_out,
+                )
                 replace(android.R.id.content, fragment, destination.fragmentTag)
             }
         }

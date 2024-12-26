@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.ClassPresenterSelector
 import com.apollographql.apollo.api.Optional
@@ -36,7 +37,8 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
 
         viewModel.item.observe(viewLifecycleOwner) { gallery ->
             if (gallery == null) {
-                TODO()
+                Toast.makeText(requireContext(), "Gallery not found", Toast.LENGTH_LONG).show()
+                serverViewModel.navigationManager.goBack()
                 return@observe
             }
             tabViewModel.title.value = gallery.name

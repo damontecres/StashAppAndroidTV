@@ -27,6 +27,7 @@ import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
@@ -207,7 +208,13 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             val position = bundle.getLong(Constants.POSITION_REQUEST_KEY)
             Log.v(TAG, "setFragmentResultListener: position=$position")
             viewModel.currentPosition.value = position
-            viewModel.maybeSaveCurrentPosition()
+            if (serverViewModel.requireServer().serverPreferences.trackActivity &&
+                PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
+                    .getBoolean(getString(R.string.pref_key_playback_track_activity), true)
+            ) {
+                viewModel.saveCurrentPosition()
+            }
         }
 
         setFragmentResultListener(SceneDetailsFragment::class.simpleName!!) { _, bundle ->
@@ -390,12 +397,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private fun setupObservers() {
         viewModel.scene.observe(viewLifecycleOwner) { sceneData ->
             if (sceneData == null) {
-                Toast
-                    .makeText(
-                        requireContext(),
-                        "No scene with ID $sceneId found",
-                        Toast.LENGTH_LONG,
-                    ).show()
+                Toast.makeText(requireContext(), "Scene not found", Toast.LENGTH_LONG).show()
+                serverViewModel.navigationManager.goBack()
                 return@observe
             }
 

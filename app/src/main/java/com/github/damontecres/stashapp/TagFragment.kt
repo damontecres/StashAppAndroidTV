@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.viewModels
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -41,7 +42,8 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.item.observe(viewLifecycleOwner) { tag ->
             if (tag == null) {
-                TODO()
+                Toast.makeText(requireContext(), "Tag not found", Toast.LENGTH_LONG).show()
+                serverViewModel.navigationManager.goBack()
                 return@observe
             }
             tabViewModel.title.value = tag.name

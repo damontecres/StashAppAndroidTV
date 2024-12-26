@@ -232,7 +232,8 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
 
         viewModel.item.observe(viewLifecycleOwner) { marker ->
             if (marker == null) {
-                TODO()
+                Toast.makeText(requireContext(), "Marker not found", Toast.LENGTH_LONG).show()
+                serverViewModel.navigationManager.goBack()
                 return@observe
             }
             val sceneData = viewModel.scene.value!!

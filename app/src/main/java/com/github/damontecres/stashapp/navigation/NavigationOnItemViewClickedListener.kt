@@ -38,7 +38,7 @@ class NavigationOnItemViewClickedListener(
                             false,
                         )
                     } else {
-                        TODO()
+                        throw IllegalStateException("imageFilterLookup is null")
                     }
                 }
 
@@ -46,7 +46,7 @@ class NavigationOnItemViewClickedListener(
 
                 is FilterArgs -> Destination.Filter(item, true)
 
-                else -> TODO()
+                else -> throw IllegalArgumentException("Unsupported item: ${item::class.java.name}")
             }
         navigationManager.navigate(destination)
     }

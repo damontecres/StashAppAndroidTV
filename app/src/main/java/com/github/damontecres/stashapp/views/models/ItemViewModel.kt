@@ -13,7 +13,6 @@ import com.github.damontecres.stashapp.util.getDestination
 import kotlinx.coroutines.launch
 
 abstract class ItemViewModel<T : StashData> : ViewModel() {
-    // TODO need EqualityMutableLiveData?
     private val _item = EqualityMutableLiveData<T>()
     val item: LiveData<T?> = _item
 

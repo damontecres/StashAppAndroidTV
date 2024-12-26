@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.viewModels
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -32,7 +33,8 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.item.observe(viewLifecycleOwner) { group ->
             if (group == null) {
-                TODO()
+                Toast.makeText(requireContext(), "Group not found", Toast.LENGTH_LONG).show()
+                serverViewModel.navigationManager.goBack()
                 return@observe
             }
             tabViewModel.title.value = group.name
