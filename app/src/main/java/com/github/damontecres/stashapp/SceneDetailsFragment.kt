@@ -189,6 +189,12 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             },
         )
 
+    override fun onInflateTitleView(
+        inflater: LayoutInflater?,
+        parent: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)

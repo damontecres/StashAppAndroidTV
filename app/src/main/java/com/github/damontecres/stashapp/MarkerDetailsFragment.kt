@@ -5,7 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
@@ -146,6 +148,12 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
 
             override fun incrementOCounter(counter: OCounter): Unit = throw IllegalStateException()
         }
+
+    override fun onInflateTitleView(
+        inflater: LayoutInflater?,
+        parent: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -54,11 +54,31 @@ class FilterFragment :
 
     private lateinit var dataType: DataType
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val dest = requireArguments().getDestination<Destination.Filter>()
+        val startingFilter = dest.filterArgs
+        dataType = startingFilter.dataType
+
+        sortButtonManager =
+            SortButtonManager(StashServer.getCurrentServerVersion()) { sortAndDirection ->
+                val fragment =
+                    childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
+                fragment.refresh(sortAndDirection)
+            }
+
+        setup(startingFilter)
+    }
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        val dest = requireArguments().getDestination<Destination.Filter>()
+        val startingFilter = dest.filterArgs
 
         filterButton = view.findViewById(R.id.filter_button)
         filterButton.setOnClickListener {
@@ -72,34 +92,13 @@ class FilterFragment :
         playAllButton = view.findViewById(R.id.play_all_button)
         playAllButton.onFocusChangeListener = onFocusChangeListener
         titleTextView = view.findViewById(R.id.list_title)
+        titleTextView.text = startingFilter.name ?: getString(dataType.pluralStringId)
 
-        sortButtonManager =
-            SortButtonManager(StashServer.getCurrentServerVersion()) { sortAndDirection ->
-                val fragment =
-                    childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
-                fragment.refresh(sortAndDirection)
-            }
-
-        childFragmentManager.addFragmentOnAttachListener { _, fragment ->
-            setTitleText((fragment as StashGridFragment).filterArgs)
-        }
-        childFragmentManager.addOnBackStackChangedListener {
-            val fragment =
-                childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
-            if (fragment != null) {
-                val fa = fragment.filterArgs
-                setTitleText(fa)
-                sortButtonManager.setUpSortButton(sortButton, fa.dataType, fa.sortAndDirection)
-            }
-        }
-
-        val dest = requireArguments().getDestination<Destination.Filter>()
-
-        val startingFilter = dest.filterArgs
-        dataType = startingFilter.dataType
-        if (savedInstanceState == null) {
-            setup(startingFilter, first = true)
-        }
+        sortButtonManager.setUpSortButton(
+            sortButton,
+            startingFilter.dataType,
+            startingFilter.sortAndDirection,
+        )
 
         val playAllListener =
             PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
@@ -127,20 +126,6 @@ class FilterFragment :
     private fun setTitleText(filterArgs: FilterArgs) {
         titleTextView.text = filterArgs.name ?: getString(filterArgs.dataType.pluralStringId)
     }
-
-//    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-//        super.onRestoreInstanceState(savedInstanceState)
-//        val fragment =
-//            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
-//        if (fragment != null) {
-//            setTitleText(fragment.filterArgs)
-//            sortButtonManager.setUpSortButton(
-//                sortButton,
-//                fragment.dataType,
-//                fragment.filterArgs.sortAndDirection,
-//            )
-//        }
-//    }
 
     private suspend fun populateSavedFilters(dataType: DataType) {
         val server = StashServer.requireCurrentServer()
@@ -206,7 +191,7 @@ class FilterFragment :
                             savedFilter
                                 .toFilterArgs(filterParser)
                                 .withResolvedRandom()
-                        setup(filterArgs)
+                        serverViewModel.navigationManager.navigate(Destination.Filter(filterArgs))
                     } catch (ex: Exception) {
                         Log.e(TAG, "Exception parsing filter ${savedFilter.id}", ex)
                         Toast
@@ -226,22 +211,16 @@ class FilterFragment :
         }
     }
 
-    private fun setup(
-        filter: FilterArgs,
-        first: Boolean = false,
-    ) {
-        val scrollToNextPage = requireArguments().getDestination<Destination.Filter>().scrollToNextPage
+    private fun setup(filter: FilterArgs) {
+        val scrollToNextPage =
+            requireArguments().getDestination<Destination.Filter>().scrollToNextPage
         val fragment = StashGridFragment(filter, null, scrollToNextPage)
         fragment.name = filter.name
         fragment.disableButtons()
         fragment.requestFocus = true
         childFragmentManager.commit {
-            if (!first) {
-                addToBackStack(fragment.name)
-            }
             replace(R.id.list_fragment, fragment)
         }
-        sortButtonManager.setUpSortButton(sortButton, filter.dataType, filter.sortAndDirection)
     }
 
     private class SavedFilterAdapter(

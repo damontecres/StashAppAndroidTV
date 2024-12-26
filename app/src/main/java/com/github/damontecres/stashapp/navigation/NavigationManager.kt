@@ -42,40 +42,30 @@ class NavigationManager(
     private val fragmentManager = activity.supportFragmentManager
     private val onBackPressedDispatcher = activity.onBackPressedDispatcher
     private val listeners = mutableListOf<NavigationListener>()
-    private val onBackPressedCallback: OnBackPressedCallback
-
-    private val destinationStack = ArrayDeque<Destination>()
+    private val onBackPressedCallback: OnBackPressedCallback =
+        onBackPressedDispatcher.addCallback(activity, false) {
+            activity.finish()
+        }
 
     init {
-        onBackPressedCallback =
-            onBackPressedDispatcher.addCallback(activity, true) {
-                if (fragmentManager.backStackEntryCount > 0) {
-                    if (destinationStack.last() == Destination.Main) {
-                        activity.finish()
-                    } else if (destinationStack.last() != Destination.Pin) {
-                        // Prevent backing out from PIN, but not settings pin
-                        destinationStack.removeLast()
-                        fragmentManager.popBackStack()
-                        val fragment =
-                            fragmentManager.findFragmentByTag(
-                                destinationStack.lastOrNull()?.fragmentTag,
-                            )
-                        if (fragment != null) {
-                            notifyListeners(destinationStack.last(), fragment)
-                        }
-                    }
-                } else {
-                    activity.finish()
-                }
+        fragmentManager.addOnBackStackChangedListener {
+            val current = fragmentManager.findFragmentById(R.id.main_browse_fragment)
+            val dest = current?.arguments?.getDestination<Destination>()
+            if (DEBUG) Log.v(TAG, "backStackChanged: current=$current, dest=${dest?.fragmentTag}")
+            if (dest != null) {
+                notifyListeners(dest, current)
             }
+        }
     }
 
     fun navigate(destination: Destination) {
-        if (destination == Destination.Pin &&
-            destinationStack.lastOrNull() == Destination.Pin
-        ) {
+        val current = getCurrentFragment()
+        if (destination == Destination.Pin && current is PinFragment) {
             Log.v(TAG, "Ignore navigate to ${Destination.Pin}")
             return
+        }
+        if (destination == Destination.Pin) {
+            onBackPressedCallback.isEnabled = true
         }
         val fragment =
             when (destination) {
@@ -131,87 +121,62 @@ class NavigationManager(
         val args = Bundle().putDestination(destination)
         fragment.arguments = args
         if (fragment is GuidedStepSupportFragment) {
-            GuidedStepSupportFragment.add(fragmentManager, fragment, android.R.id.content)
+            GuidedStepSupportFragment.add(fragmentManager, fragment, R.id.main_browse_fragment)
         } else {
             fragmentManager.commit {
-                addToBackStack(destination.fragmentTag)
+                if (destination != Destination.Main) {
+                    addToBackStack(destination.fragmentTag)
+                }
                 setCustomAnimations(
                     R.animator.fade_in,
                     R.animator.fade_out,
                     R.animator.fade_in,
                     R.animator.fade_out,
                 )
-                replace(android.R.id.content, fragment, destination.fragmentTag)
+                replace(R.id.main_browse_fragment, fragment, destination.fragmentTag)
             }
         }
-        destinationStack.addLast(destination)
-        notifyListeners(destination, fragment)
     }
 
     fun goBack() {
-        onBackPressedCallback.handleOnBackPressed()
+        fragmentManager.popBackStack()
     }
 
     fun goToMain() {
         fragmentManager.popBackStack(Destination.Main.fragmentTag, 0)
-        destinationStack.removeAll { true }
-        val fragment =
-            fragmentManager.findFragmentByTag(
-                Destination.Main.fragmentTag,
-            )
+        val fragment = getCurrentFragment()
         if (fragment == null) {
             // From setup
             navigate(Destination.Main)
         } else {
-            destinationStack.addLast(Destination.Main)
-            notifyListeners(destinationStack.last(), fragment)
+            notifyListeners(Destination.Main, fragment)
         }
     }
 
     fun clearPinFragment() {
-        Log.v(TAG, "clearPinFragment")
-        if (destinationStack.lastOrNull() == Destination.Pin) {
-            destinationStack.removeLast()
-            fragmentManager.popBackStack()
-            if (destinationStack.isNotEmpty()) {
-                val fragment =
-                    fragmentManager.findFragmentByTag(
-                        destinationStack.lastOrNull()?.fragmentTag,
-                    )!!
-                notifyListeners(destinationStack.last(), fragment)
-                onBackPressedCallback.isEnabled = fragmentManager.backStackEntryCount > 0
-            } else if (destinationStack.lastOrNull() == Destination.SettingsPin) {
-                destinationStack.removeLast()
-                fragmentManager.popBackStack()
-                navigate(Destination.Settings)
-            } else {
-                navigate(Destination.Main)
-            }
+        fragmentManager.popBackStackImmediate()
+        if (getCurrentFragment() == null) {
+            navigate(Destination.Main)
         }
+        onBackPressedCallback.isEnabled = false
+    }
+
+    fun clearSettingsPin() {
+        fragmentManager.popBackStack()
+        navigate(Destination.Settings)
     }
 
     fun addListener(listener: NavigationListener) {
         listeners.add(listener)
     }
 
+    private fun getCurrentFragment(): Fragment? = fragmentManager.findFragmentById(R.id.main_browse_fragment)
+
     private fun notifyListeners(
         destination: Destination,
         fragment: Fragment,
     ) {
         listeners.forEach { it.onNavigate(destination, fragment) }
-    }
-
-    fun saveInstanceState(bundle: Bundle) {
-        bundle.putInt("count", destinationStack.size)
-        destinationStack.forEachIndexed { index, destination ->
-            bundle.putDestination("destination_$index", destination)
-        }
-    }
-
-    fun restoreInstanceState(bundle: Bundle) {
-        for (index in 0..<bundle.getInt("count")) {
-            destinationStack.addLast(bundle.getDestination("destination_$index"))
-        }
     }
 
     interface NavigationListener {
@@ -224,5 +189,6 @@ class NavigationManager(
     companion object {
         const val DESTINATION_ARG = "destination"
         private const val TAG = "NavigationManager"
+        private const val DEBUG = false
     }
 }

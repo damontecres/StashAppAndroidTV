@@ -14,6 +14,7 @@ import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.views.MainTitleView
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
@@ -28,6 +29,8 @@ class RootActivity :
     private var appHasPin by Delegates.notNull<Boolean>()
 
     private var currentFragment: Fragment? = null
+
+    private lateinit var titleView: MainTitleView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,7 +60,7 @@ class RootActivity :
                     navigationManager.navigate(Destination.Main)
                 }
             } else {
-                navigationManager.restoreInstanceState(savedInstanceState)
+//                navigationManager.restoreInstanceState(savedInstanceState)
                 if (appHasPin) {
                     navigationManager.navigate(Destination.Pin)
                 }
@@ -89,29 +92,12 @@ class RootActivity :
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        Log.v(TAG, "onSaveInstanceState")
-        navigationManager.saveInstanceState(outState)
-        super.onSaveInstanceState(outState)
-    }
-
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        Log.v(TAG, "onRestoreInstanceState")
-        navigationManager.restoreInstanceState(savedInstanceState)
-        super.onRestoreInstanceState(savedInstanceState)
-    }
-
     override fun onNavigate(
         destination: Destination,
         fragment: Fragment,
     ) {
-        Log.v(TAG, "onNavigate: destination=${destination.fragmentTag}")
+        Log.v(TAG, "onNavigate: dest=${destination.fragmentTag}")
         currentFragment = fragment
-        if (destination == Destination.Main) {
-            setTheme(R.style.Theme_StashAppAndroidTV)
-        } else {
-            setTheme(R.style.NoTitleTheme)
-        }
     }
 
     override fun onKeyDown(

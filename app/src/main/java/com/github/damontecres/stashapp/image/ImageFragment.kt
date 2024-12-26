@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.views.models.ImageViewModel
@@ -17,7 +18,7 @@ import java.util.Timer
 
 class ImageFragment :
     Fragment(R.layout.activity_image),
-    KeyEvent.Callback {
+    DefaultKeyEventCallback {
     private val viewModel: ImageViewModel by viewModels()
 
     private var timer: Timer? = null
@@ -114,16 +115,6 @@ class ImageFragment :
         }
     }
 
-    override fun onKeyDown(
-        keyCode: Int,
-        event: KeyEvent?,
-    ): Boolean = false
-
-    override fun onKeyLongPress(
-        keyCode: Int,
-        event: KeyEvent?,
-    ): Boolean = false
-
     override fun onKeyUp(
         keyCode: Int,
         event: KeyEvent,
@@ -160,12 +151,6 @@ class ImageFragment :
         }
         return false
     }
-
-    override fun onKeyMultiple(
-        keyCode: Int,
-        count: Int,
-        event: KeyEvent?,
-    ): Boolean = false
 
     companion object {
         fun isDpadKey(keyCode: Int): Boolean =
