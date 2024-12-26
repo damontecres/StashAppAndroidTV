@@ -380,7 +380,7 @@ class MainFragment :
     ): Boolean {
         if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
             val item =
-                currentPosition?.let {
+                currentPosition.let {
                     val row = rowsAdapter.get(it.row) as ListRow
                     row.adapter.get(it.column)
                 }

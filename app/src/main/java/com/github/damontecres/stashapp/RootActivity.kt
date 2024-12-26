@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -11,10 +12,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.views.MainTitleView
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
@@ -29,8 +30,6 @@ class RootActivity :
     private var appHasPin by Delegates.notNull<Boolean>()
 
     private var currentFragment: Fragment? = null
-
-    private lateinit var titleView: MainTitleView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,6 +97,15 @@ class RootActivity :
     ) {
         Log.v(TAG, "onNavigate: dest=${destination.fragmentTag}")
         currentFragment = fragment
+    }
+
+    @SuppressLint("RestrictedApi")
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val fragment = currentFragment
+        if (fragment is KeyEventDispatcher) {
+            return fragment.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     override fun onKeyDown(

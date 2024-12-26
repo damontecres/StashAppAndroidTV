@@ -38,6 +38,7 @@ import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.StashClient
@@ -70,7 +71,8 @@ import java.time.format.DateTimeParseException
 @UnstableApi
 abstract class PlaybackFragment(
     @LayoutRes layoutId: Int = R.layout.video_playback,
-) : Fragment(layoutId) {
+) : Fragment(layoutId),
+    KeyEventDispatcher {
     protected val serverViewModel: ServerViewModel by activityViewModels()
     protected val viewModel: PlaybackViewModel by viewModels()
     protected val filterViewModel: VideoFilterViewModel by viewModels()
@@ -486,7 +488,7 @@ abstract class PlaybackFragment(
                                 Destination.SearchFor(
                                     PlaybackFragment::class.simpleName!!,
                                     1L,
-                                    DataType.MARKER,
+                                    DataType.TAG,
                                     "for primary tag for scene marker",
                                 ),
                             )
@@ -633,7 +635,7 @@ abstract class PlaybackFragment(
         previewTimeBar.requestFocus()
     }
 
-    fun dispatchKeyEvent(event: KeyEvent): Boolean = videoView.dispatchKeyEvent(event)
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean = videoView.dispatchKeyEvent(event)
 
     inner class AmbientPlaybackListener : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
