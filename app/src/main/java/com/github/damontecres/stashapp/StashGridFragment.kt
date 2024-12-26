@@ -36,7 +36,7 @@ import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.StashFindFilter
-import com.github.damontecres.stashapp.filter.CreateFilterActivity
+import com.github.damontecres.stashapp.filter.CreateFilterFragment
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.NullPresenter
@@ -465,9 +465,9 @@ class StashGridFragment() :
             filterButton.nextFocusUpId = R.id.tab_layout
             filterButton.setOnClickListener {
                 val intent =
-                    Intent(requireContext(), CreateFilterActivity::class.java)
+                    Intent(requireContext(), CreateFilterFragment::class.java)
                         .putDataType(dataType)
-                        .putFilterArgs(CreateFilterActivity.INTENT_STARTING_FILTER, filterArgs)
+                        .putFilterArgs(CreateFilterFragment.INTENT_STARTING_FILTER, filterArgs)
                 requireContext().startActivity(intent)
             }
         }

@@ -42,6 +42,8 @@ class CreateFilterViewModel : ViewModel() {
 
     private val currentSavedFilters = mutableMapOf<String, String>()
 
+    val ready = MutableLiveData(false)
+
     /**
      * Initialize the state
      */
@@ -49,8 +51,9 @@ class CreateFilterViewModel : ViewModel() {
         dataType: DataType,
         initialFilter: StashDataFilter?,
         initialFindFilter: StashFindFilter?,
-        callback: () -> Unit,
     ) {
+        ready.value = false
+
         this.dataType.value = dataType
         this.objectFilter.value = initialFilter ?: dataType.filterType.createInstance()
         this.findFilter.value =
@@ -66,7 +69,7 @@ class CreateFilterViewModel : ViewModel() {
                     storedItems[DataTypeId(dt, item.id)] = NameDescription(item)
                 }
             }
-            callback()
+            ready.value = true
         }
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
             queryEngine.getSavedFilters(dataType).forEach {

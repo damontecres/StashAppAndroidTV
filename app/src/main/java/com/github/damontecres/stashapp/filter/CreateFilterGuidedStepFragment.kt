@@ -8,7 +8,7 @@ import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.views.getString
 
 abstract class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
-    protected val viewModel by activityViewModels<CreateFilterViewModel>()
+    protected val viewModel: CreateFilterViewModel by activityViewModels()
 
     fun nextStep(step: GuidedStepSupportFragment) {
         add(requireActivity().supportFragmentManager, step, android.R.id.content)

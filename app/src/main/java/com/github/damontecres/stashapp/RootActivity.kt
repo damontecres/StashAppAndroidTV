@@ -101,7 +101,7 @@ class RootActivity :
         destination: Destination,
         fragment: Fragment,
     ) {
-        Log.v(TAG, "onNavigate: destination=$destination")
+        Log.v(TAG, "onNavigate: destination=${destination.fragmentTag}")
         currentFragment = fragment
         if (destination == Destination.Main) {
             setTheme(R.style.Theme_StashAppAndroidTV)

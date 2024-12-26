@@ -1,31 +1,30 @@
 package com.github.damontecres.stashapp.filter
 
-import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo.api.Optional
-import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SaveFilterInput
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.putDataType
-import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
 import com.github.damontecres.stashapp.views.formatNumber
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -34,6 +33,8 @@ import kotlinx.coroutines.launch
  * Assumes that [CreateFilterViewModel.initialize] has been called already
  */
 class CreateFilterStep : CreateFilterGuidedStepFragment() {
+    private val serverViewModel: ServerViewModel by activityViewModels()
+
     private lateinit var queryEngine: QueryEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -238,12 +239,9 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
             val newSavedFilter = mutationEngine.saveFilter(newFilterInput)
             Log.i(TAG, "New SavedFilter: ${newSavedFilter.id}")
         }
-        finishGuidedStepSupportFragments()
-        val intent =
-            Intent(requireContext(), FilterListActivity::class.java)
-                .putDataType(filterArgs.dataType)
-                .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
-        requireContext().startActivity(intent)
+
+        serverViewModel.navigationManager.goBack()
+        serverViewModel.navigationManager.navigate(Destination.Filter(filterArgs))
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {

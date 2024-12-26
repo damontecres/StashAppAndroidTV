@@ -18,62 +18,67 @@ import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Release
 import kotlinx.serialization.Serializable
+import java.util.concurrent.atomic.AtomicLong
 
 @Serializable
-sealed interface Destination {
-    @Serializable
-    data object Main : Destination
+sealed class Destination {
+    private val destId = counter.getAndIncrement()
+
+    val fragmentTag = "${this::class.simpleName}_$destId"
 
     @Serializable
-    data object Settings : Destination
+    data object Main : Destination()
 
     @Serializable
-    data object Search : Destination
+    data object Settings : Destination()
 
     @Serializable
-    data object Pin : Destination
+    data object Search : Destination()
 
     @Serializable
-    data object SettingsPin : Destination
+    data object Pin : Destination()
+
+    @Serializable
+    data object SettingsPin : Destination()
 
     @Serializable
     data class Item(
         val dataType: DataType,
         val id: String,
-    ) : Destination
+    ) : Destination()
 
     @Serializable
     data class MarkerDetails(
         val id: String,
         val sceneId: String,
-    ) : Destination
+    ) : Destination()
 
     @Serializable
     data class Playback(
         val sceneId: String,
         val position: Long,
         val mode: PlaybackMode,
-    ) : Destination
+    ) : Destination()
 
     @Serializable
     data class Slideshow(
         val filterArgs: FilterArgs,
         val position: Int,
         val automatic: Boolean,
-    ) : Destination
+    ) : Destination()
 
     @Serializable
     data class Filter(
         val filterArgs: FilterArgs,
         val scrollToNextPage: Boolean = false,
-    ) : Destination
+    ) : Destination()
 
     @Serializable
     data class Playlist(
         val filterArgs: FilterArgs,
         val position: Int,
         val duration: Long? = null,
-    ) : Destination
+    ) : Destination()
 
     @Serializable
     data class SearchFor(
@@ -81,23 +86,29 @@ sealed interface Destination {
         val sourceId: Long,
         val dataType: DataType,
         val title: String? = null,
-    ) : Destination
+    ) : Destination()
 
     @Serializable
     data class UpdateMarker(
         val markerId: String,
         val sceneId: String,
-    ) : Destination
+    ) : Destination()
 
     @Serializable
     data class UpdateApp(
         val release: Release,
-    ) : Destination
+    ) : Destination()
 
     @Serializable
     data class ManageServers(
         val overrideReadOnly: Boolean,
-    ) : Destination
+    ) : Destination()
+
+    @Serializable
+    data class CreateFilter(
+        val dataType: DataType,
+        val startingFilter: FilterArgs?,
+    ) : Destination()
 
     /**
      * An arbitrary fragment that requires no arguments
@@ -105,9 +116,11 @@ sealed interface Destination {
     @Serializable
     data class Fragment(
         val className: String,
-    ) : Destination
+    ) : Destination()
 
     companion object {
+        private val counter = AtomicLong(0)
+
         fun fromStashData(item: StashData): Item = Item(getDataType(item), item.id)
 
         fun getDataType(item: StashData): DataType =

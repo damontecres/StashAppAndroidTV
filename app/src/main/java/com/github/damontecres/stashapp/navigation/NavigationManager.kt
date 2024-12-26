@@ -23,6 +23,7 @@ import com.github.damontecres.stashapp.StudioFragment
 import com.github.damontecres.stashapp.TagFragment
 import com.github.damontecres.stashapp.UpdateAppFragment
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.filter.CreateFilterFragment
 import com.github.damontecres.stashapp.image.ImageFragment
 import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
@@ -46,11 +47,6 @@ class NavigationManager(
     init {
         onBackPressedCallback =
             onBackPressedDispatcher.addCallback(activity, true) {
-                Log.v(
-                    TAG,
-                    "fragmentManager.backStackEntryCount=${fragmentManager.backStackEntryCount}, " +
-                        "destinationStack.lastOrNull()=${destinationStack.lastOrNull()}",
-                )
                 if (fragmentManager.backStackEntryCount > 0) {
                     if (destinationStack.last() == Destination.Main) {
                         activity.finish()
@@ -60,10 +56,9 @@ class NavigationManager(
                         fragmentManager.popBackStack()
                         val fragment =
                             fragmentManager.findFragmentByTag(
-                                destinationStack.lastOrNull()?.toString(),
+                                destinationStack.lastOrNull()?.fragmentTag,
                             )
                         if (fragment != null) {
-                            Log.v(TAG, "back: fragment=$fragment")
                             notifyListeners(destinationStack.last(), fragment)
                         }
                     }
@@ -90,6 +85,7 @@ class NavigationManager(
 
                 is Destination.UpdateApp -> UpdateAppFragment()
                 is Destination.ManageServers -> ManageServersFragment()
+                is Destination.CreateFilter -> CreateFilterFragment()
 
                 is Destination.Item -> {
                     when (destination.dataType) {
@@ -135,12 +131,11 @@ class NavigationManager(
             GuidedStepSupportFragment.add(fragmentManager, fragment, android.R.id.content)
         } else {
             fragmentManager.commit {
-                addToBackStack(destination.toString())
+                addToBackStack(destination.fragmentTag)
                 // TODO animation
-                replace(android.R.id.content, fragment, destination.toString())
+                replace(android.R.id.content, fragment, destination.fragmentTag)
             }
         }
-        Log.v(TAG, "next: fragment=$fragment")
         destinationStack.addLast(destination)
         notifyListeners(destination, fragment)
     }
@@ -150,12 +145,12 @@ class NavigationManager(
     }
 
     fun goToMain() {
-        fragmentManager.popBackStack(Destination.Main.toString(), 0)
+        fragmentManager.popBackStack(Destination.Main.fragmentTag, 0)
         destinationStack.removeAll { true }
         destinationStack.addLast(Destination.Main)
         val fragment =
             fragmentManager.findFragmentByTag(
-                destinationStack.last().toString(),
+                destinationStack.last().fragmentTag,
             )!!
         notifyListeners(destinationStack.last(), fragment)
     }
@@ -168,7 +163,7 @@ class NavigationManager(
             if (destinationStack.isNotEmpty()) {
                 val fragment =
                     fragmentManager.findFragmentByTag(
-                        destinationStack.lastOrNull()?.toString(),
+                        destinationStack.lastOrNull()?.fragmentTag,
                     )!!
                 notifyListeners(destinationStack.last(), fragment)
                 onBackPressedCallback.isEnabled = fragmentManager.backStackEntryCount > 0

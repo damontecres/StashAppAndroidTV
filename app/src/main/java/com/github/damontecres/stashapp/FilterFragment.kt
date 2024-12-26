@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -19,7 +18,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.filter.CreateFilterActivity
 import com.github.damontecres.stashapp.filter.FilterOptions
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
@@ -31,8 +29,6 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
-import com.github.damontecres.stashapp.util.putDataType
-import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -192,17 +188,16 @@ class FilterFragment :
                         position
                     }
                 if (adapter.createEnabled && (position == 0 || position == 1)) {
-                    TODO()
-                    val intent =
-                        Intent(requireContext(), CreateFilterActivity::class.java)
-                            .putDataType(dataType)
-                    if (position == 1) {
-                        val fragment =
-                            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
-                        val filter = fragment.filterArgs
-                        intent.putFilterArgs(CreateFilterActivity.INTENT_STARTING_FILTER, filter)
-                    }
-                    requireContext().startActivity(intent)
+                    val fragment =
+                        childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
+                    val destination =
+                        if (position == 1) {
+                            // Create from current
+                            Destination.CreateFilter(fragment.dataType, fragment.filterArgs)
+                        } else {
+                            Destination.CreateFilter(fragment.dataType, null)
+                        }
+                    serverViewModel.navigationManager.navigate(destination)
                 } else {
                     val savedFilter =
                         savedFilters[lookupPos]
