@@ -19,6 +19,7 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
@@ -268,12 +269,13 @@ class UpdateChecker {
             }
         }
     }
-
-    data class Release(
-        val version: Version,
-        val downloadUrl: String?,
-        val publishedAt: String?,
-        val body: String?,
-        val notes: List<String>,
-    )
 }
+
+@Serializable
+data class Release(
+    val version: Version,
+    val downloadUrl: String?,
+    val publishedAt: String?,
+    val body: String?,
+    val notes: List<String>,
+)

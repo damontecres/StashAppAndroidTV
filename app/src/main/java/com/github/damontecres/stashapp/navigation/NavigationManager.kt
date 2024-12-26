@@ -6,6 +6,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
+import androidx.leanback.app.GuidedStepSupportFragment
 import com.github.damontecres.stashapp.FilterFragment
 import com.github.damontecres.stashapp.GalleryFragment
 import com.github.damontecres.stashapp.GroupFragment
@@ -16,14 +17,18 @@ import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.SearchForFragment
+import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.StashSearchFragment
 import com.github.damontecres.stashapp.StudioFragment
 import com.github.damontecres.stashapp.TagFragment
+import com.github.damontecres.stashapp.UpdateAppFragment
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.image.ImageFragment
 import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
 import com.github.damontecres.stashapp.playback.PlaylistScenesFragment
+import com.github.damontecres.stashapp.setup.ManageServersFragment
+import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
@@ -50,7 +55,7 @@ class NavigationManager(
                     if (destinationStack.last() == Destination.Main) {
                         activity.finish()
                     } else if (destinationStack.last() != Destination.Pin) {
-                        // Prevent backing out from PIN
+                        // Prevent backing out from PIN, but not settings pin
                         destinationStack.removeLast()
                         fragmentManager.popBackStack()
                         val fragment =
@@ -79,8 +84,12 @@ class NavigationManager(
             when (destination) {
                 Destination.Main -> MainFragment()
                 Destination.Search -> StashSearchFragment()
-                Destination.Settings -> TODO()
+                Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()
+                Destination.SettingsPin -> SettingsPinEntryFragment()
+
+                is Destination.UpdateApp -> UpdateAppFragment()
+                is Destination.ManageServers -> ManageServersFragment()
 
                 is Destination.Item -> {
                     when (destination.dataType) {
@@ -122,10 +131,14 @@ class NavigationManager(
             }
         val args = Bundle().putDestination(destination)
         fragment.arguments = args
-        fragmentManager.commit {
-            addToBackStack(destination.toString())
-            // TODO animation
-            replace(android.R.id.content, fragment, destination.toString())
+        if (fragment is GuidedStepSupportFragment) {
+            GuidedStepSupportFragment.add(fragmentManager, fragment, android.R.id.content)
+        } else {
+            fragmentManager.commit {
+                addToBackStack(destination.toString())
+                // TODO animation
+                replace(android.R.id.content, fragment, destination.toString())
+            }
         }
         Log.v(TAG, "next: fragment=$fragment")
         destinationStack.addLast(destination)
@@ -159,6 +172,10 @@ class NavigationManager(
                     )!!
                 notifyListeners(destinationStack.last(), fragment)
                 onBackPressedCallback.isEnabled = fragmentManager.backStackEntryCount > 0
+            } else if (destinationStack.lastOrNull() == Destination.SettingsPin) {
+                destinationStack.removeLast()
+                fragmentManager.popBackStack()
+                navigate(Destination.Settings)
             } else {
                 navigate(Destination.Main)
             }
@@ -195,6 +212,8 @@ class NavigationManager(
             fragment: Fragment,
         )
     }
+
+    private fun Destination?.isPin() = this != null && (this == Destination.Pin || this == Destination.SettingsPin)
 
     companion object {
         const val DESTINATION_ARG = "destination"

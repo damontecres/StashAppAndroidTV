@@ -46,9 +46,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SettingsActivity"
-            android:exported="false" />
-        <activity
             android:name=".FilterListActivity"
             android:exported="false"
             android:theme="@style/NoTitleTheme" />

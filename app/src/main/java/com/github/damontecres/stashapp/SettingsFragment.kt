@@ -12,7 +12,6 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.preference.LeanbackEditTextPreferenceDialogFragmentCompat
 import androidx.leanback.preference.LeanbackPreferenceFragmentCompat
 import androidx.leanback.preference.LeanbackSettingsFragmentCompat
@@ -32,7 +31,6 @@ import com.github.damontecres.stashapp.api.type.JobStatus
 import com.github.damontecres.stashapp.api.type.JobStatusUpdateType
 import com.github.damontecres.stashapp.data.JobResult
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.setup.readonly.ReadOnlyPinConfigFragment
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.LongClickPreference
@@ -120,7 +118,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
         val startPreferenceFragmentFunc: (fragment: LeanbackPreferenceFragmentCompat) -> Unit,
         val startImmersiveFunc: (fragment: Fragment) -> Unit,
     ) : LeanbackPreferenceFragmentCompat() {
-        private val viewModel: ServerViewModel by activityViewModels()
+        private val serverViewModel: ServerViewModel by activityViewModels()
         private var subscriptionJob: Job? = null
 
         override fun onCreatePreferences(
@@ -135,7 +133,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         requireContext(),
                         true,
                         StashClient.getApolloClient(
-                            viewModel.currentServer.value!!,
+                            serverViewModel.currentServer.value!!,
                         ),
                     )
                 }
@@ -144,10 +142,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val manageServers = findPreference<Preference>("manageServers")
             manageServers!!.setOnPreferenceClickListener {
-                GuidedStepSupportFragment.add(
-                    requireActivity().supportFragmentManager,
-                    ManageServersFragment(overrideReadOnly = true),
-                )
+                serverViewModel.navigationManager.navigate(Destination.ManageServers(true))
                 true
             }
 
@@ -177,7 +172,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             versionPref.setOnPreferenceClickListener {
                 if (clickCount > 2) {
                     clickCount = 0
-                    viewModel.navigationManager.navigate(Destination.Fragment(DebugFragment::class.qualifiedName!!))
+                    serverViewModel.navigationManager.navigate(Destination.Fragment(DebugFragment::class.qualifiedName!!))
                 } else {
                     clickCount++
                 }
@@ -192,9 +187,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         val release = UpdateChecker.getLatestRelease(requireContext())
                         if (release != null) {
                             if (release.version.isGreaterThan(installedVersion)) {
-                                GuidedStepSupportFragment.add(
-                                    requireActivity().supportFragmentManager,
-                                    UpdateAppFragment(release),
+                                serverViewModel.navigationManager.navigate(
+                                    Destination.UpdateApp(
+                                        release,
+                                    ),
                                 )
                             } else {
                                 Toast
@@ -219,10 +215,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                         val release = UpdateChecker.getLatestRelease(requireContext())
                         if (release != null) {
-                            GuidedStepSupportFragment.add(
-                                requireActivity().supportFragmentManager,
-                                UpdateAppFragment(release),
-                            )
+                            serverViewModel.navigationManager.navigate(Destination.UpdateApp(release))
                         } else {
                             Toast
                                 .makeText(
@@ -259,7 +252,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             super.onViewCreated(view, savedInstanceState)
             setTitle(getString(R.string.stashapp_settings))
 
-            viewModel.currentServer.observe(viewLifecycleOwner) {
+            serverViewModel.currentServer.observe(viewLifecycleOwner) {
                 if (it != null) {
                     refresh(it)
                 }
@@ -491,10 +484,10 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                             val jobId =
                                 CompanionPlugin.installPlugin(
-                                    MutationEngine(viewModel.currentServer.value!!),
+                                    MutationEngine(serverViewModel.currentServer.value!!),
                                 )
                             val queryEngine =
-                                QueryEngine(viewModel.currentServer.value!!)
+                                QueryEngine(serverViewModel.currentServer.value!!)
                             val result = queryEngine.waitForJob(jobId)
                             withContext(Dispatchers.Main) {
                                 if (result is JobResult.Failure) {

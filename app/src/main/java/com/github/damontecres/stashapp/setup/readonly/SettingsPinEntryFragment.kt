@@ -4,15 +4,17 @@ import android.os.Bundle
 import android.text.InputType
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
-class ReadOnlyPinEntryFragment(
-    private val callback: () -> Unit,
-) : GuidedStepSupportFragment() {
+class SettingsPinEntryFragment : GuidedStepSupportFragment() {
+    private val serverViewModel: ServerViewModel by activityViewModels()
+
     override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
@@ -48,30 +50,13 @@ class ReadOnlyPinEntryFragment(
         )
     }
 
-//    override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-//        val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-//        if (action.id == ACTION_PIN) {
-//            if (action.editDescription.isNotNullOrBlank()) {
-//                val enteredPIN = action.editDescription.toString().toIntOrNull()
-//
-//                if (preferences.getBoolean(getString(R.string.pref_key_pin_code_auto), false) &&
-//                    preferences.getInt(getString(R.string.pref_key_read_only_mode_pin), -1) == enteredPIN
-//                ) {
-//                    callback()
-//                }
-//                return GuidedAction.ACTION_ID_OK
-//            }
-//        }
-//        return GuidedAction.ACTION_ID_CURRENT
-//    }
-
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
             val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
             val enteredPIN = findActionById(ACTION_PIN).editDescription.toString().ifBlank { null }
             val pin = preferences.getString(getString(R.string.pref_key_read_only_mode_pin), null)
             if (enteredPIN != null && pin == enteredPIN) {
-                callback()
+                serverViewModel.navigationManager.clearPinFragment()
             } else {
                 Toast.makeText(requireContext(), "Incorrect PIN", Toast.LENGTH_SHORT).show()
             }

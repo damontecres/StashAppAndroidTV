@@ -1,24 +1,20 @@
 package com.github.damontecres.stashapp.views
 
 import android.content.Context
-import android.content.Intent
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RelativeLayout
-import androidx.core.content.ContextCompat.startActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
-import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
 import androidx.lifecycle.ViewModelProvider
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.ServerPreferences
 import com.github.damontecres.stashapp.util.StashServer
@@ -62,18 +58,25 @@ class MainTitleView(
         val root = LayoutInflater.from(context).inflate(R.layout.title, this)
         iconButton = root.findViewById(R.id.icon)
         iconButton.setOnClickListener {
-            GuidedStepSupportFragment.add(
-                findFragment<Fragment>().parentFragmentManager,
-                ManageServersFragment(),
-            )
+            serverViewModel.navigationManager.navigate(Destination.ManageServers(false))
         }
         iconButton.onFocusChangeListener = onFocusChangeListener
 
         searchButton = root.findViewById(R.id.search_button)
         mPreferencesView = root.findViewById(R.id.settings_button)
         mPreferencesView.setOnClickListener {
-            val intent = Intent(context, SettingsActivity::class.java)
-            startActivity(context, intent, null)
+            val preferences = PreferenceManager.getDefaultSharedPreferences(root.context)
+            val destination =
+                if (preferences.getBoolean(
+                        root.context.getString(R.string.pref_key_read_only_mode),
+                        false,
+                    )
+                ) {
+                    Destination.SettingsPin
+                } else {
+                    Destination.Settings
+                }
+            serverViewModel.navigationManager.navigate(destination)
         }
 
         searchButton.onFocusChangeListener = onFocusChangeListener

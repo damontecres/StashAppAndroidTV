@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.Release
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -31,6 +32,9 @@ sealed interface Destination {
 
     @Serializable
     data object Pin : Destination
+
+    @Serializable
+    data object SettingsPin : Destination
 
     @Serializable
     data class Item(
@@ -83,6 +87,16 @@ sealed interface Destination {
     data class UpdateMarker(
         val markerId: String,
         val sceneId: String,
+    ) : Destination
+
+    @Serializable
+    data class UpdateApp(
+        val release: Release,
+    ) : Destination
+
+    @Serializable
+    data class ManageServers(
+        val overrideReadOnly: Boolean,
     ) : Destination
 
     /**

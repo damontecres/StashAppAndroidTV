@@ -9,19 +9,26 @@ import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.util.Release
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.Version
+import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
-class UpdateAppFragment(
-    private val release: UpdateChecker.Release,
-) : GuidedStepSupportFragment() {
+class UpdateAppFragment : GuidedStepSupportFragment() {
     private val serverViewModel: ServerViewModel by activityViewModels()
+
+    private lateinit var release: Release
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        release = requireArguments().getDestination<Destination.UpdateApp>().release
+        super.onCreate(savedInstanceState)
+    }
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())

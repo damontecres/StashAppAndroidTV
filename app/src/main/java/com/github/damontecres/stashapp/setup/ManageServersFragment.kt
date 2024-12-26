@@ -7,18 +7,27 @@ import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.models.ServerViewModel
+import kotlin.properties.Delegates
 
-class ManageServersFragment(
-    private val overrideReadOnly: Boolean = false,
-) : GuidedStepSupportFragment() {
+class ManageServersFragment : GuidedStepSupportFragment() {
     private val viewModel: ServerViewModel by activityViewModels()
+
+    private var overrideReadOnly by Delegates.notNull<Boolean>()
 
     private var currentServer: StashServer? = null
     private lateinit var allServers: List<StashServer>
     private lateinit var otherServers: List<StashServer>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        overrideReadOnly =
+            requireArguments().getDestination<Destination.ManageServers>().overrideReadOnly
+        super.onCreate(savedInstanceState)
+    }
 
     override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep
 
@@ -111,13 +120,13 @@ class ManageServersFragment(
             val index = action.id - ACTION_SWITCH_OFFSET
             val server = otherServers[index.toInt()]
             viewModel.switchServer(server)
-            finishGuidedStepSupportFragments()
+            viewModel.navigationManager.goToMain()
         } else if (action.id >= ACTION_REMOVE_OFFSET) {
             // Remove a server
             val index = action.id - ACTION_REMOVE_OFFSET
             val server = otherServers[index.toInt()]
             StashServer.removeStashServer(requireContext(), server)
-            finishGuidedStepSupportFragments()
+            viewModel.navigationManager.goToMain()
         }
         return true
     }
