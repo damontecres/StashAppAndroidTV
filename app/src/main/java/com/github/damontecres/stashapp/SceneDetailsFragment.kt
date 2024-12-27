@@ -155,8 +155,10 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             ListRowManager.SparseArrayRowModifier(mAdapter, MARKER_POS),
             ArrayObjectAdapter(),
         ) { markerIds ->
-            val removed = sceneData!!.scene_markers.map { it.id } - markerIds.toSet()
+            val removed = sceneData!!.scene_markers.map { it.id }.toSet() - markerIds.toSet()
             removed.forEach { mutationEngine.deleteMarker(it) }
+            sceneData =
+                sceneData!!.copy(scene_markers = sceneData!!.scene_markers.filter { it.id !in removed })
             queryEngine.findMarkersInScene(sceneData!!.id)
         }
 
