@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.util
 
 import android.util.Log
-import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Mutation
 import com.apollographql.apollo.api.Optional
@@ -62,8 +61,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class MutationEngine(
     server: StashServer,
-    client: ApolloClient = StashClient.getApolloClient(server),
-) : StashEngine(server, client) {
+) : StashEngine(server) {
     private val readOnlyMode = readOnlyModeEnabled()
 
     suspend fun <D : Mutation.Data> executeMutation(

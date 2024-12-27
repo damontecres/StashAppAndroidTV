@@ -580,7 +580,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             val networkTimeoutPref = findPreference<Preference>("networkTimeout")!!
             networkTimeoutPref.setOnPreferenceClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    StashClient.invalidate()
                     testStashConnection(
                         requireContext(),
                         true,

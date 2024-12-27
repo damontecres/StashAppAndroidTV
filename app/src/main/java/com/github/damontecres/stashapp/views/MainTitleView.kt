@@ -17,7 +17,6 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.ServerPreferences
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 /**
@@ -131,25 +130,17 @@ class MainTitleView(
         galleriesButton = root.findViewById(R.id.galleries_button)
         galleriesButton.setOnClickListener(ClickListener(DataType.GALLERY))
         galleriesButton.onFocusChangeListener = onFocusChangeListener
-
-        refreshMenuItems()
     }
 
     override fun getTitleViewAdapter(): TitleViewAdapter = mTitleViewAdapter
 
-    private fun getMenuItems(): Set<String> {
-        val server = StashServer.getCurrentStashServer()
-        if (server != null) {
-            return server.serverPreferences.preferences.getStringSet(
-                ServerPreferences.PREF_INTERFACE_MENU_ITEMS,
-                ServerPreferences.DEFAULT_MENU_ITEMS,
-            )!!
-        }
-        return setOf()
-    }
-
-    fun refreshMenuItems() {
-        val menuItems = getMenuItems()
+    fun refreshMenuItems(serverPreferences: ServerPreferences) {
+        val menuItems =
+            serverPreferences.preferences
+                .getStringSet(
+                    ServerPreferences.PREF_INTERFACE_MENU_ITEMS,
+                    ServerPreferences.DEFAULT_MENU_ITEMS,
+                )!!
 
         fun getVis(key: String): Int =
             if (key in menuItems) {

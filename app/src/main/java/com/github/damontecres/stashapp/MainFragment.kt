@@ -39,7 +39,6 @@ import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.MainTitleView
 import com.github.damontecres.stashapp.views.models.ServerViewModel
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -58,6 +57,7 @@ class MainFragment :
     private lateinit var backCallback: OnBackPressedCallback
 
     private var currentPosition = Position(-1, -1)
+    private var dataFetchedFor: StashServer? = null
 
     @Volatile
     private var fetchingData = false
@@ -72,8 +72,6 @@ class MainFragment :
         adapter = rowsAdapter
 
         if (savedInstanceState == null) {
-            Log.v(TAG, "Setting up observers")
-            setupObservers()
             viewModel.maybeShowUpdate(requireContext())
         }
     }
@@ -110,6 +108,7 @@ class MainFragment :
                 backCallback.isEnabled = !isFocused
             }
         }
+        setupObservers()
         setOnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
             val rowNum = rowsAdapter.indexOf(row)
             val col =
@@ -122,34 +121,39 @@ class MainFragment :
     }
 
     private fun setupObservers() {
-        var firstTime = true
-        viewModel.currentSettingsHash.observe(this) {
-            viewLifecycleOwner.lifecycleScope.launch(
-                StashCoroutineExceptionHandler { ex ->
-                    Toast.makeText(
-                        requireContext(),
-                        "Exception: ${ex.message}",
-                        Toast.LENGTH_LONG,
-                    )
-                },
-            ) {
-                Log.d(TAG, "Settings hash changed: $it")
-                if (!firstTime) {
-                    clearData()
-                    rowsAdapter.clear()
+//        var firstTime = true
+//        viewModel.currentSettingsHash.observe(viewLifecycleOwner) {
+//            viewLifecycleOwner.lifecycleScope.launch(
+//                StashCoroutineExceptionHandler { ex ->
+//                    Toast.makeText(
+//                        requireContext(),
+//                        "Exception: ${ex.message}",
+//                        Toast.LENGTH_LONG,
+//                    )
+//                },
+//            ) {
+//                Log.d(TAG, "Settings hash changed: $it")
+//                if (!firstTime) {
+//                    clearData()
+//                    rowsAdapter.clear()
+//
+//                    val server = viewModel.currentServer.value!!
+//                    server.updateServerPrefs()
+//                    val mainTitleView =
+//                        requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
+//                    mainTitleView.refreshMenuItems()
+//                    fetchData(server)
+//                }
+//                firstTime = false
+//            }
+//        }
 
-                    val server = viewModel.currentServer.value!!
-                    server.updateServerPrefs()
-                    val mainTitleView =
-                        requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-                    mainTitleView.refreshMenuItems()
-                    fetchData(server)
-                }
-                firstTime = false
+        viewModel.currentServer.observe(viewLifecycleOwner) { newServer ->
+            if (dataFetchedFor == newServer) {
+                return@observe
+            } else {
+                dataFetchedFor = newServer
             }
-        }
-
-        viewModel.currentServer.observe(this) { newServer ->
             viewLifecycleOwner.lifecycleScope.launch(
                 StashCoroutineExceptionHandler { ex ->
                     Toast.makeText(
@@ -160,6 +164,7 @@ class MainFragment :
                 },
             ) {
                 Log.d(TAG, "Server changed")
+
                 if (newServer != null) {
                     val result =
                         testStashConnection(
@@ -168,10 +173,9 @@ class MainFragment :
                             StashClient.getApolloClient(newServer),
                         )
                     if (result.status == TestResultStatus.SUCCESS) {
-                        newServer.updateServerPrefs()
                         val mainTitleView =
                             requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-                        mainTitleView.refreshMenuItems()
+                        mainTitleView.refreshMenuItems(newServer.serverPreferences)
                         fetchData(newServer)
                     } else if (result.status == TestResultStatus.UNSUPPORTED_VERSION) {
                         clearData()
@@ -240,22 +244,9 @@ class MainFragment :
     }
 
     private fun fetchData(server: StashServer) {
-        if (fetchingData) {
-            return
-        }
-        fetchingData = true
         clearData()
         viewLifecycleOwner.lifecycleScope.launch(
-            Dispatchers.IO +
-                CoroutineExceptionHandler { _, ex ->
-                    Log.e(TAG, "Exception in fetchData coroutine", ex)
-                    Toast
-                        .makeText(
-                            requireContext(),
-                            "Error fetching data: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                },
+            Dispatchers.IO + StashCoroutineExceptionHandler(autoToast = true),
         ) {
             try {
                 val serverVersion = server.serverPreferences.serverVersion
@@ -273,20 +264,17 @@ class MainFragment :
                     try {
                         val queryEngine = QueryEngine(server)
                         val filterParser = FilterParser(serverVersion)
-
-                        val config = queryEngine.getServerConfiguration()
-                        server.serverPreferences.updatePreferences(config)
-
-                        val ui = config.configuration.ui as Map<*, *>
                         val frontPageContent =
-                            ui.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
+                            server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
                         if (frontPageContent == null) {
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Unable to find front page content! Check the Web UI.",
-                                    Toast.LENGTH_LONG,
-                                ).show()
+                            withContext(Dispatchers.Main) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Unable to find front page content! Check the Web UI.",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                            }
                             return@launch
                         }
                         val pageSize =

@@ -133,6 +133,7 @@ class NavigationManager(
         if (fragment is GuidedStepSupportFragment) {
             GuidedStepSupportFragment.add(fragmentManager, fragment, R.id.main_browse_fragment)
         } else {
+            if (DEBUG) Log.v(TAG, "Setting ${destination.fragmentTag}: $fragment")
             fragmentManager.commit {
                 if (destination != Destination.Main) {
                     addToBackStack(destination.fragmentTag)

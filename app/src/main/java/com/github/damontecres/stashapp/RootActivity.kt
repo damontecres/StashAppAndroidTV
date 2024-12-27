@@ -47,12 +47,13 @@ class RootActivity :
 
         serverViewModel.navigationManager = navigationManager
 
-        serverViewModel.refresh()
+        serverViewModel.init()
         serverViewModel.currentServer.observe(this) { server ->
             if (server != null) {
                 if (savedInstanceState == null) {
                     if (!appHasPin) {
-                        navigationManager.navigate(Destination.Main)
+                        serverViewModel.currentServer.removeObservers(this@RootActivity)
+                        navigationManager.goToMain()
                     }
                 }
             } else {

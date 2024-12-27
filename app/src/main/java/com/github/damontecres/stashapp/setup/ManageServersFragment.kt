@@ -46,7 +46,7 @@ class ManageServersFragment : GuidedStepSupportFragment() {
         super.onCreateActions(actions, savedInstanceState)
 
         allServers = StashServer.getAll(requireContext())
-        currentServer = StashServer.getCurrentStashServer(requireContext())
+        currentServer = viewModel.currentServer.value
         otherServers =
             if (currentServer != null) {
                 val temp = allServers.toMutableList()
@@ -120,13 +120,15 @@ class ManageServersFragment : GuidedStepSupportFragment() {
             val index = action.id - ACTION_SWITCH_OFFSET
             val server = otherServers[index.toInt()]
             viewModel.switchServer(server)
-            viewModel.navigationManager.goToMain()
+//            viewModel.navigationManager.goToMain()
+            finishGuidedStepSupportFragments()
         } else if (action.id >= ACTION_REMOVE_OFFSET) {
             // Remove a server
             val index = action.id - ACTION_REMOVE_OFFSET
             val server = otherServers[index.toInt()]
             StashServer.removeStashServer(requireContext(), server)
-            viewModel.navigationManager.goToMain()
+//            viewModel.navigationManager.goToMain()
+            finishGuidedStepSupportFragments()
         }
         return true
     }

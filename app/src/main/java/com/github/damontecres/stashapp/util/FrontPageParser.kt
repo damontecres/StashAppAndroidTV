@@ -47,8 +47,8 @@ class FrontPageParser(
                 val filterType =
                     frontPageFilter["__typename"]?.toString()?.lowercase()
             ) {
-                "customfilter" -> addCustomFilterRow(frontPageFilter, queryEngine)
-                "savedfilter" -> addSavedFilterRow(frontPageFilter, queryEngine, filterParser)
+                "customfilter" -> addCustomFilterRow(frontPageFilter)
+                "savedfilter" -> addSavedFilterRow(frontPageFilter)
                 else -> {
                     Log.w(
                         TAG,
@@ -59,10 +59,7 @@ class FrontPageParser(
             }
         }
 
-    private suspend fun addCustomFilterRow(
-        frontPageFilter: Map<String, *>,
-        queryEngine: QueryEngine,
-    ): Deferred<FrontPageRow> =
+    private suspend fun addCustomFilterRow(frontPageFilter: Map<String, *>): Deferred<FrontPageRow> =
         withContext(Dispatchers.IO) {
             try {
                 val msg = frontPageFilter["message"] as Map<String, *>
@@ -133,11 +130,7 @@ class FrontPageParser(
             }
         }
 
-    private suspend fun addSavedFilterRow(
-        frontPageFilter: Map<String, *>,
-        queryEngine: QueryEngine,
-        filterParser: FilterParser,
-    ): Deferred<FrontPageRow> =
+    private suspend fun addSavedFilterRow(frontPageFilter: Map<String, *>): Deferred<FrontPageRow> =
         withContext(Dispatchers.IO) {
             return@withContext async {
                 val filterId = frontPageFilter.getCaseInsensitive("savedFilterId")

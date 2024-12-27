@@ -60,12 +60,15 @@ class ServerPreferences(
     val defaultFilters: Map<DataType, FilterArgs> = _defaultFilters
     private val defaultPageFilters = mutableMapOf<PageFilterKey, FilterArgs>()
 
+    var uiConfiguration: Map<*, *>? = null
+        private set
+
     /**
      * Update the local preferences from the server configuration
      */
     fun updatePreferences(config: ConfigurationQuery.Data) {
         val serverVersion = Version.tryFromString(config.version.version)
-        Log.i(TAG, "updatePreferences for server version $serverVersion, obj=$this")
+        Log.i(TAG, "updatePreferences for server version $serverVersion")
 
         val companionPluginVersion =
             config.plugins?.firstOrNull { it.id == CompanionPlugin.PLUGIN_ID }?.version
@@ -74,8 +77,11 @@ class ServerPreferences(
             putString(PREF_SERVER_VERSION, config.version.version)
             putString(PREF_COMPANION_PLUGIN_VERSION, companionPluginVersion)
         }
-        if (config.configuration.ui is Map<*, *>) {
-            val ui = config.configuration.ui
+        val ui = config.configuration.ui
+        if (ui !is Map<*, *>) {
+            Log.w(TAG, "config.configuration.ui is not a map")
+        } else {
+            uiConfiguration = ui
             preferences.edit(true) {
                 ui.getCaseInsensitive(PREF_TRACK_ACTIVITY).also {
                     if (it != null) {

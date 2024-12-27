@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.util
 
 import android.util.Log
 import com.apollographql.apollo.ApolloCall
-import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Operation
 import com.apollographql.apollo.api.Optional
@@ -64,8 +63,7 @@ import kotlin.time.toDuration
  */
 class QueryEngine(
     server: StashServer,
-    client: ApolloClient = StashClient.getApolloClient(server),
-) : StashEngine(server, client) {
+) : StashEngine(server) {
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val queryName = query.operation.name()

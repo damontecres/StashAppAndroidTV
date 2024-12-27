@@ -230,42 +230,40 @@ class SearchForFragment :
                 )
             }
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                val currentServer = StashServer.getCurrentStashServer(requireContext())
-                if (currentServer != null) {
-                    val mostRecentIds =
-                        StashApplication
-                            .getDatabase()
-                            .recentSearchItemsDao()
-                            .getMostRecent(perPage, currentServer.url, dataType)
-                            .map { it.id }
-                    Log.v(TAG, "Got ${mostRecentIds.size} recent items")
-                    if (mostRecentIds.isNotEmpty()) {
-                        val items =
-                            when (dataType) {
-                                DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
-                                DataType.TAG -> queryEngine.getTags(mostRecentIds)
-                                DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
-                                DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
-                                DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
-                                else -> {
-                                    listOf()
-                                }
+                val currentServer = serverViewModel.requireServer()
+                val mostRecentIds =
+                    StashApplication
+                        .getDatabase()
+                        .recentSearchItemsDao()
+                        .getMostRecent(perPage, currentServer.url, dataType)
+                        .map { it.id }
+                Log.v(TAG, "Got ${mostRecentIds.size} recent items")
+                if (mostRecentIds.isNotEmpty()) {
+                    val items =
+                        when (dataType) {
+                            DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
+                            DataType.TAG -> queryEngine.getTags(mostRecentIds)
+                            DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
+                            DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
+                            DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
+                            else -> {
+                                listOf()
                             }
-                        val results = ArrayObjectAdapter(presenterSelector)
-                        if (items.isNotEmpty()) {
-                            Log.v(
-                                TAG,
-                                "${mostRecentIds.size} recent items resolved to ${results.size()} items",
-                            )
-                            results.addAll(0, items)
-                            withContext(Dispatchers.Main) {
-                                val headerName =
-                                    getString(
-                                        R.string.format_recently_used,
-                                        getString(dataType.pluralStringId).lowercase(),
-                                    )
-                                adapter.set(RECENT_POS, ListRow(HeaderItem(headerName), results))
-                            }
+                        }
+                    val results = ArrayObjectAdapter(presenterSelector)
+                    if (items.isNotEmpty()) {
+                        Log.v(
+                            TAG,
+                            "${mostRecentIds.size} recent items resolved to ${results.size()} items",
+                        )
+                        results.addAll(0, items)
+                        withContext(Dispatchers.Main) {
+                            val headerName =
+                                getString(
+                                    R.string.format_recently_used,
+                                    getString(dataType.pluralStringId).lowercase(),
+                                )
+                            adapter.set(RECENT_POS, ListRow(HeaderItem(headerName), results))
                         }
                     }
                 }

@@ -19,8 +19,7 @@ import java.util.Objects
  * Tracks the current server
  */
 open class ServerViewModel : ViewModel() {
-    private val _currentServer =
-        EqualityMutableLiveData<StashServer?>(StashServer.getCurrentStashServer(StashApplication.getApplication()))
+    private val _currentServer = EqualityMutableLiveData<StashServer?>()
     val currentServer: LiveData<StashServer?> = _currentServer
 
     fun requireServer(): StashServer = currentServer.value!!
@@ -30,9 +29,21 @@ open class ServerViewModel : ViewModel() {
 
     lateinit var navigationManager: NavigationManager
 
-    fun switchServer(newServer: StashServer) {
-        StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
-        _currentServer.value = newServer
+    fun switchServer(newServer: StashServer?) {
+        if (newServer != null) {
+            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                newServer.updateServerPrefs()
+                StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
+                _currentServer.value = newServer
+            }
+        } else {
+            _currentServer.value = null
+        }
+    }
+
+    fun updateSettingsHash() {
+        val newHash = computeSettingsHash()
+        _currentSettingsHash.value = newHash
     }
 
     private fun computeSettingsHash(): Int {
@@ -59,14 +70,10 @@ open class ServerViewModel : ViewModel() {
         )
     }
 
-    fun refresh(): Boolean {
-        val newHash = computeSettingsHash()
-        _currentSettingsHash.value = newHash
-
-        val currentServer = StashServer.getCurrentStashServer(StashApplication.getApplication())
-        StashApplication.currentServer = currentServer
-        _currentServer.value = currentServer
-        return currentServer != null
+    fun init() {
+        updateSettingsHash()
+        val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
+        switchServer(currentServer)
     }
 
     fun maybeShowUpdate(context: Context) {
