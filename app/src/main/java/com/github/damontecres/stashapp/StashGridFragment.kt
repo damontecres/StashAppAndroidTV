@@ -416,15 +416,13 @@ class StashGridFragment() :
                 showOrHideViews()
             } else {
                 Log.v(TAG, "onViewCreated first time")
-                refresh(_filterArgs) {
-                    if (scrollToNextPage) {
-                        Log.v(TAG, "scrolling to next page")
-                        currentSelectedPosition =
-                            PreferenceManager
-                                .getDefaultSharedPreferences(requireContext())
-                                .getInt("maxSearchResults", 25)
-                    }
+                if (scrollToNextPage) {
+                    mSelectedPosition =
+                        PreferenceManager
+                            .getDefaultSharedPreferences(requireContext())
+                            .getInt("maxSearchResults", 25)
                 }
+                refresh(_filterArgs)
             }
         } else {
             Log.v(TAG, "onViewCreated restoring")
