@@ -28,7 +28,6 @@ import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
@@ -148,7 +147,7 @@ class MainFragment :
                         testStashConnection(
                             requireContext(),
                             false,
-                            StashClient.getApolloClient(newServer),
+                            newServer.apolloClient,
                         )
                     if (result.status == TestResultStatus.SUCCESS) {
                         val mainTitleView =

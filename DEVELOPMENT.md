@@ -32,7 +32,7 @@ The app uses [Apollo Kotlin](https://www.apollographql.com/docs/kotlin) to autom
 
 All interactions with the server are done via GraphQL using one of the `StashEngine` subclasses: `QueryEngine`, `MutationEngine`, or `SubscriptionEngine`. Each query/mutation/subscription roughly translates to a function in one of those classes.
 
-If lower level network access is needed, `StashClient` can be used to create an `ApolloClient` for graphql or an `OkHttpClient` for other requests.
+If lower level network access is needed, the `StashServer` has fields for an `ApolloClient` for graphql and an `OkHttpClient` for other requests. `StashClient` can used to create new clients if further customization is needed.
 
 Tips:
 - Install the Apollo plugin in Android Studio

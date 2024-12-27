@@ -37,7 +37,6 @@ import com.github.damontecres.stashapp.util.LongClickPreference
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.ServerPreferences
-import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.SubscriptionEngine
@@ -132,9 +131,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     testStashConnection(
                         requireContext(),
                         true,
-                        StashClient.getApolloClient(
-                            serverViewModel.currentServer.value!!,
-                        ),
+                        serverViewModel.requireServer().apolloClient,
                     )
                 }
                 true
@@ -583,7 +580,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                     testStashConnection(
                         requireContext(),
                         true,
-                        StashClient.getApolloClient(StashServer.requireCurrentServer()),
+                        serverViewModel.requireServer().apolloClient,
                     )
                 }
                 true

@@ -35,11 +35,6 @@ class StashClient private constructor() {
         private const val OK_HTTP_TAG = "$TAG.OkHttpClient"
 
         /**
-         * Get an [OkHttpClient] cached from a previous call or else created from the provided [Context]
-         */
-        fun getHttpClient(server: StashServer): OkHttpClient = server.okHttpClient
-
-        /**
          * Get an [OkHttpClient] for use in [StashGlideModule].
          *
          * This client is not cached and does not include the API key in requests
@@ -49,8 +44,9 @@ class StashClient private constructor() {
             return createOkHttpClient(server, false, true)
         }
 
-        fun getStreamHttpClient(server: StashServer): OkHttpClient = server.streamingOkHttpClient
-
+        /**
+         * Create an [OkHttpClient]. Prefer using [StashServer.okHttpClient] when possible
+         */
         fun createOkHttpClient(
             server: StashServer,
             useApiKey: Boolean,
@@ -200,12 +196,7 @@ class StashClient private constructor() {
         }
 
         /**
-         * Get an [ApolloClient] for the server
-         */
-        fun getApolloClient(server: StashServer): ApolloClient = server.apolloClient
-
-        /**
-         * Create a new [ApolloClient]. Using [getApolloClient] is preferred.
+         * Create a new [ApolloClient]. Prefer using [StashServer.apolloClient] when possible
          */
         @OptIn(ApolloExperimental::class)
         fun createApolloClient(server: StashServer): ApolloClient {

@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.util.plugin
 import android.content.Context
 import android.util.Log
 import com.github.damontecres.stashapp.api.RunPluginTaskMutation
-import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashServer
 import com.google.auto.service.AutoService
 import kotlinx.coroutines.runBlocking
@@ -29,8 +28,8 @@ class CrashReportSenderFactory : ReportSenderFactory {
         ) {
             Log.w(TAG, "Sending crash report")
             try {
-                StashServer.getCurrentStashServer()?.let { server ->
-                    val client = StashClient.getApolloClient(server)
+                StashServer.findConfiguredStashServer(context)?.let { server ->
+                    val client = server.apolloClient
                     val mutation =
                         RunPluginTaskMutation(
                             plugin_id = CompanionPlugin.PLUGIN_ID,
