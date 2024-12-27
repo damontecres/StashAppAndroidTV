@@ -333,6 +333,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
                 .addListenerForClass(StashAction::class.java) { item ->
                     actionListener.onClicked(item)
+                }.addListenerForClass(Action::class.java) { _ ->
+                    // no-op, detailsPresenter.onActionClickedListener will handle
                 }
 
         viewModel.image.observe(viewLifecycleOwner) { newImage ->
