@@ -1,9 +1,12 @@
 package com.github.damontecres.stashapp.navigation
 
+import android.util.Log
+import android.widget.Toast
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.Row
 import androidx.leanback.widget.RowPresenter
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.StashData
@@ -22,7 +25,7 @@ class NavigationOnItemViewClickedListener(
 ) : OnItemViewClickedListener {
     override fun onItemClicked(
         itemViewHolder: Presenter.ViewHolder?,
-        item: Any,
+        item: Any?,
         rowViewHolder: RowPresenter.ViewHolder?,
         row: Row?,
     ) {
@@ -52,8 +55,23 @@ class NavigationOnItemViewClickedListener(
 
                 is FilterArgs -> Destination.Filter(item, true)
 
-                else -> throw IllegalArgumentException("Unsupported item: ${item::class.java.name}")
+                else -> null
             }
-        navigationManager.navigate(destination)
+        if (destination != null) {
+            navigationManager.navigate(destination)
+        } else {
+            val itemInfo = if (item == null) "null" else item::class.java.name
+            Log.w(TAG, "Unsupported item: $itemInfo")
+            Toast
+                .makeText(
+                    StashApplication.getApplication(),
+                    "Unknown item: $itemInfo, this is probably a bug!",
+                    Toast.LENGTH_SHORT,
+                ).show()
+        }
+    }
+
+    companion object {
+        private const val TAG = "NavigationOnItemViewClickedListener"
     }
 }
