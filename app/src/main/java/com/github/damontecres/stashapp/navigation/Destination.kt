@@ -20,6 +20,9 @@ import com.github.damontecres.stashapp.util.Release
 import kotlinx.serialization.Serializable
 import java.util.concurrent.atomic.AtomicLong
 
+/**
+ * Represents a "page" of the app that can be navigated to
+ */
 @Serializable
 sealed class Destination {
     private val destId = counter.getAndIncrement()

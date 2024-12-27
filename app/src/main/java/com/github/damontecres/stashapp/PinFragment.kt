@@ -23,7 +23,7 @@ class PinFragment : Fragment(R.layout.pin_dialog) {
                 .getDefaultSharedPreferences(requireContext())
                 .getString("pinCode", "")
         if (pinCode.isNullOrBlank()) {
-            startMainActivity()
+            startMain()
         }
     }
 
@@ -44,7 +44,7 @@ class PinFragment : Fragment(R.layout.pin_dialog) {
         submit.setOnClickListener {
             val enteredPin = pinEditText.text.toString()
             if (enteredPin == pinCode) {
-                startMainActivity()
+                startMain()
             } else {
                 Toast.makeText(requireContext(), "Wrong PIN", Toast.LENGTH_SHORT).show()
             }
@@ -59,13 +59,13 @@ class PinFragment : Fragment(R.layout.pin_dialog) {
             pinEditText.doAfterTextChanged {
                 val enteredPin = it.toString()
                 if (enteredPin == pinCode) {
-                    startMainActivity()
+                    startMain()
                 }
             }
         }
     }
 
-    private fun startMainActivity() {
+    private fun startMain() {
         serverViewModel.navigationManager.clearPinFragment()
     }
 }

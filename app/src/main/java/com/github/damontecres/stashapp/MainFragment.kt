@@ -74,6 +74,7 @@ class MainFragment :
         if (savedInstanceState == null) {
             Log.v(TAG, "Setting up observers")
             setupObservers()
+            viewModel.maybeShowUpdate(requireContext())
         }
     }
 
@@ -97,14 +98,12 @@ class MainFragment :
             backCallback =
                 requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, false) {
                     val pos = currentPosition
-                    if (pos != null) {
-                        if (pos.column > 0) {
-                            selectedPosition = pos.row
-                            (selectedRowViewHolder as ListRowPresenter.ViewHolder)
-                                .gridView.selectedPosition = 0
-                        } else if (pos.row > 0) {
-                            selectedPosition = 0
-                        }
+                    if (pos.column > 0) {
+                        selectedPosition = pos.row
+                        (selectedRowViewHolder as ListRowPresenter.ViewHolder)
+                            .gridView.selectedPosition = 0
+                    } else if (pos.row > 0) {
+                        selectedPosition = 0
                     }
                 }
             (titleView as MainTitleView).focusListener.addListener { _, isFocused ->
@@ -230,12 +229,8 @@ class MainFragment :
         onItemViewClickedListener =
             NavigationOnItemViewClickedListener(viewModel.navigationManager) {
                 val position = currentPosition
-                if (position != null) {
-                    val filter = filterList[position.row]
-                    FilterAndPosition(filter, position.column)
-                } else {
-                    null
-                }
+                val filter = filterList[position.row]
+                FilterAndPosition(filter, position.column)
             }
     }
 

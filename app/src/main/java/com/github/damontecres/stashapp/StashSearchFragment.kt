@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.text.TextUtils
 import android.widget.Toast
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.SearchSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.HeaderItem
@@ -16,12 +17,13 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.toStashFindFilter
+import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -32,6 +34,8 @@ import kotlinx.coroutines.launch
 class StashSearchFragment :
     SearchSupportFragment(),
     SearchSupportFragment.SearchResultProvider {
+    private val serverViewModel: ServerViewModel by activityViewModels()
+
     private var taskJob: Job? = null
 
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
@@ -39,7 +43,7 @@ class StashSearchFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setSearchResultProvider(this)
-        setOnItemViewClickedListener(StashItemViewClickListener(requireActivity()))
+        setOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
     }
 
     override fun getResultsAdapter(): ObjectAdapter = rowsAdapter

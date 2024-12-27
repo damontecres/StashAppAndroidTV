@@ -12,15 +12,24 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDestination
 import kotlinx.coroutines.launch
 
+/**
+ * Base [ViewModel] for simple [StashData] items
+ */
 abstract class ItemViewModel<T : StashData> : ViewModel() {
     private val _item = EqualityMutableLiveData<T>()
     val item: LiveData<T?> = _item
 
+    /**
+     * Fetch the item for the given id
+     */
     abstract suspend fun fetch(
         queryEngine: QueryEngine,
         id: String,
     ): T?
 
+    /**
+     * Initialize the [ViewModel] by fetching the item in the background and updating it
+     */
     fun init(args: Bundle) {
         val id = args.getDestination<Destination.Item>().id
         viewModelScope.launch(StashCoroutineExceptionHandler()) {

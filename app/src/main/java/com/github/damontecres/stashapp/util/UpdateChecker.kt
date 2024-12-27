@@ -43,20 +43,30 @@ class UpdateChecker {
         private val NOTE_REGEX = Regex("<!-- app-note:(.+) -->")
 
         suspend fun checkForUpdate(
-            activity: Activity,
+            context: Context,
             showNegativeToast: Boolean = false,
         ) {
-            val installedVersion = getInstalledVersion(activity)
-            val latestRelease = getLatestRelease(activity)
+            val installedVersion = getInstalledVersion(context)
+            val latestRelease = getLatestRelease(context)
             if (latestRelease != null && latestRelease.version.isGreaterThan(installedVersion)) {
-                Toast.makeText(activity, "Update available: $installedVersion => ${latestRelease.version}!", Toast.LENGTH_LONG).show()
+                Toast
+                    .makeText(
+                        context,
+                        "Update available: $installedVersion => ${latestRelease.version}!",
+                        Toast.LENGTH_LONG,
+                    ).show()
             } else if (showNegativeToast) {
-                Toast.makeText(activity, "No updates available, $installedVersion is the latest!", Toast.LENGTH_LONG).show()
+                Toast
+                    .makeText(
+                        context,
+                        "No updates available, $installedVersion is the latest!",
+                        Toast.LENGTH_LONG,
+                    ).show()
             }
         }
 
-        fun getInstalledVersion(activity: Activity): Version {
-            val pkgInfo = activity.packageManager.getPackageInfo(activity.packageName, 0)
+        fun getInstalledVersion(context: Context): Version {
+            val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             return Version.fromString(pkgInfo.versionName!!)
         }
 

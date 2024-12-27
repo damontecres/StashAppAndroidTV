@@ -1,13 +1,18 @@
 package com.github.damontecres.stashapp.views.models
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
+import kotlinx.coroutines.launch
 import java.util.Objects
 
 /**
@@ -62,5 +67,17 @@ open class ServerViewModel : ViewModel() {
         StashApplication.currentServer = currentServer
         _currentServer.value = currentServer
         return currentServer != null
+    }
+
+    fun maybeShowUpdate(context: Context) {
+        val checkForUpdates =
+            PreferenceManager
+                .getDefaultSharedPreferences(StashApplication.getApplication())
+                .getBoolean("autoCheckForUpdates", true)
+        if (checkForUpdates) {
+            viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                UpdateChecker.checkForUpdate(context, false)
+            }
+        }
     }
 }

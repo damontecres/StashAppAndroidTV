@@ -8,18 +8,17 @@ import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.models.ServerViewModel
-import kotlinx.coroutines.launch
 import kotlin.properties.Delegates
 
+/**
+ * The only activity in the app
+ */
 class RootActivity :
     FragmentActivity(R.layout.activity_main),
     NavigationManager.NavigationListener {
@@ -48,35 +47,17 @@ class RootActivity :
 
         serverViewModel.navigationManager = navigationManager
 
-        if (serverViewModel.refresh()) {
-            if (savedInstanceState == null) {
-                if (appHasPin) {
-                    navigationManager.navigate(Destination.Pin)
-                } else {
-                    navigationManager.navigate(Destination.Main)
+        serverViewModel.refresh()
+        serverViewModel.currentServer.observe(this) { server ->
+            if (server != null) {
+                if (savedInstanceState == null) {
+                    if (!appHasPin) {
+                        navigationManager.navigate(Destination.Main)
+                    }
                 }
             } else {
-//                navigationManager.restoreInstanceState(savedInstanceState)
-                if (appHasPin) {
-                    navigationManager.navigate(Destination.Pin)
-                }
-            }
-
-            maybeShowUpdate()
-        } else {
-            // No server configured
-            navigationManager.navigate(Destination.Setup)
-        }
-    }
-
-    private fun maybeShowUpdate() {
-        val checkForUpdates =
-            PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .getBoolean("autoCheckForUpdates", true)
-        if (checkForUpdates) {
-            lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                UpdateChecker.checkForUpdate(this@RootActivity, false)
+                // No server configured
+                navigationManager.navigate(Destination.Setup)
             }
         }
     }
@@ -95,6 +76,8 @@ class RootActivity :
         Log.v(TAG, "onNavigate: dest=${destination.fragmentTag}")
         currentFragment = fragment
     }
+
+    // Delegate key events to the current fragment
 
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

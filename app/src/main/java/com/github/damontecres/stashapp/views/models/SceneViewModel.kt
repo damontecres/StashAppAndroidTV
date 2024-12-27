@@ -59,6 +59,9 @@ class SceneViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Initialize the [FullSceneData] for the given id. Optionally also fetch extra data such as galleries and performers.
+     */
     fun init(
         id: String,
         fetchAll: Boolean,

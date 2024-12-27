@@ -10,6 +10,12 @@ import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 
+/**
+ * An [OnItemViewClickedListener] for clicking on [StashData] and [FilterArgs] to navigating to their page
+ *
+ * @param navigationManager the manager
+ * @param imageFilterLookup get the filter and position of the current image clicked for slideshow
+ */
 class NavigationOnItemViewClickedListener(
     private val navigationManager: NavigationManager,
     private val imageFilterLookup: ((item: ImageData) -> FilterAndPosition?)? = null,

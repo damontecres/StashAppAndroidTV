@@ -75,7 +75,7 @@ class ServerPreferences(
             putString(PREF_COMPANION_PLUGIN_VERSION, companionPluginVersion)
         }
         if (config.configuration.ui is Map<*, *>) {
-            val ui = config.configuration.ui as Map<String, *>
+            val ui = config.configuration.ui
             preferences.edit(true) {
                 ui.getCaseInsensitive(PREF_TRACK_ACTIVITY).also {
                     if (it != null) {

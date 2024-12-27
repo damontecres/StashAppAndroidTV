@@ -36,9 +36,9 @@ import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
 /**
- * An activity that displays items of a single [DataType] in a [StashGridFragment].
+ * Displays items of a single [DataType] in a [StashGridFragment].
  *
- * This activity manages the sort (delegating to the [StashGridFragment]) and can also retrieve saved filters.
+ * This fragment manages the sort (delegating to the [StashGridFragment]) and can also retrieve saved filters.
  */
 class FilterFragment :
     Fragment(R.layout.filter_list),
@@ -121,10 +121,6 @@ class FilterFragment :
         lifecycleScope.launch(StashCoroutineExceptionHandler()) {
             populateSavedFilters(dataType)
         }
-    }
-
-    private fun setTitleText(filterArgs: FilterArgs) {
-        titleTextView.text = filterArgs.name ?: getString(filterArgs.dataType.pluralStringId)
     }
 
     private suspend fun populateSavedFilters(dataType: DataType) {

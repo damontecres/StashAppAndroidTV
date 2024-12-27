@@ -32,7 +32,6 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getUiTabs
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.models.PerformerViewModel
 
 /**
@@ -186,7 +185,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         ) {
             when (popUpItem.id) {
                 0L -> {
-                    StashItemViewClickListener(context).onItemClicked(item)
+                    serverViewModel.navigationManager.navigate(Destination.fromStashData(item))
                 }
 
                 1L -> {
@@ -230,7 +229,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         ) {
             when (popUpItem.id) {
                 StashPresenter.PopUpItem.DEFAULT_ID -> {
-                    StashItemViewClickListener(context).onItemClicked(item)
+                    serverViewModel.navigationManager.navigate(Destination.fromStashData(item))
                 }
 
                 1L -> {

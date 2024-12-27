@@ -37,11 +37,18 @@ import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
 
+/**
+ * Manages navigating to pages in the app
+ */
 class NavigationManager(
     private val activity: RootActivity,
 ) {
     private val fragmentManager = activity.supportFragmentManager
     private val listeners = mutableListOf<NavigationListener>()
+
+    /**
+     * A [OnBackPressedCallback] that always finishes the [RootActivity]
+     */
     private val onBackPressedCallback: OnBackPressedCallback =
         activity.onBackPressedDispatcher.addCallback(activity, false) {
             activity.finish()
@@ -66,6 +73,7 @@ class NavigationManager(
             return
         }
         if (destination == Destination.Pin) {
+            // Enable so that backing out of the fragment will close the app
             onBackPressedCallback.isEnabled = true
         }
         val fragment =
@@ -119,8 +127,9 @@ class NavigationManager(
                     )
                 }
             }
-        val args = Bundle().putDestination(destination)
-        fragment.arguments = args
+
+        fragment.arguments = Bundle().putDestination(destination)
+
         if (fragment is GuidedStepSupportFragment) {
             GuidedStepSupportFragment.add(fragmentManager, fragment, R.id.main_browse_fragment)
         } else {
@@ -140,26 +149,33 @@ class NavigationManager(
         notifyListeners(destination, fragment)
     }
 
+    /**
+     * End the current fragment and go to the previous one
+     */
     fun goBack() {
         fragmentManager.popBackStack()
     }
 
+    /**
+     * Drop all of the back stack and go back to the main page
+     */
     fun goToMain() {
         fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
         navigate(Destination.Main)
     }
 
+    /**
+     * Remove the [PinFragment]
+     */
     fun clearPinFragment() {
+        if (getCurrentFragment() !is PinFragment) {
+            throw IllegalStateException("Current fragment is not PinFragment")
+        }
         fragmentManager.popBackStackImmediate()
         if (getCurrentFragment() == null) {
             navigate(Destination.Main)
         }
         onBackPressedCallback.isEnabled = false
-    }
-
-    fun clearSettingsPin() {
-        fragmentManager.popBackStack()
-        navigate(Destination.Settings)
     }
 
     fun addListener(listener: NavigationListener) {

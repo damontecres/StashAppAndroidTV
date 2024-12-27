@@ -26,6 +26,7 @@ class MarkerDetailsViewModel : ViewModel() {
     ) {
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
             val queryEngine = QueryEngine(StashServer.requireCurrentServer())
+            // TODO fetch by marker ID if supported in the future
             val sceneData = queryEngine.getScene(sceneId)!!
             _scene.value = sceneData
             val marker = sceneData.scene_markers.firstOrNull { it.id == id }
