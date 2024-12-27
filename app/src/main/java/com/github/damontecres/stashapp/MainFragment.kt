@@ -121,32 +121,10 @@ class MainFragment :
     }
 
     private fun setupObservers() {
-//        var firstTime = true
-//        viewModel.currentSettingsHash.observe(viewLifecycleOwner) {
-//            viewLifecycleOwner.lifecycleScope.launch(
-//                StashCoroutineExceptionHandler { ex ->
-//                    Toast.makeText(
-//                        requireContext(),
-//                        "Exception: ${ex.message}",
-//                        Toast.LENGTH_LONG,
-//                    )
-//                },
-//            ) {
-//                Log.d(TAG, "Settings hash changed: $it")
-//                if (!firstTime) {
-//                    clearData()
-//                    rowsAdapter.clear()
-//
-//                    val server = viewModel.currentServer.value!!
-//                    server.updateServerPrefs()
-//                    val mainTitleView =
-//                        requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-//                    mainTitleView.refreshMenuItems()
-//                    fetchData(server)
-//                }
-//                firstTime = false
-//            }
-//        }
+        viewModel.currentSettingsHash.observe(viewLifecycleOwner) {
+            // Refresh the cards
+            rowsAdapter.notifyItemRangeChanged(0, rowsAdapter.size())
+        }
 
         viewModel.currentServer.observe(viewLifecycleOwner) { newServer ->
             if (dataFetchedFor == newServer) {
