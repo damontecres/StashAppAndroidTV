@@ -18,11 +18,17 @@ import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.leanback.system.Settings
+import androidx.leanback.transition.TransitionHelper
 import androidx.leanback.widget.BrowseFrameLayout
 import androidx.leanback.widget.FocusHighlight
+import androidx.leanback.widget.FocusHighlightHelper
+import androidx.leanback.widget.ItemBridgeAdapter
+import androidx.leanback.widget.ItemBridgeAdapterShadowOverlayWrapper
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.OnItemViewSelectedListener
-import androidx.leanback.widget.VerticalGridPresenter
+import androidx.leanback.widget.ShadowOverlayHelper
+import androidx.leanback.widget.VerticalGridView
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
@@ -45,12 +51,12 @@ import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
-import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.formatNumber
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.models.StashGridViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.properties.Delegates
 
 /**
  * A [Fragment] that shows a grid of items of the same [DataType].
@@ -60,6 +66,7 @@ import kotlin.math.abs
 class StashGridListFragment :
     Fragment(),
     DefaultKeyEventCallback {
+    private lateinit var mShadowOverlayHelper: ShadowOverlayHelper
     private val serverViewModel: ServerViewModel by activityViewModels()
     private val viewModel: StashGridViewModel by viewModels(ownerProducer = { requireParentFragment() })
 
@@ -68,23 +75,20 @@ class StashGridListFragment :
     private lateinit var positionTextView: TextView
     private lateinit var totalCountTextView: TextView
     private lateinit var noResultsTextView: TextView
-    private lateinit var mGridPresenter: VerticalGridPresenter
-    private lateinit var mGridViewHolder: VerticalGridPresenter.ViewHolder
-    private lateinit var mAdapter: PagingObjectAdapter
+    private lateinit var gridView: VerticalGridView
+    private lateinit var itemBridgeAdapter: ItemBridgeAdapter
+    private lateinit var pagingAdapter: PagingObjectAdapter
     private lateinit var alphabetFilterLayout: LinearLayout
     private lateinit var loadingProgressBar: ContentLoadingProgressBar
     private lateinit var jumpButtonLayout: LinearLayout
 
     private var remoteButtonPaging: Boolean = true
 
-    private var adapter: PagingObjectAdapter? = null
-
     // Arguments
     var scrollToNextPage = false
 
     // State
     private var selectedPosition = -1
-    private var gridHeaderTransitionHelper: TitleTransitionHelper? = null
 
     private var onBackPressedCallback: OnBackPressedCallback? = null
 
@@ -112,8 +116,8 @@ class StashGridListFragment :
      */
     lateinit var dataType: DataType
 
-    val numberOfColumns: Int
-        get() = mGridPresenter.numberOfColumns
+    var numberOfColumns by Delegates.notNull<Int>()
+        private set
 
     fun init(dataType: DataType) {
         this.dataType = dataType
@@ -121,22 +125,22 @@ class StashGridListFragment :
 
     private val mViewSelectedListener =
         OnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
-            val position = mGridViewHolder.gridView.selectedPosition
+            val position = gridView.selectedPosition
             onSelectedOrJump(position)
         }
 
     private fun jumpTo(newPosition: Int) {
-        if (mGridViewHolder.gridView.adapter != null) {
-            if (abs(selectedPosition - newPosition) < mGridPresenter.numberOfColumns * 10) {
+        if (gridView.adapter != null) {
+            if (abs(selectedPosition - newPosition) < numberOfColumns * 10) {
                 // If new position is close to the current, smooth scroll
-                mGridViewHolder.gridView.setSelectedPositionSmooth(newPosition)
+                gridView.setSelectedPositionSmooth(newPosition)
                 onSelectedOrJump(newPosition)
             } else {
                 // If not, just jump without smooth scrolling
 
                 viewLifecycleOwner.lifecycleScope.launch {
-                    mAdapter.prefetch(newPosition).join()
-                    mGridViewHolder.gridView.selectedPosition = newPosition
+                    pagingAdapter.prefetch(newPosition).join()
+                    gridView.selectedPosition = newPosition
                     onSelectedOrJump(newPosition)
                 }
             }
@@ -150,29 +154,18 @@ class StashGridListFragment :
             viewModel.position = position
             positionTextView.text = formatNumber(position + 1, false)
             // If on the second row & the back callback exists, enable it
-            onBackPressedCallback?.isEnabled = selectedPosition >= mGridPresenter.numberOfColumns
-            mAdapter.maybePrefetch(position)
+            onBackPressedCallback?.isEnabled = selectedPosition >= numberOfColumns
+            pagingAdapter.maybePrefetch(position)
         }
     }
 
-    @SuppressLint("SetTextI18n")
-    private fun gridOnItemSelected(position: Int) {
-        if (position != selectedPosition) {
-            if (DEBUG) Log.v(TAG, "gridOnItemSelected=$position")
-            selectedPosition = position
-            viewModel.position = position
-            positionTextView.text = formatNumber(position + 1, false)
-            // If on the second row & the back callback exists, enable it
-            onBackPressedCallback?.isEnabled = selectedPosition >= mGridPresenter.numberOfColumns
-            mAdapter.maybePrefetch(position)
-        }
-    }
-
+    @SuppressLint("RestrictedApi")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
+        Log.v(TAG, "onCreateView")
         val root =
             inflater.inflate(
                 R.layout.stash_grid_list,
@@ -185,13 +178,14 @@ class StashGridListFragment :
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getInt("cardSize", requireContext().getString(R.string.card_size_default))
-        val calculatedColumns = (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
+        numberOfColumns =
+            (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
 
-        mGridPresenter = StashGridPresenter()
-        mGridPresenter.numberOfColumns = calculatedColumns
-        mGridPresenter.onItemViewSelectedListener = mViewSelectedListener
-        if (onItemViewClickedListener != null) {
-            mGridPresenter.onItemViewClickedListener = onItemViewClickedListener
+        if (onItemViewClickedListener == null) {
+            onItemViewClickedListener =
+                NavigationOnItemViewClickedListener(serverViewModel.navigationManager) {
+                    FilterAndPosition(viewModel.filterArgs.value!!, selectedPosition)
+                }
         }
 
         remoteButtonPaging =
@@ -199,10 +193,54 @@ class StashGridListFragment :
                 .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_remote_page_buttons), true)
 
-        val gridDock = root.findViewById<View>(androidx.leanback.R.id.browse_grid_dock) as ViewGroup
-        mGridViewHolder = mGridPresenter.onCreateViewHolder(gridDock)
-        mGridViewHolder.view.isFocusableInTouchMode = false
-        gridDock.addView(mGridViewHolder.view)
+        val mUseFocusDimmer = false
+        mShadowOverlayHelper =
+            ShadowOverlayHelper
+                .Builder()
+                .needsOverlay(mUseFocusDimmer)
+                .needsShadow(true)
+                .needsRoundedCorner(false)
+                .preferZOrder(!Settings.getInstance(requireContext()).preferStaticShadows())
+                .keepForegroundDrawable(true)
+                .options(ShadowOverlayHelper.Options.DEFAULT)
+                .build(requireContext())
+
+        gridView = root.findViewById(R.id.browse_grid)
+        gridView.setNumColumns(numberOfColumns)
+        // gridView.setColumnWidth(0)
+        if (gridView.adapter == null) {
+            itemBridgeAdapter = VerticalGridItemBridgeAdapter()
+            gridView.adapter = itemBridgeAdapter
+
+            if (mShadowOverlayHelper.needsWrapper()) {
+                val mShadowOverlayWrapper =
+                    ItemBridgeAdapterShadowOverlayWrapper(
+                        mShadowOverlayHelper,
+                    )
+                itemBridgeAdapter.setWrapper(mShadowOverlayWrapper)
+            }
+            mShadowOverlayHelper.prepareParentForShadow(gridView)
+            gridView.setFocusDrawingOrderEnabled(
+                mShadowOverlayHelper.getShadowType()
+                    != ShadowOverlayHelper.SHADOW_DYNAMIC,
+            )
+            FocusHighlightHelper.setupBrowseItemFocusHighlight(
+                itemBridgeAdapter,
+                FocusHighlight.ZOOM_FACTOR_MEDIUM,
+                mUseFocusDimmer,
+            )
+        } else {
+            itemBridgeAdapter = gridView.adapter as ItemBridgeAdapter
+        }
+        gridView.setOnChildSelectedListener { parent, view, position, id ->
+            val ibn =
+                if (view == null) null else gridView.getChildViewHolder(view) as ItemBridgeAdapter.ViewHolder
+            if (ibn != null) {
+                mViewSelectedListener.onItemSelected(ibn.viewHolder, ibn.item, null, null)
+            } else {
+                mViewSelectedListener.onItemSelected(null, null, null, null)
+            }
+        }
 
         jumpButtonLayout = root.findViewById(R.id.jump_layout)
         loadingProgressBar = root.findViewById(R.id.loading_progress_bar)
@@ -233,13 +271,13 @@ class StashGridListFragment :
                                 ?.direction == SortDirectionEnum.DESC
                         ) {
                             // Reverse if sorting descending
-                            mAdapter.size() - letterPosition - 1
+                            pagingAdapter.size() - letterPosition - 1
                         } else {
                             letterPosition
                         }
 
                     jumpTo(jumpPosition)
-                    mGridViewHolder.gridView.requestFocus()
+                    gridView.requestFocus()
                     loadingProgressBar.hide()
                 }
             }
@@ -254,21 +292,18 @@ class StashGridListFragment :
         view: View,
         savedInstanceState: Bundle?,
     ) {
+        Log.v(TAG, "onViewCreated")
         super.onViewCreated(view, savedInstanceState)
 
         positionTextView = view.findViewById(R.id.position_text)
         totalCountTextView = view.findViewById(R.id.total_count_text)
         noResultsTextView = view.findViewById(R.id.no_results_text)
 
-        mGridPresenter.onItemViewClickedListener =
-            onItemViewClickedListener
-                ?: NavigationOnItemViewClickedListener(serverViewModel.navigationManager) {
-                    FilterAndPosition(viewModel.filterArgs.value!!, selectedPosition)
-                }
-        if (this::mAdapter.isInitialized) {
-            mGridPresenter.onBindViewHolder(mGridViewHolder, mAdapter)
+        if (this::pagingAdapter.isInitialized) {
+            itemBridgeAdapter.setAdapter(pagingAdapter)
+//            mGridPresenter.onBindViewHolder(mGridViewHolder, mAdapter)
             if (selectedPosition != -1) {
-                mGridViewHolder.gridView.selectedPosition = selectedPosition
+                gridView.selectedPosition = selectedPosition
             }
             showOrHideViews()
         }
@@ -278,13 +313,17 @@ class StashGridListFragment :
                 is StashGridViewModel.LoadingStatus.AdapterReady -> {
                     Log.v(
                         TAG,
-                        "LoadingStatus.AdapterReady: same=${this::mAdapter.isInitialized && mAdapter == status.pagingAdapter} ${status.pagingAdapter}",
+                        "LoadingStatus.AdapterReady: same=${this::pagingAdapter.isInitialized && pagingAdapter == status.pagingAdapter} ${status.pagingAdapter}",
                     )
-                    mAdapter = status.pagingAdapter
+                    pagingAdapter = status.pagingAdapter
                     loadingProgressBar.hide()
-                    mGridPresenter.onBindViewHolder(mGridViewHolder, status.pagingAdapter)
+                    itemBridgeAdapter.setAdapter(status.pagingAdapter)
+//                    mGridPresenter.onBindViewHolder(mGridViewHolder, status.pagingAdapter)
                     if (selectedPosition != -1) {
-                        mGridViewHolder.gridView.selectedPosition = selectedPosition
+                        gridView.selectedPosition = selectedPosition
+                    }
+                    if (requestFocus) {
+                        gridView.requestFocus()
                     }
                     showOrHideViews()
                 }
@@ -292,7 +331,7 @@ class StashGridListFragment :
                 StashGridViewModel.LoadingStatus.FirstPageLoaded -> {
                     Log.v(TAG, "LoadingStatus.FirstPageLoaded")
                     if (requestFocus) {
-                        mGridViewHolder.gridView.requestFocus()
+                        gridView.requestFocus()
                     }
 //                    firstPageListener?.invoke()
                 }
@@ -339,12 +378,23 @@ class StashGridListFragment :
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
+        Log.v(TAG, "onSaveInstanceState")
         super.onSaveInstanceState(outState)
         outState.putInt("mSelectedPosition", selectedPosition)
     }
 
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        Log.v(TAG, "onViewStateRestored")
+        super.onViewStateRestored(savedInstanceState)
+    }
+
+    override fun onDestroyView() {
+        Log.v(TAG, "onDestroyView")
+        super.onDestroyView()
+    }
+
     private fun showOrHideViews() {
-        val count = mAdapter.size()
+        val count = pagingAdapter.size()
         if (count <= 0) {
             positionTextView.text = getString(R.string.zero)
             noResultsTextView.animateToVisible()
@@ -389,7 +439,7 @@ class StashGridListFragment :
     }
 
     private fun setupJumpButtons(count: Int) {
-        val columns = mGridPresenter.numberOfColumns
+        val columns = numberOfColumns
         val jump2 =
             if (count >= 25_000) {
                 columns * 2000
@@ -433,13 +483,13 @@ class StashGridListFragment :
             BrowseFrameLayout.OnFocusSearchListener { focused: View?, direction: Int ->
                 if (focused != null && focused in alphabetFilterLayout) {
                     if (direction == View.FOCUS_LEFT) {
-                        mGridViewHolder.gridView
+                        gridView
                     } else {
                         null
                     }
                 } else if (focused != null && focused in jumpButtonLayout) {
                     if (direction == View.FOCUS_RIGHT) {
-                        mGridViewHolder.gridView
+                        gridView
                     } else {
                         null
                     }
@@ -462,7 +512,7 @@ class StashGridListFragment :
             requireActivity().currentFocus is StashImageCardView
         ) {
             val position = selectedPosition
-            val item = mAdapter.get(position)
+            val item = pagingAdapter.get(position)
             if (item != null) {
                 maybeStartPlayback(requireContext(), item)
                 return true
@@ -506,15 +556,44 @@ class StashGridListFragment :
         private const val DEBUG = false
     }
 
-    private class StashGridPresenter : VerticalGridPresenter(FocusHighlight.ZOOM_FACTOR_MEDIUM, false) {
-        override fun initializeGridViewHolder(vh: ViewHolder?) {
-            super.initializeGridViewHolder(vh)
-            val gridView = vh!!.gridView
-            val top = 10 // gridView.paddingTop
-            val bottom = gridView.paddingBottom
-            val right = 14
-            val left = 14
-            gridView.setPadding(left, top, right, bottom)
+    inner class VerticalGridItemBridgeAdapter : ItemBridgeAdapter() {
+        @SuppressLint("RestrictedApi")
+        override fun onCreate(viewHolder: ViewHolder) {
+            if (viewHolder.itemView is ViewGroup) {
+                TransitionHelper.setTransitionGroup(
+                    viewHolder.itemView as ViewGroup,
+                    true,
+                )
+            }
+            mShadowOverlayHelper.onViewCreated(viewHolder.itemView)
+        }
+
+        public override fun onBind(itemViewHolder: ViewHolder) {
+            // Only when having an OnItemClickListener, we attach the OnClickListener.
+            if (onItemViewClickedListener != null) {
+                val itemView = itemViewHolder.viewHolder.view
+                itemView.setOnClickListener {
+                    if (onItemViewClickedListener != null) {
+                        // Row is always null
+                        onItemViewClickedListener!!.onItemClicked(
+                            itemViewHolder.viewHolder,
+                            itemViewHolder.item,
+                            null,
+                            null,
+                        )
+                    }
+                }
+            }
+        }
+
+        public override fun onUnbind(viewHolder: ViewHolder) {
+            if (onItemViewClickedListener != null) {
+                viewHolder.viewHolder.view.setOnClickListener(null)
+            }
+        }
+
+        public override fun onAttachedToWindow(viewHolder: ViewHolder) {
+            viewHolder.itemView.isActivated = true
         }
     }
 }

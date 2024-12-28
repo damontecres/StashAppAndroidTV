@@ -7,6 +7,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem.Companion.DEFAULT_ID
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -104,7 +105,7 @@ class ScenePresenter(
                 popUpItem: PopUpItem,
             ) {
                 when (popUpItem.id) {
-                    0L -> {
+                    DEFAULT_ID -> {
                         cardView.performClick()
                     }
 
@@ -131,7 +132,7 @@ class ScenePresenter(
                     }
 
                     else -> {
-                        throw IllegalStateException()
+                        throw IllegalStateException("ID ${popUpItem.id}")
                     }
                 }
             }
