@@ -12,6 +12,7 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlin.properties.Delegates
@@ -47,19 +48,22 @@ class RootActivity :
 
         serverViewModel.navigationManager = navigationManager
 
-        serverViewModel.init()
-        serverViewModel.currentServer.observe(this) { server ->
-            if (server != null) {
-                if (savedInstanceState == null) {
-                    if (!appHasPin) {
-                        serverViewModel.currentServer.removeObservers(this@RootActivity)
-                        navigationManager.goToMain()
+        val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
+        if (currentServer != null) {
+            serverViewModel.init(currentServer)
+            serverViewModel.currentServer.observe(this) { server ->
+                if (server != null) {
+                    if (savedInstanceState == null) {
+                        if (!appHasPin) {
+                            serverViewModel.currentServer.removeObservers(this@RootActivity)
+                            navigationManager.goToMain()
+                        }
                     }
                 }
-            } else {
-                // No server configured
-                navigationManager.navigate(Destination.Setup)
             }
+        } else {
+            // No server configured
+            navigationManager.navigate(Destination.Setup)
         }
     }
 

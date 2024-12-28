@@ -70,9 +70,8 @@ open class ServerViewModel : ViewModel() {
         )
     }
 
-    fun init() {
+    fun init(currentServer: StashServer) {
         updateSettingsHash()
-        val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
         switchServer(currentServer)
     }
 
