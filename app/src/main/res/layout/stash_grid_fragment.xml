@@ -70,7 +70,7 @@
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/grid_fragment"
-        android:name="com.github.damontecres.stashapp.StashGridListFragment"
+        android:name="com.github.damontecres.stashapp.StashDataGridFragment"
         android:focusable="true"
         android:focusableInTouchMode="false"
         android:descendantFocusability="afterDescendants"

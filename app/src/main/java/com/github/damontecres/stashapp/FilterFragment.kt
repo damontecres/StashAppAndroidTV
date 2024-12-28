@@ -39,9 +39,9 @@ import com.github.damontecres.stashapp.views.models.StashGridViewModel
 import kotlinx.coroutines.launch
 
 /**
- * Displays items of a single [DataType] in a [StashGridListFragment].
+ * Displays items of a single [DataType] in a [StashDataGridFragment].
  *
- * This fragment manages the sort (delegating to the [StashGridListFragment]) and can also retrieve saved filters.
+ * This fragment manages the sort (delegating to the [StashDataGridFragment]) and can also retrieve saved filters.
  */
 class FilterFragment :
     Fragment(R.layout.filter_list),
@@ -58,7 +58,7 @@ class FilterFragment :
 
     private lateinit var dataType: DataType
 
-    private lateinit var fragment: StashGridListFragment
+    private lateinit var fragment: StashDataGridFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,7 +89,7 @@ class FilterFragment :
         val dest = requireArguments().getDestination<Destination.Filter>()
 
         fragment =
-            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment
+            childFragmentManager.findFragmentById(R.id.list_fragment) as StashDataGridFragment
         Log.v(
             TAG,
             "stashGridViewModel.filterArgs.isInitialized=${stashGridViewModel.filterArgs.isInitialized}",
@@ -309,7 +309,7 @@ class FilterFragment :
         event: KeyEvent,
     ): Boolean {
         val fragment =
-            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment?
+            childFragmentManager.findFragmentById(R.id.list_fragment) as StashDataGridFragment?
         return fragment?.onKeyUp(keyCode, event) ?: false
     }
 
@@ -318,7 +318,7 @@ class FilterFragment :
         event: KeyEvent,
     ): Boolean {
         val fragment =
-            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment?
+            childFragmentManager.findFragmentById(R.id.list_fragment) as StashDataGridFragment?
         return fragment?.onKeyDown(keyCode, event) ?: false
     }
 
@@ -327,7 +327,7 @@ class FilterFragment :
         event: KeyEvent,
     ): Boolean {
         val fragment =
-            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment?
+            childFragmentManager.findFragmentById(R.id.list_fragment) as StashDataGridFragment?
         return fragment?.onKeyLongPress(keyCode, event) ?: false
     }
 
@@ -337,7 +337,7 @@ class FilterFragment :
         event: KeyEvent,
     ): Boolean {
         val fragment =
-            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment?
+            childFragmentManager.findFragmentById(R.id.list_fragment) as StashDataGridFragment?
         return fragment?.onKeyMultiple(keyCode, repeatCount, event) ?: false
     }
 

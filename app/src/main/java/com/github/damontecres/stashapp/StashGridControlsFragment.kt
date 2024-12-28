@@ -41,7 +41,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.serialization.ExperimentalSerializationApi
 
 /**
- * A [Fragment] that shows a [StashGridListFragment] along with controls for sorting, etc
+ * A [Fragment] that shows a [StashDataGridFragment] along with controls for sorting, etc
  */
 class StashGridControlsFragment() :
     Fragment(),
@@ -59,7 +59,7 @@ class StashGridControlsFragment() :
     private lateinit var filterButton: Button
     private lateinit var subContentSwitch: SwitchMaterial
 
-    private lateinit var fragment: StashGridListFragment
+    private lateinit var fragment: StashDataGridFragment
 
     var titleView: View? = null
 
@@ -178,7 +178,7 @@ class StashGridControlsFragment() :
         }
 
         fragment =
-            childFragmentManager.findFragmentById(R.id.grid_fragment) as StashGridListFragment
+            childFragmentManager.findFragmentById(R.id.grid_fragment) as StashDataGridFragment
         fragment.scrollToNextPage = scrollToNextPage
         fragment.init(dataType)
         if (onItemViewClickedListener != null) {

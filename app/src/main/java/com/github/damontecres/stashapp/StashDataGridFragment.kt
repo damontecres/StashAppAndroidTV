@@ -59,11 +59,11 @@ import kotlin.math.abs
 import kotlin.properties.Delegates
 
 /**
- * A [Fragment] that shows a grid of items of the same [DataType].
+ * A [Fragment] that shows a grid of [StashData] of the same [DataType].
  *
  * The items are derived from a [FilterArgs] and queried via [DataSupplierFactory].
  */
-class StashGridListFragment :
+class StashDataGridFragment :
     Fragment(),
     DefaultKeyEventCallback {
     private lateinit var mShadowOverlayHelper: ShadowOverlayHelper
