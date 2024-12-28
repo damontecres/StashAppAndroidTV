@@ -17,7 +17,7 @@ import com.github.damontecres.stashapp.views.models.ImageViewModel
 import java.util.Timer
 
 class ImageFragment :
-    Fragment(R.layout.activity_image),
+    Fragment(R.layout.image_fragment),
     DefaultKeyEventCallback {
     private val viewModel: ImageViewModel by viewModels()
 
