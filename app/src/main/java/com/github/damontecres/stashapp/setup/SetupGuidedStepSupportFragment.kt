@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.setup
 
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResult
@@ -12,7 +13,7 @@ open class SetupGuidedStepSupportFragment : GuidedStepSupportFragment() {
     protected val serverViewModel: ServerViewModel by activityViewModels()
 
     fun nextStep(step: GuidedStepSupportFragment) {
-        add(requireActivity().supportFragmentManager, step, android.R.id.content)
+        add(requireActivity().supportFragmentManager, step, R.id.root_fragment)
     }
 
     fun finishSetup(setupState: SetupState) {

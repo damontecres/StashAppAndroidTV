@@ -766,8 +766,10 @@ fun Bundle.putDestination(
 }
 
 @OptIn(ExperimentalSerializationApi::class)
-fun <T : Destination> Bundle.getDestination(): T =
-    getParcelable(NavigationManager.DESTINATION_ARG, Destination::class, 0, StashParcelable) as T
+fun <T : Destination> Bundle.maybeGetDestination(): T? =
+    getParcelable(NavigationManager.DESTINATION_ARG, Destination::class, 0, StashParcelable) as T?
+
+fun <T : Destination> Bundle.getDestination(): T = maybeGetDestination()!!
 
 @OptIn(ExperimentalSerializationApi::class)
 fun <T : Destination> Bundle.getDestination(name: String): T = getParcelable(name, Destination::class, 0, StashParcelable) as T

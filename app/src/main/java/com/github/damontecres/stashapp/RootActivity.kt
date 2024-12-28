@@ -20,7 +20,7 @@ import kotlin.properties.Delegates
  * The only activity in the app
  */
 class RootActivity :
-    FragmentActivity(R.layout.activity_main),
+    FragmentActivity(R.layout.activity_root),
     NavigationManager.NavigationListener {
     private val serverViewModel: ServerViewModel by viewModels<ServerViewModel>()
     private lateinit var navigationManager: NavigationManager

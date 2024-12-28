@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.filter
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidedAction
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.views.getString
@@ -11,7 +12,7 @@ abstract class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
     protected val viewModel: CreateFilterViewModel by activityViewModels()
 
     fun nextStep(step: GuidedStepSupportFragment) {
-        add(requireActivity().supportFragmentManager, step, android.R.id.content)
+        add(requireActivity().supportFragmentManager, step, R.id.root_fragment)
     }
 
     override fun onProvideTheme(): Int = com.github.damontecres.stashapp.R.style.Theme_StashAppAndroidTV_GuidedStep

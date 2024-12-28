@@ -203,7 +203,7 @@ class MainFragment :
         setOnSearchClickedListener {
             requireActivity().supportFragmentManager.commit {
                 addToBackStack("search")
-                replace(R.id.main_browse_fragment, StashSearchFragment())
+                replace(R.id.root_fragment, StashSearchFragment())
             }
         }
 

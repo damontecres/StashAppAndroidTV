@@ -33,7 +33,7 @@ import com.github.damontecres.stashapp.playback.PlaylistScenesFragment
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.setup.SetupFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
-import com.github.damontecres.stashapp.util.getDestination
+import com.github.damontecres.stashapp.util.maybeGetDestination
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
 
@@ -56,8 +56,8 @@ class NavigationManager(
 
     init {
         fragmentManager.addOnBackStackChangedListener {
-            val current = fragmentManager.findFragmentById(R.id.main_browse_fragment)
-            val dest = current?.arguments?.getDestination<Destination>()
+            val current = fragmentManager.findFragmentById(R.id.root_fragment)
+            val dest = current?.arguments?.maybeGetDestination<Destination>()
             if (DEBUG) Log.v(TAG, "backStackChanged: current=$current, dest=${dest?.fragmentTag}")
             if (dest != null) {
                 notifyListeners(dest, current)
@@ -131,7 +131,7 @@ class NavigationManager(
         fragment.arguments = Bundle().putDestination(destination)
 
         if (fragment is GuidedStepSupportFragment) {
-            GuidedStepSupportFragment.add(fragmentManager, fragment, R.id.main_browse_fragment)
+            GuidedStepSupportFragment.add(fragmentManager, fragment, R.id.root_fragment)
         } else {
             if (DEBUG) Log.v(TAG, "Setting ${destination.fragmentTag}: $fragment")
             fragmentManager.commit {
@@ -144,7 +144,7 @@ class NavigationManager(
                     R.animator.fade_in,
                     R.animator.fade_out,
                 )
-                replace(R.id.main_browse_fragment, fragment, destination.fragmentTag)
+                replace(R.id.root_fragment, fragment, destination.fragmentTag)
             }
         }
         notifyListeners(destination, fragment)
@@ -183,7 +183,7 @@ class NavigationManager(
         listeners.add(listener)
     }
 
-    private fun getCurrentFragment(): Fragment? = fragmentManager.findFragmentById(R.id.main_browse_fragment)
+    private fun getCurrentFragment(): Fragment? = fragmentManager.findFragmentById(R.id.root_fragment)
 
     private fun notifyListeners(
         destination: Destination,
