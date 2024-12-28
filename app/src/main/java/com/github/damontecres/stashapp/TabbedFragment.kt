@@ -49,7 +49,7 @@ abstract class TabbedFragment(
         tabViewModel.tabs.observe(this) { pages ->
             adapter = StashFragmentPagerAdapter(pages, childFragmentManager)
             adapter.fragmentCreatedListener = { fragment, position ->
-                if (fragment is StashGridFragment) {
+                if (fragment is StashGridControlsFragment) {
                     fragment.titleView = tabLayout
                 }
                 fragments[position] = fragment

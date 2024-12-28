@@ -57,7 +57,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                         GalleryDetailsFragment()
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.IMAGE,
                             findFilter =
                                 serverViewModel
@@ -70,7 +70,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                         )
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.SCENE,
                             objectFilter = SceneFilterType(galleries = galleries),
                         )
@@ -82,7 +82,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                                 PerformerInScenePresenter(gallery.date),
                             )
                         val fragment =
-                            StashGridFragment(
+                            StashGridControlsFragment(
                                 filterArgs =
                                     FilterArgs(
                                         DataType.PERFORMER,
@@ -93,7 +93,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                         fragment
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             filterArgs =
                                 FilterArgs(
                                     DataType.TAG,

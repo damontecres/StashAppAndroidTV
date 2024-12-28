@@ -109,7 +109,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                         }
                     },
                     PagerEntry(getString(R.string.stashapp_parent_tags)) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.TAG,
                             objectFilter =
                                 TagFilterType(
@@ -130,9 +130,9 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
         dataType: DataType,
         defaultFindFilter: StashFindFilter?,
         createObjectFilter: (Optional<HierarchicalMultiCriterionInput>) -> StashDataFilter,
-    ): StashGridFragment {
+    ): StashGridControlsFragment {
         val fragment =
-            StashGridFragment(
+            StashGridControlsFragment(
                 dataType = dataType,
                 findFilter = defaultFindFilter,
                 objectFilter = createObjectFilter(createCriterionInput(includeSubTags, tagId)),

@@ -43,7 +43,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 /**
  * A [Fragment] that shows a [StashGridListFragment] along with controls for sorting, etc
  */
-class StashGridFragment() :
+class StashGridControlsFragment() :
     Fragment(),
     DefaultKeyEventCallback {
     private val serverViewModel: ServerViewModel by activityViewModels()

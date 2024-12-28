@@ -48,7 +48,7 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                         GroupDetailsFragment()
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.SCENE,
                             findFilter = groupSceneFilter.findFilter,
                             objectFilter =
@@ -64,7 +64,7 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                         )
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.MARKER,
                             objectFilter =
                                 SceneMarkerFilterType(
@@ -84,7 +84,7 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                         )
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             FilterArgs(
                                 DataType.TAG,
                                 override = DataSupplierOverride.GroupTags(group.id),
@@ -92,7 +92,7 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                         )
                     },
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_containing_groups)) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             FilterArgs(
                                 DataType.GROUP,
                                 override =
@@ -105,7 +105,7 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                     },
                     // TODO use subgroup filter
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_sub_groups)) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             FilterArgs(
                                 DataType.GROUP,
                                 override =

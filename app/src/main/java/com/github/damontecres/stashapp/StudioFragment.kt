@@ -98,7 +98,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                         }
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             FilterArgs(
                                 DataType.TAG,
                                 override = DataSupplierOverride.StudioTags(studio.id),
@@ -106,7 +106,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                         )
                     },
                     StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_subsidiary_studios)) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.STUDIO,
                             findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_CHILDREN).findFilter,
                             objectFilter =
@@ -140,9 +140,9 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
         dataType: DataType,
         defaultFindFilter: StashFindFilter?,
         createObjectFilter: (Optional<HierarchicalMultiCriterionInput>) -> StashDataFilter,
-    ): StashGridFragment {
+    ): StashGridControlsFragment {
         val fragment =
-            StashGridFragment(
+            StashGridControlsFragment(
                 dataType = dataType,
                 findFilter = defaultFindFilter,
                 objectFilter = createObjectFilter(createCriterionInput(false, studioId)),

@@ -79,28 +79,28 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                         PerformerDetailsFragment()
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.SCENE,
                             findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_SCENES).findFilter,
                             objectFilter = SceneFilterType(performers = performers),
                         )
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.GALLERY,
                             findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_GALLERIES).findFilter,
                             objectFilter = GalleryFilterType(performers = performers),
                         )
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.IMAGE,
                             findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_IMAGES).findFilter,
                             objectFilter = ImageFilterType(performers = performers),
                         )
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.GROUP) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.GROUP,
                             findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_GROUPS).findFilter,
                             objectFilter = GroupFilterType(performers = performers),
@@ -114,7 +114,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                     TagPresenter(PerformersWithTagLongClickCallback()),
                                 )
                         val fragment =
-                            StashGridFragment(
+                            StashGridControlsFragment(
                                 FilterArgs(
                                     dataType = DataType.TAG,
                                     override = DataSupplierOverride.PerformerTags(performer.id),
@@ -135,7 +135,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                     ),
                                 )
                         val fragment =
-                            StashGridFragment(
+                            StashGridControlsFragment(
                                 dataType = DataType.PERFORMER,
                                 findFilter =
                                     server.serverPreferences
@@ -157,7 +157,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                         fragment
                     },
                     StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
-                        StashGridFragment(
+                        StashGridControlsFragment(
                             dataType = DataType.MARKER,
                             objectFilter = SceneMarkerFilterType(performers = performers),
                         )
