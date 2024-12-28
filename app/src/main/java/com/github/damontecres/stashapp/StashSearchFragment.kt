@@ -14,9 +14,12 @@ import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
+import com.github.damontecres.stashapp.MainFragment.Position
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.data.toStashFindFilter
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -39,11 +42,29 @@ class StashSearchFragment :
     private var taskJob: Job? = null
 
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
+    private var currentPosition: Position = Position(0, 0)
+    private var currentQuery: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setSearchResultProvider(this)
-        setOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
+        setOnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
+            val rowNum = rowsAdapter.indexOf(row)
+            val col =
+                (rowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition
+            val pos = Position(rowNum, col)
+            currentPosition = pos
+        }
+        setOnItemViewClickedListener(
+            NavigationOnItemViewClickedListener(serverViewModel.navigationManager) {
+                val filter =
+                    FilterArgs(
+                        dataType = DataType.IMAGE,
+                        findFilter = StashFindFilter(q = currentQuery),
+                    )
+                FilterAndPosition(filter, currentPosition.column)
+            },
+        )
     }
 
     override fun getResultsAdapter(): ObjectAdapter = rowsAdapter
@@ -74,7 +95,7 @@ class StashSearchFragment :
     private fun search(query: String) {
         if (!TextUtils.isEmpty(query)) {
             rowsAdapter.clear()
-
+            currentQuery = query
             val perPage =
                 PreferenceManager
                     .getDefaultSharedPreferences(requireContext())
