@@ -55,7 +55,7 @@ class MainFragment :
     private val filterList = ArrayList<FilterArgs>()
     private lateinit var backCallback: OnBackPressedCallback
 
-    private var currentPosition = Position(-1, -1)
+    private var currentPosition: Position? = null
     private var dataFetchedFor: StashServer? = null
 
     @Volatile
@@ -91,22 +91,25 @@ class MainFragment :
                     null
                 }
             }
-        if (!this::backCallback.isInitialized) {
-            backCallback =
-                requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, false) {
-                    val pos = currentPosition
-                    if (pos.column > 0) {
-                        selectedPosition = pos.row
-                        (selectedRowViewHolder as ListRowPresenter.ViewHolder)
-                            .gridView.selectedPosition = 0
-                    } else if (pos.row > 0) {
-                        selectedPosition = 0
-                    }
+
+        backCallback =
+            requireActivity().onBackPressedDispatcher.addCallback(
+                viewLifecycleOwner,
+                currentPosition != null,
+            ) {
+                val pos = currentPosition!!
+                if (pos.column > 0) {
+                    selectedPosition = pos.row
+                    (selectedRowViewHolder as ListRowPresenter.ViewHolder)
+                        .gridView.selectedPosition = 0
+                } else if (pos.row > 0) {
+                    selectedPosition = 0
                 }
-            (titleView as MainTitleView).focusListener.addListener { _, isFocused ->
-                backCallback.isEnabled = !isFocused
             }
+        (titleView as MainTitleView).focusListener.addListener { _, isFocused ->
+            backCallback.isEnabled = !isFocused
         }
+
         setupObservers()
         setOnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
             val rowNum = rowsAdapter.indexOf(row)
@@ -209,7 +212,7 @@ class MainFragment :
 
         onItemViewClickedListener =
             NavigationOnItemViewClickedListener(viewModel.navigationManager) {
-                val position = currentPosition
+                val position = currentPosition!!
                 val filter = filterList[position.row]
                 FilterAndPosition(filter, position.column)
             }
@@ -330,7 +333,7 @@ class MainFragment :
     ): Boolean {
         if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
             val item =
-                currentPosition.let {
+                currentPosition?.let {
                     val row = rowsAdapter.get(it.row) as ListRow
                     row.adapter.get(it.column)
                 }

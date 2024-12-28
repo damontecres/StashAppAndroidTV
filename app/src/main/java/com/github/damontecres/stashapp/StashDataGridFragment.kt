@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.core.view.contains
+import androidx.core.view.forEach
 import androidx.core.view.get
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
@@ -100,11 +101,6 @@ class StashDataGridFragment :
     var requestFocus: Boolean = false
 
     /**
-     * Whether to enable scrolling to the top on a back press, defaults to true
-     */
-    var backPressScrollEnabled = true
-
-    /**
      * The item clicked listener, will default to [NavigationOnItemViewClickedListener] in [onViewCreated] if not specified before
      */
     var onItemViewClickedListener: OnItemViewClickedListener? = null
@@ -128,6 +124,20 @@ class StashDataGridFragment :
             val position = gridView.selectedPosition
             onSelectedOrJump(position)
         }
+
+    private val backPressFocusChangeListener: View.OnFocusChangeListener by lazy {
+        object : StashOnFocusChangeListener(requireContext(), R.fraction.alphabet_zoom) {
+            override fun onFocusChange(
+                v: View,
+                hasFocus: Boolean,
+            ) {
+                super.onFocusChange(v, hasFocus)
+                if (hasFocus) {
+                    onBackPressedCallback?.isEnabled = false
+                }
+            }
+        }
+    }
 
     private fun jumpTo(newPosition: Int) {
         if (gridView.adapter != null) {
@@ -252,8 +262,7 @@ class StashDataGridFragment :
             val button =
                 inflater.inflate(R.layout.alphabet_button, alphabetFilterLayout, false) as Button
             button.text = letter.toString()
-            button.onFocusChangeListener =
-                StashOnFocusChangeListener(requireContext(), R.fraction.alphabet_zoom)
+            button.onFocusChangeListener = backPressFocusChangeListener
             button.setOnClickListener {
                 loadingProgressBar.show()
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
@@ -367,9 +376,12 @@ class StashDataGridFragment :
                 .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_back_button_scroll), true)
 
-        if (prefBackPressScrollEnabled && backPressScrollEnabled) {
+        if (prefBackPressScrollEnabled) {
             onBackPressedCallback =
-                requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, false) {
+                requireActivity().onBackPressedDispatcher.addCallback(
+                    viewLifecycleOwner,
+                    selectedPosition >= 0,
+                ) {
                     jumpTo(0)
                     isEnabled = false
                 }
@@ -470,6 +482,9 @@ class StashDataGridFragment :
         }
         jumpButtonLayout[3].setOnClickListener {
             jumpTo((selectedPosition + jump2).coerceIn(0, count - 1))
+        }
+        jumpButtonLayout.forEach {
+            it.onFocusChangeListener = backPressFocusChangeListener
         }
     }
 
