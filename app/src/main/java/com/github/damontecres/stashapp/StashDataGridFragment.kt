@@ -77,7 +77,7 @@ class StashDataGridFragment :
     private lateinit var noResultsTextView: TextView
     private lateinit var gridView: VerticalGridView
     private lateinit var itemBridgeAdapter: ItemBridgeAdapter
-    private lateinit var pagingAdapter: PagingObjectAdapter
+    private var pagingAdapter: PagingObjectAdapter? = null
     private lateinit var alphabetFilterLayout: LinearLayout
     private lateinit var loadingProgressBar: ContentLoadingProgressBar
     private lateinit var jumpButtonLayout: LinearLayout
@@ -139,7 +139,7 @@ class StashDataGridFragment :
                 // If not, just jump without smooth scrolling
 
                 viewLifecycleOwner.lifecycleScope.launch {
-                    pagingAdapter.prefetch(newPosition).join()
+                    pagingAdapter?.prefetch(newPosition)?.join()
                     gridView.selectedPosition = newPosition
                     onSelectedOrJump(newPosition)
                 }
@@ -155,7 +155,7 @@ class StashDataGridFragment :
             positionTextView.text = formatNumber(position + 1, false)
             // If on the second row & the back callback exists, enable it
             onBackPressedCallback?.isEnabled = selectedPosition >= numberOfColumns
-            pagingAdapter.maybePrefetch(position)
+            pagingAdapter?.maybePrefetch(position)
         }
     }
 
@@ -273,7 +273,7 @@ class StashDataGridFragment :
                                 ?.direction == SortDirectionEnum.DESC
                         ) {
                             // Reverse if sorting descending
-                            pagingAdapter.size() - letterPosition - 1
+                            pagingAdapter!!.size() - letterPosition - 1
                         } else {
                             letterPosition
                         }
@@ -301,7 +301,7 @@ class StashDataGridFragment :
         totalCountTextView = view.findViewById(R.id.total_count_text)
         noResultsTextView = view.findViewById(R.id.no_results_text)
 
-        if (this::pagingAdapter.isInitialized) {
+        if (pagingAdapter != null) {
             Log.v(TAG, "pagingAdapter.isInitialized")
             itemBridgeAdapter.setAdapter(pagingAdapter)
 //            mGridPresenter.onBindViewHolder(mGridViewHolder, mAdapter)
@@ -314,10 +314,6 @@ class StashDataGridFragment :
         viewModel.loadingStatus.observe(viewLifecycleOwner) { status ->
             when (status) {
                 is StashGridViewModel.LoadingStatus.AdapterReady -> {
-                    Log.v(
-                        TAG,
-                        "LoadingStatus.AdapterReady: same=${this::pagingAdapter.isInitialized && pagingAdapter == status.pagingAdapter} ${status.pagingAdapter}",
-                    )
                     pagingAdapter = status.pagingAdapter
                     loadingProgressBar.hide()
                     itemBridgeAdapter.setAdapter(status.pagingAdapter)
@@ -397,7 +393,7 @@ class StashDataGridFragment :
     }
 
     private fun showOrHideViews() {
-        val count = pagingAdapter.size()
+        val count = pagingAdapter?.size() ?: -1
         if (count <= 0) {
             positionTextView.text = getString(R.string.zero)
             noResultsTextView.animateToVisible()
@@ -515,7 +511,7 @@ class StashDataGridFragment :
             requireActivity().currentFocus is StashImageCardView
         ) {
             val position = selectedPosition
-            val item = pagingAdapter.get(position)
+            val item = pagingAdapter?.get(position)
             if (item != null) {
                 maybeStartPlayback(requireContext(), item)
                 return true
@@ -554,7 +550,7 @@ class StashDataGridFragment :
     }
 
     companion object {
-        private const val TAG = "StashGridListFragment"
+        private const val TAG = "StashDataGridFragment"
 
         private const val DEBUG = false
     }

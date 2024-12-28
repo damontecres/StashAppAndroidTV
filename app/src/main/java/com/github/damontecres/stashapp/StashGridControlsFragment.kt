@@ -207,16 +207,15 @@ class StashGridControlsFragment() :
         }
 
         val filter =
-            if (!viewModel.filterArgs.isInitialized && savedInstanceState == null) {
-                Log.v(TAG, "onViewCreated first time")
+            if (viewModel.filterArgs.isInitialized) {
+                viewModel.filterArgs.value!!
+            } else if (savedInstanceState != null) {
+                initialFilter = savedInstanceState.getFilterArgs("initialFilter")!!
                 viewModel.setFilter(initialFilter)
                 initialFilter
-            } else if (savedInstanceState != null) {
-                val filter = savedInstanceState.getFilterArgs("_filterArgs")!!
-                viewModel.setFilter(filter)
-                filter
             } else {
-                viewModel.filterArgs.value!!
+                viewModel.setFilter(initialFilter)
+                initialFilter
             }
 
         val gridHeader = view.findViewById<View>(R.id.grid_header)
@@ -291,7 +290,7 @@ class StashGridControlsFragment() :
     ): Boolean = fragment.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event)
 
     companion object {
-        private const val TAG = "StashGridFragment"
+        private const val TAG = "StashGridControlsFragment"
 
         private const val DEBUG = false
     }
