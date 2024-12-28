@@ -141,13 +141,13 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
         fragment.subContentText = getString(R.string.stashapp_include_sub_tag_content)
         fragment.subContentSwitchCheckedListener = { isChecked ->
             val newFilter =
-                fragment.filterArgs.copy(
+                fragment.currentFilter.copy(
                     objectFilter =
                         createObjectFilter(
                             createCriterionInput(isChecked, tagId),
                         ),
                 )
-            stashGridViewModel.setFilter(newFilter)
+            fragment.currentFilter = newFilter
         }
         return fragment
     }

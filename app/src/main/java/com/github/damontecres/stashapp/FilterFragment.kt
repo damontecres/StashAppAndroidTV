@@ -24,7 +24,6 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -88,11 +87,23 @@ class FilterFragment :
         super.onViewCreated(view, savedInstanceState)
 
         val dest = requireArguments().getDestination<Destination.Filter>()
-        val startingFilter = dest.filterArgs
 
         fragment =
             childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment
-        setup(startingFilter)
+        Log.v(
+            TAG,
+            "stashGridViewModel.filterArgs.isInitialized=${stashGridViewModel.filterArgs.isInitialized}",
+        )
+        val filter =
+            if (!stashGridViewModel.filterArgs.isInitialized) {
+                fragment.scrollToNextPage = dest.scrollToNextPage
+                fragment.requestFocus = true
+                fragment.init(dataType)
+                stashGridViewModel.setFilter(dest.filterArgs)
+                dest.filterArgs
+            } else {
+                stashGridViewModel.filterArgs.value!!
+            }
 
         filterButton = view.findViewById(R.id.filter_button)
         filterButton.setOnClickListener {
@@ -106,12 +117,12 @@ class FilterFragment :
         playAllButton = view.findViewById(R.id.play_all_button)
         playAllButton.onFocusChangeListener = onFocusChangeListener
         titleTextView = view.findViewById(R.id.list_title)
-        titleTextView.text = startingFilter.name ?: getString(dataType.pluralStringId)
+        titleTextView.text = filter.name ?: getString(dataType.pluralStringId)
 
         sortButtonManager.setUpSortButton(
             sortButton,
-            startingFilter.dataType,
-            startingFilter.sortAndDirection,
+            filter.dataType,
+            filter.sortAndDirection,
         )
 
         val playAllListener =
@@ -120,9 +131,9 @@ class FilterFragment :
             }
         playAllButton.setOnClickListener(playAllListener)
 
-        if (startingFilter.dataType.supportsPlaylists) {
+        if (filter.dataType.supportsPlaylists) {
             playAllButton.visibility = View.VISIBLE
-        } else if (startingFilter.dataType == DataType.IMAGE) {
+        } else if (filter.dataType == DataType.IMAGE) {
             playAllButton.visibility = View.VISIBLE
             playAllButton.text = getString(R.string.play_slideshow)
         }
@@ -218,15 +229,6 @@ class FilterFragment :
                 listPopUp.listView?.requestFocus()
             }
         }
-    }
-
-    private fun setup(filter: FilterArgs) {
-        val scrollToNextPage =
-            requireArguments().getDestination<Destination.Filter>().scrollToNextPage
-        fragment.scrollToNextPage = scrollToNextPage
-        fragment.requestFocus = true
-        fragment.init(dataType)
-        stashGridViewModel.setFilter(filter)
     }
 
     private class SavedFilterAdapter(

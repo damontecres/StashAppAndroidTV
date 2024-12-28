@@ -8,18 +8,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.OnItemViewClickedListener
-import androidx.leanback.widget.OnItemViewSelectedListener
 import androidx.leanback.widget.PresenterSelector
 import androidx.preference.PreferenceManager
 import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
@@ -52,6 +49,10 @@ class StashGridFragment() :
     private val serverViewModel: ServerViewModel by activityViewModels()
     private val viewModel: StashGridViewModel by viewModels()
 
+    var currentFilter: FilterArgs
+        get() = viewModel.filterArgs.value!!
+        set(newFilter) = viewModel.setFilter(newFilter)
+
     // Views
     private lateinit var sortButton: Button
     private lateinit var playAllButton: Button
@@ -65,15 +66,11 @@ class StashGridFragment() :
     private var remoteButtonPaging: Boolean = true
 
     // Arguments
-    private lateinit var _filterArgs: FilterArgs
-    private lateinit var _currentSortAndDirection: SortAndDirection
+    private lateinit var initialFilter: FilterArgs
 
     // State
-    private var mOnItemViewSelectedListener: OnItemViewSelectedListener? = null
     private var gridHeaderTransitionHelper: TitleTransitionHelper? = null
-    private var columns: Int? = 5
     private var scrollToNextPage = false
-    private var onBackPressedCallback: OnBackPressedCallback? = null
 
     // Modifiable properties
 
@@ -86,11 +83,6 @@ class StashGridFragment() :
      * An optional name for this fragment, not used in this View
      */
     var name: String? = null
-
-    /**
-     * Whether to enable scrolling to the top on a back press, defaults to true
-     */
-    var backPressScrollEnabled = true
 
     /**
      * The presenter for the items, defaults to [StashPresenter.defaultClassPresenterSelector]
@@ -123,28 +115,13 @@ class StashGridFragment() :
      * Type of items being displayed
      */
     val dataType: DataType
-        get() = _filterArgs.dataType
-
-    /**
-     * The current [SortAndDirection] of the items
-     */
-    val currentSortAndDirection: SortAndDirection
-        get() = _currentSortAndDirection
-
-    /**
-     * The current [FilterArgs] which may not be the original provided in the constructor!
-     */
-    val filterArgs: FilterArgs
-        get() = _filterArgs.with(currentSortAndDirection)
+        get() = initialFilter.dataType
 
     constructor(
         filterArgs: FilterArgs,
-        columns: Int? = 5,
         scrollToNextPage: Boolean = false,
     ) : this() {
-        this._filterArgs = filterArgs
-        this.columns = columns
-        this._currentSortAndDirection = _filterArgs.sortAndDirection
+        this.initialFilter = filterArgs
         this.scrollToNextPage = scrollToNextPage
     }
 
@@ -152,9 +129,8 @@ class StashGridFragment() :
         dataType: DataType,
         findFilter: StashFindFilter? = null,
         objectFilter: StashDataFilter? = null,
-        columns: Int? = 5,
         scrollToNextPage: Boolean = false,
-    ) : this(FilterArgs(dataType, null, findFilter, objectFilter), columns, scrollToNextPage)
+    ) : this(FilterArgs(dataType, null, findFilter, objectFilter), scrollToNextPage)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -165,9 +141,9 @@ class StashGridFragment() :
 
         if (savedInstanceState != null) {
             name = savedInstanceState.getString("name")
-            _filterArgs =
-                savedInstanceState.getFilterArgs("_filterArgs")!!
-            Log.v(TAG, "sortAndDirection=${_filterArgs.sortAndDirection}")
+            initialFilter =
+                savedInstanceState.getFilterArgs("initialFilter")!!
+            Log.v(TAG, "sortAndDirection=${initialFilter.sortAndDirection}")
         }
 
         remoteButtonPaging =
@@ -224,30 +200,36 @@ class StashGridFragment() :
             if (DEBUG) {
                 Log.v(
                     TAG,
-                    "showOrHideTitle: $shouldShowTitle, position=$position, columns=$columns",
+                    "showOrHideTitle: $shouldShowTitle, position=$position",
                 )
             }
             showTitle(shouldShowTitle)
         }
 
-        if (savedInstanceState == null) {
-            Log.v(TAG, "onViewCreated first time")
-            viewModel.setFilter(_filterArgs)
-        } else {
-            viewModel.setFilter(savedInstanceState.getFilterArgs("_filterArgs")!!)
-        }
+        val filter =
+            if (!viewModel.filterArgs.isInitialized && savedInstanceState == null) {
+                Log.v(TAG, "onViewCreated first time")
+                viewModel.setFilter(initialFilter)
+                initialFilter
+            } else if (savedInstanceState != null) {
+                val filter = savedInstanceState.getFilterArgs("_filterArgs")!!
+                viewModel.setFilter(filter)
+                filter
+            } else {
+                viewModel.filterArgs.value!!
+            }
 
         val gridHeader = view.findViewById<View>(R.id.grid_header)
         gridHeaderTransitionHelper = TitleTransitionHelper(view as ViewGroup, gridHeader)
 
         sortButton.nextFocusUpId = R.id.tab_layout
         SortButtonManager(StashServer.getCurrentServerVersion()) {
-            viewModel.setFilter(_filterArgs.with(it))
-        }.setUpSortButton(sortButton, dataType, _filterArgs.sortAndDirection)
+            viewModel.setFilter(viewModel.filterArgs.value!!.with(it))
+        }.setUpSortButton(sortButton, dataType, filter.sortAndDirection)
 
         val playAllListener =
             PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
-                FilterAndPosition(filterArgs, 0)
+                FilterAndPosition(viewModel.filterArgs.value!!, 0)
             }
         playAllButton.setOnClickListener(playAllListener)
 
@@ -265,7 +247,7 @@ class StashGridFragment() :
             serverViewModel.navigationManager.navigate(
                 Destination.CreateFilter(
                     dataType,
-                    filterArgs,
+                    viewModel.filterArgs.value!!,
                 ),
             )
         }
@@ -285,8 +267,8 @@ class StashGridFragment() :
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putParcelable(
-            "_filterArgs",
-            _filterArgs.with(currentSortAndDirection),
+            "initialFilter",
+            initialFilter,
             StashParcelable,
         )
         outState.putString("name", name)

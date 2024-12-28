@@ -209,6 +209,7 @@ class StashGridListFragment :
         gridView.setNumColumns(numberOfColumns)
         // gridView.setColumnWidth(0)
         if (gridView.adapter == null) {
+            Log.v(TAG, "gridView.adapter == null")
             itemBridgeAdapter = VerticalGridItemBridgeAdapter()
             gridView.adapter = itemBridgeAdapter
 
@@ -230,6 +231,7 @@ class StashGridListFragment :
                 mUseFocusDimmer,
             )
         } else {
+            Log.v(TAG, "gridView.adapter != null")
             itemBridgeAdapter = gridView.adapter as ItemBridgeAdapter
         }
         gridView.setOnChildSelectedListener { parent, view, position, id ->
@@ -300,6 +302,7 @@ class StashGridListFragment :
         noResultsTextView = view.findViewById(R.id.no_results_text)
 
         if (this::pagingAdapter.isInitialized) {
+            Log.v(TAG, "pagingAdapter.isInitialized")
             itemBridgeAdapter.setAdapter(pagingAdapter)
 //            mGridPresenter.onBindViewHolder(mGridViewHolder, mAdapter)
             if (selectedPosition != -1) {
