@@ -57,12 +57,19 @@ import java.io.File
 
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
-        startPreferenceFragment(
-            PreferencesFragment(
-                ::startPreferenceFragment,
-                ::startImmersiveFragment,
-            ),
-        )
+        // PREFERENCE_FRAGMENT_TAG is private, so hardcoded here
+        val prevFragment =
+            childFragmentManager
+                .findFragmentByTag("androidx.leanback.preference.LeanbackSettingsFragment.PREFERENCE_FRAGMENT")
+        // If the previous fragment was not a preference, then the current one should be, so do not start a new one
+        if (prevFragment !is LeanbackPreferenceFragmentCompat) {
+            startPreferenceFragment(
+                PreferencesFragment(
+                    ::startPreferenceFragment,
+                    ::startImmersiveFragment,
+                ),
+            )
+        }
     }
 
     override fun onPreferenceStartFragment(
