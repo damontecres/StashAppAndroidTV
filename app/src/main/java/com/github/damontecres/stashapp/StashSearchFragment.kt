@@ -93,7 +93,7 @@ class StashSearchFragment :
     }
 
     private fun search(query: String) {
-        if (!TextUtils.isEmpty(query)) {
+        if (!TextUtils.isEmpty(query) && query != currentQuery) {
             rowsAdapter.clear()
             currentQuery = query
             val perPage =
