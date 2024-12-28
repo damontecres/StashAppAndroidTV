@@ -37,4 +37,8 @@ abstract class ItemViewModel<T : StashData> : ViewModel() {
             _item.value = fetch(queryEngine, id)
         }
     }
+
+    fun update(item: T) {
+        _item.value = item
+    }
 }

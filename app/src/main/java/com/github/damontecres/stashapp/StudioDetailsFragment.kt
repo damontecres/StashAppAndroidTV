@@ -44,7 +44,7 @@ class StudioDetailsFragment : DetailsFragment() {
                 val newStudio = mutationEngine.updateStudio(studio.id, rating100 = newRating100)
                 if (newStudio != null) {
                     showSetRatingToast(requireContext(), newRating100)
-                    updateUi(newStudio)
+                    viewModel.update(newStudio)
                 }
             }
         }
@@ -61,7 +61,7 @@ class StudioDetailsFragment : DetailsFragment() {
                                 Toast.LENGTH_SHORT,
                             ).show()
                     }
-                    updateUi(newStudio)
+                    viewModel.update(newStudio)
                 }
             }
         }

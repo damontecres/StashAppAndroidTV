@@ -77,12 +77,12 @@ class GalleryDetailsFragment : Fragment(R.layout.gallery_view) {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
                         val result = mutationEngine.updateGallery(galleryData.id, rating100)
                         if (result != null) {
-                            ratingBar.rating100 = result.rating100 ?: 0
                             showSetRatingToast(
                                 requireContext(),
                                 rating100,
                                 ratingBar.ratingAsStars,
                             )
+                            viewModel.update(result)
                         }
                     }
                 }

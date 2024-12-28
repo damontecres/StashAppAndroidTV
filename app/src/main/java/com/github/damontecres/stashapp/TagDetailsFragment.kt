@@ -51,7 +51,7 @@ class TagDetailsFragment : DetailsFragment() {
                                 Toast.LENGTH_SHORT,
                             ).show()
                     }
-                    updateUi(newTag)
+                    viewModel.update(newTag)
                 }
             }
         }

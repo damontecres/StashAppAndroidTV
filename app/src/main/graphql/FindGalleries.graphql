@@ -76,12 +76,6 @@ fragment GalleryData on Gallery {
 
 mutation UpdateGallery($input: GalleryUpdateInput!) {
   galleryUpdate(input: $input) {
-    tags {
-      ...TagData
-    }
-    performers {
-      ...PerformerData
-    }
-    rating100
+    ...GalleryData
   }
 }

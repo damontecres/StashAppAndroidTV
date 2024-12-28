@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.api.UpdatePerformerMutation
 import com.github.damontecres.stashapp.api.UpdateStudioMutation
 import com.github.damontecres.stashapp.api.UpdateTagMutation
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SavedFilterData
@@ -427,7 +428,7 @@ class MutationEngine(
     suspend fun updateGallery(
         galleryId: String,
         rating100: Int,
-    ): UpdateGalleryMutation.GalleryUpdate? {
+    ): GalleryData? {
         val mutation =
             UpdateGalleryMutation(
                 GalleryUpdateInput(
@@ -436,7 +437,7 @@ class MutationEngine(
                 ),
             )
         val result = executeMutation(mutation)
-        return result.data?.galleryUpdate
+        return result.data?.galleryUpdate?.galleryData
     }
 
     suspend fun installPackage(

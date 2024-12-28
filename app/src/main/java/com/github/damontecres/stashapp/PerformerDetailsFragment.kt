@@ -52,7 +52,7 @@ class PerformerDetailsFragment : DetailsFragment() {
                                 Toast.LENGTH_SHORT,
                             ).show()
                     }
-                    updateUi(newPerformer)
+                    viewModel.update(newPerformer)
                 }
             }
         }
@@ -63,7 +63,7 @@ class PerformerDetailsFragment : DetailsFragment() {
                 val newPerformer = mutationEngine.updatePerformer(perf.id, rating100 = newRating100)
                 if (newPerformer != null) {
                     showSetRatingToast(requireContext(), newRating100)
-                    updateUi(newPerformer)
+                    viewModel.update(newPerformer)
                 }
             }
         }
