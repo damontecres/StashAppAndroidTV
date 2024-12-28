@@ -168,7 +168,7 @@ class StashDataGridFragment :
         Log.v(TAG, "onCreateView")
         val root =
             inflater.inflate(
-                R.layout.stash_grid_list,
+                R.layout.stash_grid,
                 container,
                 false,
             ) as ViewGroup

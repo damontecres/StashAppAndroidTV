@@ -159,7 +159,7 @@ class StashGridControlsFragment() :
     ): View {
         val root =
             inflater.inflate(
-                R.layout.stash_grid_fragment,
+                R.layout.stash_grid_controls,
                 container,
                 false,
             ) as ViewGroup
