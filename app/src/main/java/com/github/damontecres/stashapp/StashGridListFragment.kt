@@ -147,6 +147,7 @@ class StashGridListFragment :
         if (position != selectedPosition) {
             if (DEBUG) Log.v(TAG, "gridOnItemSelected=$position")
             selectedPosition = position
+            viewModel.position = position
             positionTextView.text = formatNumber(position + 1, false)
             // If on the second row & the back callback exists, enable it
             onBackPressedCallback?.isEnabled = selectedPosition >= mGridPresenter.numberOfColumns
@@ -500,7 +501,7 @@ class StashGridListFragment :
     }
 
     companion object {
-        private const val TAG = "StashGridFragment"
+        private const val TAG = "StashGridListFragment"
 
         private const val DEBUG = false
     }
