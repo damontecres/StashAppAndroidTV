@@ -80,7 +80,7 @@ class ImageFragment :
                         period = delay,
                     ) {
                         if (!overlayIsVisible) {
-                            viewModel.nextImage()
+                            viewModel.nextImage(false)
                         }
                     }
             }
@@ -137,10 +137,10 @@ class ImageFragment :
                 // Overlay is not showing and the image is not zoomed in
                 // So maybe move to another image if left or right
                 if (isLeft(event.keyCode)) {
-                    viewModel.previousImage()
+                    viewModel.previousImage(true)
                     return true
                 } else if (isRight(event.keyCode)) {
-                    viewModel.nextImage()
+                    viewModel.nextImage(true)
                     return true
                 }
             }

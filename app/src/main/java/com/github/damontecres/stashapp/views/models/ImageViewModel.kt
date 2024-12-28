@@ -90,17 +90,17 @@ class ImageViewModel(
         pager = StashSparseFilterFetcher(pagingSource, pageSize)
     }
 
-    fun nextImage() {
+    fun nextImage(causedByUser: Boolean) {
         val curr = currentPosition.value
         if (curr != null) {
-            switchImage(curr + 1, false)
+            switchImage(curr + 1, causedByUser)
         }
     }
 
-    fun previousImage() {
+    fun previousImage(causedByUser: Boolean) {
         val curr = currentPosition.value
         if (curr != null) {
-            switchImage(curr - 1, false)
+            switchImage(curr - 1, causedByUser)
         }
     }
 
