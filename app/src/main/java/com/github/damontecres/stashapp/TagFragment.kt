@@ -20,10 +20,12 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter.PagerEntry
 import com.github.damontecres.stashapp.util.getUiTabs
+import com.github.damontecres.stashapp.views.models.StashGridViewModel
 import com.github.damontecres.stashapp.views.models.TagViewModel
 
 class TagFragment : TabbedFragment(DataType.TAG.name) {
     private val viewModel: TagViewModel by viewModels()
+    private val stashGridViewModel: StashGridViewModel by viewModels()
 
     private var includeSubTags = false
 
@@ -145,7 +147,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                             createCriterionInput(isChecked, tagId),
                         ),
                 )
-            fragment.refresh(newFilter)
+            stashGridViewModel.setFilter(newFilter)
         }
         return fragment
     }

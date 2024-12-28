@@ -23,10 +23,12 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getUiTabs
+import com.github.damontecres.stashapp.views.models.StashGridViewModel
 import com.github.damontecres.stashapp.views.models.StudioViewModel
 
 class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
     private val viewModel: StudioViewModel by viewModels()
+    private val stashGridViewModel: StashGridViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -157,7 +159,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                             createCriterionInput(isChecked, studioId),
                         ),
                 )
-            fragment.refresh(newFilter)
+            stashGridViewModel.setFilter(newFilter)
         }
         return fragment
     }

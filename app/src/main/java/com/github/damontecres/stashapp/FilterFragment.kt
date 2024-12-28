@@ -15,12 +15,15 @@ import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.commit
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.FilterOptions
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.presenters.NullPresenter
+import com.github.damontecres.stashapp.presenters.NullPresenterSelector
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
@@ -33,17 +36,19 @@ import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.models.ServerViewModel
+import com.github.damontecres.stashapp.views.models.StashGridViewModel
 import kotlinx.coroutines.launch
 
 /**
- * Displays items of a single [DataType] in a [StashGridFragment].
+ * Displays items of a single [DataType] in a [StashGridListFragment].
  *
- * This fragment manages the sort (delegating to the [StashGridFragment]) and can also retrieve saved filters.
+ * This fragment manages the sort (delegating to the [StashGridListFragment]) and can also retrieve saved filters.
  */
 class FilterFragment :
     Fragment(R.layout.filter_list),
     KeyEvent.Callback {
     private val serverViewModel: ServerViewModel by activityViewModels()
+    private val stashGridViewModel: StashGridViewModel by viewModels()
 
     private lateinit var titleTextView: TextView
     private lateinit var filterButton: Button
@@ -54,6 +59,8 @@ class FilterFragment :
 
     private lateinit var dataType: DataType
 
+    private lateinit var fragment: StashGridListFragment
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -61,14 +68,17 @@ class FilterFragment :
         val startingFilter = dest.filterArgs
         dataType = startingFilter.dataType
 
+        stashGridViewModel.init(
+            NullPresenterSelector(
+                StashPresenter.defaultClassPresenterSelector(),
+                NullPresenter(dataType),
+            ),
+        )
+
         sortButtonManager =
             SortButtonManager(StashServer.getCurrentServerVersion()) { sortAndDirection ->
-                val fragment =
-                    childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
-                fragment.refresh(sortAndDirection)
+                stashGridViewModel.setFilter(sortAndDirection)
             }
-
-        setup(startingFilter)
     }
 
     override fun onViewCreated(
@@ -79,6 +89,10 @@ class FilterFragment :
 
         val dest = requireArguments().getDestination<Destination.Filter>()
         val startingFilter = dest.filterArgs
+
+        fragment =
+            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment
+        setup(startingFilter)
 
         filterButton = view.findViewById(R.id.filter_button)
         filterButton.setOnClickListener {
@@ -102,9 +116,7 @@ class FilterFragment :
 
         val playAllListener =
             PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
-                val fragment =
-                    childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
-                FilterAndPosition(fragment.filterArgs, 0)
+                FilterAndPosition(stashGridViewModel.filterArgs.value!!, 0)
             }
         playAllButton.setOnClickListener(playAllListener)
 
@@ -169,12 +181,13 @@ class FilterFragment :
                         position
                     }
                 if (adapter.createEnabled && (position == 0 || position == 1)) {
-                    val fragment =
-                        childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment
                     val destination =
                         if (position == 1) {
                             // Create from current
-                            Destination.CreateFilter(fragment.dataType, fragment.filterArgs)
+                            Destination.CreateFilter(
+                                fragment.dataType,
+                                stashGridViewModel.filterArgs.value!!,
+                            )
                         } else {
                             Destination.CreateFilter(fragment.dataType, null)
                         }
@@ -210,13 +223,10 @@ class FilterFragment :
     private fun setup(filter: FilterArgs) {
         val scrollToNextPage =
             requireArguments().getDestination<Destination.Filter>().scrollToNextPage
-        val fragment = StashGridFragment(filter, null, scrollToNextPage)
-        fragment.name = filter.name
-        fragment.disableButtons()
+        fragment.scrollToNextPage = scrollToNextPage
         fragment.requestFocus = true
-        childFragmentManager.commit {
-            replace(R.id.list_fragment, fragment)
-        }
+        fragment.init(dataType)
+        stashGridViewModel.setFilter(filter)
     }
 
     private class SavedFilterAdapter(
@@ -297,7 +307,7 @@ class FilterFragment :
         event: KeyEvent,
     ): Boolean {
         val fragment =
-            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment?
         return fragment?.onKeyUp(keyCode, event) ?: false
     }
 
@@ -306,7 +316,7 @@ class FilterFragment :
         event: KeyEvent,
     ): Boolean {
         val fragment =
-            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment?
         return fragment?.onKeyDown(keyCode, event) ?: false
     }
 
@@ -315,7 +325,7 @@ class FilterFragment :
         event: KeyEvent,
     ): Boolean {
         val fragment =
-            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment?
         return fragment?.onKeyLongPress(keyCode, event) ?: false
     }
 
@@ -325,7 +335,7 @@ class FilterFragment :
         event: KeyEvent,
     ): Boolean {
         val fragment =
-            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridFragment?
+            childFragmentManager.findFragmentById(R.id.list_fragment) as StashGridListFragment?
         return fragment?.onKeyMultiple(keyCode, repeatCount, event) ?: false
     }
 
