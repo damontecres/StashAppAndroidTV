@@ -14,7 +14,6 @@ import androidx.fragment.app.viewModels
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.PresenterSelector
 import androidx.preference.PreferenceManager
-import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
@@ -26,11 +25,11 @@ import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
-import com.github.damontecres.stashapp.util.StashParcelable
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getFilterArgs
+import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -140,9 +139,8 @@ class StashGridControlsFragment() :
         )
 
         if (savedInstanceState != null) {
-            name = savedInstanceState.getString("name")
-            initialFilter =
-                savedInstanceState.getFilterArgs("initialFilter")!!
+            name = savedInstanceState.getString(STATE_NAME)
+            initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
             Log.v(TAG, "sortAndDirection=${initialFilter.sortAndDirection}")
         }
 
@@ -210,7 +208,7 @@ class StashGridControlsFragment() :
             if (viewModel.filterArgs.isInitialized) {
                 viewModel.filterArgs.value!!
             } else if (savedInstanceState != null) {
-                initialFilter = savedInstanceState.getFilterArgs("initialFilter")!!
+                initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
                 viewModel.setFilter(initialFilter)
                 initialFilter
             } else {
@@ -223,7 +221,7 @@ class StashGridControlsFragment() :
 
         sortButton.nextFocusUpId = R.id.tab_layout
         SortButtonManager(StashServer.getCurrentServerVersion()) {
-            viewModel.setFilter(viewModel.filterArgs.value!!.with(it))
+            viewModel.setFilter(currentFilter.with(it))
         }.setUpSortButton(sortButton, dataType, filter.sortAndDirection)
 
         val playAllListener =
@@ -265,12 +263,8 @@ class StashGridControlsFragment() :
     @OptIn(ExperimentalSerializationApi::class)
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putParcelable(
-            "initialFilter",
-            initialFilter,
-            StashParcelable,
-        )
-        outState.putString("name", name)
+        outState.putFilterArgs(STATE_FILTER, currentFilter)
+        outState.putString(STATE_NAME, name)
     }
 
     fun showTitle(show: Boolean) {
@@ -291,6 +285,9 @@ class StashGridControlsFragment() :
 
     companion object {
         private const val TAG = "StashGridControlsFragment"
+
+        private const val STATE_FILTER = "currentFilter"
+        private const val STATE_NAME = "name"
 
         private const val DEBUG = false
     }

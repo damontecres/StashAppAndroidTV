@@ -751,6 +751,15 @@ fun Bundle.getDataType(): DataType = DataType.valueOf(getString("dataType")!!)
 fun Bundle.getFilterArgs(name: String): FilterArgs? = getParcelable(name, FilterArgs::class, 0, StashParcelable)
 
 @OptIn(ExperimentalSerializationApi::class)
+fun Bundle.putFilterArgs(
+    name: String,
+    filterArgs: FilterArgs,
+): Bundle {
+    putParcelable(name, filterArgs, StashParcelable)
+    return this
+}
+
+@OptIn(ExperimentalSerializationApi::class)
 fun Bundle.putDestination(destination: Destination): Bundle {
     putParcelable(NavigationManager.DESTINATION_ARG, destination, StashParcelable)
     return this

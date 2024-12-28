@@ -30,7 +30,9 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDestination
+import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
+import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -92,17 +94,21 @@ class FilterFragment :
             childFragmentManager.findFragmentById(R.id.list_fragment) as StashDataGridFragment
         Log.v(
             TAG,
-            "stashGridViewModel.filterArgs.isInitialized=${stashGridViewModel.filterArgs.isInitialized}",
+            "filterArgs.isInitialized=${stashGridViewModel.filterArgs.isInitialized}, " +
+                "savedInstanceState.isNull=${savedInstanceState == null}",
         )
+        fragment.scrollToNextPage = dest.scrollToNextPage
+        fragment.requestFocus = true
+        fragment.init(dataType)
+
         val filter =
-            if (!stashGridViewModel.filterArgs.isInitialized) {
-                fragment.scrollToNextPage = dest.scrollToNextPage
-                fragment.requestFocus = true
-                fragment.init(dataType)
+            if (stashGridViewModel.filterArgs.isInitialized) {
+                stashGridViewModel.filterArgs.value!!
+            } else if (savedInstanceState != null) {
+                savedInstanceState.getFilterArgs(STATE_FILTER) ?: dest.filterArgs
+            } else {
                 stashGridViewModel.setFilter(dest.filterArgs)
                 dest.filterArgs
-            } else {
-                stashGridViewModel.filterArgs.value!!
             }
 
         filterButton = view.findViewById(R.id.filter_button)
@@ -231,6 +237,13 @@ class FilterFragment :
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (stashGridViewModel.filterArgs.isInitialized) {
+            outState.putFilterArgs(STATE_FILTER, stashGridViewModel.filterArgs.value!!)
+        }
+    }
+
     private class SavedFilterAdapter(
         context: Context,
         val createEnabled: Boolean,
@@ -343,5 +356,6 @@ class FilterFragment :
 
     companion object {
         private const val TAG = "FilterFragment"
+        private const val STATE_FILTER = "currentFilter"
     }
 }
