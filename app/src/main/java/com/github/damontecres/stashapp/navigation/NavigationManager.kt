@@ -65,6 +65,13 @@ class NavigationManager(
         }
     }
 
+    private val slideAnimDestinations =
+        setOf(
+            Destination.Settings,
+            Destination.SettingsPin,
+            Destination.ManageServers,
+        )
+
     fun navigate(destination: Destination) {
         if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
         val current = getCurrentFragment()
@@ -138,12 +145,21 @@ class NavigationManager(
                 if (destination != Destination.Main) {
                     addToBackStack(destination.fragmentTag)
                 }
-                setCustomAnimations(
-                    R.animator.fade_in,
-                    R.animator.fade_out,
-                    R.animator.fade_in,
-                    R.animator.fade_out,
-                )
+                if (destination in slideAnimDestinations) {
+                    setCustomAnimations(
+                        R.anim.slide_in_right,
+                        R.anim.slide_out_left,
+                        android.R.anim.slide_in_left,
+                        android.R.anim.slide_out_right,
+                    )
+                } else {
+                    setCustomAnimations(
+                        R.animator.fade_in,
+                        R.animator.fade_out,
+                        R.animator.fade_in,
+                        R.animator.fade_out,
+                    )
+                }
                 replace(R.id.root_fragment, fragment, destination.fragmentTag)
             }
         }
