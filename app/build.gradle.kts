@@ -127,7 +127,7 @@ tasks.register("createGraphqlSchema") {
     description = "Concats all of the server graphql scehem files"
 
     doFirst {
-        File("$projectDir/src/main/graphql/schema.graphqls").writeTextIfDifferent(
+        File("$buildDir/generated/source/schema.graphqls").writeTextIfDifferent(
             fileTree("../stash-server/graphql/schema/")
                 .filter { it.extension == "graphql" }
                 .files
@@ -137,14 +137,10 @@ tasks.register("createGraphqlSchema") {
     }
 }
 
-tasks.named("generateApolloSources") {
-    dependsOn("createGraphqlSchema")
-}
-
 apollo {
     service("app") {
         packageName.set("com.github.damontecres.stashapp.api")
-        schemaFile = File("$projectDir/src/main/graphql/schema.graphqls")
+        schemaFile = File("$buildDir/generated/source/schema.graphqls")
         generateOptionalOperationVariables.set(false)
         outputDirConnection {
             // Fixes where classes aren't detected in unit tests
@@ -153,6 +149,10 @@ apollo {
         }
         plugin(project(":apollo-compiler"))
     }
+}
+
+tasks.named("generateAppApolloSources") {
+    dependsOn("createGraphqlSchema")
 }
 
 tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrings") {
