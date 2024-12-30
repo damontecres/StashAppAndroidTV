@@ -37,7 +37,6 @@ import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.models.StashGridViewModel
 import com.google.android.material.switchmaterial.SwitchMaterial
-import kotlinx.serialization.ExperimentalSerializationApi
 
 /**
  * A [Fragment] that shows a [StashDataGridFragment] along with controls for sorting, etc
@@ -140,9 +139,11 @@ class StashGridControlsFragment() :
 
         if (savedInstanceState != null) {
             name = savedInstanceState.getString(STATE_NAME)
-            initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
+            initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER) ?: initialFilter
             Log.v(TAG, "sortAndDirection=${initialFilter.sortAndDirection}")
         }
+
+        currentFilter = initialFilter
 
         remoteButtonPaging =
             PreferenceManager
@@ -260,10 +261,13 @@ class StashGridControlsFragment() :
         }
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putFilterArgs(STATE_FILTER, currentFilter)
+        if (viewModel.filterArgs.isInitialized) {
+            outState.putFilterArgs(STATE_FILTER, currentFilter)
+        } else {
+            outState.putFilterArgs(STATE_FILTER, initialFilter)
+        }
         outState.putString(STATE_NAME, name)
     }
 
