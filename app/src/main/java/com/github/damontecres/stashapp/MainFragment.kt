@@ -70,9 +70,7 @@ class MainFragment :
 
         adapter = rowsAdapter
 
-        if (savedInstanceState == null) {
-            viewModel.maybeShowUpdate(requireContext())
-        }
+        viewModel.maybeShowUpdate(requireContext())
     }
 
     override fun onViewCreated(
