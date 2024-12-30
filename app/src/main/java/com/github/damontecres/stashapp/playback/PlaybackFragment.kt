@@ -10,6 +10,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
@@ -78,6 +79,7 @@ abstract class PlaybackFragment(
 
     protected var trackActivityListener: TrackActivityPlaybackListener? = null
     protected val controllerVisibilityListener = ControllerVisibilityListenerList()
+    private var backCallback: OnBackPressedCallback? = null
 
     /**
      * Whether to show video previews when scrubbing
@@ -374,12 +376,12 @@ abstract class PlaybackFragment(
             manager.getInt("controllerShowTimeoutMs", PlayerControlView.DEFAULT_SHOW_TIMEOUT_MS)
         videoView.setControllerVisibilityListener(controllerVisibilityListener)
 
-        val backCallback =
-            requireActivity().onBackPressedDispatcher.addCallback(requireActivity(), false) {
+        backCallback =
+            requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, false) {
                 hideControlsIfVisible()
             }
         controllerVisibilityListener.addListener { vis ->
-            backCallback.isEnabled = vis == View.VISIBLE
+            backCallback?.isEnabled = vis == View.VISIBLE
         }
         controllerVisibilityListener.addListener { _ ->
             if (!exoCenterControls.isVisible) {

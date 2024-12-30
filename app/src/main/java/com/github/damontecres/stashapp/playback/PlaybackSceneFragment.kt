@@ -128,14 +128,13 @@ class PlaybackSceneFragment : PlaybackFragment() {
                         if (position > 0) position else C.TIME_UNSET,
                     )
 
-                    // Unless the video was paused before called the result launcher, play immediately
-//                    exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
                     exoPlayer.volume = 1f
                     if (videoView.controllerShowTimeoutMs > 0) {
                         videoView.hideController()
                     }
                     exoPlayer.prepare()
-                    exoPlayer.playWhenReady = true
+                    // Unless the video was paused before called the result launcher, play immediately
+                    exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
                 } else {
                     videoView.useController = false
                     Toast
