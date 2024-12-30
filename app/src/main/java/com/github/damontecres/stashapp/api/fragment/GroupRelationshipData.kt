@@ -1,7 +1,4 @@
-package com.github.damontecres.stashapp.data
-
-import com.github.damontecres.stashapp.api.fragment.GroupData
-import com.github.damontecres.stashapp.api.fragment.GroupDescriptionData
+package com.github.damontecres.stashapp.api.fragment
 
 enum class GroupRelationshipType {
     CONTAINING,

@@ -32,7 +32,7 @@ import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.fragment.SavedFilter
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.GalleryUpdateInput
@@ -449,9 +449,9 @@ class MutationEngine(
         return result.data!!.installPackages
     }
 
-    suspend fun saveFilter(input: SaveFilterInput): SavedFilterData {
+    suspend fun saveFilter(input: SaveFilterInput): SavedFilter {
         val mutation = SaveFilterMutation(input)
-        return executeMutation(mutation).data!!.saveFilter.savedFilterData
+        return executeMutation(mutation).data!!.saveFilter.savedFilter
     }
 
     suspend fun updateStudio(

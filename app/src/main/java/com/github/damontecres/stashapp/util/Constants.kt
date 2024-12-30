@@ -39,7 +39,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.TagData
-import com.github.damontecres.stashapp.api.fragment.VideoFileData
+import com.github.damontecres.stashapp.api.fragment.VideoFile
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
@@ -374,7 +374,7 @@ fun CharSequence?.isNotNullOrBlank(): Boolean {
 val FullSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
-            val path = files.firstOrNull()?.videoFileData?.path
+            val path = files.firstOrNull()?.videoFile?.path
             path?.fileNameFromPath
         } else {
             title
@@ -383,7 +383,7 @@ val FullSceneData.titleOrFilename: String?
 val SlimSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
-            val path = files.firstOrNull()?.videoFileData?.path
+            val path = files.firstOrNull()?.videoFile?.path
             path?.fileNameFromPath
         } else {
             title
@@ -392,7 +392,7 @@ val SlimSceneData.titleOrFilename: String?
 val VideoSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
-            val path = files.firstOrNull()?.videoFileData?.path
+            val path = files.firstOrNull()?.videoFile?.path
             path?.fileNameFromPath
         } else {
             title
@@ -414,7 +414,7 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
             resume_time = this.resume_time,
             created_at = this.created_at,
             updated_at = this.updated_at,
-            files = this.files.map { SlimSceneData.File(it.__typename, it.videoFileData) },
+            files = this.files.map { SlimSceneData.File(it.__typename, it.videoFile) },
             paths =
                 SlimSceneData.Paths(
                     screenshot = this.paths.screenshot,
@@ -474,7 +474,7 @@ val FullSceneData.asVideoSceneData: VideoSceneData
             o_counter,
             created_at,
             updated_at,
-            files.map { VideoSceneData.File("", it.videoFileData) },
+            files.map { VideoSceneData.File("", it.videoFile) },
             VideoSceneData.Paths(paths.screenshot, paths.preview, paths.stream, paths.sprite),
             sceneStreams.map { VideoSceneData.SceneStream(it.url, it.mime_type, it.label) },
         )
@@ -682,7 +682,7 @@ suspend fun showToastOnMain(
     Toast.makeText(context, message, length).show()
 }
 
-fun VideoFileData.resolutionName(): CharSequence {
+fun VideoFile.resolutionName(): CharSequence {
     val number = if (width > height) height else width
     return if (number >= 6144) {
         "HUGE"

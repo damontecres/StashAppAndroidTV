@@ -54,8 +54,8 @@ class SceneDetailsPresenter(
         var debugInfo: String? = null
         val file = scene.files.firstOrNull()
         if (file != null) {
-            val resolution = file.videoFileData.resolutionName()
-            val duration = durationToString(file.videoFileData.duration)
+            val resolution = file.videoFile.resolutionName()
+            val duration = durationToString(file.videoFile.duration)
             viewHolder.subtitle.text =
                 concatIfNotBlank(
                     " - ",
@@ -69,7 +69,7 @@ class SceneDetailsPresenter(
                     false,
                 )
             ) {
-                val videoFile = file.videoFileData
+                val videoFile = file.videoFile
                 val supportedCodecs = CodecSupport.getSupportedCodecs(context)
                 val videoSupported = supportedCodecs.isVideoSupported(videoFile.video_codec)
                 val audioSupported = supportedCodecs.isAudioSupported(videoFile.audio_codec)

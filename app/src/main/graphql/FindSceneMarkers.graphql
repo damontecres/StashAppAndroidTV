@@ -29,7 +29,7 @@ fragment VideoSceneData on Scene {
   created_at
   updated_at
   files {
-    ...VideoFileData
+    ...VideoFile
   }
   paths {
     screenshot

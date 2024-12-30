@@ -38,7 +38,7 @@ data class Scene(
                     .associate {
                         Pair(it.label.toString(), it.url)
                     }
-            val fileData = data.files.firstOrNull()?.videoFileData
+            val fileData = data.files.firstOrNull()?.videoFile
             return Scene(
                 id = data.id,
                 title = data.titleOrFilename,
@@ -66,7 +66,7 @@ data class Scene(
                     .associate {
                         Pair(it.label.toString(), it.url)
                     }
-            val fileData = data.files.firstOrNull()?.videoFileData
+            val fileData = data.files.firstOrNull()?.videoFile
             return Scene(
                 id = data.id,
                 title = data.titleOrFilename,
@@ -94,7 +94,7 @@ data class Scene(
                     .associate {
                         Pair(it.label.toString(), it.url)
                     }
-            val fileData = data.files.firstOrNull()?.videoFileData
+            val fileData = data.files.firstOrNull()?.videoFile
             return Scene(
                 id = data.id,
                 title = data.titleOrFilename,

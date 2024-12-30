@@ -26,7 +26,7 @@ import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.cache.DiskCache
-import com.github.damontecres.stashapp.api.fragment.JobData
+import com.github.damontecres.stashapp.api.fragment.StashJob
 import com.github.damontecres.stashapp.api.type.JobStatus
 import com.github.damontecres.stashapp.api.type.JobStatusUpdateType
 import com.github.damontecres.stashapp.data.JobResult
@@ -300,7 +300,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
          */
         private fun handleJobUpdate(
             updateType: JobStatusUpdateType,
-            job: JobData,
+            job: StashJob,
             serverPrefs: ServerPreferences,
         ) {
             val triggerScan = findPreference<Preference>("triggerScan")!!
@@ -345,7 +345,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
         }
 
-        private fun JobData.isRunning() = status == JobStatus.RUNNING || status == JobStatus.READY || status == JobStatus.STOPPING
+        private fun StashJob.isRunning() = status == JobStatus.RUNNING || status == JobStatus.READY || status == JobStatus.STOPPING
 
         private fun refresh(currentServer: StashServer) {
             Log.v(TAG, "refresh")
@@ -406,7 +406,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                     subscriptionEngine.subscribeToJobs { update ->
                         val type = update.jobsSubscribe.type
-                        val jobData = update.jobsSubscribe.job.jobData
+                        val jobData = update.jobsSubscribe.job.stashJob
                         Log.v(TAG, "job subscription update: $type ${jobData.id}")
                         handleJobUpdate(type, jobData, serverPrefs)
                     }

@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.data.StashData
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.StashPresenter

@@ -24,7 +24,7 @@ fragment TagData on Tag {
   updated_at
 }
 
-fragment JobData on Job {
+fragment StashJob on Job {
   id
   status
   progress

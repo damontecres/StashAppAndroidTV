@@ -9,7 +9,7 @@ import androidx.leanback.widget.RowPresenter
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.data.StashData
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 

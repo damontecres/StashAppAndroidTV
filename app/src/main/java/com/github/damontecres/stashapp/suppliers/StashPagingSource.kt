@@ -3,9 +3,9 @@ package com.github.damontecres.stashapp.suppliers
 import android.util.Log
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.suppliers.StashPagingSource.DataTransform
 import com.github.damontecres.stashapp.util.QueryEngine
 import kotlinx.coroutines.Dispatchers

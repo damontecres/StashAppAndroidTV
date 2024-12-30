@@ -41,7 +41,7 @@ class ScenePresenter(
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 
-        val videoFile = item.files.firstOrNull()?.videoFileData
+        val videoFile = item.files.firstOrNull()?.videoFile
         if (videoFile != null) {
             val duration = durationToString(videoFile.duration)
             cardView.setTextOverlayText(StashImageCardView.OverlayPosition.BOTTOM_RIGHT, duration)

@@ -2,7 +2,7 @@ subscription JobProgress {
     jobsSubscribe {
         type
         job {
-            ...JobData
+            ...StashJob
         }
     }
 }

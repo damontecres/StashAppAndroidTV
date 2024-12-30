@@ -20,7 +20,7 @@ class StashApolloCompilerPlugin : ApolloCompilerPlugin {
         return object : Transform<KotlinOutput> {
             override fun transform(input: KotlinOutput): KotlinOutput {
                 val packageName = "com.github.damontecres.stashapp"
-                val stashDataInterface = ClassName("$packageName.data", "StashData")
+                val stashDataInterface = ClassName("$packageName.api.fragment", "StashData")
                 val stashFilterInterface = ClassName("$packageName.api.type", "StashDataFilter")
                 val stashFilterFileSpec =
                     FileSpec

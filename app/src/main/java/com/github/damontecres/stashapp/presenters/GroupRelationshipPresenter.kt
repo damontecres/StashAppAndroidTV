@@ -1,6 +1,6 @@
 package com.github.damontecres.stashapp.presenters
 
-import com.github.damontecres.stashapp.data.GroupRelationshipData
+import com.github.damontecres.stashapp.api.fragment.GroupRelationshipData
 
 class GroupRelationshipPresenter(
     callback: LongClickCallBack<GroupRelationshipData>? = null,
