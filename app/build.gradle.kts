@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.cxx.io.writeTextIfDifferent
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import java.io.ByteArrayOutputStream
 import java.util.Base64
@@ -121,10 +122,25 @@ android {
     }
 }
 
+tasks.register("createGraphqlSchema") {
+    group = "build"
+    description = "Concats all of the server graphql scehem files"
+
+    doFirst {
+        File("$buildDir/generated/source/schema.graphqls").writeTextIfDifferent(
+            fileTree("../stash-server/graphql/schema/")
+                .filter { it.extension == "graphql" }
+                .files
+                .sorted()
+                .joinToString("\n") { it.readText() },
+        )
+    }
+}
+
 apollo {
     service("app") {
         packageName.set("com.github.damontecres.stashapp.api")
-        schemaFiles.setFrom(fileTree("../stash-server/graphql/schema/").filter { it.extension == "graphql" }.files.map { it.path })
+        schemaFile = File("$buildDir/generated/source/schema.graphqls")
         generateOptionalOperationVariables.set(false)
         outputDirConnection {
             // Fixes where classes aren't detected in unit tests
@@ -133,6 +149,10 @@ apollo {
         }
         plugin(project(":apollo-compiler"))
     }
+}
+
+tasks.named("generateAppApolloSources") {
+    dependsOn("createGraphqlSchema")
 }
 
 tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrings") {
