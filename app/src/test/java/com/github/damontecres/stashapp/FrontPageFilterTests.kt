@@ -5,7 +5,7 @@ import com.apollographql.apollo.api.json.BufferedSourceJsonReader
 import com.apollographql.apollo.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.ConfigurationUIQuery
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.fragment.SavedFilter
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.data.DataType
@@ -47,7 +47,7 @@ class FrontPageFilterTests {
     private fun createSavedFilterData(
         id: String,
         mode: FilterMode,
-    ): SavedFilterData = SavedFilterData(id, mode, "savedfilter-$id", null, null, null, "SavedFilterData")
+    ): SavedFilter = SavedFilter(id, mode, "savedfilter-$id", null, null, null, "SavedFilterData")
 
     @Test
     fun basicTest() {
