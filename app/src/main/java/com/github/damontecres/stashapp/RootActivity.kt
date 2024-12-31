@@ -97,7 +97,7 @@ class RootActivity :
     @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val fragment = currentFragment
-        if (fragment is KeyEventDispatcher) {
+        if (fragment is KeyEventDispatcher && fragment.isAdded) {
             return fragment.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
         }
         return super.dispatchKeyEvent(event)
@@ -108,7 +108,7 @@ class RootActivity :
         event: KeyEvent?,
     ): Boolean {
         val fragment = currentFragment
-        return if (fragment != null && fragment is KeyEvent.Callback) {
+        return if (fragment != null && fragment.isAdded && fragment is KeyEvent.Callback) {
             fragment.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event)
         } else {
             super.onKeyDown(keyCode, event)
@@ -120,7 +120,7 @@ class RootActivity :
         event: KeyEvent?,
     ): Boolean {
         val fragment = currentFragment
-        return if (fragment != null && fragment is KeyEvent.Callback) {
+        return if (fragment != null && fragment.isAdded && fragment is KeyEvent.Callback) {
             fragment.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event)
         } else {
             super.onKeyUp(keyCode, event)
@@ -132,7 +132,7 @@ class RootActivity :
         event: KeyEvent?,
     ): Boolean {
         val fragment = currentFragment
-        return if (fragment != null && fragment is KeyEvent.Callback) {
+        return if (fragment != null && fragment.isAdded && fragment is KeyEvent.Callback) {
             fragment.onKeyLongPress(keyCode, event) || super.onKeyLongPress(keyCode, event)
         } else {
             super.onKeyLongPress(keyCode, event)
@@ -145,7 +145,7 @@ class RootActivity :
         event: KeyEvent?,
     ): Boolean {
         val fragment = currentFragment
-        return if (fragment != null && fragment is KeyEvent.Callback) {
+        return if (fragment != null && fragment.isAdded && fragment is KeyEvent.Callback) {
             fragment.onKeyMultiple(keyCode, repeatCount, event) ||
                 super.onKeyMultiple(
                     keyCode,
