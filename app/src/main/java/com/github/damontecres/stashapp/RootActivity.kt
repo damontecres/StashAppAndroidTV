@@ -31,6 +31,8 @@ class RootActivity :
     private var appHasPin by Delegates.notNull<Boolean>()
     private var currentFragment: Fragment? = null
 
+    private var hasCheckedForUpdate = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         setUpLifeCycleListeners()
         Log.v(TAG, "onCreate: savedInstanceState==null:${savedInstanceState == null}")
@@ -75,6 +77,7 @@ class RootActivity :
 
     override fun onResume() {
         super.onResume()
+        hasCheckedForUpdate = false
         if (appHasPin) {
             navigationManager.navigate(Destination.Pin)
         }
@@ -90,6 +93,10 @@ class RootActivity :
             "onNavigate: $previousDestination=>$nextDestination",
         )
         currentFragment = fragment
+        if (nextDestination == Destination.Main && !hasCheckedForUpdate) {
+            serverViewModel.maybeShowUpdate(this)
+            hasCheckedForUpdate = true
+        }
     }
 
     // Delegate key events to the current fragment

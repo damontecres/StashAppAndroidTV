@@ -49,19 +49,23 @@ class UpdateChecker {
             val installedVersion = getInstalledVersion(context)
             val latestRelease = getLatestRelease(context)
             if (latestRelease != null && latestRelease.version.isGreaterThan(installedVersion)) {
+                Log.v(TAG, "Update available $installedVersion => ${latestRelease.version}")
                 Toast
                     .makeText(
                         context,
                         "Update available: $installedVersion => ${latestRelease.version}!",
                         Toast.LENGTH_LONG,
                     ).show()
-            } else if (showNegativeToast) {
-                Toast
-                    .makeText(
-                        context,
-                        "No updates available, $installedVersion is the latest!",
-                        Toast.LENGTH_LONG,
-                    ).show()
+            } else {
+                Log.v(TAG, "No update available for $installedVersion")
+                if (showNegativeToast) {
+                    Toast
+                        .makeText(
+                            context,
+                            "No updates available, $installedVersion is the latest!",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                }
             }
         }
 

@@ -69,8 +69,6 @@ class MainFragment :
         setupEventListeners()
 
         adapter = rowsAdapter
-
-        viewModel.maybeShowUpdate(requireContext())
     }
 
     override fun onViewCreated(
