@@ -74,20 +74,26 @@ sealed class Destination {
         val filterArgs: FilterArgs,
         val position: Int,
         val automatic: Boolean,
-    ) : Destination()
+    ) : Destination() {
+        override fun toString(): String = "Slideshow(position=$position, automatic=$automatic)"
+    }
 
     @Serializable
     data class Filter(
         val filterArgs: FilterArgs,
         val scrollToNextPage: Boolean = false,
-    ) : Destination()
+    ) : Destination() {
+        override fun toString(): String = "Filter(dataType=${filterArgs.dataType}, scrollToNextPage=$scrollToNextPage)"
+    }
 
     @Serializable
     data class Playlist(
         val filterArgs: FilterArgs,
         val position: Int,
         val duration: Long? = null,
-    ) : Destination()
+    ) : Destination() {
+        override fun toString(): String = "Playlist(dataType=${filterArgs.dataType}, position=$position, duration=$duration)"
+    }
 
     @Serializable
     data class SearchFor(
@@ -117,7 +123,9 @@ sealed class Destination {
     data class CreateFilter(
         val dataType: DataType,
         val startingFilter: FilterArgs?,
-    ) : Destination()
+    ) : Destination() {
+        override fun toString(): String = "Playlist(dataType=$dataType)"
+    }
 
     /**
      * An arbitrary fragment that requires no arguments

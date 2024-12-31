@@ -46,6 +46,8 @@ class NavigationManager(
     private val fragmentManager = activity.supportFragmentManager
     private val listeners = mutableListOf<NavigationListener>()
 
+    private var previousDestination: Destination? = null
+
     /**
      * A [OnBackPressedCallback] that always finishes the [RootActivity]
      */
@@ -60,7 +62,8 @@ class NavigationManager(
             val dest = current?.arguments?.maybeGetDestination<Destination>()
             if (DEBUG) Log.v(TAG, "backStackChanged: current=$current, dest=${dest?.fragmentTag}")
             if (dest != null) {
-                notifyListeners(dest, current)
+                notifyListeners(previousDestination, dest, current)
+                previousDestination = dest
             }
         }
     }
@@ -163,7 +166,8 @@ class NavigationManager(
                 replace(R.id.root_fragment, fragment, destination.fragmentTag)
             }
         }
-        notifyListeners(destination, fragment)
+        notifyListeners(previousDestination, destination, fragment)
+        previousDestination = destination
     }
 
     /**
@@ -202,15 +206,19 @@ class NavigationManager(
     private fun getCurrentFragment(): Fragment? = fragmentManager.findFragmentById(R.id.root_fragment)
 
     private fun notifyListeners(
-        destination: Destination,
+        previousDestination: Destination?,
+        nextDestination: Destination,
         fragment: Fragment,
     ) {
-        listeners.forEach { it.onNavigate(destination, fragment) }
+        if (previousDestination != nextDestination) {
+            listeners.forEach { it.onNavigate(previousDestination, nextDestination, fragment) }
+        }
     }
 
     interface NavigationListener {
         fun onNavigate(
-            destination: Destination,
+            previousDestination: Destination?,
+            nextDestination: Destination,
             fragment: Fragment,
         )
     }

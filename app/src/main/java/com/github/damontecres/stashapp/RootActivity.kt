@@ -75,10 +75,14 @@ class RootActivity :
     }
 
     override fun onNavigate(
-        destination: Destination,
+        previousDestination: Destination?,
+        nextDestination: Destination,
         fragment: Fragment,
     ) {
-        Log.v(TAG, "onNavigate: dest=${destination.fragmentTag}")
+        Log.v(
+            TAG,
+            "onNavigate: $previousDestination=>$nextDestination",
+        )
         currentFragment = fragment
     }
 
