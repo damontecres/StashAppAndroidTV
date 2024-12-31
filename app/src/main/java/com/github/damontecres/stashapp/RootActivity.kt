@@ -1,13 +1,16 @@
 package com.github.damontecres.stashapp
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
+import android.view.View
 import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -29,6 +32,8 @@ class RootActivity :
     private var currentFragment: Fragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setUpLifeCycleListeners()
+
         super.onCreate(savedInstanceState)
         Log.v(TAG, "onCreate: savedInstanceState==null:${savedInstanceState == null}")
         window.setFlags(
@@ -151,7 +156,125 @@ class RootActivity :
         }
     }
 
+    private fun setUpLifeCycleListeners() {
+        if (DEBUG) {
+            supportFragmentManager.registerFragmentLifecycleCallbacks(
+                object :
+                    FragmentManager.FragmentLifecycleCallbacks() {
+                    override fun onFragmentAttached(
+                        fm: FragmentManager,
+                        f: Fragment,
+                        context: Context,
+                    ) {
+                        Log.v(
+                            TAG_LIFECYCLE,
+                            "onFragmentAttached: f=${f::class.simpleName} (${f.tag})",
+                        )
+                    }
+
+                    override fun onFragmentCreated(
+                        fm: FragmentManager,
+                        f: Fragment,
+                        savedInstanceState: Bundle?,
+                    ) {
+                        Log.v(
+                            TAG_LIFECYCLE,
+                            "onFragmentCreated: f=${f::class.simpleName} (${f.tag})",
+                        )
+                    }
+
+                    override fun onFragmentViewCreated(
+                        fm: FragmentManager,
+                        f: Fragment,
+                        v: View,
+                        savedInstanceState: Bundle?,
+                    ) {
+                        Log.v(
+                            TAG_LIFECYCLE,
+                            "onFragmentViewCreated: f=${f::class.simpleName} (${f.tag})",
+                        )
+                    }
+
+                    override fun onFragmentStarted(
+                        fm: FragmentManager,
+                        f: Fragment,
+                    ) {
+                        Log.v(
+                            TAG_LIFECYCLE,
+                            "onFragmentStarted: f=${f::class.simpleName} (${f.tag})",
+                        )
+                    }
+
+                    override fun onFragmentResumed(
+                        fm: FragmentManager,
+                        f: Fragment,
+                    ) {
+                        Log.v(
+                            TAG_LIFECYCLE,
+                            "onFragmentResumed: f=${f::class.simpleName} (${f.tag})",
+                        )
+                    }
+
+                    override fun onFragmentPaused(
+                        fm: FragmentManager,
+                        f: Fragment,
+                    ) {
+                        Log.v(
+                            TAG_LIFECYCLE,
+                            "onFragmentPaused: f=${f::class.simpleName} (${f.tag})",
+                        )
+                    }
+
+                    override fun onFragmentStopped(
+                        fm: FragmentManager,
+                        f: Fragment,
+                    ) {
+                        Log.v(
+                            TAG_LIFECYCLE,
+                            "onFragmentStopped: f=${f::class.simpleName} (${f.tag})",
+                        )
+                    }
+
+                    override fun onFragmentSaveInstanceState(
+                        fm: FragmentManager,
+                        f: Fragment,
+                        outState: Bundle,
+                    ) {
+                        Log.v(
+                            TAG_LIFECYCLE,
+                            "onFragmentSaveInstanceState: f=${f::class.simpleName} (${f.tag})",
+                        )
+                    }
+
+                    override fun onFragmentViewDestroyed(
+                        fm: FragmentManager,
+                        f: Fragment,
+                    ) {
+                        Log.v(
+                            TAG_LIFECYCLE,
+                            "onFragmentViewDestroyed: f=${f::class.simpleName} (${f.tag})",
+                        )
+                    }
+
+                    override fun onFragmentDestroyed(
+                        fm: FragmentManager,
+                        f: Fragment,
+                    ) {
+                        Log.v(
+                            TAG_LIFECYCLE,
+                            "onFragmentDestroyed: f=${f::class.simpleName} (${f.tag})",
+                        )
+                    }
+                },
+                false,
+            )
+        }
+    }
+
     companion object {
         private const val TAG = "RootActivity"
+        private const val TAG_LIFECYCLE = "LifecycleTracking"
+
+        private const val DEBUG = false
     }
 }

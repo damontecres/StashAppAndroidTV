@@ -32,11 +32,15 @@ abstract class TabbedFragment(
     private lateinit var tabLayout: LeanbackTabLayout
     private lateinit var adapter: StashFragmentPagerAdapter
     private var currentTabPosition = 0
+    private var firstTime = true
 
     private val fragments = mutableMapOf<Int, Fragment>()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
 
         val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
         val rememberTab =
@@ -44,9 +48,7 @@ abstract class TabbedFragment(
         val rememberTabKey = getString(R.string.pref_key_ui_remember_tab) + ".$tabKey"
         val rememberedTabIndex = if (rememberTab) preferences.getInt(rememberTabKey, 0) else 0
 
-        var firstTime = true
-
-        tabViewModel.tabs.observe(this) { pages ->
+        tabViewModel.tabs.observe(viewLifecycleOwner) { pages ->
             adapter = StashFragmentPagerAdapter(pages, childFragmentManager)
             adapter.fragmentCreatedListener = { fragment, position ->
                 if (fragment is StashGridControlsFragment) {
@@ -94,13 +96,6 @@ abstract class TabbedFragment(
             }
             firstTime = false
         }
-    }
-
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-    ) {
-        super.onViewCreated(view, savedInstanceState)
 
         val gridTitle = view.findViewById<TextView>(R.id.grid_title)
         tabViewModel.title.observe(viewLifecycleOwner) {
