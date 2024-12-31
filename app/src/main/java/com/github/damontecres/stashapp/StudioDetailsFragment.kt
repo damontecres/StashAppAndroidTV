@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -87,6 +88,12 @@ class StudioDetailsFragment : DetailsFragment() {
 
         addRow(R.string.stashapp_created_at, parseTimeToString(studio.created_at))
         addRow(R.string.stashapp_updated_at, parseTimeToString(studio.updated_at))
+        if (PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)
+        ) {
+            addRow(R.string.id, studio.id)
+        }
         table.setColumnShrinkable(1, true)
     }
 

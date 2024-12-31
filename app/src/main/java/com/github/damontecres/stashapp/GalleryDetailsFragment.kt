@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -58,6 +59,13 @@ class GalleryDetailsFragment : Fragment(R.layout.gallery_view) {
             addRow(table, R.string.stashapp_date, galleryData.date)
             addRow(table, R.string.stashapp_scene_code, galleryData.code)
             addRow(table, R.string.stashapp_photographer, galleryData.photographer)
+
+            if (PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
+                    .getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)
+            ) {
+                addRow(table, R.string.id, galleryData.id)
+            }
 
             if (galleryData.studio?.image_path.isNotNullOrBlank()) {
                 StashGlide

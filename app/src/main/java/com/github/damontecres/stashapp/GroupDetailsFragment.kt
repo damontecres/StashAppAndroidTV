@@ -9,6 +9,7 @@ import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.views.models.GroupViewModel
@@ -61,6 +62,12 @@ class GroupDetailsFragment : Fragment(R.layout.group_view) {
             addRow(R.string.stashapp_synopsis, groupData.synopsis)
             addRow(R.string.stashapp_created_at, parseTimeToString(groupData.created_at))
             addRow(R.string.stashapp_updated_at, parseTimeToString(groupData.updated_at))
+            if (PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
+                    .getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)
+            ) {
+                addRow(R.string.id, groupData.id)
+            }
             table.setColumnShrinkable(1, true)
         }
     }

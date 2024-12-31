@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.presenters.StashPresenter
@@ -121,6 +122,12 @@ class PerformerDetailsFragment : DetailsFragment() {
         addRow(R.string.stashapp_career_length, perf.career_length)
         addRow(R.string.stashapp_created_at, parseTimeToString(perf.created_at))
         addRow(R.string.stashapp_updated_at, parseTimeToString(perf.updated_at))
+        if (PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
+                .getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)
+        ) {
+            addRow(R.string.id, perf.id)
+        }
         table.setColumnShrinkable(1, true)
     }
 

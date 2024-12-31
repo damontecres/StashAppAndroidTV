@@ -57,7 +57,8 @@ class SceneDetailsPresenter(
                 false,
             )
         ) {
-            val debugItems = mutableListOf("ID: ${scene.id}")
+            val debugItems =
+                mutableListOf("${context.getString(R.string.stashapp_scene_id)}: ${scene.id}")
 
             val file = scene.files.firstOrNull()
             if (file != null) {
@@ -99,7 +100,8 @@ class SceneDetailsPresenter(
 
                 debugItems += listOf(video, audio, format)
             }
-            debugInfo = debugItems.joinToString(", ")
+            debugItems += ""
+            debugInfo = debugItems.joinToString("\n")
         }
         val playCount =
             if (scene.play_count != null && scene.play_count > 0) {

@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
@@ -27,6 +28,7 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.actions.StashAction
@@ -238,6 +240,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             detailsPresenter =
                 FullWidthDetailsOverviewRowPresenter(
                     object : AbstractDetailsDescriptionPresenter() {
+                        @SuppressLint("SetTextI18n")
                         override fun onBindDescription(
                             vh: ViewHolder,
                             item: Any,
@@ -251,6 +254,17 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                                 } else {
                                     marker.primary_tag.tagData.name
                                 }
+                            if (PreferenceManager
+                                    .getDefaultSharedPreferences(requireContext())
+                                    .getBoolean(
+                                        getString(R.string.pref_key_show_playback_debug_info),
+                                        false,
+                                    )
+                            ) {
+                                vh.body.text =
+                                    "${getString(R.string.id)}: ${marker.id}\n" +
+                                    "${getString(R.string.stashapp_scene_id)}: ${sceneData.id}"
+                            }
                         }
                     },
                 )
