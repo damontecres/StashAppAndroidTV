@@ -310,10 +310,19 @@ class StashDataGridFragment :
         totalCountTextView = view.findViewById(R.id.total_count_text)
         noResultsTextView = view.findViewById(R.id.no_results_text)
 
+        val previousPosition =
+            if (savedInstanceState == null) {
+                Log.v(TAG, "onViewCreated savedInstanceState is null")
+                -1
+            } else {
+                Log.v(TAG, "onViewCreated restoring")
+                savedInstanceState.getInt("mSelectedPosition")
+            }
+        Log.v(TAG, "previousPosition=$previousPosition")
+
         if (pagingAdapter != null) {
             Log.v(TAG, "pagingAdapter.isInitialized")
             itemBridgeAdapter.setAdapter(pagingAdapter)
-//            mGridPresenter.onBindViewHolder(mGridViewHolder, mAdapter)
             if (selectedPosition != -1) {
                 gridView.selectedPosition = selectedPosition
             }
@@ -323,13 +332,19 @@ class StashDataGridFragment :
         viewModel.loadingStatus.observe(viewLifecycleOwner) { status ->
             when (status) {
                 is StashGridViewModel.LoadingStatus.AdapterReady -> {
+                    Log.v(TAG, "LoadingStatus.AdapterReady")
                     pagingAdapter = status.pagingAdapter
-                    loadingProgressBar.hide()
                     itemBridgeAdapter.setAdapter(status.pagingAdapter)
-//                    mGridPresenter.onBindViewHolder(mGridViewHolder, status.pagingAdapter)
-                    if (selectedPosition != -1) {
-                        gridView.selectedPosition = selectedPosition
+                    if (previousPosition > 0) {
+                        jumpTo(previousPosition)
+                    } else if (previousPosition < 0 && scrollToNextPage) {
+                        val page =
+                            PreferenceManager
+                                .getDefaultSharedPreferences(requireContext())
+                                .getInt("maxSearchResults", 25)
+                        jumpTo(page)
                     }
+                    loadingProgressBar.hide()
                     if (requestFocus) {
                         gridView.requestFocus()
                     }
@@ -354,21 +369,6 @@ class StashDataGridFragment :
 //                    viewModel.loadingStatus.removeObservers(viewLifecycleOwner)
                 }
             }
-        }
-
-        if (savedInstanceState == null) {
-            Log.v(TAG, "onViewCreated first time")
-            if (scrollToNextPage) {
-                selectedPosition =
-                    PreferenceManager
-                        .getDefaultSharedPreferences(requireContext())
-                        .getInt("maxSearchResults", 25)
-            }
-        } else {
-            Log.v(TAG, "onViewCreated restoring")
-            val previousPosition = savedInstanceState.getInt("mSelectedPosition")
-            Log.v(TAG, "previousPosition=$previousPosition")
-            selectedPosition = previousPosition
         }
 
         val prefBackPressScrollEnabled =
@@ -567,7 +567,7 @@ class StashDataGridFragment :
     companion object {
         private const val TAG = "StashDataGridFragment"
 
-        private const val DEBUG = false
+        private const val DEBUG = true
     }
 
     inner class VerticalGridItemBridgeAdapter : ItemBridgeAdapter() {
