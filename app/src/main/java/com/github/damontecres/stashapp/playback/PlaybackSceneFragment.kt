@@ -114,10 +114,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                     playback.position
                 }
             Log.d(TAG, "playbackPosition=$playbackPosition, playback.position=${playback.position}")
-            val forceTranscode = playback.mode == PlaybackMode.FORCED_TRANSCODE
-            val forceDirectPlay = playback.mode == PlaybackMode.FORCED_DIRECT_PLAY
-            val streamDecision =
-                getStreamDecision(requireContext(), scene, forceTranscode, forceDirectPlay)
+            val streamDecision = getStreamDecision(requireContext(), scene, playback.mode)
             updateDebugInfo(streamDecision, scene)
 
             player!!.also { exoPlayer ->

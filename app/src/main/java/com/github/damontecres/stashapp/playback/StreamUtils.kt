@@ -123,15 +123,14 @@ fun buildMediaItem(
 fun getStreamDecision(
     context: Context,
     scene: Scene,
-    forceTranscode: Boolean = false,
-    forceDirectPlay: Boolean = false,
+    mode: PlaybackMode,
 ): StreamDecision {
     val supportedCodecs = CodecSupport.getSupportedCodecs(context)
     val videoSupported = supportedCodecs.isVideoSupported(scene.videoCodec)
     val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
     val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
     if (
-        !forceTranscode &&
+        mode == PlaybackMode.CHOOSE &&
         videoSupported &&
         audioSupported &&
         containerSupported &&
@@ -148,7 +147,7 @@ fun getStreamDecision(
             true,
             true,
         )
-    } else if (forceDirectPlay) {
+    } else if (mode == PlaybackMode.FORCED_DIRECT_PLAY) {
         Log.v(
             PlaybackSceneFragment.TAG,
             "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
@@ -168,7 +167,7 @@ fun getStreamDecision(
         )
         return StreamDecision(
             scene.id,
-            if (forceTranscode) TranscodeDecision.FORCED_TRANSCODE else TranscodeDecision.TRANSCODE,
+            if (mode == PlaybackMode.FORCED_TRANSCODE) TranscodeDecision.FORCED_TRANSCODE else TranscodeDecision.TRANSCODE,
             videoSupported,
             audioSupported,
             containerSupported,

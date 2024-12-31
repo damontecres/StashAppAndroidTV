@@ -52,23 +52,25 @@ class SceneDetailsPresenter(
         }
 
         var debugInfo: String? = null
-        val file = scene.files.firstOrNull()
-        if (file != null) {
-            val resolution = file.videoFile.resolutionName()
-            val duration = durationToString(file.videoFile.duration)
-            viewHolder.subtitle.text =
-                concatIfNotBlank(
-                    " - ",
-                    scene.date,
-                    duration,
-                    resolution,
-                )
+        if (manager.getBoolean(
+                context.getString(R.string.pref_key_show_playback_debug_info),
+                false,
+            )
+        ) {
+            val debugItems = mutableListOf("ID: ${scene.id}")
 
-            if (manager.getBoolean(
-                    context.getString(R.string.pref_key_show_playback_debug_info),
-                    false,
-                )
-            ) {
+            val file = scene.files.firstOrNull()
+            if (file != null) {
+                val resolution = file.videoFile.resolutionName()
+                val duration = durationToString(file.videoFile.duration)
+                viewHolder.subtitle.text =
+                    concatIfNotBlank(
+                        " - ",
+                        scene.date,
+                        duration,
+                        resolution,
+                    )
+
                 val videoFile = file.videoFile
                 val supportedCodecs = CodecSupport.getSupportedCodecs(context)
                 val videoSupported = supportedCodecs.isVideoSupported(videoFile.video_codec)
@@ -95,8 +97,9 @@ class SceneDetailsPresenter(
                         "Format: ${videoFile.format} (unsupported)"
                     }
 
-                debugInfo = listOf(video, audio, format).joinToString(", ")
+                debugItems += listOf(video, audio, format)
             }
+            debugInfo = debugItems.joinToString(", ")
         }
         val playCount =
             if (scene.play_count != null && scene.play_count > 0) {
