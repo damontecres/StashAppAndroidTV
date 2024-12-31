@@ -33,8 +33,6 @@ class RootActivity :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setUpLifeCycleListeners()
-
-        super.onCreate(savedInstanceState)
         Log.v(TAG, "onCreate: savedInstanceState==null:${savedInstanceState == null}")
         window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
@@ -52,6 +50,9 @@ class RootActivity :
         StashApplication.navigationManager = navigationManager
 
         serverViewModel.navigationManager = navigationManager
+
+        // Ensure everything is initialized
+        super.onCreate(savedInstanceState)
 
         val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
         if (currentServer != null) {

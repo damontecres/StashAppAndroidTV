@@ -671,6 +671,8 @@ val SlimSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
 
 val Long.toMilliseconds get() = this / 1000.0
 
+val Double.toLongMilliseconds get() = (this * 1000).toLong()
+
 /**
  * Show a [Toast] on [Dispatchers.Main]
  */

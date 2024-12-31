@@ -46,7 +46,7 @@ class MarkerPresenter(
                 item: MarkerData,
             ): List<PopUpItem> =
                 listOf(
-                    PopUpItem(0L, context.getString(R.string.go_to)),
+                    PopUpItem(0L, context.getString(R.string.play_scene)),
                     PopUpItem(1L, context.getString(R.string.go_to_scene)),
                     PopUpItem(2L, context.getString(R.string.stashapp_details)),
                 )

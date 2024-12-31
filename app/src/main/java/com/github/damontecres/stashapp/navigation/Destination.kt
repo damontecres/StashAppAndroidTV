@@ -20,6 +20,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Release
+import com.github.damontecres.stashapp.util.toLongMilliseconds
 import kotlinx.serialization.Serializable
 import java.util.concurrent.atomic.AtomicLong
 
@@ -138,7 +139,40 @@ sealed class Destination {
     companion object {
         private val counter = AtomicLong(0)
 
-        fun fromStashData(item: StashData): Item = Item(getDataType(item), item.id)
+        fun fromStashData(item: StashData): Destination =
+            when (val dataType = getDataType(item)) {
+                DataType.MARKER -> {
+                    // Clicking a marker should start playback
+                    when (item) {
+                        is MarkerData -> {
+                            Playback(
+                                item.scene.videoSceneData.id,
+                                item.seconds.toLongMilliseconds,
+                                PlaybackMode.CHOOSE,
+                            )
+                        }
+
+                        is FullMarkerData -> {
+                            Playback(
+                                item.scene.videoSceneData.id,
+                                item.seconds.toLongMilliseconds,
+                                PlaybackMode.CHOOSE,
+                            )
+                        }
+
+                        else -> {
+                            throw IllegalStateException("Unknown marker type: ${item::class.qualifiedName}")
+                        }
+                    }
+                }
+
+                DataType.IMAGE -> {
+                    // Showing an image requires a filter
+                    throw IllegalArgumentException("Image not supported")
+                }
+
+                else -> Item(dataType, item.id)
+            }
 
         fun getDataType(item: StashData): DataType =
             when (item) {

@@ -107,7 +107,7 @@ class NavigationManager(
                         DataType.PERFORMER -> PerformerFragment()
                         DataType.STUDIO -> StudioFragment()
                         DataType.GALLERY -> GalleryFragment()
-                        DataType.MARKER -> MarkerDetailsFragment()
+                        DataType.MARKER -> throw IllegalArgumentException("Marker not supported here")
                         DataType.IMAGE -> throw IllegalArgumentException("Image not supported here")
                     }
                 }

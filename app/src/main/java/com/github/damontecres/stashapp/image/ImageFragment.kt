@@ -119,6 +119,9 @@ class ImageFragment :
         keyCode: Int,
         event: KeyEvent,
     ): Boolean {
+        if (!isAdded) {
+            return false
+        }
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (overlayIsVisible) {
                 hideOverlay()
