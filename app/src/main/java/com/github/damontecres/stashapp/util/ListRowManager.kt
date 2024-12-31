@@ -144,6 +144,8 @@ fun <T : StashData> configRowManager(
     rowManager: ListRowManager<T>,
     presenter: (StashPresenter.LongClickCallBack<T>) -> StashPresenter<T>,
 ) {
-    rowManager.adapter.presenterSelector =
-        SinglePresenterSelector(presenter.invoke(RemoveLongClickListener(scope, rowManager)))
+    if (rowManager.adapter.presenterSelector == null) {
+        rowManager.adapter.presenterSelector =
+            SinglePresenterSelector(presenter.invoke(RemoveLongClickListener(scope, rowManager)))
+    }
 }

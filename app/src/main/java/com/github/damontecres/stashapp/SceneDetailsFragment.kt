@@ -65,7 +65,6 @@ import com.github.damontecres.stashapp.util.RemoveLongClickListener
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
-import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.configRowManager
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getDestination
@@ -163,7 +162,32 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         }
 
     private val galleriesAdapter = ArrayObjectAdapter(GalleryPresenter())
-    private lateinit var sceneActionsAdapter: SparseArrayObjectAdapter
+
+    private val sceneActionsAdapter: SparseArrayObjectAdapter by lazy {
+        SparseArrayObjectAdapter(
+            ClassPresenterSelector()
+                .addClassPresenter(
+                    StashAction::class.java,
+                    ActionPresenter(),
+                ).addClassPresenter(
+                    OCounter::class.java,
+                    OCounterPresenter(
+                        OCounterLongClickCallBack(
+                            DataType.SCENE,
+                            sceneId,
+                            mutationEngine,
+                            viewLifecycleOwner.lifecycleScope,
+                        ) { newCount ->
+                            sceneActionsAdapter.set(O_COUNTER_POS, newCount)
+                            sceneData = sceneData!!.copy(o_counter = newCount.count)
+                        },
+                    ),
+                ).addClassPresenter(
+                    CreateMarkerAction::class.java,
+                    CreateMarkerActionPresenter(),
+                ),
+        )
+    }
 
     private var detailsOverviewRow: DetailsOverviewRow? = null
     private lateinit var mDetailsBackground: DetailsSupportFragmentBackgroundController
@@ -332,34 +356,20 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        sceneActionsAdapter =
-            SparseArrayObjectAdapter(
-                ClassPresenterSelector()
-                    .addClassPresenter(
-                        StashAction::class.java,
-                        ActionPresenter(),
-                    ).addClassPresenter(
-                        OCounter::class.java,
-                        OCounterPresenter(
-                            OCounterLongClickCallBack(
-                                DataType.SCENE,
-                                sceneId,
-                                mutationEngine,
-                                viewLifecycleOwner.lifecycleScope,
-                            ) { newCount ->
-                                sceneActionsAdapter.set(O_COUNTER_POS, newCount)
-                                sceneData = sceneData!!.copy(o_counter = newCount.count)
-                            },
-                        ),
-                    ).addClassPresenter(
-                        CreateMarkerAction::class.java,
-                        CreateMarkerActionPresenter(),
-                    ),
+        if (mAdapter.lookup(ACTIONS_POS) == null) {
+            if (readOnlyModeDisabled()) {
+                sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
+                sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
+                sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
+                sceneActionsAdapter.set(ADD_GROUP_POS, StashAction.ADD_GROUP)
+            }
+            sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
+            sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
+            mAdapter.set(
+                ACTIONS_POS,
+                ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
             )
-        mAdapter.set(
-            ACTIONS_POS,
-            ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
-        )
+        }
 
         configRowManager(viewLifecycleOwner.lifecycleScope, tagsRowManager, ::TagPresenter)
         configRowManager(viewLifecycleOwner.lifecycleScope, studioRowManager, ::StudioPresenter)
@@ -388,35 +398,35 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         setupObservers()
     }
 
-    override fun onStart() {
-        super.onStart()
-        Log.v(TAG, "onStart")
-    }
-
     override fun onResume() {
         super.onResume()
-        Log.v(TAG, "onResume")
         viewModel.init(sceneId, true)
     }
 
     private fun setupObservers() {
         viewModel.scene.observe(viewLifecycleOwner) { sceneData ->
             if (sceneData == null) {
-                Toast.makeText(requireContext(), "Scene not found", Toast.LENGTH_LONG).show()
+                Toast
+                    .makeText(requireContext(), "Scene $sceneId not found", Toast.LENGTH_LONG)
+                    .show()
                 serverViewModel.navigationManager.goBack()
                 return@observe
             }
+            Log.v(TAG, "sceneData.id=${sceneData.id}")
 
             configRowManager(
                 viewLifecycleOwner.lifecycleScope,
                 performersRowManager,
             ) { callback ->
-                PerformerInScenePresenter(sceneData!!.date, callback)
+                PerformerInScenePresenter(sceneData.date, callback)
             }
 
             setupDetailsOverviewRow(sceneData)
 
-            adapter = mAdapter
+            if (adapter == null) {
+                adapter = mAdapter
+            }
+
             initializeBackground(sceneData)
 
             if (readOnlyModeDisabled()) {
@@ -427,33 +437,22 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         sceneData.o_counter ?: 0,
                     ),
                 )
-                sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
-                sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
-                sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
-                sceneActionsAdapter.set(ADD_GROUP_POS, StashAction.ADD_GROUP)
-            }
-            sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
-            sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
-
-            if (sceneData!!.studio?.studioData != null) {
-                studioRowManager.setItems(listOf(sceneData.studio!!.studioData))
             }
 
-            tagsRowManager.setItems(sceneData.tags.map { it.tagData })
+            if (sceneData.studio?.studioData != null) {
+                studioRowManager.setItems(listOf(sceneData.studio.studioData))
+            }
 
-            markersRowManager.setItems(
-                sceneData.scene_markers.map {
-                    it.asMarkerData(sceneData)
-                },
-            )
-
-            groupsRowManager.setItems(sceneData.groups.map { it.group.groupData })
             this@SceneDetailsFragment.sceneData = sceneData
         }
 
-        viewModel.performers.observe(viewLifecycleOwner) { performers ->
-            performersRowManager.setItems(performers)
-        }
+        viewModel.tags.observe(viewLifecycleOwner, tagsRowManager::setItems)
+
+        viewModel.markers.observe(viewLifecycleOwner, markersRowManager::setItems)
+
+        viewModel.groups.observe(viewLifecycleOwner, groupsRowManager::setItems)
+
+        viewModel.performers.observe(viewLifecycleOwner, performersRowManager::setItems)
 
         viewModel.galleries.observe(viewLifecycleOwner) { galleries ->
             if (galleries.isNotEmpty()) {
@@ -503,7 +502,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
     private fun initializeBackground(sceneData: FullSceneData) {
         val screenshotUrl = sceneData.paths.screenshot
-        if (screenshotUrl.isNotNullOrBlank()) {
+        if (mDetailsBackground.coverBitmap == null && screenshotUrl.isNotNullOrBlank()) {
             StashGlide
                 .withBitmap(requireActivity(), screenshotUrl)
                 .optionalCenterCrop()
@@ -523,16 +522,22 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         }
                     },
                 )
-        } else {
-            mDetailsBackground.coverBitmap = null
         }
     }
 
     private fun setupDetailsOverviewRow(sceneData: FullSceneData) {
-        val row = detailsOverviewRow ?: DetailsOverviewRow(sceneData)
+        val row =
+            if (detailsOverviewRow != null) {
+                detailsOverviewRow!!
+            } else {
+                val newRow = DetailsOverviewRow(sceneData)
+                newRow.actionsAdapter = playActionsAdapter
+                mAdapter.set(DETAILS_POS, newRow)
+                newRow
+            }
 
         val screenshotUrl = sceneData.paths.screenshot
-        if ((detailsOverviewRow == null || sceneData != row.item) && !screenshotUrl.isNullOrBlank()) {
+        if (detailsOverviewRow == null && !screenshotUrl.isNullOrBlank()) {
             row.item = sceneData
             val width = convertDpToPixel(requireActivity(), DETAIL_THUMB_WIDTH)
             val height = convertDpToPixel(requireActivity(), DETAIL_THUMB_HEIGHT)
@@ -556,10 +561,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     },
                 )
         }
-
-        row.actionsAdapter = playActionsAdapter
-
-        mAdapter.set(DETAILS_POS, row)
         detailsOverviewRow = row
     }
 
