@@ -10,17 +10,20 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 /**
  * Simple details page with an image, favorite button, rating bar, and table for details
  */
 abstract class DetailsFragment : Fragment(R.layout.details_view) {
+    protected val serverViewModel: ServerViewModel by activityViewModels()
     protected lateinit var imageView: ImageView
     protected lateinit var table: TableLayout
     protected lateinit var favoriteButton: Button
@@ -58,6 +61,7 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
     protected fun addRow(
         key: Int,
         value: String?,
+        valueViewModifier: (TextView.() -> Unit)? = null,
     ) {
         if (value.isNullOrBlank()) {
             return
@@ -80,6 +84,7 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
             TypedValue.COMPLEX_UNIT_PX,
             resources.getDimension(R.dimen.table_text_size_large),
         )
+        valueViewModifier?.invoke(valueView)
 
         table.addView(row)
     }

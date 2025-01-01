@@ -7,10 +7,13 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.models.StudioViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
@@ -77,7 +80,20 @@ class StudioDetailsFragment : DetailsFragment() {
         table.removeAllViews()
 
         addRow(R.string.stashapp_details, studio.details)
-        addRow(R.string.stashapp_parent_studio, studio.parent_studio?.name)
+        addRow(R.string.stashapp_parent_studio, studio.parent_studio?.name) {
+            if (studio.parent_studio != null) {
+                setTextColor(resources.getColor(R.color.selected_background, null))
+                onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+                setOnClickListener {
+                    serverViewModel.navigationManager.navigate(
+                        Destination.Item(
+                            DataType.STUDIO,
+                            studio.parent_studio.id,
+                        ),
+                    )
+                }
+            }
+        }
 
         if (studio.aliases.isNotEmpty()) {
             addRow(
