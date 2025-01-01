@@ -7,7 +7,7 @@ import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.room.VideoFilter
@@ -16,7 +16,7 @@ import com.github.damontecres.stashapp.data.room.VideoFilter
  * Display the [VideoFilter] options to manipulate
  */
 class PlaybackVideoFiltersFragment : Fragment(R.layout.apply_video_filters) {
-    private val viewModel: VideoFilterViewModel by activityViewModels()
+    private val viewModel: VideoFilterViewModel by viewModels(ownerProducer = { requireParentFragment() })
 
     override fun onViewCreated(
         view: View,
