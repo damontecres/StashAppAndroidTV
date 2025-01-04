@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong
  */
 @Serializable
 sealed class Destination {
-    private val destId = counter.getAndIncrement()
+    protected val destId = counter.getAndIncrement()
 
     val fragmentTag = "${this::class.simpleName}_$destId"
 
@@ -76,7 +76,7 @@ sealed class Destination {
         val position: Int,
         val automatic: Boolean,
     ) : Destination() {
-        override fun toString(): String = "Slideshow(position=$position, automatic=$automatic)"
+        override fun toString(): String = "Slideshow(destId=$destId, position=$position, automatic=$automatic)"
     }
 
     @Serializable
@@ -84,7 +84,7 @@ sealed class Destination {
         val filterArgs: FilterArgs,
         val scrollToNextPage: Boolean = false,
     ) : Destination() {
-        override fun toString(): String = "Filter(dataType=${filterArgs.dataType}, scrollToNextPage=$scrollToNextPage)"
+        override fun toString(): String = "Filter(destId=$destId, dataType=${filterArgs.dataType}, scrollToNextPage=$scrollToNextPage)"
     }
 
     @Serializable
@@ -93,7 +93,8 @@ sealed class Destination {
         val position: Int,
         val duration: Long? = null,
     ) : Destination() {
-        override fun toString(): String = "Playlist(dataType=${filterArgs.dataType}, position=$position, duration=$duration)"
+        override fun toString(): String =
+            "Playlist(destId=$destId, dataType=${filterArgs.dataType}, position=$position, duration=$duration)"
     }
 
     @Serializable
@@ -125,7 +126,7 @@ sealed class Destination {
         val dataType: DataType,
         val startingFilter: FilterArgs?,
     ) : Destination() {
-        override fun toString(): String = "Playlist(dataType=$dataType)"
+        override fun toString(): String = "CreateFilter(destId=$destId, dataType=$dataType)"
     }
 
     /**
