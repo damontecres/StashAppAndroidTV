@@ -6,7 +6,9 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.playback.CodecSupport
+import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.util.concatIfNotBlank
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.resolutionName
@@ -99,6 +101,15 @@ class SceneDetailsPresenter(
                     }
 
                 debugItems += listOf(video, audio, format)
+
+                if (scene.captions?.isNotEmpty() == true) {
+                    debugItems.add(
+                        "Captions: " +
+                            scene.captions
+                                .map { it.caption.displayString(context) }
+                                .joinNotNullOrBlank(", "),
+                    )
+                }
             }
             debugItems += ""
             debugInfo = debugItems.joinToString("\n")

@@ -457,8 +457,8 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
             captions =
                 this.captions?.map {
                     SlimSceneData.Caption(
-                        it.language_code,
-                        it.caption_type,
+                        __typename = "SlimSceneData.Caption",
+                        caption = it.caption,
                     )
                 },
         )
@@ -477,6 +477,7 @@ val FullSceneData.asVideoSceneData: VideoSceneData
             files.map { VideoSceneData.File("", it.videoFile) },
             VideoSceneData.Paths(paths.screenshot, paths.preview, paths.stream, paths.sprite),
             sceneStreams.map { VideoSceneData.SceneStream(it.url, it.mime_type, it.label) },
+            captions?.map { VideoSceneData.Caption("", it.caption) },
         )
 
 val TagData.asSlimTagData: SlimTagData

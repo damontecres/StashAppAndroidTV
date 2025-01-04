@@ -8,6 +8,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.Caption
 import com.github.damontecres.stashapp.data.Scene
 import kotlinx.serialization.Serializable
 import java.util.Locale
@@ -89,25 +90,14 @@ fun buildMediaItem(
                 val uri =
                     baseUrl
                         .buildUpon()
-                        .appendQueryParameter("lang", it.lang)
-                        .appendQueryParameter("type", it.type)
+                        .appendQueryParameter("lang", it.language_code)
+                        .appendQueryParameter("type", it.caption_type)
                         .build()
-                val languageName =
-                    try {
-                        if (it.lang != "00") {
-                            Locale(it.lang).displayLanguage
-                        } else {
-                            context.getString(R.string.stashapp_display_mode_unknown)
-                        }
-                    } catch (ex: Exception) {
-                        Log.w(TAG, "Error in locale for '${it.lang}'", ex)
-                        it.lang.uppercase()
-                    }
                 MediaItem.SubtitleConfiguration
                     .Builder(uri)
                     // The server always provides subtitles as VTT: https://github.com/stashapp/stash/blob/v0.26.2/internal/api/routes_scene.go#L439
                     .setMimeType(MimeTypes.TEXT_VTT)
-                    .setLabel("$languageName (${it.type})")
+                    .setLabel(it.displayString(context))
                     .setSelectionFlags(C.SELECTION_FLAG_AUTOSELECT)
                     .build()
             }
@@ -173,4 +163,19 @@ fun getStreamDecision(
             containerSupported,
         )
     }
+}
+
+fun Caption.displayString(context: Context): String {
+    val languageName =
+        try {
+            if (language_code != "00") {
+                Locale(language_code).displayLanguage
+            } else {
+                context.getString(R.string.stashapp_display_mode_unknown)
+            }
+        } catch (ex: Exception) {
+            Log.w(TAG, "Error in locale for '${language_code}'", ex)
+            language_code.uppercase()
+        }
+    return "$languageName ($caption_type)"
 }

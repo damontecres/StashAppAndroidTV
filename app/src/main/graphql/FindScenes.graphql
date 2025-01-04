@@ -48,8 +48,7 @@ fragment SlimSceneData on Scene {
     label
   }
   captions {
-    language_code
-    caption_type
+    ...Caption
   }
   scene_markers {
     id
@@ -121,8 +120,7 @@ fragment FullSceneData on Scene {
     label
   }
   captions {
-    language_code
-    caption_type
+    ...Caption
   }
   scene_markers {
     id
@@ -198,4 +196,9 @@ fragment VideoFile on VideoFile {
   frame_rate
   bit_rate
   __typename
+}
+
+fragment Caption on VideoCaption {
+  caption_type
+  language_code
 }

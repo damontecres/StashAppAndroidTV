@@ -42,6 +42,9 @@ fragment VideoSceneData on Scene {
     mime_type
     label
   }
+  captions {
+    ...Caption
+  }
 }
 
 fragment MarkerData on SceneMarker {
