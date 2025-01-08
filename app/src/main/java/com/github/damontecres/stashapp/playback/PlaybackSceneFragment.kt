@@ -115,6 +115,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 }
             Log.d(TAG, "playbackPosition=$playbackPosition, playback.position=${playback.position}")
             val streamDecision = getStreamDecision(requireContext(), scene, playback.mode)
+            Log.d(TAG, "streamDecision=$streamDecision")
             updateDebugInfo(streamDecision, scene)
 
             player!!.also { exoPlayer ->

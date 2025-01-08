@@ -104,9 +104,8 @@ fun buildMediaItem(
         Log.v(TAG, "Got ${subtitles.size} subtitle options for scene ${scene.id}")
         builder.setSubtitleConfigurations(subtitles)
     }
-    if (builderCallback != null) {
-        builderCallback(builder)
-    }
+    builderCallback?.invoke(builder)
+
     return builder.build()
 }
 
@@ -115,6 +114,15 @@ fun getStreamDecision(
     scene: Scene,
     mode: PlaybackMode,
 ): StreamDecision {
+    Log.d(
+        TAG,
+        "getStreamDecision: mode=$mode, " +
+            "sceneId=${scene.id}, " +
+            "videoCodec=${scene.videoCodec}, " +
+            "resolution=${scene.videoResolution}, " +
+            "audioCodec=${scene.audioCodec}, " +
+            "format=${scene.format}",
+    )
     val supportedCodecs = CodecSupport.getSupportedCodecs(context)
     val videoSupported = supportedCodecs.isVideoSupported(scene.videoCodec)
     val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)

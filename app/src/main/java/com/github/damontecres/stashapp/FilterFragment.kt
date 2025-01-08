@@ -68,6 +68,7 @@ class FilterFragment :
         val dest = requireArguments().getDestination<Destination.Filter>()
         val startingFilter = dest.filterArgs
         dataType = startingFilter.dataType
+        Log.d(TAG, "onCreate: dataType=$dataType")
 
         stashGridViewModel.init(
             NullPresenterSelector(

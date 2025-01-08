@@ -13,7 +13,6 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
 import kotlinx.coroutines.launch
-import java.util.Objects
 
 /**
  * Tracks the current server
@@ -24,8 +23,8 @@ open class ServerViewModel : ViewModel() {
 
     fun requireServer(): StashServer = currentServer.value!!
 
-    private val _currentSettingsHash = EqualityMutableLiveData(computeSettingsHash())
-    val currentSettingsHash: LiveData<Int> = _currentSettingsHash
+    private val _cardUiSettings = EqualityMutableLiveData(createUiSettings())
+    val cardUiSettings: LiveData<CardUiSettings> = _cardUiSettings
 
     lateinit var navigationManager: NavigationManager
 
@@ -41,12 +40,12 @@ open class ServerViewModel : ViewModel() {
         }
     }
 
-    fun updateSettingsHash() {
-        val newHash = computeSettingsHash()
-        _currentSettingsHash.value = newHash
+    fun updateUiSettings() {
+        val newHash = createUiSettings()
+        _cardUiSettings.value = newHash
     }
 
-    private fun computeSettingsHash(): Int {
+    private fun createUiSettings(): CardUiSettings {
         val context = StashApplication.getApplication()
         val manager = PreferenceManager.getDefaultSharedPreferences(context)
         val maxSearchResults = manager.getInt("maxSearchResults", 0)
@@ -60,7 +59,7 @@ open class ServerViewModel : ViewModel() {
                 context.getString(R.string.pref_key_ui_card_overlay_delay),
                 context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
             )
-        return Objects.hash(
+        return CardUiSettings(
             maxSearchResults,
             playVideoPreviews,
             columns,
@@ -71,7 +70,7 @@ open class ServerViewModel : ViewModel() {
     }
 
     fun init(currentServer: StashServer) {
-        updateSettingsHash()
+        updateUiSettings()
         switchServer(currentServer)
     }
 
@@ -86,4 +85,16 @@ open class ServerViewModel : ViewModel() {
             }
         }
     }
+
+    /**
+     * Basic UI settings that affect the cards
+     */
+    data class CardUiSettings(
+        val maxSearchResults: Int,
+        val playVideoPreviews: Boolean,
+        val columns: Int,
+        val showRatings: Boolean,
+        val imageCrop: Boolean,
+        val videoDelay: Int,
+    )
 }

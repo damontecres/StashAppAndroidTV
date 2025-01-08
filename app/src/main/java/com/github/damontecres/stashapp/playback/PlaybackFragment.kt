@@ -219,6 +219,7 @@ abstract class PlaybackFragment(
     }
 
     protected open fun updateUI(scene: Scene) {
+        Log.d(TAG, "updateUI for ${scene.id}")
         val mutationEngine = MutationEngine(serverViewModel.requireServer())
         val showTitle =
             PreferenceManager
@@ -281,7 +282,7 @@ abstract class PlaybackFragment(
                 .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_video_filters), false)
         ) {
-            Log.v(PlaybackSceneFragment.TAG, "Initializing video effects")
+            Log.v(TAG, "Initializing video effects")
             exoPlayer.setVideoEffects(listOf())
 
             controllerVisibilityListener.addListener {
@@ -600,7 +601,7 @@ abstract class PlaybackFragment(
 
         val sceneDuration = viewModel.scene.value?.duration
         val position = currentVideoPosition
-        val maxPlayPercent = 98 // Hard coded on the server
+        val maxPlayPercent = 98 // TODO: Hard coded on the server
         val positionToSave =
             if (sceneDuration == null || (position.toMilliseconds / sceneDuration) * 100 < maxPlayPercent) {
                 position

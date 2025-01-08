@@ -140,6 +140,7 @@ class StashDataGridFragment :
     }
 
     private fun jumpTo(newPosition: Int) {
+        Log.v(TAG, "jumpTo $newPosition")
         if (gridView.adapter != null) {
             if (abs(selectedPosition - newPosition) < numberOfColumns * 10) {
                 // If new position is close to the current, smooth scroll
@@ -175,7 +176,7 @@ class StashDataGridFragment :
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        Log.v(TAG, "onCreateView")
+        Log.v(TAG, "onCreateView: dataType=$dataType")
         val root =
             inflater.inflate(
                 R.layout.stash_grid,
@@ -471,6 +472,7 @@ class StashDataGridFragment :
             } else {
                 columns * 6
             }
+        Log.i(TAG, "Setup jumps: $jump1 & $jump2, count=$count")
         jumpButtonLayout[0].setOnClickListener {
             jumpTo((selectedPosition - jump2).coerceIn(0, count - 1))
         }

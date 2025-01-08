@@ -18,7 +18,6 @@ import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.StashImageCardView
@@ -119,8 +118,9 @@ class MainFragment :
     }
 
     private fun setupObservers() {
-        viewModel.currentSettingsHash.observe(viewLifecycleOwner) {
+        viewModel.cardUiSettings.observe(viewLifecycleOwner) {
             // Refresh the cards
+            Log.d(TAG, "Card UI settings changed")
             rowsAdapter.notifyItemRangeChanged(0, rowsAdapter.size())
         }
 
@@ -177,6 +177,7 @@ class MainFragment :
                             ).show()
                     }
                 } else {
+                    Log.e(TAG, "newServer is null")
                     clearData()
                     Toast
                         .makeText(
@@ -253,10 +254,8 @@ class MainFragment :
                             }
                             return@launch
                         }
-                        val pageSize =
-                            PreferenceManager
-                                .getDefaultSharedPreferences(requireContext())
-                                .getInt(getString(R.string.pref_key_page_size), 25)
+                        Log.d(TAG, "${frontPageContent.size} front page rows")
+                        val pageSize = viewModel.cardUiSettings.value!!.maxSearchResults
                         val frontPageParser =
                             FrontPageParser(requireContext(), queryEngine, filterParser, pageSize)
                         val jobs = frontPageParser.parse(frontPageContent)
@@ -277,6 +276,7 @@ class MainFragment :
                                         )
                                     }
                                 } else if (row is FrontPageParser.FrontPageRow.Error) {
+                                    Log.w(TAG, "Error on front page row $index")
                                     withContext(Dispatchers.Main) {
                                         Toast
                                             .makeText(
@@ -289,6 +289,7 @@ class MainFragment :
                             }
                         }
                     } catch (ex: QueryEngine.StashNotConfiguredException) {
+                        Log.e(TAG, "StashNotConfiguredException", ex)
                         withContext(Dispatchers.Main) {
                             Toast
                                 .makeText(
@@ -299,6 +300,7 @@ class MainFragment :
                             requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                         }
                     } catch (ex: QueryEngine.QueryException) {
+                        Log.e(TAG, "QueryException", ex)
                         withContext(Dispatchers.Main) {
                             Toast
                                 .makeText(

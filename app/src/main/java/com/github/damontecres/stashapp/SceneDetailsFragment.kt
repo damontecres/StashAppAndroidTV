@@ -222,10 +222,10 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     ): View? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d(TAG, "onCreate DetailsFragment")
         super.onCreate(savedInstanceState)
 
         sceneId = requireArguments().getDestination<Destination.Item>().id
+        Log.d(TAG, "onCreate: sceneId=$sceneId")
 
         queryEngine = QueryEngine(serverViewModel.requireServer())
         mutationEngine = MutationEngine(serverViewModel.requireServer())
@@ -599,12 +599,10 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                 0L
                             }
                         val mode =
-                            if (action.id == ACTION_TRANSCODE_RESUME_SCENE) {
-                                PlaybackMode.FORCED_TRANSCODE
-                            } else if (action.id == ACTION_DIRECT_PLAY_RESUME_SCENE) {
-                                PlaybackMode.FORCED_DIRECT_PLAY
-                            } else {
-                                PlaybackMode.CHOOSE
+                            when (action.id) {
+                                ACTION_TRANSCODE_RESUME_SCENE -> PlaybackMode.FORCED_TRANSCODE
+                                ACTION_DIRECT_PLAY_RESUME_SCENE -> PlaybackMode.FORCED_DIRECT_PLAY
+                                else -> PlaybackMode.CHOOSE
                             }
 
                         val playbackDest = Destination.Playback(sceneId, position, mode)

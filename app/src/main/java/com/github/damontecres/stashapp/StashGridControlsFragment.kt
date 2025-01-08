@@ -132,6 +132,7 @@ class StashGridControlsFragment() :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.v(TAG, "onCreate: dataType=$dataType")
 
         viewModel.init(
             NullPresenterSelector(presenterSelector, NullPresenter(dataType)),

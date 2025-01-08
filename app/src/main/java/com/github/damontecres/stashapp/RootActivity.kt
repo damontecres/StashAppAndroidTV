@@ -58,6 +58,7 @@ class RootActivity :
 
         val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
         if (currentServer != null) {
+            Log.i(TAG, "Server configured")
             serverViewModel.init(currentServer)
             serverViewModel.currentServer.observe(this) { server ->
                 if (server != null) {
@@ -70,6 +71,7 @@ class RootActivity :
                 }
             }
         } else {
+            Log.i(TAG, "No server, starting setup")
             // No server configured
             navigationManager.navigate(Destination.Setup)
         }

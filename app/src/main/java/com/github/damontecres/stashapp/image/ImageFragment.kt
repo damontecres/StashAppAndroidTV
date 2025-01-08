@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.image
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
@@ -46,7 +47,9 @@ class ImageFragment :
         }
 
         viewModel.image.observe(this) { newImage ->
+            Log.v(TAG, "newImage: id=${newImage.id}")
             childFragmentManager.commit {
+                // TODO switch to sliding transitions?
                 setCustomAnimations(
                     R.animator.fade_in,
                     R.animator.fade_out,
@@ -72,6 +75,7 @@ class ImageFragment :
         viewModel.slideshow.observe(this) { newValue ->
             timer?.cancel()
             if (newValue) {
+                Log.i(TAG, "Setting up slideshow timer")
                 timer =
                     kotlin.concurrent.timer(
                         name = "imageSlideshow",
@@ -156,6 +160,8 @@ class ImageFragment :
     }
 
     companion object {
+        private const val TAG = "ImageFragment"
+
         fun isDpadKey(keyCode: Int): Boolean =
             isDirectionalDpadKey(keyCode) ||
                 keyCode == KeyEvent.KEYCODE_DPAD_CENTER

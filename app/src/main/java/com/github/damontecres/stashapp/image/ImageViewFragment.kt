@@ -119,6 +119,7 @@ class ImageViewFragment :
     fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (isImageZoomedIn()) {
             // Image is zoomed in
+            // TODO maybe pan faster on long presses?
             val panDistance =
                 mainImage.drawable.intrinsicWidth.coerceAtMost(mainImage.drawable.intrinsicHeight) * .05f
             if (ImageFragment.isDirectionalDpadKey(event.keyCode)) {
