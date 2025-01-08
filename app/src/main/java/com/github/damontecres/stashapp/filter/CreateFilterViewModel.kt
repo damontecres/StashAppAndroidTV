@@ -31,6 +31,7 @@ class CreateFilterViewModel : ViewModel() {
     val abbreviateCounters: Boolean get() = server.value!!.serverPreferences.abbreviateCounters
     val queryEngine = QueryEngine(server.value!!)
 
+    val filterName = MutableLiveData<String?>(null)
     val dataType = MutableLiveData<DataType>()
     val objectFilter = MutableLiveData<StashDataFilter>()
     val findFilter = MutableLiveData<StashFindFilter>()
@@ -40,7 +41,7 @@ class CreateFilterViewModel : ViewModel() {
     val resultCount = MutableLiveData(-1)
     private var countJob: Job? = null
 
-    private val currentSavedFilters = mutableMapOf<String, String>()
+    private val currentSavedFilters = mutableMapOf<String?, String>()
 
     val ready = MutableLiveData(false)
 
