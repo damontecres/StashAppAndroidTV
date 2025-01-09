@@ -32,7 +32,7 @@ abstract class ItemViewModel<T : StashData> : ViewModel() {
      */
     fun init(args: Bundle) {
         val id = args.getDestination<Destination.Item>().id
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
             val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             _item.value = fetch(queryEngine, id)
         }

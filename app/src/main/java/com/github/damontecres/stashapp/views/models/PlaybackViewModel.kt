@@ -15,7 +15,7 @@ class PlaybackViewModel : ViewModel() {
     val scene: LiveData<Scene?> = _scene
 
     fun setScene(id: String) {
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
             val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             val scenes = queryEngine.findScenes(ids = listOf(id))
             _scene.value = scenes.firstOrNull()?.let { Scene.fromSlimSceneData(it) }

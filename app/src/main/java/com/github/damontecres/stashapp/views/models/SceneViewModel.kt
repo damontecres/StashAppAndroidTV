@@ -79,7 +79,7 @@ class SceneViewModel : ViewModel() {
         id: String,
         fetchAll: Boolean,
     ) {
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
             val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             val newScene = queryEngine.getScene(id)
             if (newScene != null) {
@@ -96,13 +96,13 @@ class SceneViewModel : ViewModel() {
                 if (fetchAll) {
                     val performerIds = newScene.performers.map { it.id }
                     if (performerIds.isNotEmpty()) {
-                        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
                             _performers.value =
                                 queryEngine.findPerformers(performerIds = performerIds)
                         }
                     }
                     if (newScene.galleries.isNotEmpty()) {
-                        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
                             _galleries.value =
                                 queryEngine.getGalleries(newScene.galleries.map { it.id })
                         }
@@ -110,7 +110,7 @@ class SceneViewModel : ViewModel() {
 
                     // Suggestions
                     if (!_suggestedScenes.isInitialized) {
-                        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
                             val idFilter =
                                 Optional.present(
                                     IntCriterionInput(
