@@ -3,9 +3,9 @@ package com.github.damontecres.stashapp.suppliers
 import android.util.Log
 import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.suppliers.StashPagingSource.DataTransform
 import com.github.damontecres.stashapp.util.QueryEngine
 import kotlinx.coroutines.Dispatchers
@@ -90,21 +90,13 @@ class StashPagingSource<T : Query.Data, D : StashData, S : Any, C : Query.Data>(
                 return@withContext count!!
             }
             val query = dataSupplier.createCountQuery(dataSupplier.getDefaultFilter())
-            val queryResult = queryEngine.executeQuery(query).data
-            count =
-                if (queryResult != null) {
-                    dataSupplier.parseCountQuery(queryResult)
-                } else {
-                    INVALID_COUNT
-                }
+            val queryResult = queryEngine.executeQuery(query).data!!
+            count = dataSupplier.parseCountQuery(queryResult)
             return@withContext count!!
         }
 
     companion object {
         private const val TAG = "StashPagingSource"
-        const val INVALID_COUNT = -1
-        const val UNSUPPORTED_COUNT = -2
-
         private const val DEBUG = false
     }
 

@@ -32,6 +32,10 @@ data class StashServer(
             return serverPreferences.serverVersion
         }
 
+    val okHttpClient = StashClient.createOkHttpClient(this, true, true)
+    val streamingOkHttpClient = StashClient.createOkHttpClient(this, true, false)
+    val apolloClient = StashClient.createApolloClient(this)
+
     /**
      * Query the server for preferences
      */
@@ -50,9 +54,9 @@ data class StashServer(
 
         fun requireCurrentServer(): StashServer = getCurrentStashServer() ?: throw QueryEngine.StashNotConfiguredException()
 
-        fun getCurrentStashServer(): StashServer? = getCurrentStashServer(StashApplication.getApplication())
+        fun getCurrentStashServer(): StashServer? = StashApplication.currentServer
 
-        fun getCurrentStashServer(context: Context): StashServer? {
+        fun findConfiguredStashServer(context: Context): StashServer? {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
             val url = manager.getString(SettingsFragment.PREF_STASH_URL, null)
             val apiKey = manager.getString(SettingsFragment.PREF_STASH_API_KEY, null)
@@ -72,8 +76,8 @@ data class StashServer(
                 putString(SettingsFragment.PREF_STASH_URL, server.url)
                 putString(SettingsFragment.PREF_STASH_API_KEY, server.apiKey)
             }
-            StashClient.invalidate()
             StashExoPlayer.releasePlayer()
+            StashApplication.currentServer = server
         }
 
         fun removeStashServer(
@@ -98,7 +102,7 @@ data class StashServer(
             otherSettings: ((SharedPreferences.Editor) -> Unit)? = null,
         ) {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
-            val current = getCurrentStashServer(context)
+            val current = findConfiguredStashServer(context)
             val currentServerKey = SERVER_PREF_PREFIX + current?.url
             val currentApiKeyKey =
                 SERVER_APIKEY_PREF_PREFIX + current?.url
@@ -118,7 +122,6 @@ data class StashServer(
                     otherSettings(this)
                 }
             }
-            StashClient.invalidate()
             StashExoPlayer.releasePlayer()
         }
 

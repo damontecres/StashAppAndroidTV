@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.util
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
@@ -28,9 +27,7 @@ import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.chrynan.parcelable.core.getParcelable
-import com.chrynan.parcelable.core.getParcelableExtra
-import com.chrynan.parcelable.core.putExtra
-import com.github.damontecres.stashapp.ImageActivity
+import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
@@ -42,13 +39,14 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.TagData
-import com.github.damontecres.stashapp.api.fragment.VideoFileData
+import com.github.damontecres.stashapp.api.fragment.VideoFile
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.playback.PlaybackActivity
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
@@ -85,17 +83,16 @@ import kotlin.time.toDuration
  * Now it's mostly a dumping ground for various extension functions
  */
 object Constants {
+    private const val REQUEST_KEY = "requestKey"
+
+    const val POSITION_REQUEST_KEY = "$REQUEST_KEY.position"
+
     /**
      * The name of the header for authenticating to Stash
      */
     const val STASH_API_HEADER = "ApiKey"
     const val TAG = "Constants"
     private const val OK_HTTP_CACHE_DIR = "okhttpcache"
-
-    const val ARG = "arg"
-    const val SCENE_ARG = "$ARG.scene"
-    const val SCENE_ID_ARG = "$ARG.scene.id"
-    const val POSITION_ARG = "$ARG.position"
 
     fun getNetworkCache(context: Context): Cache {
         val cacheSize =
@@ -377,7 +374,7 @@ fun CharSequence?.isNotNullOrBlank(): Boolean {
 val FullSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
-            val path = files.firstOrNull()?.videoFileData?.path
+            val path = files.firstOrNull()?.videoFile?.path
             path?.fileNameFromPath
         } else {
             title
@@ -386,7 +383,7 @@ val FullSceneData.titleOrFilename: String?
 val SlimSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
-            val path = files.firstOrNull()?.videoFileData?.path
+            val path = files.firstOrNull()?.videoFile?.path
             path?.fileNameFromPath
         } else {
             title
@@ -395,7 +392,7 @@ val SlimSceneData.titleOrFilename: String?
 val VideoSceneData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
-            val path = files.firstOrNull()?.videoFileData?.path
+            val path = files.firstOrNull()?.videoFile?.path
             path?.fileNameFromPath
         } else {
             title
@@ -417,7 +414,7 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
             resume_time = this.resume_time,
             created_at = this.created_at,
             updated_at = this.updated_at,
-            files = this.files.map { SlimSceneData.File(it.__typename, it.videoFileData) },
+            files = this.files.map { SlimSceneData.File(it.__typename, it.videoFile) },
             paths =
                 SlimSceneData.Paths(
                     screenshot = this.paths.screenshot,
@@ -460,8 +457,8 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
             captions =
                 this.captions?.map {
                     SlimSceneData.Caption(
-                        it.language_code,
-                        it.caption_type,
+                        __typename = "SlimSceneData.Caption",
+                        caption = it.caption,
                     )
                 },
         )
@@ -477,9 +474,10 @@ val FullSceneData.asVideoSceneData: VideoSceneData
             o_counter,
             created_at,
             updated_at,
-            files.map { VideoSceneData.File("", it.videoFileData) },
+            files.map { VideoSceneData.File("", it.videoFile) },
             VideoSceneData.Paths(paths.screenshot, paths.preview, paths.stream, paths.sprite),
             sceneStreams.map { VideoSceneData.SceneStream(it.url, it.mime_type, it.label) },
+            captions?.map { VideoSceneData.Caption("", it.caption) },
         )
 
 val TagData.asSlimTagData: SlimTagData
@@ -574,13 +572,6 @@ val ImageData.maxFileSize: Int
                 ?.toString()
                 ?.toInt() ?: -1
         } ?: -1
-
-fun ImageData.addToIntent(intent: Intent): Intent {
-    intent.putExtra(ImageActivity.INTENT_IMAGE_ID, id)
-    intent.putExtra(ImageActivity.INTENT_IMAGE_URL, paths.image)
-    intent.putExtra(ImageActivity.INTENT_IMAGE_SIZE, maxFileSize)
-    return intent
-}
 
 fun showSetRatingToast(
     context: Context,
@@ -682,6 +673,8 @@ val SlimSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
 
 val Long.toMilliseconds get() = this / 1000.0
 
+val Double.toLongMilliseconds get() = (this * 1000).toLong()
+
 /**
  * Show a [Toast] on [Dispatchers.Main]
  */
@@ -693,7 +686,7 @@ suspend fun showToastOnMain(
     Toast.makeText(context, message, length).show()
 }
 
-fun VideoFileData.resolutionName(): CharSequence {
+fun VideoFile.resolutionName(): CharSequence {
     val number = if (width > height) height else width
     return if (number >= 6144) {
         "HUGE"
@@ -751,21 +744,48 @@ fun CoroutineScope.launchIO(
         launch(Dispatchers.IO + exceptionHandler, block = block)
     }
 
-fun Intent.putDataType(dataType: DataType): Intent = this.putExtra("dataType", dataType.name)
+fun Bundle.putDataType(dataType: DataType): Bundle {
+    this.putString("dataType", dataType.name)
+    return this
+}
 
-fun Intent.getDataType(): DataType = DataType.valueOf(getStringExtra("dataType")!!)
-
-@OptIn(ExperimentalSerializationApi::class)
-fun Intent.putFilterArgs(
-    name: String,
-    filterArgs: FilterArgs,
-): Intent = putExtra(name, filterArgs, StashParcelable)
-
-@OptIn(ExperimentalSerializationApi::class)
-fun Intent.getFilterArgs(name: String): FilterArgs? = getParcelableExtra(name, FilterArgs::class, 0, StashParcelable)
+fun Bundle.getDataType(): DataType = DataType.valueOf(getString("dataType")!!)
 
 @OptIn(ExperimentalSerializationApi::class)
 fun Bundle.getFilterArgs(name: String): FilterArgs? = getParcelable(name, FilterArgs::class, 0, StashParcelable)
+
+@OptIn(ExperimentalSerializationApi::class)
+fun Bundle.putFilterArgs(
+    name: String,
+    filterArgs: FilterArgs,
+): Bundle {
+    putParcelable(name, filterArgs, StashParcelable)
+    return this
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun Bundle.putDestination(destination: Destination): Bundle {
+    putParcelable(NavigationManager.DESTINATION_ARG, destination, StashParcelable)
+    return this
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun Bundle.putDestination(
+    name: String,
+    destination: Destination,
+): Bundle {
+    putParcelable(name, destination, StashParcelable)
+    return this
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+fun <T : Destination> Bundle.maybeGetDestination(): T? =
+    getParcelable(NavigationManager.DESTINATION_ARG, Destination::class, 0, StashParcelable) as T?
+
+fun <T : Destination> Bundle.getDestination(): T = maybeGetDestination()!!
+
+@OptIn(ExperimentalSerializationApi::class)
+fun <T : Destination> Bundle.getDestination(name: String): T = getParcelable(name, Destination::class, 0, StashParcelable) as T
 
 fun experimentalFeaturesEnabled(): Boolean {
     val context = StashApplication.getApplication()
@@ -830,24 +850,23 @@ fun maybeStartPlayback(
 ) {
     when (item) {
         is SlimSceneData -> {
-            val intent = Intent(context, PlaybackActivity::class.java)
-            intent.putDataType(DataType.SCENE)
-            intent.putExtra(Constants.SCENE_ARG, Scene.fromSlimSceneData(item))
-            if (item.resume_time != null) {
-                intent.putExtra(Constants.POSITION_ARG, item.resume_position!!)
-            }
-            context.startActivity(intent)
+            StashApplication.navigationManager.navigate(
+                Destination.Playback(
+                    item.id,
+                    item.resume_position ?: 0L,
+                    PlaybackMode.CHOOSE,
+                ),
+            )
         }
 
         is MarkerData -> {
-            val intent = Intent(context, PlaybackActivity::class.java)
-            intent.putDataType(DataType.MARKER)
-            intent.putExtra(
-                Constants.SCENE_ARG,
-                Scene.fromVideoSceneData(item.scene.videoSceneData),
+            StashApplication.navigationManager.navigate(
+                Destination.Playback(
+                    item.scene.videoSceneData.id,
+                    (item.seconds * 1000).toLong(),
+                    PlaybackMode.CHOOSE,
+                ),
             )
-            intent.putExtra(Constants.POSITION_ARG, (item.seconds * 1000).toLong())
-            context.startActivity(intent)
         }
     }
 }

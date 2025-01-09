@@ -19,6 +19,7 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
@@ -42,20 +43,34 @@ class UpdateChecker {
         private val NOTE_REGEX = Regex("<!-- app-note:(.+) -->")
 
         suspend fun checkForUpdate(
-            activity: Activity,
+            context: Context,
             showNegativeToast: Boolean = false,
         ) {
-            val installedVersion = getInstalledVersion(activity)
-            val latestRelease = getLatestRelease(activity)
+            val installedVersion = getInstalledVersion(context)
+            val latestRelease = getLatestRelease(context)
             if (latestRelease != null && latestRelease.version.isGreaterThan(installedVersion)) {
-                Toast.makeText(activity, "Update available: $installedVersion => ${latestRelease.version}!", Toast.LENGTH_LONG).show()
-            } else if (showNegativeToast) {
-                Toast.makeText(activity, "No updates available, $installedVersion is the latest!", Toast.LENGTH_LONG).show()
+                Log.v(TAG, "Update available $installedVersion => ${latestRelease.version}")
+                Toast
+                    .makeText(
+                        context,
+                        "Update available: $installedVersion => ${latestRelease.version}!",
+                        Toast.LENGTH_LONG,
+                    ).show()
+            } else {
+                Log.v(TAG, "No update available for $installedVersion")
+                if (showNegativeToast) {
+                    Toast
+                        .makeText(
+                            context,
+                            "No updates available, $installedVersion is the latest!",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                }
             }
         }
 
-        fun getInstalledVersion(activity: Activity): Version {
-            val pkgInfo = activity.packageManager.getPackageInfo(activity.packageName, 0)
+        fun getInstalledVersion(context: Context): Version {
+            val pkgInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             return Version.fromString(pkgInfo.versionName!!)
         }
 
@@ -268,12 +283,13 @@ class UpdateChecker {
             }
         }
     }
-
-    data class Release(
-        val version: Version,
-        val downloadUrl: String?,
-        val publishedAt: String?,
-        val body: String?,
-        val notes: List<String>,
-    )
 }
+
+@Serializable
+data class Release(
+    val version: Version,
+    val downloadUrl: String?,
+    val publishedAt: String?,
+    val body: String?,
+    val notes: List<String>,
+)

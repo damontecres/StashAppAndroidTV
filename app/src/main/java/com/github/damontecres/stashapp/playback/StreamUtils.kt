@@ -8,10 +8,19 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.Caption
 import com.github.damontecres.stashapp.data.Scene
+import kotlinx.serialization.Serializable
 import java.util.Locale
 
 private const val TAG = "StreamUtils"
+
+@Serializable
+enum class PlaybackMode {
+    FORCED_DIRECT_PLAY,
+    FORCED_TRANSCODE,
+    CHOOSE,
+}
 
 enum class TranscodeDecision {
     DIRECT_PLAY,
@@ -81,49 +90,45 @@ fun buildMediaItem(
                 val uri =
                     baseUrl
                         .buildUpon()
-                        .appendQueryParameter("lang", it.lang)
-                        .appendQueryParameter("type", it.type)
+                        .appendQueryParameter("lang", it.language_code)
+                        .appendQueryParameter("type", it.caption_type)
                         .build()
-                val languageName =
-                    try {
-                        if (it.lang != "00") {
-                            Locale(it.lang).displayLanguage
-                        } else {
-                            context.getString(R.string.stashapp_display_mode_unknown)
-                        }
-                    } catch (ex: Exception) {
-                        Log.w(TAG, "Error in locale for '${it.lang}'", ex)
-                        it.lang.uppercase()
-                    }
                 MediaItem.SubtitleConfiguration
                     .Builder(uri)
                     // The server always provides subtitles as VTT: https://github.com/stashapp/stash/blob/v0.26.2/internal/api/routes_scene.go#L439
                     .setMimeType(MimeTypes.TEXT_VTT)
-                    .setLabel("$languageName (${it.type})")
+                    .setLabel(it.displayString(context))
                     .setSelectionFlags(C.SELECTION_FLAG_AUTOSELECT)
                     .build()
             }
         Log.v(TAG, "Got ${subtitles.size} subtitle options for scene ${scene.id}")
         builder.setSubtitleConfigurations(subtitles)
     }
-    if (builderCallback != null) {
-        builderCallback(builder)
-    }
+    builderCallback?.invoke(builder)
+
     return builder.build()
 }
 
 fun getStreamDecision(
     context: Context,
     scene: Scene,
-    forceTranscode: Boolean = false,
-    forceDirectPlay: Boolean = false,
+    mode: PlaybackMode,
 ): StreamDecision {
+    Log.d(
+        TAG,
+        "getStreamDecision: mode=$mode, " +
+            "sceneId=${scene.id}, " +
+            "videoCodec=${scene.videoCodec}, " +
+            "resolution=${scene.videoResolution}, " +
+            "audioCodec=${scene.audioCodec}, " +
+            "format=${scene.format}",
+    )
     val supportedCodecs = CodecSupport.getSupportedCodecs(context)
     val videoSupported = supportedCodecs.isVideoSupported(scene.videoCodec)
     val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
     val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
     if (
-        !forceTranscode &&
+        mode == PlaybackMode.CHOOSE &&
         videoSupported &&
         audioSupported &&
         containerSupported &&
@@ -140,7 +145,7 @@ fun getStreamDecision(
             true,
             true,
         )
-    } else if (forceDirectPlay) {
+    } else if (mode == PlaybackMode.FORCED_DIRECT_PLAY) {
         Log.v(
             PlaybackSceneFragment.TAG,
             "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
@@ -160,10 +165,25 @@ fun getStreamDecision(
         )
         return StreamDecision(
             scene.id,
-            if (forceTranscode) TranscodeDecision.FORCED_TRANSCODE else TranscodeDecision.TRANSCODE,
+            if (mode == PlaybackMode.FORCED_TRANSCODE) TranscodeDecision.FORCED_TRANSCODE else TranscodeDecision.TRANSCODE,
             videoSupported,
             audioSupported,
             containerSupported,
         )
     }
+}
+
+fun Caption.displayString(context: Context): String {
+    val languageName =
+        try {
+            if (language_code != "00") {
+                Locale(language_code).displayLanguage
+            } else {
+                context.getString(R.string.stashapp_display_mode_unknown)
+            }
+        } catch (ex: Exception) {
+            Log.w(TAG, "Error in locale for '${language_code}'", ex)
+            language_code.uppercase()
+        }
+    return "$languageName ($caption_type)"
 }

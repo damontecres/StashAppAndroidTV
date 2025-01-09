@@ -1,31 +1,30 @@
 package com.github.damontecres.stashapp.filter
 
-import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo.api.Optional
-import com.github.damontecres.stashapp.FilterListActivity
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SaveFilterInput
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.output.FilterWriter
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.putDataType
-import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
 import com.github.damontecres.stashapp.views.formatNumber
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
 /**
@@ -34,12 +33,7 @@ import kotlinx.coroutines.launch
  * Assumes that [CreateFilterViewModel.initialize] has been called already
  */
 class CreateFilterStep : CreateFilterGuidedStepFragment() {
-    private lateinit var queryEngine: QueryEngine
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        queryEngine = QueryEngine(StashServer.requireCurrentServer())
-    }
+    private val serverViewModel: ServerViewModel by activityViewModels()
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val text =
@@ -67,6 +61,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .title(getString(R.string.stashapp_filter_name))
                 .descriptionEditInputType(InputType.TYPE_CLASS_TEXT)
                 .descriptionEditable(true)
+                .description(viewModel.filterName.value)
                 .build(),
         )
 
@@ -106,16 +101,15 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .build(),
         )
         if (readOnlyModeDisabled()) {
-            actions.add(
+            val submitAction =
                 GuidedAction
                     .Builder(requireContext())
                     .id(SAVE_SUBMIT)
                     .hasNext(true)
-                    .enabled(false)
                     .title("Save and submit")
-                    .description(getString(R.string.save_and_submit_no_name_desc))
-                    .build(),
-            )
+                    .build()
+            updateSaveAndSubmit(submitAction, viewModel.filterName.value)
+            actions.add(submitAction)
         }
     }
 
@@ -161,18 +155,18 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
             nextStep(CreateFindFilterFragment(dataType, viewModel.findFilter.value!!))
         } else if (action.id == SUBMIT || action.id == SAVE_SUBMIT) {
             // Ready to load the filter!
-            val filterNameAction = findActionById(FILTER_NAME)
+            val filterName = viewModel.filterName.value
             val objectFilter = viewModel.objectFilter.value!!
             val filterArgs =
                 FilterArgs(
                     dataType = dataType,
-                    name = filterNameAction.description?.toString()?.ifBlank { null },
+                    name = filterName,
                     findFilter = viewModel.findFilter.value,
                     objectFilter = objectFilter,
                 ).withResolvedRandom()
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 // If there is a name, try to save it to the server
-                if (action.id == SAVE_SUBMIT && filterArgs.name.isNotNullOrBlank()) {
+                if (action.id == SAVE_SUBMIT && filterName.isNotNullOrBlank()) {
                     val queryEngine = QueryEngine(viewModel.server.value!!)
                     // Save it
                     val filterWriter =
@@ -187,13 +181,12 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                             filterArgs.dataType.defaultSort,
                         )
                     val objectFilterMap = filterWriter.convertFilter(objectFilter)
-                    val existingId =
-                        viewModel.getSavedFilterId(filterNameAction.description?.toString())
+                    val existingId = viewModel.getSavedFilterId(filterName)
                     val newFilterInput =
                         SaveFilterInput(
                             id = Optional.presentIfNotNull(existingId),
                             mode = dataType.filterMode,
-                            name = filterNameAction.description.toString(),
+                            name = filterName,
                             find_filter =
                                 Optional.presentIfNotNull(
                                     findFilter.toFindFilterType(1, 40),
@@ -207,7 +200,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                             childFragmentManager,
                             getString(
                                 R.string.stashapp_dialogs_overwrite_filter_confirm,
-                                filterNameAction.description.toString(),
+                                filterName,
                             ),
                         ) {
                             viewLifecycleOwner.lifecycleScope.launch(
@@ -238,30 +231,39 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
             val newSavedFilter = mutationEngine.saveFilter(newFilterInput)
             Log.i(TAG, "New SavedFilter: ${newSavedFilter.id}")
         }
-        finishGuidedStepSupportFragments()
-        val intent =
-            Intent(requireContext(), FilterListActivity::class.java)
-                .putDataType(filterArgs.dataType)
-                .putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filterArgs)
-        requireContext().startActivity(intent)
+
+        serverViewModel.navigationManager.goBack()
+        serverViewModel.navigationManager.navigate(Destination.Filter(filterArgs))
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
         if (action.id == FILTER_NAME) {
+            val filterName = action.description?.toString()?.ifBlank { null }
+            viewModel.filterName.value = filterName
             val submitAction = findActionById(SAVE_SUBMIT)
-            val id = viewModel.getSavedFilterId(action.description?.toString())
-            submitAction.isEnabled = action.description.isNotNullOrBlank()
-            submitAction.description =
-                if (submitAction.isEnabled && id.isNotNullOrBlank()) {
-                    getString(R.string.save_and_submit_overwrite)
-                } else if (submitAction.isEnabled) {
-                    getString(R.string.stashapp_actions_save_filter)
-                } else {
-                    getString(R.string.save_and_submit_no_name_desc)
-                }
-            notifyActionChanged(findActionPositionById(SAVE_SUBMIT))
+            if (submitAction != null) {
+                // In read-only, this action doesn't exist
+                updateSaveAndSubmit(submitAction, filterName)
+                notifyActionChanged(findActionPositionById(SAVE_SUBMIT))
+            }
         }
         return GuidedAction.ACTION_ID_NEXT
+    }
+
+    private fun updateSaveAndSubmit(
+        submitAction: GuidedAction,
+        filterName: String?,
+    ) {
+        val id = viewModel.getSavedFilterId(filterName)
+        submitAction.isEnabled = filterName.isNotNullOrBlank()
+        submitAction.description =
+            if (submitAction.isEnabled && id.isNotNullOrBlank()) {
+                getString(R.string.save_and_submit_overwrite)
+            } else if (submitAction.isEnabled) {
+                getString(R.string.stashapp_actions_save_filter)
+            } else {
+                getString(R.string.save_and_submit_no_name_desc)
+            }
     }
 
     companion object {

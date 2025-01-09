@@ -100,18 +100,10 @@ class StashImageCardView(
 
     private var imageDimensionsSet = false
 
-    private val playVideoPreviews =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getBoolean("playVideoPreviews", true)
-
-    private val videoDelay =
-        PreferenceManager
-            .getDefaultSharedPreferences(context)
-            .getInt(
-                context.getString(R.string.pref_key_ui_card_overlay_delay),
-                context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
-            ).toLong()
+    private var videoPreviewAudio: Boolean = false
+    private var playVideoPreviews = true
+    private var videoDelay =
+        context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default).toLong()
 
     private val listener =
         object : Player.Listener {
@@ -260,10 +252,7 @@ class StashImageCardView(
 
         videoView!!.player = player
         player.setMediaItem(mediaItem, if (videoPosition > 0) videoPosition else C.TIME_UNSET)
-        if (PreferenceManager
-                .getDefaultSharedPreferences(context)
-                .getBoolean("videoPreviewAudio", false)
-        ) {
+        if (videoPreviewAudio) {
             player.volume = 1f
         } else {
             player.volume = 0f
@@ -392,6 +381,20 @@ class StashImageCardView(
         textView.text = context.getString(R.string.fa_heart)
         textView.setTextColor(context.getColor(android.R.color.holo_red_light))
         textView.textSize = 18.0f
+    }
+
+    fun onBindViewHolder() {
+        val prefs =
+            PreferenceManager
+                .getDefaultSharedPreferences(context)
+        playVideoPreviews = prefs.getBoolean("playVideoPreviews", true)
+        videoDelay =
+            prefs
+                .getInt(
+                    context.getString(R.string.pref_key_ui_card_overlay_delay),
+                    context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
+                ).toLong()
+        videoPreviewAudio = prefs.getBoolean("videoPreviewAudio", false)
     }
 
     fun onUnbindViewHolder() {

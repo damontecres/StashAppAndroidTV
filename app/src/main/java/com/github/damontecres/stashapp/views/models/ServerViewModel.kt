@@ -1,31 +1,51 @@
 package com.github.damontecres.stashapp.views.models
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
-import java.util.Objects
+import kotlinx.coroutines.launch
 
 /**
  * Tracks the current server
  */
-class ServerViewModel : ViewModel() {
-    private val _currentServer =
-        EqualityMutableLiveData<StashServer?>(StashServer.getCurrentStashServer(StashApplication.getApplication()))
+open class ServerViewModel : ViewModel() {
+    private val _currentServer = EqualityMutableLiveData<StashServer?>()
     val currentServer: LiveData<StashServer?> = _currentServer
 
-    private val _currentSettingsHash = EqualityMutableLiveData(computeSettingsHash())
-    val currentSettingsHash: LiveData<Int> = _currentSettingsHash
+    fun requireServer(): StashServer = currentServer.value!!
 
-    fun switchServer(newServer: StashServer) {
-        StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
-        _currentServer.value = newServer
+    private val _cardUiSettings = EqualityMutableLiveData(createUiSettings())
+    val cardUiSettings: LiveData<CardUiSettings> = _cardUiSettings
+
+    lateinit var navigationManager: NavigationManager
+
+    fun switchServer(newServer: StashServer?) {
+        if (newServer != null) {
+            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                newServer.updateServerPrefs()
+                StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
+                _currentServer.value = newServer
+            }
+        } else {
+            _currentServer.value = null
+        }
     }
 
-    private fun computeSettingsHash(): Int {
+    fun updateUiSettings() {
+        val newHash = createUiSettings()
+        _cardUiSettings.value = newHash
+    }
+
+    private fun createUiSettings(): CardUiSettings {
         val context = StashApplication.getApplication()
         val manager = PreferenceManager.getDefaultSharedPreferences(context)
         val maxSearchResults = manager.getInt("maxSearchResults", 0)
@@ -39,7 +59,7 @@ class ServerViewModel : ViewModel() {
                 context.getString(R.string.pref_key_ui_card_overlay_delay),
                 context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
             )
-        return Objects.hash(
+        return CardUiSettings(
             maxSearchResults,
             playVideoPreviews,
             columns,
@@ -49,11 +69,32 @@ class ServerViewModel : ViewModel() {
         )
     }
 
-    fun refresh() {
-        val newHash = computeSettingsHash()
-        _currentSettingsHash.value = newHash
-
-        val currentServer = StashServer.getCurrentStashServer(StashApplication.getApplication())
-        _currentServer.value = currentServer
+    fun init(currentServer: StashServer) {
+        updateUiSettings()
+        switchServer(currentServer)
     }
+
+    fun maybeShowUpdate(context: Context) {
+        val checkForUpdates =
+            PreferenceManager
+                .getDefaultSharedPreferences(StashApplication.getApplication())
+                .getBoolean("autoCheckForUpdates", true)
+        if (checkForUpdates) {
+            viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                UpdateChecker.checkForUpdate(context, false)
+            }
+        }
+    }
+
+    /**
+     * Basic UI settings that affect the cards
+     */
+    data class CardUiSettings(
+        val maxSearchResults: Int,
+        val playVideoPreviews: Boolean,
+        val columns: Int,
+        val showRatings: Boolean,
+        val imageCrop: Boolean,
+        val videoDelay: Int,
+    )
 }

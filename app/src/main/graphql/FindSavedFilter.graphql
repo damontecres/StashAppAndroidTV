@@ -1,18 +1,18 @@
 query FindSavedFilter($id: ID!) {
   findSavedFilter(id: $id) {
-    ...SavedFilterData
+    ...SavedFilter
     __typename
   }
 }
 
 query FindSavedFilters($mode: FilterMode!) {
   findSavedFilters(mode: $mode) {
-    ...SavedFilterData
+    ...SavedFilter
     __typename
   }
 }
 
-fragment SavedFilterData on SavedFilter {
+fragment SavedFilter on SavedFilter {
   id
   mode
   name
@@ -31,6 +31,6 @@ fragment SavedFilterData on SavedFilter {
 
 mutation SaveFilter($input: SaveFilterInput!) {
   saveFilter(input: $input) {
-    ...SavedFilterData
+    ...SavedFilter
   }
 }

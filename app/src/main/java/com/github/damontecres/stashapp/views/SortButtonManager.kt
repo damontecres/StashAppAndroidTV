@@ -47,17 +47,13 @@ class SortButtonManager(
         val sortOptions =
             dataType.sortOptions
                 .filter { serverVersion.isAtLeast(it.requiresVersion) }
-                .map {
-                    Pair(
-                        it.key,
-                        context.getString(it.nameStringId),
-                    )
-                }.sortedBy { it.second }
+                .map { Pair(it.key, it.getString(context)) }
+                .sortedBy { it.second }
         val resolvedNames = sortOptions.map { it.second }
 
         val index =
             if (sortAndDirection.isRandom) {
-                sortOptions.map { it.first }.indexOf(SortOption.RANDOM.key)
+                sortOptions.map { it.first }.indexOf(SortOption.Random.key)
             } else {
                 sortOptions.map { it.first }.indexOf(sortAndDirection.sort.key)
             }

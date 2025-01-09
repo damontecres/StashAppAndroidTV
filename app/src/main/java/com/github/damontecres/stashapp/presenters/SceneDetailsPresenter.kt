@@ -6,7 +6,9 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.playback.CodecSupport
+import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.util.concatIfNotBlank
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.resolutionName
@@ -52,24 +54,27 @@ class SceneDetailsPresenter(
         }
 
         var debugInfo: String? = null
-        val file = scene.files.firstOrNull()
-        if (file != null) {
-            val resolution = file.videoFileData.resolutionName()
-            val duration = durationToString(file.videoFileData.duration)
-            viewHolder.subtitle.text =
-                concatIfNotBlank(
-                    " - ",
-                    scene.date,
-                    duration,
-                    resolution,
-                )
+        if (manager.getBoolean(
+                context.getString(R.string.pref_key_show_playback_debug_info),
+                false,
+            )
+        ) {
+            val debugItems =
+                mutableListOf("${context.getString(R.string.stashapp_scene_id)}: ${scene.id}")
 
-            if (manager.getBoolean(
-                    context.getString(R.string.pref_key_show_playback_debug_info),
-                    false,
-                )
-            ) {
-                val videoFile = file.videoFileData
+            val file = scene.files.firstOrNull()
+            if (file != null) {
+                val resolution = file.videoFile.resolutionName()
+                val duration = durationToString(file.videoFile.duration)
+                viewHolder.subtitle.text =
+                    concatIfNotBlank(
+                        " - ",
+                        scene.date,
+                        duration,
+                        resolution,
+                    )
+
+                val videoFile = file.videoFile
                 val supportedCodecs = CodecSupport.getSupportedCodecs(context)
                 val videoSupported = supportedCodecs.isVideoSupported(videoFile.video_codec)
                 val audioSupported = supportedCodecs.isAudioSupported(videoFile.audio_codec)
@@ -95,8 +100,19 @@ class SceneDetailsPresenter(
                         "Format: ${videoFile.format} (unsupported)"
                     }
 
-                debugInfo = listOf(video, audio, format).joinToString(", ")
+                debugItems += listOf(video, audio, format)
+
+                if (scene.captions?.isNotEmpty() == true) {
+                    debugItems.add(
+                        "Captions: " +
+                            scene.captions
+                                .map { it.caption.displayString(context) }
+                                .joinNotNullOrBlank(", "),
+                    )
+                }
             }
+            debugItems += ""
+            debugInfo = debugItems.joinToString("\n")
         }
         val playCount =
             if (scene.play_count != null && scene.play_count > 0) {

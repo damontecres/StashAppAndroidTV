@@ -8,13 +8,13 @@ import android.widget.TextView
 import androidx.core.content.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.views.TabbedGridTitleView
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.models.TabbedGridViewModel
 import com.google.android.material.tabs.TabLayout
 
@@ -25,12 +25,14 @@ abstract class TabbedFragment(
     val tabKey: String,
 ) : Fragment(R.layout.tabbed_grid_view),
     DefaultKeyEventCallback {
-    protected val viewModel by activityViewModels<TabbedGridViewModel>()
+    private lateinit var viewPager: LeanbackViewPager
+    protected val serverViewModel by activityViewModels<ServerViewModel>()
+    protected val tabViewModel by viewModels<TabbedGridViewModel>()
 
-    private lateinit var titleView: TabbedGridTitleView
     private lateinit var tabLayout: LeanbackTabLayout
     private lateinit var adapter: StashFragmentPagerAdapter
     private var currentTabPosition = 0
+    private var firstTime = true
 
     private val fragments = mutableMapOf<Int, Fragment>()
 
@@ -46,32 +48,16 @@ abstract class TabbedFragment(
         val rememberTabKey = getString(R.string.pref_key_ui_remember_tab) + ".$tabKey"
         val rememberedTabIndex = if (rememberTab) preferences.getInt(rememberTabKey, 0) else 0
 
-        titleView = view.findViewById(R.id.browse_title_group)
-        val gridTitle = view.findViewById<TextView>(R.id.grid_title)
-        viewModel.title.observe(viewLifecycleOwner) {
-            gridTitle.text = it
-        }
-        val title = getTitleText()
-        if (title.isNotNullOrBlank()) {
-            viewModel.title.value = getTitleText()
-        }
-
-        val viewPager = view.findViewById<LeanbackViewPager>(R.id.view_pager)
-        tabLayout = view.findViewById(R.id.tab_layout)
-
-        viewModel.refreshServer()
-
-        viewModel.tabs.observe(viewLifecycleOwner) { pages ->
+        tabViewModel.tabs.observe(viewLifecycleOwner) { pages ->
             adapter = StashFragmentPagerAdapter(pages, childFragmentManager)
             adapter.fragmentCreatedListener = { fragment, position ->
-                if (fragment is StashGridFragment) {
+                if (fragment is StashGridControlsFragment) {
                     fragment.titleView = tabLayout
                 }
                 fragments[position] = fragment
             }
             viewPager.adapter = adapter
-            tabLayout.setupWithViewPager(viewPager)
-            if (savedInstanceState == null && tabLayout.childCount > 0) {
+            if (savedInstanceState == null && tabLayout.childCount > 0 && firstTime) {
                 tabLayout.getChildAt(0).requestFocus()
             }
 
@@ -101,17 +87,25 @@ abstract class TabbedFragment(
                 },
             )
 
-            if (rememberTab) {
+            if (firstTime && rememberTab) {
                 val tabIndex =
                     if (rememberedTabIndex < tabLayout.tabCount) rememberedTabIndex else 0
                 val tab = tabLayout.getTabAt(tabIndex)
                 tabLayout.selectTab(tab, true)
                 tab?.view?.requestFocus()
             }
+            firstTime = false
         }
-    }
 
-    open fun getTitleText(): String? = null
+        val gridTitle = view.findViewById<TextView>(R.id.grid_title)
+        tabViewModel.title.observe(viewLifecycleOwner) {
+            gridTitle.text = it
+        }
+
+        viewPager = view.findViewById(R.id.view_pager)
+        tabLayout = view.findViewById(R.id.tab_layout)
+        tabLayout.setupWithViewPager(viewPager)
+    }
 
     override fun onKeyUp(
         keyCode: Int,

@@ -1,6 +1,6 @@
 package com.github.damontecres.stashapp.suppliers
 
-import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.fragment.SavedFilter
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
@@ -51,7 +51,7 @@ data class FilterArgs(
         }
 }
 
-fun SavedFilterData.toFilterArgs(filterParser: FilterParser): FilterArgs {
+fun SavedFilter.toFilterArgs(filterParser: FilterParser): FilterArgs {
     val dataType = DataType.fromFilterMode(mode)!!
     val findFilter =
         if (find_filter != null) {

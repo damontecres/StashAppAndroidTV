@@ -11,7 +11,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 class SetupStep4Pin(
     private val setupState: SetupState,
-) : SetupActivity.SimpleGuidedStepSupportFragment() {
+) : SetupGuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
         GuidanceStylist.Guidance(
             "Set a PIN code?",

@@ -14,7 +14,7 @@ import com.github.damontecres.stashapp.util.TestResultStatus
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.coroutines.launch
 
-class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
+class SetupStep1ServerUrl : SetupGuidedStepSupportFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
         GuidanceStylist.Guidance(
             getString(R.string.stash_server_url),
@@ -30,7 +30,7 @@ class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
         actions.add(
             GuidedAction
                 .Builder(requireContext())
-                .id(SetupActivity.ACTION_SERVER_URL)
+                .id(SetupFragment.ACTION_SERVER_URL)
                 .title("Server URL")
                 .descriptionInputType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
                 .descriptionEditable(true)
@@ -49,7 +49,7 @@ class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        if (action.id == SetupActivity.ACTION_SERVER_URL) {
+        if (action.id == SetupFragment.ACTION_SERVER_URL) {
 //            val okAction = findActionById(GuidedAction.ACTION_ID_OK)
 //            okAction.isEnabled = serverUrl.isNotNullOrBlank()
 //            notifyActionChanged(findActionPositionById(GuidedAction.ACTION_ID_OK))
@@ -60,7 +60,7 @@ class SetupStep1ServerUrl : SetupActivity.SimpleGuidedStepSupportFragment() {
 
     override fun onGuidedActionClicked(action: GuidedAction) {
         if (action.id == GuidedAction.ACTION_ID_OK) {
-            val serverUrlAction = findActionById(SetupActivity.ACTION_SERVER_URL)
+            val serverUrlAction = findActionById(SetupFragment.ACTION_SERVER_URL)
             testServerUrl(serverUrlAction)
         }
     }

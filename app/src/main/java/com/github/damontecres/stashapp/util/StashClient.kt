@@ -34,38 +34,6 @@ class StashClient private constructor() {
         private const val TAG = "StashClient"
         private const val OK_HTTP_TAG = "$TAG.OkHttpClient"
 
-        @Volatile
-        private var httpClient: OkHttpClient? = null
-
-        @Volatile
-        private var apolloClient: ApolloClient? = null
-
-        /**
-         * Invalidate the cached clients typically when switching servers
-         */
-        fun invalidate() {
-            synchronized(this) {
-                httpClient = null
-                apolloClient = null
-            }
-        }
-
-        /**
-         * Get an [OkHttpClient] cached from a previous call or else created from the provided [Context]
-         */
-        fun getHttpClient(server: StashServer): OkHttpClient {
-            if (httpClient == null) {
-                synchronized(this) {
-                    if (httpClient == null) {
-                        Log.v(TAG, "Creating new OkHttpClient")
-                        val newClient = createOkHttpClient(server, true, true)
-                        httpClient = newClient
-                    }
-                }
-            }
-            return httpClient!!
-        }
-
         /**
          * Get an [OkHttpClient] for use in [StashGlideModule].
          *
@@ -76,9 +44,10 @@ class StashClient private constructor() {
             return createOkHttpClient(server, false, true)
         }
 
-        fun getStreamHttpClient(server: StashServer): OkHttpClient = createOkHttpClient(server, true, false)
-
-        private fun createOkHttpClient(
+        /**
+         * Create an [OkHttpClient]. Prefer using [StashServer.okHttpClient] when possible
+         */
+        fun createOkHttpClient(
             server: StashServer,
             useApiKey: Boolean,
             useCache: Boolean,
@@ -227,29 +196,12 @@ class StashClient private constructor() {
         }
 
         /**
-         * Get an [ApolloClient] cached from a previous call or else created for the specified server
-         */
-        @Throws(QueryEngine.StashNotConfiguredException::class)
-        fun getApolloClient(server: StashServer): ApolloClient {
-            if (apolloClient == null) {
-                synchronized(this) {
-                    if (apolloClient == null) {
-                        Log.v(TAG, "Creating new ApolloClient")
-                        val newClient = createApolloClient(server)
-                        apolloClient = newClient
-                    }
-                }
-            }
-            return apolloClient!!
-        }
-
-        /**
-         * Create a new [ApolloClient]. Using [getApolloClient] is preferred.
+         * Create a new [ApolloClient]. Prefer using [StashServer.apolloClient] when possible
          */
         @OptIn(ApolloExperimental::class)
-        private fun createApolloClient(server: StashServer): ApolloClient {
+        fun createApolloClient(server: StashServer): ApolloClient {
             val url = cleanServerUrl(server.url)
-            val httpClient = getHttpClient(server)
+            val httpClient = server.okHttpClient
             return ApolloClient
                 .Builder()
                 .serverUrl(url)

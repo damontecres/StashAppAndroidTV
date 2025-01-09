@@ -1,78 +1,209 @@
 package com.github.damontecres.stashapp.data
 
+import android.content.Context
 import androidx.annotation.StringRes
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.util.Version
+import kotlinx.serialization.Serializable
+import kotlin.reflect.full.isSubclassOf
 
 /**
  * A way to sort something
  */
-enum class SortOption(
+@Serializable
+sealed interface SortOption {
     /**
      * The key as understood by the server
      */
-    val key: String,
-    /**
-     * The string resource for the readable name of the sort
-     */
-    @StringRes val nameStringId: Int,
+    val key: String
+
     /**
      * The minimum server version required to sort by this
      *
      * This allows for adding future compatible sorting to older app versions
      */
-    val requiresVersion: Version = Version.MINIMUM_STASH_VERSION,
-) {
-    BIRTHDATE("birthdate", R.string.stashapp_birthdate),
-    BITRATE("bitrate", R.string.stashapp_bitrate),
-    CAREER_LENGTH("career_length", R.string.stashapp_career_length, Version.V0_27_0),
-    CHILD_COUNT("child_count", R.string.stashapp_subsidiary_studio_count),
-    CREATED_AT("created_at", R.string.stashapp_created_at),
-    DATE("date", R.string.stashapp_date),
-    DURATION("duration", R.string.stashapp_duration),
-    FILE_COUNT("file_count", R.string.stashapp_file_count),
-    FILE_MOD_TIME("file_mod_time", R.string.stashapp_file_mod_time),
-    FILESIZE("filesize", R.string.stashapp_filesize),
-    FRAMERATE("framerate", R.string.stashapp_framerate),
-    GALLERIES_COUNT("galleries_count", R.string.stashapp_gallery_count),
-    GROUP_SCENE_NUMBER("group_scene_number", R.string.stashapp_group_scene_number),
-    HEIGHT("height", R.string.stashapp_height),
-    IMAGES_COUNT("images_count", R.string.stashapp_image_count),
-    INTERACTIVE_SPEED("interactive_speed", R.string.stashapp_interactive_speed),
-    INTERACTIVE("interactive", R.string.stashapp_interactive),
-    LAST_O_AT("last_o_at", R.string.stashapp_last_o_at, Version.V0_26_0),
-    LAST_PLAYED_AT("last_played_at", R.string.stashapp_last_played_at, Version.V0_26_0),
-    MEASUREMENTS("measurements", R.string.stashapp_measurements, Version.V0_27_0),
-    NAME("name", R.string.stashapp_name),
-    O_COUNTER("o_counter", R.string.stashapp_o_count),
-    ORGANIZED("organized", R.string.stashapp_organized),
-    PATH("path", R.string.stashapp_path),
-    PENIS_LENGTH("penis_length", R.string.stashapp_penis_length),
-    PERCEPTUAL_SIMILARITY("perceptual_similarity", R.string.stashapp_perceptual_similarity),
-    PERFORMER_COUNT("performer_count", R.string.stashapp_performer_count),
-    PERFORMERS_COUNT("performers_count", R.string.stashapp_performer_count),
-    PLAY_COUNT("play_count", R.string.stashapp_play_count, Version.V0_26_0),
-    PLAY_DURATION("play_duration", R.string.stashapp_play_duration),
-    RANDOM("random", R.string.stashapp_random),
-    RATING("rating", R.string.stashapp_rating),
-    RESUME_TIME("resume_time", R.string.stashapp_resume_time),
-    SCENE_ID("scene_id", R.string.stashapp_scene_id),
-    SCENE_MARKERS_COUNT("scene_markers_count", R.string.stashapp_marker_count),
-    SCENES_COUNT("scenes_count", R.string.stashapp_scene_count),
-    SCENES_UPDATED_AT("scenes_updated_at", R.string.stashapp_scenes_updated_at),
-    SECONDS("seconds", R.string.stashapp_seconds),
-    TAG_COUNT("tag_count", R.string.stashapp_tag_count),
-    TITLE("title", R.string.stashapp_title),
-    UPDATED_AT("updated_at", R.string.stashapp_updated_at),
-    WEIGHT("weight", R.string.stashapp_weight, Version.V0_27_0),
-    ;
+    val requiresVersion: Version
+
+    /**
+     * Get the readable representation of the sort
+     */
+    fun getString(context: Context): String
+
+    @Serializable
+    sealed class SortOptionImpl(
+        override val key: String,
+        /**
+         * The string resource for the readable name of the sort
+         */
+        @StringRes val nameStringId: Int?,
+        override val requiresVersion: Version = Version.MINIMUM_STASH_VERSION,
+    ) : SortOption {
+        override fun getString(context: Context): String = if (nameStringId != null) context.getString(nameStringId) else key
+    }
+
+    @Serializable
+    data object Birthdate : SortOptionImpl("birthdate", R.string.stashapp_birthdate)
+
+    @Serializable
+    data object Bitrate : SortOptionImpl("bitrate", R.string.stashapp_bitrate)
+
+    @Serializable
+    data object CareerLength :
+        SortOptionImpl("career_length", R.string.stashapp_career_length, Version.V0_27_0)
+
+    @Serializable
+    data object ChildCount :
+        SortOptionImpl("child_count", R.string.stashapp_subsidiary_studio_count)
+
+    @Serializable
+    data object CreatedAt : SortOptionImpl("created_at", R.string.stashapp_created_at)
+
+    @Serializable
+    data object Date : SortOptionImpl("date", R.string.stashapp_date)
+
+    @Serializable
+    data object Duration : SortOptionImpl("duration", R.string.stashapp_duration)
+
+    @Serializable
+    data object FileCount : SortOptionImpl("file_count", R.string.stashapp_file_count)
+
+    @Serializable
+    data object FileModTime : SortOptionImpl("file_mod_time", R.string.stashapp_file_mod_time)
+
+    @Serializable
+    data object FileSize : SortOptionImpl("filesize", R.string.stashapp_filesize)
+
+    @Serializable
+    data object FrameRate : SortOptionImpl("framerate", R.string.stashapp_framerate)
+
+    @Serializable
+    data object GalleriesCount : SortOptionImpl("galleries_count", R.string.stashapp_gallery_count)
+
+    @Serializable
+    data object GroupSceneNumber :
+        SortOptionImpl("group_scene_number", R.string.stashapp_group_scene_number)
+
+    @Serializable
+    data object Height : SortOptionImpl("height", R.string.stashapp_height)
+
+    @Serializable
+    data object ImagesCount : SortOptionImpl("images_count", R.string.stashapp_image_count)
+
+    @Serializable
+    data object InteractiveSpeed :
+        SortOptionImpl("interactive_speed", R.string.stashapp_interactive_speed)
+
+    @Serializable
+    data object Interactive : SortOptionImpl("interactive", R.string.stashapp_interactive)
+
+    @Serializable
+    data object LastOAt : SortOptionImpl("last_o_at", R.string.stashapp_last_o_at, Version.V0_26_0)
+
+    @Serializable
+    data object LastPlayedAt :
+        SortOptionImpl("last_played_at", R.string.stashapp_last_played_at, Version.V0_26_0)
+
+    @Serializable
+    data object Measurements :
+        SortOptionImpl("measurements", R.string.stashapp_measurements, Version.V0_27_0)
+
+    @Serializable
+    data object Name : SortOptionImpl("name", R.string.stashapp_name)
+
+    @Serializable
+    data object OCounter : SortOptionImpl("o_counter", R.string.stashapp_o_count)
+
+    @Serializable
+    data object Organized : SortOptionImpl("organized", R.string.stashapp_organized)
+
+    @Serializable
+    data object Path : SortOptionImpl("path", R.string.stashapp_path)
+
+    @Serializable
+    data object PenisLength : SortOptionImpl("penis_length", R.string.stashapp_penis_length)
+
+    @Serializable
+    data object PerceptualSimilarity :
+        SortOptionImpl("perceptual_similarity", R.string.stashapp_perceptual_similarity)
+
+    @Serializable
+    data object PerformerCount :
+        SortOptionImpl("performer_count", R.string.stashapp_performer_count)
+
+    @Serializable
+    data object PerformersCount :
+        SortOptionImpl("performers_count", R.string.stashapp_performer_count)
+
+    @Serializable
+    data object PlayCount :
+        SortOptionImpl("play_count", R.string.stashapp_play_count, Version.V0_26_0)
+
+    @Serializable
+    data object PlayDuration : SortOptionImpl("play_duration", R.string.stashapp_play_duration)
+
+    @Serializable
+    data object Random : SortOptionImpl("random", R.string.stashapp_random)
+
+    @Serializable
+    data object Rating : SortOptionImpl("rating", R.string.stashapp_rating)
+
+    @Serializable
+    data object ResumeTime : SortOptionImpl("resume_time", R.string.stashapp_resume_time)
+
+    @Serializable
+    data object SceneId : SortOptionImpl("scene_id", R.string.stashapp_scene_id)
+
+    @Serializable
+    data object SceneMarkersCount :
+        SortOptionImpl("scene_markers_count", R.string.stashapp_marker_count)
+
+    @Serializable
+    data object ScenesCount : SortOptionImpl("scenes_count", R.string.stashapp_scene_count)
+
+    @Serializable
+    data object ScenesUpdatedAt :
+        SortOptionImpl("scenes_updated_at", R.string.stashapp_scenes_updated_at)
+
+    @Serializable
+    data object Seconds : SortOptionImpl("seconds", R.string.stashapp_seconds)
+
+    @Serializable
+    data object TagCount : SortOptionImpl("tag_count", R.string.stashapp_tag_count)
+
+    @Serializable
+    data object Title : SortOptionImpl("title", R.string.stashapp_title)
+
+    @Serializable
+    data object UpdatedAt : SortOptionImpl("updated_at", R.string.stashapp_updated_at)
+
+    @Serializable
+    data object Weight : SortOptionImpl("weight", R.string.stashapp_weight, Version.V0_27_0)
+
+    /**
+     * Represents an unknown sort key possibly from a future server version
+     */
+    @Serializable
+    data class Unknown(
+        override val key: String,
+        override val requiresVersion: Version = Version.MINIMUM_STASH_VERSION,
+    ) : SortOption {
+        override fun getString(context: Context): String = key
+    }
 
     companion object {
+        private val MAPPING =
+            SortOption::class
+                .nestedClasses
+                .filter { klass -> klass.isSubclassOf(SortOption::class) }
+                .mapNotNull { klass -> klass.objectInstance }
+                .filterIsInstance<SortOption>()
+                .associateBy { it.key }
+
         fun getByKey(key: String): SortOption =
             if (key.startsWith("random")) {
-                RANDOM
+                Random
             } else {
-                entries.first { it.key == key }
+                MAPPING[key] ?: Unknown(key)
             }
 
         /**
@@ -89,132 +220,132 @@ enum class SortOption(
                     DataType.PERFORMER,
                     DataType.STUDIO,
                 ) &&
-                sortOption == NAME
+                sortOption == Name
 
         private val COMMON_SORT_OPTIONS =
             arrayOf(
-                CREATED_AT,
-                UPDATED_AT,
-                RANDOM,
+                CreatedAt,
+                UpdatedAt,
+                Random,
             )
 
         val SCENE_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
-                BITRATE,
-                DATE,
-                DURATION,
-                FILE_COUNT,
-                FILE_MOD_TIME,
-                FILESIZE,
-                FRAMERATE,
-                INTERACTIVE,
-                INTERACTIVE_SPEED,
-                LAST_O_AT,
-                LAST_PLAYED_AT,
-                GROUP_SCENE_NUMBER,
-                O_COUNTER,
-                ORGANIZED,
-                PATH,
-                PERCEPTUAL_SIMILARITY,
-                PERFORMER_COUNT,
-                PLAY_COUNT,
-                PLAY_DURATION,
-                RATING,
-                RESUME_TIME,
-                TAG_COUNT,
-                TITLE,
+                Bitrate,
+                Date,
+                Duration,
+                FileCount,
+                FileModTime,
+                FileSize,
+                FrameRate,
+                Interactive,
+                InteractiveSpeed,
+                LastOAt,
+                LastPlayedAt,
+                GroupSceneNumber,
+                OCounter,
+                Organized,
+                Path,
+                PerceptualSimilarity,
+                PerformerCount,
+                PlayCount,
+                PlayDuration,
+                Rating,
+                ResumeTime,
+                TagCount,
+                Title,
             )
 
         val GALLERY_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
-                DATE,
-                FILE_COUNT,
-                FILE_MOD_TIME,
-                IMAGES_COUNT,
-                PATH,
-                PERFORMER_COUNT,
-                RATING,
-                TAG_COUNT,
-                TITLE,
+                Date,
+                FileCount,
+                FileModTime,
+                ImagesCount,
+                Path,
+                PerformerCount,
+                Rating,
+                TagCount,
+                Title,
             )
 
         val IMAGE_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
-                DATE,
-                FILE_COUNT,
-                FILE_MOD_TIME,
-                FILESIZE,
-                O_COUNTER,
-                PATH,
-                PERFORMER_COUNT,
-                RATING,
-                TAG_COUNT,
-                TITLE,
+                Date,
+                FileCount,
+                FileModTime,
+                FileSize,
+                OCounter,
+                Path,
+                PerformerCount,
+                Rating,
+                TagCount,
+                Title,
             )
 
         val GROUP_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
-                DATE,
-                DURATION,
-                NAME,
-                RATING,
-                SCENES_COUNT,
+                Date,
+                Duration,
+                Name,
+                Rating,
+                ScenesCount,
             )
 
         val PERFORMER_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
-                BIRTHDATE,
-                GALLERIES_COUNT,
-                HEIGHT,
-                IMAGES_COUNT,
-                LAST_O_AT,
-                LAST_PLAYED_AT,
-                NAME,
-                O_COUNTER,
-                PENIS_LENGTH,
-                PLAY_COUNT,
-                RATING,
-                SCENES_COUNT,
-                TAG_COUNT,
-                CAREER_LENGTH,
-                MEASUREMENTS,
-                WEIGHT,
+                Birthdate,
+                GalleriesCount,
+                Height,
+                ImagesCount,
+                LastOAt,
+                LastPlayedAt,
+                Name,
+                OCounter,
+                PenisLength,
+                PlayCount,
+                Rating,
+                ScenesCount,
+                TagCount,
+                CareerLength,
+                Measurements,
+                Weight,
             )
 
         val MARKER_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
-                SCENE_ID,
-                SCENES_UPDATED_AT,
-                SECONDS,
-                TITLE,
+                SceneId,
+                ScenesUpdatedAt,
+                Seconds,
+                Title,
             )
 
         val STUDIO_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
-                CHILD_COUNT,
-                GALLERIES_COUNT,
-                IMAGES_COUNT,
-                NAME,
-                RATING,
-                SCENES_COUNT,
+                ChildCount,
+                GalleriesCount,
+                ImagesCount,
+                Name,
+                Rating,
+                ScenesCount,
             )
 
         val TAG_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
-                GALLERIES_COUNT,
-                IMAGES_COUNT,
-                NAME,
-                PERFORMERS_COUNT,
-                SCENE_MARKERS_COUNT,
-                SCENES_COUNT,
+                GalleriesCount,
+                ImagesCount,
+                Name,
+                PerformersCount,
+                SceneMarkersCount,
+                ScenesCount,
             )
     }
 }

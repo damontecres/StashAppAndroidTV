@@ -33,7 +33,7 @@ fragment SlimSceneData on Scene {
   created_at
   updated_at
   files {
-    ...VideoFileData
+    ...VideoFile
   }
   paths {
     screenshot
@@ -48,8 +48,7 @@ fragment SlimSceneData on Scene {
     label
   }
   captions {
-    language_code
-    caption_type
+    ...Caption
   }
   scene_markers {
     id
@@ -100,7 +99,7 @@ fragment FullSceneData on Scene {
   created_at
   updated_at
   files {
-    ...VideoFileData
+    ...VideoFile
     __typename
   }
   paths {
@@ -121,8 +120,7 @@ fragment FullSceneData on Scene {
     label
   }
   captions {
-    language_code
-    caption_type
+    ...Caption
   }
   scene_markers {
     id
@@ -185,7 +183,7 @@ fragment FullSceneData on Scene {
   __typename
 }
 
-fragment VideoFileData on VideoFile {
+fragment VideoFile on VideoFile {
   id
   path
   size
@@ -199,4 +197,9 @@ fragment VideoFileData on VideoFile {
   frame_rate
   bit_rate
   __typename
+}
+
+fragment Caption on VideoCaption {
+  caption_type
+  language_code
 }

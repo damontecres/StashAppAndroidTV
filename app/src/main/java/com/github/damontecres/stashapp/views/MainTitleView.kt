@@ -1,29 +1,22 @@
 package com.github.damontecres.stashapp.views
 
 import android.content.Context
-import android.content.Intent
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RelativeLayout
-import androidx.core.content.ContextCompat.startActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.findFragment
-import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.TitleViewAdapter
 import androidx.lifecycle.ViewModelProvider
-import com.github.damontecres.stashapp.FilterListActivity
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SettingsActivity
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.setup.ManageServersFragment
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.ServerPreferences
-import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 /**
@@ -58,24 +51,49 @@ class MainTitleView(
             override fun getSearchAffordanceView(): View = searchButton
         }
 
+    class FocusListener : View.OnFocusChangeListener {
+        private val listeners = mutableListOf<View.OnFocusChangeListener>()
+
+        override fun onFocusChange(
+            v: View,
+            hasFocus: Boolean,
+        ) {
+            listeners.forEach { it.onFocusChange(v, hasFocus) }
+        }
+
+        fun addListener(listener: View.OnFocusChangeListener) {
+            listeners.add(listener)
+        }
+    }
+
+    val focusListener = FocusListener()
+
     init {
-        val onFocusChangeListener = StashOnFocusChangeListener(context)
+        val onFocusChangeListener = focusListener
+        focusListener.addListener(StashOnFocusChangeListener(context))
 
         val root = LayoutInflater.from(context).inflate(R.layout.title, this)
         iconButton = root.findViewById(R.id.icon)
         iconButton.setOnClickListener {
-            GuidedStepSupportFragment.add(
-                findFragment<Fragment>().parentFragmentManager,
-                ManageServersFragment(),
-            )
+            serverViewModel.navigationManager.navigate(Destination.ManageServers(false))
         }
         iconButton.onFocusChangeListener = onFocusChangeListener
 
         searchButton = root.findViewById(R.id.search_button)
         mPreferencesView = root.findViewById(R.id.settings_button)
         mPreferencesView.setOnClickListener {
-            val intent = Intent(context, SettingsActivity::class.java)
-            startActivity(context, intent, null)
+            val preferences = PreferenceManager.getDefaultSharedPreferences(root.context)
+            val destination =
+                if (preferences.getBoolean(
+                        root.context.getString(R.string.pref_key_read_only_mode),
+                        false,
+                    )
+                ) {
+                    Destination.SettingsPin
+                } else {
+                    Destination.Settings
+                }
+            serverViewModel.navigationManager.navigate(destination)
         }
 
         searchButton.onFocusChangeListener = onFocusChangeListener
@@ -112,25 +130,17 @@ class MainTitleView(
         galleriesButton = root.findViewById(R.id.galleries_button)
         galleriesButton.setOnClickListener(ClickListener(DataType.GALLERY))
         galleriesButton.onFocusChangeListener = onFocusChangeListener
-
-        refreshMenuItems()
     }
 
     override fun getTitleViewAdapter(): TitleViewAdapter = mTitleViewAdapter
 
-    private fun getMenuItems(): Set<String> {
-        val server = StashServer.getCurrentStashServer()
-        if (server != null) {
-            return server.serverPreferences.preferences.getStringSet(
-                ServerPreferences.PREF_INTERFACE_MENU_ITEMS,
-                ServerPreferences.DEFAULT_MENU_ITEMS,
-            )!!
-        }
-        return setOf()
-    }
-
-    fun refreshMenuItems() {
-        val menuItems = getMenuItems()
+    fun refreshMenuItems(serverPreferences: ServerPreferences) {
+        val menuItems =
+            serverPreferences.preferences
+                .getStringSet(
+                    ServerPreferences.PREF_INTERFACE_MENU_ITEMS,
+                    ServerPreferences.DEFAULT_MENU_ITEMS,
+                )!!
 
         fun getVis(key: String): Int =
             if (key in menuItems) {
@@ -157,17 +167,9 @@ class MainTitleView(
         private val dataType: DataType,
     ) : OnClickListener {
         override fun onClick(v: View) {
-            val intent = Intent(v.context, FilterListActivity::class.java)
-
             val serverPrefs = serverViewModel.currentServer.value!!.serverPreferences
-            val filter = serverPrefs.defaultFilters[dataType]
-            if (filter != null) {
-                intent.putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, filter)
-            } else {
-                Log.w(TAG, "ServerPreferences.defaultFilters is missing $dataType")
-                intent.putFilterArgs(FilterListActivity.INTENT_FILTER_ARGS, FilterArgs(dataType))
-            }
-            startActivity(v.context, intent, null)
+            val filter = serverPrefs.defaultFilters[dataType] ?: FilterArgs(dataType)
+            serverViewModel.navigationManager.navigate(Destination.Filter(filter, false))
         }
     }
 

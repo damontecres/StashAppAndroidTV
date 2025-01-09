@@ -3,7 +3,7 @@ package com.github.damontecres.stashapp.image
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.OptIn
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -16,6 +16,7 @@ import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackFragment
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
+import com.github.damontecres.stashapp.views.models.ImageViewModel
 
 /**
  * Playback for an image clip (a video)
@@ -24,7 +25,7 @@ import com.github.damontecres.stashapp.util.isImageClip
 class ImageClipFragment :
     PlaybackFragment(),
     VideoController {
-    private val viewModel: ImageViewModel by activityViewModels<ImageViewModel>()
+    private val imageViewModel: ImageViewModel by viewModels(ownerProducer = { requireParentFragment() })
 
     override val previewsEnabled: Boolean
         get() = false
@@ -41,9 +42,9 @@ class ImageClipFragment :
         videoView.useController = false
         hideControlsIfVisible()
 
-        viewModel.videoController = this
+        imageViewModel.videoController = this
 
-        viewModel.image.observe(viewLifecycleOwner) { imageData ->
+        imageViewModel.image.observe(viewLifecycleOwner) { imageData ->
             if (imageData.isImageClip) {
                 val videoFile = imageData.visual_files.firstOrNull()?.onVideoFile
 
@@ -80,7 +81,7 @@ class ImageClipFragment :
         }
     }
 
-    override fun initializePlayer(): ExoPlayer {
+    override fun createPlayer(): ExoPlayer {
         val skipForward =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
@@ -95,11 +96,13 @@ class ImageClipFragment :
                 StashServer.requireCurrentServer(),
                 skipForward * 1000L,
                 skipBack * 1000L,
-            ).also { exoPlayer ->
-                exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
-                exoPlayer.prepare()
-                exoPlayer.play()
-            }
+            )
+    }
+
+    override fun postCreatePlayer(player: Player) {
+        player.repeatMode = Player.REPEAT_MODE_ONE
+        player.prepare()
+        player.play()
     }
 
     override fun play() {

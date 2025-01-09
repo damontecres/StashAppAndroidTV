@@ -30,18 +30,9 @@ import com.github.damontecres.stashapp.filter.picker.OrientationPickerFragment
 import com.github.damontecres.stashapp.filter.picker.RatingPickerFragment
 import com.github.damontecres.stashapp.filter.picker.ResolutionPickerFragment
 import com.github.damontecres.stashapp.filter.picker.StringPickerFragment
-import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.formatNumber
 
 class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
-    private lateinit var queryEngine: QueryEngine
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        queryEngine = QueryEngine(StashServer.requireCurrentServer())
-    }
-
     private fun createActionList(): List<GuidedAction> {
         val dataType = viewModel.dataType.value!!
         return getFilterOptions(dataType)

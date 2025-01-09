@@ -3,11 +3,11 @@ package com.github.damontecres.stashapp.suppliers
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.CountGroupRelationshipsQuery
 import com.github.damontecres.stashapp.api.FindGroupRelationshipsQuery
+import com.github.damontecres.stashapp.api.fragment.GroupRelationshipData
+import com.github.damontecres.stashapp.api.fragment.GroupRelationshipType
+import com.github.damontecres.stashapp.api.fragment.toRelationship
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.GroupRelationshipData
-import com.github.damontecres.stashapp.data.GroupRelationshipType
-import com.github.damontecres.stashapp.data.toRelationship
 
 class GroupRelationshipDataSupplier(
     private val groupId: String,

@@ -34,7 +34,7 @@ class StashPlayerView(
         if (player != null &&
             (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
         ) {
-            if (event.action == KeyEvent.ACTION_DOWN) {
+            if (event.action == KeyEvent.ACTION_UP) {
                 val isPaused = !player!!.isPlaying
                 if (isPaused) {
                     // If paused and user presses play, resume playback without showing controls
@@ -62,6 +62,10 @@ class StashPlayerView(
                         KeyEvent.KEYCODE_MEDIA_PLAY -> Util.handlePlayButtonAction(player)
                     }
                     return true
+                } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+                    player!!.pause()
+                    showController()
+                    return true
                 } else {
                     // Not paused, so allow normal handling
                     return super.dispatchKeyEvent(event)
@@ -73,7 +77,7 @@ class StashPlayerView(
             !fragment.isControllerVisible &&
             (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_DPAD_LEFT)
         ) {
-            if (event.action == KeyEvent.ACTION_DOWN) {
+            if (event.action == KeyEvent.ACTION_UP) {
                 if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
                     if (dPadSkipEnabled) {
                         player!!.seekForward()

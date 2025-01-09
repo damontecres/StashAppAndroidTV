@@ -19,13 +19,13 @@ import com.github.damontecres.stashapp.actions.CreateMarkerAction
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
+import com.github.damontecres.stashapp.api.fragment.GroupRelationshipData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
-import com.github.damontecres.stashapp.data.GroupRelationshipData
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
@@ -47,6 +47,7 @@ abstract class StashPresenter<T>(
         item: Any?,
     ) {
         val cardView = viewHolder.view as StashImageCardView
+        cardView.onBindViewHolder()
         if (item != null) {
             val localCallBack = callback ?: getDefaultLongClickCallBack(cardView)
             val popUpItems = localCallBack.getPopUpItems(cardView.context, item as T)

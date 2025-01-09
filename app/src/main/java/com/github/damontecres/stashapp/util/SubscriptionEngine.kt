@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.util
 
 import android.util.Log
-import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.Subscription
 import com.github.damontecres.stashapp.api.JobProgressSubscription
 import kotlinx.coroutines.CoroutineDispatcher
@@ -19,10 +18,9 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class SubscriptionEngine(
     server: StashServer,
-    client: ApolloClient = StashClient.getApolloClient(server),
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val callbackDispatcher: CoroutineDispatcher = Dispatchers.Main,
-) : StashEngine(server, client) {
+) : StashEngine(server) {
     private suspend fun <D : Subscription.Data> executeSubscription(
         subscription: Subscription<D>,
         consumer: (D) -> Unit,

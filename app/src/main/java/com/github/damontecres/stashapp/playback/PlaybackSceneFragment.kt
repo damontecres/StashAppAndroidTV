@@ -1,130 +1,124 @@
 package com.github.damontecres.stashapp.playback
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.annotation.OptIn
+import androidx.core.os.bundleOf
+import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.SceneDetailsFragment
-import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.Constants
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getDestination
 
 @OptIn(UnstableApi::class)
-class PlaybackSceneFragment() : PlaybackFragment() {
-    constructor(scene: Scene) : this() {
-        this.scene = scene
-    }
-
-    private lateinit var scene: Scene
-
+class PlaybackSceneFragment : PlaybackFragment() {
     override val previewsEnabled: Boolean
         get() = true
     override val optionsButtonOptions: OptionsButtonOptions
         get() = OptionsButtonOptions(DataType.SCENE, false)
 
+    override fun createPlayer(): ExoPlayer = StashExoPlayer.createInstance(requireContext(), serverViewModel.requireServer())
+
     @OptIn(UnstableApi::class)
-    override fun initializePlayer(): ExoPlayer {
-        val position =
-            if (playbackPosition >= 0) {
-                playbackPosition
-            } else {
-                requireActivity().intent.getLongExtra(Constants.POSITION_ARG, -1)
+    override fun postCreatePlayer(player: Player) {
+        maybeAddActivityTracking(player)
+
+        val finishedBehavior =
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
+                .getString(
+                    "playbackFinishedBehavior",
+                    getString(R.string.playback_finished_do_nothing),
+                )
+        when (finishedBehavior) {
+            getString(R.string.playback_finished_repeat) -> {
+                StashExoPlayer.addListener(
+                    object :
+                        Player.Listener {
+                        override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
+                            if (Player.COMMAND_SET_REPEAT_MODE in availableCommands) {
+                                Log.v(
+                                    TAG,
+                                    "Listener setting repeatMode to REPEAT_MODE_ONE",
+                                )
+                                player.repeatMode = Player.REPEAT_MODE_ONE
+                                player.removeListener(this)
+                            }
+                        }
+                    },
+                )
             }
-        val forceTranscode =
-            requireActivity().intent.getBooleanExtra(
-                SceneDetailsFragment.FORCE_TRANSCODE,
-                false,
-            )
-        val forceDirectPlay =
-            requireActivity().intent.getBooleanExtra(
-                SceneDetailsFragment.FORCE_DIRECT_PLAY,
-                false,
-            )
-        val streamDecision =
-            getStreamDecision(requireContext(), scene, forceTranscode, forceDirectPlay)
-        updateDebugInfo(streamDecision, scene)
-        return StashExoPlayer
-            .getInstance(requireContext(), StashServer.requireCurrentServer())
-            .also { exoPlayer ->
-                maybeAddActivityTracking(exoPlayer)
-            }.also { exoPlayer ->
-                val finishedBehavior =
-                    PreferenceManager
-                        .getDefaultSharedPreferences(requireContext())
-                        .getString(
-                            "playbackFinishedBehavior",
-                            getString(R.string.playback_finished_do_nothing),
-                        )
-                when (finishedBehavior) {
-                    getString(R.string.playback_finished_repeat) -> {
-                        StashExoPlayer.addListener(
-                            object :
-                                Player.Listener {
-                                override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
-                                    if (Player.COMMAND_SET_REPEAT_MODE in availableCommands) {
-                                        Log.v(
-                                            TAG,
-                                            "Listener setting repeatMode to REPEAT_MODE_ONE",
-                                        )
-                                        exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
-                                        exoPlayer.removeListener(this)
-                                    }
-                                }
-                            },
-                        )
-                    }
 
-                    getString(R.string.playback_finished_return) ->
-                        StashExoPlayer.addListener(
-                            object :
-                                Player.Listener {
-                                override fun onPlaybackStateChanged(playbackState: Int) {
-                                    if (playbackState == Player.STATE_ENDED) {
-                                        Log.v(TAG, "Finishing activity")
-                                        val result = Intent()
-                                        result.putExtra(
-                                            SearchForFragment.ID_KEY,
-                                            -1L,
-                                        )
-                                        result.putExtra(
-                                            SceneDetailsFragment.POSITION_RESULT_ARG,
-                                            0L,
-                                        )
-                                        requireActivity().setResult(Activity.RESULT_OK, result)
-                                        requireActivity().finish()
-                                    }
-                                }
-                            },
-                        )
+            getString(R.string.playback_finished_return) ->
+                StashExoPlayer.addListener(
+                    object :
+                        Player.Listener {
+                        override fun onPlaybackStateChanged(playbackState: Int) {
+                            if (playbackState == Player.STATE_ENDED) {
+                                Log.v(TAG, "Finishing activity")
+                                setFragmentResult(
+                                    Constants.POSITION_REQUEST_KEY,
+                                    bundleOf(Constants.POSITION_REQUEST_KEY to 0L),
+                                )
+                            }
+                        }
+                    },
+                )
 
-                    getString(R.string.playback_finished_do_nothing) -> {
-                        StashExoPlayer.addListener(
-                            object :
-                                Player.Listener {
-                                override fun onPlaybackStateChanged(playbackState: Int) {
-                                    if (playbackState == Player.STATE_ENDED) {
-                                        videoView.showController()
-                                    }
-                                }
-                            },
-                        )
-                    }
+            getString(R.string.playback_finished_do_nothing) -> {
+                StashExoPlayer.addListener(
+                    object :
+                        Player.Listener {
+                        override fun onPlaybackStateChanged(playbackState: Int) {
+                            if (playbackState == Player.STATE_ENDED) {
+                                videoView.showController()
+                            }
+                        }
+                    },
+                )
+            }
 
-                    else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
+            else -> Log.w(TAG, "Unknown playbackFinishedBehavior: $finishedBehavior")
+        }
+    }
+
+    @OptIn(UnstableApi::class)
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val playback = requireArguments().getDestination<Destination.Playback>()
+        viewModel.setScene(playback.sceneId)
+
+        viewModel.scene.observe(viewLifecycleOwner) { scene ->
+            currentScene = scene
+
+            if (scene == null) {
+                return@observe
+            }
+            val position =
+                if (playbackPosition >= 0) {
+                    playbackPosition
+                } else {
+                    playback.position
                 }
-            }.also { exoPlayer ->
+            Log.d(TAG, "playbackPosition=$playbackPosition, playback.position=${playback.position}")
+            val streamDecision = getStreamDecision(requireContext(), scene, playback.mode)
+            Log.d(TAG, "streamDecision=$streamDecision")
+            updateDebugInfo(streamDecision, scene)
+
+            player!!.also { exoPlayer ->
                 if (scene.streams.isNotEmpty()) {
                     maybeSetupVideoEffects(exoPlayer)
                     exoPlayer.setMediaItem(
@@ -132,14 +126,13 @@ class PlaybackSceneFragment() : PlaybackFragment() {
                         if (position > 0) position else C.TIME_UNSET,
                     )
 
-                    Log.v(TAG, "Preparing playback")
-                    exoPlayer.prepare()
-                    // Unless the video was paused before called the result launcher, play immediately
-                    exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
                     exoPlayer.volume = 1f
                     if (videoView.controllerShowTimeoutMs > 0) {
                         videoView.hideController()
                     }
+                    exoPlayer.prepare()
+                    // Unless the video was paused before called the result launcher, play immediately
+                    exoPlayer.playWhenReady = wasPlayingBeforeResultLauncher ?: true
                 } else {
                     videoView.useController = false
                     Toast
@@ -150,19 +143,7 @@ class PlaybackSceneFragment() : PlaybackFragment() {
                         ).show()
                 }
             }
-    }
-
-    @OptIn(UnstableApi::class)
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-    ) {
-        super.onViewCreated(view, savedInstanceState)
-
-        currentScene = scene
-
-        val position = requireActivity().intent.getLongExtra(Constants.POSITION_ARG, -1)
-        Log.d(TAG, "scene=${scene.id}, ${Constants.POSITION_ARG}=$position")
+        }
     }
 
     companion object {

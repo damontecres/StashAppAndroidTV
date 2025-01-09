@@ -1,15 +1,12 @@
 package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
-import android.content.Intent
-import com.github.damontecres.stashapp.DataTypeActivity
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Marker
-import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
-import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
 import kotlin.time.DurationUnit
@@ -49,7 +46,7 @@ class MarkerPresenter(
                 item: MarkerData,
             ): List<PopUpItem> =
                 listOf(
-                    PopUpItem(0L, context.getString(R.string.go_to)),
+                    PopUpItem(0L, context.getString(R.string.play_scene)),
                     PopUpItem(1L, context.getString(R.string.go_to_scene)),
                     PopUpItem(2L, context.getString(R.string.stashapp_details)),
                 )
@@ -65,17 +62,21 @@ class MarkerPresenter(
                     }
 
                     1L -> {
-                        val intent = Intent(cardView.context, DataTypeActivity::class.java)
-                        intent.putDataType(DataType.SCENE)
-                        intent.putExtra(Constants.SCENE_ID_ARG, item.scene.videoSceneData.id)
-                        cardView.context.startActivity(intent)
+                        StashApplication.navigationManager.navigate(
+                            Destination.Item(
+                                DataType.SCENE,
+                                item.scene.videoSceneData.id,
+                            ),
+                        )
                     }
 
                     2L -> {
-                        val intent = Intent(cardView.context, DataTypeActivity::class.java)
-                        intent.putDataType(DataType.MARKER)
-                        intent.putExtra("marker", Marker(item))
-                        cardView.context.startActivity(intent)
+                        StashApplication.navigationManager.navigate(
+                            Destination.MarkerDetails(
+                                item.id,
+                                item.scene.videoSceneData.id,
+                            ),
+                        )
                     }
 
                     else -> {

@@ -10,25 +10,26 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 /**
  * Simple details page with an image, favorite button, rating bar, and table for details
  */
 abstract class DetailsFragment : Fragment(R.layout.details_view) {
+    protected val serverViewModel: ServerViewModel by activityViewModels()
     protected lateinit var imageView: ImageView
     protected lateinit var table: TableLayout
     protected lateinit var favoriteButton: Button
     protected lateinit var ratingBar: StashRatingBar
 
-    protected lateinit var queryEngine: QueryEngine
     protected lateinit var mutationEngine: MutationEngine
 
     override fun onViewCreated(
@@ -49,7 +50,6 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
         }
 
         val server = StashServer.requireCurrentServer()
-        queryEngine = QueryEngine(server)
         mutationEngine = MutationEngine(server)
     }
 
@@ -63,12 +63,24 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
         key: Int,
         value: String?,
         allowNulLValue: Boolean = false,
-    ) = addRow(getString(key), value, allowNulLValue)
+    ) = addRow(getString(key), value, allowNulLValue, null)
+
+    protected fun addRow(
+        key: Int,
+        value: String?,
+        valueViewModifier: (TextView.() -> Unit)? = null,
+    ) = addRow(getString(key), value, false, valueViewModifier)
+
+    protected fun addRow(
+        key: Int,
+        value: String?,
+    ) = addRow(getString(key), value, false, null)
 
     protected fun addRow(
         key: String,
         value: String?,
         allowNulLValue: Boolean = false,
+        valueViewModifier: (TextView.() -> Unit)? = null,
     ) {
         if (value.isNullOrBlank() && !allowNulLValue) {
             return
@@ -92,6 +104,7 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
             TypedValue.COMPLEX_UNIT_PX,
             resources.getDimension(R.dimen.table_text_size_large),
         )
+        valueViewModifier?.invoke(valueView)
 
         table.addView(row)
     }

@@ -5,10 +5,11 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
-import androidx.leanback.app.BackgroundManager
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.BrowseFrameLayout
@@ -17,8 +18,8 @@ import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -26,7 +27,6 @@ import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.TestResultStatus
@@ -35,12 +35,8 @@ import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.testStashConnection
-import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.MainTitleView
-import com.github.damontecres.stashapp.views.OnImageFilterClickedListener
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import com.github.damontecres.stashapp.views.models.ServerViewModel
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,7 +52,10 @@ class MainFragment :
     private val rowsAdapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val adapters = ArrayList<ArrayObjectAdapter>()
     private val filterList = ArrayList<FilterArgs>()
-    private lateinit var mBackgroundManager: BackgroundManager
+    private lateinit var backCallback: OnBackPressedCallback
+
+    private var currentPosition: Position? = null
+    private var dataFetchedFor: StashServer? = null
 
     @Volatile
     private var fetchingData = false
@@ -65,10 +64,7 @@ class MainFragment :
         super.onCreate(savedInstanceState)
         headersState = HEADERS_DISABLED
 
-        prepareBackgroundManager()
-
         setupUIElements()
-
         setupEventListeners()
 
         adapter = rowsAdapter
@@ -90,43 +86,50 @@ class MainFragment :
                     null
                 }
             }
-        setupObservers()
-    }
 
-    override fun onResume() {
-        super.onResume()
-        viewModel.refresh()
+        backCallback =
+            requireActivity().onBackPressedDispatcher.addCallback(
+                viewLifecycleOwner,
+                currentPosition != null,
+            ) {
+                val pos = currentPosition!!
+                if (pos.column > 0) {
+                    selectedPosition = pos.row
+                    (selectedRowViewHolder as ListRowPresenter.ViewHolder)
+                        .gridView.selectedPosition = 0
+                } else if (pos.row > 0) {
+                    selectedPosition = 0
+                }
+            }
+        (titleView as MainTitleView).focusListener.addListener { _, isFocused ->
+            backCallback.isEnabled = !isFocused
+        }
+
+        setupObservers()
+        setOnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
+            val rowNum = rowsAdapter.indexOf(row)
+            val col =
+                (rowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition
+            val pos = Position(rowNum, col)
+//            Log.v(TAG, "$pos")
+            backCallback.isEnabled = pos.row > 0 || pos.column > 0
+            currentPosition = pos
+        }
     }
 
     private fun setupObservers() {
-        var firstTime = true
-        viewModel.currentSettingsHash.observe(viewLifecycleOwner) {
-            viewLifecycleOwner.lifecycleScope.launch(
-                StashCoroutineExceptionHandler { ex ->
-                    Toast.makeText(
-                        requireContext(),
-                        "Exception: ${ex.message}",
-                        Toast.LENGTH_LONG,
-                    )
-                },
-            ) {
-                Log.d(TAG, "Settings hash changed: $it")
-                if (!firstTime) {
-                    clearData()
-                    rowsAdapter.clear()
-
-                    val server = viewModel.currentServer.value!!
-                    server.updateServerPrefs()
-                    val mainTitleView =
-                        requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-                    mainTitleView.refreshMenuItems()
-                    fetchData(server)
-                }
-                firstTime = false
-            }
+        viewModel.cardUiSettings.observe(viewLifecycleOwner) {
+            // Refresh the cards
+            Log.d(TAG, "Card UI settings changed")
+            rowsAdapter.notifyItemRangeChanged(0, rowsAdapter.size())
         }
 
         viewModel.currentServer.observe(viewLifecycleOwner) { newServer ->
+            if (dataFetchedFor == newServer) {
+                return@observe
+            } else {
+                dataFetchedFor = newServer
+            }
             viewLifecycleOwner.lifecycleScope.launch(
                 StashCoroutineExceptionHandler { ex ->
                     Toast.makeText(
@@ -137,18 +140,18 @@ class MainFragment :
                 },
             ) {
                 Log.d(TAG, "Server changed")
+
                 if (newServer != null) {
                     val result =
                         testStashConnection(
                             requireContext(),
                             false,
-                            StashClient.getApolloClient(newServer),
+                            newServer.apolloClient,
                         )
                     if (result.status == TestResultStatus.SUCCESS) {
-                        newServer.updateServerPrefs()
                         val mainTitleView =
                             requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-                        mainTitleView.refreshMenuItems()
+                        mainTitleView.refreshMenuItems(newServer.serverPreferences)
                         fetchData(newServer)
                     } else if (result.status == TestResultStatus.UNSUPPORTED_VERSION) {
                         clearData()
@@ -174,6 +177,7 @@ class MainFragment :
                             ).show()
                     }
                 } else {
+                    Log.e(TAG, "newServer is null")
                     clearData()
                     Toast
                         .makeText(
@@ -184,11 +188,6 @@ class MainFragment :
                 }
             }
         }
-    }
-
-    private fun prepareBackgroundManager() {
-        mBackgroundManager = BackgroundManager.getInstance(activity)
-        mBackgroundManager.attach(requireActivity().window)
     }
 
     private fun setupUIElements() {
@@ -204,26 +203,16 @@ class MainFragment :
         setOnSearchClickedListener {
             requireActivity().supportFragmentManager.commit {
                 addToBackStack("search")
-                replace(R.id.main_browse_fragment, StashSearchFragment())
+                replace(R.id.root_fragment, StashSearchFragment())
             }
         }
 
         onItemViewClickedListener =
-            ClassOnItemViewClickedListener(StashItemViewClickListener(requireActivity()))
-                .addListenerForClass(
-                    ImageData::class.java,
-                    OnImageFilterClickedListener(requireContext()) { image: ImageData ->
-                        val position = getCurrentPosition()
-                        if (position != null) {
-                            val filter = filterList[position.row]
-                            return@OnImageFilterClickedListener OnImageFilterClickedListener.FilterPosition(
-                                filter,
-                                position.column,
-                            )
-                        }
-                        null
-                    },
-                )
+            NavigationOnItemViewClickedListener(viewModel.navigationManager) {
+                val position = currentPosition!!
+                val filter = filterList[position.row]
+                FilterAndPosition(filter, position.column)
+            }
     }
 
     private fun clearData() {
@@ -232,22 +221,9 @@ class MainFragment :
     }
 
     private fun fetchData(server: StashServer) {
-        if (fetchingData) {
-            return
-        }
-        fetchingData = true
         clearData()
         viewLifecycleOwner.lifecycleScope.launch(
-            Dispatchers.IO +
-                CoroutineExceptionHandler { _, ex ->
-                    Log.e(TAG, "Exception in fetchData coroutine", ex)
-                    Toast
-                        .makeText(
-                            requireContext(),
-                            "Error fetching data: ${ex.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                },
+            Dispatchers.IO + StashCoroutineExceptionHandler(autoToast = true),
         ) {
             try {
                 val serverVersion = server.serverPreferences.serverVersion
@@ -265,26 +241,21 @@ class MainFragment :
                     try {
                         val queryEngine = QueryEngine(server)
                         val filterParser = FilterParser(serverVersion)
-
-                        val config = queryEngine.getServerConfiguration()
-                        server.serverPreferences.updatePreferences(config)
-
-                        val ui = config.configuration.ui as Map<*, *>
                         val frontPageContent =
-                            ui.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
+                            server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
                         if (frontPageContent == null) {
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Unable to find front page content! Check the Web UI.",
-                                    Toast.LENGTH_LONG,
-                                ).show()
+                            withContext(Dispatchers.Main) {
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Unable to find front page content! Check the Web UI.",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                            }
                             return@launch
                         }
-                        val pageSize =
-                            PreferenceManager
-                                .getDefaultSharedPreferences(requireContext())
-                                .getInt(getString(R.string.pref_key_page_size), 25)
+                        Log.d(TAG, "${frontPageContent.size} front page rows")
+                        val pageSize = viewModel.cardUiSettings.value!!.maxSearchResults
                         val frontPageParser =
                             FrontPageParser(requireContext(), queryEngine, filterParser, pageSize)
                         val jobs = frontPageParser.parse(frontPageContent)
@@ -305,6 +276,7 @@ class MainFragment :
                                         )
                                     }
                                 } else if (row is FrontPageParser.FrontPageRow.Error) {
+                                    Log.w(TAG, "Error on front page row $index")
                                     withContext(Dispatchers.Main) {
                                         Toast
                                             .makeText(
@@ -317,6 +289,7 @@ class MainFragment :
                             }
                         }
                     } catch (ex: QueryEngine.StashNotConfiguredException) {
+                        Log.e(TAG, "StashNotConfiguredException", ex)
                         withContext(Dispatchers.Main) {
                             Toast
                                 .makeText(
@@ -327,6 +300,7 @@ class MainFragment :
                             requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                         }
                     } catch (ex: QueryEngine.QueryException) {
+                        Log.e(TAG, "QueryException", ex)
                         withContext(Dispatchers.Main) {
                             Toast
                                 .makeText(
@@ -351,51 +325,19 @@ class MainFragment :
         }
     }
 
-    private fun getCurrentPosition(): Position? {
-        val rowPos = selectedPosition
-        if (rowPos >= 0 && selectedRowViewHolder != null) {
-            val columnPos =
-                (selectedRowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition
-            if (columnPos >= 0) {
-                Log.v(TAG, "row=$rowPos, column=$columnPos")
-                return Position(rowPos, columnPos)
-            }
-        }
-        return null
-    }
-
-    /**
-     * Return true if back was handled
-     */
-    fun onBackPressed(): Boolean {
-        val pos = getCurrentPosition()
-        if (pos != null) {
-            if (pos.column > 0) {
-                selectedPosition = pos.row
-                (selectedRowViewHolder as ListRowPresenter.ViewHolder).gridView.selectedPosition = 0
-                return true
-            } else if (pos.row > 0) {
-                selectedPosition = 0
-                return true
-            }
-        }
-        return false
-    }
-
     override fun onKeyUp(
         keyCode: Int,
         event: KeyEvent,
     ): Boolean {
-        val item =
-            getCurrentPosition()?.let {
-                val row = rowsAdapter.get(it.row) as ListRow
-                row.adapter.get(it.column)
+        if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            val item =
+                currentPosition?.let {
+                    val row = rowsAdapter.get(it.row) as ListRow
+                    row.adapter.get(it.column)
+                }
+            if (item != null && requireActivity().currentFocus is StashImageCardView) {
+                maybeStartPlayback(requireContext(), item)
             }
-        if ((keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) &&
-            item != null &&
-            requireActivity().currentFocus is StashImageCardView
-        ) {
-            maybeStartPlayback(requireContext(), item)
         }
         return super.onKeyUp(keyCode, event)
     }

@@ -4,7 +4,7 @@ import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.api.json.BufferedSourceJsonReader
 import com.apollographql.apollo.api.parseJsonResponse
 import com.github.damontecres.stashapp.api.FindSavedFilterQuery
-import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.fragment.SavedFilter
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FilterMode
 import com.github.damontecres.stashapp.api.type.GenderEnum
@@ -46,12 +46,12 @@ class ObjectFilterParsingTests {
         /**
          * Get the SavedFilterData from a json file resource
          */
-        fun getSavedFilterData(file: String): SavedFilterData {
+        fun getSavedFilterData(file: String): SavedFilter {
             val path = file.toPath()
             FileSystem.RESOURCES.read(path) {
                 val jsonReader = BufferedSourceJsonReader(this)
                 val response = FindSavedFilterQuery("1").parseJsonResponse(jsonReader)
-                return response.data!!.findSavedFilter!!.savedFilterData
+                return response.data!!.findSavedFilter!!.savedFilter
             }
         }
     }

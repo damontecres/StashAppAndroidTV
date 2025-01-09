@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.util
 
 import android.util.Log
 import com.apollographql.apollo.ApolloCall
-import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Operation
 import com.apollographql.apollo.api.Optional
@@ -28,11 +27,12 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.ImageData
-import com.github.damontecres.stashapp.api.fragment.JobData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.fragment.SavedFilter
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.api.fragment.StashJob
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -50,7 +50,6 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.JobResult
-import com.github.damontecres.stashapp.data.StashData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -64,8 +63,7 @@ import kotlin.time.toDuration
  */
 class QueryEngine(
     server: StashServer,
-    client: ApolloClient = StashClient.getApolloClient(server),
-) : StashEngine(server, client) {
+) : StashEngine(server) {
     private suspend fun <D : Operation.Data> executeQuery(query: ApolloCall<D>): ApolloResponse<D> =
         withContext(Dispatchers.IO) {
             val queryName = query.operation.name()
@@ -372,17 +370,17 @@ class QueryEngine(
         }
     }
 
-    suspend fun getSavedFilter(filterId: String): SavedFilterData? {
+    suspend fun getSavedFilter(filterId: String): SavedFilter? {
         val query = FindSavedFilterQuery(filterId)
-        return executeQuery(query).data?.findSavedFilter?.savedFilterData
+        return executeQuery(query).data?.findSavedFilter?.savedFilter
     }
 
-    suspend fun getSavedFilters(dataType: DataType): List<SavedFilterData> {
+    suspend fun getSavedFilters(dataType: DataType): List<SavedFilter> {
         val query = FindSavedFiltersQuery(dataType.filterMode)
         return executeQuery(query)
             .data
             ?.findSavedFilters
-            ?.map { it.savedFilterData }
+            ?.map { it.savedFilter }
             .orEmpty()
     }
 
@@ -391,15 +389,15 @@ class QueryEngine(
         return executeQuery(query).data!!
     }
 
-    suspend fun getJob(jobId: String): JobData? {
+    suspend fun getJob(jobId: String): StashJob? {
         val query = FindJobQuery(FindJobInput(jobId))
-        return executeQuery(query).data?.findJob?.jobData
+        return executeQuery(query).data?.findJob?.stashJob
     }
 
     suspend fun waitForJob(
         jobId: String,
         delay: Duration = 1.toDuration(DurationUnit.SECONDS),
-        callback: ((JobData) -> Unit)? = null,
+        callback: ((StashJob) -> Unit)? = null,
     ): JobResult {
         var job = getJob(jobId) ?: return JobResult.NotFound
         while (job.status !in

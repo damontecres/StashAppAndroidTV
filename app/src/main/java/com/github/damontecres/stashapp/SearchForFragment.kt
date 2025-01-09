@@ -1,11 +1,12 @@
 package com.github.damontecres.stashapp
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
+import androidx.core.os.bundleOf
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResult
 import androidx.leanback.app.SearchSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.HeaderItem
@@ -20,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.actions.StashAction
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -29,8 +31,8 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.ActionPresenter.Companion.CARD_HEIGHT
 import com.github.damontecres.stashapp.presenters.ActionPresenter.Companion.CARD_WIDTH
 import com.github.damontecres.stashapp.presenters.StashImageCardView
@@ -40,9 +42,11 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.SingleItemObjectAdapter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.getDataType
+import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -60,6 +64,8 @@ import kotlin.properties.Delegates
 class SearchForFragment :
     SearchSupportFragment(),
     SearchSupportFragment.SearchResultProvider {
+    private val serverViewModel by activityViewModels<ServerViewModel>()
+
     private var taskJob: Job? = null
     private var query: String? = null
 
@@ -80,17 +86,18 @@ class SearchForFragment :
     private val server = StashServer.requireCurrentServer()
     private val queryEngine = QueryEngine(server)
 
+    private lateinit var searchFor: Destination.SearchFor
     private lateinit var dataType: DataType
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        dataType = requireActivity().intent.getDataType()
+        searchFor = requireArguments().getDestination<Destination.SearchFor>()
+        dataType = searchFor.dataType
         perPage =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 25)
-        title =
-            requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
+        title = searchFor.title ?: getString(dataType.pluralStringId)
 
         searchResultsAdapter.presenterSelector = StashPresenter.defaultClassPresenterSelector()
         adapter.set(
@@ -151,8 +158,7 @@ class SearchForFragment :
 
     private fun returnId(item: StashData?) {
         if (item != null) {
-            val result = Intent()
-            val currentServer = StashServer.getCurrentStashServer(requireContext())
+            val currentServer = serverViewModel.currentServer.value
             if (dataType in DATA_TYPE_SUGGESTIONS && currentServer != null) {
                 viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                     StashApplication
@@ -161,10 +167,14 @@ class SearchForFragment :
                         .insert(RecentSearchItem(currentServer.url, item.id, dataType))
                 }
             }
-            result.putExtra(RESULT_ID_KEY, item.id)
-            result.putExtra(ID_KEY, requireActivity().intent.getLongExtra("id", -1))
-            requireActivity().setResult(Activity.RESULT_OK, result)
-            requireActivity().finish()
+            setFragmentResult(
+                searchFor.requestKey,
+                bundleOf(
+                    RESULT_ID_KEY to searchFor.sourceId,
+                    RESULT_ITEM_ID_KEY to item.id,
+                ).putDataType(dataType),
+            )
+            serverViewModel.navigationManager.goBack()
         }
     }
 
@@ -220,42 +230,40 @@ class SearchForFragment :
                 )
             }
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                val currentServer = StashServer.getCurrentStashServer(requireContext())
-                if (currentServer != null) {
-                    val mostRecentIds =
-                        StashApplication
-                            .getDatabase()
-                            .recentSearchItemsDao()
-                            .getMostRecent(perPage, currentServer.url, dataType)
-                            .map { it.id }
-                    Log.v(TAG, "Got ${mostRecentIds.size} recent items")
-                    if (mostRecentIds.isNotEmpty()) {
-                        val items =
-                            when (dataType) {
-                                DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
-                                DataType.TAG -> queryEngine.getTags(mostRecentIds)
-                                DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
-                                DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
-                                DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
-                                else -> {
-                                    listOf()
-                                }
+                val currentServer = serverViewModel.requireServer()
+                val mostRecentIds =
+                    StashApplication
+                        .getDatabase()
+                        .recentSearchItemsDao()
+                        .getMostRecent(perPage, currentServer.url, dataType)
+                        .map { it.id }
+                Log.v(TAG, "Got ${mostRecentIds.size} recent items")
+                if (mostRecentIds.isNotEmpty()) {
+                    val items =
+                        when (dataType) {
+                            DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
+                            DataType.TAG -> queryEngine.getTags(mostRecentIds)
+                            DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
+                            DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
+                            DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
+                            else -> {
+                                listOf()
                             }
-                        val results = ArrayObjectAdapter(presenterSelector)
-                        if (items.isNotEmpty()) {
-                            Log.v(
-                                TAG,
-                                "${mostRecentIds.size} recent items resolved to ${results.size()} items",
-                            )
-                            results.addAll(0, items)
-                            withContext(Dispatchers.Main) {
-                                val headerName =
-                                    getString(
-                                        R.string.format_recently_used,
-                                        getString(dataType.pluralStringId).lowercase(),
-                                    )
-                                adapter.set(RECENT_POS, ListRow(HeaderItem(headerName), results))
-                            }
+                        }
+                    val results = ArrayObjectAdapter(presenterSelector)
+                    if (items.isNotEmpty()) {
+                        Log.v(
+                            TAG,
+                            "${mostRecentIds.size} recent items resolved to ${results.size()} items",
+                        )
+                        results.addAll(0, items)
+                        withContext(Dispatchers.Main) {
+                            val headerName =
+                                getString(
+                                    R.string.format_recently_used,
+                                    getString(dataType.pluralStringId).lowercase(),
+                                )
+                            adapter.set(RECENT_POS, ListRow(HeaderItem(headerName), results))
                         }
                     }
                 }
@@ -374,8 +382,8 @@ class SearchForFragment :
         const val TAG = "SearchForFragment"
 
         const val ID_KEY = "id"
-        const val RESULT_ID_KEY = "resultId"
-        const val TITLE_KEY = "title"
+        const val RESULT_ID_KEY = "$TAG.sourceId"
+        const val RESULT_ITEM_ID_KEY = "$TAG.resultId"
 
         private const val RESULTS_POS = 0
         private const val SUGGESTIONS_POS = RESULTS_POS + 1

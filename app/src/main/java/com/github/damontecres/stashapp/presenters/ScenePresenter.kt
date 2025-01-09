@@ -1,13 +1,13 @@
 package com.github.damontecres.stashapp.presenters
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.Typeface
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.playback.PlaybackActivity
-import com.github.damontecres.stashapp.util.Constants
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem.Companion.DEFAULT_ID
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -41,7 +41,7 @@ class ScenePresenter(
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
 
-        val videoFile = item.files.firstOrNull()?.videoFileData
+        val videoFile = item.files.firstOrNull()?.videoFile
         if (videoFile != null) {
             val duration = durationToString(videoFile.duration)
             cardView.setTextOverlayText(StashImageCardView.OverlayPosition.BOTTOM_RIGHT, duration)
@@ -105,29 +105,34 @@ class ScenePresenter(
                 popUpItem: PopUpItem,
             ) {
                 when (popUpItem.id) {
-                    0L -> {
+                    DEFAULT_ID -> {
                         cardView.performClick()
                     }
 
                     1L -> {
                         // Resume
-                        val intent = Intent(context, PlaybackActivity::class.java)
-                        intent.putExtra(Constants.SCENE_ARG, Scene.fromSlimSceneData(item))
-                        if (item.resume_time != null) {
-                            intent.putExtra(Constants.POSITION_ARG, item.resume_position!!)
-                        }
-                        context.startActivity(intent)
+                        StashApplication.navigationManager.navigate(
+                            Destination.Playback(
+                                item.id,
+                                item.resume_position ?: 0L,
+                                PlaybackMode.CHOOSE,
+                            ),
+                        )
                     }
 
                     2L -> {
                         // Restart/Play
-                        val intent = Intent(context, PlaybackActivity::class.java)
-                        intent.putExtra(Constants.SCENE_ARG, Scene.fromSlimSceneData(item))
-                        context.startActivity(intent)
+                        StashApplication.navigationManager.navigate(
+                            Destination.Playback(
+                                item.id,
+                                0L,
+                                PlaybackMode.CHOOSE,
+                            ),
+                        )
                     }
 
                     else -> {
-                        throw IllegalStateException()
+                        throw IllegalStateException("ID ${popUpItem.id}")
                     }
                 }
             }
