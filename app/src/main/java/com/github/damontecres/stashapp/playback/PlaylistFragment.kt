@@ -5,8 +5,8 @@ import android.util.Log
 import android.view.View
 import androidx.activity.addCallback
 import androidx.annotation.OptIn
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -18,14 +18,16 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
-import com.github.damontecres.stashapp.data.StashData
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.getDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -37,7 +39,7 @@ import kotlinx.coroutines.withContext
  */
 @OptIn(UnstableApi::class)
 abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> : PlaybackFragment() {
-    private val playlistViewModel: PlaylistViewModel by activityViewModels()
+    private val playlistViewModel: PlaylistViewModel by viewModels()
 
     protected lateinit var pagingSource: StashPagingSource<T, D, D, C>
 
@@ -52,6 +54,13 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
     // Pages are 1-indexed
     private var currentPage = 1
     private var totalCount = -1
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val dest = requireArguments().getDestination<Destination.Playlist>()
+        playlistViewModel.setFilter(dest.filterArgs)
+        // TODO position
+    }
 
     override fun onViewCreated(
         view: View,
@@ -89,39 +98,40 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         }
     }
 
-    @OptIn(UnstableApi::class)
-    override fun initializePlayer(): ExoPlayer {
+    override fun createPlayer(): ExoPlayer {
         val server = StashServer.requireCurrentServer()
         return if (skipForwardOverride == -1L || skipBackOverride == -1L) {
-            StashExoPlayer.getInstance(requireContext(), server)
+            StashExoPlayer.createInstance(requireContext(), server)
         } else {
-            StashExoPlayer.getInstance(
+            StashExoPlayer.createInstance(
                 requireContext(),
                 server,
                 skipForwardOverride,
                 skipBackOverride,
             )
-        }.also { exoPlayer ->
-            exoPlayer.addListener(
-                object : Listener {
-                    override fun onPlayerError(error: PlaybackException) {
-                        // If there is an error, just skip the video
-                        exoPlayer.seekToNext()
-                        exoPlayer.prepare()
-                        exoPlayer.playWhenReady = true
-                    }
-                },
-            )
-            exoPlayer.addListener(PlaylistListener())
-            if (playlistViewModel.filterArgs.value?.dataType == DataType.SCENE) {
-                // Only track activity for scene playback
-                maybeAddActivityTracking(exoPlayer)
-            }
-        }.also { exoPlayer ->
-            exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
-            if (videoView.controllerShowTimeoutMs > 0) {
-                videoView.hideController()
-            }
+        }
+    }
+
+    @OptIn(UnstableApi::class)
+    override fun postCreatePlayer(player: Player) {
+        player.addListener(
+            object : Listener {
+                override fun onPlayerError(error: PlaybackException) {
+                    // If there is an error, just skip the video
+                    player.seekToNext()
+                    player.prepare()
+                    player.playWhenReady = true
+                }
+            },
+        )
+        player.addListener(PlaylistListener())
+        if (playlistViewModel.filterArgs.value?.dataType == DataType.SCENE) {
+            // Only track activity for scene playback
+            maybeAddActivityTracking(player)
+        }
+        player.repeatMode = Player.REPEAT_MODE_OFF
+        if (videoView.controllerShowTimeoutMs > 0) {
+            videoView.hideController()
         }
     }
 
@@ -134,7 +144,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
             DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, C>(filter)
         pagingSource =
             StashPagingSource(
-                QueryEngine(server),
+                QueryEngine(serverViewModel.requireServer()),
                 dataSupplier,
             )
         addNextPageToPlaylist()
@@ -159,7 +169,8 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         val mediaItems =
             newItems.map { item ->
                 val scene = convertToScene(item)
-                val streamDecision = getStreamDecision(requireContext(), scene)
+                val streamDecision = getStreamDecision(requireContext(), scene, PlaybackMode.CHOOSE)
+                Log.d(TAG, "streamDecision=$streamDecision")
                 buildMediaItem(requireContext(), streamDecision, scene) {
                     builderCallback(item)?.invoke(this)
                     setTag(MediaItemTag(scene, streamDecision))

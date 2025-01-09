@@ -10,6 +10,8 @@ import com.github.damontecres.stashapp.api.FindMarkersQuery
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.util.getDestination
 import kotlin.properties.Delegates
 
 /**
@@ -42,7 +44,7 @@ class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, MarkerDa
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        duration = requireActivity().intent.getLongExtra(INTENT_DURATION_ID, 15_000L)
+        duration = requireArguments().getDestination<Destination.Playlist>().duration ?: 15_000L
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(requireContext())
         val skipForward = prefs.getInt("skip_forward_time", 30) * 1000L
@@ -55,6 +57,5 @@ class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, MarkerDa
 
     companion object {
         const val TAG = "PlaylistMarkersFragment"
-        const val INTENT_DURATION_ID = "$TAG.duration"
     }
 }

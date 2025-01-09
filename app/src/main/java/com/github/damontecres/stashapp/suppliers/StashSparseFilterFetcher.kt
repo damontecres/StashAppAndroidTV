@@ -2,7 +2,7 @@ package com.github.damontecres.stashapp.suppliers
 
 import android.util.Log
 import com.apollographql.apollo.api.Query
-import com.github.damontecres.stashapp.data.StashData
+import com.github.damontecres.stashapp.api.fragment.StashData
 
 /**
  * Wraps a StashPagingSource to allow for accessing any item position in the backing filter
@@ -13,7 +13,6 @@ class StashSparseFilterFetcher<T : Query.Data, D : StashData>(
     val source: StashPagingSource<T, D, D, *>,
     val pageSize: Int = 25,
 ) {
-    private var firstPage = true
     private var currentPageData: List<D>? = null
     private var currentPage = 0
     private var currentPageStart = 0
@@ -28,8 +27,6 @@ class StashSparseFilterFetcher<T : Query.Data, D : StashData>(
         currentPageData = pageData
         currentPageStart = (currentPage - 1) * pageSize
         Log.v(TAG, "New currentPage=$currentPage, currentPageStart=$currentPageStart")
-
-        firstPage = false
     }
 
     suspend fun get(position: Int): D? {

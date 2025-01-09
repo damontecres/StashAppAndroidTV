@@ -8,26 +8,21 @@ import android.widget.TableLayout
 import android.widget.TableRow
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import com.github.damontecres.stashapp.api.fragment.GroupData
-import com.github.damontecres.stashapp.data.Group
+import androidx.fragment.app.viewModels
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.presenters.StashPresenter
-import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
-import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.getParcelable
+import com.github.damontecres.stashapp.views.models.GroupViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
-import kotlinx.coroutines.launch
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 class GroupDetailsFragment : Fragment(R.layout.group_view) {
+    private val viewModel: GroupViewModel by viewModels(ownerProducer = { requireParentFragment() })
+
     private lateinit var frontImage: ImageView
     private lateinit var backImage: ImageView
     private lateinit var table: TableLayout
-
-    private lateinit var groupData: GroupData
 
     override fun onViewCreated(
         view: View,
@@ -39,23 +34,23 @@ class GroupDetailsFragment : Fragment(R.layout.group_view) {
         backImage = view.findViewById(R.id.group_back_image)
 
         table = view.findViewById(R.id.group_table)
+        viewModel.item.observe(viewLifecycleOwner) { groupData ->
+            if (groupData == null) {
+                return@observe
+            }
 
-        val group = requireActivity().intent.getParcelable("group", Group::class)!!
-        if (group.frontImagePath != null) {
-            StashGlide
-                .with(requireActivity(), group.frontImagePath)
-                .error(StashPresenter.glideError(requireContext()))
-                .into(frontImage)
-        }
-        if (group.backImagePath != null) {
-            StashGlide
-                .with(requireActivity(), group.backImagePath)
-                .error(StashPresenter.glideError(requireContext()))
-                .into(backImage)
-        }
-        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
-            groupData = queryEngine.getGroup(group.id)!!
+            if (groupData.front_image_path != null) {
+                StashGlide
+                    .with(requireActivity(), groupData.front_image_path)
+                    .error(StashPresenter.glideError(requireContext()))
+                    .into(frontImage)
+            }
+            if (groupData.back_image_path != null) {
+                StashGlide
+                    .with(requireActivity(), groupData.back_image_path)
+                    .error(StashPresenter.glideError(requireContext()))
+                    .into(backImage)
+            }
 
             addRow(
                 R.string.stashapp_duration,
@@ -67,6 +62,12 @@ class GroupDetailsFragment : Fragment(R.layout.group_view) {
             addRow(R.string.stashapp_synopsis, groupData.synopsis)
             addRow(R.string.stashapp_created_at, parseTimeToString(groupData.created_at))
             addRow(R.string.stashapp_updated_at, parseTimeToString(groupData.updated_at))
+            if (PreferenceManager
+                    .getDefaultSharedPreferences(requireContext())
+                    .getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)
+            ) {
+                addRow(R.string.id, groupData.id)
+            }
             table.setColumnShrinkable(1, true)
         }
     }

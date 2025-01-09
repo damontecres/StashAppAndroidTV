@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 class SetupStep3ApiKey(
     private val setupState: SetupState,
-) : SetupActivity.SimpleGuidedStepSupportFragment() {
+) : SetupGuidedStepSupportFragment() {
     private var apiKey: String? = ""
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
@@ -37,7 +37,7 @@ class SetupStep3ApiKey(
         actions.add(
             GuidedAction
                 .Builder(requireContext())
-                .id(SetupActivity.ACTION_PASSWORD_VISIBLE)
+                .id(SetupFragment.ACTION_PASSWORD_VISIBLE)
                 .title("API Key visible")
                 .checked(false)
                 .checkSetId(GuidedAction.CHECKBOX_CHECK_SET_ID)
@@ -55,7 +55,7 @@ class SetupStep3ApiKey(
     }
 
     override fun onGuidedActionEditedAndProceed(action: GuidedAction): Long {
-        if (action.id == SetupActivity.ACTION_SERVER_API_KEY) {
+        if (action.id == SetupFragment.ACTION_SERVER_API_KEY) {
             updateApiKey(action)
             testApiKey()
             action.description =
@@ -64,13 +64,13 @@ class SetupStep3ApiKey(
                 } else {
                     "API key not set"
                 }
-            notifyActionChanged(findActionPositionById(SetupActivity.ACTION_SERVER_API_KEY))
+            notifyActionChanged(findActionPositionById(SetupFragment.ACTION_SERVER_API_KEY))
         }
         return GuidedAction.ACTION_ID_CURRENT
     }
 
     override fun onGuidedActionEditCanceled(action: GuidedAction) {
-        if (action.id == SetupActivity.ACTION_SERVER_API_KEY) {
+        if (action.id == SetupFragment.ACTION_SERVER_API_KEY) {
             updateApiKey(action)
             action.description =
                 if (apiKey.isNotNullOrBlank()) {
@@ -78,18 +78,18 @@ class SetupStep3ApiKey(
                 } else {
                     "API key not set"
                 }
-            notifyActionChanged(findActionPositionById(SetupActivity.ACTION_SERVER_API_KEY))
+            notifyActionChanged(findActionPositionById(SetupFragment.ACTION_SERVER_API_KEY))
         }
     }
 
     override fun onGuidedActionClicked(action: GuidedAction) {
-        if (action.id == SetupActivity.ACTION_PASSWORD_VISIBLE) {
+        if (action.id == SetupFragment.ACTION_PASSWORD_VISIBLE) {
             val newGuidedActionsServerApiKey = createApiKeyAction(action.isChecked)
             val newActions = listOf(newGuidedActionsServerApiKey, actions[1], actions[2])
             setActionsDiffCallback(null)
             actions = newActions
         } else if (action.id == GuidedAction.ACTION_ID_OK) {
-            val apiAction = findActionById(SetupActivity.ACTION_SERVER_API_KEY)
+            val apiAction = findActionById(SetupFragment.ACTION_SERVER_API_KEY)
             updateApiKey(apiAction)
             testApiKey()
         }
@@ -152,7 +152,7 @@ class SetupStep3ApiKey(
 
         return GuidedAction
             .Builder(requireContext())
-            .id(SetupActivity.ACTION_SERVER_API_KEY)
+            .id(SetupFragment.ACTION_SERVER_API_KEY)
             .title("Stash Server API Key")
             .description(
                 if (apiKey.isNotNullOrBlank()) {

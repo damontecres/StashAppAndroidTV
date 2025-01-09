@@ -79,6 +79,6 @@
     <string name="play_slideshow">Play Slideshow</string>
     <string name="stop_slideshow">Stop Slideshow</string>
     <string name="more_like_this_scene">More like this scene</string>
-
+    <string name="id">ID</string>
 
 </resources>

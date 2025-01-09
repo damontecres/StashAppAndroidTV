@@ -2,12 +2,10 @@ package com.github.damontecres.stashapp
 
 import android.app.Activity
 import android.app.Application
-import android.content.Intent
 import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.WindowManager
 import androidx.annotation.FontRes
 import androidx.core.content.edit
 import androidx.core.content.res.ResourcesCompat
@@ -17,9 +15,11 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.preference.PreferenceManager
 import androidx.room.Room
 import com.github.damontecres.stashapp.data.room.AppDatabase
-import com.github.damontecres.stashapp.setup.SetupActivity
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.AppUpgradeHandler
+import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.Version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,16 +31,13 @@ import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
 
 class StashApplication : Application() {
-    private var wasEnterBackground = false
-    private var mainDestroyed = false
-    var hasAskedForPin = false
-
     override fun onCreate() {
         super.onCreate()
 
         application = this
 
-        Log.v(TAG, "onCreate wasEnterBackground=$wasEnterBackground, mainDestroyed=$mainDestroyed")
+        val pkgInfo = packageManager.getPackageInfo(packageName, 0)
+        val versionNameStr = pkgInfo.versionName ?: "Unknown version"
 
         initAcra {
             buildConfigClass = BuildConfig::class.java
@@ -74,7 +71,8 @@ class StashApplication : Application() {
                 )
             dialog {
                 text =
-                    "StashAppAndroidTV has crashed! Would you like to attempt to send a crash report to your Stash server?" +
+                    "StashAppAndroidTV ($versionNameStr) has crashed! Would you like to attempt to " +
+                    "send a crash report to your Stash server?" +
                     "\n\nThis will only work if you have already installed the companion plugin."
                 title = "StashAppAndroidTV Crash Report"
                 positiveButtonText = "Send"
@@ -87,8 +85,6 @@ class StashApplication : Application() {
 
         registerActivityLifecycleCallbacks(ActivityLifecycleCallbacksImpl())
         ProcessLifecycleOwner.get().lifecycle.addObserver(LifecycleObserverImpl())
-
-        val pkgInfo = packageManager.getPackageInfo(packageName, 0)
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         val currentVersion = prefs.getString(VERSION_NAME_CURRENT_KEY, null)
@@ -134,39 +130,19 @@ class StashApplication : Application() {
                 .build()
     }
 
-    fun showPinActivity() {
-        Log.v(TAG, "showPinActivity, mainDestroyed=$mainDestroyed")
-        val intent = Intent(this, PinActivity::class.java)
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        intent.putExtra("wasResumed", true)
-        intent.putExtra("mainDestroyed", mainDestroyed)
-        mainDestroyed = false
-        startActivity(intent)
-    }
-
-    fun showPinActivityIfNeeded() {
-        val pinCode = PreferenceManager.getDefaultSharedPreferences(this).getString("pinCode", "")
-        if (!pinCode.isNullOrBlank() && !hasAskedForPin) {
-            showPinActivity()
-        }
-    }
-
     inner class LifecycleObserverImpl : DefaultLifecycleObserver {
         override fun onPause(owner: LifecycleOwner) {
             Log.v(TAG, "LifecycleObserverImpl.onPause")
-            wasEnterBackground = true
             StashExoPlayer.releasePlayer()
         }
 
         override fun onStop(owner: LifecycleOwner) {
             Log.v(TAG, "LifecycleObserverImpl.onStop")
-            wasEnterBackground = true
             StashExoPlayer.releasePlayer()
         }
 
         override fun onDestroy(owner: LifecycleOwner) {
             Log.v(TAG, "LifecycleObserverImpl.onDestroy")
-            wasEnterBackground = true
             StashExoPlayer.releasePlayer()
         }
     }
@@ -176,30 +152,12 @@ class StashApplication : Application() {
             activity: Activity,
             savedInstanceState: Bundle?,
         ) {
-            if (wasEnterBackground) {
-                wasEnterBackground = false
-                showPinActivity()
-            } else if (activity !is PinActivity && activity !is SetupActivity) {
-                showPinActivityIfNeeded()
-            }
-            activity.window.setFlags(
-                WindowManager.LayoutParams.FLAG_SECURE,
-                WindowManager.LayoutParams.FLAG_SECURE,
-            )
         }
 
         override fun onActivityStarted(activity: Activity) {
-            if (wasEnterBackground) {
-                wasEnterBackground = false
-                showPinActivity()
-            }
         }
 
         override fun onActivityResumed(activity: Activity) {
-            if (wasEnterBackground) {
-                wasEnterBackground = false
-                showPinActivity()
-            }
         }
 
         override fun onActivityPaused(activity: Activity) {
@@ -218,20 +176,21 @@ class StashApplication : Application() {
         }
 
         override fun onActivityDestroyed(activity: Activity) {
-            Log.v(TAG, "onActivityDestroyed: $activity")
-            if (activity is MainActivity) {
-                mainDestroyed = true
-            }
+            Log.d(TAG, "onActivityDestroyed: $activity")
         }
     }
 
     companion object {
         private lateinit var application: StashApplication
         private lateinit var database: AppDatabase
+        lateinit var navigationManager: NavigationManager
+        var currentServer: StashServer? = null
 
         private val fontCache = mutableMapOf<Int, Typeface>()
 
         fun getApplication(): StashApplication = application
+
+        fun requireCurrentServer(): StashServer = currentServer ?: throw QueryEngine.StashNotConfiguredException()
 
         fun getFont(
             @FontRes fontId: Int,

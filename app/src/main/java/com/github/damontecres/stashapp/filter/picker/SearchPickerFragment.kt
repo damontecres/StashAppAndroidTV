@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.SearchSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.HeaderItem
@@ -19,6 +20,7 @@ import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -26,12 +28,11 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
-import com.github.damontecres.stashapp.data.StashData
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -49,6 +50,7 @@ class SearchPickerFragment(
     private val addItem: (StashData) -> Unit,
 ) : SearchSupportFragment(),
     SearchSupportFragment.SearchResultProvider {
+    private val serverViewModel: ServerViewModel by activityViewModels()
     private var taskJob: Job? = null
 
     private val adapter = SparseArrayObjectAdapter(ListRowPresenter())
@@ -63,17 +65,16 @@ class SearchPickerFragment(
                 .show()
         }
 
-    private val server = StashServer.requireCurrentServer()
-    private val queryEngine = QueryEngine(server)
+    private lateinit var queryEngine: QueryEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        queryEngine = QueryEngine(serverViewModel.requireServer())
         perPage =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 25)
-        title =
-            requireActivity().intent.getStringExtra(TITLE_KEY) ?: getString(dataType.pluralStringId)
+        title = getString(dataType.pluralStringId)
         searchResultsAdapter.presenterSelector = StashPresenter.defaultClassPresenterSelector()
         adapter.set(
             RESULTS_POS,
@@ -96,8 +97,8 @@ class SearchPickerFragment(
     }
 
     private fun returnId(item: StashData) {
-        val currentServer = StashServer.getCurrentStashServer(requireContext())
-        if (dataType in DATA_TYPE_SUGGESTIONS && currentServer != null) {
+        val currentServer = serverViewModel.requireServer()
+        if (dataType in DATA_TYPE_SUGGESTIONS) {
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 StashApplication
                     .getDatabase()
@@ -160,33 +161,31 @@ class SearchPickerFragment(
                 )
             }
             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                val currentServer = StashServer.getCurrentStashServer(requireContext())
-                if (currentServer != null) {
-                    val mostRecentIds =
-                        StashApplication
-                            .getDatabase()
-                            .recentSearchItemsDao()
-                            .getMostRecent(perPage, currentServer.url, dataType)
-                            .map { it.id }
-                    Log.v(TAG, "Got ${mostRecentIds.size} recent items")
-                    if (mostRecentIds.isNotEmpty()) {
-                        val items = queryEngine.getByIds(dataType, mostRecentIds)
-                        val results =
-                            ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
-                        if (items.isNotEmpty()) {
-                            Log.v(
-                                TAG,
-                                "${mostRecentIds.size} recent items resolved to ${results.size()} items",
-                            )
-                            results.addAll(0, items)
-                            withContext(Dispatchers.Main) {
-                                val headerName =
-                                    getString(
-                                        R.string.format_recently_used,
-                                        getString(dataType.pluralStringId).lowercase(),
-                                    )
-                                adapter.set(RECENT_POS, ListRow(HeaderItem(headerName), results))
-                            }
+                val currentServer = serverViewModel.requireServer()
+                val mostRecentIds =
+                    StashApplication
+                        .getDatabase()
+                        .recentSearchItemsDao()
+                        .getMostRecent(perPage, currentServer.url, dataType)
+                        .map { it.id }
+                Log.v(TAG, "Got ${mostRecentIds.size} recent items")
+                if (mostRecentIds.isNotEmpty()) {
+                    val items = queryEngine.getByIds(dataType, mostRecentIds)
+                    val results =
+                        ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
+                    if (items.isNotEmpty()) {
+                        Log.v(
+                            TAG,
+                            "${mostRecentIds.size} recent items resolved to ${results.size()} items",
+                        )
+                        results.addAll(0, items)
+                        withContext(Dispatchers.Main) {
+                            val headerName =
+                                getString(
+                                    R.string.format_recently_used,
+                                    getString(dataType.pluralStringId).lowercase(),
+                                )
+                            adapter.set(RECENT_POS, ListRow(HeaderItem(headerName), results))
                         }
                     }
                 }

@@ -3,12 +3,13 @@ package com.github.damontecres.stashapp.util
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.github.damontecres.stashapp.data.StashData
+import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.filter.extractTitle
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem.Companion.GO_TO_POPUP_ITEM
 import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem.Companion.REMOVE_POPUP_ITEM
-import com.github.damontecres.stashapp.views.StashItemViewClickListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -38,12 +39,12 @@ class RemoveLongClickListener<T : StashData>(
     ) {
         when (popUpItem.id) {
             StashPresenter.PopUpItem.DEFAULT_ID -> {
-                StashItemViewClickListener(context).onItemClicked(item)
+                StashApplication.navigationManager.navigate(Destination.fromStashData(item))
             }
             StashPresenter.PopUpItem.REMOVE_ID -> {
                 if (readOnlyModeDisabled()) {
                     scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                        Log.v(TAG, "Removing ${item.id} (${item::class.simpleName})")
+                        Log.v(TAG, "Removing id=${item.id} (${item::class.simpleName})")
                         if (rowManager.remove(item)) {
                             val name = extractTitle(item)
                             Toast.makeText(context, "Removed '$name'", Toast.LENGTH_SHORT).show()

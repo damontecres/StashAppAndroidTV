@@ -2,6 +2,8 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
+import androidx.fragment.app.viewModels
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -21,16 +23,15 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getUiTabs
+import com.github.damontecres.stashapp.views.models.StudioViewModel
 
 class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
-    private lateinit var studioId: String
+    private val viewModel: StudioViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        studioId = requireActivity().intent.getStringExtra("studioId")!!
+        viewModel.init(requireArguments())
     }
-
-    override fun getTitleText(): String? = requireActivity().intent.getStringExtra("studioName")
 
     override fun onViewCreated(
         view: View,
@@ -38,118 +39,136 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val studioId = requireActivity().intent.getStringExtra("studioId")!!
-        viewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            viewModel.tabs.value =
-                listOf(
-                    StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
-                        StudioDetailsFragment()
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
-                        createStashGridFragment(
-                            DataType.SCENE,
-                            server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_SCENES).findFilter,
-                        ) { studios ->
-                            SceneFilterType(studios = studios)
-                        }
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY) {
-                        createStashGridFragment(
-                            DataType.GALLERY,
-                            server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_GALLERIES).findFilter,
-                        ) { studios ->
-                            GalleryFilterType(studios = studios)
-                        }
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
-                        createStashGridFragment(
-                            DataType.IMAGE,
-                            server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_IMAGES).findFilter,
-                        ) { studios ->
-                            ImageFilterType(studios = studios)
-                        }.withImageGridClickListener()
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER) {
-                        createStashGridFragment(
-                            DataType.PERFORMER,
-                            server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_PERFORMERS).findFilter,
-                        ) { studios ->
-                            PerformerFilterType(studios = studios)
-                        }
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(DataType.GROUP) {
-                        createStashGridFragment(
-                            DataType.GROUP,
-                            server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_GROUPS).findFilter,
-                        ) { studios ->
-                            GroupFilterType(studios = studios)
-                        }
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
-                        StashGridFragment(
-                            FilterArgs(
-                                DataType.TAG,
-                                override = DataSupplierOverride.StudioTags(studioId),
-                            ),
-                        )
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_subsidiary_studios)) {
-                        StashGridFragment(
-                            dataType = DataType.STUDIO,
-                            findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_CHILDREN).findFilter,
-                            objectFilter =
-                                StudioFilterType(
-                                    parents =
-                                        Optional.present(
-                                            MultiCriterionInput(
-                                                value = Optional.present(listOf(studioId)),
-                                                modifier = CriterionModifier.INCLUDES,
-                                            ),
-                                        ),
+        viewModel.item.observe(viewLifecycleOwner) { studio ->
+            if (studio == null) {
+                Toast.makeText(requireContext(), "Studio not found", Toast.LENGTH_LONG).show()
+                serverViewModel.navigationManager.goBack()
+                return@observe
+            }
+            tabViewModel.title.value = studio.name
+            val server = serverViewModel.requireServer()
+
+            if (!tabViewModel.tabs.isInitialized) {
+                tabViewModel.tabs.value =
+                    listOf(
+                        StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
+                            StudioDetailsFragment()
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
+                            createStashGridFragment(
+                                studio.id,
+                                DataType.SCENE,
+                                server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_SCENES).findFilter,
+                            ) { studios ->
+                                SceneFilterType(studios = studios)
+                            }
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY) {
+                            createStashGridFragment(
+                                studio.id,
+                                DataType.GALLERY,
+                                server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_GALLERIES).findFilter,
+                            ) { studios ->
+                                GalleryFilterType(studios = studios)
+                            }
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
+                            createStashGridFragment(
+                                studio.id,
+                                DataType.IMAGE,
+                                server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_IMAGES).findFilter,
+                            ) { studios ->
+                                ImageFilterType(studios = studios)
+                            }
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER) {
+                            createStashGridFragment(
+                                studio.id,
+                                DataType.PERFORMER,
+                                server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_PERFORMERS).findFilter,
+                            ) { studios ->
+                                PerformerFilterType(studios = studios)
+                            }
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(DataType.GROUP) {
+                            createStashGridFragment(
+                                studio.id,
+                                DataType.GROUP,
+                                server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_GROUPS).findFilter,
+                            ) { studios ->
+                                GroupFilterType(studios = studios)
+                            }
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
+                            StashGridControlsFragment(
+                                FilterArgs(
+                                    DataType.TAG,
+                                    override = DataSupplierOverride.StudioTags(studio.id),
                                 ),
-                        )
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
-                        createStashGridFragment(DataType.MARKER, null) { studios ->
-                            SceneMarkerFilterType(
-                                scene_filter =
-                                    Optional.present(
-                                        SceneFilterType(studios = studios),
+                            )
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_subsidiary_studios)) {
+                            StashGridControlsFragment(
+                                dataType = DataType.STUDIO,
+                                findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_CHILDREN).findFilter,
+                                objectFilter =
+                                    StudioFilterType(
+                                        parents =
+                                            Optional.present(
+                                                MultiCriterionInput(
+                                                    value = Optional.present(listOf(studio.id)),
+                                                    modifier = CriterionModifier.INCLUDES,
+                                                ),
+                                            ),
                                     ),
                             )
-                        }
-                    },
-                ).filter { it.title in getUiTabs(requireContext(), DataType.STUDIO) }
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
+                            createStashGridFragment(studio.id, DataType.MARKER, null) { studios ->
+                                SceneMarkerFilterType(
+                                    scene_filter =
+                                        Optional.present(
+                                            SceneFilterType(studios = studios),
+                                        ),
+                                )
+                            }
+                        },
+                    ).filter { it.title in getUiTabs(requireContext(), DataType.STUDIO) }
+            }
         }
     }
 
     private fun createStashGridFragment(
+        studioId: String,
         dataType: DataType,
         defaultFindFilter: StashFindFilter?,
         createObjectFilter: (Optional<HierarchicalMultiCriterionInput>) -> StashDataFilter,
-    ): StashGridFragment {
+    ): StashGridControlsFragment {
         val fragment =
-            StashGridFragment(
+            StashGridControlsFragment(
                 dataType = dataType,
                 findFilter = defaultFindFilter,
-                objectFilter = createObjectFilter(createCriterionInput(false)),
+                objectFilter = createObjectFilter(createCriterionInput(false, studioId)),
             )
         fragment.subContentSwitchInitialIsChecked = false
         fragment.subContentText = getString(R.string.stashapp_include_sub_studio_content)
         fragment.subContentSwitchCheckedListener = { isChecked ->
             val newFilter =
-                fragment.filterArgs.copy(
+                fragment.currentFilter.copy(
                     objectFilter =
                         createObjectFilter(
-                            createCriterionInput(isChecked),
+                            createCriterionInput(isChecked, studioId),
                         ),
                 )
-            fragment.refresh(newFilter)
+            fragment.currentFilter = newFilter
         }
         return fragment
     }
 
-    private fun createCriterionInput(includeSub: Boolean): Optional.Present<HierarchicalMultiCriterionInput> =
+    private fun createCriterionInput(
+        includeSub: Boolean,
+        studioId: String,
+    ): Optional.Present<HierarchicalMultiCriterionInput> =
         Optional.present(
             HierarchicalMultiCriterionInput(
                 value = Optional.present(listOf(studioId)),

@@ -2,6 +2,9 @@ package com.github.damontecres.stashapp.util
 
 import com.github.damontecres.stashapp.data.DataType
 
+/**
+ * List of keys to look up how to sort items in a tab on a page
+ */
 enum class PageFilterKey(
     val dataType: DataType,
     val prefKey: String,

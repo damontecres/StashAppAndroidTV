@@ -8,7 +8,6 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashServer
 import okhttp3.CacheControl
 
@@ -63,12 +62,32 @@ class StashExoPlayer private constructor() {
         fun createInstance(
             context: Context,
             server: StashServer,
+        ): ExoPlayer {
+            val skipForward =
+                PreferenceManager
+                    .getDefaultSharedPreferences(context)
+                    .getInt("skip_forward_time", 30)
+            val skipBack =
+                PreferenceManager
+                    .getDefaultSharedPreferences(context)
+                    .getInt("skip_back_time", 10)
+            return createInstance(context, server, skipForward * 1000L, skipBack * 1000L)
+        }
+
+        /**
+         * Create a new [ExoPlayer] instance. [getInstance] should be preferred where possible.
+         */
+        @UnstableApi
+        fun createInstance(
+            context: Context,
+            server: StashServer,
             skipForward: Long,
             skipBack: Long,
         ): ExoPlayer {
+            releasePlayer()
             val dataSourceFactory =
                 OkHttpDataSource
-                    .Factory(StashClient.getStreamHttpClient(server))
+                    .Factory(server.streamingOkHttpClient)
                     .setCacheControl(CacheControl.FORCE_NETWORK)
 
             return ExoPlayer

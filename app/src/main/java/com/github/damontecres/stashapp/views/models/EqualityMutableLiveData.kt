@@ -5,9 +5,10 @@ import androidx.lifecycle.MutableLiveData
 /**
  * A [MutableLiveData] that only notifies observers if the value does not equal the previous value
  */
-class EqualityMutableLiveData<T>(
-    value: T?,
-) : MutableLiveData<T>(value) {
+class EqualityMutableLiveData<T> : MutableLiveData<T> {
+    constructor() : super()
+    constructor(value: T) : super(value)
+
     override fun setValue(value: T?) {
         if (value != getValue()) {
             super.setValue(value)

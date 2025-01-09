@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.util
 
 import android.util.Log
-import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.Mutation
 import com.apollographql.apollo.api.Optional
@@ -30,9 +29,10 @@ import com.github.damontecres.stashapp.api.UpdatePerformerMutation
 import com.github.damontecres.stashapp.api.UpdateStudioMutation
 import com.github.damontecres.stashapp.api.UpdateTagMutation
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
-import com.github.damontecres.stashapp.api.fragment.SavedFilterData
+import com.github.damontecres.stashapp.api.fragment.SavedFilter
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.GalleryUpdateInput
@@ -62,8 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class MutationEngine(
     server: StashServer,
-    client: ApolloClient = StashClient.getApolloClient(server),
-) : StashEngine(server, client) {
+) : StashEngine(server) {
     private val readOnlyMode = readOnlyModeEnabled()
 
     suspend fun <D : Mutation.Data> executeMutation(
@@ -429,7 +428,7 @@ class MutationEngine(
     suspend fun updateGallery(
         galleryId: String,
         rating100: Int,
-    ): UpdateGalleryMutation.GalleryUpdate? {
+    ): GalleryData? {
         val mutation =
             UpdateGalleryMutation(
                 GalleryUpdateInput(
@@ -438,7 +437,7 @@ class MutationEngine(
                 ),
             )
         val result = executeMutation(mutation)
-        return result.data?.galleryUpdate
+        return result.data?.galleryUpdate?.galleryData
     }
 
     suspend fun installPackage(
@@ -450,9 +449,9 @@ class MutationEngine(
         return result.data!!.installPackages
     }
 
-    suspend fun saveFilter(input: SaveFilterInput): SavedFilterData {
+    suspend fun saveFilter(input: SaveFilterInput): SavedFilter {
         val mutation = SaveFilterMutation(input)
-        return executeMutation(mutation).data!!.saveFilter.savedFilterData
+        return executeMutation(mutation).data!!.saveFilter.savedFilter
     }
 
     suspend fun updateStudio(

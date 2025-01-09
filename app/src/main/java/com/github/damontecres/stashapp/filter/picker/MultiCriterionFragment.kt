@@ -163,7 +163,7 @@ class MultiCriterionFragment(
             requireActivity().supportFragmentManager.commit {
                 addToBackStack("picker")
                 replace(
-                    android.R.id.content,
+                    R.id.root_fragment,
                     SearchPickerFragment(dataType) { newItem ->
                         Log.v(TAG, "Adding ${newItem.id}")
                         viewModel.store(dataType, newItem)
@@ -181,7 +181,7 @@ class MultiCriterionFragment(
             requireActivity().supportFragmentManager.commit {
                 addToBackStack("picker")
                 replace(
-                    android.R.id.content,
+                    R.id.root_fragment,
                     SearchPickerFragment(dataType) { newItem ->
                         Log.v(TAG, "Adding ${newItem.id} to exclude")
                         viewModel.store(dataType, newItem)

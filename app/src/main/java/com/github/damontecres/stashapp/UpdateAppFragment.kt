@@ -1,25 +1,35 @@
 package com.github.damontecres.stashapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import androidx.lifecycle.lifecycleScope
-import com.github.damontecres.stashapp.UpdateChangelogActivity.Companion.INTENT_CHANGELOG
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.util.Release
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.Version
+import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
 
-class UpdateAppFragment(
-    private val release: UpdateChecker.Release,
-) : GuidedStepSupportFragment() {
+class UpdateAppFragment : GuidedStepSupportFragment() {
+    private val serverViewModel: ServerViewModel by activityViewModels()
+
+    private lateinit var release: Release
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        release = requireArguments().getDestination<Destination.UpdateApp>().release
+        super.onCreate(savedInstanceState)
+    }
+
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
         val serverVersion = StashServer.getCurrentServerVersion()
@@ -87,18 +97,7 @@ class UpdateAppFragment(
                 UpdateChecker.installRelease(requireActivity(), release)
             }
         } else if (action.id == 1000L) {
-            val intent = Intent(requireContext(), UpdateChangelogActivity::class.java)
-            val changelog =
-                "# ${release.version}\n\n${release.body}"
-                    // Convert PR urls to number
-                    .replace(
-                        Regex("https://github.com/damontecres/StashAppAndroidTV/pull/(\\d+)"),
-                        "#$1",
-                    )
-                    // Remove the last line for full changelog since its just a link
-                    .replace(Regex("\\*\\*Full Changelog\\*\\*.*"), "")
-            intent.putExtra(INTENT_CHANGELOG, changelog)
-            startActivity(intent)
+            serverViewModel.navigationManager.navigate(Destination.Fragment(UpdateChangelogFragment::class.qualifiedName!!))
         } else {
             finishGuidedStepSupportFragments()
         }
