@@ -45,6 +45,7 @@ class StashGridViewModel : ViewModel() {
 
         data class AdapterReady(
             val pagingAdapter: PagingObjectAdapter,
+            val filterArgs: FilterArgs,
         ) : LoadingStatus
     }
 
@@ -66,6 +67,7 @@ class StashGridViewModel : ViewModel() {
             _loadingStatus.value = LoadingStatus.NoOp
             return
         }
+        _filterArgs.value = filterArgs
         _loadingStatus.value = LoadingStatus.Start
 
         val dataType = filterArgs.dataType
@@ -99,8 +101,7 @@ class StashGridViewModel : ViewModel() {
         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
             pagingAdapter.init()
             this@StashGridViewModel.pagingAdapter = pagingAdapter
-            _filterArgs.value = filterArgs
-            _loadingStatus.value = LoadingStatus.AdapterReady(pagingAdapter)
+            _loadingStatus.value = LoadingStatus.AdapterReady(pagingAdapter, filterArgs)
         }
     }
 
