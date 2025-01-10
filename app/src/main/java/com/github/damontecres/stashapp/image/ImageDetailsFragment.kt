@@ -289,6 +289,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                         1,
                     )
                     viewModel.slideshow.value = viewModel.slideshow.value!!.not()
+                } else if (action.id.toInt() == R.string.apply_filters) {
+                    (requireParentFragment() as ImageFragment).showFilterOverlay()
                 }
                 val controller = viewModel.imageController
                 if (controller != null) {
@@ -350,6 +352,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_plus.toLong()))
                 detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_minus.toLong()))
                 detailsActionsAdapter.add(Action(R.string.fa_arrow_right_arrow_left.toLong()))
+                detailsActionsAdapter.add(Action(R.string.apply_filters.toLong()))
                 detailsActionsAdapter.add(Action(R.string.stashapp_effect_filters_reset_transforms.toLong()))
             }
             if (viewModel.slideshow.value!!) {
@@ -467,6 +470,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 buildList {
                     if (showDebug) {
                         add("Image ID: ${image.id}")
+                        add("Image ${viewModel.currentPosition.value} of ${viewModel.totalCount.value}")
                         add("")
                     }
                     if (image.photographer.isNotNullOrBlank()) {
@@ -538,6 +542,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             vh.mAction = action.id
             if (action.id.toInt() in
                 setOf(
+                    R.string.apply_filters,
                     R.string.stashapp_effect_filters_reset_transforms,
                     R.string.play_slideshow,
                     R.string.stop_slideshow,

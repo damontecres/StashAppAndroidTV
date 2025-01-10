@@ -7,8 +7,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
-import com.github.damontecres.stashapp.data.room.VideoFilter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.Dispatchers
