@@ -96,7 +96,7 @@ class StashGridViewModel : ViewModel() {
             },
         )
 
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
             pagingAdapter.init()
             this@StashGridViewModel.pagingAdapter = pagingAdapter
             _filterArgs.value = filterArgs

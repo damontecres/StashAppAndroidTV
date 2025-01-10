@@ -41,7 +41,12 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.item.observe(viewLifecycleOwner) { tag ->
             if (tag == null) {
-                Toast.makeText(requireContext(), "Tag not found", Toast.LENGTH_LONG).show()
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Tag '${viewModel.itemId}' not found",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 serverViewModel.navigationManager.goBack()
                 return@observe
             }

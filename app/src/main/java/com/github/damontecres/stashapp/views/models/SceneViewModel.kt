@@ -79,10 +79,12 @@ class SceneViewModel : ViewModel() {
         id: String,
         fetchAll: Boolean,
     ) {
-        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
             val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             val newScene = queryEngine.getScene(id)
-            if (newScene != null) {
+            if (newScene == null) {
+                _scene.setValueNoCheck(null)
+            } else {
                 _scene.value = newScene
                 val currPos = currentPosition.value
                 if (currPos == null || currPos <= 0L) {
@@ -96,21 +98,21 @@ class SceneViewModel : ViewModel() {
                 if (fetchAll) {
                     val performerIds = newScene.performers.map { it.id }
                     if (performerIds.isNotEmpty()) {
-                        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
                             _performers.value =
                                 queryEngine.findPerformers(performerIds = performerIds)
                         }
                     }
                     if (newScene.galleries.isNotEmpty()) {
-                        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
                             _galleries.value =
                                 queryEngine.getGalleries(newScene.galleries.map { it.id })
                         }
                     }
 
                     // Suggestions
-                    if (!_suggestedScenes.isInitialized) {
-                        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                    if (!_suggestedScenes.isInitialized || _suggestedScenes.value!!.isEmpty()) {
+                        viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
                             val idFilter =
                                 Optional.present(
                                     IntCriterionInput(
