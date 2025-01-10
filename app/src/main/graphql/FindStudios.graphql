@@ -8,6 +8,12 @@ query FindStudios($filter: FindFilterType, $studio_filter: StudioFilterType, $id
   }
 }
 
+query GetStudio($id: ID!) {
+  findStudio(id: $id) {
+    ...StudioData
+  }
+}
+
 query CountStudios($filter: FindFilterType, $studio_filter: StudioFilterType) {
   findStudios(filter: $filter, studio_filter: $studio_filter) {
     count

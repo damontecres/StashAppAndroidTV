@@ -82,7 +82,9 @@ class SceneViewModel : ViewModel() {
         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
             val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             val newScene = queryEngine.getScene(id)
-            if (newScene != null) {
+            if (newScene == null) {
+                _scene.setValueNoCheck(null)
+            } else {
                 _scene.value = newScene
                 val currPos = currentPosition.value
                 if (currPos == null || currPos <= 0L) {
@@ -109,7 +111,7 @@ class SceneViewModel : ViewModel() {
                     }
 
                     // Suggestions
-                    if (!_suggestedScenes.isInitialized) {
+                    if (!_suggestedScenes.isInitialized || _suggestedScenes.value!!.isEmpty()) {
                         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
                             val idFilter =
                                 Optional.present(

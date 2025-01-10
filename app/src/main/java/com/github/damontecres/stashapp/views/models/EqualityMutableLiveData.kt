@@ -15,6 +15,10 @@ class EqualityMutableLiveData<T> : MutableLiveData<T> {
         }
     }
 
+    fun setValueNoCheck(value: T?) {
+        super.setValue(value)
+    }
+
     override fun postValue(value: T?) {
         if (value != getValue()) {
             super.postValue(value)

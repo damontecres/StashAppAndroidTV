@@ -7,5 +7,5 @@ class TagViewModel : ItemViewModel<TagData>() {
     override suspend fun fetch(
         queryEngine: QueryEngine,
         id: String,
-    ): TagData? = queryEngine.getTags(listOf(id)).firstOrNull()
+    ): TagData? = queryEngine.getTag(id)
 }

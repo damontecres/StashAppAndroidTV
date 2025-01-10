@@ -52,7 +52,12 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.item.observe(viewLifecycleOwner) { performer ->
             if (performer == null) {
-                Toast.makeText(requireContext(), "Performer not found", Toast.LENGTH_LONG).show()
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Performer '${viewModel.itemId}' not found",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 serverViewModel.navigationManager.goBack()
                 return@observe
             }

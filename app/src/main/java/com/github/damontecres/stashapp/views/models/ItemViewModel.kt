@@ -19,6 +19,8 @@ abstract class ItemViewModel<T : StashData> : ViewModel() {
     private val _item = EqualityMutableLiveData<T>()
     val item: LiveData<T?> = _item
 
+    lateinit var itemId: String
+
     /**
      * Fetch the item for the given id
      */
@@ -31,10 +33,15 @@ abstract class ItemViewModel<T : StashData> : ViewModel() {
      * Initialize the [ViewModel] by fetching the item in the background and updating it
      */
     fun init(args: Bundle) {
-        val id = args.getDestination<Destination.Item>().id
+        itemId = args.getDestination<Destination.Item>().id
         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
             val queryEngine = QueryEngine(StashServer.requireCurrentServer())
-            _item.value = fetch(queryEngine, id)
+            val newValue = fetch(queryEngine, itemId)
+            if (newValue == null) {
+                _item.setValueNoCheck(null)
+            } else {
+                _item.value = newValue
+            }
         }
     }
 

@@ -41,7 +41,12 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
 
         viewModel.item.observe(viewLifecycleOwner) { studio ->
             if (studio == null) {
-                Toast.makeText(requireContext(), "Studio not found", Toast.LENGTH_LONG).show()
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Studio '${viewModel.itemId}' not found",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 serverViewModel.navigationManager.goBack()
                 return@observe
             }

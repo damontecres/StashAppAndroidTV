@@ -21,7 +21,11 @@ import com.github.damontecres.stashapp.api.FindScenesQuery
 import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
 import com.github.damontecres.stashapp.api.GetExtraImageQuery
+import com.github.damontecres.stashapp.api.GetGalleryQuery
+import com.github.damontecres.stashapp.api.GetPerformerQuery
 import com.github.damontecres.stashapp.api.GetSceneQuery
+import com.github.damontecres.stashapp.api.GetStudioQuery
+import com.github.damontecres.stashapp.api.GetTagQuery
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -134,7 +138,10 @@ class QueryEngine(
         return performers.orEmpty()
     }
 
-    suspend fun getPerformer(performerId: String): PerformerData? = findPerformers(performerIds = listOf(performerId)).firstOrNull()
+    suspend fun getPerformer(performerId: String): PerformerData? {
+        val query = client.query(GetPerformerQuery(id = performerId))
+        return executeQuery(query).data?.findPerformer?.performerData
+    }
 
     suspend fun findStudios(
         findFilter: FindFilterType? = null,
@@ -155,6 +162,11 @@ class QueryEngine(
                 it.studioData
             }
         return studios.orEmpty()
+    }
+
+    suspend fun getStudio(studioId: String): StudioData? {
+        val query = client.query(GetStudioQuery(id = studioId))
+        return executeQuery(query).data?.findStudio?.studioData
     }
 
     suspend fun findTags(
@@ -198,6 +210,11 @@ class QueryEngine(
                 ?.tags
                 ?.map { it.tagData }
         return tags.orEmpty()
+    }
+
+    suspend fun getTag(tagId: String): TagData? {
+        val query = client.query(GetTagQuery(id = tagId))
+        return executeQuery(query).data?.findTag?.tagData
     }
 
     suspend fun findGroups(
@@ -328,6 +345,11 @@ class QueryEngine(
                 ?.map { it.galleryData }
                 .orEmpty()
         }
+
+    suspend fun getGallery(galleryId: String): GalleryData? {
+        val query = client.query(GetGalleryQuery(id = galleryId))
+        return executeQuery(query).data?.findGallery?.galleryData
+    }
 
     /**
      * Search for a type of data with the given query. Users will need to cast the returned List.

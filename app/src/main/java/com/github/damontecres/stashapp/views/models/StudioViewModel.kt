@@ -7,5 +7,5 @@ class StudioViewModel : ItemViewModel<StudioData>() {
     override suspend fun fetch(
         queryEngine: QueryEngine,
         id: String,
-    ): StudioData? = queryEngine.findStudios(studioIds = listOf(id)).firstOrNull()
+    ): StudioData? = queryEngine.getStudio(id)
 }

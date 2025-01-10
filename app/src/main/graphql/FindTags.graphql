@@ -7,6 +7,12 @@ query FindTags($filter: FindFilterType, $tag_filter: TagFilterType, $ids: [ID!])
   }
 }
 
+query GetTag($id: ID!) {
+  findTag(id: $id) {
+    ...TagData
+  }
+}
+
 query CountTags($filter: FindFilterType, $tag_filter: TagFilterType)  {
   findTags(filter: $filter, tag_filter: $tag_filter){
     count
