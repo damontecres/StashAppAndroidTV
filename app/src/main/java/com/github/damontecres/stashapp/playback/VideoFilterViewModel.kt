@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.VideoFilter
 import com.github.damontecres.stashapp.data.room.PlaybackEffect
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -34,7 +35,7 @@ class VideoFilterViewModel : ViewModel() {
                     StashApplication
                         .getDatabase()
                         .playbackEffectsDao()
-                        .getPlaybackEffect(serverUrl, sceneId)
+                        .getPlaybackEffect(serverUrl, sceneId, DataType.SCENE)
                 if (vf != null) {
                     Log.d(TAG, "Loaded VideoFilter for scene $sceneId")
                 }
@@ -59,7 +60,7 @@ class VideoFilterViewModel : ViewModel() {
                     StashApplication
                         .getDatabase()
                         .playbackEffectsDao()
-                        .insert(PlaybackEffect(serverUrl, sceneId, vf))
+                        .insert(PlaybackEffect(serverUrl, sceneId, DataType.SCENE, vf))
                     Log.d(TAG, "Saved VideoFilter for scene $sceneId")
                 }
             }

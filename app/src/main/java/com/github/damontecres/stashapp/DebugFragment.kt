@@ -129,7 +129,7 @@ class DebugFragment : Fragment(R.layout.debug) {
         }
         val dbTable = view.findViewById<TableLayout>(R.id.database_table)
         dbTable.removeAllViews()
-        dbTable.addView(createRow("ID", "VideoFilter"))
+        dbTable.addView(createRow("DataType", "ID", "VideoFilter"))
         if (server != null) {
             viewLifecycleOwner.lifecycleScope.launch(
                 Dispatchers.IO +
@@ -145,7 +145,13 @@ class DebugFragment : Fragment(R.layout.debug) {
                 Log.i(TAG, "Found ${effects.size} effects")
                 withContext(Dispatchers.Main) {
                     effects.forEach {
-                        dbTable.addView(createRow(it.id, it.videoFilter.toString()))
+                        dbTable.addView(
+                            createRow(
+                                it.dataType.name,
+                                it.id,
+                                it.videoFilter.toString(),
+                            ),
+                        )
                     }
                 }
             }
