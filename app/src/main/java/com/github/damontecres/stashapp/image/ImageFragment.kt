@@ -11,6 +11,8 @@ import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.playback.PlaybackVideoFiltersFragment
+import com.github.damontecres.stashapp.playback.VideoFilterViewModel
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isImageClip
@@ -21,17 +23,22 @@ class ImageFragment :
     Fragment(R.layout.image_fragment),
     DefaultKeyEventCallback {
     private val viewModel: ImageViewModel by viewModels()
+    private val filterViewModel: VideoFilterViewModel by viewModels()
 
     private var timer: Timer? = null
 
     private val imageViewFragment = ImageViewFragment()
     private val imageClipFragment = ImageClipFragment()
     private val imageDetailsFragment = ImageDetailsFragment()
+    private val videoFiltersFragment = PlaybackVideoFiltersFragment().forImages()
 
     private val overlayFragment = imageDetailsFragment
 
     private val overlayIsVisible: Boolean
         get() = !overlayFragment.isHidden
+
+    private val filterOverlayIsVisible: Boolean
+        get() = !videoFiltersFragment.isHidden
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +47,12 @@ class ImageFragment :
         viewModel.init(slideshow)
 
         childFragmentManager.commit {
-            listOf(imageViewFragment, imageClipFragment, imageDetailsFragment).forEach {
+            listOf(
+                imageViewFragment,
+                imageClipFragment,
+                imageDetailsFragment,
+                videoFiltersFragment,
+            ).forEach {
                 add(R.id.root, it, it::class.java.simpleName)
                 hide(it)
             }
@@ -119,6 +131,31 @@ class ImageFragment :
         }
     }
 
+    fun showFilterOverlay() {
+        hideOverlay()
+        childFragmentManager.commitNow {
+            // TODO
+            setCustomAnimations(
+                androidx.leanback.R.anim.abc_slide_in_bottom,
+                androidx.leanback.R.anim.abc_slide_out_bottom,
+            )
+            show(videoFiltersFragment)
+        }
+        videoFiltersFragment.view?.requestFocus()
+    }
+
+    fun hideFilterOverlay() {
+        if (filterOverlayIsVisible) {
+            childFragmentManager.commit {
+                setCustomAnimations(
+                    androidx.leanback.R.anim.abc_slide_in_bottom,
+                    androidx.leanback.R.anim.abc_slide_out_bottom,
+                )
+                hide(videoFiltersFragment)
+            }
+        }
+    }
+
     override fun onKeyUp(
         keyCode: Int,
         event: KeyEvent,
@@ -130,10 +167,15 @@ class ImageFragment :
             if (overlayIsVisible) {
                 hideOverlay()
                 return true
+            } else if (filterOverlayIsVisible) {
+                hideFilterOverlay()
+                return true
             } else if (imageViewFragment.isImageZoomedIn()) {
                 imageViewFragment.resetZoom()
                 return true
             }
+        } else if (filterOverlayIsVisible) {
+            return false
         } else if (isDpadKey(keyCode)) {
             if ((keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) && !overlayIsVisible) {
                 showOverlay()

@@ -10,13 +10,20 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.data.room.VideoFilter
+import com.github.damontecres.stashapp.data.VideoFilter
 
 /**
  * Display the [VideoFilter] options to manipulate
  */
 class PlaybackVideoFiltersFragment : Fragment(R.layout.apply_video_filters) {
     private val viewModel: VideoFilterViewModel by viewModels(ownerProducer = { requireParentFragment() })
+
+    private var forImages = false
+
+    fun forImages(): PlaybackVideoFiltersFragment {
+        forImages = true
+        return this
+    }
 
     override fun onViewCreated(
         view: View,
@@ -126,7 +133,13 @@ class PlaybackVideoFiltersFragment : Fragment(R.layout.apply_video_filters) {
             setUi(vf)
         }
 
-        saveButton.requestFocus()
+        if (forImages) {
+            view.findViewById<View>(R.id.hue_row).visibility = View.GONE
+            view.findViewById<View>(R.id.blur_row).visibility = View.GONE
+            rotateLeftButton.visibility = View.GONE
+            rotateRightButton.visibility = View.GONE
+            saveButton.visibility = View.GONE
+        }
     }
 
     private fun getOrCreateVideoFilter(): VideoFilter = viewModel.videoFilter.value ?: VideoFilter()
