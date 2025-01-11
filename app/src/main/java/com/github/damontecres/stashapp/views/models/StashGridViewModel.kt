@@ -1,15 +1,19 @@
 package com.github.damontecres.stashapp.views.models
 
 import android.util.Log
+import android.widget.SearchView
 import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.PresenterSelector
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.SortAndDirection
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
@@ -19,6 +23,9 @@ import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class StashGridViewModel : ViewModel() {
@@ -48,6 +55,13 @@ class StashGridViewModel : ViewModel() {
             val filterArgs: FilterArgs,
         ) : LoadingStatus
     }
+
+    var searchJob: Job? = null
+    val searchDelay =
+        PreferenceManager
+            .getDefaultSharedPreferences(StashApplication.getApplication())
+            .getInt("searchDelay", 500)
+            .toLong()
 
     private var numberOfColumns = -1
     private lateinit var presenterSelector: PresenterSelector
@@ -103,6 +117,34 @@ class StashGridViewModel : ViewModel() {
             this@StashGridViewModel.pagingAdapter = pagingAdapter
             _loadingStatus.value = LoadingStatus.AdapterReady(pagingAdapter, filterArgs)
         }
+    }
+
+    fun setupSearchButton(searchButton: SearchView) {
+        if (filterArgs.isInitialized) {
+            val query = filterArgs.value!!.findFilter?.q
+            if (query.isNotNullOrBlank()) {
+                searchButton.setQuery(query, false)
+                searchButton.isIconified = false
+            }
+        }
+        searchButton.setOnQueryTextListener(
+            object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean = onQueryTextChange(query)
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    searchJob?.cancel()
+                    searchJob =
+                        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                            delay(searchDelay)
+                            val currentFilter = filterArgs.value!!
+                            val findFilter = currentFilter.findFilter ?: StashFindFilter()
+                            setFilter(currentFilter.copy(findFilter = findFilter.copy(q = newText)))
+                        }
+
+                    return true
+                }
+            },
+        )
     }
 
     companion object {

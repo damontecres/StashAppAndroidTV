@@ -18,9 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.filter.FilterOptions
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
@@ -42,8 +40,6 @@ import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.models.StashGridViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -139,38 +135,7 @@ class FilterFragment :
 
         searchButton = view.findViewById(R.id.search_button_view)
         searchButton.onFocusChangeListener = onFocusChangeListener
-        var searchJob: Job? = null
-        val searchDelay =
-            PreferenceManager
-                .getDefaultSharedPreferences(requireContext())
-                .getInt("searchDelay", 500)
-                .toLong()
-
-        searchButton.setOnQueryTextListener(
-            object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean = onQueryTextChange(query)
-
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    searchJob?.cancel()
-                    searchJob =
-                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                            delay(searchDelay)
-                            val currentFilter = stashGridViewModel.filterArgs.value!!
-                            val findFilter = currentFilter.findFilter ?: StashFindFilter()
-                            stashGridViewModel.setFilter(
-                                currentFilter.copy(
-                                    findFilter =
-                                        findFilter.copy(
-                                            q = newText,
-                                        ),
-                                ),
-                            )
-                        }
-
-                    return true
-                }
-            },
-        )
+        stashGridViewModel.setupSearchButton(searchButton)
 
         headerTransitionHelper = TitleTransitionHelper(view as ViewGroup, buttonBar)
         stashGridViewModel.currentPosition.observe(viewLifecycleOwner) { position ->
