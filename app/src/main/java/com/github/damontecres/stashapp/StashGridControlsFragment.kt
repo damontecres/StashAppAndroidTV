@@ -8,11 +8,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.PresenterSelector
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
@@ -25,6 +27,7 @@ import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
@@ -37,6 +40,9 @@ import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.models.StashGridViewModel
 import com.google.android.material.switchmaterial.SwitchMaterial
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * A [Fragment] that shows a [StashDataGridFragment] along with controls for sorting, etc
@@ -56,6 +62,7 @@ class StashGridControlsFragment() :
     private lateinit var playAllButton: Button
     private lateinit var filterButton: Button
     private lateinit var subContentSwitch: SwitchMaterial
+    private lateinit var searchButton: SearchView
 
     private lateinit var fragment: StashDataGridFragment
 
@@ -172,6 +179,8 @@ class StashGridControlsFragment() :
         filterButton.onFocusChangeListener = onFocusChangeListener
         subContentSwitch = root.findViewById(R.id.sub_content_switch)
         subContentSwitch.onFocusChangeListener = onFocusChangeListener
+        searchButton = root.findViewById(R.id.search_button_view)
+        searchButton.onFocusChangeListener = onFocusChangeListener
 
         if (name == null) {
             name = getString(dataType.pluralStringId)
@@ -260,6 +269,32 @@ class StashGridControlsFragment() :
                 subContentSwitchCheckedListener?.invoke(isChecked)
             }
         }
+
+        var searchJob: Job? = null
+        val searchDelay =
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
+                .getInt("searchDelay", 500)
+                .toLong()
+
+        searchButton.setOnQueryTextListener(
+            object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean = onQueryTextChange(query)
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    searchJob?.cancel()
+                    searchJob =
+                        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                            delay(searchDelay)
+                            val findFilter = currentFilter.findFilter ?: StashFindFilter()
+                            currentFilter =
+                                currentFilter.copy(findFilter = findFilter.copy(q = newText))
+                        }
+
+                    return true
+                }
+            },
+        )
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
