@@ -13,7 +13,6 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.showSetRatingToast
-import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.models.StudioViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
@@ -82,8 +81,7 @@ class StudioDetailsFragment : DetailsFragment() {
         addRow(R.string.stashapp_details, studio.details)
         addRow(R.string.stashapp_parent_studio, studio.parent_studio?.name) {
             if (studio.parent_studio != null) {
-                setTextColor(resources.getColor(R.color.selected_background, null))
-                onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+                setTextColor(resources.getColorStateList(R.color.clickable_text, null))
                 setOnClickListener {
                     serverViewModel.navigationManager.navigate(
                         Destination.Item(

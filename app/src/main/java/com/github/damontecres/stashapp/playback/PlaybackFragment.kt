@@ -306,12 +306,20 @@ abstract class PlaybackFragment(
 
     private fun hideVideoFilterFragment() {
         childFragmentManager.commit {
+            setCustomAnimations(
+                androidx.leanback.R.anim.abc_slide_in_top,
+                androidx.leanback.R.anim.abc_slide_out_top,
+            )
             hide(videoFilterFragment)
         }
     }
 
     private fun showVideoFilterFragment() {
         childFragmentManager.commit {
+            setCustomAnimations(
+                androidx.leanback.R.anim.abc_slide_in_top,
+                androidx.leanback.R.anim.abc_slide_out_top,
+            )
             show(videoFilterFragment)
         }
     }
@@ -510,6 +518,10 @@ abstract class PlaybackFragment(
                             callbacks[size - 1] = {
                                 videoView.showController()
                                 childFragmentManager.commitNow {
+                                    setCustomAnimations(
+                                        androidx.leanback.R.anim.abc_slide_in_top,
+                                        androidx.leanback.R.anim.abc_slide_out_top,
+                                    )
                                     add(R.id.video_overlay, videoFilterFragment)
                                 }
                                 videoFilterFragment.requireView().requestFocus()

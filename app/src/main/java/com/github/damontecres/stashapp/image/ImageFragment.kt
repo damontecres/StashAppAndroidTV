@@ -134,10 +134,9 @@ class ImageFragment :
     fun showFilterOverlay() {
         hideOverlay()
         childFragmentManager.commitNow {
-            // TODO
             setCustomAnimations(
-                androidx.leanback.R.anim.abc_slide_in_bottom,
-                androidx.leanback.R.anim.abc_slide_out_bottom,
+                androidx.leanback.R.anim.abc_slide_in_top,
+                androidx.leanback.R.anim.abc_slide_out_top,
             )
             show(videoFiltersFragment)
         }
@@ -148,8 +147,8 @@ class ImageFragment :
         if (filterOverlayIsVisible) {
             childFragmentManager.commit {
                 setCustomAnimations(
-                    androidx.leanback.R.anim.abc_slide_in_bottom,
-                    androidx.leanback.R.anim.abc_slide_out_bottom,
+                    androidx.leanback.R.anim.abc_slide_in_top,
+                    androidx.leanback.R.anim.abc_slide_out_top,
                 )
                 hide(videoFiltersFragment)
             }

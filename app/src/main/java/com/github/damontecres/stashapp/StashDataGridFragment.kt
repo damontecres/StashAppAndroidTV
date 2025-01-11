@@ -381,7 +381,7 @@ class StashDataGridFragment :
             onBackPressedCallback =
                 requireActivity().onBackPressedDispatcher.addCallback(
                     viewLifecycleOwner,
-                    selectedPosition >= 0,
+                    selectedPosition >= numberOfColumns,
                 ) {
                     jumpTo(0)
                     isEnabled = false
