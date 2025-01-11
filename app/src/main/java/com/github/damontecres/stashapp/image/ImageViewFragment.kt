@@ -128,6 +128,7 @@ class ImageViewFragment :
                             ): Boolean = false
                         },
                     )
+            filterViewModel.maybeGetSavedFilter()
             // TODO figure out how to apply the effects on load without double applying
 //            if (filterViewModel.saveVideoFilter) {
 //                // If saving filters, check if one exists
