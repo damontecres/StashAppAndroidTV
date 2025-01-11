@@ -269,7 +269,7 @@ abstract class PlaybackFragment(
         }
 
         updatePreviewLoader(scene)
-        filterViewModel.maybeGetSavedFilter(scene.id)
+        filterViewModel.maybeGetSavedFilter()
     }
 
     /**
@@ -326,6 +326,10 @@ abstract class PlaybackFragment(
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        filterViewModel.init(DataType.SCENE) {
+            currentScene!!.id
+        }
 
         setFragmentResultListener(PlaybackFragment::class.simpleName!!) { _, bundle ->
             val itemId = bundle.getString(SearchForFragment.RESULT_ITEM_ID_KEY)
