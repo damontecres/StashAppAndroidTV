@@ -371,15 +371,15 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             )
         }
 
-        configRowManager(viewLifecycleOwner.lifecycleScope, tagsRowManager, ::TagPresenter)
-        configRowManager(viewLifecycleOwner.lifecycleScope, studioRowManager, ::StudioPresenter)
-        configRowManager(viewLifecycleOwner.lifecycleScope, groupsRowManager, ::GroupPresenter)
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, tagsRowManager, ::TagPresenter)
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, studioRowManager, ::StudioPresenter)
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, groupsRowManager, ::GroupPresenter)
 
         markersRowManager.adapter.presenterSelector =
             SinglePresenterSelector(
                 MarkerPresenter(
                     RemoveLongClickListener(
-                        viewLifecycleOwner.lifecycleScope,
+                        { viewLifecycleOwner.lifecycleScope },
                         markersRowManager,
                         listOf(MARKER_DETAILS_POPUP),
                     ) { context, item, popUpItem ->
@@ -415,7 +415,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             Log.v(TAG, "sceneData.id=${sceneData.id}")
 
             configRowManager(
-                viewLifecycleOwner.lifecycleScope,
+                { viewLifecycleOwner.lifecycleScope },
                 performersRowManager,
             ) { callback ->
                 PerformerInScenePresenter(sceneData.date, callback)

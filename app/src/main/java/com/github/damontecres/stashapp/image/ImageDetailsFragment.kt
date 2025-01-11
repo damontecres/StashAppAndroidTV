@@ -248,9 +248,9 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         queryEngine = QueryEngine(server)
         mutationEngine = MutationEngine(server)
 
-        configRowManager(viewLifecycleOwner.lifecycleScope, tagsRowManager, ::TagPresenter)
-        configRowManager(viewLifecycleOwner.lifecycleScope, galleriesRowManager, ::GalleryPresenter)
-        configRowManager(viewLifecycleOwner.lifecycleScope, studioRowManager, ::StudioPresenter)
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, tagsRowManager, ::TagPresenter)
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, galleriesRowManager, ::GalleryPresenter)
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, studioRowManager, ::StudioPresenter)
 
         adapter = mAdapter
 
@@ -366,14 +366,14 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
             if (newImage.date.isNotNullOrBlank()) {
                 configRowManager(
-                    viewLifecycleOwner.lifecycleScope,
+                    { viewLifecycleOwner.lifecycleScope },
                     performersRowManager,
                 ) { callback ->
                     PerformerInScenePresenter(newImage.date, callback)
                 }
             } else {
                 configRowManager(
-                    viewLifecycleOwner.lifecycleScope,
+                    { viewLifecycleOwner.lifecycleScope },
                     performersRowManager,
                     ::PerformerPresenter,
                 )
