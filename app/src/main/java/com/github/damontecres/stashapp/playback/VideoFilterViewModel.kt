@@ -25,7 +25,7 @@ class VideoFilterViewModel : ViewModel() {
 
     private val serverUrl = StashServer.getCurrentStashServer()?.url
 
-    private val saveVideoFilter =
+    val saveVideoFilter =
         PreferenceManager.getDefaultSharedPreferences(StashApplication.getApplication()).getBoolean(
             StashApplication.getApplication().getString(R.string.pref_key_playback_save_effects),
             true,
@@ -33,8 +33,19 @@ class VideoFilterViewModel : ViewModel() {
 
     fun maybeGetSavedFilter() {
         if (saveVideoFilter && serverUrl != null) {
-            val id = fetchCurrentId.invoke()
             viewModelScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                getSavedFilter()
+            }
+        } else {
+            Log.d(TAG, "Not saving video filters")
+            videoFilter.value = null
+        }
+    }
+
+    suspend fun getSavedFilter(): PlaybackEffect? =
+        if (saveVideoFilter && serverUrl != null) {
+            val id = fetchCurrentId.invoke()
+            withContext(Dispatchers.IO) {
                 val vf =
                     StashApplication
                         .getDatabase()
@@ -46,12 +57,11 @@ class VideoFilterViewModel : ViewModel() {
                 withContext(Dispatchers.Main) {
                     videoFilter.value = vf?.videoFilter
                 }
+                vf
             }
         } else {
-            Log.d(TAG, "Not saving video filters")
-            videoFilter.value = null
+            null
         }
-    }
 
     /**
      * If saving video effects is enabled, save the current one to the database
