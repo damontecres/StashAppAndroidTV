@@ -16,6 +16,9 @@ interface PlaybackEffectsDao {
         sceneId: String,
     ): PlaybackEffect?
 
+    @Query("SELECT * FROM playback_effects WHERE serverUrl = :serverUrl")
+    fun getPlaybackEffects(serverUrl: String): List<PlaybackEffect>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg items: PlaybackEffect)
 

@@ -23,7 +23,9 @@ import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class DebugFragment : Fragment(R.layout.debug) {
     override fun onViewCreated(
@@ -124,6 +126,29 @@ class DebugFragment : Fragment(R.layout.debug) {
 
         view.findViewById<Button>(R.id.button_test_saved_filters).setOnClickListener {
             testSavedFilters()
+        }
+        val dbTable = view.findViewById<TableLayout>(R.id.database_table)
+        dbTable.removeAllViews()
+        dbTable.addView(createRow("ID", "VideoFilter"))
+        if (server != null) {
+            viewLifecycleOwner.lifecycleScope.launch(
+                Dispatchers.IO +
+                    StashCoroutineExceptionHandler(
+                        true,
+                    ),
+            ) {
+                val effects =
+                    StashApplication
+                        .getDatabase()
+                        .playbackEffectsDao()
+                        .getPlaybackEffects(server.url)
+                Log.i(TAG, "Found ${effects.size} effects")
+                withContext(Dispatchers.Main) {
+                    effects.forEach {
+                        dbTable.addView(createRow(it.id, it.videoFilter.toString()))
+                    }
+                }
+            }
         }
     }
 

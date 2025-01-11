@@ -13,6 +13,7 @@ plugins {
     id("kotlin-parcelize")
     alias(libs.plugins.apollo)
     alias(libs.plugins.kotlin.plugin.serialization)
+    alias(libs.plugins.room)
 }
 
 fun getVersionCode(): Int {
@@ -119,6 +120,9 @@ android {
     }
     lint {
         disable.add("MissingTranslation")
+    }
+    room {
+        schemaDirectory("$projectDir/schemas")
     }
 }
 

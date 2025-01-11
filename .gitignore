@@ -55,6 +55,7 @@ google-services.json
 .kotlin/
 
 schema.graphqls
+/app/schemas/
 
 # Local scripts
 local_scripts/
