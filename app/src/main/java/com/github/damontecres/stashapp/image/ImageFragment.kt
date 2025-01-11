@@ -10,6 +10,7 @@ import androidx.fragment.app.commitNow
 import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackVideoFiltersFragment
 import com.github.damontecres.stashapp.playback.VideoFilterViewModel
@@ -30,7 +31,7 @@ class ImageFragment :
     private val imageViewFragment = ImageViewFragment()
     private val imageClipFragment = ImageClipFragment()
     private val imageDetailsFragment = ImageDetailsFragment()
-    private val videoFiltersFragment = PlaybackVideoFiltersFragment().forImages()
+    private val videoFiltersFragment = PlaybackVideoFiltersFragment()
 
     private val overlayFragment = imageDetailsFragment
 
@@ -38,20 +39,22 @@ class ImageFragment :
         get() = !overlayFragment.isHidden
 
     private val filterOverlayIsVisible: Boolean
-        get() = !videoFiltersFragment.isHidden
+        get() = videoFiltersFragment.isAdded && !videoFiltersFragment.isHidden
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val slideshow = requireArguments().getDestination<Destination.Slideshow>()
         viewModel.init(slideshow)
+        filterViewModel.init(DataType.IMAGE) {
+            viewModel.image.value!!.id
+        }
 
         childFragmentManager.commit {
             listOf(
                 imageViewFragment,
                 imageClipFragment,
                 imageDetailsFragment,
-                videoFiltersFragment,
             ).forEach {
                 add(R.id.root, it, it::class.java.simpleName)
                 hide(it)
@@ -138,7 +141,11 @@ class ImageFragment :
                 androidx.leanback.R.anim.abc_slide_in_top,
                 androidx.leanback.R.anim.abc_slide_out_top,
             )
-            show(videoFiltersFragment)
+            if (videoFiltersFragment.isAdded) {
+                show(videoFiltersFragment)
+            } else {
+                add(R.id.root, videoFiltersFragment)
+            }
         }
         videoFiltersFragment.view?.requestFocus()
     }

@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.playback
 
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,32 +20,35 @@ import kotlinx.coroutines.withContext
 class VideoFilterViewModel : ViewModel() {
     val videoFilter = MutableLiveData<VideoFilter?>()
 
+    lateinit var dataType: DataType
+    lateinit var fetchCurrentId: () -> String
+
     private val serverUrl = StashServer.getCurrentStashServer()?.url
-    private lateinit var sceneId: String
+
     private val saveVideoFilter =
         PreferenceManager.getDefaultSharedPreferences(StashApplication.getApplication()).getBoolean(
             StashApplication.getApplication().getString(R.string.pref_key_playback_save_effects),
             true,
         )
 
-    fun maybeGetSavedFilter(sceneId: String) {
-        this.sceneId = sceneId
+    fun maybeGetSavedFilter() {
         if (saveVideoFilter && serverUrl != null) {
+            val id = fetchCurrentId.invoke()
             viewModelScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 val vf =
                     StashApplication
                         .getDatabase()
                         .playbackEffectsDao()
-                        .getPlaybackEffect(serverUrl, sceneId, DataType.SCENE)
+                        .getPlaybackEffect(serverUrl, id, dataType)
                 if (vf != null) {
-                    Log.d(TAG, "Loaded VideoFilter for scene $sceneId")
+                    Log.d(TAG, "Loaded VideoFilter for $dataType $id")
                 }
                 withContext(Dispatchers.Main) {
                     videoFilter.value = vf?.videoFilter
                 }
             }
         } else {
-            Log.d(TAG, "No saving video filters")
+            Log.d(TAG, "Not saving video filters")
             videoFilter.value = null
         }
     }
@@ -54,17 +58,34 @@ class VideoFilterViewModel : ViewModel() {
      */
     fun maybeSaveFilter() {
         if (saveVideoFilter && serverUrl != null) {
+            val id = fetchCurrentId.invoke()
             viewModelScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 val vf = videoFilter.value
                 if (vf != null) {
                     StashApplication
                         .getDatabase()
                         .playbackEffectsDao()
-                        .insert(PlaybackEffect(serverUrl, sceneId, DataType.SCENE, vf))
-                    Log.d(TAG, "Saved VideoFilter for scene $sceneId")
+                        .insert(PlaybackEffect(serverUrl, id, dataType, vf))
+                    Log.d(TAG, "Saved VideoFilter for $dataType $id")
+                    withContext(Dispatchers.Main) {
+                        Toast
+                            .makeText(
+                                StashApplication.getApplication(),
+                                "Saved",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                    }
                 }
             }
         }
+    }
+
+    fun init(
+        dataType: DataType,
+        fetchCurrentId: () -> String,
+    ) {
+        this.dataType = dataType
+        this.fetchCurrentId = fetchCurrentId
     }
 
     companion object {

@@ -91,6 +91,7 @@ class ImageViewFragment :
 
         val imageUrl = image.paths.image
         if (imageUrl != null) {
+            filterViewModel.maybeGetSavedFilter()
             val factory =
                 DrawableCrossFadeFactory
                     .Builder(300)
