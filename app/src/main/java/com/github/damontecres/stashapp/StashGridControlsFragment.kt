@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -56,6 +57,7 @@ class StashGridControlsFragment() :
     private lateinit var playAllButton: Button
     private lateinit var filterButton: Button
     private lateinit var subContentSwitch: SwitchMaterial
+    private lateinit var searchButton: SearchView
 
     private lateinit var fragment: StashDataGridFragment
 
@@ -172,6 +174,8 @@ class StashGridControlsFragment() :
         filterButton.onFocusChangeListener = onFocusChangeListener
         subContentSwitch = root.findViewById(R.id.sub_content_switch)
         subContentSwitch.onFocusChangeListener = onFocusChangeListener
+        searchButton = root.findViewById(R.id.search_button_view)
+        searchButton.onFocusChangeListener = onFocusChangeListener
 
         if (name == null) {
             name = getString(dataType.pluralStringId)
@@ -260,6 +264,8 @@ class StashGridControlsFragment() :
                 subContentSwitchCheckedListener?.invoke(isChecked)
             }
         }
+
+        viewModel.setupSearchButton(searchButton)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

@@ -28,31 +28,60 @@
             style="@style/GridTitleText"
             tools:text="Test Title" />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/button_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:layout_gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/filter_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:text="@string/stashapp_filters"
+            style="@style/TitleBarButton" />
+
+        <Button
+            android:id="@+id/sort_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:text="@string/sort_by"
+            style="@style/TitleBarButton" />
+
         <Button
             android:id="@+id/play_all_button"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="0"
             android:text="@string/play_all"
             android:visibility="gone"
             style="@style/TitleBarButton"
             tools:visibility="visible" />
 
-        <Button
-            android:id="@+id/sort_button"
+        <com.github.damontecres.stashapp.views.StashSearchView
+            android:id="@+id/search_button_view"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
             android:layout_weight="0"
-            android:text="@string/sort_by"
-            style="@style/TitleBarButton" />
-
-        <Button
-            android:id="@+id/filter_button"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="0"
-            android:text="@string/stashapp_filters"
-            style="@style/TitleBarButton" />
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="8dp"
+            android:textSize="14sp"
+            android:background="@drawable/button_selector"
+            android:iconifiedByDefault="true" />
     </LinearLayout>
 
     <androidx.fragment.app.FragmentContainerView

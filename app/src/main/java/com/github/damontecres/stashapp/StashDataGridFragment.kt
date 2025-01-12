@@ -415,6 +415,7 @@ class StashDataGridFragment :
         } else {
             setupJumpButtons(count)
             jumpButtonLayout.animateToVisible()
+            noResultsTextView.animateToInvisible(View.GONE)
         }
         if (count > 0 && selectedPosition >= 0) {
             positionTextView.text = formatNumber(selectedPosition + 1, false)
