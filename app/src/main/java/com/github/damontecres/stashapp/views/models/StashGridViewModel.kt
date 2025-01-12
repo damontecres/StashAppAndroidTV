@@ -120,12 +120,14 @@ class StashGridViewModel : ViewModel() {
         }
     }
 
-    fun setupSearchButton(searchButton: SearchView) {
+    fun setupSearchButton(
+        searchButton: SearchView,
+        extraFocusListener: ((hasFocus: Boolean) -> Unit)? = null,
+    ) {
         if (filterArgs.isInitialized) {
             val query = filterArgs.value!!.findFilter?.q
             if (query.isNotNullOrBlank()) {
                 searchButton.setQuery(query, false)
-                searchButton.isIconified = false
             }
         }
         searchButton.setOnQueryTextFocusChangeListener { v, hasFocus ->
@@ -137,6 +139,7 @@ class StashGridViewModel : ViewModel() {
                     )
                 imm.showSoftInput(v, 0)
             }
+            extraFocusListener?.invoke(hasFocus)
         }
         searchButton.setOnQueryTextListener(
             object : SearchView.OnQueryTextListener {
