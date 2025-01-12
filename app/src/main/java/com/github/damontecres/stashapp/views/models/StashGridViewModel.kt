@@ -147,16 +147,20 @@ class StashGridViewModel : ViewModel() {
 
                 override fun onQueryTextChange(newText: String?): Boolean {
                     searchJob?.cancel()
-                    searchJob =
-                        viewModelScope.launch(StashCoroutineExceptionHandler()) {
-                            delay(searchDelay)
-                            Log.v(TAG, "New query")
-                            val currentFilter = filterArgs.value!!
-                            val findFilter =
-                                currentFilter.findFilter
-                                    ?: StashFindFilter(currentFilter.dataType.defaultSort)
-                            setFilter(currentFilter.copy(findFilter = findFilter.copy(q = newText)))
-                        }
+                    val newQuery = newText?.ifBlank { null }
+
+                    val currentFilter = filterArgs.value!!
+                    val findFilter =
+                        currentFilter.findFilter
+                            ?: StashFindFilter(currentFilter.dataType.defaultSort)
+                    if (findFilter.q != newQuery) {
+                        searchJob =
+                            viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                                delay(searchDelay)
+                                Log.v(TAG, "New query")
+                                setFilter(currentFilter.copy(findFilter = findFilter.copy(q = newQuery)))
+                            }
+                    }
 
                     return true
                 }
