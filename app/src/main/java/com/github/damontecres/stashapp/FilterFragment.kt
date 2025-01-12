@@ -104,7 +104,7 @@ class FilterFragment :
                 "savedInstanceState.isNull=${savedInstanceState == null}",
         )
         fragment.scrollToNextPage = dest.scrollToNextPage
-        fragment.requestFocus = false
+        fragment.requestFocus = true
         fragment.init(dataType)
 
         val filter =
@@ -135,7 +135,10 @@ class FilterFragment :
 
         searchButton = view.findViewById(R.id.search_button_view)
         searchButton.onFocusChangeListener = onFocusChangeListener
-        stashGridViewModel.setupSearchButton(searchButton)
+        stashGridViewModel.setupSearchButton(searchButton) { hasFocus ->
+            // If the search text has focus, then the fragment shouldn't take it
+            fragment.requestFocus = !hasFocus
+        }
 
         headerTransitionHelper = TitleTransitionHelper(view as ViewGroup, buttonBar)
         stashGridViewModel.currentPosition.observe(viewLifecycleOwner) { position ->
