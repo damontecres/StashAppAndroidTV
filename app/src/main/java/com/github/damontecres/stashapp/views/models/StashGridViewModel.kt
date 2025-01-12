@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.views.models
 
 import android.util.Log
+import android.view.inputmethod.InputMethodManager
 import android.widget.SearchView
 import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.PresenterSelector
@@ -127,6 +128,16 @@ class StashGridViewModel : ViewModel() {
                 searchButton.isIconified = false
             }
         }
+        searchButton.setOnQueryTextFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                // Show keyboard
+                val imm: InputMethodManager =
+                    v.context.getSystemService<InputMethodManager>(
+                        InputMethodManager::class.java,
+                    )
+                imm.showSoftInput(v, 0)
+            }
+        }
         searchButton.setOnQueryTextListener(
             object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(query: String?): Boolean = onQueryTextChange(query)
@@ -136,8 +147,11 @@ class StashGridViewModel : ViewModel() {
                     searchJob =
                         viewModelScope.launch(StashCoroutineExceptionHandler()) {
                             delay(searchDelay)
+                            Log.v(TAG, "New query")
                             val currentFilter = filterArgs.value!!
-                            val findFilter = currentFilter.findFilter ?: StashFindFilter()
+                            val findFilter =
+                                currentFilter.findFilter
+                                    ?: StashFindFilter(currentFilter.dataType.defaultSort)
                             setFilter(currentFilter.copy(findFilter = findFilter.copy(q = newText)))
                         }
 

@@ -104,7 +104,7 @@ class FilterFragment :
                 "savedInstanceState.isNull=${savedInstanceState == null}",
         )
         fragment.scrollToNextPage = dest.scrollToNextPage
-        fragment.requestFocus = true
+        fragment.requestFocus = false
         fragment.init(dataType)
 
         val filter =
