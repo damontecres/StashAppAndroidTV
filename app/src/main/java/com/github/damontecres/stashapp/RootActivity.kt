@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
+import android.widget.ImageView
 import androidx.activity.viewModels
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
@@ -35,6 +36,7 @@ class RootActivity :
 
     private var hasCheckedForUpdate = false
     private lateinit var loadingView: ContentLoadingProgressBar
+    private lateinit var bgLogo: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setUpLifeCycleListeners()
@@ -59,6 +61,7 @@ class RootActivity :
         // Ensure everything is initialized
         super.onCreate(savedInstanceState)
         loadingView = findViewById(R.id.loading_progress_bar)
+        bgLogo = findViewById(R.id.background_logo)
 
         val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
         if (currentServer != null) {
@@ -86,6 +89,8 @@ class RootActivity :
         hasCheckedForUpdate = false
         if (appHasPin) {
             navigationManager.navigate(Destination.Pin)
+        } else {
+            serverViewModel.updateServerPreferences()
         }
     }
 
@@ -94,7 +99,8 @@ class RootActivity :
         nextDestination: Destination,
         fragment: Fragment,
     ) {
-        loadingView.animateToInvisible(View.GONE)
+        loadingView.hide()
+        bgLogo.animateToInvisible(View.GONE)
         Log.v(
             TAG,
             "onNavigate: $previousDestination=>$nextDestination",
