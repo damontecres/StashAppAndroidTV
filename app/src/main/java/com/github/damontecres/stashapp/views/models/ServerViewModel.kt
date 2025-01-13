@@ -74,6 +74,14 @@ open class ServerViewModel : ViewModel() {
         switchServer(currentServer)
     }
 
+    fun updateServerPreferences() {
+        currentServer.value?.let { server ->
+            viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                server.updateServerPrefs()
+            }
+        }
+    }
+
     fun maybeShowUpdate(context: Context) {
         val checkForUpdates =
             PreferenceManager
