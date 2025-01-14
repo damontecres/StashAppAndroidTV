@@ -36,30 +36,27 @@ class HierarchicalMultiCriterionFragment(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
+        val modifiers =
+            filterOption.allowedModifiers ?: listOf(
+                CriterionModifier.INCLUDES_ALL,
+                CriterionModifier.INCLUDES,
+            )
+
         curVal = filterOption.getter
             .invoke(
                 viewModel.objectFilter.value!!,
-            ).getOrNull() ?: HierarchicalMultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
+            ).getOrNull() ?: HierarchicalMultiCriterionInput(modifier = modifiers[0])
 
         val modifierOptions =
-            buildList {
-                add(
-                    GuidedAction
-                        .Builder(requireContext())
-                        .id(MODIFIER_OFFSET + CriterionModifier.INCLUDES.ordinal.toLong())
-                        .hasNext(false)
-                        .title(CriterionModifier.INCLUDES.getString(requireContext()))
-                        .build(),
-                )
-                add(
-                    GuidedAction
-                        .Builder(requireContext())
-                        .id(MODIFIER_OFFSET + CriterionModifier.INCLUDES_ALL.ordinal.toLong())
-                        .hasNext(false)
-                        .title(CriterionModifier.INCLUDES_ALL.getString(requireContext()))
-                        .build(),
-                )
+            modifiers.map { modifier ->
+                GuidedAction
+                    .Builder(requireContext())
+                    .id(MODIFIER_OFFSET + modifier.ordinal.toLong())
+                    .hasNext(false)
+                    .title(modifier.getString(requireContext()))
+                    .build()
             }
+
         actions.add(
             GuidedAction
                 .Builder(requireContext())
