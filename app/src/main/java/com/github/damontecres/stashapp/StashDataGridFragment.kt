@@ -344,6 +344,8 @@ class StashDataGridFragment :
                                 .getDefaultSharedPreferences(requireContext())
                                 .getInt("maxSearchResults", 25)
                         jumpTo(page)
+                        // Only scroll the first time
+                        scrollToNextPage = false
                     }
                     loadingProgressBar.hide()
                     if (requestFocus) {

@@ -269,6 +269,11 @@ class StashGridControlsFragment() :
         }
 
         viewModel.setupSearchButton(searchButton)
+
+        viewModel.searchBarFocus.observe(viewLifecycleOwner) { hasFocus ->
+            // If the search text has focus, then the fragment shouldn't take it
+            fragment.requestFocus = !hasFocus
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

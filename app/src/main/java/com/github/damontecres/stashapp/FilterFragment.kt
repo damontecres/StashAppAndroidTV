@@ -135,10 +135,7 @@ class FilterFragment :
 
         searchButton = view.findViewById(R.id.search_button_view)
         searchButton.onFocusChangeListener = onFocusChangeListener
-        stashGridViewModel.setupSearchButton(searchButton) { hasFocus ->
-            // If the search text has focus, then the fragment shouldn't take it
-            fragment.requestFocus = !hasFocus
-        }
+        stashGridViewModel.setupSearchButton(searchButton)
 
         headerTransitionHelper = TitleTransitionHelper(view as ViewGroup, buttonBar)
         stashGridViewModel.currentPosition.observe(viewLifecycleOwner) { position ->
@@ -163,6 +160,11 @@ class FilterFragment :
         } else if (filter.dataType == DataType.IMAGE) {
             playAllButton.visibility = View.VISIBLE
             playAllButton.text = getString(R.string.play_slideshow)
+        }
+
+        stashGridViewModel.searchBarFocus.observe(viewLifecycleOwner) { hasFocus ->
+            // If the search text has focus, then the fragment shouldn't take it
+            fragment.requestFocus = !hasFocus
         }
     }
 
