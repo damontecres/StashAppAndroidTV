@@ -67,17 +67,12 @@
             app:switchPadding="8dp"
             tools:visibility="visible" />
 
-        <com.github.damontecres.stashapp.views.StashSearchView
-            android:id="@+id/search_button_view"
-            android:layout_width="wrap_content"
+        <androidx.leanback.widget.SearchEditText
+            android:id="@+id/search_edit_text"
+            style="@style/SearchEditText"
+            android:layout_width="300dp"
             android:layout_height="match_parent"
-            android:layout_margin="8dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="8dp"
-            android:textSize="14sp"
-            android:background="@drawable/button_selector"
-            android:iconifiedByDefault="true" />
+            android:layout_margin="8dp" />
     </LinearLayout>
 
     <androidx.fragment.app.FragmentContainerView

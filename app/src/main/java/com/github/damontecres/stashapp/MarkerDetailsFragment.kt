@@ -227,6 +227,8 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
                 .addListenerForClass(StashAction::class.java) { item ->
                     actionClickListener.onClicked(item)
+                }.addListenerForClass(Action::class.java) { _ ->
+                    // no-op, detailsPresenter.onActionClickedListener will handle
                 }
 
         viewModel.item.observe(viewLifecycleOwner) { marker ->
