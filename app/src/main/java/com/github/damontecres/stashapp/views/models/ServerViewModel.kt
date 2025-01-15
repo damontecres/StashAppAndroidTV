@@ -21,6 +21,10 @@ open class ServerViewModel : ViewModel() {
     private val _currentServer = EqualityMutableLiveData<StashServer?>()
     val currentServer: LiveData<StashServer?> = _currentServer
 
+    private val _serverConnection =
+        EqualityMutableLiveData<ServerConnection>(ServerConnection.Pending)
+    val serverConnection: LiveData<ServerConnection> = _serverConnection
+
     fun requireServer(): StashServer = currentServer.value!!
 
     private val _cardUiSettings = EqualityMutableLiveData(createUiSettings())
@@ -29,14 +33,21 @@ open class ServerViewModel : ViewModel() {
     lateinit var navigationManager: NavigationManager
 
     fun switchServer(newServer: StashServer?) {
+        _serverConnection.value = ServerConnection.Pending
         if (newServer != null) {
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                newServer.updateServerPrefs()
-                StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
-                _currentServer.value = newServer
+                try {
+                    newServer.updateServerPrefs()
+                    StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
+                    _currentServer.value = newServer
+                    _serverConnection.value = ServerConnection.Success
+                } catch (ex: Exception) {
+                    _serverConnection.value = ServerConnection.Failure(ex)
+                }
             }
         } else {
             _currentServer.value = null
+            _serverConnection.value = ServerConnection.NotConfigured
         }
     }
 
@@ -105,4 +116,16 @@ open class ServerViewModel : ViewModel() {
         val imageCrop: Boolean,
         val videoDelay: Int,
     )
+
+    sealed interface ServerConnection {
+        data object Pending : ServerConnection
+
+        data object Success : ServerConnection
+
+        data class Failure(
+            val ex: Exception,
+        ) : ServerConnection
+
+        data object NotConfigured : ServerConnection
+    }
 }

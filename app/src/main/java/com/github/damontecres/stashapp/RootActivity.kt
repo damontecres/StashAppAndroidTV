@@ -8,6 +8,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
@@ -67,6 +68,30 @@ class RootActivity :
         if (currentServer != null) {
             Log.i(TAG, "Server configured")
             serverViewModel.init(currentServer)
+
+            serverViewModel.serverConnection.observe(this) { result ->
+                when (result) {
+                    is ServerViewModel.ServerConnection.Failure -> {
+                        Log.w(TAG, "Exception connecting to server", result.ex)
+                        Toast
+                            .makeText(
+                                this,
+                                "Error connecting to ${currentServer.url}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        navigationManager.navigate(Destination.ManageServers(true))
+                    }
+
+                    ServerViewModel.ServerConnection.NotConfigured -> {
+                        Log.i(TAG, "No server, starting setup")
+                        navigationManager.navigate(Destination.Setup)
+                    }
+
+                    ServerViewModel.ServerConnection.Pending -> {}
+                    ServerViewModel.ServerConnection.Success -> {}
+                }
+            }
+
             serverViewModel.currentServer.observe(this) { server ->
                 if (server != null) {
                     if (savedInstanceState == null) {
