@@ -162,9 +162,12 @@ class FilterFragment :
             playAllButton.text = getString(R.string.play_slideshow)
         }
 
-        stashGridViewModel.searchBarFocus.observe(viewLifecycleOwner) { hasFocus ->
-            // If the search text has focus, then the fragment shouldn't take it
-            fragment.requestFocus = !hasFocus
+        val initialRequestFocus = fragment.requestFocus
+        if (initialRequestFocus) {
+            stashGridViewModel.searchBarFocus.observe(viewLifecycleOwner) { hasFocus ->
+                // If the search text has focus, then the fragment shouldn't take it
+                fragment.requestFocus = !hasFocus
+            }
         }
     }
 
