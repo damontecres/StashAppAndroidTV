@@ -8,12 +8,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.PresenterSelector
+import androidx.leanback.widget.SearchEditText
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
@@ -55,7 +55,7 @@ class StashGridControlsFragment() :
     private lateinit var playAllButton: Button
     private lateinit var filterButton: Button
     private lateinit var subContentSwitch: SwitchMaterial
-    private lateinit var searchButton: SearchView
+    private lateinit var searchEditText: SearchEditText
 
     private lateinit var fragment: StashDataGridFragment
 
@@ -178,8 +178,7 @@ class StashGridControlsFragment() :
         filterButton.onFocusChangeListener = onFocusChangeListener
         subContentSwitch = root.findViewById(R.id.sub_content_switch)
         subContentSwitch.onFocusChangeListener = onFocusChangeListener
-        searchButton = root.findViewById(R.id.search_button_view)
-        searchButton.onFocusChangeListener = onFocusChangeListener
+        searchEditText = root.findViewById(R.id.search_edit_text)
 
         if (name == null) {
             name = getString(dataType.pluralStringId)
@@ -268,7 +267,7 @@ class StashGridControlsFragment() :
             }
         }
 
-        viewModel.setupSearchButton(searchButton)
+        viewModel.setupSearch(searchEditText)
 
         val initialRequestFocus = fragment.requestFocus
         if (initialRequestFocus) {

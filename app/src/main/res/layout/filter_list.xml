@@ -67,21 +67,11 @@
             style="@style/TitleBarButton"
             tools:visibility="visible" />
 
-        <com.github.damontecres.stashapp.views.StashSearchView
-            android:id="@+id/search_button_view"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="4dp"
-            android:layout_weight="0"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="8dp"
-            android:textSize="14sp"
-            android:background="@drawable/button_selector"
-            android:iconifiedByDefault="true" />
+        <androidx.leanback.widget.SearchEditText
+            android:id="@+id/search_edit_text"
+            style="@style/SearchEditText"
+            android:layout_width="300dp"
+            android:layout_height="match_parent" />
     </LinearLayout>
 
     <androidx.fragment.app.FragmentContainerView
