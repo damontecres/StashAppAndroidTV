@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.views.models
 
 import android.content.Context
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
@@ -21,8 +22,7 @@ open class ServerViewModel : ViewModel() {
     private val _currentServer = EqualityMutableLiveData<StashServer?>()
     val currentServer: LiveData<StashServer?> = _currentServer
 
-    private val _serverConnection =
-        EqualityMutableLiveData<ServerConnection>(ServerConnection.Pending)
+    private val _serverConnection = MutableLiveData<ServerConnection>(ServerConnection.Pending)
     val serverConnection: LiveData<ServerConnection> = _serverConnection
 
     fun requireServer(): StashServer = currentServer.value!!
@@ -42,11 +42,12 @@ open class ServerViewModel : ViewModel() {
                     _currentServer.value = newServer
                     _serverConnection.value = ServerConnection.Success
                 } catch (ex: Exception) {
-                    _serverConnection.value = ServerConnection.Failure(ex)
+                    _currentServer.setValueNoCheck(null)
+                    _serverConnection.value = ServerConnection.Failure(newServer, ex)
                 }
             }
         } else {
-            _currentServer.value = null
+            _currentServer.setValueNoCheck(null)
             _serverConnection.value = ServerConnection.NotConfigured
         }
     }
@@ -123,7 +124,8 @@ open class ServerViewModel : ViewModel() {
         data object Success : ServerConnection
 
         data class Failure(
-            val ex: Exception,
+            val server: StashServer,
+            val exception: Exception,
         ) : ServerConnection
 
         data object NotConfigured : ServerConnection

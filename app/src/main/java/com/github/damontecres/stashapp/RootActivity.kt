@@ -72,14 +72,16 @@ class RootActivity :
             serverViewModel.serverConnection.observe(this) { result ->
                 when (result) {
                     is ServerViewModel.ServerConnection.Failure -> {
-                        Log.w(TAG, "Exception connecting to server", result.ex)
+                        Log.w(TAG, "Exception connecting to server", result.exception)
                         Toast
                             .makeText(
                                 this,
-                                "Error connecting to ${currentServer.url}",
+                                "Error connecting to ${result.server.url}",
                                 Toast.LENGTH_LONG,
                             ).show()
-                        navigationManager.navigate(Destination.ManageServers(true))
+                        if (!appHasPin) {
+                            navigationManager.navigate(Destination.ManageServers(true))
+                        }
                     }
 
                     ServerViewModel.ServerConnection.NotConfigured -> {
