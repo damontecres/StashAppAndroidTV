@@ -27,7 +27,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
 import androidx.preference.PreferenceManager
@@ -597,18 +596,8 @@ abstract class PlaybackFragment(
 
     @OptIn(UnstableApi::class)
     override fun onStart() {
+        player = preparePlayer()
         super.onStart()
-        if (Util.SDK_INT > 23) {
-            player = preparePlayer()
-        }
-    }
-
-    @OptIn(UnstableApi::class)
-    override fun onResume() {
-        super.onResume()
-        if ((Util.SDK_INT <= 23 || player == null)) {
-            player = preparePlayer()
-        }
     }
 
     @OptIn(UnstableApi::class)
@@ -632,18 +621,12 @@ abstract class PlaybackFragment(
             Constants.POSITION_REQUEST_KEY,
             bundleOf(Constants.POSITION_REQUEST_KEY to positionToSave),
         )
-
-        if (Util.SDK_INT <= 23) {
-            releasePlayer()
-        }
     }
 
     @OptIn(UnstableApi::class)
     override fun onStop() {
         super.onStop()
-        if (Util.SDK_INT > 23) {
-            releasePlayer()
-        }
+        releasePlayer()
     }
 
     fun showAndFocusSeekBar() {

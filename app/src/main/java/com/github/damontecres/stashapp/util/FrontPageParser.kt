@@ -143,7 +143,7 @@ class FrontPageParser(
                                 .withResolvedRandom()
                         val findFilter =
                             filter.findFilter?.toFindFilterType(page = 1, perPage = pageSize)
-                        val objectFilter = result.object_filter
+                        val objectFilter = filter.objectFilter
 
                         val data =
                             when (filter.dataType) {
