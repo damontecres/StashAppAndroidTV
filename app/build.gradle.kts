@@ -132,20 +132,30 @@ tasks.register("createGraphqlSchema") {
     description = "Concats all of the server graphql scehem files"
 
     doFirst {
-        File("$buildDir/generated/source/schema.graphqls").writeTextIfDifferent(
-            fileTree("../stash-server/graphql/schema/")
-                .filter { it.extension == "graphql" }
-                .files
-                .sorted()
-                .joinToString("\n") { it.readText() },
+        File("$projectDir/src/main/graphql/schema.graphqls").writeTextIfDifferent(
+            "# Auto-generated do not edit\n\n" +
+                fileTree("../stash-server/graphql/schema/")
+                    .filter { it.extension == "graphql" }
+                    .files
+                    .sorted()
+                    .joinToString("\n") { it.readText() },
         )
+    }
+}
+
+tasks.register("cleanGraphqlSchema") {
+    group = "clean"
+    description = "Deletes generated graphql schema"
+
+    doFirst {
+        File("$projectDir/src/main/graphql/schema.graphqls").delete()
     }
 }
 
 apollo {
     service("app") {
         packageName.set("com.github.damontecres.stashapp.api")
-        schemaFile = File("$buildDir/generated/source/schema.graphqls")
+        schemaFile = File("$projectDir/src/main/graphql/schema.graphqls")
         generateOptionalOperationVariables.set(false)
         outputDirConnection {
             // Fixes where classes aren't detected in unit tests
@@ -167,6 +177,7 @@ tasks.register<com.github.damontecres.buildsrc.ParseStashStrings>("generateStrin
 
 // tasks.preBuild.dependsOn("generateStrings")
 tasks.preBuild.dependsOn("generateStrings")
+tasks.clean.dependsOn("cleanGraphqlSchema")
 
 dependencies {
     implementation(libs.androidx.core.ktx)
