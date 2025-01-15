@@ -7,5 +7,5 @@ class GalleryViewModel : ItemViewModel<GalleryData>() {
     override suspend fun fetch(
         queryEngine: QueryEngine,
         id: String,
-    ): GalleryData? = queryEngine.getGalleries(listOf(id)).firstOrNull()
+    ): GalleryData? = queryEngine.getGallery(id)
 }

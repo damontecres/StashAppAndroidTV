@@ -33,7 +33,12 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.item.observe(viewLifecycleOwner) { group ->
             if (group == null) {
-                Toast.makeText(requireContext(), "Group not found", Toast.LENGTH_LONG).show()
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Group '${viewModel.itemId}' not found",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 serverViewModel.navigationManager.goBack()
                 return@observe
             }

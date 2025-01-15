@@ -6,16 +6,15 @@ query FindGalleries($filter: FindFilterType, $gallery_filter: GalleryFilterType,
   }
 }
 
-query CountGalleries($filter: FindFilterType, $gallery_filter: GalleryFilterType) {
-  findGalleries(filter: $filter, gallery_filter: $gallery_filter) {
-    count
+query GetGallery($id: ID!) {
+  findGallery(id: $id) {
+    ...GalleryData
   }
 }
 
-
-query FindGallery($id: ID!) {
-  findGallery(id: $id) {
-    ...GalleryData
+query CountGalleries($filter: FindFilterType, $gallery_filter: GalleryFilterType) {
+  findGalleries(filter: $filter, gallery_filter: $gallery_filter) {
+    count
   }
 }
 

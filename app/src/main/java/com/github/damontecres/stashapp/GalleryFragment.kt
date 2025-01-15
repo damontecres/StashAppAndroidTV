@@ -37,7 +37,12 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
 
         viewModel.item.observe(viewLifecycleOwner) { gallery ->
             if (gallery == null) {
-                Toast.makeText(requireContext(), "Gallery not found", Toast.LENGTH_LONG).show()
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "Gallery '${viewModel.itemId}' not found",
+                        Toast.LENGTH_LONG,
+                    ).show()
                 serverViewModel.navigationManager.goBack()
                 return@observe
             }

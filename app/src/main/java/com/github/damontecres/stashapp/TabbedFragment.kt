@@ -14,6 +14,8 @@ import androidx.leanback.tab.LeanbackViewPager
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
+import com.github.damontecres.stashapp.util.animateToInvisible
+import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.models.TabbedGridViewModel
 import com.google.android.material.tabs.TabLayout
@@ -22,9 +24,10 @@ import com.google.android.material.tabs.TabLayout
  * A [Fragment] that displays multiple tabs
  */
 abstract class TabbedFragment(
-    val tabKey: String,
+    private val tabKey: String,
 ) : Fragment(R.layout.tabbed_grid_view),
-    DefaultKeyEventCallback {
+    DefaultKeyEventCallback,
+    StashGridControlsFragment.HeaderVisibilityListener {
     private lateinit var viewPager: LeanbackViewPager
     protected val serverViewModel by activityViewModels<ServerViewModel>()
     protected val tabViewModel by viewModels<TabbedGridViewModel>()
@@ -52,7 +55,7 @@ abstract class TabbedFragment(
             adapter = StashFragmentPagerAdapter(pages, childFragmentManager)
             adapter.fragmentCreatedListener = { fragment, position ->
                 if (fragment is StashGridControlsFragment) {
-                    fragment.titleView = tabLayout
+                    fragment.headerVisibilityListener = this@TabbedFragment
                 }
                 fragments[position] = fragment
             }
@@ -105,6 +108,16 @@ abstract class TabbedFragment(
         viewPager = view.findViewById(R.id.view_pager)
         tabLayout = view.findViewById(R.id.tab_layout)
         tabLayout.setupWithViewPager(viewPager)
+        // Hide tabLayout if needed
+        fragments.values.forEach {
+            if (it is StashGridControlsFragment) {
+                it.headerVisibilityListener = this
+                if (!it.headerShowing) {
+                    Log.v(TAG, "Making tabLayout gone")
+                    tabLayout.visibility = View.GONE
+                }
+            }
+        }
     }
 
     override fun onKeyUp(
@@ -117,6 +130,20 @@ abstract class TabbedFragment(
             return true
         }
         return super.onKeyUp(keyCode, event)
+    }
+
+    override fun onHeaderVisibilityChanged(
+        fragment: StashGridControlsFragment,
+        headerShowing: Boolean,
+    ) {
+        if (fragment == fragments[currentTabPosition]) {
+//            Log.v(TAG, "onHeaderVisibilityChanged: headerShowing=$headerShowing")
+            if (headerShowing) {
+                tabLayout.animateToVisible()
+            } else {
+                tabLayout.animateToInvisible(View.GONE)
+            }
+        }
     }
 
     companion object {

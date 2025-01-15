@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.BaseAdapter
 import android.widget.Button
+import android.widget.SearchView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.ListPopupWindow
@@ -36,6 +37,7 @@ import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
+import com.github.damontecres.stashapp.views.TitleTransitionHelper
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.models.StashGridViewModel
 import kotlinx.coroutines.launch
@@ -51,12 +53,15 @@ class FilterFragment :
     private val serverViewModel: ServerViewModel by activityViewModels()
     private val stashGridViewModel: StashGridViewModel by viewModels()
 
+    private lateinit var buttonBar: View
     private lateinit var titleTextView: TextView
     private lateinit var filterButton: Button
     private lateinit var sortButton: Button
     private lateinit var playAllButton: Button
+    private lateinit var searchButton: SearchView
 
     private lateinit var sortButtonManager: SortButtonManager
+    private lateinit var headerTransitionHelper: TitleTransitionHelper
 
     private lateinit var dataType: DataType
 
@@ -119,12 +124,24 @@ class FilterFragment :
         val onFocusChangeListener = StashOnFocusChangeListener(requireContext())
         filterButton.onFocusChangeListener = onFocusChangeListener
 
+        buttonBar = view.findViewById(R.id.button_bar)
+
         sortButton = view.findViewById(R.id.sort_button)
         sortButton.onFocusChangeListener = onFocusChangeListener
         playAllButton = view.findViewById(R.id.play_all_button)
         playAllButton.onFocusChangeListener = onFocusChangeListener
         titleTextView = view.findViewById(R.id.list_title)
         titleTextView.text = filter.name ?: getString(dataType.pluralStringId)
+
+        searchButton = view.findViewById(R.id.search_button_view)
+        searchButton.onFocusChangeListener = onFocusChangeListener
+        stashGridViewModel.setupSearchButton(searchButton)
+
+        headerTransitionHelper = TitleTransitionHelper(view as ViewGroup, buttonBar)
+        stashGridViewModel.currentPosition.observe(viewLifecycleOwner) { position ->
+            val shouldShowTitle = position < fragment.numberOfColumns
+            headerTransitionHelper.showTitle(shouldShowTitle)
+        }
 
         sortButtonManager.setUpSortButton(
             sortButton,
@@ -143,6 +160,11 @@ class FilterFragment :
         } else if (filter.dataType == DataType.IMAGE) {
             playAllButton.visibility = View.VISIBLE
             playAllButton.text = getString(R.string.play_slideshow)
+        }
+
+        stashGridViewModel.searchBarFocus.observe(viewLifecycleOwner) { hasFocus ->
+            // If the search text has focus, then the fragment shouldn't take it
+            fragment.requestFocus = !hasFocus
         }
     }
 

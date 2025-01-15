@@ -108,7 +108,7 @@ class ImageViewModel(
         newPosition: Int,
         showToast: Boolean = true,
     ) {
-        Log.v(TAG, "switchImage $currentPosition => $newPosition")
+        Log.v(TAG, "switchImage ${currentPosition.value} => $newPosition")
         val totalCount = this.totalCount.value
 
         if (totalCount != null && newPosition > totalCount) {

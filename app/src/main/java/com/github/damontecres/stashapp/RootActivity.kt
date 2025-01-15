@@ -7,7 +7,9 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
+import android.widget.ImageView
 import androidx.activity.viewModels
+import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
@@ -16,6 +18,7 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlin.properties.Delegates
@@ -32,6 +35,8 @@ class RootActivity :
     private var currentFragment: Fragment? = null
 
     private var hasCheckedForUpdate = false
+    private lateinit var loadingView: ContentLoadingProgressBar
+    private lateinit var bgLogo: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setUpLifeCycleListeners()
@@ -55,6 +60,8 @@ class RootActivity :
 
         // Ensure everything is initialized
         super.onCreate(savedInstanceState)
+        loadingView = findViewById(R.id.loading_progress_bar)
+        bgLogo = findViewById(R.id.background_logo)
 
         val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
         if (currentServer != null) {
@@ -82,6 +89,8 @@ class RootActivity :
         hasCheckedForUpdate = false
         if (appHasPin) {
             navigationManager.navigate(Destination.Pin)
+        } else {
+            serverViewModel.updateServerPreferences()
         }
     }
 
@@ -90,6 +99,8 @@ class RootActivity :
         nextDestination: Destination,
         fragment: Fragment,
     ) {
+        loadingView.hide()
+        bgLogo.animateToInvisible(View.GONE)
         Log.v(
             TAG,
             "onNavigate: $previousDestination=>$nextDestination",

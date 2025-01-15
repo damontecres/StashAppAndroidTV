@@ -10,7 +10,9 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.data.room.VideoFilter
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.VideoFilter
+import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 
 /**
  * Display the [VideoFilter] options to manipulate
@@ -96,17 +98,21 @@ class PlaybackVideoFiltersFragment : Fragment(R.layout.apply_video_filters) {
             blurText.text = getString(R.string.format_pixels, it / 10f)
         }
 
+        val onFocusChangeListener = StashOnFocusChangeListener(requireContext())
         val rotateLeftButton = view.findViewById<Button>(R.id.rotate_left_button)
         val rotateRightButton = view.findViewById<Button>(R.id.rotate_right_button)
+        rotateLeftButton.onFocusChangeListener = onFocusChangeListener
         rotateLeftButton.setOnClickListener {
             val vf = getOrCreateVideoFilter()
             viewModel.videoFilter.value = vf.copy(rotation = vf.rotation + 90)
         }
+        rotateRightButton.onFocusChangeListener = onFocusChangeListener
         rotateRightButton.setOnClickListener {
             val vf = getOrCreateVideoFilter()
             viewModel.videoFilter.value = vf.copy(rotation = vf.rotation - 90)
         }
         val saveButton = view.findViewById<Button>(R.id.save_button)
+        saveButton.onFocusChangeListener = onFocusChangeListener
         saveButton.setOnClickListener {
             viewModel.maybeSaveFilter()
         }
@@ -120,13 +126,19 @@ class PlaybackVideoFiltersFragment : Fragment(R.layout.apply_video_filters) {
         }
 
         val resetButton = view.findViewById<Button>(R.id.reset_button)
+        resetButton.onFocusChangeListener = onFocusChangeListener
         resetButton.setOnClickListener {
             val vf = VideoFilter()
             viewModel.videoFilter.value = vf
             setUi(vf)
         }
 
-        saveButton.requestFocus()
+        if (viewModel.dataType == DataType.IMAGE) {
+            view.findViewById<View>(R.id.hue_row).visibility = View.GONE
+            view.findViewById<View>(R.id.blur_row).visibility = View.GONE
+            rotateLeftButton.visibility = View.GONE
+            rotateRightButton.visibility = View.GONE
+        }
     }
 
     private fun getOrCreateVideoFilter(): VideoFilter = viewModel.videoFilter.value ?: VideoFilter()

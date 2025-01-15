@@ -26,6 +26,8 @@
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:progressTint="@color/filter_thumb"
+                android:thumbTint="@color/filter_thumb"
                 android:nextFocusLeft="@id/brightness_adjust"
                 android:nextFocusRight="@id/brightness_adjust"
                 />
@@ -49,6 +51,8 @@
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:progressTint="@color/filter_thumb"
+                android:thumbTint="@color/filter_thumb"
                 android:nextFocusLeft="@id/contrast_adjust"
                 android:nextFocusRight="@id/contrast_adjust"
                 />
@@ -72,6 +76,8 @@
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:progressTint="@color/filter_thumb"
+                android:thumbTint="@color/filter_thumb"
                 android:nextFocusLeft="@id/saturation_adjust"
                 android:nextFocusRight="@id/saturation_adjust"
                 />
@@ -82,7 +88,8 @@
                 tools:text="100%"
                 />
         </TableRow>
-        <TableRow>
+
+        <TableRow android:id="@+id/hue_row">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -95,6 +102,8 @@
                 android:progress="0"
                 android:min="0"
                 android:max="360"
+                android:progressTint="@color/filter_thumb"
+                android:thumbTint="@color/filter_thumb"
                 android:nextFocusLeft="@id/hue_adjust"
                 android:nextFocusRight="@id/hue_adjust"
                 />
@@ -115,10 +124,11 @@
                 android:id="@+id/red_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
-                android:progressTint="@android:color/holo_red_dark"
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:progressTint="@color/seek_bar_red"
+                android:thumbTint="@color/filter_thumb"
                 android:nextFocusLeft="@id/red_adjust"
                 android:nextFocusRight="@id/red_adjust"
                 />
@@ -139,10 +149,11 @@
                 android:id="@+id/green_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
-                android:progressTint="@android:color/holo_green_dark"
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:progressTint="@color/seek_bar_green"
+                android:thumbTint="@color/filter_thumb"
                 android:nextFocusLeft="@id/green_adjust"
                 android:nextFocusRight="@id/green_adjust"
                 />
@@ -163,10 +174,11 @@
                 android:id="@+id/blue_adjust"
                 android:layout_width="@dimen/filter_seek_bar"
                 android:layout_height="wrap_content"
-                android:progressTint="@android:color/holo_blue_dark"
                 android:progress="100"
                 android:min="0"
                 android:max="200"
+                android:progressTint="@color/seek_bar_blue"
+                android:thumbTint="@color/filter_thumb"
                 android:nextFocusLeft="@id/blue_adjust"
                 android:nextFocusRight="@id/blue_adjust"
                 />
@@ -178,7 +190,7 @@
                 />
         </TableRow>
 
-        <TableRow>
+        <TableRow android:id="@+id/blur_row">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -192,6 +204,8 @@
                 android:progress="0"
                 android:min="0"
                 android:max="250"
+                android:progressTint="@color/filter_thumb"
+                android:thumbTint="@color/filter_thumb"
                 android:nextFocusLeft="@id/blur_adjust"
                 android:nextFocusRight="@id/blur_adjust" />
 

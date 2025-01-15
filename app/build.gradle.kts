@@ -13,6 +13,7 @@ plugins {
     id("kotlin-parcelize")
     alias(libs.plugins.apollo)
     alias(libs.plugins.kotlin.plugin.serialization)
+    alias(libs.plugins.room)
 }
 
 fun getVersionCode(): Int {
@@ -49,6 +50,7 @@ android {
         getByName("main") {
             res.srcDirs("src/main/res", "$buildDir/generated/res/server")
         }
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
     }
 
     buildFeatures {
@@ -119,6 +121,9 @@ android {
     }
     lint {
         disable.add("MissingTranslation")
+    }
+    room {
+        schemaDirectory("$projectDir/schemas")
     }
 }
 
@@ -218,6 +223,7 @@ dependencies {
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
 
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.test.ext.junit.ktx)
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)

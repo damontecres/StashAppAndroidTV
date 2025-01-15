@@ -269,7 +269,7 @@ abstract class PlaybackFragment(
         }
 
         updatePreviewLoader(scene)
-        filterViewModel.maybeGetSavedFilter(scene.id)
+        filterViewModel.maybeGetSavedFilter()
     }
 
     /**
@@ -306,18 +306,30 @@ abstract class PlaybackFragment(
 
     private fun hideVideoFilterFragment() {
         childFragmentManager.commit {
+            setCustomAnimations(
+                androidx.leanback.R.anim.abc_slide_in_top,
+                androidx.leanback.R.anim.abc_slide_out_top,
+            )
             hide(videoFilterFragment)
         }
     }
 
     private fun showVideoFilterFragment() {
         childFragmentManager.commit {
+            setCustomAnimations(
+                androidx.leanback.R.anim.abc_slide_in_top,
+                androidx.leanback.R.anim.abc_slide_out_top,
+            )
             show(videoFilterFragment)
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        filterViewModel.init(DataType.SCENE) {
+            currentScene!!.id
+        }
 
         setFragmentResultListener(PlaybackFragment::class.simpleName!!) { _, bundle ->
             val itemId = bundle.getString(SearchForFragment.RESULT_ITEM_ID_KEY)
@@ -510,6 +522,10 @@ abstract class PlaybackFragment(
                             callbacks[size - 1] = {
                                 videoView.showController()
                                 childFragmentManager.commitNow {
+                                    setCustomAnimations(
+                                        androidx.leanback.R.anim.abc_slide_in_top,
+                                        androidx.leanback.R.anim.abc_slide_out_top,
+                                    )
                                     add(R.id.video_overlay, videoFilterFragment)
                                 }
                                 videoFilterFragment.requireView().requestFocus()

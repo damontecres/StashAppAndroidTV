@@ -344,6 +344,8 @@ class StashDataGridFragment :
                                 .getDefaultSharedPreferences(requireContext())
                                 .getInt("maxSearchResults", 25)
                         jumpTo(page)
+                        // Only scroll the first time
+                        scrollToNextPage = false
                     }
                     loadingProgressBar.hide()
                     if (requestFocus) {
@@ -381,7 +383,7 @@ class StashDataGridFragment :
             onBackPressedCallback =
                 requireActivity().onBackPressedDispatcher.addCallback(
                     viewLifecycleOwner,
-                    selectedPosition >= 0,
+                    selectedPosition >= numberOfColumns,
                 ) {
                     jumpTo(0)
                     isEnabled = false
@@ -415,6 +417,7 @@ class StashDataGridFragment :
         } else {
             setupJumpButtons(count)
             jumpButtonLayout.animateToVisible()
+            noResultsTextView.animateToInvisible(View.GONE)
         }
         if (count > 0 && selectedPosition >= 0) {
             positionTextView.text = formatNumber(selectedPosition + 1, false)

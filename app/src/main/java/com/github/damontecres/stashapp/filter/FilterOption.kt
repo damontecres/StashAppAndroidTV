@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
+import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -42,7 +43,46 @@ data class FilterOption<FilterType : StashDataFilter, ValueType : Any>(
     val type: KClass<ValueType>,
     val getter: (FilterType) -> Optional<ValueType?>,
     val setter: (FilterType, Optional<ValueType?>) -> FilterType,
+    val allowedModifiers: List<CriterionModifier>? = null,
 )
+
+// Derived from files in https://github.com/stashapp/stash/tree/develop/ui/v2.5/src/models/list-filter/criteria
+val MultiCriterionModifiers =
+    listOf(
+        CriterionModifier.INCLUDES_ALL,
+        CriterionModifier.INCLUDES,
+        CriterionModifier.EQUALS,
+        CriterionModifier.IS_NULL,
+        CriterionModifier.NOT_NULL,
+    )
+val PerformerTagsCriterionModifiers =
+    listOf(
+        CriterionModifier.INCLUDES_ALL,
+        CriterionModifier.INCLUDES,
+        CriterionModifier.IS_NULL,
+        CriterionModifier.NOT_NULL,
+    )
+val StudiosCriterionModifiers =
+    listOf(
+        CriterionModifier.INCLUDES,
+        CriterionModifier.IS_NULL,
+        CriterionModifier.NOT_NULL,
+    )
+val RelationshipCriterionModifiers =
+    listOf(
+        CriterionModifier.INCLUDES,
+        CriterionModifier.EXCLUDES,
+        CriterionModifier.IS_NULL,
+        CriterionModifier.NOT_NULL,
+    )
+val IncludesExcludesCriterionModifiers =
+    listOf(
+        CriterionModifier.INCLUDES_ALL,
+        CriterionModifier.INCLUDES,
+        CriterionModifier.EXCLUDES,
+        CriterionModifier.IS_NULL,
+        CriterionModifier.NOT_NULL,
+    )
 
 private val SceneFilterOptions =
     listOf(
@@ -69,6 +109,7 @@ private val SceneFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { it.groups },
             { filter, value -> filter.copy(groups = value) },
+            RelationshipCriterionModifiers,
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             "o_counter",
@@ -117,6 +158,7 @@ private val SceneFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.performer_tags },
             { filter, value -> filter.copy(performer_tags = value) },
+            PerformerTagsCriterionModifiers,
         ),
         FilterOption<SceneFilterType, MultiCriterionInput>(
             "performers",
@@ -125,6 +167,7 @@ private val SceneFilterOptions =
             MultiCriterionInput::class,
             { it.performers },
             { filter, value -> filter.copy(performers = value) },
+            MultiCriterionModifiers,
         ),
         FilterOption<SceneFilterType, IntCriterionInput>(
             "play_count",
@@ -149,6 +192,7 @@ private val SceneFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.studios },
             { filter, value -> filter.copy(studios = value) },
+            StudiosCriterionModifiers,
         ),
         FilterOption<SceneFilterType, HierarchicalMultiCriterionInput>(
             "tags",
@@ -157,6 +201,7 @@ private val SceneFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.tags },
             { filter, value -> filter.copy(tags = value) },
+            MultiCriterionModifiers,
         ),
         FilterOption<SceneFilterType, StringCriterionInput>(
             "title",
@@ -337,6 +382,7 @@ private val PerformerFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.studios },
             { filter, value -> filter.copy(studios = value) },
+            StudiosCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, HierarchicalMultiCriterionInput>(
             "tags",
@@ -345,6 +391,7 @@ private val PerformerFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.tags },
             { filter, value -> filter.copy(tags = value) },
+            MultiCriterionModifiers,
         ),
         FilterOption<PerformerFilterType, StringCriterionInput>(
             "tattoos",
@@ -373,6 +420,7 @@ private val MarkerFilterOptions =
             MultiCriterionInput::class,
             { filter -> filter.performers },
             { filter, value -> filter.copy(performers = value) },
+            MultiCriterionModifiers,
         ),
         FilterOption<SceneMarkerFilterType, DateCriterionInput>(
             "scene_date",
@@ -389,6 +437,7 @@ private val MarkerFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.scene_tags },
             { filter, value -> filter.copy(scene_tags = value) },
+            MultiCriterionModifiers,
         ),
         FilterOption<SceneMarkerFilterType, HierarchicalMultiCriterionInput>(
             "tags",
@@ -397,6 +446,7 @@ private val MarkerFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.tags },
             { filter, value -> filter.copy(tags = value) },
+            MultiCriterionModifiers,
         ),
     )
 
@@ -417,6 +467,7 @@ private val ImageFilterOptions =
             MultiCriterionInput::class,
             { filter -> filter.galleries },
             { filter, value -> filter.copy(galleries = value) },
+            IncludesExcludesCriterionModifiers,
         ),
         FilterOption<ImageFilterType, IntCriterionInput>(
             "o_counter",
@@ -465,6 +516,7 @@ private val ImageFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.performer_tags },
             { filter, value -> filter.copy(performer_tags = value) },
+            PerformerTagsCriterionModifiers,
         ),
         FilterOption<ImageFilterType, MultiCriterionInput>(
             "performers",
@@ -473,6 +525,7 @@ private val ImageFilterOptions =
             MultiCriterionInput::class,
             { filter -> filter.performers },
             { filter, value -> filter.copy(performers = value) },
+            MultiCriterionModifiers,
         ),
         FilterOption<ImageFilterType, StringCriterionInput>(
             "photographer",
@@ -505,6 +558,7 @@ private val ImageFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.studios },
             { filter, value -> filter.copy(studios = value) },
+            StudiosCriterionModifiers,
         ),
         FilterOption<ImageFilterType, HierarchicalMultiCriterionInput>(
             "tags",
@@ -513,6 +567,7 @@ private val ImageFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.tags },
             { filter, value -> filter.copy(tags = value) },
+            MultiCriterionModifiers,
         ),
         FilterOption<ImageFilterType, StringCriterionInput>(
             "title",
@@ -573,6 +628,7 @@ private val GalleryFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.performer_tags },
             { filter, value -> filter.copy(performer_tags = value) },
+            PerformerTagsCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, MultiCriterionInput>(
             "performers",
@@ -581,6 +637,7 @@ private val GalleryFilterOptions =
             MultiCriterionInput::class,
             { filter -> filter.performers },
             { filter, value -> filter.copy(performers = value) },
+            MultiCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, StringCriterionInput>(
             "photographer",
@@ -605,6 +662,7 @@ private val GalleryFilterOptions =
             MultiCriterionInput::class,
             { filter -> filter.scenes },
             { filter, value -> filter.copy(scenes = value) },
+            IncludesExcludesCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, HierarchicalMultiCriterionInput>(
             "studios",
@@ -613,6 +671,7 @@ private val GalleryFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.studios },
             { filter, value -> filter.copy(studios = value) },
+            StudiosCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, HierarchicalMultiCriterionInput>(
             "tags",
@@ -621,6 +680,7 @@ private val GalleryFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.tags },
             { filter, value -> filter.copy(tags = value) },
+            MultiCriterionModifiers,
         ),
         FilterOption<GalleryFilterType, StringCriterionInput>(
             "title",
@@ -749,6 +809,7 @@ private val StudioFilterOptions =
             MultiCriterionInput::class,
             { filter -> filter.parents },
             { filter, value -> filter.copy(parents = value) },
+            RelationshipCriterionModifiers,
         ),
         FilterOption<StudioFilterType, IntCriterionInput>(
             "rating100",
@@ -777,6 +838,7 @@ private val GroupFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.containing_groups },
             { filter, value -> filter.copy(containing_groups = value) },
+            RelationshipCriterionModifiers,
         ),
         FilterOption<GroupFilterType, IntCriterionInput>(
             "containing_group_count",
@@ -817,6 +879,7 @@ private val GroupFilterOptions =
             MultiCriterionInput::class,
             { it.performers },
             { filter, value -> filter.copy(performers = value) },
+            MultiCriterionModifiers,
         ),
         FilterOption<GroupFilterType, IntCriterionInput>(
             "rating100",
@@ -833,6 +896,7 @@ private val GroupFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.studios },
             { filter, value -> filter.copy(studios = value) },
+            StudiosCriterionModifiers,
         ),
         FilterOption<GroupFilterType, HierarchicalMultiCriterionInput>(
             "sub_groups",
@@ -841,6 +905,7 @@ private val GroupFilterOptions =
             HierarchicalMultiCriterionInput::class,
             { filter -> filter.sub_groups },
             { filter, value -> filter.copy(sub_groups = value) },
+            RelationshipCriterionModifiers,
         ),
         FilterOption<GroupFilterType, IntCriterionInput>(
             "sub_group_count",

@@ -140,7 +140,7 @@ class ListRowManager<T : StashData>(
 }
 
 fun <T : StashData> configRowManager(
-    scope: CoroutineScope,
+    scope: () -> CoroutineScope,
     rowManager: ListRowManager<T>,
     presenter: (StashPresenter.LongClickCallBack<T>) -> StashPresenter<T>,
 ) {

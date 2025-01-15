@@ -9,7 +9,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.commit
+import androidx.fragment.app.commitNow
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.BrowseFrameLayout
@@ -18,6 +18,7 @@ import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.presenters.StashImageCardView
@@ -35,6 +36,7 @@ import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.testStashConnection
+import com.github.damontecres.stashapp.views.LoadingFragment
 import com.github.damontecres.stashapp.views.MainTitleView
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.Dispatchers
@@ -56,9 +58,6 @@ class MainFragment :
 
     private var currentPosition: Position? = null
     private var dataFetchedFor: StashServer? = null
-
-    @Volatile
-    private var fetchingData = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,51 +139,53 @@ class MainFragment :
                 },
             ) {
                 Log.d(TAG, "Server changed")
-
-                if (newServer != null) {
-                    val result =
-                        testStashConnection(
-                            requireContext(),
-                            false,
-                            newServer.apolloClient,
-                        )
-                    if (result.status == TestResultStatus.SUCCESS) {
-                        val mainTitleView =
-                            requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-                        mainTitleView.refreshMenuItems(newServer.serverPreferences)
-                        fetchData(newServer)
-                    } else if (result.status == TestResultStatus.UNSUPPORTED_VERSION) {
-                        clearData()
-                        Log.w(
-                            TAG,
-                            "Server version is not supported: ${result.serverInfo?.version?.version}",
-                        )
-                        Toast
-                            .makeText(
+                showLoading()
+                clearData()
+                try {
+                    if (newServer != null) {
+                        val result =
+                            testStashConnection(
                                 requireContext(),
-                                "Server version ${result.serverInfo?.version?.version} is not supported!",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                                false,
+                                newServer.apolloClient,
+                            )
+                        if (result.status == TestResultStatus.SUCCESS) {
+                            val mainTitleView =
+                                requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
+                            mainTitleView.refreshMenuItems(newServer.serverPreferences)
+                            fetchData(newServer)
+                        } else if (result.status == TestResultStatus.UNSUPPORTED_VERSION) {
+                            Log.w(
+                                TAG,
+                                "Server version is not supported: ${result.serverInfo?.version?.version}",
+                            )
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Server version ${result.serverInfo?.version?.version} is not supported!",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                        } else {
+                            Log.w(TAG, "testStashConnection returned $result")
+                            requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                            Toast
+                                .makeText(
+                                    requireContext(),
+                                    "Connection to Stash failed: ${result.status}",
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                        }
                     } else {
-                        Log.w(TAG, "testStashConnection returned $result")
-                        clearData()
-                        requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                        Log.e(TAG, "newServer is null")
                         Toast
                             .makeText(
                                 requireContext(),
-                                "Connection to Stash failed: ${result.status}",
+                                "Stash server not configured!",
                                 Toast.LENGTH_LONG,
                             ).show()
                     }
-                } else {
-                    Log.e(TAG, "newServer is null")
-                    clearData()
-                    Toast
-                        .makeText(
-                            requireContext(),
-                            "Stash server not configured!",
-                            Toast.LENGTH_LONG,
-                        ).show()
+                } finally {
+                    hideLoading()
                 }
             }
         }
@@ -201,10 +202,7 @@ class MainFragment :
 
     private fun setupEventListeners() {
         setOnSearchClickedListener {
-            requireActivity().supportFragmentManager.commit {
-                addToBackStack("search")
-                replace(R.id.root_fragment, StashSearchFragment())
-            }
+            viewModel.navigationManager.navigate(Destination.Search)
         }
 
         onItemViewClickedListener =
@@ -220,11 +218,8 @@ class MainFragment :
         adapters.forEach { it.clear() }
     }
 
-    private fun fetchData(server: StashServer) {
-        clearData()
-        viewLifecycleOwner.lifecycleScope.launch(
-            Dispatchers.IO + StashCoroutineExceptionHandler(autoToast = true),
-        ) {
+    private suspend fun fetchData(server: StashServer) =
+        withContext(Dispatchers.IO) {
             try {
                 val serverVersion = server.serverPreferences.serverVersion
 
@@ -234,83 +229,77 @@ class MainFragment :
                     Log.e(TAG, msg)
                     withContext(Dispatchers.Main) {
                         Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
-                        clearData()
                         requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                     }
                 } else {
-                    try {
-                        val queryEngine = QueryEngine(server)
-                        val filterParser = FilterParser(serverVersion)
-                        val frontPageContent =
-                            server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
-                        if (frontPageContent == null) {
-                            withContext(Dispatchers.Main) {
-                                Toast
-                                    .makeText(
-                                        requireContext(),
-                                        "Unable to find front page content! Check the Web UI.",
-                                        Toast.LENGTH_LONG,
-                                    ).show()
-                            }
-                            return@launch
-                        }
-                        Log.d(TAG, "${frontPageContent.size} front page rows")
-                        val pageSize = viewModel.cardUiSettings.value!!.maxSearchResults
-                        val frontPageParser =
-                            FrontPageParser(requireContext(), queryEngine, filterParser, pageSize)
-                        val jobs = frontPageParser.parse(frontPageContent)
-                        jobs.forEachIndexed { index, job ->
-                            job.await().let { row ->
-                                if (row is FrontPageParser.FrontPageRow.Success) {
-                                    filterList.add(row.filter)
+                    val queryEngine = QueryEngine(server)
+                    val filterParser = FilterParser(serverVersion)
+                    val frontPageContent =
+                        server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
+                    if (frontPageContent == null) {
+                        showToastOnMain(
+                            requireContext(),
+                            "Unable to find front page content! Check the Web UI.",
+                            Toast.LENGTH_LONG,
+                        )
+                        return@withContext
+                    }
+                    Log.d(TAG, "${frontPageContent.size} front page rows")
+                    val pageSize = viewModel.cardUiSettings.value!!.maxSearchResults
+                    val frontPageParser =
+                        FrontPageParser(requireContext(), queryEngine, filterParser, pageSize)
+                    val jobs = frontPageParser.parse(frontPageContent)
+                    jobs.forEachIndexed { index, job ->
+                        job.await().let { row ->
+                            if (row is FrontPageParser.FrontPageRow.Success) {
+                                filterList.add(row.filter)
 
-                                    val adapter =
-                                        ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
-                                    adapter.addAll(0, row.data)
-                                    adapter.add(row.filter)
-                                    adapters.add(adapter)
-                                    withContext(Dispatchers.Main) {
-                                        rowsAdapter.set(
-                                            index,
-                                            ListRow(HeaderItem(row.name), adapter),
-                                        )
-                                    }
-                                } else if (row is FrontPageParser.FrontPageRow.Error) {
-                                    Log.w(TAG, "Error on front page row $index")
-                                    withContext(Dispatchers.Main) {
-                                        Toast
-                                            .makeText(
-                                                requireContext(),
-                                                "Error loading row $index on front page",
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                    }
+                                val adapter =
+                                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
+                                adapter.addAll(0, row.data)
+                                adapter.add(row.filter)
+                                adapters.add(adapter)
+                                withContext(Dispatchers.Main) {
+                                    rowsAdapter.set(
+                                        index,
+                                        ListRow(HeaderItem(row.name), adapter),
+                                    )
+                                }
+                            } else if (row is FrontPageParser.FrontPageRow.Error) {
+                                Log.w(TAG, "Error on front page row $index")
+                                withContext(Dispatchers.Main) {
+                                    Toast
+                                        .makeText(
+                                            requireContext(),
+                                            "Error loading row $index on front page",
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
                                 }
                             }
                         }
-                    } catch (ex: QueryEngine.StashNotConfiguredException) {
-                        Log.e(TAG, "StashNotConfiguredException", ex)
-                        withContext(Dispatchers.Main) {
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Stash not configured. Please enter the URL in settings!",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                            requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
-                        }
-                    } catch (ex: QueryEngine.QueryException) {
-                        Log.e(TAG, "QueryException", ex)
-                        withContext(Dispatchers.Main) {
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    ex.message,
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                            requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
-                        }
                     }
+                }
+            } catch (ex: QueryEngine.StashNotConfiguredException) {
+                Log.e(TAG, "StashNotConfiguredException", ex)
+                withContext(Dispatchers.Main) {
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Stash not configured. Please enter the URL in settings!",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
+                }
+            } catch (ex: QueryEngine.QueryException) {
+                Log.e(TAG, "QueryException", ex)
+                withContext(Dispatchers.Main) {
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            ex.message,
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    requireActivity().findViewById<View?>(R.id.search_button).requestFocus()
                 }
             } catch (ex: Exception) {
                 Log.e(TAG, "Exception in fetchData", ex)
@@ -319,11 +308,8 @@ class MainFragment :
                     "Error fetching data: ${ex.message}",
                     Toast.LENGTH_LONG,
                 )
-            } finally {
-                fetchingData = false
             }
         }
-    }
 
     override fun onKeyUp(
         keyCode: Int,
@@ -340,6 +326,27 @@ class MainFragment :
             }
         }
         return super.onKeyUp(keyCode, event)
+    }
+
+    private suspend fun showLoading() =
+        withContext(Dispatchers.Main) {
+            childFragmentManager.commitNow {
+                add(requireView().id, LoadingFragment(), "stash_loading")
+            }
+        }
+
+    private suspend fun hideLoading() =
+        withContext(Dispatchers.Main) {
+            childFragmentManager.findFragmentByTag("stash_loading")?.let {
+                childFragmentManager.commitNow {
+                    remove(it)
+                }
+            }
+        }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.updateServerPreferences()
     }
 
     data class Position(

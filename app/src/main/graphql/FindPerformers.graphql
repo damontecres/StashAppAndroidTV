@@ -6,9 +6,13 @@ query FindPerformers($filter: FindFilterType, $performer_filter: PerformerFilter
   ) {
     performers {
       ...PerformerData
-      __typename
     }
-    __typename
+  }
+}
+
+query GetPerformer($id: ID!) {
+  findPerformer(id: $id) {
+    ...PerformerData
   }
 }
 

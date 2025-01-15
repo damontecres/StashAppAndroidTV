@@ -36,19 +36,22 @@ class MultiCriterionFragment(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
+        val modifiers =
+            filterOption.allowedModifiers ?: listOf(
+                CriterionModifier.INCLUDES_ALL,
+                CriterionModifier.INCLUDES,
+                CriterionModifier.IS_NULL,
+                CriterionModifier.NOT_NULL,
+            )
+
         curVal =
             filterOption.getter
                 .invoke(
                     viewModel.objectFilter.value!!,
-                ).getOrNull() ?: MultiCriterionInput(modifier = CriterionModifier.INCLUDES_ALL)
+                ).getOrNull() ?: MultiCriterionInput(modifier = modifiers[0])
 
-        val modifierOptions =
-            buildList {
-                add(modifierAction(CriterionModifier.INCLUDES))
-                add(modifierAction(CriterionModifier.INCLUDES_ALL))
-                add(modifierAction(CriterionModifier.IS_NULL))
-                add(modifierAction(CriterionModifier.NOT_NULL))
-            }
+        val modifierOptions = modifiers.map { modifierAction(it) }
+
         actions.add(
             GuidedAction
                 .Builder(requireContext())

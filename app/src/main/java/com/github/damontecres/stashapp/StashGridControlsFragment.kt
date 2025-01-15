@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
@@ -26,8 +27,6 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.StashServer
-import com.github.damontecres.stashapp.util.animateToInvisible
-import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
@@ -56,10 +55,9 @@ class StashGridControlsFragment() :
     private lateinit var playAllButton: Button
     private lateinit var filterButton: Button
     private lateinit var subContentSwitch: SwitchMaterial
+    private lateinit var searchButton: SearchView
 
     private lateinit var fragment: StashDataGridFragment
-
-    var titleView: View? = null
 
     private var remoteButtonPaging: Boolean = true
 
@@ -67,7 +65,7 @@ class StashGridControlsFragment() :
     private lateinit var initialFilter: FilterArgs
 
     // State
-    private var gridHeaderTransitionHelper: TitleTransitionHelper? = null
+    private lateinit var gridHeaderTransitionHelper: TitleTransitionHelper
     private var scrollToNextPage = false
 
     // Modifiable properties
@@ -107,6 +105,11 @@ class StashGridControlsFragment() :
      */
     var subContentText: CharSequence? = null
 
+    /**
+     * Notify when the grid is showing/hiding the header
+     */
+    var headerVisibilityListener: HeaderVisibilityListener? = null
+
     // Unmodifiable properties, current state
 
     /**
@@ -114,6 +117,9 @@ class StashGridControlsFragment() :
      */
     val dataType: DataType
         get() = initialFilter.dataType
+
+    var headerShowing: Boolean = true
+        private set
 
     constructor(
         filterArgs: FilterArgs,
@@ -172,6 +178,8 @@ class StashGridControlsFragment() :
         filterButton.onFocusChangeListener = onFocusChangeListener
         subContentSwitch = root.findViewById(R.id.sub_content_switch)
         subContentSwitch.onFocusChangeListener = onFocusChangeListener
+        searchButton = root.findViewById(R.id.search_button_view)
+        searchButton.onFocusChangeListener = onFocusChangeListener
 
         if (name == null) {
             name = getString(dataType.pluralStringId)
@@ -184,6 +192,8 @@ class StashGridControlsFragment() :
         if (onItemViewClickedListener != null) {
             fragment.onItemViewClickedListener = onItemViewClickedListener
         }
+        val gridHeader = root.findViewById<View>(R.id.grid_header)
+        gridHeaderTransitionHelper = TitleTransitionHelper(root, gridHeader)
 
         return root
     }
@@ -217,9 +227,6 @@ class StashGridControlsFragment() :
                 viewModel.setFilter(initialFilter)
                 initialFilter
             }
-
-        val gridHeader = view.findViewById<View>(R.id.grid_header)
-        gridHeaderTransitionHelper = TitleTransitionHelper(view as ViewGroup, gridHeader)
 
         sortButton.nextFocusUpId = R.id.tab_layout
         SortButtonManager(StashServer.getCurrentServerVersion()) {
@@ -260,6 +267,13 @@ class StashGridControlsFragment() :
                 subContentSwitchCheckedListener?.invoke(isChecked)
             }
         }
+
+        viewModel.setupSearchButton(searchButton)
+
+        viewModel.searchBarFocus.observe(viewLifecycleOwner) { hasFocus ->
+            // If the search text has focus, then the fragment shouldn't take it
+            fragment.requestFocus = !hasFocus
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -272,15 +286,10 @@ class StashGridControlsFragment() :
         outState.putString(STATE_NAME, name)
     }
 
-    fun showTitle(show: Boolean) {
-        gridHeaderTransitionHelper?.showTitle(show)
-
-        // TODO: this animation would be nicer if both the grid header & title slide up together
-        if (show) {
-            titleView?.animateToVisible()
-        } else {
-            titleView?.animateToInvisible(View.GONE)
-        }
+    private fun showTitle(show: Boolean) {
+        headerShowing = show
+        gridHeaderTransitionHelper.showTitle(show)
+        headerVisibilityListener?.onHeaderVisibilityChanged(this, show)
     }
 
     override fun onKeyUp(
@@ -295,5 +304,12 @@ class StashGridControlsFragment() :
         private const val STATE_NAME = "name"
 
         private const val DEBUG = false
+    }
+
+    fun interface HeaderVisibilityListener {
+        fun onHeaderVisibilityChanged(
+            fragment: StashGridControlsFragment,
+            headerShowing: Boolean,
+        )
     }
 }

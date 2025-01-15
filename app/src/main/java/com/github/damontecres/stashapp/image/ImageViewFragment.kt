@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.image
 
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
@@ -17,10 +18,12 @@ import com.bumptech.glide.request.target.Target
 import com.bumptech.glide.request.transition.DrawableCrossFadeFactory
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.data.ThrottledLiveData
 import com.github.damontecres.stashapp.image.ImageFragment.Companion.isDown
 import com.github.damontecres.stashapp.image.ImageFragment.Companion.isLeft
 import com.github.damontecres.stashapp.image.ImageFragment.Companion.isRight
 import com.github.damontecres.stashapp.image.ImageFragment.Companion.isUp
+import com.github.damontecres.stashapp.playback.VideoFilterViewModel
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isImageClip
@@ -37,6 +40,7 @@ class ImageViewFragment :
     Fragment(R.layout.image_layout),
     ImageController {
     private val viewModel: ImageViewModel by viewModels(ownerProducer = { requireParentFragment() })
+    private val filterViewModel: VideoFilterViewModel by viewModels(ownerProducer = { requireParentFragment() })
 
     private lateinit var mainImage: StashZoomImageView
 
@@ -49,13 +53,23 @@ class ImageViewFragment :
     ) {
         super.onViewCreated(view, savedInstanceState)
         mainImage = view.findViewById(R.id.image_view_image)
-
+        viewModel.imageController = this
         viewModel.image.observe(viewLifecycleOwner) { newImage ->
+            filterViewModel.videoFilter.value = null
             if (!newImage.isImageClip) {
                 loadImage(newImage)
             }
         }
-        viewModel.imageController = this
+        ThrottledLiveData(
+            filterViewModel.videoFilter,
+            500L,
+        ).observe(viewLifecycleOwner) { videoFilter ->
+            if (videoFilter != null && videoFilter.hasImageFilter()) {
+                mainImage.colorFilter = ColorMatrixColorFilter(videoFilter.createColorMatrix())
+            } else {
+                mainImage.clearColorFilter()
+            }
+        }
     }
 
     private fun loadImage(image: ImageData) {
@@ -82,37 +96,57 @@ class ImageViewFragment :
                     .Builder(300)
                     .setCrossFadeEnabled(true)
                     .build()
-            StashGlide
-                .with(requireContext(), imageUrl, image.maxFileSize)
-                .transition(withCrossFade(factory))
-                .placeholder(placeholder)
-                .listener(
-                    object : RequestListener<Drawable?> {
-                        override fun onLoadFailed(
-                            e: GlideException?,
-                            model: Any?,
-                            target: Target<Drawable?>,
-                            isFirstResource: Boolean,
-                        ): Boolean {
-                            Log.v(TAG, "onLoadFailed for ${image.id}")
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Image loading failed!",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                            return true
-                        }
+            val imageLoader =
+                StashGlide
+                    .with(requireContext(), imageUrl, image.maxFileSize)
+                    .transition(withCrossFade(factory))
+                    .placeholder(placeholder)
+                    .listener(
+                        object : RequestListener<Drawable?> {
+                            override fun onLoadFailed(
+                                e: GlideException?,
+                                model: Any?,
+                                target: Target<Drawable?>,
+                                isFirstResource: Boolean,
+                            ): Boolean {
+                                Log.v(TAG, "onLoadFailed for ${image.id}")
+                                Toast
+                                    .makeText(
+                                        requireContext(),
+                                        "Image loading failed!",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                                return true
+                            }
 
-                        override fun onResourceReady(
-                            resource: Drawable,
-                            model: Any,
-                            target: Target<Drawable?>?,
-                            dataSource: DataSource,
-                            isFirstResource: Boolean,
-                        ): Boolean = false
-                    },
-                ).into(mainImage)
+                            override fun onResourceReady(
+                                resource: Drawable,
+                                model: Any,
+                                target: Target<Drawable?>?,
+                                dataSource: DataSource,
+                                isFirstResource: Boolean,
+                            ): Boolean = false
+                        },
+                    )
+            filterViewModel.maybeGetSavedFilter()
+            // TODO figure out how to apply the effects on load without double applying
+//            if (filterViewModel.saveVideoFilter) {
+//                // If saving filters, check if one exists
+//                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
+//                    val vf = filterViewModel.getSavedFilter()?.videoFilter
+//                    if (vf != null && vf.hasImageFilter()) {
+//                        imageLoader
+//                            .transform(EffectTransformation(vf))
+//                            .into(mainImage)
+//                    } else {
+//                        imageLoader.into(mainImage)
+//                    }
+//                }
+//            } else {
+//                // Not saving filters, so just directly load the image
+//                imageLoader.into(mainImage)
+//            }
+            imageLoader.into(mainImage)
         }
     }
 

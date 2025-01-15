@@ -66,6 +66,18 @@
             android:text="@string/stashapp_include_sub_tag_content"
             app:switchPadding="8dp"
             tools:visibility="visible" />
+
+        <com.github.damontecres.stashapp.views.StashSearchView
+            android:id="@+id/search_button_view"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="8dp"
+            android:textSize="14sp"
+            android:background="@drawable/button_selector"
+            android:iconifiedByDefault="true" />
     </LinearLayout>
 
     <androidx.fragment.app.FragmentContainerView

@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
  * A [StashPresenter.LongClickCallBack] which shows a 'Go To' or 'Remove' popups
  */
 class RemoveLongClickListener<T : StashData>(
-    private val scope: CoroutineScope,
+    private val scope: () -> CoroutineScope,
     private val rowManager: ListRowManager<T>,
     private val extraPopupItems: List<StashPresenter.PopUpItem> = emptyList(),
     private val extraPopupHandler: ((context: Context, item: T, popUpItem: StashPresenter.PopUpItem) -> Unit)? = null,
@@ -43,7 +43,7 @@ class RemoveLongClickListener<T : StashData>(
             }
             StashPresenter.PopUpItem.REMOVE_ID -> {
                 if (readOnlyModeDisabled()) {
-                    scope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                    scope.invoke().launch(StashCoroutineExceptionHandler(autoToast = true)) {
                         Log.v(TAG, "Removing id=${item.id} (${item::class.simpleName})")
                         if (rowManager.remove(item)) {
                             val name = extractTitle(item)
