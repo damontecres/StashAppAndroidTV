@@ -46,6 +46,8 @@ data class StashServer(
         return serverPreferences
     }
 
+    override fun toString(): String = "StashServer(url=$url, apiKey?=${apiKey.isNotNullOrBlank()})"
+
     companion object {
         private const val SERVER_PREF_PREFIX = "server_"
         private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"

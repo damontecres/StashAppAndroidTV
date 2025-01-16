@@ -124,6 +124,11 @@ class MainFragment :
         }
 
         viewModel.currentServer.observe(viewLifecycleOwner) { newServer ->
+            if (newServer == null) {
+                Log.w(TAG, "Null server")
+                viewModel.navigationManager.navigate(Destination.ManageServers(true))
+                return@observe
+            }
             if (dataFetchedFor == newServer) {
                 return@observe
             } else {
