@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.apollo)
     alias(libs.plugins.kotlin.plugin.serialization)
     alias(libs.plugins.room)
+    alias(libs.plugins.compose.compiler)
 }
 
 fun getVersionCode(): Int {
@@ -55,6 +56,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        compose = true
     }
 
     defaultConfig {
@@ -228,6 +230,23 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+
+    implementation(libs.glide.compose)
+    implementation(libs.androidx.compose.runtime)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.androidx.material3.android)
+    debugImplementation(libs.androidx.ui.tooling)
+    implementation(libs.androidx.tv.foundation)
+    implementation(libs.androidx.tv.material)
+    implementation(libs.androidx.ui.viewbinding)
+    implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.android.material)
+    implementation(libs.androidx.swiperefreshlayout)
+    implementation(libs.androidsvg.aar)
 
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)
