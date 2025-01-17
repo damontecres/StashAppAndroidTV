@@ -34,6 +34,7 @@
         <item name="android:paddingEnd">10dp</item>
         <item name="android:minWidth">0dp</item>
         <item name="android:cursorVisible">true</item>
+        <item name="android:textCursorDrawable">@drawable/search_cursor</item>
         <item name="android:editable">true</item>
         <item name="android:focusable">true</item>
         <item name="android:focusableInTouchMode">true</item>
@@ -41,7 +42,6 @@
         <item name="android:inputType">text|textAutoComplete</item>
         <item name="android:singleLine">true</item>
         <item name="android:textColorHint">@color/lb_search_bar_hint</item>
-        <item name="android:textCursorDrawable">@null</item>
         <item name="android:hint">@string/lb_search_bar_hint</item>
         <item name="android:textSize">@dimen/lb_search_bar_text_size</item>
     </style>

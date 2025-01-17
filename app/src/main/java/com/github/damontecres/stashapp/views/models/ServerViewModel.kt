@@ -60,7 +60,7 @@ open class ServerViewModel : ViewModel() {
     private fun createUiSettings(): CardUiSettings {
         val context = StashApplication.getApplication()
         val manager = PreferenceManager.getDefaultSharedPreferences(context)
-        val maxSearchResults = manager.getInt("maxSearchResults", 0)
+        val maxSearchResults = manager.getInt("maxSearchResults", 25)
         val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
         val columns = manager.getInt("cardSize", context.getString(R.string.card_size_default))
         val showRatings = manager.getBoolean(context.getString(R.string.pref_key_show_rating), true)
