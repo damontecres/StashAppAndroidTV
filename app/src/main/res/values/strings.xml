@@ -29,12 +29,14 @@
     <string name="fa_angles_up" translatable="false">&#xf102;</string>
     <string name="fa_angle_down" translatable="false">&#xf107;</string>
     <string name="fa_angles_down" translatable="false">&#xf103;</string>
+    <string name="fa_house" translatable="false">&#xf015;</string>
 
 
     <string name="go_to">Go to</string>
     <string name="go_to_scene">Go to scene</string>
     <string name="failed_o_counter">Failed to update o-counter</string>
     <string name="advanced_settings">Advanced Settings</string>
+    <string name="home">Home</string>
 
     <string name="app_update_url" translatable="false">https://api.github.com/repos/damontecres/StashAppAndroidTV/releases/latest</string>
 
