@@ -53,14 +53,13 @@ class RootActivity :
                 .getString("pinCode", "")
                 .isNotNullOrBlank()
 
+        // Ensure everything is initialized
+        super.onCreate(savedInstanceState)
         navigationManager = NavigationManager(this)
         navigationManager.addListener(this)
         StashApplication.navigationManager = navigationManager
 
         serverViewModel.navigationManager = navigationManager
-
-        // Ensure everything is initialized
-        super.onCreate(savedInstanceState)
         loadingView = findViewById(R.id.loading_progress_bar)
         bgLogo = findViewById(R.id.background_logo)
 
@@ -126,6 +125,7 @@ class RootActivity :
         nextDestination: Destination,
         fragment: Fragment,
     ) {
+        serverViewModel.setCurrentDestination(nextDestination)
         loadingView.hide()
         bgLogo.animateToInvisible(View.GONE)
         Log.v(

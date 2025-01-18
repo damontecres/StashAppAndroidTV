@@ -77,6 +77,9 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                     val paddingValue = 12.dp
 
                     val server: StashServer? by serverViewModel.currentServer.observeAsState()
+                    val destination: Destination by serverViewModel.destination.observeAsState(
+                        Destination.Main,
+                    )
 
                     val pages =
                         buildList {
@@ -111,83 +114,101 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                     NavigationDrawer(
                         drawerState = drawerState,
                         drawerContent = {
-                            Column(
-                                Modifier
-                                    .fillMaxHeight()
-                                    .padding(4.dp)
-                                    .width(
-                                        if (drawerState.currentValue == DrawerValue.Closed) {
-                                            collapsedDrawerItemWidth
-                                        } else {
-                                            Dp.Unspecified
-                                        },
-                                    ),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                var serverFocused by remember { mutableStateOf(false) }
-                                NavigationDrawerItem(
-                                    modifier =
-                                        Modifier.onFocusChanged {
-                                            serverFocused = it.isFocused
-                                        },
-                                    selected = false,
-                                    onClick = {
-                                        serverViewModel.navigationManager.navigate(Destination.ManageServers(false))
-                                    },
-                                    leadingContent = {
-                                        Icon(
-                                            painterResource(id = R.mipmap.stash_logo),
-                                            contentDescription = null,
-                                        )
-                                    },
-                                ) {
-                                    Text(
-                                        modifier =
-                                            Modifier.enableMarquee(serverFocused),
-                                        text = server?.url ?: "No server",
-                                        maxLines = 1,
-                                    )
-                                }
-
-                                // Group of item with same padding
-
-                                LazyColumn(
-                                    contentPadding = PaddingValues(0.dp),
-                                    modifier =
-                                        Modifier
-                                            .selectableGroup(),
+                            if (!destination.fullScreen) {
+                                Column(
+                                    Modifier
+                                        .fillMaxHeight()
+                                        .padding(4.dp)
+                                        .width(
+                                            if (drawerState.currentValue == DrawerValue.Closed) {
+                                                collapsedDrawerItemWidth
+                                            } else {
+                                                Dp.Unspecified
+                                            },
+                                        ),
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
+                                    verticalArrangement = Arrangement.SpaceBetween,
                                 ) {
-                                    items(pages, key = { it.destination.fragmentTag }) { page ->
-                                        NavigationDrawerItem(
-                                            modifier = Modifier,
+                                    var serverFocused by remember { mutableStateOf(false) }
+                                    NavigationDrawerItem(
+                                        modifier =
+                                            Modifier.onFocusChanged {
+                                                serverFocused = it.isFocused
+                                            },
+                                        selected = false,
+                                        onClick = {
+                                            serverViewModel.navigationManager.navigate(
+                                                Destination.ManageServers(
+                                                    false,
+                                                ),
+                                            )
+                                        },
+                                        leadingContent = {
+                                            Icon(
+                                                painterResource(id = R.mipmap.stash_logo),
+                                                contentDescription = null,
+                                            )
+                                        },
+                                    ) {
+                                        Text(
+                                            modifier =
+                                                Modifier.enableMarquee(serverFocused),
+                                            text = server?.url ?: "No server",
+                                            maxLines = 1,
+                                        )
+                                    }
+
+                                    // Group of item with same padding
+
+                                    LazyColumn(
+                                        contentPadding = PaddingValues(0.dp),
+                                        modifier =
+                                            Modifier
+                                                .selectableGroup(),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement =
+                                            Arrangement.spacedBy(
+                                                6.dp,
+                                                Alignment.CenterVertically,
+                                            ),
+                                    ) {
+                                        items(
+                                            pages,
+                                            key = { it.destination.fragmentTag },
+                                        ) { page ->
+                                            NavigationDrawerItem(
+                                                modifier = Modifier,
 //                                                    .focusRequester(focusRequesters[page]!!),
-                                            selected = currentScreen == page,
-                                            onClick = {
-                                                currentScreen = page
-                                                drawerState.setValue(DrawerValue.Closed)
-                                                Log.v(TAG, "Navigating to ${page.destination}")
-                                                serverViewModel.navigationManager.navigate(page.destination)
-                                            },
-                                            leadingContent = {
-                                                if (page != DrawerPage.SETTINGS_PAGE) {
-                                                    Text(
-                                                        stringResource(id = page.iconString),
-                                                        fontFamily = fontFamily,
-                                                        textAlign = TextAlign.Center,
-                                                        modifier = Modifier,
+                                                selected = currentScreen == page,
+                                                onClick = {
+                                                    currentScreen = page
+                                                    drawerState.setValue(DrawerValue.Closed)
+                                                    Log.v(
+                                                        TAG,
+                                                        "Navigating to ${page.destination}",
                                                     )
-                                                } else {
-                                                    Icon(
-                                                        painter = painterResource(id = R.drawable.vector_settings),
-                                                        contentDescription = null,
+                                                    serverViewModel.navigationManager.navigate(
+                                                        page.destination,
                                                     )
-                                                }
-                                            },
-                                        ) {
-                                            Text(stringResource(id = page.name))
+                                                },
+                                                leadingContent = {
+                                                    if (page != DrawerPage.SETTINGS_PAGE) {
+                                                        Text(
+                                                            stringResource(id = page.iconString),
+                                                            fontFamily = fontFamily,
+                                                            textAlign = TextAlign.Center,
+                                                            modifier = Modifier,
+                                                        )
+                                                    } else {
+                                                        Icon(
+                                                            painter = painterResource(id = R.drawable.vector_settings),
+                                                            contentDescription = null,
+                                                        )
+                                                    }
+                                                },
+                                            ) {
+                                                Text(stringResource(id = page.name))
+                                            }
                                         }
                                     }
                                 }

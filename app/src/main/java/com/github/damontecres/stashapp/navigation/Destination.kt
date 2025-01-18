@@ -28,28 +28,30 @@ import java.util.concurrent.atomic.AtomicLong
  * Represents a "page" of the app that can be navigated to
  */
 @Serializable
-sealed class Destination {
+sealed class Destination(
+    val fullScreen: Boolean = false,
+) {
     protected val destId = counter.getAndIncrement()
 
     val fragmentTag = "${this::class.simpleName}_$destId"
 
     @Serializable
-    data object Setup : Destination()
+    data object Setup : Destination(true)
 
     @Serializable
     data object Main : Destination()
 
     @Serializable
-    data object Settings : Destination()
+    data object Settings : Destination(true)
 
     @Serializable
     data object Search : Destination()
 
     @Serializable
-    data object Pin : Destination()
+    data object Pin : Destination(true)
 
     @Serializable
-    data object SettingsPin : Destination()
+    data object SettingsPin : Destination(true)
 
     @Serializable
     data class Item(
@@ -68,7 +70,7 @@ sealed class Destination {
         val sceneId: String,
         val position: Long,
         val mode: PlaybackMode,
-    ) : Destination()
+    ) : Destination(true)
 
     @Serializable
     data class Slideshow(
@@ -92,7 +94,7 @@ sealed class Destination {
         val filterArgs: FilterArgs,
         val position: Int,
         val duration: Long? = null,
-    ) : Destination() {
+    ) : Destination(true) {
         override fun toString(): String =
             "Playlist(destId=$destId, dataType=${filterArgs.dataType}, position=$position, duration=$duration)"
     }
@@ -114,12 +116,12 @@ sealed class Destination {
     @Serializable
     data class UpdateApp(
         val release: Release,
-    ) : Destination()
+    ) : Destination(true)
 
     @Serializable
     data class ManageServers(
         val overrideReadOnly: Boolean,
-    ) : Destination()
+    ) : Destination(true)
 
     @Serializable
     data class CreateFilter(

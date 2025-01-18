@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -31,6 +32,12 @@ open class ServerViewModel : ViewModel() {
     val cardUiSettings: LiveData<CardUiSettings> = _cardUiSettings
 
     lateinit var navigationManager: NavigationManager
+    private val _destination = MutableLiveData<Destination>()
+    val destination: LiveData<Destination> = _destination
+
+    fun setCurrentDestination(destination: Destination) {
+        _destination.value = destination
+    }
 
     fun switchServer(newServer: StashServer?) {
         _serverConnection.value = ServerConnection.Pending
