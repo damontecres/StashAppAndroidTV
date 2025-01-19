@@ -66,7 +66,6 @@ class StashGridControlsFragment() :
 
     // State
     private lateinit var gridHeaderTransitionHelper: TitleTransitionHelper
-    private var scrollToNextPage = false
 
     // Modifiable properties
 
@@ -123,18 +122,15 @@ class StashGridControlsFragment() :
 
     constructor(
         filterArgs: FilterArgs,
-        scrollToNextPage: Boolean = false,
     ) : this() {
         this.initialFilter = filterArgs
-        this.scrollToNextPage = scrollToNextPage
     }
 
     constructor(
         dataType: DataType,
         findFilter: StashFindFilter? = null,
         objectFilter: StashDataFilter? = null,
-        scrollToNextPage: Boolean = false,
-    ) : this(FilterArgs(dataType, null, findFilter, objectFilter), scrollToNextPage)
+    ) : this(FilterArgs(dataType, null, findFilter, objectFilter))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -186,7 +182,6 @@ class StashGridControlsFragment() :
 
         fragment =
             childFragmentManager.findFragmentById(R.id.grid_fragment) as StashDataGridFragment
-        fragment.scrollToNextPage = scrollToNextPage
         fragment.init(dataType)
         if (onItemViewClickedListener != null) {
             fragment.onItemViewClickedListener = onItemViewClickedListener

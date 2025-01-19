@@ -85,9 +85,6 @@ class StashDataGridFragment :
 
     private var remoteButtonPaging: Boolean = true
 
-    // Arguments
-    var scrollToNextPage = false
-
     // State
     private var selectedPosition = -1
 
@@ -333,7 +330,11 @@ class StashDataGridFragment :
         viewModel.loadingStatus.observe(viewLifecycleOwner) { status ->
             when (status) {
                 is StashGridViewModel.LoadingStatus.AdapterReady -> {
-                    Log.v(TAG, "LoadingStatus.AdapterReady")
+                    val scrollToNextPage = viewModel.scrollToNextPage.value ?: false
+                    Log.v(
+                        TAG,
+                        "LoadingStatus.AdapterReady: previousPosition=$previousPosition, scrollToNextPage=$scrollToNextPage",
+                    )
                     pagingAdapter = status.pagingAdapter
                     itemBridgeAdapter.setAdapter(status.pagingAdapter)
                     if (previousPosition > 0) {
@@ -345,7 +346,7 @@ class StashDataGridFragment :
                                 .getInt("maxSearchResults", 25)
                         jumpTo(page)
                         // Only scroll the first time
-                        scrollToNextPage = false
+                        viewModel.scrollToNextPage.value = false
                     }
                     loadingProgressBar.hide()
                     if (requestFocus) {
