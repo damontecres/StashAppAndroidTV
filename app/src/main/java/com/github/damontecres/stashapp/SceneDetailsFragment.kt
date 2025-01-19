@@ -59,13 +59,13 @@ import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.RemoveLongClickListener
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.configRowManager
+import com.github.damontecres.stashapp.util.createOCounterLongClickCallBack
+import com.github.damontecres.stashapp.util.createRemoveLongClickListener
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -172,7 +172,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 ).addClassPresenter(
                     OCounter::class.java,
                     OCounterPresenter(
-                        OCounterLongClickCallBack(
+                        createOCounterLongClickCallBack(
                             DataType.SCENE,
                             sceneId,
                             mutationEngine,
@@ -378,19 +378,16 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         markersRowManager.adapter.presenterSelector =
             SinglePresenterSelector(
                 MarkerPresenter(
-                    RemoveLongClickListener(
+                    createRemoveLongClickListener(
                         { viewLifecycleOwner.lifecycleScope },
                         markersRowManager,
-                        listOf(MARKER_DETAILS_POPUP),
-                    ) { context, item, popUpItem ->
-                        if (popUpItem.id == MARKER_DETAILS_POPUP.id) {
-                            serverViewModel.navigationManager.navigate(
-                                Destination.MarkerDetails(
-                                    item.id,
-                                    item.scene.videoSceneData.id,
-                                ),
-                            )
-                        }
+                    ).addAction(MARKER_DETAILS_POPUP) { _, item ->
+                        serverViewModel.navigationManager.navigate(
+                            Destination.MarkerDetails(
+                                item.id,
+                                item.scene.videoSceneData.id,
+                            ),
+                        )
                     },
                 ),
             )

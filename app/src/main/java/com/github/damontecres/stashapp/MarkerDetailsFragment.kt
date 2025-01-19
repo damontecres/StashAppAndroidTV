@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -84,11 +83,40 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         )
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
 
+    private val primaryTagPresenter =
+        TagPresenter()
+            .addLongCLickAction(
+                StashPresenter.PopUpItem(
+                    REPLACE_PRIMARY_ID,
+                    R.string.replace,
+                ),
+            ) { _, item ->
+                viewLifecycleOwner.lifecycleScope.launch(
+                    CoroutineExceptionHandler { _, ex ->
+                        Log.e(TAG, "Exception setting tags", ex)
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Failed to remove tag: ${ex.message}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                    },
+                ) {
+                    if (tagsRowManager.remove(item)) {
+                        Toast
+                            .makeText(
+                                requireContext(),
+                                "Removed tag '${item.name}' from scene",
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                    }
+                }
+            }
     private val primaryTagRowManager =
         ListRowManager<TagData>(
             DataType.TAG,
             ListRowManager.SparseArrayRowModifier(mAdapter, PRIMARY_TAG_POS),
-            ArrayObjectAdapter(TagPresenter(PrimaryTagLongClickListener())),
+            ArrayObjectAdapter(primaryTagPresenter),
         ) { tagIds ->
             // Kind of hacky
             val marker = viewModel.item.value!!
@@ -106,7 +134,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         ListRowManager<TagData>(
             DataType.TAG,
             ListRowManager.SparseArrayRowModifier(mAdapter, TAG_POS),
-            ArrayObjectAdapter(TagPresenter(TagLongClickListener())),
+            ArrayObjectAdapter(TagPresenter()),
         ) { tagIds ->
             val marker = viewModel.item.value!!
             val result =
@@ -391,90 +419,6 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                             }
                         },
                     )
-            }
-        }
-    }
-
-    private inner class PrimaryTagLongClickListener : TagPresenter.DefaultTagLongClickCallBack() {
-        override fun getPopUpItems(
-            context: Context,
-            item: TagData,
-        ): List<StashPresenter.PopUpItem> {
-            val items = super.getPopUpItems(context, item).toMutableList()
-            if (readOnlyModeDisabled()) {
-                items.add(StashPresenter.PopUpItem(REPLACE_PRIMARY_ID, getString(R.string.replace)))
-            }
-            return items
-        }
-
-        override fun onItemLongClick(
-            context: Context,
-            item: TagData,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            when (popUpItem.id) {
-                REPLACE_PRIMARY_ID -> {
-                    // Replace
-                    serverViewModel.navigationManager.navigate(
-                        Destination.SearchFor(
-                            MarkerDetailsFragment::class.simpleName!!,
-                            REPLACE_PRIMARY_ID,
-                            DataType.TAG,
-                        ),
-                    )
-                }
-
-                else -> {
-                    super.onItemLongClick(context, item, popUpItem)
-                }
-            }
-        }
-    }
-
-    private inner class TagLongClickListener : TagPresenter.DefaultTagLongClickCallBack() {
-        override fun getPopUpItems(
-            context: Context,
-            item: TagData,
-        ): List<StashPresenter.PopUpItem> {
-            val items = super.getPopUpItems(context, item).toMutableList()
-            if (readOnlyModeDisabled()) {
-                items.add(StashPresenter.PopUpItem.REMOVE_POPUP_ITEM)
-            }
-            return items
-        }
-
-        override fun onItemLongClick(
-            context: Context,
-            item: TagData,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            when (popUpItem.id) {
-                StashPresenter.PopUpItem.REMOVE_ID -> {
-                    viewLifecycleOwner.lifecycleScope.launch(
-                        CoroutineExceptionHandler { _, ex ->
-                            Log.e(TAG, "Exception setting tags", ex)
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Failed to remove tag: ${ex.message}",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                        },
-                    ) {
-                        if (tagsRowManager.remove(item)) {
-                            Toast
-                                .makeText(
-                                    requireContext(),
-                                    "Removed tag '${item.name}' from scene",
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                        }
-                    }
-                }
-
-                else -> {
-                    super.onItemLongClick(context, item, popUpItem)
-                }
             }
         }
     }

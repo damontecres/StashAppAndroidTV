@@ -45,8 +45,14 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.presenters.ClassPresenterSelector
+import com.github.damontecres.stashapp.presenters.ImagePresenter
+import com.github.damontecres.stashapp.presenters.MarkerPresenter
+import com.github.damontecres.stashapp.presenters.ScenePresenter
+import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
@@ -866,6 +872,54 @@ fun maybeStartPlayback(
                     PlaybackMode.CHOOSE,
                 ),
             )
+        }
+    }
+}
+
+fun addExtraGridLongClicks(
+    ps: ClassPresenterSelector,
+    dataType: DataType,
+    getFilterPosition: () -> FilterAndPosition,
+) {
+    when (dataType) {
+        DataType.SCENE -> {
+            val current = ps.getPresenter(SlimSceneData::class.java) as ScenePresenter
+            current.longClickCallBack.addAction(StashPresenter.PopUpItem.PLAY_FROM) { _, item ->
+                val (filter, position) = getFilterPosition.invoke()
+                if (position >= 0) {
+                    StashApplication.navigationManager.navigate(
+                        Destination.Playlist(filter, position),
+                    )
+                }
+            }
+        }
+
+        DataType.MARKER -> {
+            val current = ps.getPresenter(MarkerData::class.java) as MarkerPresenter
+            current.longClickCallBack.addAction(StashPresenter.PopUpItem.PLAY_FROM) { _, item ->
+                val (filter, position) = getFilterPosition.invoke()
+                if (position >= 0) {
+                    StashApplication.navigationManager.navigate(
+                        Destination.Playlist(filter, position, 30_000L),
+                    )
+                }
+            }
+        }
+
+        DataType.IMAGE -> {
+            val current = ps.getPresenter(ImageData::class.java) as ImagePresenter
+            current.longClickCallBack.addAction(StashPresenter.PopUpItem.PLAY_FROM) { _, item ->
+                val (filter, position) = getFilterPosition.invoke()
+                if (position >= 0) {
+                    StashApplication.navigationManager.navigate(
+                        Destination.Slideshow(filter, position, true),
+                    )
+                }
+            }
+        }
+
+        else -> {
+            // no-op
         }
     }
 }

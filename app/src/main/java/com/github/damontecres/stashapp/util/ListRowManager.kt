@@ -146,6 +146,13 @@ fun <T : StashData> configRowManager(
 ) {
     if (rowManager.adapter.presenterSelector == null) {
         rowManager.adapter.presenterSelector =
-            SinglePresenterSelector(presenter.invoke(RemoveLongClickListener(scope, rowManager)))
+            SinglePresenterSelector(
+                presenter.invoke(
+                    createRemoveLongClickListener(
+                        scope,
+                        rowManager,
+                    ),
+                ),
+            )
     }
 }

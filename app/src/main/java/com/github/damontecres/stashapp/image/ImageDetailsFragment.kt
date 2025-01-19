@@ -50,11 +50,11 @@ import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.configRowManager
+import com.github.damontecres.stashapp.util.createOCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isImageClip
@@ -382,7 +382,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             itemPresenter.addClassPresenter(
                 OCounter::class.java,
                 OCounterPresenter(
-                    OCounterLongClickCallBack(
+                    createOCounterLongClickCallBack(
                         DataType.IMAGE,
                         newImage.id,
                         mutationEngine,
