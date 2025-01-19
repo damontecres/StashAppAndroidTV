@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp
 
-import android.content.Context
 import android.graphics.Color
 import android.os.Bundle
 import android.text.SpannableString
@@ -117,7 +116,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                 ClassPresenterSelector()
                                     .addClassPresenter(
                                         TagData::class.java,
-                                        TagPresenter(PerformersWithTagLongClickCallback()),
+                                        TagPresenter(performersWithTagLongClickCallback()),
                                     )
                             val fragment =
                                 StashGridControlsFragment(
@@ -135,7 +134,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                     .addClassPresenter(
                                         PerformerData::class.java,
                                         PerformerPresenter(
-                                            PerformTogetherLongClickCallback(
+                                            performTogetherLongClickCallback(
                                                 performer,
                                             ),
                                         ),
@@ -173,93 +172,58 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         }
     }
 
-    private inner class PerformTogetherLongClickCallback(
-        val performer: PerformerData,
-    ) : StashPresenter.LongClickCallBack<PerformerData> {
-        override fun getPopUpItems(
-            context: Context,
-            item: PerformerData,
-        ): List<StashPresenter.PopUpItem> =
-            listOf(
-                StashPresenter.PopUpItem.getDefault(context),
-                StashPresenter.PopUpItem(1, "View scenes together"),
-            )
-
-        override fun onItemLongClick(
-            context: Context,
-            item: PerformerData,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            when (popUpItem.id) {
-                0L -> {
-                    serverViewModel.navigationManager.navigate(Destination.fromStashData(item))
-                }
-
-                1L -> {
-                    val performerIds = listOf(performer.id, item.id)
-                    val name = "${performer.name} & ${item.name}"
-                    val filter =
-                        FilterArgs(
-                            dataType = DataType.SCENE,
-                            name = name,
-                            objectFilter =
-                                SceneFilterType(
-                                    performers =
-                                        Optional.present(
-                                            MultiCriterionInput(
-                                                value = Optional.present(performerIds),
-                                                modifier = CriterionModifier.INCLUDES_ALL,
-                                            ),
+    private fun performTogetherLongClickCallback(performer: PerformerData) =
+        StashPresenter
+            .LongClickCallBack<PerformerData>(
+                StashPresenter.PopUpItem.DEFAULT to StashPresenter.PopUpAction { cardView, _ -> cardView.performClick() },
+            ).addAction(StashPresenter.PopUpItem(1L, "View scenes together")) { _, item ->
+                val performerIds = listOf(performer.id, item.id)
+                val name = "${performer.name} & ${item.name}"
+                val filter =
+                    FilterArgs(
+                        dataType = DataType.SCENE,
+                        name = name,
+                        objectFilter =
+                            SceneFilterType(
+                                performers =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(performerIds),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
                                         ),
-                                ),
-                        )
-                    serverViewModel.navigationManager.navigate(Destination.Filter(filter))
-                }
+                                    ),
+                            ),
+                    )
+                serverViewModel.navigationManager.navigate(Destination.Filter(filter))
             }
-        }
-    }
 
-    private inner class PerformersWithTagLongClickCallback : StashPresenter.LongClickCallBack<TagData> {
-        override fun getPopUpItems(
-            context: Context,
-            item: TagData,
-        ): List<StashPresenter.PopUpItem> =
-            listOf(
-                StashPresenter.PopUpItem.getDefault(context),
-                StashPresenter.PopUpItem(1, "View performers with this tag"),
-            )
-
-        override fun onItemLongClick(
-            context: Context,
-            item: TagData,
-            popUpItem: StashPresenter.PopUpItem,
-        ) {
-            when (popUpItem.id) {
-                StashPresenter.PopUpItem.DEFAULT_ID -> {
-                    serverViewModel.navigationManager.navigate(Destination.fromStashData(item))
-                }
-
-                1L -> {
-                    val name = "Performers with ${item.name}"
-                    val filter =
-                        FilterArgs(
-                            dataType = DataType.PERFORMER,
-                            name = name,
-                            objectFilter =
-                                PerformerFilterType(
-                                    tags =
-                                        Optional.present(
-                                            HierarchicalMultiCriterionInput(
-                                                value = Optional.present(listOf(item.id)),
-                                                modifier = CriterionModifier.INCLUDES_ALL,
-                                                depth = Optional.absent(),
-                                            ),
+    private fun performersWithTagLongClickCallback() =
+        StashPresenter
+            .LongClickCallBack<TagData>(
+                StashPresenter.PopUpItem.DEFAULT to StashPresenter.PopUpAction { cardView, _ -> cardView.performClick() },
+            ).addAction(
+                StashPresenter.PopUpItem(
+                    1,
+                    "View performers with this tag",
+                ),
+            ) { _, item ->
+                val name = "Performers with ${item.name}"
+                val filter =
+                    FilterArgs(
+                        dataType = DataType.PERFORMER,
+                        name = name,
+                        objectFilter =
+                            PerformerFilterType(
+                                tags =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(item.id)),
+                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                            depth = Optional.absent(),
                                         ),
-                                ),
-                        )
-                    serverViewModel.navigationManager.navigate(Destination.Filter(filter))
-                }
+                                    ),
+                            ),
+                    )
+                serverViewModel.navigationManager.navigate(Destination.Filter(filter))
             }
-        }
-    }
 }

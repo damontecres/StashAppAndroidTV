@@ -21,12 +21,14 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
+import com.github.damontecres.stashapp.presenters.ClassPresenterSelector
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.addExtraGridLongClicks
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
@@ -66,7 +68,6 @@ class StashGridControlsFragment() :
 
     // State
     private lateinit var gridHeaderTransitionHelper: TitleTransitionHelper
-    private var scrollToNextPage = false
 
     // Modifiable properties
 
@@ -123,18 +124,15 @@ class StashGridControlsFragment() :
 
     constructor(
         filterArgs: FilterArgs,
-        scrollToNextPage: Boolean = false,
     ) : this() {
         this.initialFilter = filterArgs
-        this.scrollToNextPage = scrollToNextPage
     }
 
     constructor(
         dataType: DataType,
         findFilter: StashFindFilter? = null,
         objectFilter: StashDataFilter? = null,
-        scrollToNextPage: Boolean = false,
-    ) : this(FilterArgs(dataType, null, findFilter, objectFilter), scrollToNextPage)
+    ) : this(FilterArgs(dataType, null, findFilter, objectFilter))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -186,7 +184,6 @@ class StashGridControlsFragment() :
 
         fragment =
             childFragmentManager.findFragmentById(R.id.grid_fragment) as StashDataGridFragment
-        fragment.scrollToNextPage = scrollToNextPage
         fragment.init(dataType)
         if (onItemViewClickedListener != null) {
             fragment.onItemViewClickedListener = onItemViewClickedListener
@@ -245,6 +242,15 @@ class StashGridControlsFragment() :
             playAllButton.visibility = View.VISIBLE
             playAllButton.nextFocusUpId = R.id.tab_layout
             playAllButton.text = getString(R.string.play_slideshow)
+        }
+
+        if (presenterSelector is ClassPresenterSelector) {
+            addExtraGridLongClicks(presenterSelector as ClassPresenterSelector, dataType) {
+                FilterAndPosition(
+                    viewModel.filterArgs.value!!,
+                    viewModel.currentPosition.value ?: -1,
+                )
+            }
         }
 
         filterButton.nextFocusUpId = R.id.tab_layout
