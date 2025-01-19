@@ -5,8 +5,8 @@ import android.graphics.drawable.PictureDrawable
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
 import androidx.preference.PreferenceManager
@@ -27,13 +27,23 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpAction
+import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpFilter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
 
 abstract class StashPresenter<T>(
-    private val callback: LongClickCallBack<T>? = null,
+    private var callback: LongClickCallBack<T>? = null,
 ) : Presenter() {
+    val longClickCallBack: LongClickCallBack<T>
+        get() {
+            if (callback == null) {
+                callback = getDefaultLongClickCallBack()
+            }
+            return callback!!
+        }
+
     final override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         val cardView = StashImageCardView(parent.context)
         cardView.isFocusable = true
@@ -49,13 +59,13 @@ abstract class StashPresenter<T>(
         val cardView = viewHolder.view as StashImageCardView
         cardView.onBindViewHolder()
         if (item != null) {
-            val localCallBack = callback ?: getDefaultLongClickCallBack(cardView)
-            val popUpItems = localCallBack.getPopUpItems(cardView.context, item as T)
+            val localCallBack = callback ?: getDefaultLongClickCallBack()
+            val popUpItems = localCallBack.getPopUpItems(item as T)
             cardView.setOnLongClickListener(
                 PopupOnLongClickListener(
                     popUpItems.map { it.text },
                 ) { _, _, pos, _ ->
-                    localCallBack.onItemLongClick(cardView.context, item as T, popUpItems[pos])
+                    localCallBack.onItemLongClick(cardView, item as T, popUpItems[pos])
                 },
             )
 
@@ -105,32 +115,60 @@ abstract class StashPresenter<T>(
         cardView.onUnbindViewHolder()
     }
 
-    open fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<T> =
-        object : LongClickCallBack<T> {
-            override fun getPopUpItems(
-                context: Context,
-                item: T,
-            ): List<PopUpItem> = listOf(PopUpItem.getDefault(context))
+    open fun getDefaultLongClickCallBack(): LongClickCallBack<T> =
+        LongClickCallBack(
+            PopUpItem.DEFAULT to PopUpAction { cardView, _ -> cardView.performClick() },
+        )
 
-            override fun onItemLongClick(
-                context: Context,
-                item: T,
-                popUpItem: PopUpItem,
-            ) {
-                cardView.performClick()
-            }
+    fun addLongCLickAction(
+        popUpItem: PopUpItem,
+        filter: PopUpFilter<T> = PopUpFilter { true },
+        action: PopUpAction<T>,
+    ): StashPresenter<T> {
+        longClickCallBack.addAction(popUpItem, filter, action)
+        return this
+    }
+
+    class LongClickCallBack<T>(
+        vararg actions: Pair<PopUpItem, PopUpAction<T>>,
+    ) {
+        private val actions = mutableMapOf<PopUpItem, PopUpAction<T>>()
+        private val filters = mutableMapOf<PopUpItem, PopUpFilter<T>>()
+
+        init {
+            this.actions.putAll(actions)
+            actions.forEach { filters[it.first] = PopUpFilter { true } }
         }
 
-    interface LongClickCallBack<T> {
-        fun getPopUpItems(
-            context: Context,
-            item: T,
-        ): List<PopUpItem>
+        fun addAction(
+            popUpItem: PopUpItem,
+            filter: PopUpFilter<T> = PopUpFilter { true },
+            action: PopUpAction<T>,
+        ): LongClickCallBack<T> {
+            actions[popUpItem] = action
+            filters[popUpItem] = filter
+            return this
+        }
+
+        fun getPopUpItems(item: T): List<PopUpItem> = actions.keys.filter { filters[it]!!.include(item) }
 
         fun onItemLongClick(
-            context: Context,
+            cardView: StashImageCardView,
             item: T,
             popUpItem: PopUpItem,
+        ) {
+            actions[popUpItem]!!.run(cardView, item)
+        }
+    }
+
+    fun interface PopUpFilter<T> {
+        fun include(item: T): Boolean
+    }
+
+    fun interface PopUpAction<T> {
+        fun run(
+            cardView: StashImageCardView,
+            item: T,
         )
     }
 
@@ -140,23 +178,29 @@ abstract class StashPresenter<T>(
     ) {
         constructor(id: Int, text: String) : this(id.toLong(), text)
 
+        constructor(
+            id: Long,
+            @StringRes stringId: Int,
+        ) : this(
+            id,
+            StashApplication.getApplication().getString(stringId),
+        )
+
         companion object {
             const val DEFAULT_ID = -1L
             const val REMOVE_ID = -2L
+            const val PLAY_FROM_ID = -3L
 
-            fun getDefault(context: Context): PopUpItem = PopUpItem(DEFAULT_ID, context.getString(R.string.go_to))
-
-            val GO_TO_POPUP_ITEM =
-                PopUpItem(
-                    DEFAULT_ID,
-                    StashApplication.getApplication().getString(R.string.go_to),
-                )
+            val DEFAULT =
+                PopUpItem(DEFAULT_ID, StashApplication.getApplication().getString(R.string.go_to))
 
             val REMOVE_POPUP_ITEM =
                 PopUpItem(
                     REMOVE_ID,
                     StashApplication.getApplication().getString(R.string.stashapp_actions_remove),
                 )
+
+            val PLAY_FROM = PopUpItem(PLAY_FROM_ID, "Play from here")
         }
     }
 

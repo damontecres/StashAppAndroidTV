@@ -1,13 +1,11 @@
 package com.github.damontecres.stashapp.presenters
 
-import android.content.Context
 import android.graphics.Typeface
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
-import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem.Companion.DEFAULT_ID
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -79,64 +77,43 @@ class ScenePresenter(
         }
     }
 
-    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<SlimSceneData> =
-        object : LongClickCallBack<SlimSceneData> {
-            override fun getPopUpItems(
-                context: Context,
-                item: SlimSceneData,
-            ): List<PopUpItem> =
-                if (item.resume_time != null && item.resume_time > 0) {
-                    // Has resume
-                    listOf(
-                        PopUpItem.getDefault(context),
-                        PopUpItem(1, "Resume Scene"),
-                        PopUpItem(2, "Restart Scene"),
-                    )
-                } else {
-                    listOf(
-                        PopUpItem.getDefault(context),
-                        PopUpItem(2, "Play Scene"),
-                    )
-                }
-
-            override fun onItemLongClick(
-                context: Context,
-                item: SlimSceneData,
-                popUpItem: PopUpItem,
-            ) {
-                when (popUpItem.id) {
-                    DEFAULT_ID -> {
-                        cardView.performClick()
-                    }
-
-                    1L -> {
-                        // Resume
-                        StashApplication.navigationManager.navigate(
-                            Destination.Playback(
-                                item.id,
-                                item.resume_position ?: 0L,
-                                PlaybackMode.CHOOSE,
-                            ),
-                        )
-                    }
-
-                    2L -> {
-                        // Restart/Play
-                        StashApplication.navigationManager.navigate(
-                            Destination.Playback(
-                                item.id,
-                                0L,
-                                PlaybackMode.CHOOSE,
-                            ),
-                        )
-                    }
-
-                    else -> {
-                        throw IllegalStateException("ID ${popUpItem.id}")
-                    }
-                }
+    override fun getDefaultLongClickCallBack(): LongClickCallBack<SlimSceneData> =
+        LongClickCallBack<SlimSceneData>()
+            .addAction(PopUpItem.DEFAULT) { cardView, _ -> cardView.performClick() }
+            .addAction(
+                PopUpItem(2, "Play Scene"),
+                { it.resume_position == null || it.resume_position!! <= 0 },
+            ) { _, item ->
+                StashApplication.navigationManager.navigate(
+                    Destination.Playback(
+                        item.id,
+                        0L,
+                        PlaybackMode.CHOOSE,
+                    ),
+                )
+            }.addAction(
+                PopUpItem(3, "Resume Scene"),
+                { it.resume_position != null && it.resume_position!! > 0 },
+            ) { _, item ->
+                StashApplication.navigationManager.navigate(
+                    Destination.Playback(
+                        item.id,
+                        item.resume_position ?: 0L,
+                        PlaybackMode.CHOOSE,
+                    ),
+                )
+            }.addAction(
+                PopUpItem(4, "Restart Scene"),
+                { it.resume_position != null && it.resume_position!! > 0 },
+            ) { _, item ->
+                StashApplication.navigationManager.navigate(
+                    Destination.Playback(
+                        item.id,
+                        0L,
+                        PlaybackMode.CHOOSE,
+                    ),
+                )
             }
-        }
 
     companion object {
         private const val TAG = "ScenePresenter"

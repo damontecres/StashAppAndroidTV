@@ -30,6 +30,7 @@ import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.addExtraGridLongClicks
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
@@ -75,9 +76,17 @@ class FilterFragment :
         dataType = startingFilter.dataType
         Log.d(TAG, "onCreate: dataType=$dataType")
 
+        val presenterSelector = StashPresenter.defaultClassPresenterSelector()
+        addExtraGridLongClicks(presenterSelector, dataType) {
+            FilterAndPosition(
+                stashGridViewModel.filterArgs.value!!,
+                stashGridViewModel.currentPosition.value ?: -1,
+            )
+        }
+
         stashGridViewModel.init(
             NullPresenterSelector(
-                StashPresenter.defaultClassPresenterSelector(),
+                presenterSelector,
                 NullPresenter(dataType),
             ),
         )

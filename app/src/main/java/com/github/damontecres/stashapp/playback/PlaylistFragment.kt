@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.playback
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.annotation.OptIn
 import androidx.fragment.app.commit
@@ -54,12 +55,12 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
     // Pages are 1-indexed
     private var currentPage = 1
     private var totalCount = -1
+    private lateinit var destination: Destination.Playlist
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val dest = requireArguments().getDestination<Destination.Playlist>()
-        playlistViewModel.setFilter(dest.filterArgs)
-        // TODO position
+        destination = requireArguments().getDestination<Destination.Playlist>()
+        playlistViewModel.setFilter(destination.filterArgs)
     }
 
     override fun onViewCreated(
@@ -150,6 +151,9 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         addNextPageToPlaylist()
         maybeSetupVideoEffects(player!!)
         player!!.prepare()
+        if (destination.position > 0) {
+            playIndex(destination.position)
+        }
         player!!.play()
         totalCount = pagingSource.getCount()
         withContext(Dispatchers.Main) {
@@ -182,6 +186,39 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
             return true
         } else {
             return false
+        }
+    }
+
+    fun playIndex(index: Int) {
+        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            val player = player!!
+            Log.v(
+                TAG,
+                "index=$index, player.mediaItemCount=${player.mediaItemCount}",
+            )
+            // The play will ignore requests to play something not in the playlist
+            // So check if the index is out of bounds and add pages until either the item is available or there are not more pages
+            // The latter shouldn't happen until there's a bug
+            while (index >= player.mediaItemCount) {
+                if (!addNextPageToPlaylist()) {
+                    // This condition is most likely a bug
+                    Log.w(
+                        TAG,
+                        "Requested $index with ${player.mediaItemCount} media items in player, " +
+                            "but addNextPageToPlaylist returned no additional items",
+                    )
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Unable to find item to play. This might be a bug!",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    return@launch
+                }
+                Log.v(TAG, "after fetch: player.mediaItemCount=${player.mediaItemCount}")
+            }
+            hidePlaylist()
+            player.seekTo(index, androidx.media3.common.C.TIME_UNSET)
         }
     }
 
@@ -277,11 +314,13 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      * Hide the playlist list. This will enable the video controls.
      */
     fun hidePlaylist() {
-        childFragmentManager.commit {
-            setCustomAnimations(android.R.anim.slide_in_left, R.anim.slide_out_left)
-            hide(playlistListFragment)
+        if (!playlistListFragment.isHidden) {
+            childFragmentManager.commit {
+                setCustomAnimations(android.R.anim.slide_in_left, R.anim.slide_out_left)
+                hide(playlistListFragment)
+            }
+            videoView.useController = true
         }
-        videoView.useController = true
     }
 
     /**

@@ -1,19 +1,16 @@
 package com.github.damontecres.stashapp.playback
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.VerticalGridPresenter
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.C
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.MarkerData
@@ -107,36 +104,7 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : 
         mGridPresenter.onBindViewHolder(mGridViewHolder, pagingAdapter)
         mGridPresenter.setOnItemViewClickedListener { itemViewHolder, item, rowViewHolder, row ->
             item as PlaylistItem
-            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val player = parent.player!!
-                Log.v(
-                    TAG,
-                    "item.index=${item.index}, player.mediaItemCount=${player.mediaItemCount}",
-                )
-                // The play will ignore requests to play something not in the playlist
-                // So check if the index is out of bounds and add pages until either the item is available or there are not more pages
-                // The latter shouldn't happen until there's a bug
-                while (item.index >= player.mediaItemCount) {
-                    if (!parent.addNextPageToPlaylist()) {
-                        // This condition is most likely a bug
-                        Log.w(
-                            TAG,
-                            "Requested ${item.index} with ${player.mediaItemCount} media items in player, " +
-                                "but addNextPageToPlaylist returned no additional items",
-                        )
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Unable to find item to play. This might be a bug!",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                        return@launch
-                    }
-                    Log.v(TAG, "after fetch: player.mediaItemCount=${player.mediaItemCount}")
-                }
-                parent.hidePlaylist()
-                player.seekTo(item.index, C.TIME_UNSET)
-            }
+            parent.playIndex(item.index)
         }
     }
 
