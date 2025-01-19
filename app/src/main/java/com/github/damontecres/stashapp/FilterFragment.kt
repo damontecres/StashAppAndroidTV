@@ -103,7 +103,9 @@ class FilterFragment :
             "filterArgs.isInitialized=${stashGridViewModel.filterArgs.isInitialized}, " +
                 "savedInstanceState.isNull=${savedInstanceState == null}",
         )
-        fragment.scrollToNextPage = dest.scrollToNextPage
+        if (!stashGridViewModel.scrollToNextPage.isInitialized) {
+            stashGridViewModel.scrollToNextPage.value = dest.scrollToNextPage
+        }
         fragment.requestFocus = true
         fragment.init(dataType)
 

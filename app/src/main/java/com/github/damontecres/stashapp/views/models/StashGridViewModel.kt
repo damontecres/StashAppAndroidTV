@@ -49,6 +49,8 @@ class StashGridViewModel : ViewModel() {
 
     val searchBarFocus = EqualityMutableLiveData(false)
 
+    val scrollToNextPage = MutableLiveData<Boolean?>(null)
+
     sealed interface LoadingStatus {
         data object NoOp : LoadingStatus
 
@@ -151,17 +153,20 @@ class StashGridViewModel : ViewModel() {
             val newQuery = searchEditText.text.toString().ifBlank { null }
             searchJob?.cancel()
 
-            val currentFilter = filterArgs.value!!
-            val findFilter =
-                currentFilter.findFilter
-                    ?: StashFindFilter(currentFilter.dataType.defaultSort)
-            if (findFilter.q != newQuery) {
-                searchJob =
-                    viewModelScope.launch(StashCoroutineExceptionHandler()) {
-                        delay(searchDelay)
-                        Log.v(TAG, "New query")
-                        setFilter(currentFilter.copy(findFilter = findFilter.copy(q = newQuery)))
-                    }
+            val currentFilter = filterArgs.value
+            if (currentFilter != null) {
+                val findFilter =
+                    currentFilter.findFilter
+                        ?: StashFindFilter(currentFilter.dataType.defaultSort)
+                val oldQuery = findFilter.q?.ifBlank { null }
+                if (oldQuery != newQuery) {
+                    searchJob =
+                        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                            delay(searchDelay)
+                            Log.v(TAG, "New query")
+                            setFilter(currentFilter.copy(findFilter = findFilter.copy(q = newQuery)))
+                        }
+                }
             }
         }
     }
