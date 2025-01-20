@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import androidx.annotation.StringRes
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,8 +22,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -52,6 +56,7 @@ import com.github.damontecres.stashapp.views.models.ServerViewModel
 class NavDrawerFragment : Fragment(R.layout.compose_frame) {
     private val serverViewModel: ServerViewModel by activityViewModels()
 
+    @OptIn(ExperimentalComposeUiApi::class)
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -62,7 +67,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
             // Dispose of the Composition when the view's LifecycleOwner is destroyed
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                AppTheme {
+                MainTheme {
                     val fontFamily =
                         FontFamily(
                             Font(
@@ -108,10 +113,11 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                             add(DrawerPage.SETTINGS_PAGE)
                         }
 
-                    val focusRequester = remember { FocusRequester() }
-                    val focusRequesters = remember { pages.associateWith { FocusRequester() } }
+                    val initialFocus = remember { FocusRequester() }
 
                     NavigationDrawer(
+                        modifier =
+                        Modifier,
                         drawerState = drawerState,
                         drawerContent = {
                             if (!destination.fullScreen) {
@@ -132,9 +138,10 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                     var serverFocused by remember { mutableStateOf(false) }
                                     NavigationDrawerItem(
                                         modifier =
-                                            Modifier.onFocusChanged {
-                                                serverFocused = it.isFocused
-                                            },
+                                            Modifier
+                                                .onFocusChanged {
+                                                    serverFocused = it.isFocused
+                                                },
                                         selected = false,
                                         onClick = {
                                             serverViewModel.navigationManager.navigate(
@@ -164,6 +171,8 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                         contentPadding = PaddingValues(0.dp),
                                         modifier =
                                             Modifier
+                                                .focusGroup()
+                                                .focusRestorer { initialFocus }
                                                 .selectableGroup(),
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         verticalArrangement =
@@ -174,11 +183,16 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                     ) {
                                         items(
                                             pages,
-                                            key = { it.destination.fragmentTag },
+                                            key = null,
                                         ) { page ->
+                                            val mod =
+                                                if (currentScreen == page) {
+                                                    Modifier.focusRequester(initialFocus)
+                                                } else {
+                                                    Modifier
+                                                }
                                             NavigationDrawerItem(
-                                                modifier = Modifier,
-//                                                    .focusRequester(focusRequesters[page]!!),
+                                                modifier = mod,
                                                 selected = currentScreen == page,
                                                 onClick = {
                                                     currentScreen = page

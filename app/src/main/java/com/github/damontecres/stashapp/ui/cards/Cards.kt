@@ -350,23 +350,25 @@ fun StashCard(
     uiConfig: ComposeUiConfig,
     item: Any,
     itemOnClick: (item: Any) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     when (item) {
-        is SlimSceneData -> SceneCard(uiConfig, item, onClick = { itemOnClick(item) })
+        is SlimSceneData -> SceneCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
         is FullSceneData ->
             SceneCard(
                 uiConfig,
                 item.asSlimeSceneData,
                 onClick = { itemOnClick(item) },
+                modifier,
             )
 
-        is PerformerData -> PerformerCard(uiConfig, item, onClick = { itemOnClick(item) })
-        is ImageData -> ImageCard(uiConfig, item, onClick = { itemOnClick(item) })
-        is GalleryData -> GalleryCard(uiConfig, item, onClick = { itemOnClick(item) })
-        is MarkerData -> MarkerCard(uiConfig, item, onClick = { itemOnClick(item) })
-        is GroupData -> MovieCard(uiConfig, item, onClick = { itemOnClick(item) })
-        is StudioData -> StudioCard(uiConfig, item, onClick = { itemOnClick(item) })
-        is TagData -> TagCard(uiConfig, item, onClick = { itemOnClick(item) })
+        is PerformerData -> PerformerCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
+        is ImageData -> ImageCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
+        is GalleryData -> GalleryCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
+        is MarkerData -> MarkerCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
+        is GroupData -> MovieCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
+        is StudioData -> StudioCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
+        is TagData -> TagCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
         else -> throw UnsupportedOperationException("Item with class ${item.javaClass} not supported.")
     }
 }

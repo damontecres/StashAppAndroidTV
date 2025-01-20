@@ -8,10 +8,10 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.leanback.app.GuidedStepSupportFragment
+import com.github.damontecres.stashapp.ComposeMainFragment
 import com.github.damontecres.stashapp.FilterFragment
 import com.github.damontecres.stashapp.GalleryFragment
 import com.github.damontecres.stashapp.GroupFragment
-import com.github.damontecres.stashapp.MainFragment
 import com.github.damontecres.stashapp.MarkerDetailsFragment
 import com.github.damontecres.stashapp.PerformerFragment
 import com.github.damontecres.stashapp.PinFragment
@@ -88,7 +88,7 @@ class NavigationManager(
         }
         val fragment =
             when (destination) {
-                Destination.Main -> MainFragment()
+                Destination.Main -> ComposeMainFragment()
                 Destination.Search -> StashSearchFragment()
                 Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()

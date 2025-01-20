@@ -100,6 +100,7 @@ androidx-compose-runtime = { module = "androidx.compose.runtime:runtime-android"
 androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata", version.ref = "compose-runtime" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel-compose" }
 androidx-material3-android = { module = "androidx.compose.material3:material3-android", version.ref = "material3-android" }
+androidx-compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose-runtime" }
 androidx-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose-runtime" }
 androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose-runtime" }
 androidx-tv-foundation = { module = "androidx.tv:tv-foundation", version.ref = "tv-foundation" }
