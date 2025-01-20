@@ -49,7 +49,7 @@ class StashGridViewModel : ViewModel() {
 
     val searchBarFocus = EqualityMutableLiveData(false)
 
-    val scrollToNextPage = MutableLiveData<Boolean?>(null)
+    val scrollToNextPage = MutableLiveData<Boolean?>()
 
     sealed interface LoadingStatus {
         data object NoOp : LoadingStatus
