@@ -11,3 +11,10 @@ repos:
   hooks:
     - id: pretty-format-kotlin
       args: [ --autofix, --ktlint-version=1.4.1 ]
+- repo: local
+  hooks:
+    - id: check-debug-enabled
+      name: Check debug enabled
+      entry: val DEBUG = true
+      language: pygrep
+      files: '.+\.kt'
