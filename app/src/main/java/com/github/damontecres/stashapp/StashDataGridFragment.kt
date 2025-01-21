@@ -84,6 +84,7 @@ class StashDataGridFragment :
     private lateinit var jumpButtonLayout: LinearLayout
 
     private var remoteButtonPaging: Boolean = true
+    private var prefBackPressScrollEnabled: Boolean = true
 
     // State
     private var previousPosition = -1
@@ -377,7 +378,7 @@ class StashDataGridFragment :
             }
         }
 
-        val prefBackPressScrollEnabled =
+        prefBackPressScrollEnabled =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_back_button_scroll), true)
@@ -528,7 +529,7 @@ class StashDataGridFragment :
         keyCode: Int,
         event: KeyEvent,
     ): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && prefBackPressScrollEnabled) {
             if (DEBUG) Log.d(TAG, "Long press back, maybe $selectedPosition=>$previousPosition")
             if (previousPosition >= 0 &&
                 previousPosition != selectedPosition &&
