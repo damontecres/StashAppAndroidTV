@@ -153,7 +153,7 @@ abstract class StashPresenter<T>(
         fun getPopUpItems(item: T): List<PopUpItem> = actions.keys.filter { filters[it]!!.include(item) }
 
         fun onItemLongClick(
-            cardView: StashImageCardView,
+            cardView: View,
             item: T,
             popUpItem: PopUpItem,
         ) {
@@ -167,7 +167,7 @@ abstract class StashPresenter<T>(
 
     fun interface PopUpAction<T> {
         fun run(
-            cardView: StashImageCardView,
+            cardView: View,
             item: T,
         )
     }
