@@ -8,7 +8,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.presenters.PopupOnLongClickListener
-import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -96,19 +95,23 @@ class OCounterLongClickCallBack(
     override fun onClick(v: View) {
         val fake = OCounter("", 0)
         val items = longClickCallback.getPopUpItems(fake)
-        longClickCallback.onItemLongClick(v as StashImageCardView, fake, items[0])
+        if (items.isNotEmpty()) {
+            longClickCallback.onItemLongClick(v, fake, items[0])
+        }
     }
 
     override fun onLongClick(v: View): Boolean {
         val fake = OCounter("", 0)
         val items = longClickCallback.getPopUpItems(fake)
-        PopupOnLongClickListener(
-            items.map {
-                it.text
-            },
-        ) { _, _, position, _ ->
-            longClickCallback.onItemLongClick(v as StashImageCardView, fake, items[position])
-        }.onLongClick(v)
+        if (items.isNotEmpty()) {
+            PopupOnLongClickListener(
+                items.map {
+                    it.text
+                },
+            ) { _, _, position, _ ->
+                longClickCallback.onItemLongClick(v, fake, items[position])
+            }.onLongClick(v)
+        }
         return true
     }
 }
