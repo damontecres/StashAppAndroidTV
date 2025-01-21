@@ -530,7 +530,10 @@ class StashDataGridFragment :
     ): Boolean {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (DEBUG) Log.d(TAG, "Long press back, maybe $selectedPosition=>$previousPosition")
-            if (previousPosition >= 0 && previousPosition != selectedPosition) {
+            if (previousPosition >= 0 &&
+                previousPosition != selectedPosition &&
+                requireActivity().currentFocus is StashImageCardView
+            ) {
                 jumpTo(previousPosition)
                 return true
             }
