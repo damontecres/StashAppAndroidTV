@@ -337,6 +337,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     actionListener.onClicked(item)
                 }.addListenerForClass(Action::class.java) { _ ->
                     // no-op, detailsPresenter.onActionClickedListener will handle
+                }.addListenerForClass(OCounter::class.java) { oCounter ->
+                    actionListener.incrementOCounter(oCounter)
                 }
 
         viewModel.image.observe(viewLifecycleOwner) { newImage ->

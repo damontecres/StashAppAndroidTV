@@ -84,8 +84,10 @@ class StashDataGridFragment :
     private lateinit var jumpButtonLayout: LinearLayout
 
     private var remoteButtonPaging: Boolean = true
+    private var prefBackPressScrollEnabled: Boolean = true
 
     // State
+    private var previousPosition = -1
     private var selectedPosition = -1
 
     private var onBackPressedCallback: OnBackPressedCallback? = null
@@ -157,7 +159,8 @@ class StashDataGridFragment :
 
     private fun onSelectedOrJump(position: Int) {
         if (position != selectedPosition) {
-            if (DEBUG) Log.v(TAG, "gridOnItemSelected=$position")
+            if (DEBUG) Log.v(TAG, "newPosition=$position, previousPosition=$previousPosition")
+            previousPosition = selectedPosition
             selectedPosition = position
             viewModel.position = position
             positionTextView.text = formatNumber(position + 1, false)
@@ -375,7 +378,7 @@ class StashDataGridFragment :
             }
         }
 
-        val prefBackPressScrollEnabled =
+        prefBackPressScrollEnabled =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_back_button_scroll), true)
@@ -522,6 +525,23 @@ class StashDataGridFragment :
             }
     }
 
+    override fun onKeyLongPress(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK && prefBackPressScrollEnabled) {
+            if (DEBUG) Log.d(TAG, "Long press back, maybe $selectedPosition=>$previousPosition")
+            if (previousPosition >= 0 &&
+                previousPosition != selectedPosition &&
+                requireActivity().currentFocus is StashImageCardView
+            ) {
+                jumpTo(previousPosition)
+                return true
+            }
+        }
+        return super.onKeyLongPress(keyCode, event)
+    }
+
     override fun onKeyUp(
         keyCode: Int,
         event: KeyEvent,
@@ -573,7 +593,7 @@ class StashDataGridFragment :
     companion object {
         private const val TAG = "StashDataGridFragment"
 
-        private const val DEBUG = true
+        private const val DEBUG = false
     }
 
     inner class VerticalGridItemBridgeAdapter : ItemBridgeAdapter() {

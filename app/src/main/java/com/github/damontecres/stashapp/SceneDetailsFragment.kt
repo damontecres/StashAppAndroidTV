@@ -343,6 +343,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     actionListener.onClicked(StashAction.CREATE_MARKER)
                 }.addListenerForClass(Action::class.java) { _ ->
                     // no-op, detailsPresenter.onActionClickedListener will handle
+                }.addListenerForClass(OCounter::class.java) { oCounter ->
+                    actionListener.incrementOCounter(oCounter)
                 }
 
         setupDetailsOverviewRowPresenter()
