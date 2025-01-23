@@ -250,6 +250,8 @@ dependencies {
     implementation(libs.androidsvg.aar)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.svg)
+    implementation(libs.coil.gif)
 
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)

@@ -307,6 +307,9 @@ fun RootCard(
                                 exoPlayer.seekToDefaultPosition()
                             }
                         },
+                        onRelease = { videoView ->
+                            videoView.player?.stop()
+                        },
                     )
                 } else {
                     Box(
