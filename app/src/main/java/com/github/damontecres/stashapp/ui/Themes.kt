@@ -45,9 +45,9 @@ fun MainTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme =
             darkColorScheme(
-                primary = Color(resources.getColor(R.color.selected_background, null)),
+                primary = Color(resources.getColor(R.color.default_card_background, null)),
                 onPrimary = Color(resources.getColor(android.R.color.white, null)),
-                secondary = Color(resources.getColor(R.color.popup_selected_background, null)),
+                secondary = Color(resources.getColor(R.color.popup_background, null)),
                 primaryContainer = Color(resources.getColor(R.color.default_card_background, null)),
                 background = Color(resources.getColor(R.color.default_background, null)),
                 onBackground = Color(resources.getColor(android.R.color.white, null)),
@@ -55,6 +55,7 @@ fun MainTheme(content: @Composable () -> Unit) {
                 onSurface = Color(resources.getColor(android.R.color.white, null)),
                 surfaceVariant = Color(resources.getColor(R.color.default_card_background, null)),
                 onSurfaceVariant = Color(resources.getColor(android.R.color.white, null)),
+                border = Color(resources.getColor(R.color.selected_background, null)),
             ),
         content = content,
     )
