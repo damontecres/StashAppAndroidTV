@@ -15,6 +15,8 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.HomePage
 import com.github.damontecres.stashapp.ui.MainTheme
@@ -94,7 +96,13 @@ class ComposeMainFragment :
                     HomePage(
                         uiConfig = ComposeUiConfig(true),
                         frontPageRows ?: listOf(),
-                        {},
+                        itemOnClick = {
+                            StashApplication.navigationManager.navigate(
+                                Destination.fromStashData(
+                                    it as StashData,
+                                ),
+                            )
+                        },
                     )
                 }
             }

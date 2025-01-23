@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -25,7 +26,16 @@ class ComposeGridFragment : Fragment(R.layout.compose_frame) {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 MainTheme {
-                    StashGrid(destination.filterArgs)
+                    StashGrid(
+                        destination.filterArgs,
+                        itemOnClick = {
+                            serverViewModel.navigationManager.navigate(
+                                Destination.fromStashData(
+                                    it as StashData,
+                                ),
+                            )
+                        },
+                    )
                 }
             }
         }

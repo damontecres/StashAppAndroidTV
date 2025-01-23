@@ -43,6 +43,7 @@ import com.github.damontecres.stashapp.util.StashServer
 @Composable
 fun StashGrid(
     filterArgs: FilterArgs,
+    itemOnClick: (Any) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
@@ -118,7 +119,7 @@ fun StashGrid(
                                 },
                             uiConfig = ComposeUiConfig(true),
                             item = item,
-                            itemOnClick = { _ -> },
+                            itemOnClick = itemOnClick,
                         )
                     }
                 }
