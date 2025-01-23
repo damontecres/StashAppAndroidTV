@@ -9,7 +9,6 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.leanback.app.GuidedStepSupportFragment
 import com.github.damontecres.stashapp.ComposeMainFragment
-import com.github.damontecres.stashapp.FilterFragment
 import com.github.damontecres.stashapp.GalleryFragment
 import com.github.damontecres.stashapp.GroupFragment
 import com.github.damontecres.stashapp.MarkerDetailsFragment
@@ -33,6 +32,7 @@ import com.github.damontecres.stashapp.playback.PlaylistScenesFragment
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.setup.SetupFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
+import com.github.damontecres.stashapp.ui.ComposeGridFragment
 import com.github.damontecres.stashapp.util.maybeGetDestination
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
@@ -116,7 +116,8 @@ class NavigationManager(
 
                 is Destination.Slideshow -> ImageFragment()
 
-                is Destination.Filter -> FilterFragment()
+//                is Destination.Filter -> FilterFragment()
+                is Destination.Filter -> ComposeGridFragment()
 
                 is Destination.SearchFor -> SearchForFragment()
                 is Destination.UpdateMarker -> MarkerPickerFragment()
