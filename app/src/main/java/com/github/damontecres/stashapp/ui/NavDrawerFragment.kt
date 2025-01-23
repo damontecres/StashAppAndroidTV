@@ -78,7 +78,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                     var currentScreen by remember { mutableStateOf(defaultSelection) }
                     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
-                    val collapsedDrawerItemWidth = 44.dp
+                    val collapsedDrawerItemWidth = 48.dp
                     val paddingValue = 12.dp
 
                     val server: StashServer? by serverViewModel.currentServer.observeAsState()
@@ -116,8 +116,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                     val initialFocus = remember { FocusRequester() }
 
                     NavigationDrawer(
-                        modifier =
-                        Modifier,
+                        modifier = Modifier.padding(4.dp),
                         drawerState = drawerState,
                         drawerContent = {
                             if (!destination.fullScreen) {

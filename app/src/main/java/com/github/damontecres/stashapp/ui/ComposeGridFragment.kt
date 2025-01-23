@@ -2,8 +2,11 @@ package com.github.damontecres.stashapp.ui
 
 import android.os.Bundle
 import android.view.View
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.github.damontecres.stashapp.R
@@ -27,7 +30,8 @@ class ComposeGridFragment : Fragment(R.layout.compose_frame) {
             setContent {
                 MainTheme {
                     StashGrid(
-                        destination.filterArgs,
+                        modifier = Modifier.padding(16.dp),
+                        filterArgs = destination.filterArgs,
                         itemOnClick = {
                             serverViewModel.navigationManager.navigate(
                                 Destination.fromStashData(

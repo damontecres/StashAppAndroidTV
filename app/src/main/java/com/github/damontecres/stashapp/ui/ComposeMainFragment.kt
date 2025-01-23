@@ -1,25 +1,27 @@
-package com.github.damontecres.stashapp
+package com.github.damontecres.stashapp.ui
 
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import androidx.activity.OnBackPressedCallback
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.HomePage
-import com.github.damontecres.stashapp.ui.MainTheme
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
@@ -94,8 +96,9 @@ class ComposeMainFragment :
                         }
                     }
                     HomePage(
+                        modifier = Modifier.padding(16.dp),
                         uiConfig = ComposeUiConfig(true),
-                        frontPageRows ?: listOf(),
+                        rows = frontPageRows ?: listOf(),
                         itemOnClick = {
                             StashApplication.navigationManager.navigate(
                                 Destination.fromStashData(
