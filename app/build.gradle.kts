@@ -248,6 +248,8 @@ dependencies {
     implementation(libs.android.material)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidsvg.aar)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)

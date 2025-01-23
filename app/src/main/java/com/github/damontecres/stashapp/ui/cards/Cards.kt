@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Composable
@@ -67,8 +65,10 @@ import androidx.tv.material3.ClassicCard
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -250,8 +250,7 @@ fun RootCard(
             modifier
                 .onFocusChanged { focusState ->
                     focused = focusState.isFocused
-                }.padding(0.dp)
-                .width(imageWidth),
+                }.padding(0.dp),
         interactionSource = interactionSource,
         shape = shape,
         colors = colors,
@@ -264,7 +263,8 @@ fun RootCard(
             Box(
                 modifier =
                     Modifier
-                        .size(imageWidth, imageHeight)
+                        .height(imageHeight)
+                        .fillMaxWidth()
                         .background(Color.Black),
                 contentAlignment = Alignment.Center,
             ) {
@@ -312,16 +312,28 @@ fun RootCard(
                     Box(
                         modifier =
                             Modifier
-                                .width(imageWidth)
                                 .height(imageHeight)
+                                .fillMaxWidth()
                                 .padding(0.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
                         if (imageUrl.isNotNullOrBlank()) {
-                            GlideImage(
-                                model = imageUrl,
-                                contentDescription = "",
-                                contentScale = ContentScale.Fit, // TODO setting
-                                modifier = Modifier.fillMaxSize(),
+//                            GlideImage(
+//                                model = imageUrl,
+//                                contentDescription = "",
+//                                contentScale = ContentScale.Fit, // TODO setting
+//                                modifier = Modifier.fillMaxSize(),
+//                            )
+                            AsyncImage(
+                                modifier = Modifier,
+                                model =
+                                    ImageRequest
+                                        .Builder(LocalContext.current)
+                                        .data(imageUrl)
+                                        .crossfade(true)
+                                        .build(),
+                                contentDescription = null,
+                                contentScale = ContentScale.Fit,
                             )
                         }
                         imageContent.invoke(this)

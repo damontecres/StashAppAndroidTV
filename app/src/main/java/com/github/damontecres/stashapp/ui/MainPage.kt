@@ -21,9 +21,14 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.request.crossfade
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
 import com.github.damontecres.stashapp.util.FrontPageParser
+import com.github.damontecres.stashapp.util.StashServer
 
 @Composable
 fun HomePage(
@@ -33,6 +38,20 @@ fun HomePage(
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
+    setSingletonImageLoaderFactory { context ->
+        ImageLoader
+            .Builder(context)
+            .crossfade(true)
+            .components {
+                add(
+                    OkHttpNetworkFetcherFactory(
+                        callFactory = {
+                            StashServer.requireCurrentServer().okHttpClient
+                        },
+                    ),
+                )
+            }.build()
+    }
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(20.dp),
