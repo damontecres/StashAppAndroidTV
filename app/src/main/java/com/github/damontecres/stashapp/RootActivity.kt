@@ -16,7 +16,10 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationListener
 import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
+import com.github.damontecres.stashapp.navigation.NavigationManagerLeanback
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
@@ -28,8 +31,8 @@ import kotlin.properties.Delegates
  * The only activity in the app
  */
 class RootActivity :
-    FragmentActivity(R.layout.activity_root),
-    NavigationManager.NavigationListener {
+    FragmentActivity(),
+    NavigationListener {
     private val serverViewModel: ServerViewModel by viewModels<ServerViewModel>()
     private lateinit var navigationManager: NavigationManager
     private var appHasPin by Delegates.notNull<Boolean>()
@@ -40,6 +43,16 @@ class RootActivity :
     private lateinit var bgLogo: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val useCompose =
+            PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getBoolean(getString(R.string.pref_key_use_compose_ui), false)
+        if (useCompose) {
+            setContentView(R.layout.activity_root_compose)
+        } else {
+            setContentView(R.layout.activity_root)
+        }
         setUpLifeCycleListeners()
         Log.v(TAG, "onCreate: savedInstanceState==null:${savedInstanceState == null}")
         window.setFlags(
@@ -54,8 +67,13 @@ class RootActivity :
                 .isNotNullOrBlank()
 
         // Ensure everything is initialized
-        super.onCreate(savedInstanceState)
-        navigationManager = NavigationManager(this)
+
+        navigationManager =
+            if (useCompose) {
+                NavigationManagerCompose(this)
+            } else {
+                NavigationManagerLeanback(this)
+            }
         navigationManager.addListener(this)
         StashApplication.navigationManager = navigationManager
 

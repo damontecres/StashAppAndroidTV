@@ -3,9 +3,7 @@ package com.github.damontecres.stashapp
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
@@ -39,6 +37,7 @@ import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.showToastOnMain
 import com.github.damontecres.stashapp.util.testStashConnection
 import com.github.damontecres.stashapp.views.LoadingFragment
+import com.github.damontecres.stashapp.views.MainTitleView
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -102,9 +101,9 @@ class MainFragment :
                     selectedPosition = 0
                 }
             }
-//        (titleView as MainTitleView).focusListener.addListener { _, isFocused ->
-//            backCallback.isEnabled = !isFocused
-//        }
+        (titleView as MainTitleView).focusListener.addListener { _, isFocused ->
+            backCallback.isEnabled = !isFocused
+        }
 
         setupObservers()
         setOnItemViewSelectedListener { itemViewHolder, item, rowViewHolder, row ->
@@ -157,9 +156,9 @@ class MainFragment :
                                 newServer.apolloClient,
                             )
                         if (result.status == TestResultStatus.SUCCESS) {
-//                            val mainTitleView =
-//                                requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
-//                            mainTitleView.refreshMenuItems(newServer.serverPreferences)
+                            val mainTitleView =
+                                requireActivity().findViewById<MainTitleView>(R.id.browse_title_group)
+                            mainTitleView.refreshMenuItems(newServer.serverPreferences)
                             fetchData(newServer)
                         } else if (result.status == TestResultStatus.UNSUPPORTED_VERSION) {
                             Log.w(
@@ -224,12 +223,6 @@ class MainFragment :
         rowsAdapter.clear()
         adapters.forEach { it.clear() }
     }
-
-    override fun onInflateTitleView(
-        inflater: LayoutInflater?,
-        parent: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View? = null
 
     private suspend fun fetchData(server: StashServer) =
         withContext(Dispatchers.IO) {
