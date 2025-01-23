@@ -136,17 +136,17 @@ class StashGridControlsFragment() :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            name = savedInstanceState.getString(STATE_NAME)
+            initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
+            Log.v(TAG, "sortAndDirection=${initialFilter.sortAndDirection}")
+        }
+
         Log.v(TAG, "onCreate: dataType=$dataType")
 
         viewModel.init(
             NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
         )
-
-        if (savedInstanceState != null) {
-            name = savedInstanceState.getString(STATE_NAME)
-            initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER) ?: initialFilter
-            Log.v(TAG, "sortAndDirection=${initialFilter.sortAndDirection}")
-        }
 
         currentFilter = initialFilter
 
