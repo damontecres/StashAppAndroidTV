@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.cards
 
-import android.graphics.Color
 import android.net.Uri
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
@@ -28,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -109,7 +109,7 @@ fun ImageOverlay(
             val ratingText = getRatingString(rating100, ratingsAsStars)
             val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
             val ratingColors = context.resources.obtainTypedArray(R.array.rating_colors)
-            val bgColor = ratingColors.getColor(rating100 / 5, Color.WHITE)
+            val bgColor = ratingColors.getColor(rating100 / 5, android.graphics.Color.WHITE)
             ratingColors.recycle()
 
             Text(
@@ -117,9 +117,7 @@ fun ImageOverlay(
                     Modifier
                         .align(Alignment.TopStart)
                         .background(
-                            color =
-                                androidx.compose.ui.graphics
-                                    .Color(bgColor),
+                            color = Color(bgColor),
                         ).padding(4.dp),
                 style = TextStyle(fontWeight = FontWeight.Bold),
                 text = text,
@@ -228,6 +226,16 @@ fun RootCard(
     interactionSource: MutableInteractionSource? = null,
 ) {
     val context = LocalContext.current
+
+    // TODO
+    val videoDelay =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getInt(
+                context.getString(R.string.pref_key_ui_card_overlay_delay),
+                context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
+            ).toLong()
+
     var focused by remember { mutableStateOf(false) }
 
     val playVideoPreviews =
@@ -254,46 +262,52 @@ fun RootCard(
         Column(modifier = Modifier.padding(contentPadding)) {
             // Image/Video
             Box(
-                modifier = Modifier.size(imageWidth, imageHeight),
+                modifier =
+                    Modifier
+                        .size(imageWidth, imageHeight)
+                        .background(Color.Black),
                 contentAlignment = Alignment.Center,
             ) {
                 if (playVideoPreviews && focused && videoUrl.isNotNullOrBlank()) {
-                    AndroidView(factory = {
-                        PlayerView(context).apply {
-                            hideController()
-                            useController = false
-                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                            layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+                    AndroidView(
+                        modifier = Modifier,
+                        factory = { context ->
+                            PlayerView(context).apply {
+                                hideController()
+                                useController = false
+                                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT
+                                layoutParams =
+                                    FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+                                val exoPlayer =
+                                    StashExoPlayer.getInstance(
+                                        context,
+                                        StashServer.requireCurrentServer(),
+                                    )
+                                player = exoPlayer
 
-                            val exoPlayer =
-                                StashExoPlayer.getInstance(
-                                    context,
-                                    StashServer.requireCurrentServer(),
-                                )
-                            player = exoPlayer
+                                val mediaItem =
+                                    MediaItem
+                                        .Builder()
+                                        .setUri(Uri.parse(videoUrl))
+                                        .setMimeType(MimeTypes.VIDEO_MP4)
+                                        .build()
 
-                            val mediaItem =
-                                MediaItem
-                                    .Builder()
-                                    .setUri(Uri.parse(videoUrl))
-                                    .setMimeType(MimeTypes.VIDEO_MP4)
-                                    .build()
-
-                            exoPlayer.setMediaItem(mediaItem, C.TIME_UNSET)
-                            if (PreferenceManager
-                                    .getDefaultSharedPreferences(context)
-                                    .getBoolean("videoPreviewAudio", false)
-                            ) {
-                                exoPlayer.volume = 1f
-                            } else {
-                                exoPlayer.volume = 0f
+                                exoPlayer.setMediaItem(mediaItem, C.TIME_UNSET)
+                                if (PreferenceManager
+                                        .getDefaultSharedPreferences(context)
+                                        .getBoolean("videoPreviewAudio", false)
+                                ) {
+                                    exoPlayer.volume = 1f
+                                } else {
+                                    exoPlayer.volume = 0f
+                                }
+                                exoPlayer.prepare()
+                                exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
+                                exoPlayer.playWhenReady = true
+                                exoPlayer.seekToDefaultPosition()
                             }
-                            exoPlayer.prepare()
-                            exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
-                            exoPlayer.playWhenReady = true
-                            exoPlayer.seekToDefaultPosition()
-                        }
-                    })
+                        },
+                    )
                 } else {
                     Box(
                         modifier =
