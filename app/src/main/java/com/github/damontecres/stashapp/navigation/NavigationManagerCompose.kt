@@ -9,7 +9,6 @@ import androidx.leanback.app.GuidedStepSupportFragment
 import com.github.damontecres.stashapp.GalleryFragment
 import com.github.damontecres.stashapp.GroupFragment
 import com.github.damontecres.stashapp.MarkerDetailsFragment
-import com.github.damontecres.stashapp.PerformerFragment
 import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
@@ -31,6 +30,7 @@ import com.github.damontecres.stashapp.setup.SetupFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
 import com.github.damontecres.stashapp.ui.ComposeGridFragment
 import com.github.damontecres.stashapp.ui.ComposeMainFragment
+import com.github.damontecres.stashapp.ui.ComposePerformerFragment
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
 
@@ -66,7 +66,7 @@ class NavigationManagerCompose(
                         DataType.SCENE -> SceneDetailsFragment()
                         DataType.TAG -> TagFragment()
                         DataType.GROUP -> GroupFragment()
-                        DataType.PERFORMER -> PerformerFragment()
+                        DataType.PERFORMER -> ComposePerformerFragment()
                         DataType.STUDIO -> StudioFragment()
                         DataType.GALLERY -> GalleryFragment()
                         DataType.MARKER -> throw IllegalArgumentException("Marker not supported here")
