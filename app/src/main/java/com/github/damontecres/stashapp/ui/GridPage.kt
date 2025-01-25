@@ -15,10 +15,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +46,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -68,10 +72,13 @@ fun StashGridControls(
     itemOnLongClick: ((Any) -> Unit)? = null,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
-    val filterArgs by remember { mutableStateOf(initialFilter) }
+    val dataType = initialFilter.dataType
+    var filterArgs by remember { mutableStateOf(initialFilter) }
     var showTopRowRaw by remember { mutableStateOf(true) }
     val showTopRow by remember { derivedStateOf { showTopRowRaw } }
     var checked by remember { mutableStateOf(false) }
+
+    var sortByDropDown by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
         if (showTopRow) {
@@ -90,13 +97,35 @@ fun StashGridControls(
                             Text(text = stringResource(R.string.stashapp_search_filter_saved_filters))
                         }
                     }
-                    Button(
-                        onClick = {},
-                        onLongClick = {},
-                    ) {
-                        Text(text = stringResource(R.string.sort_by))
+                    Box {
+                        Button(
+                            onClick = { sortByDropDown = true },
+                            onLongClick = {},
+                        ) {
+                            Text(text = stringResource(R.string.sort_by))
+                        }
+                        DropdownMenu(
+                            expanded = sortByDropDown,
+                            onDismissRequest = { sortByDropDown = false },
+                        ) {
+                            dataType.sortOptions.forEach { sortOption ->
+                                DropdownMenuItem(
+                                    text = { Text(sortOption.getString(LocalContext.current)) },
+                                    onClick = {
+                                        sortByDropDown = false
+                                        filterArgs =
+                                            filterArgs.with(
+                                                SortAndDirection(
+                                                    sortOption,
+                                                    SortDirectionEnum.ASC,
+                                                ),
+                                            )
+                                    },
+                                )
+                            }
+                        }
                     }
-                    if (filterArgs.dataType.supportsPlaylists || filterArgs.dataType == DataType.IMAGE) {
+                    if (dataType.supportsPlaylists || dataType == DataType.IMAGE) {
                         Button(
                             onClick = {},
                         ) {
@@ -110,7 +139,7 @@ fun StashGridControls(
                             Text(text = "Create Filter")
                         }
                     }
-                    if (filterArgs.dataType.supportsSubContent) {
+                    if (dataType.supportsSubContent) {
                         SwitchWithLabel(
                             modifier = Modifier,
                             label = stringResource(R.string.stashapp_include_sub_tag_content),
@@ -148,159 +177,163 @@ fun StashGrid(
     val scope = rememberCoroutineScope()
     val server = StashServer.requireCurrentServer()
     val dataSupplierFactory = DataSupplierFactory(server.version)
-    val dataSupplier =
-        dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filterArgs)
-    val pagingSource = StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
-    val pager = remember { ComposePager(pagingSource, scope) }
 
-    LaunchedEffect(filterArgs) {
-        pager.init()
-    }
+    key(filterArgs) {
+        val dataSupplier =
+            dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filterArgs)
+        val pagingSource =
+            StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
+        val pager = remember { ComposePager(pagingSource, scope) }
 
-    val firstFocus = remember { FocusRequester() }
-    var focusedIndex by remember { mutableIntStateOf(0) }
+        LaunchedEffect(filterArgs) {
+            pager.init()
+        }
 
-    Row(
-        modifier =
-            modifier
-                .fillMaxSize(),
-    ) {
-        JumpButtons(
-            itemCount = pager.size(),
-            jumpClick = { jump ->
-                scope.launch {
-                    val newPosition =
-                        (gridState.firstVisibleItemIndex + jump).coerceIn(0..<pager.size())
-                    gridState.scrollToItem(newPosition)
-                }
-            },
-            modifier = Modifier.align(Alignment.CenterVertically),
-        )
-        Box(
-            modifier = Modifier,
+        val firstFocus = remember { FocusRequester() }
+        var focusedIndex by remember { mutableIntStateOf(0) }
+
+        Row(
+            modifier =
+                modifier
+                    .fillMaxSize(),
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(columns),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                state = gridState,
-                modifier =
-                    Modifier
-                        .padding(16.dp)
-                        .fillMaxSize()
-                        .focusGroup(),
+            JumpButtons(
+                itemCount = pager.size(),
+                jumpClick = { jump ->
+                    scope.launch {
+                        val newPosition =
+                            (gridState.firstVisibleItemIndex + jump).coerceIn(0..<pager.size())
+                        gridState.scrollToItem(newPosition)
+                    }
+                },
+                modifier = Modifier.align(Alignment.CenterVertically),
+            )
+            Box(
+                modifier = Modifier,
+            ) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(columns),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    state = gridState,
+                    modifier =
+                        Modifier
+                            .padding(16.dp)
+                            .fillMaxSize()
+                            .focusGroup(),
 //                    .focusRestorer { firstFocus },
 //                    .focusRestorer(),
-            ) {
-                if (pager.size() < 0) {
-                    item {
-                        Text(
-                            text = "Waiting for items to load from the backend",
-                            color = Color.White,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .wrapContentWidth(Alignment.CenterHorizontally),
-                        )
-                    }
-                } else {
-                    items(
-                        pager.size(),
-//                key = { pager[it]?.id },
-                    ) { index ->
-                        val mod =
-                            if (index == (gridState.firstVisibleItemIndex + gridState.firstVisibleItemScrollOffset)) {
-//                            Modifier.focusRequester(firstFocus)
-                                Modifier
-                            } else {
-                                Modifier
-                            }
-                        val item = pager[index]
-                        if (item == null) {
+                ) {
+                    if (pager.size() < 0) {
+                        item {
                             Text(
-                                text = "Loading...",
+                                text = "Waiting for items to load from the backend",
                                 color = Color.White,
                                 modifier =
-                                    mod
+                                    Modifier
                                         .fillMaxWidth()
                                         .wrapContentWidth(Alignment.CenterHorizontally),
                             )
-                        } else {
-                            StashCard(
-                                modifier =
-                                    mod.onFocusChanged { focusState ->
-                                        if (focusState.isFocused) {
-                                            focusedIndex = index
-                                            positionCallback?.invoke(columns, index)
-                                        }
-                                    },
-                                uiConfig = ComposeUiConfig(true),
-                                item = item,
-                                itemOnClick = itemOnClick,
-                            )
+                        }
+                    } else {
+                        items(
+                            pager.size(),
+//                key = { pager[it]?.id },
+                        ) { index ->
+                            val mod =
+                                if (index == (gridState.firstVisibleItemIndex + gridState.firstVisibleItemScrollOffset)) {
+//                            Modifier.focusRequester(firstFocus)
+                                    Modifier
+                                } else {
+                                    Modifier
+                                }
+                            val item = pager[index]
+                            if (item == null) {
+                                Text(
+                                    text = "Loading...",
+                                    color = Color.White,
+                                    modifier =
+                                        mod
+                                            .fillMaxWidth()
+                                            .wrapContentWidth(Alignment.CenterHorizontally),
+                                )
+                            } else {
+                                StashCard(
+                                    modifier =
+                                        mod.onFocusChanged { focusState ->
+                                            if (focusState.isFocused) {
+                                                focusedIndex = index
+                                                positionCallback?.invoke(columns, index)
+                                            }
+                                        },
+                                    uiConfig = ComposeUiConfig(true),
+                                    item = item,
+                                    itemOnClick = itemOnClick,
+                                )
+                            }
                         }
                     }
                 }
-            }
-            // Footer
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            Color(
-                                LocalContext.current.resources.getColor(
-                                    R.color.transparent_black_50,
-                                    null,
+                // Footer
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .background(
+                                Color(
+                                    LocalContext.current.resources.getColor(
+                                        R.color.transparent_black_50,
+                                        null,
+                                    ),
                                 ),
                             ),
-                        ),
+                ) {
+                    Text(
+                        modifier = Modifier.padding(4.dp),
+                        color = Color.White,
+                        text = "${focusedIndex + 1} / ${pager.size()}",
+                    )
+                }
+            }
+            // Letters
+            Log.d(
+                "Compose",
+                "pager.size()=${pager.size()}, filterArgs.sortAndDirection.sort=${filterArgs.sortAndDirection.sort}",
+            )
+            if (pager.size() > 0 &&
+                SortOption.isJumpSupported(
+                    filterArgs.dataType,
+                    filterArgs.sortAndDirection.sort,
+                )
             ) {
-                Text(
-                    modifier = Modifier.padding(4.dp),
-                    color = Color.White,
-                    text = "${focusedIndex + 1} / ${pager.size()}",
+                AlphabetButtons(
+                    modifier = Modifier.align(Alignment.CenterVertically),
+                    letterClicked = { letter ->
+                        scope.launch {
+                            val letterPosition =
+                                AlphabetSearchUtils.findPosition(
+                                    letter,
+                                    filterArgs,
+                                    QueryEngine(server),
+                                    dataSupplierFactory,
+                                )
+//                Log.v(TAG, "Found position for $letter: $letterPosition")
+                            val jumpPosition =
+                                if (filterArgs
+                                        .sortAndDirection
+                                        .direction == SortDirectionEnum.DESC
+                                ) {
+                                    // Reverse if sorting descending
+                                    pager.size() - letterPosition - 1
+                                } else {
+                                    letterPosition
+                                }
+
+                            gridState.scrollToItem(jumpPosition)
+                        }
+                    },
                 )
             }
-        }
-        // Letters
-        Log.d(
-            "Compose",
-            "pager.size()=${pager.size()}, filterArgs.sortAndDirection.sort=${filterArgs.sortAndDirection.sort}",
-        )
-        if (pager.size() > 0 &&
-            SortOption.isJumpSupported(
-                filterArgs.dataType,
-                filterArgs.sortAndDirection.sort,
-            )
-        ) {
-            AlphabetButtons(
-                modifier = Modifier.align(Alignment.CenterVertically),
-                letterClicked = { letter ->
-                    scope.launch {
-                        val letterPosition =
-                            AlphabetSearchUtils.findPosition(
-                                letter,
-                                filterArgs,
-                                QueryEngine(server),
-                                dataSupplierFactory,
-                            )
-//                Log.v(TAG, "Found position for $letter: $letterPosition")
-                        val jumpPosition =
-                            if (filterArgs
-                                    .sortAndDirection
-                                    .direction == SortDirectionEnum.DESC
-                            ) {
-                                // Reverse if sorting descending
-                                pager.size() - letterPosition - 1
-                            } else {
-                                letterPosition
-                            }
-
-                        gridState.scrollToItem(jumpPosition)
-                    }
-                },
-            )
         }
     }
 }
