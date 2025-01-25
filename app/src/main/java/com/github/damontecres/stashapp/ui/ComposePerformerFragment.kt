@@ -58,14 +58,15 @@ class ComposePerformerFragment : ComposeFragment() {
                         )
                     },
                     TabProvider(getString(R.string.stashapp_scenes)) { positionCallback ->
-                        StashGrid(
-                            filterArgs =
+                        StashGridControls(
+                            initialFilter =
                                 FilterArgs(
                                     dataType = DataType.SCENE,
                                     findFilter = server!!.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_SCENES).findFilter,
                                     objectFilter = SceneFilterType(performers = performers),
                                 ),
                             itemOnClick = { },
+                            filterUiMode = FilterUiMode.CREATE_FILTER,
                             modifier = Modifier,
                             positionCallback = positionCallback,
                         )

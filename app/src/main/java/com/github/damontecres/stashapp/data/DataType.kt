@@ -161,6 +161,8 @@ enum class DataType(
 
     val supportsPlaylists get() = this == SCENE || this == MARKER
 
+    val supportsSubContent get() = this == STUDIO || this == TAG
+
     companion object {
         fun fromFilterMode(mode: FilterMode): DataType? =
             DataType.entries.firstOrNull {

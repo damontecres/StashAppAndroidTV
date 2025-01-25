@@ -17,8 +17,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -33,11 +35,14 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -48,6 +53,88 @@ import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
+
+enum class FilterUiMode {
+    SAVED_FILTERS,
+    CREATE_FILTER,
+}
+
+@Composable
+fun StashGridControls(
+    initialFilter: FilterArgs,
+    itemOnClick: (Any) -> Unit,
+    filterUiMode: FilterUiMode,
+    modifier: Modifier = Modifier,
+    itemOnLongClick: ((Any) -> Unit)? = null,
+    positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
+) {
+    val filterArgs by remember { mutableStateOf(initialFilter) }
+    var showTopRowRaw by remember { mutableStateOf(true) }
+    val showTopRow by remember { derivedStateOf { showTopRowRaw } }
+    var checked by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier) {
+        if (showTopRow) {
+            Row(
+                modifier =
+                    Modifier
+                        .padding(8.dp)
+                        .focusGroup(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                    if (filterUiMode == FilterUiMode.SAVED_FILTERS) {
+                        Button(
+                            onClick = {},
+                        ) {
+                            Text(text = stringResource(R.string.stashapp_search_filter_saved_filters))
+                        }
+                    }
+                    Button(
+                        onClick = {},
+                        onLongClick = {},
+                    ) {
+                        Text(text = stringResource(R.string.sort_by))
+                    }
+                    if (filterArgs.dataType.supportsPlaylists || filterArgs.dataType == DataType.IMAGE) {
+                        Button(
+                            onClick = {},
+                        ) {
+                            Text(text = stringResource(R.string.play_all))
+                        }
+                    }
+                    if (filterUiMode == FilterUiMode.CREATE_FILTER) {
+                        Button(
+                            onClick = {},
+                        ) {
+                            Text(text = "Create Filter")
+                        }
+                    }
+                    if (filterArgs.dataType.supportsSubContent) {
+                        SwitchWithLabel(
+                            modifier = Modifier,
+                            label = stringResource(R.string.stashapp_include_sub_tag_content),
+                            state = checked,
+                            onStateChange = { isChecked ->
+                                checked = isChecked
+                            },
+                        )
+                    }
+                }
+                // TODO search
+            }
+        }
+        StashGrid(
+            filterArgs,
+            itemOnClick,
+            Modifier.fillMaxSize(),
+            positionCallback = { columns, position ->
+                showTopRowRaw = position < columns
+                positionCallback?.invoke(columns, position)
+            },
+        )
+    }
+}
 
 @Composable
 fun StashGrid(

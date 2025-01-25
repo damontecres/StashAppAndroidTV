@@ -29,9 +29,10 @@ class ComposeGridFragment : Fragment(R.layout.compose_frame) {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 MainTheme {
-                    StashGrid(
+                    StashGridControls(
                         modifier = Modifier.padding(16.dp),
-                        filterArgs = destination.filterArgs,
+                        initialFilter = destination.filterArgs,
+                        filterUiMode = FilterUiMode.SAVED_FILTERS,
                         itemOnClick = {
                             serverViewModel.navigationManager.navigate(
                                 Destination.fromStashData(
