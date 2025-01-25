@@ -34,8 +34,11 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
@@ -48,6 +51,7 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.SortOption
+import com.github.damontecres.stashapp.data.flip
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -72,6 +76,9 @@ fun StashGridControls(
     itemOnLongClick: ((Any) -> Unit)? = null,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
+    val fontFamily = FontFamily(Font(resId = R.font.fa_solid_900))
+    val context = LocalContext.current
+
     val dataType = initialFilter.dataType
     var filterArgs by remember { mutableStateOf(initialFilter) }
     var showTopRowRaw by remember { mutableStateOf(true) }
@@ -79,6 +86,8 @@ fun StashGridControls(
     var checked by remember { mutableStateOf(false) }
 
     var sortByDropDown by remember { mutableStateOf(false) }
+    val currentSort = filterArgs.sortAndDirection.sort
+    val currentDirection = filterArgs.sortAndDirection.direction
 
     Column(modifier = modifier) {
         if (showTopRow) {
@@ -100,29 +109,77 @@ fun StashGridControls(
                     Box {
                         Button(
                             onClick = { sortByDropDown = true },
-                            onLongClick = {},
+                            onLongClick = {
+                                filterArgs =
+                                    filterArgs.with(
+                                        SortAndDirection(
+                                            currentSort,
+                                            currentDirection.flip(),
+                                        ),
+                                    )
+                            },
                         ) {
-                            Text(text = stringResource(R.string.sort_by))
+                            Text(
+                                text =
+                                    buildAnnotatedString {
+                                        withStyle(SpanStyle(fontFamily = fontFamily)) {
+                                            append(
+                                                stringResource(
+                                                    if (currentDirection == SortDirectionEnum.ASC) {
+                                                        R.string.fa_caret_up
+                                                    } else {
+                                                        R.string.fa_caret_down
+                                                    },
+                                                ),
+                                            )
+                                        }
+                                        append(" ")
+                                        append(currentSort.getString(LocalContext.current))
+                                    },
+                            )
                         }
                         DropdownMenu(
                             expanded = sortByDropDown,
                             onDismissRequest = { sortByDropDown = false },
                         ) {
-                            dataType.sortOptions.forEach { sortOption ->
-                                DropdownMenuItem(
-                                    text = { Text(sortOption.getString(LocalContext.current)) },
-                                    onClick = {
-                                        sortByDropDown = false
-                                        filterArgs =
-                                            filterArgs.with(
-                                                SortAndDirection(
-                                                    sortOption,
-                                                    SortDirectionEnum.ASC,
-                                                ),
-                                            )
-                                    },
-                                )
-                            }
+                            dataType.sortOptions
+                                .sortedBy { it.getString(context) }
+                                .forEach { sortOption ->
+                                    DropdownMenuItem(
+                                        leadingIcon = {
+                                            if (sortOption == currentSort) {
+                                                if (currentDirection == SortDirectionEnum.ASC) {
+                                                    Text(
+                                                        text = stringResource(R.string.fa_caret_up),
+                                                        fontFamily = fontFamily,
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = stringResource(R.string.fa_caret_down),
+                                                        fontFamily = fontFamily,
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        text = { Text(sortOption.getString(context)) },
+                                        onClick = {
+                                            sortByDropDown = false
+                                            val newDirection =
+                                                if (currentSort == sortOption) {
+                                                    currentDirection.flip()
+                                                } else {
+                                                    currentDirection
+                                                }
+                                            filterArgs =
+                                                filterArgs.with(
+                                                    SortAndDirection(
+                                                        sortOption,
+                                                        newDirection,
+                                                    ),
+                                                )
+                                        },
+                                    )
+                                }
                         }
                     }
                     if (dataType.supportsPlaylists || dataType == DataType.IMAGE) {

@@ -89,3 +89,5 @@ data class SortAndDirection(
         }
     }
 }
+
+fun SortDirectionEnum?.flip(): SortDirectionEnum = if (this == SortDirectionEnum.ASC) SortDirectionEnum.DESC else SortDirectionEnum.ASC
