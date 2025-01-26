@@ -12,25 +12,23 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidViewBinding
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GroupFilterType
+import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.databinding.PerformerDetailsComposeBinding
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.ui.components.FilterUiMode
-import com.github.damontecres.stashapp.ui.components.StashGridControls
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.models.PerformerViewModel
-import com.github.damontecres.stashapp.views.models.ServerViewModel
 
-class ComposePerformerFragment : ComposeFragment() {
-    private val serverViewModel: ServerViewModel by activityViewModels()
+class ComposePerformerFragment : ComposeTabFragment() {
     private val viewModel: PerformerViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,20 +57,38 @@ class ComposePerformerFragment : ComposeFragment() {
                             modifier = Modifier.fillMaxSize(),
                         )
                     },
-                    TabProvider(getString(R.string.stashapp_scenes)) { positionCallback ->
-                        StashGridControls(
-                            initialFilter =
-                                FilterArgs(
-                                    dataType = DataType.SCENE,
-                                    findFilter = server!!.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_SCENES).findFilter,
-                                    objectFilter = SceneFilterType(performers = performers),
-                                ),
-                            itemOnClick = { },
-                            filterUiMode = FilterUiMode.CREATE_FILTER,
-                            modifier = Modifier,
-                            positionCallback = positionCallback,
-                        )
-                    },
+                    createTab(
+                        DataType.SCENE,
+                        FilterArgs(
+                            dataType = DataType.SCENE,
+                            findFilter = server!!.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_SCENES).findFilter,
+                            objectFilter = SceneFilterType(performers = performers),
+                        ),
+                    ),
+                    createTab(
+                        DataType.GALLERY,
+                        FilterArgs(
+                            dataType = DataType.GALLERY,
+                            findFilter = server!!.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_GALLERIES).findFilter,
+                            objectFilter = GalleryFilterType(performers = performers),
+                        ),
+                    ),
+                    createTab(
+                        DataType.IMAGE,
+                        FilterArgs(
+                            dataType = DataType.IMAGE,
+                            findFilter = server!!.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_IMAGES).findFilter,
+                            objectFilter = ImageFilterType(performers = performers),
+                        ),
+                    ),
+                    createTab(
+                        DataType.GROUP,
+                        FilterArgs(
+                            dataType = DataType.GROUP,
+                            findFilter = server!!.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_GROUPS).findFilter,
+                            objectFilter = GroupFilterType(performers = performers),
+                        ),
+                    ),
                 )
             val title =
                 AnnotatedString

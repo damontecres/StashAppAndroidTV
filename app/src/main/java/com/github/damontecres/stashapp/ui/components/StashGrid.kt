@@ -76,7 +76,7 @@ fun StashGridControls(
     val context = LocalContext.current
 
     val dataType = initialFilter.dataType
-    var filterArgs by remember { mutableStateOf(initialFilter) }
+    var filterArgs by remember(initialFilter) { mutableStateOf(initialFilter) }
     var showTopRowRaw by remember { mutableStateOf(true) }
     val showTopRow by remember { derivedStateOf { showTopRowRaw } }
     var checked by remember { mutableStateOf(false) }
@@ -291,10 +291,6 @@ fun StashGrid(
                 }
             }
             // Letters
-            Log.d(
-                "Compose",
-                "pager.size()=${pager.size()}, filterArgs.sortAndDirection.sort=${filterArgs.sortAndDirection.sort}",
-            )
             if (pager.size() > 0 &&
                 SortOption.isJumpSupported(
                     filterArgs.dataType,

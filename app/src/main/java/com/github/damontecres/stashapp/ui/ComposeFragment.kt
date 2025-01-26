@@ -8,9 +8,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 abstract class ComposeFragment : Fragment(R.layout.compose_frame) {
+    protected val serverViewModel: ServerViewModel by activityViewModels()
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
