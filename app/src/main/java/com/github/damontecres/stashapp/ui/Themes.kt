@@ -88,3 +88,29 @@ fun Material3AppTheme(content: @Composable () -> Unit) {
 
     androidx.compose.material3.MaterialTheme(colorScheme = colorScheme, content = content)
 }
+
+@Composable
+fun Material3MainTheme(content: @Composable () -> Unit) {
+    val resources = StashApplication.getApplication().resources
+    androidx.compose.material3.MaterialTheme(
+        colorScheme =
+            androidx.compose.material3.darkColorScheme(
+                primary = Color(resources.getColor(R.color.default_card_background, null)),
+                onPrimary = Color(resources.getColor(android.R.color.white, null)),
+                secondary = Color(resources.getColor(R.color.popup_background, null)),
+                onSecondary = Color.White,
+                secondaryContainer = Color(resources.getColor(R.color.popup_background, null)),
+                onSecondaryContainer = Color.White,
+                primaryContainer = Color(resources.getColor(R.color.default_card_background, null)),
+                onPrimaryContainer = Color.White,
+                background = Color(resources.getColor(R.color.default_background, null)),
+                onBackground = Color(resources.getColor(android.R.color.white, null)),
+                surface = Color(resources.getColor(R.color.default_card_background, null)),
+                onSurface = Color(resources.getColor(android.R.color.white, null)),
+                surfaceVariant = Color(resources.getColor(R.color.default_card_background, null)),
+                onSurfaceVariant = Color(resources.getColor(android.R.color.white, null)),
+                outline = Color(resources.getColor(R.color.selected_background, null)),
+            ),
+        content = content,
+    )
+}

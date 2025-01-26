@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -46,6 +48,7 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.SavedFilter
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
@@ -55,9 +58,11 @@ import com.github.damontecres.stashapp.data.flip
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
+import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.launch
@@ -85,10 +90,6 @@ fun StashGridControls(
     val showTopRow by remember { derivedStateOf { showTopRowRaw } }
     var checked by remember { mutableStateOf(false) }
 
-    var sortByDropDown by remember { mutableStateOf(false) }
-    val currentSort = filterArgs.sortAndDirection.sort
-    val currentDirection = filterArgs.sortAndDirection.direction
-
     Column(modifier = modifier) {
         if (showTopRow) {
             Row(
@@ -100,88 +101,24 @@ fun StashGridControls(
             ) {
                 ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                     if (filterUiMode == FilterUiMode.SAVED_FILTERS) {
-                        Button(
-                            onClick = {},
-                        ) {
-                            Text(text = stringResource(R.string.stashapp_search_filter_saved_filters))
-                        }
-                    }
-                    Box {
-                        Button(
-                            onClick = { sortByDropDown = true },
-                            onLongClick = {
-                                filterArgs =
-                                    filterArgs.with(
-                                        SortAndDirection(
-                                            currentSort,
-                                            currentDirection.flip(),
-                                        ),
-                                    )
+                        SavedFiltersButton(
+                            modifier = Modifier,
+                            dataType = dataType,
+                            onFilterChange = { filterArgs = it },
+                            onCreateFilter = {
+                                // TODO
                             },
-                        ) {
-                            Text(
-                                text =
-                                    buildAnnotatedString {
-                                        withStyle(SpanStyle(fontFamily = fontFamily)) {
-                                            append(
-                                                stringResource(
-                                                    if (currentDirection == SortDirectionEnum.ASC) {
-                                                        R.string.fa_caret_up
-                                                    } else {
-                                                        R.string.fa_caret_down
-                                                    },
-                                                ),
-                                            )
-                                        }
-                                        append(" ")
-                                        append(currentSort.getString(LocalContext.current))
-                                    },
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = sortByDropDown,
-                            onDismissRequest = { sortByDropDown = false },
-                        ) {
-                            dataType.sortOptions
-                                .sortedBy { it.getString(context) }
-                                .forEach { sortOption ->
-                                    DropdownMenuItem(
-                                        leadingIcon = {
-                                            if (sortOption == currentSort) {
-                                                if (currentDirection == SortDirectionEnum.ASC) {
-                                                    Text(
-                                                        text = stringResource(R.string.fa_caret_up),
-                                                        fontFamily = fontFamily,
-                                                    )
-                                                } else {
-                                                    Text(
-                                                        text = stringResource(R.string.fa_caret_down),
-                                                        fontFamily = fontFamily,
-                                                    )
-                                                }
-                                            }
-                                        },
-                                        text = { Text(sortOption.getString(context)) },
-                                        onClick = {
-                                            sortByDropDown = false
-                                            val newDirection =
-                                                if (currentSort == sortOption) {
-                                                    currentDirection.flip()
-                                                } else {
-                                                    currentDirection
-                                                }
-                                            filterArgs =
-                                                filterArgs.with(
-                                                    SortAndDirection(
-                                                        sortOption,
-                                                        newDirection,
-                                                    ),
-                                                )
-                                        },
-                                    )
-                                }
-                        }
+                            onUpdateFilter = {
+                                // TODO
+                            },
+                        )
                     }
+                    SortByButton(
+                        modifier = Modifier,
+                        dataType = dataType,
+                        current = filterArgs.sortAndDirection,
+                        onSortChange = { filterArgs = filterArgs.with(it) },
+                    )
                     if (dataType.supportsPlaylists || dataType == DataType.IMAGE) {
                         Button(
                             onClick = {},
@@ -289,14 +226,24 @@ fun StashGrid(
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        .wrapContentWidth(Alignment.CenterHorizontally),
+                                        .wrapContentWidth(Alignment.CenterHorizontally)
+                                        .wrapContentHeight(Alignment.CenterVertically),
+                            )
+                        }
+                    } else if (pager.size() == 0) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
+                                color = Color.White,
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .wrapContentWidth(Alignment.CenterHorizontally)
+                                        .wrapContentHeight(Alignment.CenterVertically),
                             )
                         }
                     } else {
-                        items(
-                            pager.size(),
-//                key = { pager[it]?.id },
-                        ) { index ->
+                        items(pager.size()) { index ->
                             val mod =
                                 if (index == (gridState.firstVisibleItemIndex + gridState.firstVisibleItemScrollOffset)) {
 //                            Modifier.focusRequester(firstFocus)
@@ -439,6 +386,160 @@ fun AlphabetButtons(
                 },
             ) {
                 Text(text = AlphabetSearchUtils.LETTERS[index].toString())
+            }
+        }
+    }
+}
+
+@Composable
+fun SortByButton(
+    dataType: DataType,
+    current: SortAndDirection,
+    onSortChange: (SortAndDirection) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val currentSort = current.sort
+    val currentDirection = current.direction
+    var sortByDropDown by remember { mutableStateOf(false) }
+    val fontFamily = FontFamily(Font(resId = R.font.fa_solid_900))
+    val context = LocalContext.current
+
+    Box(modifier = modifier) {
+        Button(
+            onClick = { sortByDropDown = true },
+            onLongClick = {
+                onSortChange.invoke(SortAndDirection(currentSort, currentDirection.flip()))
+            },
+        ) {
+            Text(
+                text =
+                    buildAnnotatedString {
+                        withStyle(SpanStyle(fontFamily = fontFamily)) {
+                            append(
+                                stringResource(
+                                    if (currentDirection == SortDirectionEnum.ASC) {
+                                        R.string.fa_caret_up
+                                    } else {
+                                        R.string.fa_caret_down
+                                    },
+                                ),
+                            )
+                        }
+                        append(" ")
+                        append(currentSort.getString(LocalContext.current))
+                    },
+            )
+        }
+        Material3MainTheme {
+            DropdownMenu(
+                expanded = sortByDropDown,
+                onDismissRequest = { sortByDropDown = false },
+            ) {
+                dataType.sortOptions
+                    .sortedBy { it.getString(context) }
+                    .forEach { sortOption ->
+                        DropdownMenuItem(
+                            leadingIcon = {
+                                if (sortOption == currentSort) {
+                                    if (currentDirection == SortDirectionEnum.ASC) {
+                                        Text(
+                                            text = stringResource(R.string.fa_caret_up),
+                                            fontFamily = fontFamily,
+                                        )
+                                    } else {
+                                        Text(
+                                            text = stringResource(R.string.fa_caret_down),
+                                            fontFamily = fontFamily,
+                                        )
+                                    }
+                                }
+                            },
+                            text = { Text(sortOption.getString(context)) },
+                            onClick = {
+                                sortByDropDown = false
+                                val newDirection =
+                                    if (currentSort == sortOption) {
+                                        currentDirection.flip()
+                                    } else {
+                                        currentDirection
+                                    }
+                                onSortChange.invoke(
+                                    SortAndDirection(
+                                        sortOption,
+                                        newDirection,
+                                    ),
+                                )
+                            },
+                        )
+                    }
+            }
+        }
+    }
+}
+
+@Composable
+fun SavedFiltersButton(
+    dataType: DataType,
+    /**
+     * Called when user clicks a saved filter
+     */
+    onFilterChange: (FilterArgs) -> Unit,
+    /**
+     * Called when user us creating a filter from current
+     */
+    onUpdateFilter: () -> Unit,
+    /**
+     * Called when user us creating a new filter
+     */
+    onCreateFilter: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var savedFilters by remember { mutableStateOf(listOf<SavedFilter>()) }
+    val filterParser = FilterParser(StashServer.requireCurrentServer().version)
+
+    LaunchedEffect(dataType) {
+        savedFilters = QueryEngine(StashServer.requireCurrentServer()).getSavedFilters(dataType)
+    }
+
+    Box(modifier = modifier) {
+        Button(
+            onClick = { expanded = true },
+            onLongClick = {
+                // TODO?
+            },
+        ) {
+            Text(text = stringResource(R.string.stashapp_search_filter_saved_filters))
+        }
+        Material3MainTheme {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Create filter") },
+                    onClick = {
+                        expanded = false
+                        onUpdateFilter.invoke()
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Create filter from current") },
+                    onClick = {
+                        expanded = false
+                        onUpdateFilter.invoke()
+                    },
+                )
+                HorizontalDivider()
+                savedFilters.sortedBy { it.name }.forEach { savedFilter ->
+                    DropdownMenuItem(
+                        text = { Text(savedFilter.name) },
+                        onClick = {
+                            expanded = false
+                            onFilterChange(savedFilter.toFilterArgs(filterParser))
+                        },
+                    )
+                }
             }
         }
     }
