@@ -43,7 +43,10 @@ class ComposeGridFragment : Fragment(R.layout.compose_frame) {
                                 ),
                             )
                         },
-                        longClicker = LongClicker.default(),
+                        longClicker =
+                            LongClicker.default {
+                                TODO()
+                            },
                     )
                 }
             }

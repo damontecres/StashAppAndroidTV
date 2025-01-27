@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -250,7 +248,7 @@ fun RootCard(
 
     Card(
         onClick = onClick,
-        onLongClick = { expanded = true },
+        onLongClick = { longClicker.onLongClick.invoke(item) },
         modifier =
             modifier
                 .onFocusChanged { focusState ->
@@ -376,22 +374,22 @@ fun RootCard(
                 }
             }
         }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = {
-                expanded = false
-            },
-        ) {
-            longClicker.getPopUpItems(item).forEach {
-                DropdownMenuItem(
-                    text = { Text(it.text) },
-                    onClick = {
-                        longClicker.onItemLongClick(item, it)
-                        expanded = false
-                    },
-                )
-            }
-        }
+//        DropdownMenu(
+//            expanded = expanded,
+//            onDismissRequest = {
+//                expanded = false
+//            },
+//        ) {
+//            longClicker.getPopUpItems(item).forEach {
+//                DropdownMenuItem(
+//                    text = { Text(it.text) },
+//                    onClick = {
+//                        longClicker.onItemLongClick(item, it)
+//                        expanded = false
+//                    },
+//                )
+//            }
+//        }
     }
 }
 

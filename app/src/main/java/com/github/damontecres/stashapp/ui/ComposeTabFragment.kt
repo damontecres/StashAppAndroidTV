@@ -18,7 +18,10 @@ abstract class ComposeTabFragment : ComposeFragment() {
         )
     }
 
-    protected open val longClicker = LongClicker.default()
+    protected open val longClicker =
+        LongClicker.default {
+            TODO()
+        }
 
     fun createTab(
         dataType: DataType,

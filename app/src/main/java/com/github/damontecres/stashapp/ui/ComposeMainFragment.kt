@@ -5,10 +5,19 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
@@ -18,9 +27,14 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.tv.material3.ListItem
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.ProvideTextStyle
+import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
@@ -62,6 +76,8 @@ class ComposeMainFragment :
                 MainTheme {
                     val frontPageRows by mainViewModel.frontPageRows.observeAsState()
                     val server: StashServer? by viewModel.currentServer.observeAsState()
+                    var showPopup by remember { mutableStateOf(false) }
+                    var itemLongClicked by remember { mutableStateOf<Any?>(null) }
 
                     if (server == null) {
                         // TODO
@@ -96,19 +112,61 @@ class ComposeMainFragment :
                             }
                         }
                     }
-                    HomePage(
-                        modifier = Modifier.padding(16.dp),
-                        uiConfig = ComposeUiConfig(true),
-                        rows = frontPageRows ?: listOf(),
-                        itemOnClick = {
-                            StashApplication.navigationManager.navigate(
-                                Destination.fromStashData(
-                                    it as StashData,
-                                ),
-                            )
-                        },
-                        longClicker = LongClicker.default(),
-                    )
+                    val longClicker =
+                        remember {
+                            LongClicker.default { item ->
+                                itemLongClicked = item
+                                showPopup = true
+                            }
+                        }
+                    if (!showPopup) {
+                        HomePage(
+                            modifier = Modifier.padding(16.dp),
+                            uiConfig = ComposeUiConfig(true),
+                            rows = frontPageRows ?: listOf(),
+                            itemOnClick = {
+                                StashApplication.navigationManager.navigate(
+                                    Destination.fromStashData(
+                                        it as StashData,
+                                    ),
+                                )
+                            },
+                            longClicker = longClicker,
+                        )
+                    } else {
+                        BackHandler {
+                            showPopup = false
+                        }
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxHeight(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            ProvideTextStyle(MaterialTheme.typography.titleLarge) {
+                                Text(
+                                    text = extractTitle(itemLongClicked!! as StashData) ?: "",
+                                    modifier =
+                                        Modifier
+                                            .align(Alignment.CenterHorizontally),
+                                )
+                            }
+                            longClicker.getPopUpItems(itemLongClicked!!).forEach {
+                                ListItem(
+                                    modifier =
+                                        Modifier
+                                            .wrapContentWidth()
+                                            .align(Alignment.CenterHorizontally),
+                                    selected = false,
+                                    onClick = {
+                                        longClicker.onItemLongClick(itemLongClicked!!, it)
+                                    },
+                                    headlineContent = { Text(it.text) },
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

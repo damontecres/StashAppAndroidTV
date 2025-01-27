@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.cards
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -49,7 +50,10 @@ fun SceneCard(
     longClicker
         .addAction(
             PopUpItem(2, "Play Scene"),
-            { (it as SlimSceneData).resume_position == null || it.resume_position!! <= 0 },
+            {
+                Log.v("Compose", "Checking for play scene")
+                it is SlimSceneData && (it.resume_position == null || it.resume_position!! <= 0)
+            },
         ) {
             StashApplication.navigationManager.navigate(
                 Destination.Playback(
@@ -60,7 +64,7 @@ fun SceneCard(
             )
         }.addAction(
             PopUpItem(3, "Resume Scene"),
-            { (it as SlimSceneData).resume_position != null && it.resume_position!! > 0 },
+            { it is SlimSceneData && (it.resume_position != null && it.resume_position!! > 0) },
         ) {
             StashApplication.navigationManager.navigate(
                 Destination.Playback(
@@ -71,7 +75,7 @@ fun SceneCard(
             )
         }.addAction(
             PopUpItem(4, "Restart Scene"),
-            { (it as SlimSceneData).resume_position != null && it.resume_position!! > 0 },
+            { it is SlimSceneData && (it.resume_position != null && it.resume_position!! > 0) },
         ) {
             StashApplication.navigationManager.navigate(
                 Destination.Playback(
