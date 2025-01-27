@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import java.util.EnumMap
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -19,6 +20,7 @@ fun MarkerCard(
     uiConfig: ComposeUiConfig,
     item: MarkerData,
     onClick: (() -> Unit),
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -35,11 +37,13 @@ fun MarkerCard(
     val details = if (item.title.isNotBlank()) item.primary_tag.slimTagData.name else ""
 
     RootCard(
+        item = item,
         modifier =
             modifier
                 .padding(0.dp)
                 .width(MarkerPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
+        longClicker = longClicker,
         imageWidth = MarkerPresenter.CARD_WIDTH.dp / 2,
         imageHeight = MarkerPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

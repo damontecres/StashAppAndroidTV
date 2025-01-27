@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridControls
 
 abstract class ComposeTabFragment : ComposeFragment() {
@@ -17,6 +18,8 @@ abstract class ComposeTabFragment : ComposeFragment() {
         )
     }
 
+    protected open val longClicker = LongClicker.default()
+
     fun createTab(
         dataType: DataType,
         initialFilter: FilterArgs,
@@ -25,6 +28,7 @@ abstract class ComposeTabFragment : ComposeFragment() {
             StashGridControls(
                 initialFilter = initialFilter,
                 itemOnClick = itemOnClick,
+                longClicker = longClicker,
                 filterUiMode = FilterUiMode.CREATE_FILTER,
                 modifier = Modifier,
                 positionCallback = positionCallback,

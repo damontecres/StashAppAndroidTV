@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,6 +85,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.ICON_ORDER
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asSlimeSceneData
@@ -205,15 +208,16 @@ fun IconRowText(
 @OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun RootCard(
+    item: Any,
     onClick: () -> Unit,
     title: String,
     imageWidth: Dp,
     imageHeight: Dp,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
     imageContent: @Composable BoxScope.() -> Unit = {},
     videoUrl: String? = null,
-    onLongClick: (() -> Unit)? = null,
     imageOverlay: @Composable BoxScope.() -> Unit = {},
     subtitle: @Composable () -> Unit = {},
     description: @Composable () -> Unit = {},
@@ -237,6 +241,7 @@ fun RootCard(
             ).toLong()
 
     var focused by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     val playVideoPreviews =
         PreferenceManager
@@ -245,7 +250,7 @@ fun RootCard(
 
     Card(
         onClick = onClick,
-        onLongClick = onLongClick,
+        onLongClick = { expanded = true },
         modifier =
             modifier
                 .onFocusChanged { focusState ->
@@ -371,6 +376,22 @@ fun RootCard(
                 }
             }
         }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+            },
+        ) {
+            longClicker.getPopUpItems(item).forEach {
+                DropdownMenuItem(
+                    text = { Text(it.text) },
+                    onClick = {
+                        longClicker.onItemLongClick(item, it)
+                        expanded = false
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -379,25 +400,89 @@ fun StashCard(
     uiConfig: ComposeUiConfig,
     item: Any,
     itemOnClick: (item: Any) -> Unit,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     when (item) {
-        is SlimSceneData -> SceneCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
+        is SlimSceneData ->
+            SceneCard(
+                uiConfig,
+                item,
+                onClick = { itemOnClick(item) },
+                longClicker,
+                modifier,
+            )
         is FullSceneData ->
             SceneCard(
                 uiConfig,
                 item.asSlimeSceneData,
                 onClick = { itemOnClick(item) },
+                longClicker,
                 modifier,
             )
 
-        is PerformerData -> PerformerCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
-        is ImageData -> ImageCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
-        is GalleryData -> GalleryCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
-        is MarkerData -> MarkerCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
-        is GroupData -> MovieCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
-        is StudioData -> StudioCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
-        is TagData -> TagCard(uiConfig, item, onClick = { itemOnClick(item) }, modifier)
+        is PerformerData ->
+            PerformerCard(
+                uiConfig,
+                item,
+                onClick = { itemOnClick(item) },
+                longClicker,
+                modifier,
+            )
+
+        is ImageData ->
+            ImageCard(
+                uiConfig,
+                item,
+                onClick = { itemOnClick(item) },
+                longClicker,
+                modifier,
+            )
+
+        is GalleryData ->
+            GalleryCard(
+                uiConfig,
+                item,
+                onClick = { itemOnClick(item) },
+                longClicker,
+                modifier,
+            )
+
+        is MarkerData ->
+            MarkerCard(
+                uiConfig,
+                item,
+                onClick = { itemOnClick(item) },
+                longClicker,
+                modifier,
+            )
+
+        is GroupData ->
+            MovieCard(
+                uiConfig,
+                item,
+                onClick = { itemOnClick(item) },
+                longClicker,
+                modifier,
+            )
+
+        is StudioData ->
+            StudioCard(
+                uiConfig,
+                item,
+                onClick = { itemOnClick(item) },
+                longClicker,
+                modifier,
+            )
+
+        is TagData ->
+            TagCard(
+                uiConfig,
+                item,
+                onClick = { itemOnClick(item) },
+                longClicker,
+                modifier,
+            )
         else -> throw UnsupportedOperationException("Item with class ${item.javaClass} not supported.")
     }
 }

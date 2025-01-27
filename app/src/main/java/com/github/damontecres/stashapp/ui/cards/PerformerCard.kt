@@ -13,6 +13,7 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.util.ageInYears
 import java.util.EnumMap
 
@@ -21,6 +22,7 @@ fun PerformerCard(
     uiConfig: ComposeUiConfig,
     item: PerformerData,
     onClick: (() -> Unit),
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -31,11 +33,13 @@ fun PerformerCard(
     dataTypeMap[DataType.GALLERY] = item.gallery_count
 
     RootCard(
+        item = item,
         modifier =
             modifier
                 .padding(0.dp)
                 .width(PerformerPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
+        longClicker = longClicker,
         imageWidth = PerformerPresenter.CARD_WIDTH.dp / 2,
         imageHeight = PerformerPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = item.image_path,

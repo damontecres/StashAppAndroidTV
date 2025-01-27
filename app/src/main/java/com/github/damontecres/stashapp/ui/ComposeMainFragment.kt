@@ -22,6 +22,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
@@ -106,6 +107,7 @@ class ComposeMainFragment :
                                 ),
                             )
                         },
+                        longClicker = LongClicker.default(),
                     )
                 }
             }

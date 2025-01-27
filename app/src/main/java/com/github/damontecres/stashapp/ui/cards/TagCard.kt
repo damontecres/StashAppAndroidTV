@@ -13,6 +13,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import java.util.EnumMap
 
 @Composable
@@ -20,6 +21,7 @@ fun TagCard(
     uiConfig: ComposeUiConfig,
     item: TagData,
     onClick: (() -> Unit),
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -34,11 +36,13 @@ fun TagCard(
     val details = item.description ?: ""
 
     RootCard(
+        item = item,
         modifier =
             modifier
                 .padding(0.dp)
                 .width(TagPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
+        longClicker = longClicker,
         imageWidth = TagPresenter.CARD_WIDTH.dp / 2,
         imageHeight = TagPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

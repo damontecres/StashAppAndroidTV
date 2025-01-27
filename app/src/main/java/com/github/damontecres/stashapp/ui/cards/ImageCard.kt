@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.ImagePresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -20,6 +21,7 @@ fun ImageCard(
     uiConfig: ComposeUiConfig,
     item: ImageData,
     onClick: (() -> Unit),
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -41,11 +43,13 @@ fun ImageCard(
     details.add(item.date)
 
     RootCard(
+        item = item,
         modifier =
             modifier
                 .padding(0.dp)
                 .width(ImagePresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
+        longClicker = longClicker,
         imageWidth = ImagePresenter.CARD_WIDTH.dp / 2,
         imageHeight = ImagePresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

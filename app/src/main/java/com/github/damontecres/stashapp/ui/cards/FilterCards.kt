@@ -23,11 +23,13 @@ import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.components.LongClicker
 
 @Composable
 fun ViewAllCard(
     filter: FilterArgs,
     itemOnClick: (Any) -> Unit,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val width =
@@ -54,6 +56,7 @@ fun ViewAllCard(
         }
 
     RootCard(
+        item = filter,
         modifier =
             modifier
                 .padding(0.dp)
@@ -61,6 +64,7 @@ fun ViewAllCard(
         onClick = {
             itemOnClick(filter)
         },
+        longClicker = longClicker,
         imageWidth = width.dp / 2,
         imageContent = {
             Image(

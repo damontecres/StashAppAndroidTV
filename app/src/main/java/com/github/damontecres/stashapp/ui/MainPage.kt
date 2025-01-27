@@ -27,6 +27,7 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.StashServer
 
@@ -35,6 +36,7 @@ fun HomePage(
     uiConfig: ComposeUiConfig,
     rows: List<FrontPageParser.FrontPageRow.Success>,
     itemOnClick: (Any) -> Unit,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -63,7 +65,7 @@ fun HomePage(
                 .focusRequester(focusRequester),
     ) {
         items(rows) { row ->
-            HomePageRow(uiConfig, row, itemOnClick)
+            HomePageRow(uiConfig, row, itemOnClick, longClicker)
         }
     }
 }
@@ -74,6 +76,7 @@ fun HomePageRow(
     uiConfig: ComposeUiConfig,
     row: FrontPageParser.FrontPageRow.Success,
     itemOnClick: (Any) -> Unit,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -101,12 +104,12 @@ fun HomePageRow(
                         Modifier
                     }
                 if (item != null) {
-                    StashCard(uiConfig, item, itemOnClick, cardModifier)
+                    StashCard(uiConfig, item, itemOnClick, longClicker, cardModifier)
                 }
             }
             if (row.data.isNotEmpty()) {
                 item {
-                    ViewAllCard(filter = row.filter, itemOnClick)
+                    ViewAllCard(filter = row.filter, itemOnClick, longClicker)
                 }
             }
         }

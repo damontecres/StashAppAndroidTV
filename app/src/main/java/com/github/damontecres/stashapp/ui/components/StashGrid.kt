@@ -67,6 +67,7 @@ enum class FilterUiMode {
 fun StashGridControls(
     initialFilter: FilterArgs,
     itemOnClick: (Any) -> Unit,
+    longClicker: LongClicker<Any>,
     filterUiMode: FilterUiMode,
     modifier: Modifier = Modifier,
     itemOnLongClick: ((Any) -> Unit)? = null,
@@ -141,6 +142,7 @@ fun StashGridControls(
         StashGrid(
             filterArgs,
             itemOnClick,
+            longClicker,
             Modifier.fillMaxSize(),
             positionCallback = { columns, position ->
                 showTopRowRaw = position < columns
@@ -154,6 +156,7 @@ fun StashGridControls(
 fun StashGrid(
     filterArgs: FilterArgs,
     itemOnClick: (Any) -> Unit,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
@@ -264,6 +267,7 @@ fun StashGrid(
                                     uiConfig = ComposeUiConfig(true),
                                     item = item,
                                     itemOnClick = itemOnClick,
+                                    longClicker = longClicker,
                                 )
                             }
                         }

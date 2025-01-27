@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import java.util.EnumMap
 
@@ -18,6 +19,7 @@ fun GalleryCard(
     uiConfig: ComposeUiConfig,
     item: GalleryData,
     onClick: (() -> Unit),
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -34,11 +36,13 @@ fun GalleryCard(
     details.add(item.date)
 
     RootCard(
+        item = item,
         modifier =
             modifier
                 .padding(0.dp)
                 .width(GalleryPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
+        longClicker = longClicker,
         imageWidth = GalleryPresenter.CARD_WIDTH.dp / 2,
         imageHeight = GalleryPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

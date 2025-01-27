@@ -10,6 +10,7 @@ import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import java.util.EnumMap
 
 @Composable
@@ -17,6 +18,7 @@ fun MovieCard(
     uiConfig: ComposeUiConfig,
     item: GroupData,
     onClick: (() -> Unit),
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -27,11 +29,13 @@ fun MovieCard(
     val details = item.date ?: ""
 
     RootCard(
+        item = item,
         modifier =
             modifier
                 .padding(0.dp)
                 .width(GroupPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
+        longClicker = longClicker,
         imageWidth = GroupPresenter.CARD_WIDTH.dp / 2,
         imageHeight = GroupPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

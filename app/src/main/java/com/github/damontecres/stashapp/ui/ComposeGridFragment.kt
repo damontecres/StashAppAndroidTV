@@ -13,6 +13,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridControls
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -42,6 +43,7 @@ class ComposeGridFragment : Fragment(R.layout.compose_frame) {
                                 ),
                             )
                         },
+                        longClicker = LongClicker.default(),
                     )
                 }
             }
