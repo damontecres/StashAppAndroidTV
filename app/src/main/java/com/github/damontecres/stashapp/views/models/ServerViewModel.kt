@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
@@ -14,6 +16,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -112,6 +115,13 @@ open class ServerViewModel : ViewModel() {
             }
         }
     }
+
+    fun <T> withLiveData(liveData: LiveData<T?>): LiveData<Pair<StashServer, T?>> =
+        currentServer
+            .asFlow()
+            .combine(liveData.asFlow()) { server, item ->
+                server!! to item
+            }.asLiveData()
 
     /**
      * Basic UI settings that affect the cards

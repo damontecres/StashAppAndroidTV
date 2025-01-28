@@ -49,8 +49,10 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
+import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.maybeStartPlayback
+import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.formatNumber
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -176,6 +178,9 @@ class StashDataGridFragment :
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
+        if (savedInstanceState != null) {
+            dataType = savedInstanceState.getDataType()
+        }
         Log.v(TAG, "onCreateView: dataType=$dataType")
         val root =
             inflater.inflate(
@@ -399,6 +404,7 @@ class StashDataGridFragment :
         Log.v(TAG, "onSaveInstanceState")
         super.onSaveInstanceState(outState)
         outState.putInt("mSelectedPosition", selectedPosition)
+        outState.putDataType(dataType)
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {

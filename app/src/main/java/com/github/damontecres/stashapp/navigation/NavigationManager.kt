@@ -41,6 +41,8 @@ import com.github.damontecres.stashapp.views.MarkerPickerFragment
  * Manages navigating to pages in the app
  */
 interface NavigationManager {
+    var previousDestination: Destination?
+
     fun navigate(destination: Destination)
 
     /**
@@ -72,7 +74,7 @@ abstract class NavigationManagerParent(
 
     protected val fragmentManager = activity.supportFragmentManager
 
-    protected var previousDestination: Destination? = null
+    override var previousDestination: Destination? = null
 
     /**
      * A [OnBackPressedCallback] that always finishes the [RootActivity]

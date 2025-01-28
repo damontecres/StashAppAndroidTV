@@ -90,11 +90,6 @@ class FilterFragment :
                 NullPresenter(dataType),
             ),
         )
-
-        sortButtonManager =
-            SortButtonManager(StashServer.getCurrentServerVersion()) { sortAndDirection ->
-                stashGridViewModel.setFilter(sortAndDirection)
-            }
     }
 
     override fun onViewCreated(
@@ -118,73 +113,80 @@ class FilterFragment :
         fragment.requestFocus = true
         fragment.init(dataType)
 
-        val filter =
-            if (stashGridViewModel.filterArgs.isInitialized) {
-                stashGridViewModel.filterArgs.value!!
-            } else if (savedInstanceState != null) {
-                savedInstanceState.getFilterArgs(STATE_FILTER) ?: dest.filterArgs
-            } else {
-                stashGridViewModel.setFilter(dest.filterArgs)
-                dest.filterArgs
+        serverViewModel.currentServer.observe(viewLifecycleOwner) {
+            sortButtonManager =
+                SortButtonManager(StashServer.getCurrentServerVersion()) { sortAndDirection ->
+                    stashGridViewModel.setFilter(sortAndDirection)
+                }
+            val filter =
+                if (stashGridViewModel.filterArgs.isInitialized) {
+                    stashGridViewModel.filterArgs.value!!
+                } else if (savedInstanceState != null) {
+                    val restoredFilter =
+                        savedInstanceState.getFilterArgs(STATE_FILTER) ?: dest.filterArgs
+                    stashGridViewModel.setFilter(restoredFilter)
+                    restoredFilter
+                } else {
+                    stashGridViewModel.setFilter(dest.filterArgs)
+                    dest.filterArgs
+                }
+
+            filterButton = view.findViewById(R.id.filter_button)
+            filterButton.setOnClickListener {
+                Toast
+                    .makeText(requireContext(), "Filters not loaded yet!", Toast.LENGTH_SHORT)
+                    .show()
+            }
+            val onFocusChangeListener = StashOnFocusChangeListener(requireContext())
+            filterButton.onFocusChangeListener = onFocusChangeListener
+            lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                populateSavedFilters(dataType)
             }
 
-        filterButton = view.findViewById(R.id.filter_button)
-        filterButton.setOnClickListener {
-            Toast.makeText(requireContext(), "Filters not loaded yet!", Toast.LENGTH_SHORT).show()
-        }
-        val onFocusChangeListener = StashOnFocusChangeListener(requireContext())
-        filterButton.onFocusChangeListener = onFocusChangeListener
+            buttonBar = view.findViewById(R.id.button_bar)
 
-        buttonBar = view.findViewById(R.id.button_bar)
+            sortButton = view.findViewById(R.id.sort_button)
+            sortButton.onFocusChangeListener = onFocusChangeListener
+            playAllButton = view.findViewById(R.id.play_all_button)
+            playAllButton.onFocusChangeListener = onFocusChangeListener
+            titleTextView = view.findViewById(R.id.list_title)
+            titleTextView.text = filter.name ?: getString(dataType.pluralStringId)
 
-        sortButton = view.findViewById(R.id.sort_button)
-        sortButton.onFocusChangeListener = onFocusChangeListener
-        playAllButton = view.findViewById(R.id.play_all_button)
-        playAllButton.onFocusChangeListener = onFocusChangeListener
-        titleTextView = view.findViewById(R.id.list_title)
-        titleTextView.text = filter.name ?: getString(dataType.pluralStringId)
+            searchEditText = view.findViewById(R.id.search_edit_text)
+            stashGridViewModel.setupSearch(searchEditText)
 
-        searchEditText = view.findViewById(R.id.search_edit_text)
-        stashGridViewModel.setupSearch(searchEditText)
-
-        headerTransitionHelper = TitleTransitionHelper(view as ViewGroup, buttonBar)
-        stashGridViewModel.currentPosition.observe(viewLifecycleOwner) { position ->
-            val shouldShowTitle = position < fragment.numberOfColumns
-            headerTransitionHelper.showTitle(shouldShowTitle)
-        }
-
-        sortButtonManager.setUpSortButton(
-            sortButton,
-            filter.dataType,
-            filter.sortAndDirection,
-        )
-
-        val playAllListener =
-            PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
-                FilterAndPosition(stashGridViewModel.filterArgs.value!!, 0)
+            headerTransitionHelper = TitleTransitionHelper(view as ViewGroup, buttonBar)
+            stashGridViewModel.currentPosition.observe(viewLifecycleOwner) { position ->
+                val shouldShowTitle = position < fragment.numberOfColumns
+                headerTransitionHelper.showTitle(shouldShowTitle)
             }
-        playAllButton.setOnClickListener(playAllListener)
 
-        if (filter.dataType.supportsPlaylists) {
-            playAllButton.visibility = View.VISIBLE
-        } else if (filter.dataType == DataType.IMAGE) {
-            playAllButton.visibility = View.VISIBLE
-            playAllButton.text = getString(R.string.play_slideshow)
-        }
+            sortButtonManager.setUpSortButton(
+                sortButton,
+                filter.dataType,
+                filter.sortAndDirection,
+            )
 
-        val initialRequestFocus = fragment.requestFocus
-        if (initialRequestFocus) {
-            stashGridViewModel.searchBarFocus.observe(viewLifecycleOwner) { hasFocus ->
-                // If the search text has focus, then the fragment shouldn't take it
-                fragment.requestFocus = !hasFocus
+            val playAllListener =
+                PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
+                    FilterAndPosition(stashGridViewModel.filterArgs.value!!, 0)
+                }
+            playAllButton.setOnClickListener(playAllListener)
+
+            if (filter.dataType.supportsPlaylists) {
+                playAllButton.visibility = View.VISIBLE
+            } else if (filter.dataType == DataType.IMAGE) {
+                playAllButton.visibility = View.VISIBLE
+                playAllButton.text = getString(R.string.play_slideshow)
             }
-        }
-    }
 
-    override fun onResume() {
-        super.onResume()
-        lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            populateSavedFilters(dataType)
+            val initialRequestFocus = fragment.requestFocus
+            if (initialRequestFocus) {
+                stashGridViewModel.searchBarFocus.observe(viewLifecycleOwner) { hasFocus ->
+                    // If the search text has focus, then the fragment shouldn't take it
+                    fragment.requestFocus = !hasFocus
+                }
+            }
         }
     }
 
