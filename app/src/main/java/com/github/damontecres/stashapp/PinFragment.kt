@@ -2,9 +2,11 @@ package com.github.damontecres.stashapp
 
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -63,6 +65,19 @@ class PinFragment : Fragment(R.layout.pin_dialog) {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        pinEditText.requestFocus()
+        val imm = getSystemService(requireContext(), InputMethodManager::class.java)!!
+        imm.showSoftInput(pinEditText, InputMethodManager.SHOW_IMPLICIT)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        val imm = getSystemService(requireContext(), InputMethodManager::class.java)!!
+        imm.hideSoftInputFromWindow(pinEditText.windowToken, 0)
     }
 
     private fun startMain() {
