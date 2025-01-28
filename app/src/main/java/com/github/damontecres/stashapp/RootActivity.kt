@@ -21,6 +21,8 @@ import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.maybeGetDestination
+import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlin.properties.Delegates
 
@@ -41,7 +43,10 @@ class RootActivity :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setUpLifeCycleListeners()
-        Log.v(TAG, "onCreate: savedInstanceState==null:${savedInstanceState == null}")
+        Log.v(
+            TAG,
+            "onCreate: savedInstanceState==null:${savedInstanceState == null}, currentFragment==null:${currentFragment == null}",
+        )
         window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE,
@@ -61,12 +66,17 @@ class RootActivity :
 
         // Ensure everything is initialized
         super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            navigationManager.previousDestination = savedInstanceState.maybeGetDestination()
+            Log.d(TAG, "Restoring destination: ${navigationManager.previousDestination}")
+        }
         loadingView = findViewById(R.id.loading_progress_bar)
         bgLogo = findViewById(R.id.background_logo)
 
         val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
         if (currentServer != null) {
             Log.i(TAG, "Server configured")
+            StashServer.setCurrentStashServer(StashApplication.getApplication(), currentServer)
             serverViewModel.init(currentServer)
 
             serverViewModel.serverConnection.observe(this) { result ->
@@ -99,7 +109,9 @@ class RootActivity :
                     if (savedInstanceState == null) {
                         if (!appHasPin) {
                             serverViewModel.currentServer.removeObservers(this@RootActivity)
-                            navigationManager.goToMain()
+                            if (!navigationManager.showingFragment) {
+                                navigationManager.goToMain()
+                            }
                         }
                     }
                 }
@@ -113,12 +125,20 @@ class RootActivity :
 
     override fun onResume() {
         super.onResume()
+        Log.v(TAG, "onResume")
         hasCheckedForUpdate = false
         if (appHasPin) {
             navigationManager.navigate(Destination.Pin)
         } else {
+            loadingView.hide()
+            bgLogo.animateToInvisible(View.GONE)
             serverViewModel.updateServerPreferences()
         }
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Log.v(TAG, "onRestart")
     }
 
     override fun onNavigate(
@@ -136,6 +156,17 @@ class RootActivity :
         if (nextDestination == Destination.Main && !hasCheckedForUpdate) {
             serverViewModel.maybeShowUpdate(this)
             hasCheckedForUpdate = true
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        Log.v(TAG, "onSaveInstanceState")
+        super.onSaveInstanceState(outState)
+        val dest = navigationManager.previousDestination
+        if (dest != null) {
+            outState.putDestination(dest)
+        } else {
+            outState.putParcelable(NavigationManager.DESTINATION_ARG, null)
         }
     }
 

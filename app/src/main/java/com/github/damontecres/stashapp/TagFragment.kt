@@ -29,107 +29,115 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
 
     private var includeSubTags = false
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        viewModel.init(requireArguments())
-    }
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.item.observe(viewLifecycleOwner) { tag ->
-            if (tag == null) {
-                Toast
-                    .makeText(
-                        requireContext(),
-                        "Tag '${viewModel.itemId}' not found",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                serverViewModel.navigationManager.goBack()
-                return@observe
-            }
-            tabViewModel.title.value = tag.name
 
-            val server = serverViewModel.requireServer()
-            if (!tabViewModel.tabs.isInitialized) {
-                tabViewModel.tabs.value =
-                    listOf(
-                        PagerEntry(getString(R.string.stashapp_details)) {
-                            TagDetailsFragment()
-                        },
-                        PagerEntry(DataType.SCENE) {
-                            createStashGridFragment(
-                                tag.id,
-                                dataType = DataType.SCENE,
-                                server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_SCENES).findFilter,
-                            ) { tags ->
-                                SceneFilterType(tags = tags)
-                            }
-                        },
-                        PagerEntry(DataType.GALLERY) {
-                            createStashGridFragment(
-                                tag.id,
-                                dataType = DataType.GALLERY,
-                                server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_GALLERIES).findFilter,
-                            ) { tags ->
-                                GalleryFilterType(tags = tags)
-                            }
-                        },
-                        PagerEntry(DataType.IMAGE) {
-                            createStashGridFragment(
-                                tag.id,
-                                dataType = DataType.IMAGE,
-                                server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_IMAGES).findFilter,
-                            ) { tags ->
-                                ImageFilterType(tags = tags)
-                            }
-                        },
-                        PagerEntry(DataType.MARKER) {
-                            createStashGridFragment(
-                                tag.id,
-                                dataType = DataType.MARKER,
-                                server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_MARKERS).findFilter,
-                            ) { tags ->
-                                SceneMarkerFilterType(tags = tags)
-                            }
-                        },
-                        PagerEntry(DataType.PERFORMER) {
-                            createStashGridFragment(
-                                tag.id,
-                                dataType = DataType.PERFORMER,
-                                server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_PERFORMERS).findFilter,
-                            ) { tags ->
-                                PerformerFilterType(tags = tags)
-                            }
-                        },
-                        PagerEntry(DataType.STUDIO) {
-                            createStashGridFragment(tag.id, dataType = DataType.STUDIO, null) { tags ->
-                                StudioFilterType(tags = tags)
-                            }
-                        },
-                        PagerEntry(getString(R.string.stashapp_sub_tags)) {
-                            createStashGridFragment(tag.id, dataType = DataType.TAG, null) { tags ->
-                                TagFilterType(parents = tags)
-                            }
-                        },
-                        PagerEntry(getString(R.string.stashapp_parent_tags)) {
-                            StashGridControlsFragment(
-                                dataType = DataType.TAG,
-                                objectFilter =
-                                    TagFilterType(
-                                        children =
-                                            createCriterionInput(
-                                                false,
-                                                tag.id,
-                                            ),
-                                    ),
-                            )
-                        },
-                    ).filter { it.title in getUiTabs(requireContext(), DataType.TAG) }
-            }
+        serverViewModel.currentServer.observe(viewLifecycleOwner) {
+            viewModel.init(requireArguments())
         }
+        serverViewModel
+            .withLiveData(viewModel.item)
+            .observe(viewLifecycleOwner) { (server, tag) ->
+                if (tag == null) {
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Tag '${viewModel.itemId}' not found",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    serverViewModel.navigationManager.goBack()
+                    return@observe
+                }
+                tabViewModel.title.value = tag.name
+
+                if (!tabViewModel.tabs.isInitialized) {
+                    tabViewModel.tabs.value =
+                        listOf(
+                            PagerEntry(getString(R.string.stashapp_details)) {
+                                TagDetailsFragment()
+                            },
+                            PagerEntry(DataType.SCENE) {
+                                createStashGridFragment(
+                                    tag.id,
+                                    dataType = DataType.SCENE,
+                                    server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_SCENES).findFilter,
+                                ) { tags ->
+                                    SceneFilterType(tags = tags)
+                                }
+                            },
+                            PagerEntry(DataType.GALLERY) {
+                                createStashGridFragment(
+                                    tag.id,
+                                    dataType = DataType.GALLERY,
+                                    server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_GALLERIES).findFilter,
+                                ) { tags ->
+                                    GalleryFilterType(tags = tags)
+                                }
+                            },
+                            PagerEntry(DataType.IMAGE) {
+                                createStashGridFragment(
+                                    tag.id,
+                                    dataType = DataType.IMAGE,
+                                    server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_IMAGES).findFilter,
+                                ) { tags ->
+                                    ImageFilterType(tags = tags)
+                                }
+                            },
+                            PagerEntry(DataType.MARKER) {
+                                createStashGridFragment(
+                                    tag.id,
+                                    dataType = DataType.MARKER,
+                                    server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_MARKERS).findFilter,
+                                ) { tags ->
+                                    SceneMarkerFilterType(tags = tags)
+                                }
+                            },
+                            PagerEntry(DataType.PERFORMER) {
+                                createStashGridFragment(
+                                    tag.id,
+                                    dataType = DataType.PERFORMER,
+                                    server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_PERFORMERS).findFilter,
+                                ) { tags ->
+                                    PerformerFilterType(tags = tags)
+                                }
+                            },
+                            PagerEntry(DataType.STUDIO) {
+                                createStashGridFragment(
+                                    tag.id,
+                                    dataType = DataType.STUDIO,
+                                    null,
+                                ) { tags ->
+                                    StudioFilterType(tags = tags)
+                                }
+                            },
+                            PagerEntry(getString(R.string.stashapp_sub_tags)) {
+                                createStashGridFragment(
+                                    tag.id,
+                                    dataType = DataType.TAG,
+                                    null,
+                                ) { tags ->
+                                    TagFilterType(parents = tags)
+                                }
+                            },
+                            PagerEntry(getString(R.string.stashapp_parent_tags)) {
+                                StashGridControlsFragment(
+                                    dataType = DataType.TAG,
+                                    objectFilter =
+                                        TagFilterType(
+                                            children =
+                                                createCriterionInput(
+                                                    false,
+                                                    tag.id,
+                                                ),
+                                        ),
+                                )
+                            },
+                        ).filter { it.title in getUiTabs(requireContext(), DataType.TAG) }
+                }
+            }
     }
 
     private fun createStashGridFragment(

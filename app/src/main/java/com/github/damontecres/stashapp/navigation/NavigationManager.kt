@@ -46,7 +46,7 @@ class NavigationManager(
     private val fragmentManager = activity.supportFragmentManager
     private val listeners = mutableListOf<NavigationListener>()
 
-    private var previousDestination: Destination? = null
+    var previousDestination: Destination? = null
 
     /**
      * A [OnBackPressedCallback] that always finishes the [RootActivity]
@@ -204,6 +204,9 @@ class NavigationManager(
     }
 
     private fun getCurrentFragment(): Fragment? = fragmentManager.findFragmentById(R.id.root_fragment)
+
+    val showingFragment: Boolean
+        get() = getCurrentFragment() != null
 
     private fun notifyListeners(
         previousDestination: Destination?,
