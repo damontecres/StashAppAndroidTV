@@ -148,8 +148,6 @@ class StashGridControlsFragment() :
             NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
         )
 
-        currentFilter = initialFilter
-
         remoteButtonPaging =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())

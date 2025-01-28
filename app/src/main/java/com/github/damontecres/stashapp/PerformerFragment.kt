@@ -9,8 +9,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.ClassPresenterSelector
-import androidx.lifecycle.asFlow
-import androidx.lifecycle.asLiveData
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.TagData
@@ -34,7 +32,6 @@ import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.views.models.PerformerViewModel
-import kotlinx.coroutines.flow.combine
 
 /**
  * Main [TabbedFragment] for a performers which includes [PerformerDetailsFragment] and other tabs
@@ -42,26 +39,20 @@ import kotlinx.coroutines.flow.combine
 class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
     private val viewModel: PerformerViewModel by viewModels()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        viewModel.init(requireArguments())
-        super.onCreate(savedInstanceState)
-    }
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.item
-            .asFlow()
-            .combine(serverViewModel.currentServer.asFlow()) { perf, server ->
-                perf to server
-            }.asLiveData()
-            .observe(viewLifecycleOwner) { (performer, server) ->
+        serverViewModel.currentServer.observe(viewLifecycleOwner) {
+            viewModel.init(requireArguments())
+        }
 
-//        viewModel.item.observe(viewLifecycleOwner) { performer ->
-                if (performer == null || server == null) {
+        serverViewModel
+            .withLiveData(viewModel.item)
+            .observe(viewLifecycleOwner) { (server, performer) ->
+                if (performer == null) {
                     Toast
                         .makeText(
                             requireContext(),
@@ -87,7 +78,6 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                         ),
                     )
 
-//            val server = serverViewModel.requireServer()
                 if (!tabViewModel.tabs.isInitialized) {
                     tabViewModel.tabs.value =
                         listOf(

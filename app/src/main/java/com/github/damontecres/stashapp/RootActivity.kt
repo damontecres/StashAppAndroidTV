@@ -76,6 +76,7 @@ class RootActivity :
         val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
         if (currentServer != null) {
             Log.i(TAG, "Server configured")
+            StashServer.setCurrentStashServer(StashApplication.getApplication(), currentServer)
             serverViewModel.init(currentServer)
 
             serverViewModel.serverConnection.observe(this) { result ->
@@ -129,6 +130,8 @@ class RootActivity :
         if (appHasPin) {
             navigationManager.navigate(Destination.Pin)
         } else {
+            loadingView.hide()
+            bgLogo.animateToInvisible(View.GONE)
             serverViewModel.updateServerPreferences()
         }
     }

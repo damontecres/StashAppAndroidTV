@@ -63,6 +63,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.configRowManager
 import com.github.damontecres.stashapp.util.createOCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.createRemoveLongClickListener
@@ -227,8 +228,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         sceneId = requireArguments().getDestination<Destination.Item>().id
         Log.d(TAG, "onCreate: sceneId=$sceneId")
 
-        queryEngine = QueryEngine(serverViewModel.requireServer())
-        mutationEngine = MutationEngine(serverViewModel.requireServer())
+        queryEngine = QueryEngine(StashServer.requireCurrentServer())
+        mutationEngine = MutationEngine(StashServer.requireCurrentServer())
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         mDetailsBackground.enableParallax()
