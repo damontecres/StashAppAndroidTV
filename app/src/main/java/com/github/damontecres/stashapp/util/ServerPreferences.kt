@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.FileNotFoundException
 
 /**
  * Represents configuration that users have set server-side
@@ -42,6 +43,9 @@ class ServerPreferences(
                     .bufferedReader()
                     .use { it.readText() }
             readUIConfig(JSONObject(jsonStr).toMap())
+        } catch (ex: FileNotFoundException) {
+            Log.w(TAG, "UI config file not found")
+            // no-op
         } catch (ex: Exception) {
             Log.e(TAG, "Exception reading UI config", ex)
         }
