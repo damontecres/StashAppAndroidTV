@@ -45,9 +45,13 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                 }
                 tabViewModel.title.value = group.name
                 val groupSceneFilter =
-                    serverViewModel.requireServer().serverPreferences.getDefaultFilter(PageFilterKey.GROUP_SCENES)
+                    serverViewModel.requireServer().serverPreferences.getDefaultPageFilter(
+                        PageFilterKey.GROUP_SCENES,
+                    )
                 val subGroupFilter =
-                    serverViewModel.requireServer().serverPreferences.getDefaultFilter(PageFilterKey.GROUP_SUB_GROUPS)
+                    serverViewModel.requireServer().serverPreferences.getDefaultPageFilter(
+                        PageFilterKey.GROUP_SUB_GROUPS,
+                    )
                 tabViewModel.tabs.value =
                     listOf(
                         StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {

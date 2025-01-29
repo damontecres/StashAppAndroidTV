@@ -61,7 +61,12 @@ class ComposePerformerFragment : ComposeTabFragment() {
                         DataType.SCENE,
                         FilterArgs(
                             dataType = DataType.SCENE,
-                            findFilter = server!!.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_SCENES).findFilter,
+                            findFilter =
+                                server!!
+                                    .serverPreferences
+                                    .getDefaultPageFilter(
+                                        PageFilterKey.PERFORMER_SCENES,
+                                    ).findFilter,
                             objectFilter = SceneFilterType(performers = performers),
                         ),
                     ),
@@ -69,7 +74,12 @@ class ComposePerformerFragment : ComposeTabFragment() {
                         DataType.GALLERY,
                         FilterArgs(
                             dataType = DataType.GALLERY,
-                            findFilter = server!!.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_GALLERIES).findFilter,
+                            findFilter =
+                                server!!
+                                    .serverPreferences
+                                    .getDefaultPageFilter(
+                                        PageFilterKey.PERFORMER_GALLERIES,
+                                    ).findFilter,
                             objectFilter = GalleryFilterType(performers = performers),
                         ),
                     ),
@@ -77,7 +87,12 @@ class ComposePerformerFragment : ComposeTabFragment() {
                         DataType.IMAGE,
                         FilterArgs(
                             dataType = DataType.IMAGE,
-                            findFilter = server!!.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_IMAGES).findFilter,
+                            findFilter =
+                                server!!
+                                    .serverPreferences
+                                    .getDefaultPageFilter(
+                                        PageFilterKey.PERFORMER_IMAGES,
+                                    ).findFilter,
                             objectFilter = ImageFilterType(performers = performers),
                         ),
                     ),
@@ -85,7 +100,12 @@ class ComposePerformerFragment : ComposeTabFragment() {
                         DataType.GROUP,
                         FilterArgs(
                             dataType = DataType.GROUP,
-                            findFilter = server!!.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_GROUPS).findFilter,
+                            findFilter =
+                                server!!
+                                    .serverPreferences
+                                    .getDefaultPageFilter(
+                                        PageFilterKey.PERFORMER_GROUPS,
+                                    ).findFilter,
                             objectFilter = GroupFilterType(performers = performers),
                         ),
                     ),

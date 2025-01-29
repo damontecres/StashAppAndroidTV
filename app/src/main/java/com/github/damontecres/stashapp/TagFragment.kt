@@ -63,7 +63,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                                 createStashGridFragment(
                                     tag.id,
                                     dataType = DataType.SCENE,
-                                    server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_SCENES).findFilter,
+                                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.TAG_SCENES).findFilter,
                                 ) { tags ->
                                     SceneFilterType(tags = tags)
                                 }
@@ -72,7 +72,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                                 createStashGridFragment(
                                     tag.id,
                                     dataType = DataType.GALLERY,
-                                    server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_GALLERIES).findFilter,
+                                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.TAG_GALLERIES).findFilter,
                                 ) { tags ->
                                     GalleryFilterType(tags = tags)
                                 }
@@ -81,7 +81,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                                 createStashGridFragment(
                                     tag.id,
                                     dataType = DataType.IMAGE,
-                                    server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_IMAGES).findFilter,
+                                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.TAG_IMAGES).findFilter,
                                 ) { tags ->
                                     ImageFilterType(tags = tags)
                                 }
@@ -90,7 +90,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                                 createStashGridFragment(
                                     tag.id,
                                     dataType = DataType.MARKER,
-                                    server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_MARKERS).findFilter,
+                                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.TAG_MARKERS).findFilter,
                                 ) { tags ->
                                     SceneMarkerFilterType(tags = tags)
                                 }
@@ -99,7 +99,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
                                 createStashGridFragment(
                                     tag.id,
                                     dataType = DataType.PERFORMER,
-                                    server.serverPreferences.getDefaultFilter(PageFilterKey.TAG_PERFORMERS).findFilter,
+                                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.TAG_PERFORMERS).findFilter,
                                 ) { tags ->
                                     PerformerFilterType(tags = tags)
                                 }
