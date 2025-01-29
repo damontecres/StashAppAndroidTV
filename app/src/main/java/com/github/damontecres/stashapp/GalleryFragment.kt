@@ -68,7 +68,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                                         serverViewModel
                                             .requireServer()
                                             .serverPreferences
-                                            .getDefaultFilter(
+                                            .getDefaultPageFilter(
                                                 PageFilterKey.GALLERY_IMAGES,
                                             ).findFilter,
                                     objectFilter = ImageFilterType(galleries = galleries),

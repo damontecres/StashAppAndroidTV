@@ -255,6 +255,13 @@ class StashImageCardView(
         if (videoPreviewAudio) {
             player.volume = 1f
         } else {
+            if (C.TRACK_TYPE_AUDIO !in player.trackSelectionParameters.disabledTrackTypes) {
+                player.trackSelectionParameters =
+                    player.trackSelectionParameters
+                        .buildUpon()
+                        .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
+                        .build()
+            }
             player.volume = 0f
         }
         player.prepare()
