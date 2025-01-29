@@ -62,7 +62,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                                 createStashGridFragment(
                                     studio.id,
                                     DataType.SCENE,
-                                    server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_SCENES).findFilter,
+                                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.STUDIO_SCENES).findFilter,
                                 ) { studios ->
                                     SceneFilterType(studios = studios)
                                 }
@@ -71,7 +71,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                                 createStashGridFragment(
                                     studio.id,
                                     DataType.GALLERY,
-                                    server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_GALLERIES).findFilter,
+                                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.STUDIO_GALLERIES).findFilter,
                                 ) { studios ->
                                     GalleryFilterType(studios = studios)
                                 }
@@ -80,7 +80,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                                 createStashGridFragment(
                                     studio.id,
                                     DataType.IMAGE,
-                                    server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_IMAGES).findFilter,
+                                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.STUDIO_IMAGES).findFilter,
                                 ) { studios ->
                                     ImageFilterType(studios = studios)
                                 }
@@ -89,7 +89,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                                 createStashGridFragment(
                                     studio.id,
                                     DataType.PERFORMER,
-                                    server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_PERFORMERS).findFilter,
+                                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.STUDIO_PERFORMERS).findFilter,
                                 ) { studios ->
                                     PerformerFilterType(studios = studios)
                                 }
@@ -98,7 +98,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                                 createStashGridFragment(
                                     studio.id,
                                     DataType.GROUP,
-                                    server.serverPreferences.getDefaultFilter(PageFilterKey.STUDIO_GROUPS).findFilter,
+                                    server.serverPreferences.getDefaultPageFilter(PageFilterKey.STUDIO_GROUPS).findFilter,
                                 ) { studios ->
                                     GroupFilterType(studios = studios)
                                 }
@@ -116,7 +116,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
                                     dataType = DataType.STUDIO,
                                     findFilter =
                                         server.serverPreferences
-                                            .getDefaultFilter(
+                                            .getDefaultPageFilter(
                                                 PageFilterKey.STUDIO_CHILDREN,
                                             ).findFilter,
                                     objectFilter =

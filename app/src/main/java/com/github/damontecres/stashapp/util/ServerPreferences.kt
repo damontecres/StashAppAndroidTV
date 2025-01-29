@@ -9,6 +9,8 @@ import com.github.damontecres.stashapp.api.ConfigurationQuery
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Represents configuration that users have set server-side
@@ -18,12 +20,34 @@ import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
 class ServerPreferences(
     val server: StashServer,
 ) {
-    val preferences: SharedPreferences =
-        StashApplication.getApplication().getSharedPreferences(
-            server.url.replace(Regex("[^\\w.]"), "_"),
-            Context.MODE_PRIVATE,
-        )
+    private val serverKey = server.url.replace(Regex("[^\\w.]"), "_")
 
+    val preferences: SharedPreferences =
+        StashApplication.getApplication().getSharedPreferences(serverKey, Context.MODE_PRIVATE)
+
+    private val _defaultFilters = mutableMapOf<DataType, FilterArgs>()
+    val defaultFilters: Map<DataType, FilterArgs> = _defaultFilters
+    private val _defaultPageFilters = mutableMapOf<PageFilterKey, FilterArgs>()
+    val defaultPageFilters: Map<PageFilterKey, FilterArgs> = _defaultPageFilters
+
+    var uiConfiguration: Map<*, *>? = null
+        private set
+
+    init {
+        try {
+            val jsonStr =
+                StashApplication
+                    .getApplication()
+                    .openFileInput("${serverKey}_ui.json")
+                    .bufferedReader()
+                    .use { it.readText() }
+            readUIConfig(JSONObject(jsonStr).toMap())
+        } catch (ex: Exception) {
+            Log.e(TAG, "Exception reading UI config", ex)
+        }
+    }
+
+    // Properties stored in preferences
     val serverVersion: Version
         get() {
             return Version.fromString(
@@ -56,12 +80,13 @@ class ServerPreferences(
     val companionPluginInstalled
         get() = companionPluginVersion != null
 
-    private val _defaultFilters = mutableMapOf<DataType, FilterArgs>()
-    val defaultFilters: Map<DataType, FilterArgs> = _defaultFilters
-    private val defaultPageFilters = mutableMapOf<PageFilterKey, FilterArgs>()
+    var scanJobId: String?
+        get() = preferences.getString(PREF_JOB_SCAN, null)
+        set(value) = preferences.edit { putString(PREF_JOB_SCAN, value) }
 
-    var uiConfiguration: Map<*, *>? = null
-        private set
+    var generateJobId: String?
+        get() = preferences.getString(PREF_JOB_GENERATE, null)
+        set(value) = preferences.edit { putString(PREF_JOB_GENERATE, value) }
 
     /**
      * Update the local preferences from the server configuration
@@ -76,67 +101,35 @@ class ServerPreferences(
         preferences.edit {
             putString(PREF_SERVER_VERSION, config.version.version)
             putString(PREF_COMPANION_PLUGIN_VERSION, companionPluginVersion)
+
+            val menuItems =
+                config.configuration.`interface`.menuItems
+                    ?.map(String::lowercase)
+                    ?.toSet()
+            putStringSet(PREF_INTERFACE_MENU_ITEMS, menuItems)
+
+            putBoolean(
+                PREF_INTERFACE_STUDIOS_AS_TEXT,
+                config.configuration.`interface`.showStudioAsText ?: false,
+            )
         }
         val ui = config.configuration.ui
         if (ui !is Map<*, *>) {
             Log.w(TAG, "config.configuration.ui is not a map")
         } else {
-            uiConfiguration = ui
-            preferences.edit(true) {
-                ui.getCaseInsensitive(PREF_TRACK_ACTIVITY).also {
-                    if (it != null) {
-                        // Use a non-null value from server
-                        putBoolean(PREF_TRACK_ACTIVITY, it.toString().toBoolean())
-                    } else if (serverVersion != null && serverVersion.isAtLeast(Version.V0_26_0)) {
-                        // If server is >=0.26.0 and doesn't provide a value, default to true
-                        // See https://github.com/stashapp/stash/pull/4710
-                        putBoolean(PREF_TRACK_ACTIVITY, true)
-                    } else {
-                        // Server <0.26.0 default to false
-                        putBoolean(PREF_TRACK_ACTIVITY, false)
+            try {
+                val jsonStr = JSONObject(ui).toString()
+                StashApplication
+                    .getApplication()
+                    .openFileOutput("${serverKey}_ui.json", Context.MODE_PRIVATE)
+                    .use {
+                        it.write(jsonStr.toByteArray())
                     }
-                }
-                val minPlayPercent = ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT)
-                try {
-                    putInt(PREF_MINIMUM_PLAY_PERCENT, minPlayPercent?.toString()?.toInt() ?: 20)
-                } catch (ex: NumberFormatException) {
-                    Log.w(TAG, "$PREF_MINIMUM_PLAY_PERCENT is not an integer: '$minPlayPercent'")
-                }
+            } catch (ex: Exception) {
+                Log.e(TAG, "Exception writing UI JSON", ex)
+            }
 
-                val ratingSystemOptionsRaw = ui.getCaseInsensitive("ratingSystemOptions")
-
-                try {
-                    val ratingSystemOptions = ratingSystemOptionsRaw as Map<String, String>?
-                    val type = ratingSystemOptions?.getCaseInsensitive("type") ?: "stars"
-                    val starPrecision =
-                        when (
-                            ratingSystemOptions?.getCaseInsensitive("starPrecision")?.lowercase()
-                        ) {
-                            "full" -> 1.0f
-                            "half" -> 0.5f
-                            "quarter" -> 0.25f
-                            "tenth" -> 0.1f
-                            else -> 0.5f
-                        }
-                    putString(PREF_RATING_TYPE, type)
-                    putFloat(PREF_RATING_PRECISION, starPrecision)
-                } catch (ex: Exception) {
-                    Log.e(
-                        TAG,
-                        "Exception parsing ratingSystemOptions: $ratingSystemOptionsRaw",
-                    )
-                }
-
-                val alwaysStartFromBeginning = ui.getCaseInsensitive("alwaysStartFromBeginning")
-                putBoolean(
-                    PREF_ALWAYS_START_BEGINNING,
-                    alwaysStartFromBeginning?.toString()?.toBoolean() ?: false,
-                )
-                putBoolean(
-                    PREF_INTERFACE_ABBREV_COUNTERS,
-                    ui.getCaseInsensitive("abbreviateCounters") as Boolean? ?: false,
-                )
-
+            preferences.edit {
                 val taskDefaults = ui.getCaseInsensitive("taskDefaults") as Map<String, *>?
                 try {
                     parseScan(config.configuration.defaults.scan, taskDefaults).invoke(this)
@@ -144,21 +137,70 @@ class ServerPreferences(
                 } catch (ex: Exception) {
                     Log.e(TAG, "Exception during scan/generate parsing", ex)
                 }
-
-                val menuItems =
-                    config.configuration.`interface`.menuItems
-                        ?.map(String::lowercase)
-                        ?.toSet()
-                putStringSet(PREF_INTERFACE_MENU_ITEMS, menuItems)
-
-                putBoolean(
-                    PREF_INTERFACE_STUDIOS_AS_TEXT,
-                    config.configuration.`interface`.showStudioAsText ?: false,
-                )
-
-                val defaultFilters = ui.getCaseInsensitive("defaultFilters")
-                refreshDefaultFilters(defaultFilters as Map<String, *>?)
             }
+            readUIConfig(ui)
+        }
+    }
+
+    private fun readUIConfig(ui: Map<*, *>) {
+        uiConfiguration = ui
+        preferences.edit(true) {
+            ui.getCaseInsensitive(PREF_TRACK_ACTIVITY).also {
+                if (it != null) {
+                    // Use a non-null value from server
+                    putBoolean(PREF_TRACK_ACTIVITY, it.toString().toBoolean())
+                } else if (serverVersion.isAtLeast(Version.V0_26_0)) {
+                    // If server is >=0.26.0 and doesn't provide a value, default to true
+                    // See https://github.com/stashapp/stash/pull/4710
+                    putBoolean(PREF_TRACK_ACTIVITY, true)
+                } else {
+                    // Server <0.26.0 default to false
+                    putBoolean(PREF_TRACK_ACTIVITY, false)
+                }
+            }
+            val minPlayPercent = ui.getCaseInsensitive(PREF_MINIMUM_PLAY_PERCENT)
+            try {
+                putInt(PREF_MINIMUM_PLAY_PERCENT, minPlayPercent?.toString()?.toInt() ?: 20)
+            } catch (ex: NumberFormatException) {
+                Log.w(TAG, "$PREF_MINIMUM_PLAY_PERCENT is not an integer: '$minPlayPercent'")
+            }
+
+            val ratingSystemOptionsRaw = ui.getCaseInsensitive("ratingSystemOptions")
+
+            try {
+                val ratingSystemOptions = ratingSystemOptionsRaw as Map<String, String>?
+                val type = ratingSystemOptions?.getCaseInsensitive("type") ?: "stars"
+                val starPrecision =
+                    when (
+                        ratingSystemOptions?.getCaseInsensitive("starPrecision")?.lowercase()
+                    ) {
+                        "full" -> 1.0f
+                        "half" -> 0.5f
+                        "quarter" -> 0.25f
+                        "tenth" -> 0.1f
+                        else -> 0.5f
+                    }
+                putString(PREF_RATING_TYPE, type)
+                putFloat(PREF_RATING_PRECISION, starPrecision)
+            } catch (ex: Exception) {
+                Log.e(
+                    TAG,
+                    "Exception parsing ratingSystemOptions: $ratingSystemOptionsRaw",
+                )
+            }
+
+            val alwaysStartFromBeginning = ui.getCaseInsensitive("alwaysStartFromBeginning")
+            putBoolean(
+                PREF_ALWAYS_START_BEGINNING,
+                alwaysStartFromBeginning?.toString()?.toBoolean() ?: false,
+            )
+            putBoolean(
+                PREF_INTERFACE_ABBREV_COUNTERS,
+                ui.getCaseInsensitive("abbreviateCounters") as Boolean? ?: false,
+            )
+
+            val defaultFilters = ui.getCaseInsensitive("defaultFilters")
+            refreshDefaultFilters(defaultFilters as Map<String, *>?)
         }
     }
 
@@ -185,7 +227,7 @@ class ServerPreferences(
         PageFilterKey.entries.forEach { key ->
             val filterMap =
                 defaultFilters?.getCaseInsensitive(key.prefKey) as Map<String, *>?
-            defaultPageFilters[key] =
+            _defaultPageFilters[key] =
                 if (filterMap != null) {
                     try {
                         filterParser.convertFilterMap(key.dataType, filterMap, false)
@@ -198,8 +240,6 @@ class ServerPreferences(
                 }
         }
     }
-
-    fun getDefaultFilter(page: PageFilterKey): FilterArgs = defaultPageFilters[page] ?: FilterArgs(page.dataType)
 
     private fun parseScan(
         defaultScan: ConfigurationQuery.Scan?,
@@ -315,14 +355,6 @@ class ServerPreferences(
         default: Boolean,
     ): Boolean = this?.getCaseInsensitive(key)?.toString()?.toBoolean() ?: defaultsValue ?: default
 
-    var scanJobId: String?
-        get() = preferences.getString(PREF_JOB_SCAN, null)
-        set(value) = preferences.edit { putString(PREF_JOB_SCAN, value) }
-
-    var generateJobId: String?
-        get() = preferences.getString(PREF_JOB_GENERATE, null)
-        set(value) = preferences.edit { putString(PREF_JOB_GENERATE, value) }
-
     companion object {
         const val TAG = "ServerPreferences"
         val DEFAULT_MENU_ITEMS =
@@ -376,4 +408,20 @@ class ServerPreferences(
         const val PREF_JOB_SCAN = "app.job.scan"
         const val PREF_JOB_GENERATE = "app.job.generate"
     }
+
+    private fun JSONObject.toMap(): Map<String, *> =
+        keys().asSequence().associateWith {
+            when (val value = this[it]) {
+                is JSONArray -> {
+                    val map = (0 until value.length()).associate { Pair(it.toString(), value[it]) }
+                    JSONObject(map).toMap().values.toList()
+                }
+
+                is JSONObject -> value.toMap()
+                JSONObject.NULL -> null
+                else -> value
+            }
+        }
+
+    fun getDefaultPageFilter(pageKey: PageFilterKey): FilterArgs = defaultPageFilters[pageKey] ?: FilterArgs(pageKey.dataType)
 }

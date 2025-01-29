@@ -87,28 +87,44 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                             StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
                                 StashGridControlsFragment(
                                     dataType = DataType.SCENE,
-                                    findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_SCENES).findFilter,
+                                    findFilter =
+                                        server.serverPreferences
+                                            .getDefaultPageFilter(
+                                                PageFilterKey.PERFORMER_SCENES,
+                                            ).findFilter,
                                     objectFilter = SceneFilterType(performers = performers),
                                 )
                             },
                             StashFragmentPagerAdapter.PagerEntry(DataType.GALLERY) {
                                 StashGridControlsFragment(
                                     dataType = DataType.GALLERY,
-                                    findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_GALLERIES).findFilter,
+                                    findFilter =
+                                        server.serverPreferences
+                                            .getDefaultPageFilter(
+                                                PageFilterKey.PERFORMER_GALLERIES,
+                                            ).findFilter,
                                     objectFilter = GalleryFilterType(performers = performers),
                                 )
                             },
                             StashFragmentPagerAdapter.PagerEntry(DataType.IMAGE) {
                                 StashGridControlsFragment(
                                     dataType = DataType.IMAGE,
-                                    findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_IMAGES).findFilter,
+                                    findFilter =
+                                        server.serverPreferences
+                                            .getDefaultPageFilter(
+                                                PageFilterKey.PERFORMER_IMAGES,
+                                            ).findFilter,
                                     objectFilter = ImageFilterType(performers = performers),
                                 )
                             },
                             StashFragmentPagerAdapter.PagerEntry(DataType.GROUP) {
                                 StashGridControlsFragment(
                                     dataType = DataType.GROUP,
-                                    findFilter = server.serverPreferences.getDefaultFilter(PageFilterKey.PERFORMER_GROUPS).findFilter,
+                                    findFilter =
+                                        server.serverPreferences
+                                            .getDefaultPageFilter(
+                                                PageFilterKey.PERFORMER_GROUPS,
+                                            ).findFilter,
                                     objectFilter = GroupFilterType(performers = performers),
                                 )
                             },
@@ -145,7 +161,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                         dataType = DataType.PERFORMER,
                                         findFilter =
                                             server.serverPreferences
-                                                .getDefaultFilter(
+                                                .getDefaultPageFilter(
                                                     PageFilterKey.PERFORMER_APPEARS_WITH,
                                                 ).findFilter,
                                         objectFilter =
