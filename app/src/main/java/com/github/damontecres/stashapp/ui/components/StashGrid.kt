@@ -47,6 +47,7 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -67,7 +68,7 @@ enum class FilterUiMode {
 @Composable
 fun StashGridControls(
     initialFilter: FilterArgs,
-    itemOnClick: (Any) -> Unit,
+    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     filterUiMode: FilterUiMode,
@@ -159,7 +160,7 @@ fun StashGridControls(
 fun StashGrid(
     filterArgs: FilterArgs,
     uiConfig: ComposeUiConfig,
-    itemOnClick: (Any) -> Unit,
+    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
@@ -270,7 +271,12 @@ fun StashGrid(
                                         },
                                     uiConfig = uiConfig,
                                     item = item,
-                                    itemOnClick = itemOnClick,
+                                    itemOnClick = {
+                                        itemOnClick.onClick(
+                                            it,
+                                            FilterAndPosition(filterArgs, focusedIndex),
+                                        )
+                                    },
                                     longClicker = longClicker,
                                 )
                             }

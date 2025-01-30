@@ -35,6 +35,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.DetailsPage
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
+import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridControls
 import com.github.damontecres.stashapp.ui.components.TabPage
@@ -57,7 +58,7 @@ import kotlin.math.roundToInt
 fun PerformerPage(
     server: StashServer,
     id: String,
-    itemOnClick: (Any) -> Unit,
+    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {

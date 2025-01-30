@@ -77,7 +77,7 @@ sealed class Destination(
         val filterArgs: FilterArgs,
         val position: Int,
         val automatic: Boolean,
-    ) : Destination() {
+    ) : Destination(true) {
         override fun toString(): String = "Slideshow(destId=$destId, position=$position, automatic=$automatic)"
     }
 

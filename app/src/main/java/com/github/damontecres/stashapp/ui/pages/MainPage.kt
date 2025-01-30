@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ListItem
@@ -35,9 +37,11 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.filter.extractTitle
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
+import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
@@ -53,7 +57,7 @@ fun MainPage(
     server: StashServer,
     uiConfig: ComposeUiConfig,
     cardUiSettings: ServerViewModel.CardUiSettings,
-    itemOnClick: (Any) -> Unit,
+    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
@@ -140,7 +144,7 @@ fun MainPage(
 fun HomePage(
     uiConfig: ComposeUiConfig,
     rows: List<FrontPageParser.FrontPageRow.Success>,
-    itemOnClick: (Any) -> Unit,
+    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
@@ -166,7 +170,7 @@ fun HomePage(
 fun HomePageRow(
     uiConfig: ComposeUiConfig,
     row: FrontPageParser.FrontPageRow.Success,
-    itemOnClick: (Any) -> Unit,
+    itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
@@ -178,6 +182,7 @@ fun HomePageRow(
             )
         }
         val firstFocus = remember { FocusRequester() }
+        var focusedIndex by remember { mutableIntStateOf(0) }
         LazyRow(
             modifier =
                 Modifier
@@ -187,20 +192,45 @@ fun HomePageRow(
             contentPadding = PaddingValues(start = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            items(row.data) { item ->
+            items(row.data.size) { index ->
+                val item = row.data[index]
                 val cardModifier =
                     if (item == row.data[0]) {
                         Modifier.focusRequester(firstFocus)
                     } else {
                         Modifier
+                    }.onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            focusedIndex = index
+                        }
                     }
                 if (item != null) {
-                    StashCard(uiConfig, item, itemOnClick, longClicker, cardModifier)
+                    StashCard(
+                        modifier = cardModifier,
+                        uiConfig = uiConfig,
+                        item = item,
+                        itemOnClick = {
+                            itemOnClick.onClick(
+                                item,
+                                FilterAndPosition(row.filter, index),
+                            )
+                        },
+                        longClicker = longClicker,
+                    )
                 }
             }
             if (row.data.isNotEmpty()) {
                 item {
-                    ViewAllCard(filter = row.filter, itemOnClick, longClicker)
+                    ViewAllCard(
+                        filter = row.filter,
+                        itemOnClick = {
+                            itemOnClick.onClick(
+                                row.filter,
+                                FilterAndPosition(row.filter, row.data.size),
+                            )
+                        },
+                        longClicker = longClicker,
+                    )
                 }
             }
         }

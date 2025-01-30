@@ -52,11 +52,13 @@ import coil3.compose.setSingletonImageLoaderFactory
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.pages.FilterPage
 import com.github.damontecres.stashapp.ui.pages.MainPage
@@ -105,9 +107,38 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                     val cardUiSettings by serverViewModel.cardUiSettings.observeAsState()
                     val composeUiConfig = server?.let { ComposeUiConfig.fromStashServer(it) }
 
-                    val itemOnClick = { item: Any ->
-                        serverViewModel.navigationManager.navigate(Destination.fromStashData(item as StashData))
-                    }
+                    val itemOnClick =
+                        ItemOnClicker { item: Any, filterAndPosition ->
+                            when (item) {
+                                is FilterArgs -> {
+                                    serverViewModel.navigationManager.navigate(
+                                        Destination.Filter(
+                                            item,
+                                            true,
+                                        ),
+                                    )
+                                }
+
+                                is ImageData -> {
+                                    val (filter, position) = filterAndPosition!!
+                                    serverViewModel.navigationManager.navigate(
+                                        Destination.Slideshow(
+                                            filter,
+                                            position,
+                                            false,
+                                        ),
+                                    )
+                                }
+
+                                is StashData -> {
+                                    serverViewModel.navigationManager.navigate(
+                                        Destination.fromStashData(item),
+                                    )
+                                }
+
+                                else -> TODO(item::class.qualifiedName.toString())
+                            }
+                        }
                     val longClicker =
                         remember {
                             LongClicker.default {
