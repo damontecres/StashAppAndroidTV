@@ -48,7 +48,11 @@ fun DetailsPage(
     ) {
         if (imageUrl.isNotNullOrBlank()) {
             AsyncImage(
-                modifier = Modifier.padding(12.dp).fillMaxWidth(.5f).fillMaxHeight(),
+                modifier =
+                    Modifier
+                        .padding(12.dp)
+                        .fillMaxWidth(.5f)
+                        .fillMaxHeight(),
                 model =
                     ImageRequest
                         .Builder(LocalContext.current)
@@ -92,7 +96,7 @@ fun DetailsPage(
             }
             items(tableRows) { (key, value) ->
                 Row(Modifier.fillMaxWidth()) {
-                    ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = Color.White)) {
+                    ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground)) {
                         Box(modifier = keyModifier) {
                             key.invoke(this, Modifier.padding(4.dp))
                         }

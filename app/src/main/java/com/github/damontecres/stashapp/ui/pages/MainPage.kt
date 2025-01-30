@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.ui.components
+package com.github.damontecres.stashapp.ui.pages
 
 import android.util.Log
 import androidx.activity.compose.BackHandler
@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,15 +33,12 @@ import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
-import coil3.ImageLoader
-import coil3.compose.setSingletonImageLoaderFactory
-import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import coil3.request.crossfade
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
+import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.FrontPageParser
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -59,11 +57,10 @@ fun MainPage(
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
-    var frontPageRows by remember {
-        mutableStateOf<List<FrontPageParser.FrontPageRow.Success>>(
-            listOf(),
-        )
-    }
+    val frontPageRows =
+        remember {
+            mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
+        }
     var showPopup by remember { mutableStateOf(false) }
     var itemLongClicked by remember { mutableStateOf<Any?>(null) }
 
@@ -83,16 +80,15 @@ fun MainPage(
             )
         LaunchedEffect(server) {
             val jobs = frontPageParser.parse(frontPageContent)
-            frontPageRows =
-                jobs.mapIndexedNotNull { index, job ->
-                    job.await().let { row ->
-                        if (row is FrontPageParser.FrontPageRow.Success) {
-                            row
-                        } else {
-                            null
-                        }
+            jobs.mapIndexedNotNull { index, job ->
+                job.await().let { row ->
+                    if (row is FrontPageParser.FrontPageRow.Success) {
+                        frontPageRows.add(row)
+                    } else {
+                        null
                     }
                 }
+            }
         }
     }
 
@@ -149,20 +145,6 @@ fun HomePage(
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
-    setSingletonImageLoaderFactory { context ->
-        ImageLoader
-            .Builder(context)
-            .crossfade(true)
-            .components {
-                add(
-                    OkHttpNetworkFetcherFactory(
-                        callFactory = {
-                            StashServer.requireCurrentServer().okHttpClient
-                        },
-                    ),
-                )
-            }.build()
-    }
 
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(20.dp),

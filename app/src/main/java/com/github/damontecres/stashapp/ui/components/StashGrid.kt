@@ -6,6 +6,7 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -204,9 +205,9 @@ fun StashGrid(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     state = gridState,
+                    contentPadding = PaddingValues(16.dp),
                     modifier =
                         Modifier
-                            .padding(16.dp)
                             .fillMaxSize()
                             .focusGroup(),
 //                    .focusRestorer { firstFocus },
@@ -216,7 +217,7 @@ fun StashGrid(
                         item {
                             Text(
                                 text = "Waiting for items to load from the backend",
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
@@ -228,7 +229,7 @@ fun StashGrid(
                         item {
                             Text(
                                 text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
@@ -249,7 +250,7 @@ fun StashGrid(
                             if (item == null) {
                                 Text(
                                     text = "Loading...",
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     modifier =
                                         mod
                                             .fillMaxWidth()
@@ -289,7 +290,7 @@ fun StashGrid(
                 ) {
                     Text(
                         modifier = Modifier.padding(4.dp),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         text = "${focusedIndex + 1} / ${pager.size()}",
                     )
                 }

@@ -15,7 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -64,8 +63,8 @@ fun SwitchWithLabel(
                 ).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ProvideTextStyle(MaterialTheme.typography.titleMedium.copy(Color.White)) {
-            Text(text = label)
+        ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+            Text(text = label, color = MaterialTheme.colorScheme.onPrimaryContainer)
         }
         Spacer(modifier = Modifier.padding(start = 8.dp))
         Switch(

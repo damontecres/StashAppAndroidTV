@@ -28,7 +28,6 @@ import com.github.damontecres.stashapp.playback.PlaylistScenesFragment
 import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.setup.SetupFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
-import com.github.damontecres.stashapp.ui.ComposeGridFragment
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
 import dev.olshevski.navigation.reimagined.NavController
@@ -84,7 +83,7 @@ class NavigationManagerCompose(
 
                 is Destination.Slideshow -> ImageFragment()
 
-                is Destination.Filter -> ComposeGridFragment()
+                is Destination.Filter -> null
 
                 is Destination.SearchFor -> SearchForFragment()
                 is Destination.UpdateMarker -> MarkerPickerFragment()

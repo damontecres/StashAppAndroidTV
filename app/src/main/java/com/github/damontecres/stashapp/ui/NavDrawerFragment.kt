@@ -47,6 +47,10 @@ import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
@@ -54,8 +58,9 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.components.LongClicker
-import com.github.damontecres.stashapp.ui.components.MainPage
-import com.github.damontecres.stashapp.ui.components.PerformerPage
+import com.github.damontecres.stashapp.ui.pages.FilterPage
+import com.github.damontecres.stashapp.ui.pages.MainPage
+import com.github.damontecres.stashapp.ui.pages.PerformerPage
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
@@ -109,6 +114,22 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                 TODO()
                             }
                         }
+                    server?.let {
+                        setSingletonImageLoaderFactory { context ->
+                            ImageLoader
+                                .Builder(context)
+                                .crossfade(true)
+                                .components {
+                                    add(
+                                        OkHttpNetworkFetcherFactory(
+                                            callFactory = {
+                                                it.okHttpClient
+                                            },
+                                        ),
+                                    )
+                                }.build()
+                        }
+                    }
 
                     val pages =
                         buildList {
@@ -261,6 +282,16 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                                 server = server!!,
                                                 uiConfig = composeUiConfig!!,
                                                 cardUiSettings = cardUiSettings!!,
+                                                itemOnClick = itemOnClick,
+                                                longClicker = longClicker,
+                                                modifier = Modifier.fillMaxSize(),
+                                            )
+                                        }
+
+                                        is Destination.Filter -> {
+                                            FilterPage(
+                                                filterArgs = destination.filterArgs,
+                                                scrollToNextPage = destination.scrollToNextPage,
                                                 itemOnClick = itemOnClick,
                                                 longClicker = longClicker,
                                                 modifier = Modifier.fillMaxSize(),

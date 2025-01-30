@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.ui.components
+package com.github.damontecres.stashapp.ui.pages
 
 import android.os.Build
 import android.widget.Toast
@@ -32,8 +32,13 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.ui.TabPage
-import com.github.damontecres.stashapp.ui.TabProvider
+import com.github.damontecres.stashapp.ui.components.DetailsPage
+import com.github.damontecres.stashapp.ui.components.FilterUiMode
+import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.StashGridControls
+import com.github.damontecres.stashapp.ui.components.TabPage
+import com.github.damontecres.stashapp.ui.components.TabProvider
+import com.github.damontecres.stashapp.ui.components.TableRow
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -245,7 +250,12 @@ fun PerformerDetails(
             if (perf.height_cm != null) {
                 val feet = floor(perf.height_cm / 30.48).toInt()
                 val inches = (perf.height_cm / 2.54 - feet * 12).roundToInt()
-                add(TableRow.from(R.string.stashapp_height, "${perf.height_cm} cm ($feet'$inches\")"))
+                add(
+                    TableRow.from(
+                        R.string.stashapp_height,
+                        "${perf.height_cm} cm ($feet'$inches\")",
+                    ),
+                )
             }
             if (perf.weight != null) {
                 val pounds = (perf.weight * 2.2).roundToInt()
@@ -253,7 +263,12 @@ fun PerformerDetails(
             }
             if (perf.penis_length != null) {
                 val inches = kotlin.math.round(perf.penis_length / 2.54 * 100) / 100
-                add(TableRow.from(R.string.stashapp_penis_length, "${perf.penis_length} cm ($inches\")"))
+                add(
+                    TableRow.from(
+                        R.string.stashapp_penis_length,
+                        "${perf.penis_length} cm ($inches\")",
+                    ),
+                )
             }
             val circString =
                 when (perf.circumcised) {

@@ -1,4 +1,4 @@
-package com.github.damontecres.stashapp.ui
+package com.github.damontecres.stashapp.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
