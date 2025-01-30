@@ -12,6 +12,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridControls
@@ -20,6 +21,7 @@ import com.github.damontecres.stashapp.ui.components.StashGridControls
 fun FilterPage(
     filterArgs: FilterArgs,
     scrollToNextPage: Boolean,
+    uiConfig: ComposeUiConfig,
     itemOnClick: (Any) -> Unit,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
@@ -37,6 +39,7 @@ fun FilterPage(
         }
         StashGridControls(
             modifier = Modifier.padding(16.dp),
+            uiConfig = uiConfig,
             initialFilter = filterArgs,
             filterUiMode = FilterUiMode.SAVED_FILTERS,
             itemOnClick = itemOnClick,

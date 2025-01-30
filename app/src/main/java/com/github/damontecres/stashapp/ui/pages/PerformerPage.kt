@@ -32,6 +32,7 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.DetailsPage
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -86,6 +87,7 @@ fun PerformerPage(
                 filterUiMode = FilterUiMode.CREATE_FILTER,
                 modifier = Modifier,
                 positionCallback = positionCallback,
+                uiConfig = ComposeUiConfig.fromStashServer(server),
             )
         }
 

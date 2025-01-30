@@ -14,19 +14,21 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import java.util.EnumMap
 
 @Composable
-fun MovieCard(
+fun GroupCard(
     uiConfig: ComposeUiConfig,
     item: GroupData,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
     dataTypeMap[DataType.SCENE] = item.scene_count
+    dataTypeMap[DataType.TAG] = item.tags.size
 
     val title = item.name
     val imageUrl = item.front_image_path
-    val details = item.date ?: ""
+    val details = subtitle ?: item.date ?: ""
 
     RootCard(
         item = item,

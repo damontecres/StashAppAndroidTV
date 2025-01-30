@@ -29,6 +29,7 @@ fun StudioCard(
     dataTypeMap[DataType.GROUP] = item.group_count
     dataTypeMap[DataType.IMAGE] = item.image_count
     dataTypeMap[DataType.GALLERY] = item.gallery_count
+    dataTypeMap[DataType.TAG] = item.tags.size
 
     val title = item.name
     val imageUrl = item.image_path
@@ -59,7 +60,11 @@ fun StudioCard(
             IconRowText(dataTypeMap, null)
         },
         imageOverlay = {
-            ImageOverlay(uiConfig.ratingAsStars, rating100 = item.rating100)
+            ImageOverlay(
+                uiConfig.ratingAsStars,
+                favorite = item.favorite,
+                rating100 = item.rating100,
+            )
         },
     )
 }

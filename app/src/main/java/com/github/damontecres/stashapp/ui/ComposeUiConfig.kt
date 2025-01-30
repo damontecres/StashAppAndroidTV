@@ -4,11 +4,13 @@ import com.github.damontecres.stashapp.util.StashServer
 
 data class ComposeUiConfig(
     val ratingAsStars: Boolean,
+    val showStudioAsText: Boolean,
 ) {
     companion object {
         fun fromStashServer(server: StashServer): ComposeUiConfig =
             ComposeUiConfig(
                 ratingAsStars = server.serverPreferences.ratingsAsStars,
+                showStudioAsText = server.serverPreferences.showStudioAsText,
             )
     }
 }

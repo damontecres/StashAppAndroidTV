@@ -11,6 +11,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
+import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -34,7 +36,11 @@ fun MarkerCard(
     val imageUrl = item.screenshot
     val videoUrl = item.preview
 
-    val details = if (item.title.isNotBlank()) item.primary_tag.slimTagData.name else ""
+    val details =
+        listOf(
+            if (item.title.isNotBlank()) item.primary_tag.slimTagData.name else null,
+            item.scene.videoSceneData.titleOrFilename,
+        ).joinNotNullOrBlank(" - ")
 
     RootCard(
         item = item,

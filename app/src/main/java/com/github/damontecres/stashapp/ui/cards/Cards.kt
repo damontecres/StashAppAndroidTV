@@ -3,7 +3,6 @@ package com.github.damontecres.stashapp.ui.cards
 import android.net.Uri
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -32,10 +31,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -68,12 +67,12 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
+import com.github.damontecres.stashapp.api.fragment.GroupRelationshipData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -88,7 +87,7 @@ import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asSlimeSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.views.getRatingString
+import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import java.util.EnumMap
 
 @Composable
@@ -107,7 +106,7 @@ fun ImageOverlay(
 
     Box(modifier = modifier.fillMaxSize()) {
         if (showRatings && rating100 != null && rating100 >= 0) {
-            val ratingText = getRatingString(rating100, ratingsAsStars)
+            val ratingText = getRatingAsDecimalString(rating100, ratingsAsStars)
             val text = context.getString(R.string.stashapp_rating) + ": $ratingText"
             val ratingColors = context.resources.obtainTypedArray(R.array.rating_colors)
             val bgColor = ratingColors.getColor(rating100 / 5, android.graphics.Color.WHITE)
@@ -120,7 +119,7 @@ fun ImageOverlay(
                         .background(
                             color = Color(bgColor),
                         ).padding(4.dp),
-                style = TextStyle(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                 text = text,
             )
         }
@@ -203,12 +202,60 @@ fun IconRowText(
  * Main card based on [ClassicCard]
  */
 @androidx.annotation.OptIn(UnstableApi::class)
-@OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun RootCard(
     item: Any,
     onClick: () -> Unit,
     title: String,
+    imageWidth: Dp,
+    imageHeight: Dp,
+    longClicker: LongClicker<Any>,
+    modifier: Modifier = Modifier,
+    imageUrl: String? = null,
+    imageContent: @Composable BoxScope.() -> Unit = {},
+    videoUrl: String? = null,
+    imageOverlay: @Composable BoxScope.() -> Unit = {},
+    subtitle: @Composable () -> Unit = {},
+    description: @Composable () -> Unit = {},
+    shape: CardShape = CardDefaults.shape(),
+    colors: CardColors = CardDefaults.colors(),
+    scale: CardScale = CardDefaults.scale(),
+    border: CardBorder = CardDefaults.border(),
+    glow: CardGlow = CardDefaults.glow(),
+    contentPadding: PaddingValues = PaddingValues(),
+    interactionSource: MutableInteractionSource? = null,
+) = RootCard(
+    item,
+    onClick,
+    AnnotatedString(title),
+    imageWidth,
+    imageHeight,
+    longClicker,
+    modifier,
+    imageUrl,
+    imageContent,
+    videoUrl,
+    imageOverlay,
+    subtitle,
+    description,
+    shape,
+    colors,
+    scale,
+    border,
+    glow,
+    contentPadding,
+    interactionSource,
+)
+
+/**
+ * Main card based on [ClassicCard]
+ */
+@androidx.annotation.OptIn(UnstableApi::class)
+@Composable
+fun RootCard(
+    item: Any,
+    onClick: () -> Unit,
+    title: AnnotatedString,
     imageWidth: Dp,
     imageHeight: Dp,
     longClicker: LongClicker<Any>,
@@ -456,13 +503,24 @@ fun StashCard(
             )
 
         is GroupData ->
-            MovieCard(
+            GroupCard(
                 uiConfig,
                 item,
                 onClick = { itemOnClick(item) },
                 longClicker,
                 modifier,
             )
+
+        is GroupRelationshipData -> {
+            GroupCard(
+                uiConfig,
+                item.group,
+                onClick = { itemOnClick(item) },
+                longClicker,
+                modifier,
+                subtitle = item.description,
+            )
+        }
 
         is StudioData ->
             StudioCard(

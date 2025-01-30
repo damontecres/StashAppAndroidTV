@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -13,10 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
@@ -26,6 +29,7 @@ import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -115,13 +119,14 @@ fun SceneCard(
                                 .align(Alignment.BottomEnd)
                                 .padding(4.dp),
                         text = duration,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Text(
                         modifier =
                             Modifier
                                 .align(Alignment.BottomStart)
                                 .padding(4.dp),
-                        style = TextStyle(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                         text = videoFile.resolutionName().toString(),
                     )
                     if (item.resume_time != null) {
@@ -135,6 +140,35 @@ fun SceneCard(
                                     ).clip(RectangleShape)
                                     .height(4.dp)
                                     .width((ScenePresenter.CARD_WIDTH * percentWatched).dp / 2),
+                        )
+                    }
+                }
+                if (item.studio != null) {
+                    val imageUrl = item.studio.image_path
+                    if (!uiConfig.showStudioAsText &&
+                        imageUrl.isNotNullOrBlank() &&
+                        !imageUrl.contains(
+                            "default=true",
+                        )
+                    ) {
+                        AsyncImage(
+                            modifier =
+                                Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(4.dp)
+                                    .fillMaxWidth(.4f),
+                            model = imageUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Fit,
+                        )
+                    } else {
+                        Text(
+                            modifier =
+                                Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(4.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            text = item.studio.name,
                         )
                     }
                 }

@@ -55,7 +55,7 @@ fun TagCard(
             IconRowText(dataTypeMap, null)
         },
         imageOverlay = {
-            ImageOverlay(uiConfig.ratingAsStars) {
+            ImageOverlay(uiConfig.ratingAsStars, favorite = item.favorite) {
                 if (item.child_count > 0) {
                     val parentText =
                         stringResource(

@@ -69,6 +69,7 @@ fun StashGridControls(
     initialFilter: FilterArgs,
     itemOnClick: (Any) -> Unit,
     longClicker: LongClicker<Any>,
+    uiConfig: ComposeUiConfig,
     filterUiMode: FilterUiMode,
     modifier: Modifier = Modifier,
     itemOnLongClick: ((Any) -> Unit)? = null,
@@ -142,6 +143,7 @@ fun StashGridControls(
         }
         StashGrid(
             filterArgs,
+            uiConfig,
             itemOnClick,
             longClicker,
             Modifier.fillMaxSize(),
@@ -156,6 +158,7 @@ fun StashGridControls(
 @Composable
 fun StashGrid(
     filterArgs: FilterArgs,
+    uiConfig: ComposeUiConfig,
     itemOnClick: (Any) -> Unit,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
@@ -265,7 +268,7 @@ fun StashGrid(
                                                 positionCallback?.invoke(columns, index)
                                             }
                                         },
-                                    uiConfig = ComposeUiConfig(true),
+                                    uiConfig = uiConfig,
                                     item = item,
                                     itemOnClick = itemOnClick,
                                     longClicker = longClicker,

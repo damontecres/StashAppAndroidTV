@@ -294,6 +294,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                                 scrollToNextPage = destination.scrollToNextPage,
                                                 itemOnClick = itemOnClick,
                                                 longClicker = longClicker,
+                                                uiConfig = composeUiConfig!!,
                                                 modifier = Modifier.fillMaxSize(),
                                             )
                                         }
