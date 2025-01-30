@@ -29,16 +29,22 @@ import com.github.damontecres.stashapp.setup.ManageServersFragment
 import com.github.damontecres.stashapp.setup.SetupFragment
 import com.github.damontecres.stashapp.setup.readonly.SettingsPinEntryFragment
 import com.github.damontecres.stashapp.ui.ComposeGridFragment
-import com.github.damontecres.stashapp.ui.ComposeMainFragment
-import com.github.damontecres.stashapp.ui.ComposePerformerFragment
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
+import dev.olshevski.navigation.reimagined.NavController
+import dev.olshevski.navigation.reimagined.navigate
 
 class NavigationManagerCompose(
     activity: RootActivity,
 ) : NavigationManagerParent(activity) {
+    lateinit var controller: NavController<Destination>
+
     override fun navigate(destination: Destination) {
         if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
+        controller.navigate(destination)
+    }
+
+    fun composeNavigate(destination: Destination) {
         val current = getCurrentFragment()
         if (destination == Destination.Pin && current is PinFragment) {
             if (DEBUG) Log.v(TAG, "Ignore navigate to ${Destination.Pin}")
@@ -50,7 +56,7 @@ class NavigationManagerCompose(
         }
         val fragment =
             when (destination) {
-                Destination.Main -> ComposeMainFragment()
+                Destination.Main -> null // ComposeMainFragment()
                 Destination.Search -> StashSearchFragment()
                 Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()
@@ -66,7 +72,7 @@ class NavigationManagerCompose(
                         DataType.SCENE -> SceneDetailsFragment()
                         DataType.TAG -> TagFragment()
                         DataType.GROUP -> GroupFragment()
-                        DataType.PERFORMER -> ComposePerformerFragment()
+                        DataType.PERFORMER -> null // ComposePerformerFragment()
                         DataType.STUDIO -> StudioFragment()
                         DataType.GALLERY -> GalleryFragment()
                         DataType.MARKER -> throw IllegalArgumentException("Marker not supported here")
@@ -100,11 +106,11 @@ class NavigationManagerCompose(
                 }
             }
 
-        fragment.arguments = Bundle().putDestination(destination)
+        fragment?.arguments = Bundle().putDestination(destination)
 
         if (fragment is GuidedStepSupportFragment) {
             GuidedStepSupportFragment.add(fragmentManager, fragment, R.id.root_fragment)
-        } else {
+        } else if (fragment != null) {
             if (DEBUG) Log.v(TAG, "Setting ${destination.fragmentTag}: $fragment")
             fragmentManager.commit {
                 if (destination != Destination.Main) {

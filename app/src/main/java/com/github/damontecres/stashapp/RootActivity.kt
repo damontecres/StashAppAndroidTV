@@ -161,7 +161,7 @@ class RootActivity :
     override fun onNavigate(
         previousDestination: Destination?,
         nextDestination: Destination,
-        fragment: Fragment,
+        fragment: Fragment?,
     ) {
         serverViewModel.setCurrentDestination(nextDestination)
         loadingView.hide()

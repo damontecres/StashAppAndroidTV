@@ -253,6 +253,7 @@ dependencies {
     implementation(libs.coil.network.okhttp)
     implementation(libs.coil.svg)
     implementation(libs.coil.gif)
+    implementation(libs.navigation.reimagined)
 
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)

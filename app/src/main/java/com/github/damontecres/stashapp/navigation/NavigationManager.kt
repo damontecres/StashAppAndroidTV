@@ -110,7 +110,7 @@ abstract class NavigationManagerParent(
     protected fun notifyListeners(
         previousDestination: Destination?,
         nextDestination: Destination,
-        fragment: Fragment,
+        fragment: Fragment?,
     ) {
         if (previousDestination != nextDestination) {
             listeners.forEach { it.onNavigate(previousDestination, nextDestination, fragment) }
@@ -262,6 +262,6 @@ interface NavigationListener {
     fun onNavigate(
         previousDestination: Destination?,
         nextDestination: Destination,
-        fragment: Fragment,
+        fragment: Fragment?,
     )
 }

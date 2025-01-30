@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components
 
-import android.util.Log
 import androidx.core.util.Consumer
 import androidx.core.util.Predicate
 import com.github.damontecres.stashapp.StashApplication
@@ -24,7 +23,7 @@ class LongClicker<T>(
         filter: Predicate<T> = Predicate { true },
         action: Consumer<T>,
     ): LongClicker<T> {
-        Log.v(TAG, "Adding action for $popUpItem")
+//        Log.v(TAG, "Adding action for $popUpItem")
         actions[popUpItem] = action
         filters[popUpItem] = filter
         return this
