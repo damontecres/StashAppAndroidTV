@@ -72,6 +72,7 @@ import java.net.UnknownHostException
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.net.ssl.SSLHandshakeException
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -728,6 +729,16 @@ fun VideoFile.resolutionName(): CharSequence {
         "144p"
     } else {
         "${number}p"
+    }
+}
+
+fun VideoFile.bitRateString(): CharSequence {
+    if (bit_rate > (1024 * 1024)) {
+        return String.format(Locale.getDefault(), "%.1fMbps", bit_rate / (1024 * 1024.0))
+    } else if (bit_rate > (1024)) {
+        return String.format(Locale.getDefault(), "%.1fKbps", bit_rate / (1024.0))
+    } else {
+        return String.format(Locale.getDefault(), "%.1fbps", bit_rate.toDouble())
     }
 }
 

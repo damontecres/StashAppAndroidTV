@@ -82,6 +82,7 @@
     <string name="stop_slideshow">Stop Slideshow</string>
     <string name="apply_filters">Apply Filters</string>
     <string name="more_like_this_scene">More like this scene</string>
+    <string name="more">More</string>
     <string name="id">ID</string>
 
 </resources>

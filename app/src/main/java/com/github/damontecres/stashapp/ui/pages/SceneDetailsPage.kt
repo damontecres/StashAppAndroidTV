@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.util.Log
+import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -26,11 +27,13 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -44,14 +47,18 @@ import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
@@ -60,6 +67,7 @@ import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.playback.PlaybackMode
@@ -71,11 +79,14 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.asMarkerData
+import com.github.damontecres.stashapp.util.bitRateString
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
+import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
 import kotlinx.coroutines.launch
 
@@ -100,6 +111,8 @@ fun SceneDetailsPage(
 ) {
     var loadingState by remember { mutableStateOf<SceneLoadingState>(SceneLoadingState.Loading) }
     var performers by remember { mutableStateOf<List<PerformerData>>(listOf()) }
+    var galleries by remember { mutableStateOf<List<GalleryData>>(listOf()) }
+
     LaunchedEffect(sceneId) {
         try {
             val queryEngine = QueryEngine(server)
@@ -108,6 +121,9 @@ fun SceneDetailsPage(
                 loadingState = SceneLoadingState.Success(scene)
                 if (scene.performers.isNotEmpty()) {
                     performers = queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                }
+                if (scene.galleries.isNotEmpty()) {
+                    galleries = queryEngine.getGalleries(scene.galleries.map { it.id })
                 }
             } else {
                 loadingState = SceneLoadingState.Error
@@ -133,6 +149,7 @@ fun SceneDetailsPage(
             SceneDetails(
                 scene = state.scene,
                 performers = performers,
+                galleries = galleries,
                 uiConfig = ComposeUiConfig.fromStashServer(server),
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
@@ -146,6 +163,7 @@ fun SceneDetailsPage(
 fun SceneDetails(
     scene: FullSceneData,
     performers: List<PerformerData>,
+    galleries: List<GalleryData>,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
@@ -160,6 +178,31 @@ fun SceneDetails(
             SceneDetailsHeader(scene, itemOnClick, playOnClick)
         }
         val startPadding = 24.dp
+        val bottomPadding = 16.dp
+        if (scene.scene_markers.isNotEmpty()) {
+            item {
+                ItemsRow(
+                    title = R.string.stashapp_markers,
+                    items = scene.scene_markers.map { it.asMarkerData(scene) },
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+                )
+            }
+        }
+        if (scene.groups.isNotEmpty()) {
+            item {
+                ItemsRow(
+                    title = R.string.stashapp_groups,
+                    items = scene.groups.map { it.group.groupData },
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+                )
+            }
+        }
         if (performers.isNotEmpty()) {
             item {
                 ItemsRow(
@@ -168,11 +211,11 @@ fun SceneDetails(
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
-                    modifier = Modifier.padding(start = startPadding),
+                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
             }
         }
-        if (scene.performers.isNotEmpty()) {
+        if (scene.tags.isNotEmpty()) {
             item {
                 ItemsRow(
                     title = R.string.stashapp_tags,
@@ -180,7 +223,19 @@ fun SceneDetails(
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
-                    modifier = Modifier.padding(start = startPadding),
+                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
+                )
+            }
+        }
+        if (galleries.isNotEmpty()) {
+            item {
+                ItemsRow(
+                    title = R.string.stashapp_galleries,
+                    items = galleries,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                    modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
             }
         }
@@ -196,6 +251,7 @@ fun SceneDetailsHeader(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    var rating100 by remember { mutableIntStateOf(scene.rating100 ?: 0) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val scope = rememberCoroutineScope()
 
@@ -226,7 +282,7 @@ fun SceneDetailsHeader(
                             drawRect(
                                 Brush.horizontalGradient(
                                     colors = listOf(gradientColor, Color.Transparent),
-                                    endX = 600f,
+                                    endX = 400f,
                                     startX = 100f,
                                 ),
                             )
@@ -245,24 +301,50 @@ fun SceneDetailsHeader(
                 Column(
                     modifier = Modifier.padding(start = 16.dp),
                 ) {
+                    // Title
                     Text(
                         text = scene.titleOrFilename ?: "",
-                        color = MaterialTheme.colorScheme.onBackground,
-                        style = MaterialTheme.typography.displayLarge,
+//                        color = MaterialTheme.colorScheme.onBackground,
+                        color = Color.LightGray,
+                        style =
+                            MaterialTheme.typography.displayLarge.copy(
+                                shadow =
+                                    Shadow(
+                                        color = Color.DarkGray,
+                                        offset = Offset(5f, 2f),
+                                        blurRadius = 2f,
+                                    ),
+                            ),
                     )
 
                     Column(
                         modifier = Modifier.alpha(0.75f),
                     ) {
+                        AndroidView(
+                            modifier = Modifier.height(40.dp),
+                            factory = { context ->
+                                StashRatingBar(context)
+                            },
+                            update = { view ->
+                                view.rating100 = rating100
+                                val lp = view.layoutParams
+                                lp.height = ViewGroup.LayoutParams.MATCH_PARENT
+                                view.layoutParams = lp
+                            },
+                        )
                         val file = scene.files.firstOrNull()?.videoFile
                         DotSeparatedRow(
                             modifier = Modifier.padding(top = 20.dp),
-                            textStyle = MaterialTheme.typography.titleMedium,
+                            textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             texts =
                                 listOfNotNullOrBlank(
                                     scene.date,
                                     file?.let { durationToString(it.duration) },
                                     file?.resolutionName(),
+                                    file?.bitRateString(),
+                                    file?.video_codec,
+                                    file?.audio_codec,
+                                    file?.format,
                                 ),
                         )
                         if (scene.details.isNotNullOrBlank()) {
@@ -278,7 +360,7 @@ fun SceneDetailsHeader(
                                 }
                             Text(
                                 text = scene.details,
-                                style = MaterialTheme.typography.bodyMedium,
+                                style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onBackground,
                                 maxLines = 3,
                                 overflow = TextOverflow.Ellipsis,
@@ -300,15 +382,32 @@ fun SceneDetailsHeader(
                             )
                         }
                         Row(
-                            modifier = Modifier.padding(top = 16.dp).fillMaxWidth(),
+                            modifier =
+                                Modifier
+                                    .padding(top = 16.dp)
+                                    .fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             if (scene.studio != null) {
                                 TitleValueText(stringResource(R.string.stashapp_studio), scene.studio.studioData.name)
                             }
+                            if (scene.code.isNotNullOrBlank()) {
+                                TitleValueText(
+                                    stringResource(R.string.stashapp_scene_code),
+                                    scene.code,
+                                )
+                            }
                             if (scene.director.isNotNullOrBlank()) {
                                 TitleValueText(stringResource(R.string.stashapp_director), scene.director)
                             }
+                            TitleValueText(
+                                stringResource(R.string.stashapp_play_count),
+                                (scene.play_count ?: 0).toString(),
+                            )
+                            TitleValueText(
+                                stringResource(R.string.stashapp_play_duration),
+                                durationToString(scene.play_duration ?: 0.0),
+                            )
                             if (scene.created_at.toString().length >= 10) {
                                 TitleValueText(
                                     stringResource(R.string.stashapp_created_at),
@@ -344,7 +443,7 @@ fun PlayButtons(
 ) {
     val firstFocus = remember { FocusRequester() }
     val resume = scene.resume_position ?: 0
-    Row(
+    LazyRow(
         modifier =
             modifier
                 .padding(top = 24.dp, bottom = 24.dp)
@@ -352,39 +451,68 @@ fun PlayButtons(
                 .focusRestorer { firstFocus },
     ) {
         if (resume > 0) {
-            PlayButton(
-                R.string.resume,
-                resume,
-                Icons.Default.PlayArrow,
-                PlaybackMode.CHOOSE,
-                playOnClick,
-                Modifier
-                    .padding(start = 8.dp, end = 8.dp)
-                    .onFocusChanged(buttonOnFocusChanged)
-                    .focusRequester(firstFocus),
-            )
-            PlayButton(
-                R.string.restart,
-                0L,
-                Icons.Default.Refresh,
-                PlaybackMode.CHOOSE,
-                playOnClick,
-                Modifier
-                    .padding(start = 8.dp, end = 8.dp)
-                    .onFocusChanged(buttonOnFocusChanged),
-            )
+            item {
+                PlayButton(
+                    R.string.resume,
+                    resume,
+                    Icons.Default.PlayArrow,
+                    PlaybackMode.CHOOSE,
+                    playOnClick,
+                    Modifier
+                        .padding(start = 8.dp, end = 8.dp)
+                        .onFocusChanged(buttonOnFocusChanged)
+                        .focusRequester(firstFocus),
+                )
+            }
+            item {
+                PlayButton(
+                    R.string.restart,
+                    0L,
+                    Icons.Default.Refresh,
+                    PlaybackMode.CHOOSE,
+                    playOnClick,
+                    Modifier
+                        .padding(start = 8.dp, end = 8.dp)
+                        .onFocusChanged(buttonOnFocusChanged),
+                )
+            }
         } else {
-            PlayButton(
-                R.string.restart,
-                0L,
-                Icons.Default.PlayArrow,
-                PlaybackMode.CHOOSE,
-                playOnClick,
-                Modifier
-                    .padding(start = 8.dp, end = 8.dp)
-                    .onFocusChanged(buttonOnFocusChanged)
-                    .focusRequester(firstFocus),
-            )
+            item {
+                PlayButton(
+                    R.string.restart,
+                    0L,
+                    Icons.Default.PlayArrow,
+                    PlaybackMode.CHOOSE,
+                    playOnClick,
+                    Modifier
+                        .padding(start = 8.dp, end = 8.dp)
+                        .onFocusChanged(buttonOnFocusChanged)
+                        .focusRequester(firstFocus),
+                )
+            }
+        }
+        // More button
+        item {
+            Button(
+                onClick = {
+                    // TODO
+                },
+                modifier =
+                    Modifier
+                        .padding(start = 8.dp, end = 8.dp)
+                        .onFocusChanged(buttonOnFocusChanged),
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = null,
+                )
+                Spacer(Modifier.size(8.dp))
+                Text(
+                    text = stringResource(R.string.more),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            }
         }
     }
 }
@@ -431,13 +559,13 @@ fun <T : StashData> ItemsRow(
     ) {
         Text(
             text = stringResource(title),
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
         )
         LazyRow(
             modifier =
                 Modifier
-                    .padding(top = 16.dp)
+                    .padding(top = 8.dp)
                     .focusRestorer { firstFocus },
             contentPadding = PaddingValues(8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),

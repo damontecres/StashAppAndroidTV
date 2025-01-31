@@ -32,7 +32,7 @@ fun TitleValueText(
 ) {
     Column(modifier = modifier) {
         Text(
-            modifier = Modifier.alpha(0.75f),
+            modifier = Modifier.alpha(0.8f),
             text = title,
             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Normal),
             color = MaterialTheme.colorScheme.onSurface,
