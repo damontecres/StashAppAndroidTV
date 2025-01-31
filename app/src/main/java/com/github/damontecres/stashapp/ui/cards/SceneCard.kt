@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.cards
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,18 +19,14 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
-import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.durationToString
 import java.util.EnumMap
@@ -42,6 +37,7 @@ fun SceneCard(
     item: SlimSceneData,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
+    getFilterAndPosition: (item: Any) -> FilterAndPosition,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -50,45 +46,6 @@ fun SceneCard(
     dataTypeMap[DataType.GROUP] = item.groups.size
     dataTypeMap[DataType.MARKER] = item.scene_markers.size
     dataTypeMap[DataType.GALLERY] = item.galleries.size
-
-    longClicker
-        .addAction(
-            PopUpItem(2, "Play Scene"),
-            {
-                Log.v("Compose", "Checking for play scene")
-                it is SlimSceneData && (it.resume_position == null || it.resume_position!! <= 0)
-            },
-        ) {
-            StashApplication.navigationManager.navigate(
-                Destination.Playback(
-                    (it as SlimSceneData).id,
-                    0L,
-                    PlaybackMode.CHOOSE,
-                ),
-            )
-        }.addAction(
-            PopUpItem(3, "Resume Scene"),
-            { it is SlimSceneData && (it.resume_position != null && it.resume_position!! > 0) },
-        ) {
-            StashApplication.navigationManager.navigate(
-                Destination.Playback(
-                    (it as SlimSceneData).id,
-                    (it as SlimSceneData).resume_position ?: 0L,
-                    PlaybackMode.CHOOSE,
-                ),
-            )
-        }.addAction(
-            PopUpItem(4, "Restart Scene"),
-            { it is SlimSceneData && (it.resume_position != null && it.resume_position!! > 0) },
-        ) {
-            StashApplication.navigationManager.navigate(
-                Destination.Playback(
-                    (it as SlimSceneData).id,
-                    0L,
-                    PlaybackMode.CHOOSE,
-                ),
-            )
-        }
 
     RootCard(
         item = item,
@@ -99,6 +56,7 @@ fun SceneCard(
         contentPadding = PaddingValues(0.dp),
         onClick = onClick,
         longClicker = longClicker,
+        getFilterAndPosition = getFilterAndPosition,
         imageWidth = ScenePresenter.CARD_WIDTH.dp / 2,
         imageHeight = ScenePresenter.CARD_HEIGHT.dp / 2,
         imageUrl = item.paths.screenshot,

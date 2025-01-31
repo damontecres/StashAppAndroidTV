@@ -29,8 +29,8 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.components.DetailsPage
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
+import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridControls
@@ -236,7 +236,7 @@ fun TagDetails(
             add(TableRow.from(R.string.stashapp_created_at, parseTimeToString(tag.created_at)))
             add(TableRow.from(R.string.stashapp_updated_at, parseTimeToString(tag.updated_at)))
         }.filterNotNull()
-    DetailsPage(
+    ItemDetails(
         modifier = modifier,
         imageUrl = tag.image_path,
         tableRows = rows,

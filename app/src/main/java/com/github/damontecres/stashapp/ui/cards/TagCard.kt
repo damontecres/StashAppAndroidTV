@@ -11,6 +11,7 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -22,6 +23,7 @@ fun TagCard(
     item: TagData,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
+    getFilterAndPosition: (item: Any) -> FilterAndPosition,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -43,6 +45,7 @@ fun TagCard(
                 .width(TagPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
         longClicker = longClicker,
+        getFilterAndPosition = getFilterAndPosition,
         imageWidth = TagPresenter.CARD_WIDTH.dp / 2,
         imageHeight = TagPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

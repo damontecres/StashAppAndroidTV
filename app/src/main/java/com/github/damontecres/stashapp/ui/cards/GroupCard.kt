@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -19,6 +20,7 @@ fun GroupCard(
     item: GroupData,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
+    getFilterAndPosition: (item: Any) -> FilterAndPosition,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
 ) {
@@ -38,6 +40,7 @@ fun GroupCard(
                 .width(GroupPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
         longClicker = longClicker,
+        getFilterAndPosition = getFilterAndPosition,
         imageWidth = GroupPresenter.CARD_WIDTH.dp / 2,
         imageHeight = GroupPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

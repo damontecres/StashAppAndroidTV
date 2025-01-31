@@ -1,50 +1,78 @@
 package com.github.damontecres.stashapp.ui.components
 
-import androidx.core.util.Consumer
-import androidx.core.util.Predicate
-import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.api.fragment.StashData
+import androidx.annotation.StringRes
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.util.resume_position
+import java.util.concurrent.atomic.AtomicInteger
 
-class LongClicker<T>(
-    val onLongClick: (T) -> Unit,
-) {
-    private val actions = mutableMapOf<PopUpItem, Consumer<T>>()
-    private val filters = mutableMapOf<PopUpItem, Predicate<T>>()
-
-    fun addAction(
-        popUpItem: PopUpItem,
-        action: Consumer<T>,
-    ): LongClicker<T> = addAction(popUpItem, { true }, action)
-
-    fun addAction(
-        popUpItem: PopUpItem,
-        filter: Predicate<T> = Predicate { true },
-        action: Consumer<T>,
-    ): LongClicker<T> {
-//        Log.v(TAG, "Adding action for $popUpItem")
-        actions[popUpItem] = action
-        filters[popUpItem] = filter
-        return this
-    }
-
-    fun getPopUpItems(item: T): List<PopUpItem> = actions.keys.filter { filters[it]!!.test(item) }.sortedBy { it.id }
-
-    fun onItemLongClick(
+fun interface LongClicker<T> {
+    fun longClick(
         item: T,
-        popUpItem: PopUpItem,
-    ) {
-        actions[popUpItem]!!.accept(item)
-    }
+        filterAndPosition: FilterAndPosition?,
+    )
+}
+
+data class LongClickerAction<T>(
+    @StringRes val title: Int,
+    val filter: (T) -> Boolean,
+    val action: (T, FilterAndPosition?) -> Unit,
+) {
+    val id: Int = idCounter.getAndIncrement()
 
     companion object {
-        private const val TAG = "LongClicker"
-
-        fun default(onLongClick: (Any) -> Unit) =
-            LongClicker<Any>(onLongClick).addAction(
-                PopUpItem.DEFAULT,
-                { StashApplication.navigationManager.navigate(Destination.fromStashData(it as StashData)) },
-            )
+        private val idCounter = AtomicInteger(0)
     }
 }
+
+data class LongClickPopup(
+    val item: Any,
+    val filterAndPosition: FilterAndPosition?,
+    val actions: List<LongClickerAction<Any>>,
+)
+
+fun buildLongClickActionList(
+    nav: NavigationManager,
+    itemOnClicker: ItemOnClicker<Any>,
+): List<LongClickerAction<Any>> =
+    listOf(
+        LongClickerAction<Any>(
+            R.string.go_to,
+            { true },
+            { item, fp -> itemOnClicker.onClick(item, fp!!) },
+        ),
+        LongClickerAction<Any>(
+            R.string.play_scene,
+            { it is SlimSceneData && (it.resume_position == null || it.resume_position!! <= 0) },
+            { item, _ ->
+                item as SlimSceneData
+                nav.navigate(Destination.Playback(item.id, 0L, PlaybackMode.CHOOSE))
+            },
+        ),
+        LongClickerAction<Any>(
+            R.string.resume,
+            { it is SlimSceneData && (it.resume_position != null && it.resume_position!! > 0) },
+            { item, _ ->
+                item as SlimSceneData
+                nav.navigate(
+                    Destination.Playback(
+                        item.id,
+                        item.resume_position ?: 0,
+                        PlaybackMode.CHOOSE,
+                    ),
+                )
+            },
+        ),
+        LongClickerAction<Any>(
+            R.string.restart,
+            { it is SlimSceneData && (it.resume_position != null && it.resume_position!! > 0) },
+            { item, _ ->
+                item as SlimSceneData
+                nav.navigate(Destination.Playback(item.id, 0L, PlaybackMode.CHOOSE))
+            },
+        ),
+    )

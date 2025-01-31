@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
 import com.github.damontecres.stashapp.presenters.GroupPresenter
 import com.github.damontecres.stashapp.presenters.ImagePresenter
@@ -30,6 +31,7 @@ fun ViewAllCard(
     filter: FilterArgs,
     itemOnClick: (Any) -> Unit,
     longClicker: LongClicker<Any>,
+    getFilterAndPosition: (item: Any) -> FilterAndPosition,
     modifier: Modifier = Modifier,
 ) {
     val width =
@@ -65,6 +67,7 @@ fun ViewAllCard(
             itemOnClick(filter)
         },
         longClicker = longClicker,
+        getFilterAndPosition = getFilterAndPosition,
         imageWidth = width.dp / 2,
         imageContent = {
             Image(

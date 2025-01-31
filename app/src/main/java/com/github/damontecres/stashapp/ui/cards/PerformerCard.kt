@@ -18,6 +18,7 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -36,6 +37,7 @@ fun PerformerCard(
     item: PerformerData,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
+    getFilterAndPosition: (item: Any) -> FilterAndPosition,
     modifier: Modifier = Modifier,
     ageOnDate: String? = null,
 ) {
@@ -99,6 +101,7 @@ fun PerformerCard(
                 .width(PerformerPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
         longClicker = longClicker,
+        getFilterAndPosition = getFilterAndPosition,
         imageWidth = PerformerPresenter.CARD_WIDTH.dp / 2,
         imageHeight = PerformerPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = item.image_path,

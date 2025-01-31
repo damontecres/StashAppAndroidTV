@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -20,6 +21,7 @@ fun GalleryCard(
     item: GalleryData,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
+    getFilterAndPosition: (item: Any) -> FilterAndPosition,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -43,6 +45,7 @@ fun GalleryCard(
                 .width(GalleryPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
         longClicker = longClicker,
+        getFilterAndPosition = getFilterAndPosition,
         imageWidth = GalleryPresenter.CARD_WIDTH.dp / 2,
         imageHeight = GalleryPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

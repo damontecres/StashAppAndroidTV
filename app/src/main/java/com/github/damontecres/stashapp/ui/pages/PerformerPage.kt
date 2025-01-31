@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import androidx.preference.PreferenceManager
@@ -33,8 +33,8 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.components.DetailsPage
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
+import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridControls
@@ -205,19 +205,17 @@ fun PerformerPage(
                 ),
             ).filter { it.name in uiTabs }
         val title =
-            AnnotatedString
-                .Builder()
-                .apply {
-                    withStyle(SpanStyle(color = Color.White, fontSize = 40.sp)) {
-                        append(perf.name)
+            buildAnnotatedString {
+                withStyle(SpanStyle(color = Color.White, fontSize = 40.sp)) {
+                    append(perf.name)
+                }
+                if (perf.disambiguation.isNotNullOrBlank()) {
+                    withStyle(SpanStyle(color = Color.LightGray, fontSize = 24.sp)) {
+                        append(" ")
+                        append(perf.disambiguation)
                     }
-                    if (perf.disambiguation.isNotNullOrBlank()) {
-                        withStyle(SpanStyle(color = Color.LightGray, fontSize = 24.sp)) {
-                            append(" ")
-                            append(perf.disambiguation)
-                        }
-                    }
-                }.toAnnotatedString()
+                }
+            }
         TabPage(title, tabs, modifier)
     }
 }
@@ -295,7 +293,7 @@ fun PerformerDetails(
                 add(TableRow.from(R.string.id, perf.id))
             }
         }.filterNotNull()
-    DetailsPage(
+    ItemDetails(
         modifier = modifier,
         imageUrl = perf.image_path,
         tableRows = rows,

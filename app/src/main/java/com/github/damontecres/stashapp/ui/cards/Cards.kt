@@ -80,6 +80,7 @@ import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.ICON_ORDER
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -210,6 +211,7 @@ fun RootCard(
     imageWidth: Dp,
     imageHeight: Dp,
     longClicker: LongClicker<Any>,
+    getFilterAndPosition: (item: Any) -> FilterAndPosition,
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
     imageContent: @Composable BoxScope.() -> Unit = {},
@@ -231,6 +233,7 @@ fun RootCard(
     imageWidth,
     imageHeight,
     longClicker,
+    getFilterAndPosition,
     modifier,
     imageUrl,
     imageContent,
@@ -259,6 +262,7 @@ fun RootCard(
     imageWidth: Dp,
     imageHeight: Dp,
     longClicker: LongClicker<Any>,
+    getFilterAndPosition: (item: Any) -> FilterAndPosition,
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
     imageContent: @Composable BoxScope.() -> Unit = {},
@@ -295,7 +299,7 @@ fun RootCard(
 
     Card(
         onClick = onClick,
-        onLongClick = { longClicker.onLongClick.invoke(item) },
+        onLongClick = { longClicker.longClick(item, getFilterAndPosition.invoke(item)) },
         modifier =
             modifier
                 .onFocusChanged { focusState ->
@@ -446,6 +450,7 @@ fun StashCard(
     item: Any,
     itemOnClick: (item: Any) -> Unit,
     longClicker: LongClicker<Any>,
+    getFilterAndPosition: (item: Any) -> FilterAndPosition,
     modifier: Modifier = Modifier,
 ) {
     when (item) {
@@ -455,6 +460,7 @@ fun StashCard(
                 item,
                 onClick = { itemOnClick(item) },
                 longClicker,
+                getFilterAndPosition,
                 modifier,
             )
         is FullSceneData ->
@@ -463,6 +469,7 @@ fun StashCard(
                 item.asSlimeSceneData,
                 onClick = { itemOnClick(item) },
                 longClicker,
+                getFilterAndPosition,
                 modifier,
             )
 
@@ -472,6 +479,7 @@ fun StashCard(
                 item,
                 onClick = { itemOnClick(item) },
                 longClicker,
+                getFilterAndPosition,
                 modifier,
             )
 
@@ -481,6 +489,7 @@ fun StashCard(
                 item,
                 onClick = { itemOnClick(item) },
                 longClicker,
+                getFilterAndPosition,
                 modifier,
             )
 
@@ -490,6 +499,7 @@ fun StashCard(
                 item,
                 onClick = { itemOnClick(item) },
                 longClicker,
+                getFilterAndPosition,
                 modifier,
             )
 
@@ -499,6 +509,7 @@ fun StashCard(
                 item,
                 onClick = { itemOnClick(item) },
                 longClicker,
+                getFilterAndPosition,
                 modifier,
             )
 
@@ -508,6 +519,7 @@ fun StashCard(
                 item,
                 onClick = { itemOnClick(item) },
                 longClicker,
+                getFilterAndPosition,
                 modifier,
             )
 
@@ -517,6 +529,7 @@ fun StashCard(
                 item.group,
                 onClick = { itemOnClick(item) },
                 longClicker,
+                getFilterAndPosition,
                 modifier,
                 subtitle = item.description,
             )
@@ -528,6 +541,7 @@ fun StashCard(
                 item,
                 onClick = { itemOnClick(item) },
                 longClicker,
+                getFilterAndPosition,
                 modifier,
             )
 
@@ -537,6 +551,7 @@ fun StashCard(
                 item,
                 onClick = { itemOnClick(item) },
                 longClicker,
+                getFilterAndPosition,
                 modifier,
             )
         else -> throw UnsupportedOperationException("Item with class ${item.javaClass} not supported.")

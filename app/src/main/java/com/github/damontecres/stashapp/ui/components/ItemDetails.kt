@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.ui.components
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
@@ -32,7 +33,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.StashRatingBar
 
 @Composable
-fun DetailsPage(
+fun ItemDetails(
     imageUrl: String?,
     tableRows: List<TableRow>,
     modifier: Modifier = Modifier,
@@ -66,6 +67,7 @@ fun DetailsPage(
         val keyModifier =
             Modifier
                 .weight(.3f)
+                .focusable() // TODO, this allows scrolling, but is difficult to see
         val valueModifier =
             Modifier
                 .weight(.7f)

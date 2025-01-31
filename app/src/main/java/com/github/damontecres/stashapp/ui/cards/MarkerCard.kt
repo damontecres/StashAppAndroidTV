@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -23,6 +24,7 @@ fun MarkerCard(
     item: MarkerData,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
+    getFilterAndPosition: (item: Any) -> FilterAndPosition,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
@@ -50,6 +52,7 @@ fun MarkerCard(
                 .width(MarkerPresenter.CARD_WIDTH.dp / 2),
         onClick = onClick,
         longClicker = longClicker,
+        getFilterAndPosition = getFilterAndPosition,
         imageWidth = MarkerPresenter.CARD_WIDTH.dp / 2,
         imageHeight = MarkerPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,

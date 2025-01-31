@@ -274,10 +274,11 @@ fun StashGrid(
                                     itemOnClick = {
                                         itemOnClick.onClick(
                                             it,
-                                            FilterAndPosition(filterArgs, focusedIndex),
+                                            FilterAndPosition(filterArgs, index),
                                         )
                                     },
                                     longClicker = longClicker,
+                                    getFilterAndPosition = { FilterAndPosition(filterArgs, index) },
                                 )
                             }
                         }
