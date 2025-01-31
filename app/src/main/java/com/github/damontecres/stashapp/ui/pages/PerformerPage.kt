@@ -47,6 +47,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.ageInYears
+import com.github.damontecres.stashapp.util.getUiTabs
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.parseTimeToString
@@ -100,6 +101,7 @@ fun PerformerPage(
                     modifier = CriterionModifier.INCLUDES_ALL,
                 ),
             )
+        val uiTabs = getUiTabs(context, DataType.PERFORMER)
         val tabs =
             listOf(
                 TabProvider(stringResource(R.string.stashapp_details)) {
@@ -201,7 +203,7 @@ fun PerformerPage(
                         objectFilter = GroupFilterType(performers = performers),
                     ),
                 ),
-            )
+            ).filter { it.name in uiTabs }
         val title =
             AnnotatedString
                 .Builder()

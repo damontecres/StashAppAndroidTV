@@ -17,7 +17,6 @@ import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.StashSearchFragment
 import com.github.damontecres.stashapp.StudioFragment
-import com.github.damontecres.stashapp.TagFragment
 import com.github.damontecres.stashapp.UpdateAppFragment
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterFragment
@@ -69,9 +68,9 @@ class NavigationManagerCompose(
                 is Destination.Item -> {
                     when (destination.dataType) {
                         DataType.SCENE -> SceneDetailsFragment()
-                        DataType.TAG -> TagFragment()
+                        DataType.TAG -> null
                         DataType.GROUP -> GroupFragment()
-                        DataType.PERFORMER -> null // ComposePerformerFragment()
+                        DataType.PERFORMER -> null
                         DataType.STUDIO -> StudioFragment()
                         DataType.GALLERY -> GalleryFragment()
                         DataType.MARKER -> throw IllegalArgumentException("Marker not supported here")

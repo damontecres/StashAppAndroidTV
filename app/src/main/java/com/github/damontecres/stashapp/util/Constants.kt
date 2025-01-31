@@ -799,6 +799,13 @@ fun readOnlyModeEnabled(): Boolean {
 
 fun readOnlyModeDisabled(): Boolean = !readOnlyModeEnabled()
 
+fun showDebugInfo(): Boolean {
+    val context = StashApplication.getApplication()
+    return PreferenceManager
+        .getDefaultSharedPreferences(context)
+        .getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false)
+}
+
 fun getUiTabs(
     context: Context,
     dataType: DataType,

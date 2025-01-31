@@ -63,6 +63,7 @@ import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.pages.FilterPage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
+import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
@@ -331,16 +332,27 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                                         }
 
                                         is Destination.Item -> {
-                                            if (destination.dataType == DataType.PERFORMER) {
-                                                PerformerPage(
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    server = server!!,
-                                                    id = destination.id,
-                                                    itemOnClick = itemOnClick,
-                                                    longClicker = longClicker,
-                                                )
-                                            } else {
-                                                FragmentView(navManager, destination)
+                                            when (destination.dataType) {
+                                                DataType.PERFORMER ->
+                                                    PerformerPage(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        server = server!!,
+                                                        id = destination.id,
+                                                        itemOnClick = itemOnClick,
+                                                        longClicker = longClicker,
+                                                    )
+
+                                                DataType.TAG ->
+                                                    TagPage(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        server = server!!,
+                                                        id = destination.id,
+                                                        includeSubTags = false,
+                                                        itemOnClick = itemOnClick,
+                                                        longClicker = longClicker,
+                                                    )
+
+                                                else -> FragmentView(navManager, destination)
                                             }
                                         }
 
