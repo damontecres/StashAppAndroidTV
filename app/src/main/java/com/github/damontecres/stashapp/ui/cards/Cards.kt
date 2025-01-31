@@ -214,7 +214,7 @@ fun RootCard(
     imageWidth: Dp,
     imageHeight: Dp,
     longClicker: LongClicker<Any>,
-    getFilterAndPosition: (item: Any) -> FilterAndPosition,
+    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
     imageContent: @Composable BoxScope.() -> Unit = {},
@@ -265,7 +265,7 @@ fun RootCard(
     imageWidth: Dp,
     imageHeight: Dp,
     longClicker: LongClicker<Any>,
-    getFilterAndPosition: (item: Any) -> FilterAndPosition,
+    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
     imageContent: @Composable BoxScope.() -> Unit = {},
@@ -302,7 +302,7 @@ fun RootCard(
 
     Card(
         onClick = onClick,
-        onLongClick = { longClicker.longClick(item, getFilterAndPosition.invoke(item)) },
+        onLongClick = { longClicker.longClick(item, getFilterAndPosition?.invoke(item)) },
         modifier =
             modifier
                 .onFocusChanged { focusState ->
@@ -438,7 +438,7 @@ fun StashCard(
     item: Any,
     itemOnClick: (item: Any) -> Unit,
     longClicker: LongClicker<Any>,
-    getFilterAndPosition: (item: Any) -> FilterAndPosition,
+    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
 ) {
     when (item) {

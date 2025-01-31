@@ -31,7 +31,7 @@ fun ViewAllCard(
     filter: FilterArgs,
     itemOnClick: (Any) -> Unit,
     longClicker: LongClicker<Any>,
-    getFilterAndPosition: (item: Any) -> FilterAndPosition,
+    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
 ) {
     val width =

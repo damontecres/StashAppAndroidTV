@@ -39,7 +39,7 @@ fun PerformerCard(
     item: PerformerData,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
-    getFilterAndPosition: (item: Any) -> FilterAndPosition,
+    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
     ageOnDate: String? = null,
 ) {

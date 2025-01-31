@@ -22,7 +22,7 @@ fun GroupCard(
     item: GroupData,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
-    getFilterAndPosition: (item: Any) -> FilterAndPosition,
+    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
 ) {

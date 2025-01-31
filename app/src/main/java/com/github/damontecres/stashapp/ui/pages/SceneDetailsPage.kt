@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -25,7 +26,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -37,11 +39,14 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -57,10 +62,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
-import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.playback.PlaybackMode
-import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
@@ -157,6 +159,7 @@ fun SceneDetails(
         item {
             SceneDetailsHeader(scene, itemOnClick, playOnClick)
         }
+        val startPadding = 24.dp
         if (performers.isNotEmpty()) {
             item {
                 ItemsRow(
@@ -165,6 +168,7 @@ fun SceneDetails(
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
+                    modifier = Modifier.padding(start = startPadding),
                 )
             }
         }
@@ -176,6 +180,7 @@ fun SceneDetails(
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
+                    modifier = Modifier.padding(start = startPadding),
                 )
             }
         }
@@ -221,8 +226,8 @@ fun SceneDetailsHeader(
                             drawRect(
                                 Brush.horizontalGradient(
                                     colors = listOf(gradientColor, Color.Transparent),
-                                    endX = 200f,
-                                    startX = 0f,
+                                    endX = 600f,
+                                    startX = 100f,
                                 ),
                             )
 //                            drawRect(
@@ -295,8 +300,8 @@ fun SceneDetailsHeader(
                             )
                         }
                         Row(
-                            modifier = Modifier.padding(top = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            modifier = Modifier.padding(top = 16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             if (scene.studio != null) {
                                 TitleValueText(stringResource(R.string.stashapp_studio), scene.studio.studioData.name)
@@ -304,8 +309,18 @@ fun SceneDetailsHeader(
                             if (scene.director.isNotNullOrBlank()) {
                                 TitleValueText(stringResource(R.string.stashapp_director), scene.director)
                             }
-                            TitleValueText(stringResource(R.string.stashapp_created_at), scene.created_at.toString())
-                            TitleValueText(stringResource(R.string.stashapp_updated_at), scene.updated_at.toString())
+                            if (scene.created_at.toString().length >= 10) {
+                                TitleValueText(
+                                    stringResource(R.string.stashapp_created_at),
+                                    scene.created_at.toString().substring(0..<10),
+                                )
+                            }
+                            if (scene.updated_at.toString().length >= 10) {
+                                TitleValueText(
+                                    stringResource(R.string.stashapp_updated_at),
+                                    scene.updated_at.toString().substring(0..<10),
+                                )
+                            }
                         }
                         PlayButtons(scene, playOnClick, buttonOnFocusChanged = {
                             if (it.isFocused) {
@@ -319,6 +334,7 @@ fun SceneDetailsHeader(
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PlayButtons(
     scene: FullSceneData,
@@ -326,21 +342,31 @@ fun PlayButtons(
     buttonOnFocusChanged: (FocusState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val firstFocus = remember { FocusRequester() }
     val resume = scene.resume_position ?: 0
-    Row(modifier = modifier.padding(top = 24.dp, bottom = 24.dp)) {
+    Row(
+        modifier =
+            modifier
+                .padding(top = 24.dp, bottom = 24.dp)
+                .focusGroup()
+                .focusRestorer { firstFocus },
+    ) {
         if (resume > 0) {
             PlayButton(
                 R.string.resume,
                 resume,
+                Icons.Default.PlayArrow,
                 PlaybackMode.CHOOSE,
                 playOnClick,
                 Modifier
                     .padding(start = 8.dp, end = 8.dp)
-                    .onFocusChanged(buttonOnFocusChanged),
+                    .onFocusChanged(buttonOnFocusChanged)
+                    .focusRequester(firstFocus),
             )
             PlayButton(
                 R.string.restart,
                 0L,
+                Icons.Default.Refresh,
                 PlaybackMode.CHOOSE,
                 playOnClick,
                 Modifier
@@ -351,11 +377,13 @@ fun PlayButtons(
             PlayButton(
                 R.string.restart,
                 0L,
+                Icons.Default.PlayArrow,
                 PlaybackMode.CHOOSE,
                 playOnClick,
                 Modifier
                     .padding(start = 8.dp, end = 8.dp)
-                    .onFocusChanged(buttonOnFocusChanged),
+                    .onFocusChanged(buttonOnFocusChanged)
+                    .focusRequester(firstFocus),
             )
         }
     }
@@ -365,6 +393,7 @@ fun PlayButtons(
 fun PlayButton(
     @StringRes title: Int,
     resume: Long,
+    icon: ImageVector,
     mode: PlaybackMode,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     modifier: Modifier = Modifier,
@@ -375,7 +404,7 @@ fun PlayButton(
         contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
     ) {
         Icon(
-            imageVector = Icons.Outlined.PlayArrow,
+            imageVector = icon,
             contentDescription = null,
         )
         Spacer(Modifier.size(8.dp))
@@ -396,8 +425,9 @@ fun <T : StashData> ItemsRow(
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
+    val firstFocus = remember { FocusRequester() }
     Column(
-        modifier = modifier.padding(top = 10.dp),
+        modifier = modifier,
     ) {
         Text(
             text = stringResource(title),
@@ -408,19 +438,24 @@ fun <T : StashData> ItemsRow(
             modifier =
                 Modifier
                     .padding(top = 16.dp)
-                    .focusRestorer(),
+                    .focusRestorer { firstFocus },
             contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            itemsIndexed(items, key = { index, item -> item.id }) { index, item ->
+            itemsIndexed(items, key = { _, item -> item.id }) { index, item ->
+                val cardModifier =
+                    if (index == 0) {
+                        Modifier.focusRequester(firstFocus)
+                    } else {
+                        Modifier
+                    }
                 StashCard(
                     uiConfig = uiConfig,
                     item = item,
                     itemOnClick = { itemOnClick.onClick(item, null) },
                     longClicker = longClicker,
-                    getFilterAndPosition = {
-                        // TODO
-                        FilterAndPosition(FilterArgs(dataType = DataType.TAG), index)
-                    },
+                    getFilterAndPosition = null,
+                    modifier = cardModifier,
                 )
             }
         }

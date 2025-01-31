@@ -24,7 +24,7 @@ fun TagCard(
     item: TagData,
     onClick: (() -> Unit),
     longClicker: LongClicker<Any>,
-    getFilterAndPosition: (item: Any) -> FilterAndPosition,
+    getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
 ) {
     val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
