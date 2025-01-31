@@ -30,7 +30,7 @@ class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, MarkerDa
     override fun builderCallback(item: MarkerData): (MediaItem.Builder.() -> Unit) =
         {
             // Clip the media item to a start position & duration
-            val startPos = (item.seconds * 1000).toLong()
+            val startPos = (item.seconds * 1000).toLong().coerceAtLeast(0L)
             val clipConfig =
                 MediaItem.ClippingConfiguration
                     .Builder()

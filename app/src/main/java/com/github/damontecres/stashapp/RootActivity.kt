@@ -27,7 +27,6 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.maybeGetDestination
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.models.ServerViewModel
-import kotlin.properties.Delegates
 
 /**
  * The only activity in the app
@@ -37,7 +36,6 @@ class RootActivity :
     NavigationListener {
     private val serverViewModel: ServerViewModel by viewModels<ServerViewModel>()
     private lateinit var navigationManager: NavigationManager
-    private var appHasPin by Delegates.notNull<Boolean>()
     private var currentFragment: Fragment? = null
 
     private var hasCheckedForUpdate = false
@@ -65,11 +63,7 @@ class RootActivity :
             WindowManager.LayoutParams.FLAG_SECURE,
         )
 
-        appHasPin =
-            PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .getString("pinCode", "")
-                .isNotNullOrBlank()
+        val appHasPin = appHasPin()
 
         // Ensure everything is initialized
 
@@ -144,7 +138,7 @@ class RootActivity :
         super.onResume()
         Log.v(TAG, "onResume")
         hasCheckedForUpdate = false
-        if (appHasPin) {
+        if (appHasPin()) {
             navigationManager.navigate(Destination.Pin)
         } else {
             loadingView.hide()
@@ -153,9 +147,12 @@ class RootActivity :
         }
     }
 
-    override fun onRestart() {
-        super.onRestart()
-        Log.v(TAG, "onRestart")
+    override fun onPause() {
+        Log.v(TAG, "onPause")
+        if (appHasPin()) {
+            navigationManager.navigate(Destination.Pin)
+        }
+        super.onPause()
     }
 
     override fun onNavigate(
@@ -187,6 +184,12 @@ class RootActivity :
             outState.putParcelable(NavigationManager.DESTINATION_ARG, null)
         }
     }
+
+    private fun appHasPin(): Boolean =
+        PreferenceManager
+            .getDefaultSharedPreferences(this)
+            .getString("pinCode", "")
+            .isNotNullOrBlank()
 
     // Delegate key events to the current fragment
 
