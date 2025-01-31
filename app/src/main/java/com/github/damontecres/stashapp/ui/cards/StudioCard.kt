@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.ui.cards
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -14,6 +15,7 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.enableMarquee
 import java.util.EnumMap
 
 @Composable
@@ -60,7 +62,13 @@ fun StudioCard(
             Text(details)
         },
         description = {
-            IconRowText(dataTypeMap, null)
+            IconRowText(
+                dataTypeMap,
+                null,
+                Modifier
+                    .enableMarquee(it)
+                    .align(Alignment.Center),
+            )
         },
         imageOverlay = {
             ImageOverlay(

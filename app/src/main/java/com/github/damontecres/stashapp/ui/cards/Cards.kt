@@ -195,7 +195,10 @@ fun IconRowText(
         annotatedString,
         inlineContent = inlineContentMap,
         textAlign = TextAlign.Center,
-        modifier = modifier.fillMaxWidth(),
+        maxLines = 1,
+        modifier =
+            modifier
+                .fillMaxWidth(),
     )
 }
 
@@ -218,7 +221,7 @@ fun RootCard(
     videoUrl: String? = null,
     imageOverlay: @Composable BoxScope.() -> Unit = {},
     subtitle: @Composable () -> Unit = {},
-    description: @Composable () -> Unit = {},
+    description: @Composable BoxScope.(focused: Boolean) -> Unit = {},
     shape: CardShape = CardDefaults.shape(),
     colors: CardColors = CardDefaults.colors(),
     scale: CardScale = CardDefaults.scale(),
@@ -269,7 +272,7 @@ fun RootCard(
     videoUrl: String? = null,
     imageOverlay: @Composable BoxScope.() -> Unit = {},
     subtitle: @Composable () -> Unit = {},
-    description: @Composable () -> Unit = {},
+    description: @Composable BoxScope.(focused: Boolean) -> Unit = {},
     shape: CardShape = CardDefaults.shape(),
     colors: CardColors = CardDefaults.colors(),
     scale: CardScale = CardDefaults.scale(),
@@ -418,29 +421,14 @@ fun RootCard(
                 // Description
                 ProvideTextStyle(MaterialTheme.typography.bodySmall) {
                     Box(
-                        Modifier.graphicsLayer {
-                            alpha = 0.8f
-                        },
-                    ) { description.invoke() }
+                        Modifier
+                            .graphicsLayer {
+                                alpha = 0.8f
+                            }.fillMaxWidth(),
+                    ) { description.invoke(this, focused) }
                 }
             }
         }
-//        DropdownMenu(
-//            expanded = expanded,
-//            onDismissRequest = {
-//                expanded = false
-//            },
-//        ) {
-//            longClicker.getPopUpItems(item).forEach {
-//                DropdownMenuItem(
-//                    text = { Text(it.text) },
-//                    onClick = {
-//                        longClicker.onItemLongClick(item, it)
-//                        expanded = false
-//                    },
-//                )
-//            }
-//        }
     }
 }
 

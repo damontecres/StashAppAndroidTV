@@ -25,6 +25,7 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -64,7 +65,13 @@ fun SceneCard(
         title = item.titleOrFilename ?: "",
         subtitle = { Text(item.date ?: "") },
         description = {
-            IconRowText(dataTypeMap, item.o_counter ?: -1)
+            IconRowText(
+                dataTypeMap,
+                item.o_counter ?: -1,
+                Modifier
+                    .enableMarquee(it)
+                    .align(Alignment.Center),
+            )
         },
         imageOverlay = {
             ImageOverlay(uiConfig.ratingAsStars, rating100 = item.rating100) {

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -22,6 +23,7 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.time.LocalDate
@@ -108,7 +110,13 @@ fun PerformerCard(
         title = title,
         subtitle = { Text(subtitle) },
         description = {
-            IconRowText(dataTypeMap, item.o_counter ?: -1)
+            IconRowText(
+                dataTypeMap,
+                item.o_counter ?: -1,
+                Modifier
+                    .enableMarquee(it)
+                    .align(Alignment.Center),
+            )
         },
         imageOverlay = {
             ImageOverlay(

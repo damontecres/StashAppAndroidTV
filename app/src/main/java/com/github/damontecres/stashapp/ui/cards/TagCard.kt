@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.enableMarquee
 import java.util.EnumMap
 
 @Composable
@@ -55,7 +56,13 @@ fun TagCard(
             Text(details)
         },
         description = {
-            IconRowText(dataTypeMap, null)
+            IconRowText(
+                dataTypeMap,
+                null,
+                Modifier
+                    .enableMarquee(it)
+                    .align(Alignment.Center),
+            )
         },
         imageOverlay = {
             ImageOverlay(uiConfig.ratingAsStars, favorite = item.favorite) {
