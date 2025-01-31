@@ -5,6 +5,6 @@ import com.github.damontecres.stashapp.navigation.FilterAndPosition
 fun interface ItemOnClicker<T> {
     fun onClick(
         item: T,
-        filterAndPosition: FilterAndPosition,
+        filterAndPosition: FilterAndPosition?,
     )
 }

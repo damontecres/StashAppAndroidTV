@@ -12,7 +12,6 @@ import com.github.damontecres.stashapp.MarkerDetailsFragment
 import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
-import com.github.damontecres.stashapp.SceneDetailsFragment
 import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.StashSearchFragment
@@ -67,7 +66,7 @@ class NavigationManagerCompose(
 
                 is Destination.Item -> {
                     when (destination.dataType) {
-                        DataType.SCENE -> SceneDetailsFragment()
+                        DataType.SCENE -> null
                         DataType.TAG -> null
                         DataType.GROUP -> GroupFragment()
                         DataType.PERFORMER -> null

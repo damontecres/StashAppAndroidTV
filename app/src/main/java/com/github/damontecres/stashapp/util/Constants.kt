@@ -349,6 +349,9 @@ fun concatIfNotBlank(
 
 fun List<CharSequence?>.joinNotNullOrBlank(sep: CharSequence): String = this.filter { it.isNotNullOrBlank() }.joinToString(sep)
 
+fun listOfNotNullOrBlank(vararg strings: CharSequence?): List<String> =
+    strings.filter { it.isNotNullOrBlank() }.map { it.toString() }.toList()
+
 fun cacheDurationPrefToDuration(value: Int): Duration? =
     when (value) {
         0 -> null
@@ -675,6 +678,8 @@ fun getMaxMeasuredWidth(
  * Gets the [SlimSceneData.resume_time] in milliseconds
  */
 val SlimSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
+
+val FullSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
 
 val Long.toMilliseconds get() = this / 1000.0
 

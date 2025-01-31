@@ -71,6 +71,7 @@ import com.github.damontecres.stashapp.ui.components.buildLongClickActionList
 import com.github.damontecres.stashapp.ui.pages.FilterPage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
+import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -401,6 +402,25 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
 
                                         is Destination.Item -> {
                                             when (destination.dataType) {
+                                                DataType.SCENE ->
+                                                    SceneDetailsPage(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        server = server!!,
+                                                        sceneId = destination.id,
+                                                        itemOnClick = itemOnClick,
+                                                        // TODO longClicker for scene to add remove actions?
+                                                        longClicker = longClicker,
+                                                        playOnClick = { position, mode ->
+                                                            navManager.navigate(
+                                                                Destination.Playback(
+                                                                    destination.id,
+                                                                    position,
+                                                                    mode,
+                                                                ),
+                                                            )
+                                                        },
+                                                    )
+
                                                 DataType.PERFORMER ->
                                                     PerformerPage(
                                                         modifier = Modifier.fillMaxSize(),

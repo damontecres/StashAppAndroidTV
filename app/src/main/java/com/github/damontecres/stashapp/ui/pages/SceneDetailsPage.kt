@@ -1,0 +1,428 @@
+package com.github.damontecres.stashapp.ui.pages
+
+import android.util.Log
+import androidx.annotation.StringRes
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.tv.material3.Button
+import androidx.tv.material3.ButtonDefaults
+import androidx.tv.material3.Icon
+import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
+import coil3.compose.AsyncImage
+import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.cards.StashCard
+import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
+import com.github.damontecres.stashapp.ui.components.ItemOnClicker
+import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
+import com.github.damontecres.stashapp.util.resolutionName
+import com.github.damontecres.stashapp.util.resume_position
+import com.github.damontecres.stashapp.util.titleOrFilename
+import com.github.damontecres.stashapp.views.durationToString
+import kotlinx.coroutines.launch
+
+sealed class SceneLoadingState {
+    data object Loading : SceneLoadingState()
+
+    data object Error : SceneLoadingState()
+
+    data class Success(
+        val scene: FullSceneData,
+    ) : SceneLoadingState()
+}
+
+@Composable
+fun SceneDetailsPage(
+    server: StashServer,
+    sceneId: String,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
+    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var loadingState by remember { mutableStateOf<SceneLoadingState>(SceneLoadingState.Loading) }
+    var performers by remember { mutableStateOf<List<PerformerData>>(listOf()) }
+    LaunchedEffect(sceneId) {
+        try {
+            val queryEngine = QueryEngine(server)
+            val scene = queryEngine.getScene(sceneId)
+            if (scene != null) {
+                loadingState = SceneLoadingState.Success(scene)
+                if (scene.performers.isNotEmpty()) {
+                    performers = queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                }
+            } else {
+                loadingState = SceneLoadingState.Error
+            }
+        } catch (ex: Exception) {
+            loadingState = SceneLoadingState.Error
+        }
+    }
+    when (val state = loadingState) {
+        SceneLoadingState.Error ->
+            Text(
+                "Error",
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        SceneLoadingState.Loading ->
+            Text(
+                "Loading...",
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+            )
+        is SceneLoadingState.Success ->
+            SceneDetails(
+                scene = state.scene,
+                performers = performers,
+                uiConfig = ComposeUiConfig.fromStashServer(server),
+                itemOnClick = itemOnClick,
+                longClicker = longClicker,
+                playOnClick = playOnClick,
+                modifier = modifier.animateContentSize(),
+            )
+    }
+}
+
+@Composable
+fun SceneDetails(
+    scene: FullSceneData,
+    performers: List<PerformerData>,
+    uiConfig: ComposeUiConfig,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
+    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(bottom = 135.dp),
+        modifier = modifier,
+    ) {
+        item {
+            SceneDetailsHeader(scene, itemOnClick, playOnClick)
+        }
+        if (performers.isNotEmpty()) {
+            item {
+                ItemsRow(
+                    title = R.string.stashapp_performers,
+                    items = performers,
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                )
+            }
+        }
+        if (scene.performers.isNotEmpty()) {
+            item {
+                ItemsRow(
+                    title = R.string.stashapp_tags,
+                    items = scene.tags.map { it.tagData },
+                    uiConfig = uiConfig,
+                    itemOnClick = itemOnClick,
+                    longClicker = longClicker,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun SceneDetailsHeader(
+    scene: FullSceneData,
+    itemOnClick: ItemOnClicker<Any>,
+    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val scope = rememberCoroutineScope()
+
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+//                .height(460.dp)
+                .bringIntoViewRequester(bringIntoViewRequester),
+    ) {
+        if (scene.paths.screenshot.isNotNullOrBlank()) {
+            val gradientColor = MaterialTheme.colorScheme.background
+            AsyncImage(
+                model = scene.paths.screenshot,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .drawWithContent {
+                            drawContent()
+                            drawRect(
+                                Brush.verticalGradient(
+                                    colors = listOf(Color.Transparent, gradientColor),
+                                    startY = 500f,
+                                ),
+                            )
+                            drawRect(
+                                Brush.horizontalGradient(
+                                    colors = listOf(gradientColor, Color.Transparent),
+                                    endX = 200f,
+                                    startX = 0f,
+                                ),
+                            )
+//                            drawRect(
+//                                Brush.linearGradient(
+//                                    colors = listOf(gradientColor, Color.Transparent),
+//                                    start = Offset(x = 500f, y = 500f),
+//                                    end = Offset(x = 1000f, y = 0f),
+//                                ),
+//                            )
+                        },
+            )
+
+            Column(modifier = Modifier.fillMaxWidth(0.7f)) {
+                Spacer(modifier = Modifier.height(80.dp))
+                Column(
+                    modifier = Modifier.padding(start = 16.dp),
+                ) {
+                    Text(
+                        text = scene.titleOrFilename ?: "",
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.displayLarge,
+                    )
+
+                    Column(
+                        modifier = Modifier.alpha(0.75f),
+                    ) {
+                        val file = scene.files.firstOrNull()?.videoFile
+                        DotSeparatedRow(
+                            modifier = Modifier.padding(top = 20.dp),
+                            textStyle = MaterialTheme.typography.titleMedium,
+                            texts =
+                                listOfNotNullOrBlank(
+                                    scene.date,
+                                    file?.let { durationToString(it.duration) },
+                                    file?.resolutionName(),
+                                ),
+                        )
+                        if (scene.details.isNotNullOrBlank()) {
+//                            var borderColor by remember { mutableStateOf(Color.Transparent) }
+                            val interactionSource = remember { MutableInteractionSource() }
+                            val isFocused = interactionSource.collectIsFocusedAsState().value
+                            val borderColor =
+                                if (isFocused) {
+//                                    scope.launch { bringIntoViewRequester.bringIntoView() }
+                                    Color.Red
+                                } else {
+                                    Color.Unspecified
+                                }
+                            Text(
+                                text = scene.details,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier =
+                                    Modifier
+                                        .padding(top = 8.dp)
+//                                        .clickable { Toast.makeText(context, "Details clicked", Toast.LENGTH_SHORT).show() }
+                                        .focusable(interactionSource = interactionSource)
+                                        .border(3.dp, color = borderColor)
+                                        .onFocusChanged {
+                                            Log.v("SceneDetails", "Details focused: ${it.isFocused}")
+                                            if (it.isFocused) {
+//                                                borderColor = Color.DarkGray
+                                                scope.launch { bringIntoViewRequester.bringIntoView() }
+                                            } else {
+//                                                borderColor = Color.Transparent
+                                            }
+                                        },
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.padding(top = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                        ) {
+                            if (scene.studio != null) {
+                                TitleValueText(stringResource(R.string.stashapp_studio), scene.studio.studioData.name)
+                            }
+                            if (scene.director.isNotNullOrBlank()) {
+                                TitleValueText(stringResource(R.string.stashapp_director), scene.director)
+                            }
+                            TitleValueText(stringResource(R.string.stashapp_created_at), scene.created_at.toString())
+                            TitleValueText(stringResource(R.string.stashapp_updated_at), scene.updated_at.toString())
+                        }
+                        PlayButtons(scene, playOnClick, buttonOnFocusChanged = {
+                            if (it.isFocused) {
+                                scope.launch { bringIntoViewRequester.bringIntoView() }
+                            }
+                        })
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun PlayButtons(
+    scene: FullSceneData,
+    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    buttonOnFocusChanged: (FocusState) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val resume = scene.resume_position ?: 0
+    Row(modifier = modifier.padding(top = 24.dp, bottom = 24.dp)) {
+        if (resume > 0) {
+            PlayButton(
+                R.string.resume,
+                resume,
+                PlaybackMode.CHOOSE,
+                playOnClick,
+                Modifier
+                    .padding(start = 8.dp, end = 8.dp)
+                    .onFocusChanged(buttonOnFocusChanged),
+            )
+            PlayButton(
+                R.string.restart,
+                0L,
+                PlaybackMode.CHOOSE,
+                playOnClick,
+                Modifier
+                    .padding(start = 8.dp, end = 8.dp)
+                    .onFocusChanged(buttonOnFocusChanged),
+            )
+        } else {
+            PlayButton(
+                R.string.restart,
+                0L,
+                PlaybackMode.CHOOSE,
+                playOnClick,
+                Modifier
+                    .padding(start = 8.dp, end = 8.dp)
+                    .onFocusChanged(buttonOnFocusChanged),
+            )
+        }
+    }
+}
+
+@Composable
+fun PlayButton(
+    @StringRes title: Int,
+    resume: Long,
+    mode: PlaybackMode,
+    playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        onClick = { playOnClick.invoke(resume, mode) },
+        modifier = modifier,
+        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.PlayArrow,
+            contentDescription = null,
+        )
+        Spacer(Modifier.size(8.dp))
+        Text(
+            text = stringResource(title),
+            style = MaterialTheme.typography.titleSmall,
+        )
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun <T : StashData> ItemsRow(
+    @StringRes title: Int,
+    items: List<T>,
+    uiConfig: ComposeUiConfig,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(top = 10.dp),
+    ) {
+        Text(
+            text = stringResource(title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        LazyRow(
+            modifier =
+                Modifier
+                    .padding(top = 16.dp)
+                    .focusRestorer(),
+            contentPadding = PaddingValues(8.dp),
+        ) {
+            itemsIndexed(items, key = { index, item -> item.id }) { index, item ->
+                StashCard(
+                    uiConfig = uiConfig,
+                    item = item,
+                    itemOnClick = { itemOnClick.onClick(item, null) },
+                    longClicker = longClicker,
+                    getFilterAndPosition = {
+                        // TODO
+                        FilterAndPosition(FilterArgs(dataType = DataType.TAG), index)
+                    },
+                )
+            }
+        }
+    }
+}
