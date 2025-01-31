@@ -130,9 +130,12 @@ class RootActivity :
         }
     }
 
-    override fun onRestart() {
-        super.onRestart()
-        Log.v(TAG, "onRestart")
+    override fun onPause() {
+        Log.v(TAG, "onPause")
+        if (appHasPin()) {
+            navigationManager.navigate(Destination.Pin)
+        }
+        super.onPause()
     }
 
     override fun onNavigate(
