@@ -71,6 +71,7 @@ import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
@@ -239,6 +240,12 @@ fun SceneDetails(
                 )
             }
         }
+        item {
+            SceneDetailsFooter(
+                scene,
+                Modifier.padding(start = startPadding, bottom = bottomPadding, top = 24.dp),
+            )
+        }
     }
 }
 
@@ -342,9 +349,6 @@ fun SceneDetailsHeader(
                                     file?.let { durationToString(it.duration) },
                                     file?.resolutionName(),
                                     file?.bitRateString(),
-                                    file?.video_codec,
-                                    file?.audio_codec,
-                                    file?.format,
                                 ),
                         )
                         if (scene.details.isNotNullOrBlank()) {
@@ -408,18 +412,6 @@ fun SceneDetailsHeader(
                                 stringResource(R.string.stashapp_play_duration),
                                 durationToString(scene.play_duration ?: 0.0),
                             )
-                            if (scene.created_at.toString().length >= 10) {
-                                TitleValueText(
-                                    stringResource(R.string.stashapp_created_at),
-                                    scene.created_at.toString().substring(0..<10),
-                                )
-                            }
-                            if (scene.updated_at.toString().length >= 10) {
-                                TitleValueText(
-                                    stringResource(R.string.stashapp_updated_at),
-                                    scene.updated_at.toString().substring(0..<10),
-                                )
-                            }
                         }
                         PlayButtons(scene, playOnClick, buttonOnFocusChanged = {
                             if (it.isFocused) {
@@ -539,6 +531,70 @@ fun PlayButton(
         Text(
             text = stringResource(title),
             style = MaterialTheme.typography.titleSmall,
+        )
+    }
+}
+
+@Composable
+fun SceneDetailsFooter(
+    scene: FullSceneData,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        TitleValueText(stringResource(R.string.stashapp_scene_id), scene.id)
+        if (scene.created_at.toString().length >= 10) {
+            TitleValueText(
+                stringResource(R.string.stashapp_created_at),
+                scene.created_at.toString().substring(0..<10),
+            )
+        }
+        if (scene.updated_at.toString().length >= 10) {
+            TitleValueText(
+                stringResource(R.string.stashapp_updated_at),
+                scene.updated_at.toString().substring(0..<10),
+            )
+        }
+        val file = scene.files.firstOrNull()?.videoFile
+        if (file != null) {
+            TitleValueText(
+                stringResource(R.string.stashapp_video_codec),
+                file.video_codec,
+            )
+            TitleValueText(
+                stringResource(R.string.stashapp_audio_codec),
+                file.audio_codec,
+            )
+            TitleValueText(
+                stringResource(R.string.format),
+                file.format,
+            )
+        }
+        if (!scene.captions.isNullOrEmpty()) {
+            val str =
+                buildString {
+                    append(
+                        scene.captions
+                            .first()
+                            .caption
+                            .displayString(LocalContext.current),
+                    )
+                    if (scene.captions.size > 1) {
+                        append(", +${scene.captions.size - 1} more")
+                    }
+                }
+            TitleValueText(
+                stringResource(R.string.stashapp_captions),
+                str,
+            )
+        }
+        TitleValueText(
+            stringResource(R.string.stashapp_organized),
+            scene.organized.toString(),
         )
     }
 }
