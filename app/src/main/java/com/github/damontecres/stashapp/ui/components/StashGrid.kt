@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -29,8 +30,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -198,6 +202,7 @@ class StashGridViewModel(
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StashGrid(
     filterArgs: FilterArgs,
@@ -227,6 +232,9 @@ fun StashGrid(
         var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
 
         pager?.let { pager ->
+            LaunchedEffect(filterArgs) {
+                gridState.scrollToItem(focusedIndex)
+            }
             Row(
                 modifier =
                     modifier
@@ -255,8 +263,8 @@ fun StashGrid(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .focusGroup(),
-//                    .focusRestorer { firstFocus },
+                                .focusGroup()
+                                .focusRestorer { firstFocus },
 //                    .focusRestorer(),
                     ) {
                         if (pager.size() < 0) {
@@ -286,9 +294,8 @@ fun StashGrid(
                         } else {
                             items(pager.size()) { index ->
                                 val mod =
-                                    if (index == (gridState.firstVisibleItemIndex + gridState.firstVisibleItemScrollOffset)) {
-//                            Modifier.focusRequester(firstFocus)
-                                        Modifier
+                                    if (index == focusedIndex) {
+                                        Modifier.focusRequester(firstFocus)
                                     } else {
                                         Modifier
                                     }
