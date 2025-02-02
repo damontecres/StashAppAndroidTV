@@ -30,6 +30,7 @@ import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.MarkerPickerFragment
 import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.navigate
+import dev.olshevski.navigation.reimagined.popUpTo
 
 class NavigationManagerCompose(
     activity: RootActivity,
@@ -38,7 +39,14 @@ class NavigationManagerCompose(
 
     override fun navigate(destination: Destination) {
         if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
-        controller.navigate(destination)
+        if (destination == Destination.Main) {
+            controller.popUpTo { it == Destination.Main }
+        } else if (destination is Destination.Filter) {
+            controller.popUpTo { it == Destination.Main }
+            controller.navigate(destination)
+        } else {
+            controller.navigate(destination)
+        }
     }
 
     fun composeNavigate(destination: Destination) {
