@@ -266,7 +266,8 @@ fun SceneDetailsHeader(
         modifier =
             modifier
                 .fillMaxWidth()
-//                .height(460.dp)
+//                .fillMaxHeight(.33f)
+                .height(460.dp)
                 .bringIntoViewRequester(bringIntoViewRequester),
     ) {
         if (scene.paths.screenshot.isNotNullOrBlank()) {
@@ -302,123 +303,133 @@ fun SceneDetailsHeader(
 //                            )
                         },
             )
-
-            Column(modifier = Modifier.fillMaxWidth(0.7f)) {
-                Spacer(modifier = Modifier.height(80.dp))
-                Column(
-                    modifier = Modifier.padding(start = 16.dp),
-                ) {
-                    // Title
-                    Text(
-                        text = scene.titleOrFilename ?: "",
+        }
+        Column(modifier = Modifier.fillMaxWidth(0.8f)) {
+            Spacer(modifier = Modifier.height(60.dp))
+            Column(
+                modifier = Modifier.padding(start = 16.dp),
+            ) {
+                // Title
+                Text(
+                    text = scene.titleOrFilename ?: "",
 //                        color = MaterialTheme.colorScheme.onBackground,
-                        color = Color.LightGray,
-                        style =
-                            MaterialTheme.typography.displayLarge.copy(
-                                shadow =
-                                    Shadow(
-                                        color = Color.DarkGray,
-                                        offset = Offset(5f, 2f),
-                                        blurRadius = 2f,
-                                    ),
+                    color = Color.LightGray,
+                    style =
+                        MaterialTheme.typography.displayMedium.copy(
+                            shadow =
+                                Shadow(
+                                    color = Color.DarkGray,
+                                    offset = Offset(5f, 2f),
+                                    blurRadius = 2f,
+                                ),
+                        ),
+                )
+
+                Column(
+                    modifier = Modifier.alpha(0.75f),
+                ) {
+                    // Rating
+                    AndroidView(
+                        modifier = Modifier.height(40.dp),
+                        factory = { context ->
+                            StashRatingBar(context)
+                        },
+                        update = { view ->
+                            view.rating100 = rating100
+                            val lp = view.layoutParams
+                            lp.height = ViewGroup.LayoutParams.MATCH_PARENT
+                            view.layoutParams = lp
+                        },
+                    )
+                    // Quick info
+                    val file = scene.files.firstOrNull()?.videoFile
+                    DotSeparatedRow(
+                        modifier = Modifier.padding(top = 20.dp),
+                        textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        texts =
+                            listOfNotNullOrBlank(
+                                scene.date,
+                                file?.let { durationToString(it.duration) },
+                                file?.resolutionName(),
+                                file?.bitRateString(),
                             ),
                     )
-
-                    Column(
-                        modifier = Modifier.alpha(0.75f),
-                    ) {
-                        AndroidView(
-                            modifier = Modifier.height(40.dp),
-                            factory = { context ->
-                                StashRatingBar(context)
-                            },
-                            update = { view ->
-                                view.rating100 = rating100
-                                val lp = view.layoutParams
-                                lp.height = ViewGroup.LayoutParams.MATCH_PARENT
-                                view.layoutParams = lp
-                            },
-                        )
-                        val file = scene.files.firstOrNull()?.videoFile
-                        DotSeparatedRow(
-                            modifier = Modifier.padding(top = 20.dp),
-                            textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            texts =
-                                listOfNotNullOrBlank(
-                                    scene.date,
-                                    file?.let { durationToString(it.duration) },
-                                    file?.resolutionName(),
-                                    file?.bitRateString(),
-                                ),
-                        )
-                        if (scene.details.isNotNullOrBlank()) {
+                    // Description
+                    if (scene.details.isNotNullOrBlank()) {
 //                            var borderColor by remember { mutableStateOf(Color.Transparent) }
-                            val interactionSource = remember { MutableInteractionSource() }
-                            val isFocused = interactionSource.collectIsFocusedAsState().value
-                            val borderColor =
-                                if (isFocused) {
+                        val interactionSource = remember { MutableInteractionSource() }
+                        val isFocused = interactionSource.collectIsFocusedAsState().value
+                        val borderColor =
+                            if (isFocused) {
 //                                    scope.launch { bringIntoViewRequester.bringIntoView() }
-                                    Color.Red
-                                } else {
-                                    Color.Unspecified
-                                }
-                            Text(
-                                text = scene.details,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier =
-                                    Modifier
-                                        .padding(top = 8.dp)
-//                                        .clickable { Toast.makeText(context, "Details clicked", Toast.LENGTH_SHORT).show() }
-                                        .focusable(interactionSource = interactionSource)
-                                        .border(3.dp, color = borderColor)
-                                        .onFocusChanged {
-                                            Log.v("SceneDetails", "Details focused: ${it.isFocused}")
-                                            if (it.isFocused) {
-//                                                borderColor = Color.DarkGray
-                                                scope.launch { bringIntoViewRequester.bringIntoView() }
-                                            } else {
-//                                                borderColor = Color.Transparent
-                                            }
-                                        },
-                            )
-                        }
-                        Row(
+                                Color.Red
+                            } else {
+                                Color.Unspecified
+                            }
+                        Text(
+                            text = scene.details,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
                             modifier =
                                 Modifier
-                                    .padding(top = 16.dp)
-                                    .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        ) {
-                            if (scene.studio != null) {
-                                TitleValueText(stringResource(R.string.stashapp_studio), scene.studio.studioData.name)
-                            }
-                            if (scene.code.isNotNullOrBlank()) {
-                                TitleValueText(
-                                    stringResource(R.string.stashapp_scene_code),
-                                    scene.code,
-                                )
-                            }
-                            if (scene.director.isNotNullOrBlank()) {
-                                TitleValueText(stringResource(R.string.stashapp_director), scene.director)
-                            }
+                                    .padding(top = 8.dp)
+//                                        .clickable { Toast.makeText(context, "Details clicked", Toast.LENGTH_SHORT).show() }
+                                    .focusable(interactionSource = interactionSource)
+                                    .border(3.dp, color = borderColor)
+                                    .onFocusChanged {
+                                        Log.v("SceneDetails", "Details focused: ${it.isFocused}")
+                                        if (it.isFocused) {
+//                                                borderColor = Color.DarkGray
+                                            scope.launch { bringIntoViewRequester.bringIntoView() }
+                                        } else {
+//                                                borderColor = Color.Transparent
+                                        }
+                                    },
+                        )
+                    }
+                    // Key-Values
+                    Row(
+                        modifier =
+                            Modifier
+                                .padding(top = 16.dp)
+                                .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        if (scene.studio != null) {
                             TitleValueText(
-                                stringResource(R.string.stashapp_play_count),
-                                (scene.play_count ?: 0).toString(),
-                            )
-                            TitleValueText(
-                                stringResource(R.string.stashapp_play_duration),
-                                durationToString(scene.play_duration ?: 0.0),
+                                stringResource(R.string.stashapp_studio),
+                                scene.studio.studioData.name,
                             )
                         }
-                        PlayButtons(scene, playOnClick, buttonOnFocusChanged = {
-                            if (it.isFocused) {
-                                scope.launch { bringIntoViewRequester.bringIntoView() }
-                            }
-                        })
+                        if (scene.code.isNotNullOrBlank()) {
+                            TitleValueText(
+                                stringResource(R.string.stashapp_scene_code),
+                                scene.code,
+                            )
+                        }
+                        if (scene.director.isNotNullOrBlank()) {
+                            TitleValueText(
+                                stringResource(R.string.stashapp_director),
+                                scene.director,
+                            )
+                        }
+                        TitleValueText(
+                            stringResource(R.string.stashapp_play_count),
+                            (scene.play_count ?: 0).toString(),
+                        )
+                        TitleValueText(
+                            stringResource(R.string.stashapp_play_duration),
+                            durationToString(scene.play_duration ?: 0.0),
+                        )
                     }
+                    // Playback controls
+                    PlayButtons(scene, playOnClick, buttonOnFocusChanged = {
+                        if (it.isFocused) {
+                            scope.launch { bringIntoViewRequester.bringIntoView() }
+                        }
+                    })
                 }
             }
         }

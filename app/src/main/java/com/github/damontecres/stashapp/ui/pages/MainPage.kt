@@ -12,11 +12,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -24,11 +24,20 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.MutableCreationExtras
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
@@ -41,8 +50,58 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getCaseInsensitive
 import com.github.damontecres.stashapp.views.models.ServerViewModel
+import kotlinx.coroutines.launch
 
 private const val TAG = "MainPage"
+
+class MainPageViewModel(
+    server: StashServer,
+) : ViewModel() {
+    val frontPageRows = MutableLiveData<List<FrontPageParser.FrontPageRow.Success>>(listOf())
+
+    init {
+        val queryEngine = QueryEngine(server)
+        val filterParser = FilterParser(server.version)
+        val frontPageContent =
+            server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
+        if (frontPageContent != null) {
+            Log.d(TAG, "${frontPageContent.size} front page rows")
+            val pageSize = 25 // TODO
+            val frontPageParser =
+                FrontPageParser(
+                    StashApplication.getApplication(),
+                    queryEngine,
+                    filterParser,
+                    pageSize,
+                )
+            viewModelScope.launch {
+                val jobs = frontPageParser.parse(frontPageContent)
+                val rows =
+                    jobs.mapIndexedNotNull { index, job ->
+                        job.await().let { row ->
+                            if (row is FrontPageParser.FrontPageRow.Success) {
+                                row
+                            } else {
+                                null
+                            }
+                        }
+                    }
+                frontPageRows.value = rows
+            }
+        }
+    }
+
+    companion object {
+        val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
+        val Factory: ViewModelProvider.Factory =
+            viewModelFactory {
+                initializer {
+                    val server = this[SERVER_KEY]!!
+                    MainPageViewModel(server)
+                }
+            }
+    }
+}
 
 @Composable
 fun MainPage(
@@ -53,43 +112,21 @@ fun MainPage(
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
-    val frontPageRows =
-        remember {
-            mutableStateListOf<FrontPageParser.FrontPageRow.Success>()
-        }
+    val viewModel =
+        ViewModelProvider.create(
+            LocalViewModelStoreOwner.current!!,
+            MainPageViewModel.Factory,
+            MutableCreationExtras().apply {
+                set(MainPageViewModel.SERVER_KEY, server)
+            },
+        )[MainPageViewModel::class]
 
-    val queryEngine = QueryEngine(server)
-    val filterParser = FilterParser(server.version)
-    val frontPageContent =
-        server.serverPreferences.uiConfiguration?.getCaseInsensitive("frontPageContent") as List<Map<String, *>>?
-    if (frontPageContent != null) {
-        Log.d(TAG, "${frontPageContent.size} front page rows")
-        val pageSize = cardUiSettings.maxSearchResults
-        val frontPageParser =
-            FrontPageParser(
-                LocalContext.current,
-                queryEngine,
-                filterParser,
-                pageSize,
-            )
-        LaunchedEffect(server) {
-            val jobs = frontPageParser.parse(frontPageContent)
-            jobs.mapIndexedNotNull { index, job ->
-                job.await().let { row ->
-                    if (row is FrontPageParser.FrontPageRow.Success) {
-                        frontPageRows.add(row)
-                    } else {
-                        null
-                    }
-                }
-            }
-        }
-    }
+    val frontPageRows by viewModel.frontPageRows.observeAsState()
 
     HomePage(
         modifier = Modifier.padding(16.dp),
         uiConfig = uiConfig,
-        rows = frontPageRows,
+        rows = frontPageRows!!,
         itemOnClick = itemOnClick,
         longClicker = longClicker,
     )
@@ -137,7 +174,7 @@ fun HomePageRow(
             )
         }
         val firstFocus = remember { FocusRequester() }
-        var focusedIndex by remember { mutableIntStateOf(0) }
+        var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
         LazyRow(
             modifier =
                 Modifier
@@ -150,7 +187,7 @@ fun HomePageRow(
             items(row.data.size) { index ->
                 val item = row.data[index]
                 val cardModifier =
-                    if (item == row.data[0]) {
+                    if (index == focusedIndex) {
                         Modifier.focusRequester(firstFocus)
                     } else {
                         Modifier
