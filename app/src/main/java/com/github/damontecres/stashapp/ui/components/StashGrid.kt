@@ -88,6 +88,7 @@ fun StashGridControls(
     uiConfig: ComposeUiConfig,
     filterUiMode: FilterUiMode,
     modifier: Modifier = Modifier,
+    initialPosition: Int = 0,
     itemOnLongClick: ((Any) -> Unit)? = null,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
@@ -163,6 +164,7 @@ fun StashGridControls(
             itemOnClick,
             longClicker,
             Modifier.fillMaxSize(),
+            initialPosition,
             positionCallback = { columns, position ->
                 showTopRowRaw = position < columns
                 positionCallback?.invoke(columns, position)
@@ -210,6 +212,7 @@ fun StashGrid(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
+    initialPosition: Int = 0,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
     val columns = 5
@@ -229,12 +232,13 @@ fun StashGrid(
         val pager by viewModel.pager.observeAsState()
 
         val firstFocus = remember { FocusRequester() }
-        var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
-
-        pager?.let { pager ->
-            LaunchedEffect(filterArgs) {
-                gridState.scrollToItem(focusedIndex)
+        var focusedIndex by rememberSaveable { mutableIntStateOf(initialPosition) }
+        if (initialPosition > 0) {
+            LaunchedEffect(filterArgs, initialPosition) {
+                gridState.scrollToItem(focusedIndex, -columns)
             }
+        }
+        pager?.let { pager ->
             Row(
                 modifier =
                     modifier

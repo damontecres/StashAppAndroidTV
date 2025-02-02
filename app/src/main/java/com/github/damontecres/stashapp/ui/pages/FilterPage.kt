@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
@@ -27,6 +30,15 @@ fun FilterPage(
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
+    val initialPosition =
+        if (scrollToNextPage) {
+            PreferenceManager
+                .getDefaultSharedPreferences(
+                    LocalContext.current,
+                ).getInt(LocalContext.current.getString(R.string.pref_key_page_size), 25)
+        } else {
+            0
+        }
     Column(
         modifier = modifier,
     ) {
@@ -45,7 +57,7 @@ fun FilterPage(
             filterUiMode = FilterUiMode.SAVED_FILTERS,
             itemOnClick = itemOnClick,
             longClicker = longClicker,
-            // TODO scrollToNextPage = scrollToNextPage,
+            initialPosition = initialPosition,
         )
     }
 }
