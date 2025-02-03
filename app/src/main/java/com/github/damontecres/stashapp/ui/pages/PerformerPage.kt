@@ -83,6 +83,7 @@ fun PerformerPage(
     ): TabProvider =
         TabProvider(context.getString(dataType.pluralStringId)) { positionCallback ->
             StashGridControls(
+                server = server,
                 initialFilter = initialFilter,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,

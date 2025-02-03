@@ -73,7 +73,6 @@ import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
 import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import dev.olshevski.navigation.reimagined.NavBackHandler
 import dev.olshevski.navigation.reimagined.NavHost
@@ -113,7 +112,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                     val collapsedDrawerItemWidth = 48.dp
                     val paddingValue = 12.dp
 
-                    val server: StashServer? by serverViewModel.currentServer.observeAsState()
+                    val server by serverViewModel.currentServer.observeAsState()
                     val cardUiSettings by serverViewModel.cardUiSettings.observeAsState()
                     val composeUiConfig = server?.let { ComposeUiConfig.fromStashServer(it) }
 
@@ -391,6 +390,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
 
                                         is Destination.Filter -> {
                                             FilterPage(
+                                                server = server!!,
                                                 filterArgs = destination.filterArgs,
                                                 scrollToNextPage = destination.scrollToNextPage,
                                                 itemOnClick = itemOnClick,

@@ -20,9 +20,11 @@ import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridControls
+import com.github.damontecres.stashapp.util.StashServer
 
 @Composable
 fun FilterPage(
+    server: StashServer,
     filterArgs: FilterArgs,
     scrollToNextPage: Boolean,
     uiConfig: ComposeUiConfig,
@@ -53,6 +55,7 @@ fun FilterPage(
         StashGridControls(
             modifier = Modifier.padding(16.dp),
             uiConfig = uiConfig,
+            server = server,
             initialFilter = filterArgs,
             filterUiMode = FilterUiMode.SAVED_FILTERS,
             itemOnClick = itemOnClick,

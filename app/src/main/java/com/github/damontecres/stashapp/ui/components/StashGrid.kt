@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -17,6 +16,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -41,18 +46,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.tv.material3.Button
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
@@ -67,6 +74,7 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.ui.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
@@ -80,8 +88,47 @@ enum class FilterUiMode {
     CREATE_FILTER,
 }
 
+class StashGridViewModel(
+    val server: StashServer,
+    initialFilter: FilterArgs,
+) : ViewModel() {
+    private val _filter = MutableLiveData<FilterArgs>()
+    val filter: LiveData<FilterArgs> = _filter
+
+    private val _pager = MutableLiveData<ComposePager<StashData>>()
+    val pager: LiveData<ComposePager<StashData>> = _pager
+
+    init {
+        setFilter(initialFilter)
+    }
+
+    fun setFilter(newFilter: FilterArgs) {
+        _filter.value = newFilter
+        val dataSupplierFactory = DataSupplierFactory(server.version)
+        val dataSupplier =
+            dataSupplierFactory.create<Query.Data, StashData, Query.Data>(newFilter)
+        val pagingSource =
+            StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
+        val pager = ComposePager(pagingSource, viewModelScope)
+        viewModelScope.launch { pager.init() }
+        _pager.value = pager
+    }
+
+    companion object {
+        val serverKey = object : CreationExtras.Key<StashServer> {}
+        val filterKey = object : CreationExtras.Key<FilterArgs> {}
+        val factory =
+            viewModelFactory {
+                initializer {
+                    StashGridViewModel(this[serverKey]!!, this[filterKey]!!)
+                }
+            }
+    }
+}
+
 @Composable
 fun StashGridControls(
+    server: StashServer,
     initialFilter: FilterArgs,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
@@ -94,12 +141,23 @@ fun StashGridControls(
 ) {
     val fontFamily = FontFamily(Font(resId = R.font.fa_solid_900))
     val context = LocalContext.current
+    val viewModel: StashGridViewModel =
+        viewModel(
+            LocalViewModelStoreOwner.current!!,
+            factory = StashGridViewModel.factory,
+            extras =
+                MutableCreationExtras().apply {
+                    this[StashGridViewModel.serverKey] = server
+                    this[StashGridViewModel.filterKey] = initialFilter
+                },
+        )
 
-    val dataType = initialFilter.dataType
-    var filterArgs by remember(initialFilter) { mutableStateOf(initialFilter) }
-    var showTopRowRaw by remember { mutableStateOf(true) }
+    val filterArgs: FilterArgs by viewModel.filter.observeAsState(initialFilter)
+    val dataType = filterArgs.dataType
+    var showTopRowRaw by rememberSaveable { mutableStateOf(true) }
     val showTopRow by remember { derivedStateOf { showTopRowRaw } }
-    var checked by remember { mutableStateOf(false) }
+    var checked by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by rememberSaveable { mutableStateOf(filterArgs.findFilter?.q ?: "") }
 
     Column(modifier = modifier) {
         if (showTopRow) {
@@ -115,7 +173,7 @@ fun StashGridControls(
                         SavedFiltersButton(
                             modifier = Modifier,
                             dataType = dataType,
-                            onFilterChange = { filterArgs = it },
+                            onFilterChange = { viewModel.setFilter(it) },
                             onCreateFilter = {
                                 // TODO
                             },
@@ -128,7 +186,7 @@ fun StashGridControls(
                         modifier = Modifier,
                         dataType = dataType,
                         current = filterArgs.sortAndDirection,
-                        onSortChange = { filterArgs = filterArgs.with(it) },
+                        onSortChange = { viewModel.setFilter(filterArgs.with(it)) },
                     )
                     if (dataType.supportsPlaylists || dataType == DataType.IMAGE) {
                         Button(
@@ -155,7 +213,35 @@ fun StashGridControls(
                         )
                     }
                 }
-                // TODO search
+                Material3MainTheme {
+                    TextField(
+                        value = searchQuery,
+                        onValueChange = { newQuery ->
+                            searchQuery = newQuery
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = stringResource(R.string.stashapp_actions_search),
+                            )
+                        },
+                        maxLines = 1,
+                        shape = CircleShape,
+                        keyboardOptions =
+                            KeyboardOptions(
+                                autoCorrectEnabled = false,
+                                imeAction = ImeAction.Search,
+                            ),
+                        keyboardActions =
+                            KeyboardActions(
+                                onSearch = {
+                                    if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
+                                        viewModel.setFilter(filterArgs.withQuery(searchQuery))
+                                    }
+                                },
+                            ),
+                    )
+                }
             }
         }
         StashGrid(
@@ -173,37 +259,6 @@ fun StashGridControls(
     }
 }
 
-class StashGridViewModel(
-    server: StashServer,
-    filterArgs: FilterArgs,
-) : ViewModel() {
-    private val _pager = MutableLiveData<ComposePager<StashData>>()
-    val pager: LiveData<ComposePager<StashData>> = _pager
-
-    init {
-        val dataSupplierFactory = DataSupplierFactory(server.version)
-        val dataSupplier =
-            dataSupplierFactory.create<Query.Data, StashData, Query.Data>(filterArgs)
-        val pagingSource =
-            StashPagingSource(QueryEngine(server), dataSupplier) { _, _, item -> item }
-        _pager.value = ComposePager(pagingSource, viewModelScope)
-        viewModelScope.launch { _pager.value!!.init() }
-    }
-
-    companion object {
-        val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
-        val FILTER_KEY = object : CreationExtras.Key<FilterArgs> {}
-        val FACTORY: ViewModelProvider.Factory =
-            viewModelFactory {
-                initializer {
-                    val server = this[SERVER_KEY]!!
-                    val filterArgs = this[FILTER_KEY]!!
-                    StashGridViewModel(server, filterArgs)
-                }
-            }
-    }
-}
-
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StashGrid(
@@ -218,17 +273,8 @@ fun StashGrid(
     val columns = 5
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
-    val server = StashServer.requireCurrentServer()
     key(filterArgs) {
-        val viewModel =
-            ViewModelProvider.create(
-                LocalViewModelStoreOwner.current!!,
-                StashGridViewModel.FACTORY,
-                MutableCreationExtras().apply {
-                    set(StashGridViewModel.SERVER_KEY, server)
-                    set(StashGridViewModel.FILTER_KEY, filterArgs)
-                },
-            )[StashGridViewModel::class]
+        val viewModel: StashGridViewModel = viewModel(LocalViewModelStoreOwner.current!!)
         val pager by viewModel.pager.observeAsState()
 
         val firstFocus = remember { FocusRequester() }
@@ -374,12 +420,13 @@ fun StashGrid(
                         modifier = Modifier.align(Alignment.CenterVertically),
                         letterClicked = { letter ->
                             scope.launch {
-                                val dataSupplierFactory = DataSupplierFactory(server.version)
+                                val dataSupplierFactory =
+                                    DataSupplierFactory(viewModel.server.version)
                                 val letterPosition =
                                     AlphabetSearchUtils.findPosition(
                                         letter,
                                         filterArgs,
-                                        QueryEngine(server),
+                                        QueryEngine(viewModel.server),
                                         dataSupplierFactory,
                                     )
 //                Log.v(TAG, "Found position for $letter: $letterPosition")
@@ -441,7 +488,6 @@ fun AlphabetButtons(
             AlphabetSearchUtils.LETTERS.length,
             key = { AlphabetSearchUtils.LETTERS[it] },
         ) { index ->
-            Log.d("Compose", "AlphabetButtons $index")
             Button(
                 onClick = {
                     letterClicked.invoke(AlphabetSearchUtils.LETTERS[index])
@@ -451,4 +497,12 @@ fun AlphabetButtons(
             }
         }
     }
+}
+
+@Composable
+fun SearchQuery(
+    query: String?,
+    onQueryChange: (String?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
 }

@@ -71,6 +71,7 @@ fun TagPage(
     fun createTab(initialFilter: FilterArgs): TabProvider =
         TabProvider(context.getString(initialFilter.dataType.pluralStringId)) { positionCallback ->
             StashGridControls(
+                server = server,
                 initialFilter = initialFilter,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
@@ -167,6 +168,7 @@ fun TagPage(
                 ),
                 TabProvider(stringResource(R.string.stashapp_sub_tags)) { positionCallback ->
                     StashGridControls(
+                        server = server,
                         initialFilter =
                             FilterArgs(
                                 dataType = DataType.TAG,
@@ -182,6 +184,7 @@ fun TagPage(
                 },
                 TabProvider(stringResource(R.string.stashapp_parent_tags)) { positionCallback ->
                     StashGridControls(
+                        server = server,
                         initialFilter =
                             FilterArgs(
                                 dataType = DataType.TAG,

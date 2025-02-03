@@ -49,6 +49,13 @@ data class FilterArgs(
         } else {
             this
         }
+
+    fun withQuery(query: String?): FilterArgs =
+        this.copy(
+            findFilter =
+                this.findFilter?.copy(q = query)
+                    ?: StashFindFilter(q = query),
+        )
 }
 
 fun SavedFilter.toFilterArgs(filterParser: FilterParser): FilterArgs {
