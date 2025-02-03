@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,359 +94,361 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 MainTheme {
-                    val navController = rememberNavController<Destination>(Destination.Main)
-                    NavBackHandler(navController)
-
-                    val navManager = (serverViewModel.navigationManager as NavigationManagerCompose)
-                    navManager.controller = navController
-
-                    val fontFamily =
-                        FontFamily(
-                            Font(
-                                resId = R.font.fa_solid_900,
-                            ),
-                        )
-                    val defaultSelection: DrawerPage = DrawerPage.HOME_PAGE
-                    var currentScreen by remember { mutableStateOf(defaultSelection) }
-                    val drawerState = rememberDrawerState(DrawerValue.Closed)
-
-                    val collapsedDrawerItemWidth = 48.dp
-                    val paddingValue = 12.dp
-
                     val server by serverViewModel.currentServer.observeAsState()
-                    val cardUiSettings by serverViewModel.cardUiSettings.observeAsState()
-                    val composeUiConfig = server?.let { ComposeUiConfig.fromStashServer(it) }
+                    key(server) {
+                        val navController = rememberNavController<Destination>(Destination.Main)
+                        NavBackHandler(navController)
 
-                    val itemOnClick =
-                        ItemOnClicker { item: Any, filterAndPosition ->
-                            when (item) {
-                                is FilterArgs -> {
-                                    serverViewModel.navigationManager.navigate(
-                                        Destination.Filter(
-                                            item,
-                                            true,
-                                        ),
-                                    )
-                                }
+                        val navManager =
+                            (serverViewModel.navigationManager as NavigationManagerCompose)
+                        navManager.controller = navController
 
-                                is ImageData -> {
-                                    val (filter, position) = filterAndPosition!!
-                                    serverViewModel.navigationManager.navigate(
-                                        Destination.Slideshow(
-                                            filter,
-                                            position,
-                                            false,
-                                        ),
-                                    )
-                                }
+                        val fontFamily =
+                            FontFamily(
+                                Font(
+                                    resId = R.font.fa_solid_900,
+                                ),
+                            )
+                        val defaultSelection: DrawerPage = DrawerPage.HOME_PAGE
+                        var currentScreen by remember { mutableStateOf(defaultSelection) }
+                        val drawerState = rememberDrawerState(DrawerValue.Closed)
 
-                                is StashData -> {
-                                    serverViewModel.navigationManager.navigate(
-                                        Destination.fromStashData(item),
-                                    )
-                                }
+                        val collapsedDrawerItemWidth = 48.dp
+                        val paddingValue = 12.dp
+                        val cardUiSettings by serverViewModel.cardUiSettings.observeAsState()
+                        val composeUiConfig = server?.let { ComposeUiConfig.fromStashServer(it) }
 
-                                else -> TODO(item::class.qualifiedName.toString())
-                            }
-                        }
-                    var popUpAction by remember { mutableStateOf<LongClickPopup?>(null) }
-                    val longClickerActions = buildLongClickActionList(navManager, itemOnClick)
-                    val longClicker =
-                        remember {
-                            LongClicker<Any> { item, filterAndPosition ->
-                                val actions =
-                                    longClickerActions
-                                        .filter { it.filter.invoke(item) }
-                                        .sortedBy { it.id }
-                                val texts = actions.map { context.getString(it.title) }
-                                Log.v(TAG, "actions=$texts")
-                                popUpAction = LongClickPopup(item, filterAndPosition, actions)
-                            }
-                        }
-                    server?.let {
-                        setSingletonImageLoaderFactory { context ->
-                            ImageLoader
-                                .Builder(context)
-                                .crossfade(true)
-                                .components {
-                                    add(
-                                        OkHttpNetworkFetcherFactory(
-                                            callFactory = {
-                                                it.okHttpClient
-                                            },
-                                        ),
-                                    )
-                                }.build()
-                        }
-                    }
+                        val itemOnClick =
+                            ItemOnClicker { item: Any, filterAndPosition ->
+                                when (item) {
+                                    is FilterArgs -> {
+                                        serverViewModel.navigationManager.navigate(
+                                            Destination.Filter(
+                                                item,
+                                                true,
+                                            ),
+                                        )
+                                    }
 
-                    val pages =
-                        buildList {
-                            if (server != null) {
-                                add(DrawerPage.SEARCH_PAGE)
-                                add(DrawerPage.HOME_PAGE)
-                                val serverPrefs = server?.serverPreferences
-                                if (serverPrefs != null) {
-                                    DataType.entries
-                                        .mapNotNull { dataType ->
-                                            if (serverPrefs.showMenuItem(dataType)) {
-                                                val filter =
-                                                    serverPrefs.defaultFilters[dataType]
-                                                        ?: FilterArgs(dataType)
-                                                DrawerPage(
-                                                    Destination.Filter(filter, false),
-                                                    dataType.iconStringId,
-                                                    dataType.pluralStringId,
-                                                )
-                                            } else {
-                                                null
-                                            }
-                                        }.forEach { add(it) }
+                                    is ImageData -> {
+                                        val (filter, position) = filterAndPosition!!
+                                        serverViewModel.navigationManager.navigate(
+                                            Destination.Slideshow(
+                                                filter,
+                                                position,
+                                                false,
+                                            ),
+                                        )
+                                    }
+
+                                    is StashData -> {
+                                        serverViewModel.navigationManager.navigate(
+                                            Destination.fromStashData(item),
+                                        )
+                                    }
+
+                                    else -> TODO(item::class.qualifiedName.toString())
                                 }
                             }
-                            add(DrawerPage.SETTINGS_PAGE)
-                        }
-
-                    val initialFocus = remember { FocusRequester() }
-                    var showPopup by remember { mutableStateOf(false) }
-
-                    NavHost(navController) { destination ->
-                        if (popUpAction != null) {
-                            val (item, filterAndPosition, actions) = popUpAction!!
-                            BackHandler {
-                                popUpAction = null
-                            }
-                            Column(
-                                modifier =
-                                    Modifier
-                                        .fillMaxHeight(),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                if (item is StashData) {
-                                    Text(
-                                        text = extractTitle(item) ?: "",
-                                        style = MaterialTheme.typography.titleLarge,
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        modifier =
-                                            Modifier
-                                                .align(Alignment.CenterHorizontally),
-                                    )
-                                    Text(
-                                        text = extractDescription(item) ?: "",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        modifier =
-                                            Modifier
-                                                .align(Alignment.CenterHorizontally),
-                                    )
-                                }
-                                actions.forEach {
-                                    ListItem(
-                                        modifier =
-                                            Modifier
-                                                .wrapContentWidth()
-                                                .align(Alignment.CenterHorizontally),
-                                        selected = false,
-                                        onClick = {
-                                            it.action.invoke(item, filterAndPosition)
-                                            popUpAction = null
-                                        },
-                                        headlineContent = {
-                                            Text(
-                                                stringResource(it.title),
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.onBackground,
-                                            )
-                                        },
-                                    )
+                        var popUpAction by remember { mutableStateOf<LongClickPopup?>(null) }
+                        val longClickerActions = buildLongClickActionList(navManager, itemOnClick)
+                        val longClicker =
+                            remember {
+                                LongClicker<Any> { item, filterAndPosition ->
+                                    val actions =
+                                        longClickerActions
+                                            .filter { it.filter.invoke(item) }
+                                            .sortedBy { it.id }
+                                    val texts = actions.map { context.getString(it.title) }
+                                    Log.v(TAG, "actions=$texts")
+                                    popUpAction = LongClickPopup(item, filterAndPosition, actions)
                                 }
                             }
-                        } else if (destination.fullScreen) {
-                            FragmentView(navManager, destination)
-                        } else {
-                            NavigationDrawer(
-                                modifier = Modifier.padding(4.dp),
-                                drawerState = drawerState,
-                                drawerContent = {
-                                    Column(
-                                        Modifier
-                                            .fillMaxHeight()
-                                            .padding(4.dp)
-                                            .width(
-                                                if (drawerState.currentValue == DrawerValue.Closed) {
-                                                    collapsedDrawerItemWidth
-                                                } else {
-                                                    Dp.Unspecified
+                        server?.let {
+                            setSingletonImageLoaderFactory { context ->
+                                ImageLoader
+                                    .Builder(context)
+                                    .crossfade(true)
+                                    .components {
+                                        add(
+                                            OkHttpNetworkFetcherFactory(
+                                                callFactory = {
+                                                    it.okHttpClient
                                                 },
                                             ),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.SpaceBetween,
-                                    ) {
-                                        var serverFocused by remember { mutableStateOf(false) }
-                                        NavigationDrawerItem(
+                                        )
+                                    }.build()
+                            }
+                        }
+
+                        val pages =
+                            buildList {
+                                if (server != null) {
+                                    add(DrawerPage.SEARCH_PAGE)
+                                    add(DrawerPage.HOME_PAGE)
+                                    val serverPrefs = server?.serverPreferences
+                                    if (serverPrefs != null) {
+                                        DataType.entries
+                                            .mapNotNull { dataType ->
+                                                if (serverPrefs.showMenuItem(dataType)) {
+                                                    val filter =
+                                                        serverPrefs.defaultFilters[dataType]
+                                                            ?: FilterArgs(dataType)
+                                                    DrawerPage(
+                                                        Destination.Filter(filter, false),
+                                                        dataType.iconStringId,
+                                                        dataType.pluralStringId,
+                                                    )
+                                                } else {
+                                                    null
+                                                }
+                                            }.forEach { add(it) }
+                                    }
+                                }
+                                add(DrawerPage.SETTINGS_PAGE)
+                            }
+
+                        val initialFocus = remember { FocusRequester() }
+                        var showPopup by remember { mutableStateOf(false) }
+
+                        NavHost(navController) { destination ->
+                            if (popUpAction != null) {
+                                val (item, filterAndPosition, actions) = popUpAction!!
+                                BackHandler {
+                                    popUpAction = null
+                                }
+                                Column(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxHeight(),
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                ) {
+                                    if (item is StashData) {
+                                        Text(
+                                            text = extractTitle(item) ?: "",
+                                            style = MaterialTheme.typography.titleLarge,
+                                            color = MaterialTheme.colorScheme.onBackground,
                                             modifier =
                                                 Modifier
-                                                    .onFocusChanged {
-                                                        serverFocused = it.isFocused
-                                                    },
+                                                    .align(Alignment.CenterHorizontally),
+                                        )
+                                        Text(
+                                            text = extractDescription(item) ?: "",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onBackground,
+                                            modifier =
+                                                Modifier
+                                                    .align(Alignment.CenterHorizontally),
+                                        )
+                                    }
+                                    actions.forEach {
+                                        ListItem(
+                                            modifier =
+                                                Modifier
+                                                    .wrapContentWidth()
+                                                    .align(Alignment.CenterHorizontally),
                                             selected = false,
                                             onClick = {
-                                                serverViewModel.navigationManager.navigate(
-                                                    Destination.ManageServers(
-                                                        false,
-                                                    ),
+                                                it.action.invoke(item, filterAndPosition)
+                                                popUpAction = null
+                                            },
+                                            headlineContent = {
+                                                Text(
+                                                    stringResource(it.title),
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    color = MaterialTheme.colorScheme.onBackground,
                                                 )
                                             },
-                                            leadingContent = {
-                                                Icon(
-                                                    painterResource(id = R.mipmap.stash_logo),
-                                                    contentDescription = null,
-                                                )
-                                            },
-                                        ) {
-                                            Text(
-                                                modifier =
-                                                    Modifier.enableMarquee(serverFocused),
-                                                text = server?.url ?: "No server",
-                                                maxLines = 1,
-                                            )
-                                        }
-
-                                        // Group of item with same padding
-
-                                        LazyColumn(
-                                            contentPadding = PaddingValues(0.dp),
-                                            modifier =
-                                                Modifier
-                                                    .focusGroup()
-                                                    .focusRestorer { initialFocus }
-                                                    .selectableGroup(),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement =
-                                                Arrangement.spacedBy(
-                                                    6.dp,
-                                                    Alignment.CenterVertically,
-                                                ),
-                                        ) {
-                                            items(
-                                                pages,
-                                                key = null,
-                                            ) { page ->
-                                                val mod =
-                                                    if (currentScreen == page) {
-                                                        Modifier.focusRequester(initialFocus)
+                                        )
+                                    }
+                                }
+                            } else if (destination.fullScreen) {
+                                FragmentView(navManager, destination)
+                            } else {
+                                NavigationDrawer(
+                                    modifier = Modifier.padding(4.dp),
+                                    drawerState = drawerState,
+                                    drawerContent = {
+                                        Column(
+                                            Modifier
+                                                .fillMaxHeight()
+                                                .padding(4.dp)
+                                                .width(
+                                                    if (drawerState.currentValue == DrawerValue.Closed) {
+                                                        collapsedDrawerItemWidth
                                                     } else {
-                                                        Modifier
-                                                    }
-                                                NavigationDrawerItem(
-                                                    modifier = mod,
-                                                    selected = currentScreen == page,
-                                                    onClick = {
-                                                        currentScreen = page
-                                                        drawerState.setValue(DrawerValue.Closed)
-                                                        Log.v(
-                                                            TAG,
-                                                            "Navigating to ${page.destination}",
-                                                        )
-                                                        serverViewModel.navigationManager.navigate(
-                                                            page.destination,
-                                                        )
+                                                        Dp.Unspecified
                                                     },
-                                                    leadingContent = {
-                                                        if (page != DrawerPage.SETTINGS_PAGE) {
-                                                            Text(
-                                                                stringResource(id = page.iconString),
-                                                                fontFamily = fontFamily,
-                                                                textAlign = TextAlign.Center,
-                                                                modifier = Modifier,
-                                                            )
+                                                ),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.SpaceBetween,
+                                        ) {
+                                            var serverFocused by remember { mutableStateOf(false) }
+                                            NavigationDrawerItem(
+                                                modifier =
+                                                    Modifier
+                                                        .onFocusChanged {
+                                                            serverFocused = it.isFocused
+                                                        },
+                                                selected = false,
+                                                onClick = {
+                                                    serverViewModel.navigationManager.navigate(
+                                                        Destination.ManageServers(
+                                                            false,
+                                                        ),
+                                                    )
+                                                },
+                                                leadingContent = {
+                                                    Icon(
+                                                        painterResource(id = R.mipmap.stash_logo),
+                                                        contentDescription = null,
+                                                    )
+                                                },
+                                            ) {
+                                                Text(
+                                                    modifier =
+                                                        Modifier.enableMarquee(serverFocused),
+                                                    text = server?.url ?: "No server",
+                                                    maxLines = 1,
+                                                )
+                                            }
+
+                                            // Group of item with same padding
+
+                                            LazyColumn(
+                                                contentPadding = PaddingValues(0.dp),
+                                                modifier =
+                                                    Modifier
+                                                        .focusGroup()
+                                                        .focusRestorer { initialFocus }
+                                                        .selectableGroup(),
+                                                horizontalAlignment = Alignment.CenterHorizontally,
+                                                verticalArrangement =
+                                                    Arrangement.spacedBy(
+                                                        6.dp,
+                                                        Alignment.CenterVertically,
+                                                    ),
+                                            ) {
+                                                items(
+                                                    pages,
+                                                    key = null,
+                                                ) { page ->
+                                                    val mod =
+                                                        if (currentScreen == page) {
+                                                            Modifier.focusRequester(initialFocus)
                                                         } else {
-                                                            Icon(
-                                                                painter = painterResource(id = R.drawable.vector_settings),
-                                                                contentDescription = null,
-                                                            )
+                                                            Modifier
                                                         }
-                                                    },
-                                                ) {
-                                                    Text(stringResource(id = page.name))
+                                                    NavigationDrawerItem(
+                                                        modifier = mod,
+                                                        selected = currentScreen == page,
+                                                        onClick = {
+                                                            currentScreen = page
+                                                            drawerState.setValue(DrawerValue.Closed)
+                                                            Log.v(
+                                                                TAG,
+                                                                "Navigating to ${page.destination}",
+                                                            )
+                                                            serverViewModel.navigationManager.navigate(
+                                                                page.destination,
+                                                            )
+                                                        },
+                                                        leadingContent = {
+                                                            if (page != DrawerPage.SETTINGS_PAGE) {
+                                                                Text(
+                                                                    stringResource(id = page.iconString),
+                                                                    fontFamily = fontFamily,
+                                                                    textAlign = TextAlign.Center,
+                                                                    modifier = Modifier,
+                                                                )
+                                                            } else {
+                                                                Icon(
+                                                                    painter = painterResource(id = R.drawable.vector_settings),
+                                                                    contentDescription = null,
+                                                                )
+                                                            }
+                                                        },
+                                                    ) {
+                                                        Text(stringResource(id = page.name))
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
-                                },
-                            ) {
-                                if (server != null) {
-                                    when (destination) {
-                                        Destination.Main -> {
-                                            MainPage(
-                                                server = server!!,
-                                                uiConfig = composeUiConfig!!,
-                                                cardUiSettings = cardUiSettings!!,
-                                                itemOnClick = itemOnClick,
-                                                longClicker = longClicker,
-                                                modifier = Modifier.fillMaxSize(),
-                                            )
-                                        }
-
-                                        is Destination.Filter -> {
-                                            FilterPage(
-                                                server = server!!,
-                                                filterArgs = destination.filterArgs,
-                                                scrollToNextPage = destination.scrollToNextPage,
-                                                itemOnClick = itemOnClick,
-                                                longClicker = longClicker,
-                                                uiConfig = composeUiConfig!!,
-                                                modifier = Modifier.fillMaxSize(),
-                                            )
-                                        }
-
-                                        is Destination.Item -> {
-                                            when (destination.dataType) {
-                                                DataType.SCENE ->
-                                                    SceneDetailsPage(
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        server = server!!,
-                                                        sceneId = destination.id,
-                                                        itemOnClick = itemOnClick,
-                                                        // TODO longClicker for scene to add remove actions?
-                                                        longClicker = longClicker,
-                                                        playOnClick = { position, mode ->
-                                                            navManager.navigate(
-                                                                Destination.Playback(
-                                                                    destination.id,
-                                                                    position,
-                                                                    mode,
-                                                                ),
-                                                            )
-                                                        },
-                                                    )
-
-                                                DataType.PERFORMER ->
-                                                    PerformerPage(
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        server = server!!,
-                                                        id = destination.id,
-                                                        itemOnClick = itemOnClick,
-                                                        longClicker = longClicker,
-                                                    )
-
-                                                DataType.TAG ->
-                                                    TagPage(
-                                                        modifier = Modifier.fillMaxSize(),
-                                                        server = server!!,
-                                                        id = destination.id,
-                                                        includeSubTags = false,
-                                                        itemOnClick = itemOnClick,
-                                                        longClicker = longClicker,
-                                                    )
-
-                                                else -> FragmentView(navManager, destination)
+                                    },
+                                ) {
+                                    server?.let { server ->
+                                        when (destination) {
+                                            Destination.Main -> {
+                                                MainPage(
+                                                    server = server,
+                                                    uiConfig = composeUiConfig!!,
+                                                    cardUiSettings = cardUiSettings!!,
+                                                    itemOnClick = itemOnClick,
+                                                    longClicker = longClicker,
+                                                    modifier = Modifier.fillMaxSize(),
+                                                )
                                             }
-                                        }
 
-                                        else -> {
-                                            FragmentView(navManager, destination)
+                                            is Destination.Filter -> {
+                                                FilterPage(
+                                                    server = server,
+                                                    filterArgs = destination.filterArgs,
+                                                    scrollToNextPage = destination.scrollToNextPage,
+                                                    itemOnClick = itemOnClick,
+                                                    longClicker = longClicker,
+                                                    uiConfig = composeUiConfig!!,
+                                                    modifier = Modifier.fillMaxSize(),
+                                                )
+                                            }
+
+                                            is Destination.Item -> {
+                                                when (destination.dataType) {
+                                                    DataType.SCENE ->
+                                                        SceneDetailsPage(
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            server = server,
+                                                            sceneId = destination.id,
+                                                            itemOnClick = itemOnClick,
+                                                            // TODO longClicker for scene to add remove actions?
+                                                            longClicker = longClicker,
+                                                            playOnClick = { position, mode ->
+                                                                navManager.navigate(
+                                                                    Destination.Playback(
+                                                                        destination.id,
+                                                                        position,
+                                                                        mode,
+                                                                    ),
+                                                                )
+                                                            },
+                                                        )
+
+                                                    DataType.PERFORMER ->
+                                                        PerformerPage(
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            server = server,
+                                                            id = destination.id,
+                                                            itemOnClick = itemOnClick,
+                                                            longClicker = longClicker,
+                                                        )
+
+                                                    DataType.TAG ->
+                                                        TagPage(
+                                                            modifier = Modifier.fillMaxSize(),
+                                                            server = server,
+                                                            id = destination.id,
+                                                            includeSubTags = false,
+                                                            itemOnClick = itemOnClick,
+                                                            longClicker = longClicker,
+                                                        )
+
+                                                    else -> FragmentView(navManager, destination)
+                                                }
+                                            }
+
+                                            else -> {
+                                                FragmentView(navManager, destination)
+                                            }
                                         }
                                     }
                                 }
