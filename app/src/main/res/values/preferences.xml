@@ -7,6 +7,7 @@
     <string name="pref_key_show_grid_footer" translatable="false">interface.showGridFooter</string>
     <string name="pref_key_show_rating" translatable="false">interface.showRating</string>
     <string name="pref_key_max_search_results" translatable="false">maxSearchResults</string>
+    <string name="pref_key_search_delay" translatable="false">searchDelay</string>
     <string name="pref_key_page_size" translatable="false">@string/pref_key_max_search_results</string>
     <string name="pref_key_current_server" translatable="false">stashUrl</string>
     <string name="pref_key_current_api_key" translatable="false">stashApiKey</string>

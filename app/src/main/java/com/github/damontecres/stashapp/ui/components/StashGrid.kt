@@ -58,6 +58,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.preference.PreferenceManager
 import androidx.tv.material3.Button
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
@@ -81,6 +82,8 @@ import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 enum class FilterUiMode {
@@ -152,6 +155,7 @@ fun StashGridControls(
                 },
         )
 
+    val scope = rememberCoroutineScope()
     val filterArgs: FilterArgs by viewModel.filter.observeAsState(initialFilter)
     val dataType = filterArgs.dataType
     var showTopRowRaw by rememberSaveable { mutableStateOf(true) }
@@ -214,10 +218,24 @@ fun StashGridControls(
                     }
                 }
                 Material3MainTheme {
+                    var job: Job? = null
+                    val searchDelay =
+                        PreferenceManager
+                            .getDefaultSharedPreferences(context)
+                            .getInt(context.getString(R.string.pref_key_search_delay), 500)
+                            .toLong()
                     TextField(
                         value = searchQuery,
                         onValueChange = { newQuery ->
                             searchQuery = newQuery
+                            job?.cancel()
+                            job =
+                                scope.launch {
+                                    delay(searchDelay)
+                                    if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
+                                        viewModel.setFilter(filterArgs.withQuery(searchQuery))
+                                    }
+                                }
                         },
                         leadingIcon = {
                             Icon(
@@ -235,9 +253,11 @@ fun StashGridControls(
                         keyboardActions =
                             KeyboardActions(
                                 onSearch = {
+                                    job?.cancel()
                                     if ((filterArgs.findFilter?.q ?: "") != searchQuery) {
                                         viewModel.setFilter(filterArgs.withQuery(searchQuery))
                                     }
+                                    this.defaultKeyboardAction(ImeAction.Done)
                                 },
                             ),
                     )
