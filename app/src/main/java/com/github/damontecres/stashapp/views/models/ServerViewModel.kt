@@ -67,30 +67,6 @@ open class ServerViewModel : ViewModel() {
         _cardUiSettings.value = newHash
     }
 
-    private fun createUiSettings(): CardUiSettings {
-        val context = StashApplication.getApplication()
-        val manager = PreferenceManager.getDefaultSharedPreferences(context)
-        val maxSearchResults = manager.getInt("maxSearchResults", 25)
-        val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
-        val columns = manager.getInt("cardSize", context.getString(R.string.card_size_default))
-        val showRatings = manager.getBoolean(context.getString(R.string.pref_key_show_rating), true)
-        val imageCrop =
-            manager.getBoolean(context.getString(R.string.pref_key_crop_card_images), true)
-        val videoDelay =
-            manager.getInt(
-                context.getString(R.string.pref_key_ui_card_overlay_delay),
-                context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
-            )
-        return CardUiSettings(
-            maxSearchResults,
-            playVideoPreviews,
-            columns,
-            showRatings,
-            imageCrop,
-            videoDelay,
-        )
-    }
-
     fun init(currentServer: StashServer) {
         updateUiSettings()
         switchServer(currentServer)
@@ -146,5 +122,32 @@ open class ServerViewModel : ViewModel() {
         ) : ServerConnection
 
         data object NotConfigured : ServerConnection
+    }
+
+    companion object {
+        fun createUiSettings(): CardUiSettings {
+            val context = StashApplication.getApplication()
+            val manager = PreferenceManager.getDefaultSharedPreferences(context)
+            val maxSearchResults = manager.getInt("maxSearchResults", 25)
+            val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
+            val columns = manager.getInt("cardSize", context.getString(R.string.card_size_default))
+            val showRatings =
+                manager.getBoolean(context.getString(R.string.pref_key_show_rating), true)
+            val imageCrop =
+                manager.getBoolean(context.getString(R.string.pref_key_crop_card_images), true)
+            val videoDelay =
+                manager.getInt(
+                    context.getString(R.string.pref_key_ui_card_overlay_delay),
+                    context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
+                )
+            return CardUiSettings(
+                maxSearchResults,
+                playVideoPreviews,
+                columns,
+                showRatings,
+                imageCrop,
+                videoDelay,
+            )
+        }
     }
 }
