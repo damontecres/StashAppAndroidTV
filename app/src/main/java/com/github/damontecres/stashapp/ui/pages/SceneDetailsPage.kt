@@ -10,6 +10,7 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
@@ -41,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
@@ -51,6 +54,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -59,11 +63,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
+import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.tv.material3.surfaceColorAtElevation
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -89,6 +97,7 @@ import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 sealed class SceneLoadingState {
@@ -160,6 +169,7 @@ fun SceneDetailsPage(
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun SceneDetails(
     scene: FullSceneData,
@@ -171,12 +181,18 @@ fun SceneDetails(
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+    var moreInteractionSource by remember { mutableStateOf(MutableInteractionSource()) }
+    val pressed by moreInteractionSource.collectIsPressedAsState()
+
     LazyColumn(
         contentPadding = PaddingValues(bottom = 135.dp),
         modifier = modifier,
     ) {
         item {
-            SceneDetailsHeader(scene, itemOnClick, playOnClick)
+            SceneDetailsHeader(scene, itemOnClick, playOnClick, moreOnClick = {
+                showDialog = true
+            }, moreInteractionSource)
         }
         val startPadding = 24.dp
         val bottomPadding = 16.dp
@@ -247,14 +263,96 @@ fun SceneDetails(
             )
         }
     }
+    DialogTest(
+        showDialog = showDialog,
+        pressed = pressed,
+        interactionSource = moreInteractionSource,
+        onDismissRequest = { showDialog = false },
+    )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+@Composable
+fun DialogTest(
+    showDialog: Boolean,
+    onDismissRequest: () -> Unit,
+    pressed: Boolean,
+    interactionSource: MutableInteractionSource,
+) {
+    var waiting by remember { mutableStateOf(true) }
+    if (showDialog) {
+        LaunchedEffect(Unit) {
+            delay(500)
+            waiting = false
+        }
+    }
+    if (showDialog) {
+        Log.v("Compose", "pressed=$pressed")
+        Dialog(
+            onDismissRequest = onDismissRequest,
+            properties = DialogProperties(),
+        ) {
+            val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+            Column(
+                modifier =
+                    Modifier
+//                        .widthIn(min = 520.dp, max = 300.dp)
+//                        .dialogFocusable()
+                        .graphicsLayer {
+                            this.clip = true
+                            this.shape = RoundedCornerShape(28.0.dp)
+                        }.drawBehind { drawRect(color = elevatedContainerColor) }
+                        .padding(PaddingValues(24.dp)),
+            ) {
+                Text("This is the title")
+                ListItem(
+                    selected = false,
+                    enabled = !waiting,
+                    onClick = {
+                        Log.w("Compose", "ListItem clicked!")
+                    },
+                    headlineContent = {
+                        Text("Go to")
+                    },
+                    modifier = Modifier,
+                    interactionSource = interactionSource,
+                )
+                Button(
+                    enabled = !waiting,
+                    onClick = {
+                        Log.w("Compose", "Go to clicked!")
+                    },
+                    onLongClick = {
+                        Log.w("Compose", "Go to long clicked!")
+                    },
+                ) {
+                    Text("Go to")
+                }
+                Button(
+                    enabled = !waiting,
+                    onClick = {},
+                ) {
+                    Text("Remove")
+                }
+                Button(
+                    enabled = !waiting,
+                    onClick = onDismissRequest,
+                ) {
+                    Text("Dismiss")
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SceneDetailsHeader(
     scene: FullSceneData,
     itemOnClick: ItemOnClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    moreOnClick: () -> Unit,
+    interactionSource: MutableInteractionSource,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -425,11 +523,17 @@ fun SceneDetailsHeader(
                         )
                     }
                     // Playback controls
-                    PlayButtons(scene, playOnClick, buttonOnFocusChanged = {
-                        if (it.isFocused) {
-                            scope.launch { bringIntoViewRequester.bringIntoView() }
-                        }
-                    })
+                    PlayButtons(
+                        scene,
+                        playOnClick,
+                        moreOnClick,
+                        interactionSource,
+                        buttonOnFocusChanged = {
+                            if (it.isFocused) {
+                                scope.launch { bringIntoViewRequester.bringIntoView() }
+                            }
+                        },
+                    )
                 }
             }
         }
@@ -441,6 +545,8 @@ fun SceneDetailsHeader(
 fun PlayButtons(
     scene: FullSceneData,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    moreOnClick: () -> Unit,
+    interactionSource: MutableInteractionSource,
     buttonOnFocusChanged: (FocusState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -497,8 +603,10 @@ fun PlayButtons(
         // More button
         item {
             Button(
-                onClick = {
-                    // TODO
+                interactionSource = interactionSource,
+                onClick = {},
+                onLongClick = {
+                    moreOnClick.invoke()
                 },
                 modifier =
                     Modifier
