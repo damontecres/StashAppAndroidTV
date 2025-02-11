@@ -8,6 +8,8 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.TableLayout
+import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -15,6 +17,7 @@ import androidx.activity.addCallback
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
 import androidx.core.os.bundleOf
+import androidx.core.view.get
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -26,6 +29,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
@@ -63,6 +67,7 @@ import okhttp3.Request
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import kotlin.collections.set
 
 /**
  * Parent [Fragment] for playing videos
@@ -109,6 +114,7 @@ abstract class PlaybackFragment(
     protected lateinit var titleText: TextView
     protected lateinit var dateText: TextView
     protected lateinit var debugView: View
+    protected lateinit var debugSupportedTable: TableLayout
     protected lateinit var debugSceneId: TextView
     protected lateinit var debugPlaybackTextView: TextView
     protected lateinit var debugVideoTextView: TextView
@@ -186,6 +192,39 @@ abstract class PlaybackFragment(
             }.also { exoPlayer ->
                 videoView.player = exoPlayer
                 exoPlayer.addListener(AmbientPlaybackListener())
+            }.also {
+                it.addListener(
+                    object : Player.Listener {
+                        override fun onTracksChanged(tracks: Tracks) {
+                            val tracksSupported = checkForSupport(tracks)
+                            viewLifecycleOwner.lifecycleScope.launch(
+                                StashCoroutineExceptionHandler(
+                                    autoToast = true,
+                                ) + Dispatchers.Main,
+                            ) {
+                                (1..<debugSupportedTable.childCount).forEach { _ ->
+                                    debugSupportedTable.removeViewAt(1)
+                                }
+
+                                tracksSupported.forEach { ts ->
+                                    val row =
+                                        requireActivity().layoutInflater.inflate(
+                                            R.layout.debug_supported_row,
+                                            debugSupportedTable,
+                                            false,
+                                        ) as TableRow
+                                    (row[0] as TextView).text = ts.id
+                                    (row[1] as TextView).text = ts.type.name
+                                    (row[2] as TextView).text = ts.selected.toString()
+                                    (row[3] as TextView).text = ts.codecs
+                                    (row[4] as TextView).text = ts.supported.name
+                                    (row[5] as TextView).text = ts.labels.joinToString(", ")
+                                    debugSupportedTable.addView(row)
+                                }
+                            }
+                        }
+                    },
+                )
             }.also(::postCreatePlayer)
 
     protected fun updateDebugInfo(
@@ -372,6 +411,7 @@ abstract class PlaybackFragment(
         exoCenterControls = view.findViewById(androidx.media3.ui.R.id.exo_center_controls)
 
         debugView = view.findViewById(R.id.playback_debug_info)
+        debugSupportedTable = view.findViewById(R.id.debug_supported_table)
         debugSceneId = view.findViewById(R.id.debug_scene_id)
         debugPlaybackTextView = view.findViewById(R.id.debug_playback)
         debugVideoTextView = view.findViewById(R.id.debug_video)
