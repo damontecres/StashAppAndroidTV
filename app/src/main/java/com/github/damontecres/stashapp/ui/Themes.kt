@@ -41,25 +41,24 @@ fun AppTheme(content: @Composable () -> Unit) {
 
 @Composable
 fun MainTheme(content: @Composable () -> Unit) {
-    val resources = StashApplication.getApplication().resources
     MaterialTheme(
         colorScheme =
             darkColorScheme(
-                primary = Color(resources.getColor(R.color.default_card_background, null)),
+                primary = Color(0xFF30404D),
                 onPrimary = Color.White,
                 onPrimaryContainer = Color.White,
-                secondary = Color(resources.getColor(R.color.popup_background, null)),
+                secondary = Color(0xFF111a20),
                 onSecondary = Color.White,
                 onSecondaryContainer = Color.White,
                 onTertiary = Color.White,
-                primaryContainer = Color(resources.getColor(R.color.default_card_background, null)),
-                background = Color(resources.getColor(R.color.default_background, null)),
+                primaryContainer = Color(0xFF30404d),
+                background = Color(0xFF202b33),
                 onBackground = Color.White,
-                surface = Color(resources.getColor(R.color.default_card_background, null)),
+                surface = Color(0xFF30404d),
                 onSurface = Color.White,
-                surfaceVariant = Color(resources.getColor(R.color.default_card_background, null)),
+                surfaceVariant = Color(0xFF30404d),
                 onSurfaceVariant = Color.White,
-                border = Color(resources.getColor(R.color.selected_background, null)),
+                border = Color(0xFF4785b5),
             ),
         content = content,
     )

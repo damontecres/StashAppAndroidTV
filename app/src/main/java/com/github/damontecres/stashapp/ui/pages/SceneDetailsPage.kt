@@ -75,10 +75,22 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.ExtraImageData
+import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
+import com.github.damontecres.stashapp.api.fragment.GroupData
+import com.github.damontecres.stashapp.api.fragment.GroupRelationshipData
+import com.github.damontecres.stashapp.api.fragment.ImageData
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.SlimPerformerData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.api.fragment.StudioData
+import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -115,7 +127,7 @@ class SceneDetailsViewModel(
     val performers = MutableLiveData<List<PerformerData>>(listOf())
     val galleries = MutableLiveData<List<GalleryData>>(listOf())
 
-    init {
+    fun init(): SceneDetailsViewModel {
         viewModelScope.launch {
             try {
                 val scene = queryEngine.getScene(sceneId)
@@ -135,13 +147,14 @@ class SceneDetailsViewModel(
                 loadingState.value = SceneLoadingState.Error
             }
         }
+        return this
     }
 
-    fun removePerformer(performer: PerformerData) {
+    fun removePerformer(performerId: String) {
         val perfs = performers.value?.map { it.id }
         perfs?.let {
             val mutable = perfs.toMutableList()
-            mutable.remove(performer.id)
+            mutable.remove(performerId)
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 val newPerfs =
                     mutationEngine
@@ -165,7 +178,7 @@ class SceneDetailsViewModel(
                 initializer {
                     val server = this[SERVER_KEY]!!
                     val sceneId = this[SCENE_ID_KEY]!!
-                    SceneDetailsViewModel(server, sceneId)
+                    SceneDetailsViewModel(server, sceneId).init()
                 }
             }
     }
@@ -218,7 +231,6 @@ fun SceneDetailsPage(
             )
         is SceneLoadingState.Success ->
             SceneDetails(
-                viewModel = viewModel,
                 scene = state.scene,
                 performers = performers ?: listOf(),
                 galleries = galleries ?: listOf(),
@@ -226,6 +238,19 @@ fun SceneDetailsPage(
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 playOnClick = playOnClick,
+                removeItem = { item ->
+                    when (item) {
+                        is PerformerData, is SlimPerformerData -> viewModel.removePerformer(item.id)
+                        is TagData, is SlimTagData -> TODO()
+                        is GroupData, is GroupRelationshipData -> TODO()
+                        is GalleryData -> TODO()
+                        is StudioData -> TODO()
+                        is MarkerData, is FullMarkerData -> TODO()
+
+                        is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
+                        is SlimSceneData, is FullSceneData, is VideoSceneData -> throw UnsupportedOperationException()
+                    }
+                },
                 modifier = modifier.animateContentSize(),
             )
 
@@ -235,7 +260,6 @@ fun SceneDetailsPage(
 
 @Composable
 fun SceneDetails(
-    viewModel: SceneDetailsViewModel,
     scene: FullSceneData,
     performers: List<PerformerData>,
     galleries: List<GalleryData>,
@@ -243,7 +267,9 @@ fun SceneDetails(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    removeItem: (item: StashData) -> Unit,
     modifier: Modifier = Modifier,
+    showRatingBar: Boolean = true,
 ) {
     val context = LocalContext.current
 
@@ -256,25 +282,32 @@ fun SceneDetails(
         modifier = modifier,
     ) {
         item {
-            SceneDetailsHeader(scene, itemOnClick, playOnClick, moreOnClick = {
-                dialogTitle = context.getString(R.string.more) + "..."
-                dialogItems =
-                    listOf(
-                        DialogItem(context.getString(R.string.play_direct)) {
-                            playOnClick(
-                                scene.resume_position ?: 0,
-                                PlaybackMode.FORCED_DIRECT_PLAY,
-                            )
-                        },
-                        DialogItem(context.getString(R.string.play_transcoding)) {
-                            playOnClick(
-                                scene.resume_position ?: 0,
-                                PlaybackMode.FORCED_TRANSCODE,
-                            )
-                        },
-                    )
-                showDialog = true
-            })
+            SceneDetailsHeader(
+                scene,
+                uiConfig,
+                itemOnClick,
+                playOnClick,
+                showRatingBar = showRatingBar,
+                moreOnClick = {
+                    dialogTitle = context.getString(R.string.more) + "..."
+                    dialogItems =
+                        listOf(
+                            DialogItem(context.getString(R.string.play_direct)) {
+                                playOnClick(
+                                    scene.resume_position ?: 0,
+                                    PlaybackMode.FORCED_DIRECT_PLAY,
+                                )
+                            },
+                            DialogItem(context.getString(R.string.play_transcoding)) {
+                                playOnClick(
+                                    scene.resume_position ?: 0,
+                                    PlaybackMode.FORCED_TRANSCODE,
+                                )
+                            },
+                        )
+                    showDialog = true
+                },
+            )
         }
         val startPadding = 24.dp
         val bottomPadding = 16.dp
@@ -310,7 +343,7 @@ fun SceneDetails(
                     dialogItems =
                         listOf(
                             DialogItem("Go to") { itemOnClick.onClick(item, filterAndPosition) },
-                            DialogItem("Remove") { viewModel.removePerformer(item) },
+                            DialogItem("Remove") { removeItem(item) },
                         )
                     showDialog = true
                 }
@@ -368,10 +401,12 @@ fun SceneDetails(
 @Composable
 fun SceneDetailsHeader(
     scene: FullSceneData,
+    uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     moreOnClick: () -> Unit,
     modifier: Modifier = Modifier,
+    showRatingBar: Boolean = true,
 ) {
     val context = LocalContext.current
     var rating100 by remember { mutableIntStateOf(scene.rating100 ?: 0) }
@@ -445,18 +480,24 @@ fun SceneDetailsHeader(
                     modifier = Modifier.alpha(0.75f),
                 ) {
                     // Rating
-                    AndroidView(
-                        modifier = Modifier.height(40.dp),
-                        factory = { context ->
-                            StashRatingBar(context)
-                        },
-                        update = { view ->
-                            view.rating100 = rating100
-                            val lp = view.layoutParams
-                            lp.height = ViewGroup.LayoutParams.MATCH_PARENT
-                            view.layoutParams = lp
-                        },
-                    )
+                    if (showRatingBar) {
+                        AndroidView(
+                            modifier = Modifier.height(40.dp),
+                            factory = { context ->
+                                StashRatingBar(
+                                    context,
+                                    uiConfig.ratingAsStars,
+                                    uiConfig.starPrecision,
+                                )
+                            },
+                            update = { view ->
+                                view.rating100 = rating100
+                                val lp = view.layoutParams
+                                lp.height = ViewGroup.LayoutParams.MATCH_PARENT
+                                view.layoutParams = lp
+                            },
+                        )
+                    }
                     // Quick info
                     val file = scene.files.firstOrNull()?.videoFile
                     DotSeparatedRow(
