@@ -19,92 +19,148 @@
     android:layoutDirection="ltr"
     android:orientation="vertical">
 
-    <TableLayout
+    <LinearLayout
         android:id="@+id/playback_debug_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/transparent_black_50"
+        android:orientation="horizontal"
         android:layout_margin="4dp"
-        android:padding="4dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         android:visibility="gone"
         tools:visibility="visible">
 
-        <TableRow>
+        <TableLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:padding="4dp"
+            android:background="@color/transparent_black_50">
+
+            <TableRow>
+
+                <TextView
+                    style="@style/DebugInfoOverlayText"
+                    android:text="@string/stashapp_scene_id" />
+
+                <TextView
+                    android:id="@+id/debug_scene_id"
+                    style="@style/DebugInfoOverlayText"
+                    tools:text="1234" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/DebugInfoOverlayText"
+                    android:text="@string/playback" />
+
+                <TextView
+                    android:id="@+id/debug_playback"
+                    style="@style/DebugInfoOverlayText"
+                    tools:text="Direct" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/DebugInfoOverlayText"
+                    android:text="@string/stashapp_video_codec" />
+
+                <TextView
+                    android:id="@+id/debug_video"
+                    style="@style/DebugInfoOverlayText"
+                    tools:text="h264" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/DebugInfoOverlayText"
+                    android:text="@string/stashapp_audio_codec" />
+
+                <TextView
+                    android:id="@+id/debug_audio"
+                    style="@style/DebugInfoOverlayText"
+                    tools:text="ac3" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/DebugInfoOverlayText"
+                    android:text="@string/format" />
+
+                <TextView
+                    android:id="@+id/debug_container_format"
+                    style="@style/DebugInfoOverlayText"
+                    tools:text="mp4" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    style="@style/DebugInfoOverlayText"
+                    android:text="Playlist" />
+
+                <TextView
+                    android:id="@+id/debug_playlist"
+                    style="@style/DebugInfoOverlayText"
+                    android:text="N/A"
+                    tools:text="2 of 25 (100)" />
+            </TableRow>
+
+        </TableLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_margin="4dp"
+            android:padding="4dp"
+            android:background="@color/transparent_black_50">
 
             <TextView
-                style="@style/DebugInfoOverlayText"
-                android:text="@string/stashapp_scene_id" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/stream_details"
+                android:textSize="14sp"
+                style="@style/DebugInfoOverlayText" />
 
-            <TextView
-                android:id="@+id/debug_scene_id"
-                style="@style/DebugInfoOverlayText"
-                tools:text="1234" />
-        </TableRow>
+            <TableLayout
+                android:id="@+id/debug_supported_table"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
 
-        <TableRow>
+                <TableRow tools:ignore="UselessParent">
 
-            <TextView
-                style="@style/DebugInfoOverlayText"
-                android:text="@string/playback" />
+                    <TextView
+                        style="@style/DebugInfoOverlayText"
+                        android:text="@string/id" />
 
-            <TextView
-                android:id="@+id/debug_playback"
-                style="@style/DebugInfoOverlayText"
-                tools:text="Direct" />
-        </TableRow>
+                    <TextView
+                        style="@style/DebugInfoOverlayText"
+                        android:text="@string/stashapp_type" />
 
-        <TableRow>
+                    <TextView
+                        style="@style/DebugInfoOverlayText"
+                        android:text="@string/selected" />
 
-            <TextView
-                style="@style/DebugInfoOverlayText"
-                android:text="@string/stashapp_video_codec" />
+                    <TextView
+                        style="@style/DebugInfoOverlayText"
+                        android:text="@string/codec" />
 
-            <TextView
-                android:id="@+id/debug_video"
-                style="@style/DebugInfoOverlayText"
-                tools:text="h264" />
-        </TableRow>
+                    <TextView
+                        style="@style/DebugInfoOverlayText"
+                        android:text="@string/supported" />
 
-        <TableRow>
-
-            <TextView
-                style="@style/DebugInfoOverlayText"
-                android:text="@string/stashapp_audio_codec" />
-
-            <TextView
-                android:id="@+id/debug_audio"
-                style="@style/DebugInfoOverlayText"
-                tools:text="ac3" />
-        </TableRow>
-
-        <TableRow>
-
-            <TextView
-                style="@style/DebugInfoOverlayText"
-                android:text="@string/format" />
-
-            <TextView
-                android:id="@+id/debug_container_format"
-                style="@style/DebugInfoOverlayText"
-                tools:text="mp4" />
-        </TableRow>
-
-        <TableRow>
-
-            <TextView
-                style="@style/DebugInfoOverlayText"
-                android:text="Playlist" />
-
-            <TextView
-                android:id="@+id/debug_playlist"
-                style="@style/DebugInfoOverlayText"
-                android:text="N/A"
-                tools:text="2 of 25 (100)" />
-        </TableRow>
-
-    </TableLayout>
+                    <TextView
+                        style="@style/DebugInfoOverlayText"
+                        android:text="@string/labels" />
+                </TableRow>
+            </TableLayout>
+        </LinearLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:id="@id/exo_center_controls"

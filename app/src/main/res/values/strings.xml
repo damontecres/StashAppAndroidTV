@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">StashAppAndroidTV</string>
     <string name="browse_title" translatable="false">Stash</string>
     <string name="play_scene" translatable="false">Play</string>
@@ -84,6 +84,11 @@
     <string name="more_like_this_scene">More like this scene</string>
     <string name="more">More</string>
     <string name="id">ID</string>
+    <string name="selected" tools:override="true">Selected</string>
+    <string name="codec">Codec</string>
+    <string name="supported">Supported</string>
+    <string name="labels">Labels</string>
+    <string name="stream_details">Stream Details</string>
     <string name="play_direct">Play direct</string>
     <string name="play_transcoding">Play with transcoding</string>
 

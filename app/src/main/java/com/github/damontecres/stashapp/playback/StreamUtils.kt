@@ -3,9 +3,13 @@ package com.github.damontecres.stashapp.playback
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.media3.common.C
+import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.Tracks
+import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.Caption
@@ -187,3 +191,100 @@ fun Caption.displayString(context: Context): String {
         }
     return "$languageName ($caption_type)"
 }
+
+enum class TrackSupportReason {
+    HANDLED,
+    EXCEEDS_CAPABILITIES,
+    UNSUPPORTED_DRM,
+    UNSUPPORTED_SUBTYPE,
+    UNSUPPORTED_TYPE,
+    UNKNOWN,
+    ;
+
+    companion object {
+        @OptIn(UnstableApi::class)
+        fun fromInt(
+            @C.FormatSupport value: Int,
+        ): TrackSupportReason =
+            when (value) {
+                C.FORMAT_HANDLED -> HANDLED
+                C.FORMAT_EXCEEDS_CAPABILITIES -> EXCEEDS_CAPABILITIES
+                C.FORMAT_UNSUPPORTED_DRM -> UNSUPPORTED_DRM
+                C.FORMAT_UNSUPPORTED_SUBTYPE -> UNSUPPORTED_SUBTYPE
+                C.FORMAT_UNSUPPORTED_TYPE -> UNSUPPORTED_TYPE
+                else -> UNKNOWN
+            }
+    }
+}
+
+enum class TrackType {
+    UNKNOWN,
+    DEFAULT,
+    AUDIO,
+    VIDEO,
+    TEXT,
+    IMAGE,
+    METADATA,
+    CAMERA_MOTION,
+    NONE,
+    ;
+
+    companion object {
+        @OptIn(UnstableApi::class)
+        fun fromInt(value: Int): TrackType =
+            when (value) {
+                C.TRACK_TYPE_UNKNOWN -> UNKNOWN
+                C.TRACK_TYPE_DEFAULT -> DEFAULT
+                C.TRACK_TYPE_AUDIO -> AUDIO
+                C.TRACK_TYPE_VIDEO -> VIDEO
+                C.TRACK_TYPE_TEXT -> TEXT
+                C.TRACK_TYPE_IMAGE -> IMAGE
+                C.TRACK_TYPE_METADATA -> METADATA
+                C.TRACK_TYPE_CAMERA_MOTION -> CAMERA_MOTION
+                C.TRACK_TYPE_NONE -> NONE
+                else -> UNKNOWN
+            }
+    }
+}
+
+data class TrackSupport(
+    val id: String?,
+    val type: TrackType,
+    val supported: TrackSupportReason,
+    val selected: Boolean,
+    val labels: List<String>,
+    val codecs: String?,
+    val format: Format,
+)
+
+@OptIn(UnstableApi::class)
+fun checkForSupport(tracks: Tracks): List<TrackSupport> =
+    tracks.groups.flatMap {
+        buildList {
+            val type = TrackType.fromInt(it.type)
+            for (i in 0..<it.length) {
+                val format = it.getTrackFormat(i)
+                val labels =
+                    format.labels
+                        .map {
+                            if (it.language != null) {
+                                "${it.value} (${it.language})"
+                            } else {
+                                it.value
+                            }
+                        }
+                val reason = TrackSupportReason.fromInt(it.getTrackSupport(i))
+                add(
+                    TrackSupport(
+                        format.id,
+                        type,
+                        reason,
+                        it.isSelected,
+                        labels,
+                        format.codecs,
+                        format,
+                    ),
+                )
+            }
+        }
+    }
