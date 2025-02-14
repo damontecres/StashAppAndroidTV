@@ -10,7 +10,6 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,14 +26,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
@@ -54,7 +51,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -63,15 +59,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.MutableCreationExtras
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
-import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import androidx.tv.material3.surfaceColorAtElevation
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -86,6 +87,7 @@ import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.TitleValueText
+import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
@@ -97,8 +99,54 @@ import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+class SceneDetailsViewModel(
+    server: StashServer,
+    val sceneId: String,
+) : ViewModel() {
+    private val queryEngine = QueryEngine(server)
+    private val mutationEngine = MutationEngine(server)
+
+    val loadingState = MutableLiveData<SceneLoadingState>(SceneLoadingState.Loading)
+    val performers = MutableLiveData<List<PerformerData>>(listOf())
+    val galleries = MutableLiveData<List<GalleryData>>(listOf())
+
+    init {
+        viewModelScope.launch {
+            try {
+                val scene = queryEngine.getScene(sceneId)
+                if (scene != null) {
+                    loadingState.value = SceneLoadingState.Success(scene)
+                    if (scene.performers.isNotEmpty()) {
+                        performers.value =
+                            queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
+                    }
+                    if (scene.galleries.isNotEmpty()) {
+                        galleries.value = queryEngine.getGalleries(scene.galleries.map { it.id })
+                    }
+                } else {
+                    loadingState.value = SceneLoadingState.Error
+                }
+            } catch (ex: Exception) {
+                loadingState.value = SceneLoadingState.Error
+            }
+        }
+    }
+
+    companion object {
+        val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
+        val SCENE_ID_KEY = object : CreationExtras.Key<String> {}
+        val Factory: ViewModelProvider.Factory =
+            viewModelFactory {
+                initializer {
+                    val server = this[SERVER_KEY]!!
+                    val sceneId = this[SCENE_ID_KEY]!!
+                    SceneDetailsViewModel(server, sceneId)
+                }
+            }
+    }
+}
 
 sealed class SceneLoadingState {
     data object Loading : SceneLoadingState()
@@ -119,29 +167,19 @@ fun SceneDetailsPage(
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var loadingState by remember { mutableStateOf<SceneLoadingState>(SceneLoadingState.Loading) }
-    var performers by remember { mutableStateOf<List<PerformerData>>(listOf()) }
-    var galleries by remember { mutableStateOf<List<GalleryData>>(listOf()) }
+    val viewModel =
+        ViewModelProvider.create(
+            LocalViewModelStoreOwner.current!!,
+            SceneDetailsViewModel.Factory,
+            MutableCreationExtras().apply {
+                set(SceneDetailsViewModel.SERVER_KEY, server)
+                set(SceneDetailsViewModel.SCENE_ID_KEY, sceneId)
+            },
+        )[SceneDetailsViewModel::class]
+    val loadingState by viewModel.loadingState.observeAsState()
+    val performers by viewModel.performers.observeAsState()
+    val galleries by viewModel.galleries.observeAsState()
 
-    LaunchedEffect(sceneId) {
-        try {
-            val queryEngine = QueryEngine(server)
-            val scene = queryEngine.getScene(sceneId)
-            if (scene != null) {
-                loadingState = SceneLoadingState.Success(scene)
-                if (scene.performers.isNotEmpty()) {
-                    performers = queryEngine.findPerformers(performerIds = scene.performers.map { it.id })
-                }
-                if (scene.galleries.isNotEmpty()) {
-                    galleries = queryEngine.getGalleries(scene.galleries.map { it.id })
-                }
-            } else {
-                loadingState = SceneLoadingState.Error
-            }
-        } catch (ex: Exception) {
-            loadingState = SceneLoadingState.Error
-        }
-    }
     when (val state = loadingState) {
         SceneLoadingState.Error ->
             Text(
@@ -158,14 +196,16 @@ fun SceneDetailsPage(
         is SceneLoadingState.Success ->
             SceneDetails(
                 scene = state.scene,
-                performers = performers,
-                galleries = galleries,
+                performers = performers ?: listOf(),
+                galleries = galleries ?: listOf(),
                 uiConfig = ComposeUiConfig.fromStashServer(server),
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 playOnClick = playOnClick,
                 modifier = modifier.animateContentSize(),
             )
+
+        null -> {}
     }
 }
 
@@ -182,8 +222,6 @@ fun SceneDetails(
     modifier: Modifier = Modifier,
 ) {
     var showDialog by remember { mutableStateOf(false) }
-    var moreInteractionSource by remember { mutableStateOf(MutableInteractionSource()) }
-    val pressed by moreInteractionSource.collectIsPressedAsState()
 
     LazyColumn(
         contentPadding = PaddingValues(bottom = 135.dp),
@@ -192,7 +230,7 @@ fun SceneDetails(
         item {
             SceneDetailsHeader(scene, itemOnClick, playOnClick, moreOnClick = {
                 showDialog = true
-            }, moreInteractionSource)
+            })
         }
         val startPadding = 24.dp
         val bottomPadding = 16.dp
@@ -263,86 +301,6 @@ fun SceneDetails(
             )
         }
     }
-    DialogTest(
-        showDialog = showDialog,
-        pressed = pressed,
-        interactionSource = moreInteractionSource,
-        onDismissRequest = { showDialog = false },
-    )
-}
-
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
-@Composable
-fun DialogTest(
-    showDialog: Boolean,
-    onDismissRequest: () -> Unit,
-    pressed: Boolean,
-    interactionSource: MutableInteractionSource,
-) {
-    var waiting by remember { mutableStateOf(true) }
-    if (showDialog) {
-        LaunchedEffect(Unit) {
-            delay(500)
-            waiting = false
-        }
-    }
-    if (showDialog) {
-        Log.v("Compose", "pressed=$pressed")
-        Dialog(
-            onDismissRequest = onDismissRequest,
-            properties = DialogProperties(),
-        ) {
-            val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-            Column(
-                modifier =
-                    Modifier
-//                        .widthIn(min = 520.dp, max = 300.dp)
-//                        .dialogFocusable()
-                        .graphicsLayer {
-                            this.clip = true
-                            this.shape = RoundedCornerShape(28.0.dp)
-                        }.drawBehind { drawRect(color = elevatedContainerColor) }
-                        .padding(PaddingValues(24.dp)),
-            ) {
-                Text("This is the title")
-                ListItem(
-                    selected = false,
-                    enabled = !waiting,
-                    onClick = {
-                        Log.w("Compose", "ListItem clicked!")
-                    },
-                    headlineContent = {
-                        Text("Go to")
-                    },
-                    modifier = Modifier,
-                    interactionSource = interactionSource,
-                )
-                Button(
-                    enabled = !waiting,
-                    onClick = {
-                        Log.w("Compose", "Go to clicked!")
-                    },
-                    onLongClick = {
-                        Log.w("Compose", "Go to long clicked!")
-                    },
-                ) {
-                    Text("Go to")
-                }
-                Button(
-                    enabled = !waiting,
-                    onClick = {},
-                ) {
-                    Text("Remove")
-                }
-                Button(
-                    enabled = !waiting,
-                    onClick = onDismissRequest,
-                ) {
-                    Text("Dismiss")
-                }
-            }
-        }
-    }
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
@@ -352,7 +310,6 @@ fun SceneDetailsHeader(
     itemOnClick: ItemOnClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     moreOnClick: () -> Unit,
-    interactionSource: MutableInteractionSource,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -527,7 +484,6 @@ fun SceneDetailsHeader(
                         scene,
                         playOnClick,
                         moreOnClick,
-                        interactionSource,
                         buttonOnFocusChanged = {
                             if (it.isFocused) {
                                 scope.launch { bringIntoViewRequester.bringIntoView() }
@@ -546,7 +502,6 @@ fun PlayButtons(
     scene: FullSceneData,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     moreOnClick: () -> Unit,
-    interactionSource: MutableInteractionSource,
     buttonOnFocusChanged: (FocusState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -603,7 +558,6 @@ fun PlayButtons(
         // More button
         item {
             Button(
-                interactionSource = interactionSource,
                 onClick = {},
                 onLongClick = {
                     moreOnClick.invoke()
