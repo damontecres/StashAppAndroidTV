@@ -83,12 +83,15 @@ import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
+import com.github.damontecres.stashapp.ui.components.DialogItem
+import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.bitRateString
@@ -130,6 +133,26 @@ class SceneDetailsViewModel(
                 }
             } catch (ex: Exception) {
                 loadingState.value = SceneLoadingState.Error
+            }
+        }
+    }
+
+    fun removePerformer(performer: PerformerData) {
+        val perfs = performers.value?.map { it.id }
+        perfs?.let {
+            val mutable = perfs.toMutableList()
+            mutable.remove(performer.id)
+            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                val newPerfs =
+                    mutationEngine
+                        .setPerformersOnScene(
+                            sceneId,
+                            mutable,
+                        )?.performers
+                        ?.map { it.performerData }
+                if (newPerfs != null) {
+                    performers.value = newPerfs
+                }
             }
         }
     }
@@ -195,6 +218,7 @@ fun SceneDetailsPage(
             )
         is SceneLoadingState.Success ->
             SceneDetails(
+                viewModel = viewModel,
                 scene = state.scene,
                 performers = performers ?: listOf(),
                 galleries = galleries ?: listOf(),
@@ -209,9 +233,9 @@ fun SceneDetailsPage(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun SceneDetails(
+    viewModel: SceneDetailsViewModel,
     scene: FullSceneData,
     performers: List<PerformerData>,
     galleries: List<GalleryData>,
@@ -221,7 +245,11 @@ fun SceneDetails(
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+
     var showDialog by remember { mutableStateOf(false) }
+    var dialogTitle by remember { mutableStateOf("") }
+    var dialogItems by remember { mutableStateOf<List<DialogItem>>(listOf()) }
 
     LazyColumn(
         contentPadding = PaddingValues(bottom = 135.dp),
@@ -229,6 +257,22 @@ fun SceneDetails(
     ) {
         item {
             SceneDetailsHeader(scene, itemOnClick, playOnClick, moreOnClick = {
+                dialogTitle = context.getString(R.string.more) + "..."
+                dialogItems =
+                    listOf(
+                        DialogItem(context.getString(R.string.play_direct)) {
+                            playOnClick(
+                                scene.resume_position ?: 0,
+                                PlaybackMode.FORCED_DIRECT_PLAY,
+                            )
+                        },
+                        DialogItem(context.getString(R.string.play_transcoding)) {
+                            playOnClick(
+                                scene.resume_position ?: 0,
+                                PlaybackMode.FORCED_TRANSCODE,
+                            )
+                        },
+                    )
                 showDialog = true
             })
         }
@@ -259,13 +303,24 @@ fun SceneDetails(
             }
         }
         if (performers.isNotEmpty()) {
+            val performerLongClicker =
+                LongClicker<Any> { item, filterAndPosition ->
+                    item as PerformerData
+                    dialogTitle = item.name
+                    dialogItems =
+                        listOf(
+                            DialogItem("Go to") { itemOnClick.onClick(item, filterAndPosition) },
+                            DialogItem("Remove") { viewModel.removePerformer(item) },
+                        )
+                    showDialog = true
+                }
             item {
                 ItemsRow(
                     title = R.string.stashapp_performers,
                     items = performers,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
-                    longClicker = longClicker,
+                    longClicker = performerLongClicker,
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
             }
@@ -301,6 +356,12 @@ fun SceneDetails(
             )
         }
     }
+    DialogPopup(
+        showDialog = showDialog,
+        title = dialogTitle,
+        items = dialogItems,
+        onDismissRequest = { showDialog = false },
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
@@ -543,7 +604,7 @@ fun PlayButtons(
         } else {
             item {
                 PlayButton(
-                    R.string.restart,
+                    R.string.play_scene,
                     0L,
                     Icons.Default.PlayArrow,
                     PlaybackMode.CHOOSE,
@@ -558,10 +619,8 @@ fun PlayButtons(
         // More button
         item {
             Button(
-                onClick = {},
-                onLongClick = {
-                    moreOnClick.invoke()
-                },
+                onClick = moreOnClick,
+                onLongClick = {},
                 modifier =
                     Modifier
                         .padding(start = 8.dp, end = 8.dp)

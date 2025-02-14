@@ -84,5 +84,7 @@
     <string name="more_like_this_scene">More like this scene</string>
     <string name="more">More</string>
     <string name="id">ID</string>
+    <string name="play_direct">Play direct</string>
+    <string name="play_transcoding">Play with transcoding</string>
 
 </resources>
