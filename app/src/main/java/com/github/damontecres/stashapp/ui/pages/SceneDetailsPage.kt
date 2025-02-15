@@ -106,6 +106,7 @@ import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.DialogItem
@@ -494,14 +495,25 @@ fun SceneDetails(
                                 )
                             },
                             DialogItem(
-                                context.getString(R.string.stashapp_actions_create_marker) +
-                                    " - " +
-                                    durationToString(scene.resume_time ?: 0.0),
-                                DataType.MARKER.iconStringId,
-                            ) {
-                                searchForId = scene.resume_position ?: 0L
-                                searchForDataType = DataType.TAG
-                            },
+                                headlineContent = {
+                                    Text(
+                                        text = stringResource(R.string.stashapp_actions_create_marker),
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(text = durationToString(scene.resume_time ?: 0.0))
+                                },
+                                leadingContent = {
+                                    Text(
+                                        text = stringResource(DataType.MARKER.iconStringId),
+                                        fontFamily = FontAwesome,
+                                    )
+                                },
+                                onClick = {
+                                    searchForId = scene.resume_position ?: 0L
+                                    searchForDataType = DataType.TAG
+                                },
+                            ),
                             DialogItem(
                                 context.getString(R.string.add_group),
                                 DataType.GROUP.iconStringId,

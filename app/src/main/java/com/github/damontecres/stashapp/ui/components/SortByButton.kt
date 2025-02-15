@@ -13,8 +13,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.withStyle
 import androidx.tv.material3.Button
 import androidx.tv.material3.Text
@@ -23,6 +21,7 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortAndDirection
 import com.github.damontecres.stashapp.data.flip
+import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.Material3MainTheme
 
 @Composable
@@ -35,7 +34,6 @@ fun SortByButton(
     val currentSort = current.sort
     val currentDirection = current.direction
     var sortByDropDown by remember { mutableStateOf(false) }
-    val fontFamily = FontFamily(Font(resId = R.font.fa_solid_900))
     val context = LocalContext.current
 
     Box(modifier = modifier) {
@@ -48,7 +46,7 @@ fun SortByButton(
             Text(
                 text =
                     buildAnnotatedString {
-                        withStyle(SpanStyle(fontFamily = fontFamily)) {
+                        withStyle(SpanStyle(fontFamily = FontAwesome)) {
                             append(
                                 stringResource(
                                     if (currentDirection == SortDirectionEnum.ASC) {
@@ -78,12 +76,12 @@ fun SortByButton(
                                     if (currentDirection == SortDirectionEnum.ASC) {
                                         Text(
                                             text = stringResource(R.string.fa_caret_up),
-                                            fontFamily = fontFamily,
+                                            fontFamily = FontAwesome,
                                         )
                                     } else {
                                         Text(
                                             text = stringResource(R.string.fa_caret_down),
-                                            fontFamily = fontFamily,
+                                            fontFamily = FontAwesome,
                                         )
                                     }
                                 }

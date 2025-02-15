@@ -37,8 +37,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -129,12 +127,6 @@ fun FragmentContent(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val fontFamily =
-        FontFamily(
-            Font(
-                resId = R.font.fa_solid_900,
-            ),
-        )
     val defaultSelection: DrawerPage = DrawerPage.HOME_PAGE
     var currentScreen by remember { mutableStateOf(defaultSelection) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -388,7 +380,7 @@ fun FragmentContent(
                                                 }
                                             Text(
                                                 stringResource(id = page.iconString),
-                                                fontFamily = fontFamily,
+                                                fontFamily = FontAwesome,
                                                 textAlign = TextAlign.Center,
                                                 modifier = Modifier,
                                                 color = color,

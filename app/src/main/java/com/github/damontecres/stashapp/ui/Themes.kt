@@ -5,11 +5,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.darkColorScheme
 import androidx.tv.material3.lightColorScheme
 import com.github.damontecres.stashapp.R
+
+val FontAwesome = FontFamily(Font(resId = R.font.fa_solid_900))
 
 @Suppress("ktlint:standard:function-naming")
 @Composable

@@ -105,6 +105,14 @@ private fun SceneDetailsPreview() {
             removeItem = {},
             modifier = Modifier,
             showRatingBar = false,
+            server = TODO(),
+            rating100 = TODO(),
+            oCount = TODO(),
+            tags = TODO(),
+            groups = TODO(),
+            markers = TODO(),
+            addItem = TODO(),
+            oCountAction = TODO(),
         )
     }
 }

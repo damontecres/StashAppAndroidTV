@@ -28,7 +28,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
-import com.github.damontecres.stashapp.ui.faFontFamily
+import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.StashRatingBar
 
@@ -79,7 +79,7 @@ fun ItemDetails(
                         Button(
                             onClick = favoriteClick,
                         ) {
-                            Text(text = stringResource(R.string.fa_heart), fontFamily = faFontFamily)
+                            Text(text = stringResource(R.string.fa_heart), fontFamily = FontAwesome)
                         }
                     }
                 }

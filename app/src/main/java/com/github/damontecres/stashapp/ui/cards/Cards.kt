@@ -36,8 +36,6 @@ import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
@@ -83,6 +81,7 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.ICON_ORDER
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.enableMarquee
 import com.github.damontecres.stashapp.util.StashServer
@@ -125,12 +124,6 @@ fun ImageOverlay(
             )
         }
         if (favorite) {
-            val faFontFamily =
-                FontFamily(
-                    Font(
-                        resId = R.font.fa_solid_900,
-                    ),
-                )
             Text(
                 modifier =
                     Modifier
@@ -139,7 +132,7 @@ fun ImageOverlay(
                 color = colorResource(android.R.color.holo_red_light),
                 text = stringResource(R.string.fa_heart),
                 fontSize = 20.sp,
-                fontFamily = faFontFamily,
+                fontFamily = FontAwesome,
             )
         }
         content.invoke(this)
@@ -153,19 +146,12 @@ fun IconRowText(
     oCounter: Int?,
     modifier: Modifier = Modifier,
 ) {
-    val faFontFamily =
-        FontFamily(
-            Font(
-                resId = R.font.fa_solid_900,
-            ),
-        )
-
     val annotatedString =
         buildAnnotatedString {
             ICON_ORDER.forEach {
                 val count = iconMap[it]
                 if (count != null && count > 0) {
-                    withStyle(SpanStyle(fontFamily = faFontFamily)) {
+                    withStyle(SpanStyle(fontFamily = FontAwesome)) {
                         append(stringResource(it.iconStringId))
                     }
                     append(" $count")

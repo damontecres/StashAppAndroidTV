@@ -44,8 +44,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
@@ -75,6 +73,7 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.ui.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.cards.StashCard
@@ -142,7 +141,6 @@ fun StashGridControls(
     itemOnLongClick: ((Any) -> Unit)? = null,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
 ) {
-    val fontFamily = FontFamily(Font(resId = R.font.fa_solid_900))
     val context = LocalContext.current
     val viewModel: StashGridViewModel =
         viewModel(
@@ -477,7 +475,6 @@ fun JumpButtons(
     jumpClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val fontFamily = FontFamily(Font(resId = R.font.fa_solid_900))
     Column(
         modifier = modifier,
     ) {
@@ -486,14 +483,14 @@ fun JumpButtons(
                 jumpClick.invoke(-10)
             },
         ) {
-            Text(text = stringResource(R.string.fa_angle_up), fontFamily = fontFamily)
+            Text(text = stringResource(R.string.fa_angle_up), fontFamily = FontAwesome)
         }
         Button(
             onClick = {
                 jumpClick.invoke(10)
             },
         ) {
-            Text(text = stringResource(R.string.fa_angle_down), fontFamily = fontFamily)
+            Text(text = stringResource(R.string.fa_angle_down), fontFamily = FontAwesome)
         }
     }
 }

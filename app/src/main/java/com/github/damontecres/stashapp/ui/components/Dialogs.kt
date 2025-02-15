@@ -17,8 +17,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -26,7 +24,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.ui.FontAwesome
 import kotlinx.coroutines.delay
 
 data class DialogItem(
@@ -49,16 +47,10 @@ data class DialogItem(
             )
         },
         leadingContent = {
-            val fontFamily =
-                FontFamily(
-                    Font(
-                        resId = R.font.fa_solid_900,
-                    ),
-                )
             Text(
                 text = stringResource(id = iconStringRes),
 //                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontFamily = fontFamily,
+                fontFamily = FontAwesome,
             )
         },
         onClick = onClick,

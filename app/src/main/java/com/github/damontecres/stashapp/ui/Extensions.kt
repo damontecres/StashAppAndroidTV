@@ -26,22 +26,12 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
-import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
-
-val faFontFamily =
-    FontFamily(
-        Font(
-            resId = R.font.fa_solid_900,
-        ),
-    )
 
 fun Modifier.enableMarquee(focused: Boolean) =
     if (focused) {
