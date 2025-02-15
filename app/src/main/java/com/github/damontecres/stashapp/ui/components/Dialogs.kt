@@ -1,5 +1,7 @@
 package com.github.damontecres.stashapp.ui.components
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -13,19 +15,89 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.tv.material3.Icon
 import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import androidx.tv.material3.surfaceColorAtElevation
+import com.github.damontecres.stashapp.R
 import kotlinx.coroutines.delay
 
 data class DialogItem(
-    val text: String,
+    val headlineContent: @Composable () -> Unit,
     val onClick: () -> Unit,
-)
+    val overlineContent: @Composable (() -> Unit)? = null,
+    val supportingContent: @Composable (() -> Unit)? = null,
+    val leadingContent: @Composable (BoxScope.() -> Unit)? = null,
+    val trailingContent: @Composable (() -> Unit)? = null,
+) {
+    constructor(
+        text: String,
+        @StringRes iconStringRes: Int,
+        onClick: () -> Unit,
+    ) : this(
+        headlineContent = {
+            Text(
+                text = text,
+//                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        },
+        leadingContent = {
+            val fontFamily =
+                FontFamily(
+                    Font(
+                        resId = R.font.fa_solid_900,
+                    ),
+                )
+            Text(
+                text = stringResource(id = iconStringRes),
+//                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                fontFamily = fontFamily,
+            )
+        },
+        onClick = onClick,
+    )
+
+    constructor(
+        text: String,
+        icon: ImageVector,
+        onClick: () -> Unit,
+    ) : this(
+        headlineContent = {
+            Text(
+                text = text,
+//                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        },
+        leadingContent = {
+            Icon(
+                imageVector = icon,
+                contentDescription = text,
+//                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        },
+        onClick = onClick,
+    )
+
+    constructor(
+        text: String,
+        onClick: () -> Unit,
+    ) : this(
+        headlineContent = {
+            Text(
+                text = text,
+//                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        },
+        onClick = onClick,
+    )
+}
 
 @Composable
 fun DialogPopup(
@@ -53,7 +125,7 @@ fun DialogPopup(
             onDismissRequest = onDismissRequest,
             properties = DialogProperties(),
         ) {
-            val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+            val elevatedContainerColor = MaterialTheme.colorScheme.secondaryContainer
             Column(
                 modifier =
                     Modifier
@@ -80,9 +152,11 @@ fun DialogPopup(
                             }
                             it.onClick.invoke()
                         },
-                        headlineContent = {
-                            Text(text = it.text)
-                        },
+                        headlineContent = it.headlineContent,
+                        overlineContent = it.overlineContent,
+                        supportingContent = it.supportingContent,
+                        leadingContent = it.leadingContent,
+                        trailingContent = it.trailingContent,
                         modifier = Modifier,
                     )
                 }

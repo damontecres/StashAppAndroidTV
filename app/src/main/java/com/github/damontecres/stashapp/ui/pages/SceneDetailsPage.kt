@@ -29,6 +29,7 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -43,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
@@ -426,9 +428,30 @@ fun SceneDetails(
             dialogFromLongClick = true
             dialogItems =
                 buildList {
-                    add(DialogItem("Go to") { itemOnClick.onClick(item, filterAndPosition) })
+                    add(
+                        DialogItem("Go to", Icons.Default.PlayArrow) {
+                            itemOnClick.onClick(
+                                item,
+                                filterAndPosition,
+                            )
+                        },
+                    )
                     if (item !is GalleryData) {
-                        add(DialogItem("Remove") { removeItem(item) })
+                        add(
+                            DialogItem(
+                                onClick = { removeItem(item) },
+                                headlineContent = {
+                                    Text(stringResource(R.string.stashapp_actions_remove))
+                                },
+                                leadingContent = {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = stringResource(R.string.stashapp_actions_remove),
+                                        tint = Color.Red,
+                                    )
+                                },
+                            ),
+                        )
                     }
                 }
             showDialog = true
@@ -452,13 +475,19 @@ fun SceneDetails(
                     dialogFromLongClick = false
                     dialogItems =
                         listOf(
-                            DialogItem(context.getString(R.string.play_direct)) {
+                            DialogItem(
+                                context.getString(R.string.play_direct),
+                                Icons.Default.PlayArrow,
+                            ) {
                                 playOnClick(
                                     scene.resume_position ?: 0,
                                     PlaybackMode.FORCED_DIRECT_PLAY,
                                 )
                             },
-                            DialogItem(context.getString(R.string.play_transcoding)) {
+                            DialogItem(
+                                context.getString(R.string.play_transcoding),
+                                Icons.Default.PlayArrow,
+                            ) {
                                 playOnClick(
                                     scene.resume_position ?: 0,
                                     PlaybackMode.FORCED_TRANSCODE,
@@ -468,17 +497,27 @@ fun SceneDetails(
                                 context.getString(R.string.stashapp_actions_create_marker) +
                                     " - " +
                                     durationToString(scene.resume_time ?: 0.0),
+                                DataType.MARKER.iconStringId,
                             ) {
                                 searchForId = scene.resume_position ?: 0L
                                 searchForDataType = DataType.TAG
                             },
-                            DialogItem(context.getString(R.string.add_group)) {
+                            DialogItem(
+                                context.getString(R.string.add_group),
+                                DataType.GROUP.iconStringId,
+                            ) {
                                 searchForDataType = DataType.GROUP
                             },
-                            DialogItem(context.getString(R.string.add_performer)) {
+                            DialogItem(
+                                context.getString(R.string.add_performer),
+                                DataType.PERFORMER.iconStringId,
+                            ) {
                                 searchForDataType = DataType.PERFORMER
                             },
-                            DialogItem(context.getString(R.string.add_tag)) {
+                            DialogItem(
+                                context.getString(R.string.add_tag),
+                                DataType.TAG.iconStringId,
+                            ) {
                                 searchForId = -1L
                                 searchForDataType = DataType.TAG
                             },
@@ -591,14 +630,15 @@ fun SceneDetails(
                     ),
             ) {
                 val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                val color = MaterialTheme.colorScheme.secondaryContainer
                 Box(
                     Modifier
                         .fillMaxSize(.9f)
                         .graphicsLayer {
                             this.clip = true
                             this.shape = RoundedCornerShape(28.0.dp)
-                        }.background(MaterialTheme.colorScheme.secondaryContainer)
-//                        .drawBehind { drawRect(color = MaterialTheme.colorScheme.secondaryContainer) }
+                        }.drawBehind { drawRect(color = color) }
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
                         .padding(PaddingValues(12.dp)),
                     propagateMinConstraints = true,
                 ) {

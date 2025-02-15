@@ -6,13 +6,13 @@ import android.view.LayoutInflater
 import android.view.View
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -291,13 +291,13 @@ fun FragmentContent(
             FragmentView(navigationManager, destination)
         } else {
             NavigationDrawer(
-                modifier = Modifier.padding(4.dp),
+                modifier = Modifier,
                 drawerState = drawerState,
                 drawerContent = {
                     Column(
                         Modifier
                             .fillMaxHeight()
-                            .padding(4.dp)
+                            .background(MaterialTheme.colorScheme.secondaryContainer)
                             .width(
                                 if (drawerState.currentValue == DrawerValue.Closed) {
                                     collapsedDrawerItemWidth
@@ -380,11 +380,18 @@ fun FragmentContent(
                                     },
                                     leadingContent = {
                                         if (page != DrawerPage.SETTINGS_PAGE) {
+                                            val color =
+                                                if (currentScreen == page) {
+                                                    MaterialTheme.colorScheme.border
+                                                } else {
+                                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                                }
                                             Text(
                                                 stringResource(id = page.iconString),
                                                 fontFamily = fontFamily,
                                                 textAlign = TextAlign.Center,
                                                 modifier = Modifier,
+                                                color = color,
                                             )
                                         } else {
                                             Icon(
@@ -405,7 +412,7 @@ fun FragmentContent(
                     navManager = navigationManager,
                     server = server,
                     destination = destination,
-                    cardUiSettings = cardUiSettings!!,
+                    cardUiSettings = cardUiSettings,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
                     modifier = Modifier.fillMaxSize(),
