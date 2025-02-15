@@ -209,7 +209,21 @@ fun SearchForPage(
         }
         val startPadding = 8.dp
         val bottomPadding = 8.dp
-        if (results.isNotEmpty()) {
+        if (results.isEmpty()) {
+            if (searchQuery.isBlank()) {
+                Text(
+                    text = stringResource(R.string.waiting_for_query),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+            }
+        } else {
             ItemsRow(
                 title = R.string.results,
                 items = results,
