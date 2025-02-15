@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
@@ -26,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
@@ -51,6 +53,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -59,6 +62,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -73,9 +78,9 @@ import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.tv.material3.surfaceColorAtElevation
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -93,10 +98,10 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -153,11 +158,11 @@ class SceneDetailsViewModel(
         return this
     }
 
-    fun removePerformer(performerId: String) {
+    private fun mutatePerformers(mutator: MutableList<String>.() -> Unit) {
         val perfs = performers.value?.map { it.id }
         perfs?.let {
             val mutable = perfs.toMutableList()
-            mutable.remove(performerId)
+            mutator.invoke(mutable)
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 val newPerfs =
                     mutationEngine
@@ -166,12 +171,14 @@ class SceneDetailsViewModel(
                             mutable,
                         )?.performers
                         ?.map { it.performerData }
-                if (newPerfs != null) {
-                    performers.value = newPerfs
-                }
+                performers.value = newPerfs ?: listOf()
             }
         }
     }
+
+    fun addPerformer(performerId: String) = mutatePerformers { add(performerId) }
+
+    fun removePerformer(performerId: String) = mutatePerformers { remove(performerId) }
 
     companion object {
         val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
@@ -234,6 +241,7 @@ fun SceneDetailsPage(
             )
         is SceneLoadingState.Success ->
             SceneDetails(
+                server = server,
                 scene = state.scene,
                 performers = performers ?: listOf(),
                 galleries = galleries ?: listOf(),
@@ -241,6 +249,19 @@ fun SceneDetailsPage(
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 playOnClick = playOnClick,
+                addItem = { item ->
+                    when (item) {
+                        is PerformerData, is SlimPerformerData -> viewModel.addPerformer(item.id)
+                        is TagData, is SlimTagData -> TODO()
+                        is GroupData, is GroupRelationshipData -> TODO()
+                        is GalleryData -> TODO()
+                        is StudioData -> TODO()
+                        is MarkerData, is FullMarkerData -> TODO()
+
+                        is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
+                        is SlimSceneData, is FullSceneData, is VideoSceneData -> throw UnsupportedOperationException()
+                    }
+                },
                 removeItem = { item ->
                     when (item) {
                         is PerformerData, is SlimPerformerData -> viewModel.removePerformer(item.id)
@@ -263,6 +284,7 @@ fun SceneDetailsPage(
 
 @Composable
 fun SceneDetails(
+    server: StashServer,
     scene: FullSceneData,
     performers: List<PerformerData>,
     galleries: List<GalleryData>,
@@ -270,6 +292,7 @@ fun SceneDetails(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
+    addItem: (item: StashData) -> Unit,
     removeItem: (item: StashData) -> Unit,
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
@@ -279,6 +302,9 @@ fun SceneDetails(
     var showDialog by remember { mutableStateOf(false) }
     var dialogTitle by remember { mutableStateOf("") }
     var dialogItems by remember { mutableStateOf<List<DialogItem>>(listOf()) }
+    var dialogFromLongClick by remember { mutableStateOf(true) }
+
+    var searchForDataType by remember { mutableStateOf<DataType?>(null) }
 
     LazyColumn(
         contentPadding = PaddingValues(bottom = 135.dp),
@@ -293,6 +319,7 @@ fun SceneDetails(
                 showRatingBar = showRatingBar,
                 moreOnClick = {
                     dialogTitle = context.getString(R.string.more) + "..."
+                    dialogFromLongClick = false
                     dialogItems =
                         listOf(
                             DialogItem(context.getString(R.string.play_direct)) {
@@ -308,15 +335,7 @@ fun SceneDetails(
                                 )
                             },
                             DialogItem(context.getString(R.string.stashapp_performer_tagger_add_new_performers)) {
-                                // TODO
-                                StashApplication.navigationManager.navigate(
-                                    Destination.SearchFor(
-                                        "",
-                                        1L,
-                                        DataType.PERFORMER,
-                                        "Add performer",
-                                    ),
-                                )
+                                searchForDataType = DataType.PERFORMER
                             },
                         )
                     showDialog = true
@@ -354,6 +373,7 @@ fun SceneDetails(
                 LongClicker<Any> { item, filterAndPosition ->
                     item as PerformerData
                     dialogTitle = item.name
+                    dialogFromLongClick = true
                     dialogItems =
                         listOf(
                             DialogItem("Go to") { itemOnClick.onClick(item, filterAndPosition) },
@@ -408,7 +428,44 @@ fun SceneDetails(
         title = dialogTitle,
         items = dialogItems,
         onDismissRequest = { showDialog = false },
+        waitToLoad = dialogFromLongClick,
     )
+    searchForDataType?.let { dataType ->
+        Material3MainTheme {
+            Dialog(
+                onDismissRequest = { searchForDataType = null },
+                properties =
+                    DialogProperties(
+                        usePlatformDefaultWidth = false,
+                    ),
+            ) {
+                val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                Box(
+                    Modifier
+                        .fillMaxSize(.9f)
+                        .graphicsLayer {
+                            this.clip = true
+                            this.shape = RoundedCornerShape(28.0.dp)
+                        }.background(MaterialTheme.colorScheme.secondaryContainer)
+//                        .drawBehind { drawRect(color = MaterialTheme.colorScheme.secondaryContainer) }
+                        .padding(PaddingValues(12.dp)),
+                    propagateMinConstraints = true,
+                ) {
+                    SearchForPage(
+                        server = server,
+                        title = "Add " + stringResource(dataType.stringId),
+                        dataType = dataType,
+                        itemOnClick = {
+                            // Close dialog
+                            searchForDataType = null
+                            addItem.invoke(it)
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)

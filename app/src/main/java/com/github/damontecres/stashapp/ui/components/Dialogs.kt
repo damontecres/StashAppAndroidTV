@@ -34,14 +34,19 @@ fun DialogPopup(
     items: List<DialogItem>,
     onDismissRequest: () -> Unit,
     dismissOnClick: Boolean = true,
+    waitToLoad: Boolean = true,
 ) {
-    var waiting by remember { mutableStateOf(true) }
+    var waiting by remember { mutableStateOf(waitToLoad) }
     if (showDialog) {
-        LaunchedEffect(Unit) {
-            // This is a hack because a long click will propagate here and click the first list item
-            // So this disables the list items assuming the user will stop pressing when the dialog appears
-            waiting = true
-            delay(500)
+        if (waitToLoad) {
+            LaunchedEffect(Unit) {
+                // This is a hack because a long click will propagate here and click the first list item
+                // So this disables the list items assuming the user will stop pressing when the dialog appears
+                waiting = true
+                delay(500)
+                waiting = false
+            }
+        } else {
             waiting = false
         }
         Dialog(

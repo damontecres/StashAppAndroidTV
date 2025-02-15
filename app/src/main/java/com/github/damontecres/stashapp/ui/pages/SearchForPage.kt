@@ -1,9 +1,8 @@
 package com.github.damontecres.stashapp.ui.pages
 
-import android.widget.Toast
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -19,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -54,11 +52,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private val TAG = "SearchForPage"
+
 @Composable
 fun SearchForPage(
     server: StashServer,
     title: String?,
     dataType: DataType,
+    itemOnClick: (StashData) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -75,16 +76,14 @@ fun SearchForPage(
             .getDefaultSharedPreferences(context)
             .getInt("maxSearchResults", 25)
 
-    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf("") }
 
     var results by remember { mutableStateOf<List<StashData>>(listOf()) }
     var suggestions by remember { mutableStateOf<List<StashData>>(listOf()) }
     var recent by remember { mutableStateOf<List<StashData>>(listOf()) }
 
-    val itemOnClick = { item: Any, filterAndPosition: FilterAndPosition? ->
-        item as StashData
-        Toast.makeText(context, "Clicked ${item.id}", Toast.LENGTH_SHORT).show()
-    }
+    val itemOnClickWrapper =
+        { item: Any, _: FilterAndPosition? -> itemOnClick.invoke(item as StashData) }
 
     var job: Job? = null
 
@@ -94,14 +93,16 @@ fun SearchForPage(
             job =
                 scope.launch {
                     delay(searchDelay)
+                    Log.v(TAG, "Starting search")
                     results = queryEngine.find(dataType, FindFilterType(q = Optional.present(query), per_page = Optional.present(perPage)))
                 }
         } else {
+            Log.v(TAG, "Query is empty")
             results = listOf()
         }
     }
 
-    LaunchedEffect(server, dataType) {
+    LaunchedEffect(Unit) {
         scope.launch(StashCoroutineExceptionHandler() + Dispatchers.IO) {
             val mostRecentIds =
                 StashApplication
@@ -126,7 +127,7 @@ fun SearchForPage(
     }
 
     if (dataType in SearchForFragment.DATA_TYPE_SUGGESTIONS) {
-        LaunchedEffect(server, dataType) {
+        LaunchedEffect(Unit) {
             val sortBy =
                 when (dataType) {
                     DataType.GALLERY -> SortOption.ImagesCount
@@ -167,14 +168,13 @@ fun SearchForPage(
     Column(
         modifier =
             modifier
-                .fillMaxSize()
                 .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (title != null) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
             )
         }
@@ -207,14 +207,14 @@ fun SearchForPage(
                     ),
             )
         }
-        val startPadding = 24.dp
-        val bottomPadding = 16.dp
+        val startPadding = 8.dp
+        val bottomPadding = 8.dp
         if (results.isNotEmpty()) {
             ItemsRow(
                 title = R.string.results,
                 items = results,
                 uiConfig = ComposeUiConfig.fromStashServer(server),
-                itemOnClick = itemOnClick,
+                itemOnClick = itemOnClickWrapper,
                 longClicker = { _, _ -> },
                 modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
             )
@@ -224,7 +224,7 @@ fun SearchForPage(
                 title = R.string.suggestions,
                 items = suggestions,
                 uiConfig = ComposeUiConfig.fromStashServer(server),
-                itemOnClick = itemOnClick,
+                itemOnClick = itemOnClickWrapper,
                 longClicker = { _, _ -> },
                 modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
             )
@@ -239,7 +239,7 @@ fun SearchForPage(
                 title = title,
                 items = recent,
                 uiConfig = ComposeUiConfig.fromStashServer(server),
-                itemOnClick = itemOnClick,
+                itemOnClick = itemOnClickWrapper,
                 longClicker = { _, _ -> },
                 modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
             )
