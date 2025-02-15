@@ -99,6 +99,7 @@ import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -133,6 +134,7 @@ class SceneDetailsViewModel(
     private val mutationEngine = MutationEngine(server)
 
     val loadingState = MutableLiveData<SceneLoadingState>(SceneLoadingState.Loading)
+    val tags = MutableLiveData<List<TagData>>(listOf())
     val performers = MutableLiveData<List<PerformerData>>(listOf())
     val galleries = MutableLiveData<List<GalleryData>>(listOf())
 
@@ -146,6 +148,8 @@ class SceneDetailsViewModel(
                 if (scene != null) {
                     rating100.value = scene.rating100 ?: 0
                     oCount.value = scene.o_counter ?: 0
+                    tags.value = scene.tags.map { it.tagData }
+
                     loadingState.value = SceneLoadingState.Success(scene)
                     if (scene.performers.isNotEmpty()) {
                         performers.value =
@@ -167,17 +171,35 @@ class SceneDetailsViewModel(
     private fun mutatePerformers(mutator: MutableList<String>.() -> Unit) {
         val perfs = performers.value?.map { it.id }
         perfs?.let {
-            val mutable = perfs.toMutableList()
+            val mutable = it.toMutableList()
             mutator.invoke(mutable)
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                val newPerfs =
+                performers.value =
                     mutationEngine
-                        .setPerformersOnScene(
-                            sceneId,
-                            mutable,
-                        )?.performers
+                        .setPerformersOnScene(sceneId, mutable)
+                        ?.performers
                         ?.map { it.performerData }
-                performers.value = newPerfs ?: listOf()
+                        .orEmpty()
+            }
+        }
+    }
+
+    fun addTag(id: String) = mutateTags { add(id) }
+
+    fun removeTag(id: String) = mutateTags { remove(id) }
+
+    private fun mutateTags(mutator: MutableList<String>.() -> Unit) {
+        val ids = tags.value?.map { it.id }
+        ids?.let {
+            val mutable = it.toMutableList()
+            mutator.invoke(mutable)
+            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                tags.value =
+                    mutationEngine
+                        .setTagsOnScene(sceneId, mutable)
+                        ?.tags
+                        ?.map { it.tagData }
+                        .orEmpty()
             }
         }
     }
@@ -236,6 +258,7 @@ fun SceneDetailsPage(
             },
         )[SceneDetailsViewModel::class]
     val loadingState by viewModel.loadingState.observeAsState()
+    val tags by viewModel.tags.observeAsState(listOf())
     val performers by viewModel.performers.observeAsState(listOf())
     val galleries by viewModel.galleries.observeAsState(listOf())
     val rating100 by viewModel.rating100.observeAsState(0)
@@ -260,6 +283,7 @@ fun SceneDetailsPage(
                 scene = state.scene,
                 rating100 = rating100,
                 oCount = oCount,
+                tags = tags,
                 performers = performers,
                 galleries = galleries,
                 uiConfig = ComposeUiConfig.fromStashServer(server),
@@ -269,7 +293,7 @@ fun SceneDetailsPage(
                 addItem = { item ->
                     when (item) {
                         is PerformerData, is SlimPerformerData -> viewModel.addPerformer(item.id)
-                        is TagData, is SlimTagData -> TODO()
+                        is TagData, is SlimTagData -> viewModel.addTag(item.id)
                         is GroupData, is GroupRelationshipData -> TODO()
                         is GalleryData -> TODO()
                         is StudioData -> TODO()
@@ -282,7 +306,7 @@ fun SceneDetailsPage(
                 removeItem = { item ->
                     when (item) {
                         is PerformerData, is SlimPerformerData -> viewModel.removePerformer(item.id)
-                        is TagData, is SlimTagData -> TODO()
+                        is TagData, is SlimTagData -> viewModel.removeTag(item.id)
                         is GroupData, is GroupRelationshipData -> TODO()
                         is GalleryData -> TODO()
                         is StudioData -> TODO()
@@ -306,6 +330,7 @@ fun SceneDetails(
     scene: FullSceneData,
     rating100: Int,
     oCount: Int,
+    tags: List<TagData>,
     performers: List<PerformerData>,
     galleries: List<GalleryData>,
     uiConfig: ComposeUiConfig,
@@ -326,6 +351,19 @@ fun SceneDetails(
     var dialogFromLongClick by remember { mutableStateOf(true) }
 
     var searchForDataType by remember { mutableStateOf<DataType?>(null) }
+
+    val removeLongClicker =
+        LongClicker<Any> { item, filterAndPosition ->
+            item as StashData
+            dialogTitle = extractTitle(item) ?: ""
+            dialogFromLongClick = true
+            dialogItems =
+                listOf(
+                    DialogItem("Go to") { itemOnClick.onClick(item, filterAndPosition) },
+                    DialogItem("Remove") { removeItem(item) },
+                )
+            showDialog = true
+        }
 
     LazyColumn(
         contentPadding = PaddingValues(bottom = 135.dp),
@@ -357,8 +395,11 @@ fun SceneDetails(
                                     PlaybackMode.FORCED_TRANSCODE,
                                 )
                             },
-                            DialogItem(context.getString(R.string.stashapp_performer_tagger_add_new_performers)) {
+                            DialogItem(context.getString(R.string.add_performer)) {
                                 searchForDataType = DataType.PERFORMER
+                            },
+                            DialogItem(context.getString(R.string.add_tag)) {
+                                searchForDataType = DataType.TAG
                             },
                         )
                     showDialog = true
@@ -392,7 +433,7 @@ fun SceneDetails(
                     items = scene.scene_markers.map { it.asMarkerData(scene) },
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
-                    longClicker = longClicker,
+                    longClicker = removeLongClicker,
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
             }
@@ -404,43 +445,31 @@ fun SceneDetails(
                     items = scene.groups.map { it.group.groupData },
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
-                    longClicker = longClicker,
+                    longClicker = removeLongClicker,
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
             }
         }
         if (performers.isNotEmpty()) {
-            val performerLongClicker =
-                LongClicker<Any> { item, filterAndPosition ->
-                    item as PerformerData
-                    dialogTitle = item.name
-                    dialogFromLongClick = true
-                    dialogItems =
-                        listOf(
-                            DialogItem("Go to") { itemOnClick.onClick(item, filterAndPosition) },
-                            DialogItem("Remove") { removeItem(item) },
-                        )
-                    showDialog = true
-                }
             item {
                 ItemsRow(
                     title = R.string.stashapp_performers,
                     items = performers,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
-                    longClicker = performerLongClicker,
+                    longClicker = removeLongClicker,
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
             }
         }
-        if (scene.tags.isNotEmpty()) {
+        if (tags.isNotEmpty()) {
             item {
                 ItemsRow(
                     title = R.string.stashapp_tags,
-                    items = scene.tags.map { it.tagData },
+                    items = tags,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
-                    longClicker = longClicker,
+                    longClicker = removeLongClicker,
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
             }
@@ -452,7 +481,7 @@ fun SceneDetails(
                     items = galleries,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
-                    longClicker = longClicker,
+                    longClicker = removeLongClicker,
                     modifier = Modifier.padding(start = startPadding, bottom = bottomPadding),
                 )
             }

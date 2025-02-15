@@ -31,6 +31,7 @@ import androidx.tv.material3.Text
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SearchForFragment
+import com.github.damontecres.stashapp.SearchForFragment.Companion.DATA_TYPE_SUGGESTIONS
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -40,6 +41,7 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StringCriterionInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
+import com.github.damontecres.stashapp.data.room.RecentSearchItem
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.Material3MainTheme
@@ -83,7 +85,18 @@ fun SearchForPage(
     var recent by remember { mutableStateOf<List<StashData>>(listOf()) }
 
     val itemOnClickWrapper =
-        { item: Any, _: FilterAndPosition? -> itemOnClick.invoke(item as StashData) }
+        { item: Any, _: FilterAndPosition? ->
+            item as StashData
+            if (dataType in DATA_TYPE_SUGGESTIONS) {
+                scope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
+                    StashApplication
+                        .getDatabase()
+                        .recentSearchItemsDao()
+                        .insert(RecentSearchItem(server.url, item.id, dataType))
+                }
+            }
+            itemOnClick.invoke(item)
+        }
 
     var job: Job? = null
 
@@ -217,6 +230,7 @@ fun SearchForPage(
                     color = MaterialTheme.colorScheme.onBackground,
                 )
             } else {
+                // TODO handle create
                 Text(
                     text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
                     style = MaterialTheme.typography.titleLarge,

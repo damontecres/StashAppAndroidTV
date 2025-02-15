@@ -91,5 +91,7 @@
     <string name="stream_details">Stream Details</string>
     <string name="play_direct">Play direct</string>
     <string name="play_transcoding">Play with transcoding</string>
+    <string name="add_tag">Add Tag</string>
+    <string name="add_performer">Add Performer</string>
 
 </resources>
