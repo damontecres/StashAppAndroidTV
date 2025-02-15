@@ -36,7 +36,6 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -391,6 +390,17 @@ fun SceneDetailsPage(
     }
 }
 
+data class SearchForParams(
+    val dataType: DataType,
+    val id: Long = -1L,
+)
+
+data class DialogParams(
+    val fromLongClick: Boolean,
+    val title: String,
+    val items: List<DialogItem>,
+)
+
 @Composable
 fun SceneDetails(
     server: StashServer,
@@ -414,48 +424,45 @@ fun SceneDetails(
 ) {
     val context = LocalContext.current
 
-    var showDialog by remember { mutableStateOf(false) }
-    var dialogTitle by remember { mutableStateOf("") }
-    var dialogItems by remember { mutableStateOf<List<DialogItem>>(listOf()) }
-    var dialogFromLongClick by remember { mutableStateOf(true) }
-
-    var searchForDataType by remember { mutableStateOf<DataType?>(null) }
-    var searchForId by remember { mutableLongStateOf(-1) }
+    var showDialog by remember { mutableStateOf<DialogParams?>(null) }
+    var searchForDataType by remember { mutableStateOf<SearchForParams?>(null) }
 
     val removeLongClicker =
         LongClicker<Any> { item, filterAndPosition ->
             item as StashData
-            dialogTitle = extractTitle(item) ?: ""
-            dialogFromLongClick = true
-            dialogItems =
-                buildList {
-                    add(
-                        DialogItem("Go to", Icons.Default.PlayArrow) {
-                            itemOnClick.onClick(
-                                item,
-                                filterAndPosition,
-                            )
-                        },
-                    )
-                    if (item !is GalleryData) {
-                        add(
-                            DialogItem(
-                                onClick = { removeItem(item) },
-                                headlineContent = {
-                                    Text(stringResource(R.string.stashapp_actions_remove))
-                                },
-                                leadingContent = {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = stringResource(R.string.stashapp_actions_remove),
-                                        tint = Color.Red,
+            showDialog =
+                DialogParams(
+                    title = extractTitle(item) ?: "",
+                    fromLongClick = true,
+                    items =
+                        buildList {
+                            add(
+                                DialogItem("Go to", Icons.Default.PlayArrow) {
+                                    itemOnClick.onClick(
+                                        item,
+                                        filterAndPosition,
                                     )
                                 },
-                            ),
-                        )
-                    }
-                }
-            showDialog = true
+                            )
+                            if (item !is GalleryData) {
+                                add(
+                                    DialogItem(
+                                        onClick = { removeItem(item) },
+                                        headlineContent = {
+                                            Text(stringResource(R.string.stashapp_actions_remove))
+                                        },
+                                        leadingContent = {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = stringResource(R.string.stashapp_actions_remove),
+                                                tint = Color.Red,
+                                            )
+                                        },
+                                    ),
+                                )
+                            }
+                        },
+                )
         }
 
     LazyColumn(
@@ -472,87 +479,93 @@ fun SceneDetails(
                 playOnClick = playOnClick,
                 showRatingBar = showRatingBar,
                 moreOnClick = {
-                    dialogTitle = context.getString(R.string.more) + "..."
-                    dialogFromLongClick = false
-                    dialogItems =
-                        listOf(
-                            DialogItem(
-                                context.getString(R.string.play_direct),
-                                Icons.Default.PlayArrow,
-                            ) {
-                                playOnClick(
-                                    scene.resume_position ?: 0,
-                                    PlaybackMode.FORCED_DIRECT_PLAY,
-                                )
-                            },
-                            DialogItem(
-                                context.getString(R.string.play_transcoding),
-                                Icons.Default.PlayArrow,
-                            ) {
-                                playOnClick(
-                                    scene.resume_position ?: 0,
-                                    PlaybackMode.FORCED_TRANSCODE,
-                                )
-                            },
-                            DialogItem(
-                                headlineContent = {
-                                    Text(
-                                        text = stringResource(R.string.stashapp_actions_create_marker),
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(text = durationToString(scene.resume_time ?: 0.0))
-                                },
-                                leadingContent = {
-                                    Text(
-                                        text = stringResource(DataType.MARKER.iconStringId),
-                                        fontFamily = FontAwesome,
-                                    )
-                                },
-                                onClick = {
-                                    searchForId = scene.resume_position ?: 0L
-                                    searchForDataType = DataType.TAG
-                                },
-                            ),
-                            DialogItem(
-                                context.getString(R.string.add_group),
-                                DataType.GROUP.iconStringId,
-                            ) {
-                                searchForDataType = DataType.GROUP
-                            },
-                            DialogItem(
-                                context.getString(R.string.add_performer),
-                                DataType.PERFORMER.iconStringId,
-                            ) {
-                                searchForDataType = DataType.PERFORMER
-                            },
-                            DialogItem(
-                                context.getString(R.string.add_tag),
-                                DataType.TAG.iconStringId,
-                            ) {
-                                searchForId = -1L
-                                searchForDataType = DataType.TAG
-                            },
+                    showDialog =
+                        DialogParams(
+                            title = context.getString(R.string.more) + "...",
+                            fromLongClick = false,
+                            items =
+                                listOf(
+                                    DialogItem(
+                                        context.getString(R.string.play_direct),
+                                        Icons.Default.PlayArrow,
+                                    ) {
+                                        playOnClick(
+                                            scene.resume_position ?: 0,
+                                            PlaybackMode.FORCED_DIRECT_PLAY,
+                                        )
+                                    },
+                                    DialogItem(
+                                        context.getString(R.string.play_transcoding),
+                                        Icons.Default.PlayArrow,
+                                    ) {
+                                        playOnClick(
+                                            scene.resume_position ?: 0,
+                                            PlaybackMode.FORCED_TRANSCODE,
+                                        )
+                                    },
+                                    DialogItem(
+                                        headlineContent = {
+                                            Text(
+                                                text = stringResource(R.string.stashapp_actions_create_marker),
+                                            )
+                                        },
+                                        supportingContent = {
+                                            Text(text = durationToString(scene.resume_time ?: 0.0))
+                                        },
+                                        leadingContent = {
+                                            Text(
+                                                text = stringResource(DataType.MARKER.iconStringId),
+                                                fontFamily = FontAwesome,
+                                            )
+                                        },
+                                        onClick = {
+                                            searchForDataType =
+                                                SearchForParams(
+                                                    DataType.TAG,
+                                                    scene.resume_position ?: 0L,
+                                                )
+                                        },
+                                    ),
+                                    DialogItem(
+                                        context.getString(R.string.add_group),
+                                        DataType.GROUP.iconStringId,
+                                    ) {
+                                        searchForDataType = SearchForParams(DataType.GROUP)
+                                    },
+                                    DialogItem(
+                                        context.getString(R.string.add_performer),
+                                        DataType.PERFORMER.iconStringId,
+                                    ) {
+                                        searchForDataType = SearchForParams(DataType.PERFORMER)
+                                    },
+                                    DialogItem(
+                                        context.getString(R.string.add_tag),
+                                        DataType.TAG.iconStringId,
+                                    ) {
+                                        searchForDataType = SearchForParams(DataType.TAG)
+                                    },
+                                ),
                         )
-                    showDialog = true
                 },
                 oCounterOnClick = { oCountAction.invoke(MutationEngine::incrementOCounter) },
                 oCounterOnLongClick = {
-                    dialogTitle = context.getString(R.string.stashapp_o_counter)
-                    dialogFromLongClick = true
-                    dialogItems =
-                        listOf(
-                            DialogItem(context.getString(R.string.increment)) {
-                                oCountAction.invoke(MutationEngine::incrementOCounter)
-                            },
-                            DialogItem(context.getString(R.string.decrement)) {
-                                oCountAction.invoke(MutationEngine::decrementOCounter)
-                            },
-                            DialogItem(context.getString(R.string.reset)) {
-                                oCountAction.invoke(MutationEngine::resetOCounter)
-                            },
+                    showDialog =
+                        DialogParams(
+                            title = context.getString(R.string.stashapp_o_counter),
+                            fromLongClick = true,
+                            items =
+                                listOf(
+                                    DialogItem(context.getString(R.string.increment)) {
+                                        oCountAction.invoke(MutationEngine::incrementOCounter)
+                                    },
+                                    DialogItem(context.getString(R.string.decrement)) {
+                                        oCountAction.invoke(MutationEngine::decrementOCounter)
+                                    },
+                                    DialogItem(context.getString(R.string.reset)) {
+                                        oCountAction.invoke(MutationEngine::resetOCounter)
+                                    },
+                                ),
                         )
-                    showDialog = true
                 },
             )
         }
@@ -625,14 +638,16 @@ fun SceneDetails(
             )
         }
     }
-    DialogPopup(
-        showDialog = showDialog,
-        title = dialogTitle,
-        items = dialogItems,
-        onDismissRequest = { showDialog = false },
-        waitToLoad = dialogFromLongClick,
-    )
-    searchForDataType?.let { dataType ->
+    showDialog?.let { params ->
+        DialogPopup(
+            showDialog = true,
+            title = params.title,
+            items = params.items,
+            onDismissRequest = { showDialog = null },
+            waitToLoad = params.fromLongClick,
+        )
+    }
+    searchForDataType?.let { params ->
         Material3MainTheme {
             Dialog(
                 onDismissRequest = { searchForDataType = null },
@@ -656,9 +671,9 @@ fun SceneDetails(
                 ) {
                     SearchForPage(
                         server = server,
-                        title = "Add " + stringResource(dataType.stringId),
-                        searchId = searchForId,
-                        dataType = dataType,
+                        title = "Add " + stringResource(params.dataType.stringId),
+                        searchId = params.id,
+                        dataType = params.dataType,
                         itemOnClick = { id, item ->
                             // Close dialog
                             searchForDataType = null
