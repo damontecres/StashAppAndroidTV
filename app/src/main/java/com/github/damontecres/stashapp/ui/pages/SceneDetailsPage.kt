@@ -35,7 +35,6 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,6 +56,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -98,6 +98,7 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -135,11 +136,16 @@ class SceneDetailsViewModel(
     val performers = MutableLiveData<List<PerformerData>>(listOf())
     val galleries = MutableLiveData<List<GalleryData>>(listOf())
 
+    val rating100 = MutableLiveData(0)
+    val oCount = MutableLiveData(0)
+
     fun init(): SceneDetailsViewModel {
         viewModelScope.launch {
             try {
                 val scene = queryEngine.getScene(sceneId)
                 if (scene != null) {
+                    rating100.value = scene.rating100 ?: 0
+                    oCount.value = scene.o_counter ?: 0
                     loadingState.value = SceneLoadingState.Success(scene)
                     if (scene.performers.isNotEmpty()) {
                         performers.value =
@@ -179,6 +185,13 @@ class SceneDetailsViewModel(
     fun addPerformer(performerId: String) = mutatePerformers { add(performerId) }
 
     fun removePerformer(performerId: String) = mutatePerformers { remove(performerId) }
+
+    fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val newOCount = action.invoke(mutationEngine, sceneId)
+            oCount.value = newOCount.count
+        }
+    }
 
     companion object {
         val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
@@ -223,8 +236,10 @@ fun SceneDetailsPage(
             },
         )[SceneDetailsViewModel::class]
     val loadingState by viewModel.loadingState.observeAsState()
-    val performers by viewModel.performers.observeAsState()
-    val galleries by viewModel.galleries.observeAsState()
+    val performers by viewModel.performers.observeAsState(listOf())
+    val galleries by viewModel.galleries.observeAsState(listOf())
+    val rating100 by viewModel.rating100.observeAsState(0)
+    val oCount by viewModel.oCount.observeAsState(0)
 
     when (val state = loadingState) {
         SceneLoadingState.Error ->
@@ -243,8 +258,10 @@ fun SceneDetailsPage(
             SceneDetails(
                 server = server,
                 scene = state.scene,
-                performers = performers ?: listOf(),
-                galleries = galleries ?: listOf(),
+                rating100 = rating100,
+                oCount = oCount,
+                performers = performers,
+                galleries = galleries,
                 uiConfig = ComposeUiConfig.fromStashServer(server),
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
@@ -275,6 +292,7 @@ fun SceneDetailsPage(
                         is SlimSceneData, is FullSceneData, is VideoSceneData -> throw UnsupportedOperationException()
                     }
                 },
+                oCountAction = viewModel::updateOCount,
                 modifier = modifier.animateContentSize(),
             )
 
@@ -286,6 +304,8 @@ fun SceneDetailsPage(
 fun SceneDetails(
     server: StashServer,
     scene: FullSceneData,
+    rating100: Int,
+    oCount: Int,
     performers: List<PerformerData>,
     galleries: List<GalleryData>,
     uiConfig: ComposeUiConfig,
@@ -294,6 +314,7 @@ fun SceneDetails(
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     addItem: (item: StashData) -> Unit,
     removeItem: (item: StashData) -> Unit,
+    oCountAction: (action: suspend MutationEngine.(String) -> OCounter) -> Unit,
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
 ) {
@@ -312,10 +333,12 @@ fun SceneDetails(
     ) {
         item {
             SceneDetailsHeader(
-                scene,
-                uiConfig,
-                itemOnClick,
-                playOnClick,
+                scene = scene,
+                rating100 = rating100,
+                oCount = oCount,
+                uiConfig = uiConfig,
+                itemOnClick = itemOnClick,
+                playOnClick = playOnClick,
                 showRatingBar = showRatingBar,
                 moreOnClick = {
                     dialogTitle = context.getString(R.string.more) + "..."
@@ -336,6 +359,24 @@ fun SceneDetails(
                             },
                             DialogItem(context.getString(R.string.stashapp_performer_tagger_add_new_performers)) {
                                 searchForDataType = DataType.PERFORMER
+                            },
+                        )
+                    showDialog = true
+                },
+                oCounterOnClick = { oCountAction.invoke(MutationEngine::incrementOCounter) },
+                oCounterOnLongClick = {
+                    dialogTitle = context.getString(R.string.stashapp_o_counter)
+                    dialogFromLongClick = true
+                    dialogItems =
+                        listOf(
+                            DialogItem(context.getString(R.string.increment)) {
+                                oCountAction.invoke(MutationEngine::incrementOCounter)
+                            },
+                            DialogItem(context.getString(R.string.decrement)) {
+                                oCountAction.invoke(MutationEngine::decrementOCounter)
+                            },
+                            DialogItem(context.getString(R.string.reset)) {
+                                oCountAction.invoke(MutationEngine::resetOCounter)
                             },
                         )
                     showDialog = true
@@ -472,15 +513,18 @@ fun SceneDetails(
 @Composable
 fun SceneDetailsHeader(
     scene: FullSceneData,
+    rating100: Int,
+    oCount: Int,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     moreOnClick: () -> Unit,
+    oCounterOnClick: () -> Unit,
+    oCounterOnLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
 ) {
     val context = LocalContext.current
-    var rating100 by remember { mutableIntStateOf(scene.rating100 ?: 0) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val scope = rememberCoroutineScope()
 
@@ -654,9 +698,12 @@ fun SceneDetailsHeader(
                     }
                     // Playback controls
                     PlayButtons(
-                        scene,
-                        playOnClick,
-                        moreOnClick,
+                        scene = scene,
+                        oCount = oCount,
+                        playOnClick = playOnClick,
+                        moreOnClick = moreOnClick,
+                        oCounterOnClick = oCounterOnClick,
+                        oCounterOnLongClick = oCounterOnLongClick,
                         buttonOnFocusChanged = {
                             if (it.isFocused) {
                                 scope.launch { bringIntoViewRequester.bringIntoView() }
@@ -673,8 +720,11 @@ fun SceneDetailsHeader(
 @Composable
 fun PlayButtons(
     scene: FullSceneData,
+    oCount: Int,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     moreOnClick: () -> Unit,
+    oCounterOnClick: () -> Unit,
+    oCounterOnLongClick: () -> Unit,
     buttonOnFocusChanged: (FocusState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -725,6 +775,29 @@ fun PlayButtons(
                         .padding(start = 8.dp, end = 8.dp)
                         .onFocusChanged(buttonOnFocusChanged)
                         .focusRequester(firstFocus),
+                )
+            }
+        }
+        // O-Counter
+        item {
+            Button(
+                onClick = oCounterOnClick,
+                onLongClick = oCounterOnLongClick,
+                modifier =
+                    Modifier
+                        .padding(start = 8.dp, end = 8.dp)
+                        .onFocusChanged(buttonOnFocusChanged),
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.sweat_drops),
+                    contentDescription = null,
+                    modifier = Modifier.size(ButtonDefaults.IconSize),
+                )
+                Spacer(Modifier.size(8.dp))
+                Text(
+                    text = oCount.toString(),
+                    style = MaterialTheme.typography.titleSmall,
                 )
             }
         }
