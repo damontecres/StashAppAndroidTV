@@ -12,7 +12,6 @@ import com.github.damontecres.stashapp.MarkerDetailsFragment
 import com.github.damontecres.stashapp.PinFragment
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
-import com.github.damontecres.stashapp.SearchForFragment
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.StashSearchFragment
 import com.github.damontecres.stashapp.StudioFragment
@@ -91,7 +90,7 @@ class NavigationManagerCompose(
 
                 is Destination.Filter -> null
 
-                is Destination.SearchFor -> SearchForFragment()
+                is Destination.SearchFor -> null
                 is Destination.UpdateMarker -> MarkerPickerFragment()
 
                 is Destination.Playback -> PlaybackSceneFragment()

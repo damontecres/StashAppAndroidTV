@@ -75,6 +75,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -91,6 +92,8 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -302,6 +305,17 @@ fun SceneDetails(
                                 playOnClick(
                                     scene.resume_position ?: 0,
                                     PlaybackMode.FORCED_TRANSCODE,
+                                )
+                            },
+                            DialogItem(context.getString(R.string.stashapp_performer_tagger_add_new_performers)) {
+                                // TODO
+                                StashApplication.navigationManager.navigate(
+                                    Destination.SearchFor(
+                                        "",
+                                        1L,
+                                        DataType.PERFORMER,
+                                        "Add performer",
+                                    ),
                                 )
                             },
                         )
@@ -772,10 +786,27 @@ fun SceneDetailsFooter(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun <T : StashData> ItemsRow(
     @StringRes title: Int,
+    items: List<T>,
+    uiConfig: ComposeUiConfig,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
+    modifier: Modifier = Modifier,
+) = ItemsRow(
+    title = stringResource(title),
+    items = items,
+    uiConfig = uiConfig,
+    itemOnClick = itemOnClick,
+    longClicker = longClicker,
+    modifier = modifier,
+)
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun <T : StashData> ItemsRow(
+    title: String,
     items: List<T>,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
@@ -787,7 +818,7 @@ fun <T : StashData> ItemsRow(
         modifier = modifier,
     ) {
         Text(
-            text = stringResource(title),
+            text = title,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
         )

@@ -75,6 +75,7 @@ import com.github.damontecres.stashapp.ui.pages.FilterPage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
 import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
+import com.github.damontecres.stashapp.ui.pages.SearchForPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -446,6 +447,15 @@ fun NavDrawerContent(
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 uiConfig = composeUiConfig,
+                modifier = modifier,
+            )
+        }
+
+        is Destination.SearchFor -> {
+            SearchForPage(
+                server = server,
+                title = destination.title,
+                dataType = destination.dataType,
                 modifier = modifier,
             )
         }
