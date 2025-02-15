@@ -60,8 +60,9 @@ private val TAG = "SearchForPage"
 fun SearchForPage(
     server: StashServer,
     title: String?,
+    searchId: Long,
     dataType: DataType,
-    itemOnClick: (StashData) -> Unit,
+    itemOnClick: (Long, StashData) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -95,7 +96,7 @@ fun SearchForPage(
                         .insert(RecentSearchItem(server.url, item.id, dataType))
                 }
             }
-            itemOnClick.invoke(item)
+            itemOnClick.invoke(searchId, item)
         }
 
     var job: Job? = null

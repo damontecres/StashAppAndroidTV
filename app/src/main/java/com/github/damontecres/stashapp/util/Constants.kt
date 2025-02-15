@@ -31,6 +31,7 @@ import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.ServerInfoQuery
+import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
@@ -526,6 +527,22 @@ val GalleryData.name: String?
         }
 
 fun FullSceneData.Scene_marker.asMarkerData(scene: FullSceneData): MarkerData =
+    MarkerData(
+        id = id,
+        title = title,
+        created_at = created_at,
+        updated_at = updated_at,
+        stream = stream,
+        screenshot = screenshot,
+        seconds = seconds,
+        preview = preview,
+        primary_tag = MarkerData.Primary_tag("", primary_tag.tagData.asSlimTagData),
+        scene = MarkerData.Scene(scene.id, scene.asVideoSceneData),
+        tags = tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
+        __typename = "",
+    )
+
+fun FullMarkerData.asMarkerData(scene: FullSceneData): MarkerData =
     MarkerData(
         id = id,
         title = title,

@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -116,12 +117,15 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
+import com.github.damontecres.stashapp.util.asVideoSceneData
 import com.github.damontecres.stashapp.util.bitRateString
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.titleOrFilename
+import com.github.damontecres.stashapp.util.toLongMilliseconds
+import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
 import kotlinx.coroutines.launch
@@ -133,10 +137,14 @@ class SceneDetailsViewModel(
     private val queryEngine = QueryEngine(server)
     private val mutationEngine = MutationEngine(server)
 
+    private var scene: FullSceneData? = null
+
     val loadingState = MutableLiveData<SceneLoadingState>(SceneLoadingState.Loading)
     val tags = MutableLiveData<List<TagData>>(listOf())
     val performers = MutableLiveData<List<PerformerData>>(listOf())
     val galleries = MutableLiveData<List<GalleryData>>(listOf())
+    val groups = MutableLiveData<List<GroupData>>(listOf())
+    val markers = MutableLiveData<List<MarkerData>>(listOf())
 
     val rating100 = MutableLiveData(0)
     val oCount = MutableLiveData(0)
@@ -149,6 +157,9 @@ class SceneDetailsViewModel(
                     rating100.value = scene.rating100 ?: 0
                     oCount.value = scene.o_counter ?: 0
                     tags.value = scene.tags.map { it.tagData }
+                    groups.value = scene.groups.map { it.group.groupData }
+                    markers.value = scene.scene_markers.map { it.asMarkerData(scene) }
+                    this@SceneDetailsViewModel.scene = scene
 
                     loadingState.value = SceneLoadingState.Success(scene)
                     if (scene.performers.isNotEmpty()) {
@@ -167,6 +178,10 @@ class SceneDetailsViewModel(
         }
         return this
     }
+
+    fun addPerformer(performerId: String) = mutatePerformers { add(performerId) }
+
+    fun removePerformer(performerId: String) = mutatePerformers { remove(performerId) }
 
     private fun mutatePerformers(mutator: MutableList<String>.() -> Unit) {
         val perfs = performers.value?.map { it.id }
@@ -204,9 +219,53 @@ class SceneDetailsViewModel(
         }
     }
 
-    fun addPerformer(performerId: String) = mutatePerformers { add(performerId) }
+    fun addGroup(id: String) = mutateGroup { add(id) }
 
-    fun removePerformer(performerId: String) = mutatePerformers { remove(performerId) }
+    fun removeGroup(id: String) = mutateGroup { remove(id) }
+
+    private fun mutateGroup(mutator: MutableList<String>.() -> Unit) {
+        val ids = groups.value?.map { it.id }
+        ids?.let {
+            val mutable = it.toMutableList()
+            mutator.invoke(mutable)
+            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                groups.value =
+                    mutationEngine
+                        .setGroupsOnScene(sceneId, mutable)
+                        ?.groups
+                        ?.map { it.group.groupData }
+                        .orEmpty()
+            }
+        }
+    }
+
+    fun addMarker(marker: MarkerData) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val newMarker =
+                mutationEngine.createMarker(
+                    sceneId,
+                    marker.seconds.toLongMilliseconds,
+                    marker.primary_tag.slimTagData.id,
+                )
+            newMarker?.let {
+                val m = newMarker.asMarkerData(scene!!)
+                markers.value =
+                    markers.value
+                        ?.toMutableList()
+                        ?.apply { add(m) }
+                        ?.sortedBy { it.seconds }
+                        ?: listOf(m)
+            }
+        }
+    }
+
+    fun removeMarker(id: String) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            if (mutationEngine.deleteMarker(id)) {
+                markers.value = markers.value?.filter { it.id != id }.orEmpty()
+            }
+        }
+    }
 
     fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
         viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
@@ -261,6 +320,8 @@ fun SceneDetailsPage(
     val tags by viewModel.tags.observeAsState(listOf())
     val performers by viewModel.performers.observeAsState(listOf())
     val galleries by viewModel.galleries.observeAsState(listOf())
+    val groups by viewModel.groups.observeAsState(listOf())
+    val markers by viewModel.markers.observeAsState(listOf())
     val rating100 by viewModel.rating100.observeAsState(0)
     val oCount by viewModel.oCount.observeAsState(0)
 
@@ -286,6 +347,8 @@ fun SceneDetailsPage(
                 tags = tags,
                 performers = performers,
                 galleries = galleries,
+                groups = groups,
+                markers = markers,
                 uiConfig = ComposeUiConfig.fromStashServer(server),
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
@@ -294,11 +357,12 @@ fun SceneDetailsPage(
                     when (item) {
                         is PerformerData, is SlimPerformerData -> viewModel.addPerformer(item.id)
                         is TagData, is SlimTagData -> viewModel.addTag(item.id)
-                        is GroupData, is GroupRelationshipData -> TODO()
+                        is GroupData, is GroupRelationshipData -> viewModel.addGroup(item.id)
                         is GalleryData -> TODO()
                         is StudioData -> TODO()
-                        is MarkerData, is FullMarkerData -> TODO()
+                        is MarkerData -> viewModel.addMarker(item)
 
+                        is FullMarkerData -> throw UnsupportedOperationException()
                         is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
                         is SlimSceneData, is FullSceneData, is VideoSceneData -> throw UnsupportedOperationException()
                     }
@@ -307,10 +371,10 @@ fun SceneDetailsPage(
                     when (item) {
                         is PerformerData, is SlimPerformerData -> viewModel.removePerformer(item.id)
                         is TagData, is SlimTagData -> viewModel.removeTag(item.id)
-                        is GroupData, is GroupRelationshipData -> TODO()
+                        is GroupData, is GroupRelationshipData -> viewModel.removeGroup(item.id)
                         is GalleryData -> TODO()
                         is StudioData -> TODO()
-                        is MarkerData, is FullMarkerData -> TODO()
+                        is MarkerData, is FullMarkerData -> viewModel.removeMarker(item.id)
 
                         is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
                         is SlimSceneData, is FullSceneData, is VideoSceneData -> throw UnsupportedOperationException()
@@ -333,6 +397,8 @@ fun SceneDetails(
     tags: List<TagData>,
     performers: List<PerformerData>,
     galleries: List<GalleryData>,
+    groups: List<GroupData>,
+    markers: List<MarkerData>,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
@@ -351,6 +417,7 @@ fun SceneDetails(
     var dialogFromLongClick by remember { mutableStateOf(true) }
 
     var searchForDataType by remember { mutableStateOf<DataType?>(null) }
+    var searchForId by remember { mutableLongStateOf(-1) }
 
     val removeLongClicker =
         LongClicker<Any> { item, filterAndPosition ->
@@ -358,10 +425,12 @@ fun SceneDetails(
             dialogTitle = extractTitle(item) ?: ""
             dialogFromLongClick = true
             dialogItems =
-                listOf(
-                    DialogItem("Go to") { itemOnClick.onClick(item, filterAndPosition) },
-                    DialogItem("Remove") { removeItem(item) },
-                )
+                buildList {
+                    add(DialogItem("Go to") { itemOnClick.onClick(item, filterAndPosition) })
+                    if (item !is GalleryData) {
+                        add(DialogItem("Remove") { removeItem(item) })
+                    }
+                }
             showDialog = true
         }
 
@@ -395,10 +464,22 @@ fun SceneDetails(
                                     PlaybackMode.FORCED_TRANSCODE,
                                 )
                             },
+                            DialogItem(
+                                context.getString(R.string.stashapp_actions_create_marker) +
+                                    " - " +
+                                    durationToString(scene.resume_time ?: 0.0),
+                            ) {
+                                searchForId = scene.resume_position ?: 0L
+                                searchForDataType = DataType.TAG
+                            },
+                            DialogItem(context.getString(R.string.add_group)) {
+                                searchForDataType = DataType.GROUP
+                            },
                             DialogItem(context.getString(R.string.add_performer)) {
                                 searchForDataType = DataType.PERFORMER
                             },
                             DialogItem(context.getString(R.string.add_tag)) {
+                                searchForId = -1L
                                 searchForDataType = DataType.TAG
                             },
                         )
@@ -426,11 +507,11 @@ fun SceneDetails(
         }
         val startPadding = 24.dp
         val bottomPadding = 16.dp
-        if (scene.scene_markers.isNotEmpty()) {
+        if (markers.isNotEmpty()) {
             item {
                 ItemsRow(
                     title = R.string.stashapp_markers,
-                    items = scene.scene_markers.map { it.asMarkerData(scene) },
+                    items = markers,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = removeLongClicker,
@@ -438,11 +519,11 @@ fun SceneDetails(
                 )
             }
         }
-        if (scene.groups.isNotEmpty()) {
+        if (groups.isNotEmpty()) {
             item {
                 ItemsRow(
                     title = R.string.stashapp_groups,
-                    items = scene.groups.map { it.group.groupData },
+                    items = groups,
                     uiConfig = uiConfig,
                     itemOnClick = itemOnClick,
                     longClicker = removeLongClicker,
@@ -524,11 +605,47 @@ fun SceneDetails(
                     SearchForPage(
                         server = server,
                         title = "Add " + stringResource(dataType.stringId),
+                        searchId = searchForId,
                         dataType = dataType,
-                        itemOnClick = {
+                        itemOnClick = { id, item ->
                             // Close dialog
                             searchForDataType = null
-                            addItem.invoke(it)
+                            if (item is TagData && id >= 0) {
+                                // Marker primary tag
+                                val marker =
+                                    MarkerData(
+                                        id = "",
+                                        title = "",
+                                        created_at = "",
+                                        updated_at = "",
+                                        stream = "",
+                                        screenshot = "",
+                                        seconds = id.toMilliseconds,
+                                        preview = "",
+                                        primary_tag =
+                                            MarkerData.Primary_tag(
+                                                __typename = "",
+                                                slimTagData =
+                                                    SlimTagData(
+                                                        id = item.id,
+                                                        name = "",
+                                                        description = "",
+                                                        favorite = false,
+                                                        image_path = "",
+                                                    ),
+                                            ),
+                                        tags = listOf(),
+                                        scene =
+                                            MarkerData.Scene(
+                                                __typename = "",
+                                                videoSceneData = scene.asVideoSceneData,
+                                            ),
+                                        __typename = "",
+                                    )
+                                addItem.invoke(marker)
+                            } else {
+                                addItem.invoke(item)
+                            }
                         },
                         modifier = Modifier.fillMaxSize(),
                     )

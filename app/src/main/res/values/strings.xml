@@ -93,5 +93,6 @@
     <string name="play_transcoding">Play with transcoding</string>
     <string name="add_tag">Add Tag</string>
     <string name="add_performer">Add Performer</string>
+    <string name="add_group">Add Group</string>
 
 </resources>
