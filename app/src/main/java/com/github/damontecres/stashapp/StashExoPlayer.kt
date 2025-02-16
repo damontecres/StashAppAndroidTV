@@ -68,7 +68,7 @@ class StashExoPlayer private constructor() {
         /**
          * Create a new [ExoPlayer] instance. [getInstance] should be preferred where possible.
          */
-        @UnstableApi
+        @OptIn(UnstableApi::class)
         private fun createInstance(
             context: Context,
             server: StashServer,
@@ -90,7 +90,7 @@ class StashExoPlayer private constructor() {
                 .build()
         }
 
-        @UnstableApi
+        @OptIn(UnstableApi::class)
         fun releasePlayer() {
             if (instance != null) {
                 synchronized(this) {
