@@ -16,10 +16,18 @@ import okhttp3.CacheControl
  */
 class StashExoPlayer private constructor() {
     companion object {
+        private data class SkipParams(
+            val skipForward: Long,
+            val skipBack: Long,
+        )
+
         private val listeners: MutableList<Player.Listener> = mutableListOf()
 
         @Volatile
         private var instance: ExoPlayer? = null // Volatile modifier is necessary
+
+        @Volatile
+        private var skipParams: SkipParams? = null
 
         @OptIn(UnstableApi::class)
         fun getInstance(
@@ -44,11 +52,13 @@ class StashExoPlayer private constructor() {
             skipForward: Long,
             skipBack: Long,
         ): ExoPlayer {
-            if (instance == null) {
+            val newSkipParams = SkipParams(skipForward, skipBack)
+            if (instance == null || skipParams != newSkipParams) {
                 synchronized(this) {
                     // synchronized to avoid concurrency problem
-                    if (instance == null) {
-                        instance = createInstance(context, server, skipForward, skipBack)
+                    if (instance == null || skipParams != newSkipParams) {
+                        skipParams = newSkipParams
+                        instance = createInstance(context, server, newSkipParams)
                     }
                 }
             }
@@ -59,56 +69,40 @@ class StashExoPlayer private constructor() {
          * Create a new [ExoPlayer] instance. [getInstance] should be preferred where possible.
          */
         @UnstableApi
-        fun createInstance(
+        private fun createInstance(
             context: Context,
             server: StashServer,
-        ): ExoPlayer {
-            val skipForward =
-                PreferenceManager
-                    .getDefaultSharedPreferences(context)
-                    .getInt("skip_forward_time", 30)
-            val skipBack =
-                PreferenceManager
-                    .getDefaultSharedPreferences(context)
-                    .getInt("skip_back_time", 10)
-            return createInstance(context, server, skipForward * 1000L, skipBack * 1000L)
-        }
-
-        /**
-         * Create a new [ExoPlayer] instance. [getInstance] should be preferred where possible.
-         */
-        @UnstableApi
-        fun createInstance(
-            context: Context,
-            server: StashServer,
-            skipForward: Long,
-            skipBack: Long,
+            skipParams: SkipParams,
         ): ExoPlayer {
             releasePlayer()
             val dataSourceFactory =
                 OkHttpDataSource
                     .Factory(server.streamingOkHttpClient)
                     .setCacheControl(CacheControl.FORCE_NETWORK)
-
             return ExoPlayer
                 .Builder(context)
                 .setMediaSourceFactory(
                     DefaultMediaSourceFactory(context).setDataSourceFactory(
                         dataSourceFactory,
                     ),
-                ).setSeekBackIncrementMs(skipBack)
-                .setSeekForwardIncrementMs(skipForward)
+                ).setSeekBackIncrementMs(skipParams.skipBack)
+                .setSeekForwardIncrementMs(skipParams.skipForward)
                 .build()
         }
 
+        @UnstableApi
         fun releasePlayer() {
             if (instance != null) {
                 synchronized(this) {
                     // synchronized to avoid concurrency problem
                     if (instance != null) {
-                        listeners.clear()
-                        instance!!.release()
+                        removeListeners()
+                        instance!!.stop()
+                        if (!instance!!.isReleased) {
+                            instance!!.release()
+                        }
                         instance = null
+                        skipParams = null
                     }
                 }
             }

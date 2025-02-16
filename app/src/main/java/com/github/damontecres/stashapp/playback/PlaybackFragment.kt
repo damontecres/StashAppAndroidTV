@@ -155,12 +155,13 @@ abstract class PlaybackFragment(
         trackActivityListener?.release(currentVideoPosition)
         trackActivityListener = null
         player?.let { exoPlayer ->
-
             playbackPosition = exoPlayer.currentPosition
-            exoPlayer.release()
+            StashExoPlayer.releasePlayer()
+            if (!exoPlayer.isReleased) {
+                exoPlayer.release()
+            }
         }
         player = null
-        StashExoPlayer.releasePlayer()
     }
 
     private fun preparePlayer(): ExoPlayer =
@@ -665,8 +666,8 @@ abstract class PlaybackFragment(
 
     @OptIn(UnstableApi::class)
     override fun onStop() {
-        super.onStop()
         releasePlayer()
+        super.onStop()
     }
 
     fun showAndFocusSeekBar() {
