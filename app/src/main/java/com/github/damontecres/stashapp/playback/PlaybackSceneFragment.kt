@@ -26,7 +26,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
     override val optionsButtonOptions: OptionsButtonOptions
         get() = OptionsButtonOptions(DataType.SCENE, false)
 
-    override fun createPlayer(): ExoPlayer = StashExoPlayer.createInstance(requireContext(), serverViewModel.requireServer())
+    override fun createPlayer(): ExoPlayer = StashExoPlayer.getInstance(requireContext(), serverViewModel.requireServer())
 
     @OptIn(UnstableApi::class)
     override fun postCreatePlayer(player: Player) {

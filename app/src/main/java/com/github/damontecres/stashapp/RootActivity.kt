@@ -10,10 +10,12 @@ import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.annotation.OptIn
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
+import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -136,6 +138,13 @@ class RootActivity :
             navigationManager.navigate(Destination.Pin)
         }
         super.onPause()
+    }
+
+    @OptIn(UnstableApi::class)
+    override fun onStop() {
+        Log.v(TAG, "onStop")
+        StashExoPlayer.releasePlayer()
+        super.onStop()
     }
 
     override fun onNavigate(
