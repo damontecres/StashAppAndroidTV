@@ -11,6 +11,7 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.getDestination
 import kotlin.properties.Delegates
 
@@ -51,8 +52,11 @@ class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, MarkerDa
         val skipBack = prefs.getInt("skip_back_time", 10).toLong() * 1000L
 
         // Override the skip forward/back since many users will have default seeking values larger than the duration
-        super.skipForwardOverride = (duration / 4).coerceAtMost(skipForward)
-        super.skipBackOverride = (duration / 4).coerceAtMost(skipBack)
+        super.skipParams =
+            SkipParams.Values(
+                (duration / 4).coerceAtMost(skipForward),
+                (duration / 4).coerceAtMost(skipBack),
+            )
     }
 
     companion object {

@@ -15,7 +15,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.Player.Listener
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
-import androidx.media3.exoplayer.ExoPlayer
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
@@ -43,12 +42,6 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
     private val playlistViewModel: PlaylistViewModel by viewModels()
 
     protected lateinit var pagingSource: StashPagingSource<T, D, D, C>
-
-    /**
-     * Override the skip forward/back, if -1 then the user's settings will be used
-     */
-    protected var skipForwardOverride = -1L
-    protected var skipBackOverride = -1L
 
     private val playlistListFragment = PlaylistListFragment<T, D, C>()
 
@@ -99,38 +92,28 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         }
     }
 
-    override fun createPlayer(): ExoPlayer {
-        val server = StashServer.requireCurrentServer()
-        return if (skipForwardOverride == -1L || skipBackOverride == -1L) {
-            StashExoPlayer.getInstance(requireContext(), server)
-        } else {
-            StashExoPlayer.getInstance(
-                requireContext(),
-                server,
-                skipForwardOverride,
-                skipBackOverride,
-            )
-        }
+    override fun Player.setupPlayer() {
+        // no-op
     }
 
     @OptIn(UnstableApi::class)
-    override fun postCreatePlayer(player: Player) {
-        player.addListener(
+    override fun Player.postSetupPlayer() {
+        StashExoPlayer.addListener(
             object : Listener {
                 override fun onPlayerError(error: PlaybackException) {
                     // If there is an error, just skip the video
-                    player.seekToNext()
-                    player.prepare()
-                    player.playWhenReady = true
+                    seekToNext()
+                    prepare()
+                    playWhenReady = true
                 }
             },
         )
-        player.addListener(PlaylistListener())
+        StashExoPlayer.addListener(PlaylistListener())
         if (playlistViewModel.filterArgs.value?.dataType == DataType.SCENE) {
             // Only track activity for scene playback
-            maybeAddActivityTracking(player)
+            maybeAddActivityTracking(this)
         }
-        player.repeatMode = Player.REPEAT_MODE_OFF
+        repeatMode = Player.REPEAT_MODE_OFF
         if (videoView.controllerShowTimeoutMs > 0) {
             videoView.hideController()
         }

@@ -7,14 +7,10 @@ import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.PlaybackFragment
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.views.models.ImageViewModel
 
@@ -81,28 +77,14 @@ class ImageClipFragment :
         }
     }
 
-    override fun createPlayer(): ExoPlayer {
-        val skipForward =
-            PreferenceManager
-                .getDefaultSharedPreferences(requireContext())
-                .getInt("skip_forward_time", 30)
-        val skipBack =
-            PreferenceManager
-                .getDefaultSharedPreferences(requireContext())
-                .getInt("skip_back_time", 10)
-        return StashExoPlayer
-            .getInstance(
-                requireContext(),
-                StashServer.requireCurrentServer(),
-                skipForward * 1000L,
-                skipBack * 1000L,
-            )
+    override fun Player.setupPlayer() {
+        // no-op
     }
 
-    override fun postCreatePlayer(player: Player) {
-        player.repeatMode = Player.REPEAT_MODE_ONE
-        player.prepare()
-        player.play()
+    override fun Player.postSetupPlayer() {
+        repeatMode = Player.REPEAT_MODE_ONE
+        prepare()
+        play()
     }
 
     override fun play() {

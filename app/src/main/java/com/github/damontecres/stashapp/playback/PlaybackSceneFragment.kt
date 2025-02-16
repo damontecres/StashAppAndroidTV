@@ -10,7 +10,6 @@ import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
@@ -27,14 +26,13 @@ class PlaybackSceneFragment : PlaybackFragment() {
     override val optionsButtonOptions: OptionsButtonOptions
         get() = OptionsButtonOptions(DataType.SCENE, false)
 
-    override fun createPlayer(): ExoPlayer =
-        StashExoPlayer
-            .getInstance(requireContext(), serverViewModel.requireServer())
-            .also { it.repeatMode = Player.REPEAT_MODE_OFF }
+    override fun Player.setupPlayer() {
+        repeatMode = Player.REPEAT_MODE_OFF
+    }
 
     @OptIn(UnstableApi::class)
-    override fun postCreatePlayer(player: Player) {
-        maybeAddActivityTracking(player)
+    override fun Player.postSetupPlayer() {
+        maybeAddActivityTracking(this)
 
         val finishedBehavior =
             PreferenceManager
@@ -45,7 +43,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 )
         when (finishedBehavior) {
             getString(R.string.playback_finished_repeat) -> {
-                player.repeatMode = Player.REPEAT_MODE_ONE
+                repeatMode = Player.REPEAT_MODE_ONE
             }
 
             getString(R.string.playback_finished_return) ->
