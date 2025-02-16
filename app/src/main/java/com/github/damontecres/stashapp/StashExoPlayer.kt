@@ -9,6 +9,7 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashServer
 import okhttp3.CacheControl
 
@@ -18,11 +19,6 @@ import okhttp3.CacheControl
 class StashExoPlayer private constructor() {
     companion object {
         private const val TAG = "StashExoPlayer"
-
-        private data class SkipParams(
-            val skipForward: Long,
-            val skipBack: Long,
-        )
 
         private val listeners: MutableList<Player.Listener> = mutableListOf()
 
@@ -36,32 +32,38 @@ class StashExoPlayer private constructor() {
         fun getInstance(
             context: Context,
             server: StashServer,
-        ): ExoPlayer {
-            val skipForward =
-                PreferenceManager
-                    .getDefaultSharedPreferences(context)
-                    .getInt("skip_forward_time", 30)
-            val skipBack =
-                PreferenceManager
-                    .getDefaultSharedPreferences(context)
-                    .getInt("skip_back_time", 10)
-            return getInstance(context, server, skipForward * 1000L, skipBack * 1000L)
-        }
+        ): ExoPlayer = getInstance(context, server, SkipParams.Default)
 
         @OptIn(UnstableApi::class)
         fun getInstance(
             context: Context,
             server: StashServer,
-            skipForward: Long,
-            skipBack: Long,
+            skipParams: SkipParams,
         ): ExoPlayer {
-            val newSkipParams = SkipParams(skipForward, skipBack)
-            if (instance == null || skipParams != newSkipParams) {
+            val skipForward =
+                when (skipParams) {
+                    is SkipParams.Default ->
+                        PreferenceManager
+                            .getDefaultSharedPreferences(context)
+                            .getInt("skip_forward_time", 30) * 1000L
+
+                    is SkipParams.Values -> skipParams.skipForward
+                }
+            val skipBack =
+                when (skipParams) {
+                    is SkipParams.Default ->
+                        PreferenceManager
+                            .getDefaultSharedPreferences(context)
+                            .getInt("skip_back_time", 10) * 1000L
+
+                    is SkipParams.Values -> skipParams.skipBack
+                }
+            if (instance == null || skipParams != this.skipParams) {
                 synchronized(this) {
                     // synchronized to avoid concurrency problem
-                    if (instance == null || skipParams != newSkipParams) {
-                        skipParams = newSkipParams
-                        instance = createInstance(context, server, newSkipParams)
+                    if (instance == null || skipParams != this.skipParams) {
+                        this.skipParams = skipParams
+                        instance = createInstance(context, server, skipForward, skipBack)
                     }
                 }
             }
@@ -75,7 +77,8 @@ class StashExoPlayer private constructor() {
         private fun createInstance(
             context: Context,
             server: StashServer,
-            skipParams: SkipParams,
+            skipForward: Long,
+            skipBack: Long,
         ): ExoPlayer {
             releasePlayer()
             val dataSourceFactory =
@@ -88,8 +91,8 @@ class StashExoPlayer private constructor() {
                     DefaultMediaSourceFactory(context).setDataSourceFactory(
                         dataSourceFactory,
                     ),
-                ).setSeekBackIncrementMs(skipParams.skipBack)
-                .setSeekForwardIncrementMs(skipParams.skipForward)
+                ).setSeekBackIncrementMs(skipBack)
+                .setSeekForwardIncrementMs(skipForward)
                 .build()
         }
 
