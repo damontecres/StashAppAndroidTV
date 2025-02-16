@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp
 
 import android.content.Context
+import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -16,6 +17,8 @@ import okhttp3.CacheControl
  */
 class StashExoPlayer private constructor() {
     companion object {
+        private const val TAG = "StashExoPlayer"
+
         private data class SkipParams(
             val skipForward: Long,
             val skipBack: Long,
@@ -109,8 +112,12 @@ class StashExoPlayer private constructor() {
         }
 
         fun addListener(listener: Player.Listener) {
-            listeners.add(listener)
-            instance?.addListener(listener)
+            if (instance == null) {
+                Log.w(TAG, "Cannot add listener to null instance")
+            } else {
+                listeners.add(listener)
+                instance?.addListener(listener)
+            }
         }
 
         fun removeListeners() {
