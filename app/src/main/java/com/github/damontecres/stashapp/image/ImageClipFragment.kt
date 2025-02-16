@@ -91,7 +91,7 @@ class ImageClipFragment :
                 .getDefaultSharedPreferences(requireContext())
                 .getInt("skip_back_time", 10)
         return StashExoPlayer
-            .createInstance(
+            .getInstance(
                 requireContext(),
                 StashServer.requireCurrentServer(),
                 skipForward * 1000L,

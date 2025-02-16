@@ -102,9 +102,9 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
     override fun createPlayer(): ExoPlayer {
         val server = StashServer.requireCurrentServer()
         return if (skipForwardOverride == -1L || skipBackOverride == -1L) {
-            StashExoPlayer.createInstance(requireContext(), server)
+            StashExoPlayer.getInstance(requireContext(), server)
         } else {
-            StashExoPlayer.createInstance(
+            StashExoPlayer.getInstance(
                 requireContext(),
                 server,
                 skipForwardOverride,
