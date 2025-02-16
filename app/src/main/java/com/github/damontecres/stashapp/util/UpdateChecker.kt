@@ -137,6 +137,7 @@ class UpdateChecker {
             release: Release,
         ) {
             withContext(Dispatchers.IO) {
+                cleanup(activity)
                 val client = OkHttpClient.Builder().build()
                 val request =
                     Request
@@ -176,12 +177,11 @@ class UpdateChecker {
                                 activity.startActivity(intent)
                             } else {
                                 Log.e(TAG, "Resolver URI is null")
-                                Toast
-                                    .makeText(
-                                        activity,
-                                        "There was an error downloading the release",
-                                        Toast.LENGTH_LONG,
-                                    ).show()
+                                showToastOnMain(
+                                    activity,
+                                    "There was an error downloading the release",
+                                    Toast.LENGTH_LONG,
+                                )
                             }
                         } else {
                             if (ContextCompat.checkSelfPermission(
@@ -229,12 +229,11 @@ class UpdateChecker {
                         }
                     } else {
                         Log.v(TAG, "Request failed for ${release.downloadUrl}: ${it.code}")
-                        Toast
-                            .makeText(
-                                activity,
-                                "Error downloading release: ${it.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
+                        showToastOnMain(
+                            activity,
+                            "Error downloading release: ${it.message}",
+                            Toast.LENGTH_LONG,
+                        )
                     }
                 }
             }
