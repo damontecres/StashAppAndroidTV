@@ -45,6 +45,7 @@ import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
+import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
 import com.github.damontecres.stashapp.util.StashServer
@@ -85,6 +86,8 @@ abstract class PlaybackFragment(
     protected val controllerVisibilityListener = ControllerVisibilityListenerList()
     private var backCallback: OnBackPressedCallback? = null
 
+    protected var skipParams: SkipParams = SkipParams.Default
+
     /**
      * Whether to show video previews when scrubbing
      */
@@ -96,14 +99,14 @@ abstract class PlaybackFragment(
     abstract val optionsButtonOptions: OptionsButtonOptions
 
     /**
-     * Create an [ExoPlayer]. Users should start with [com.github.damontecres.stashapp.StashExoPlayer]!
+     * Setup the [ExoPlayer]
      */
-    protected abstract fun createPlayer(): ExoPlayer
+    protected abstract fun Player.setupPlayer()
 
     /**
      * Called after creating the player
      */
-    protected abstract fun postCreatePlayer(player: Player)
+    protected abstract fun Player.postSetupPlayer()
 
     var player: ExoPlayer? = null
         private set
@@ -165,7 +168,9 @@ abstract class PlaybackFragment(
     }
 
     private fun preparePlayer(): ExoPlayer =
-        createPlayer()
+        StashExoPlayer
+            .getInstance(requireContext(), serverViewModel.requireServer(), skipParams)
+            .also { it.setupPlayer() }
             .also { exoPlayer ->
                 exoPlayer.addListener(
                     object : Player.Listener {
@@ -226,7 +231,7 @@ abstract class PlaybackFragment(
                         }
                     },
                 )
-            }.also(::postCreatePlayer)
+            }
 
     protected fun updateDebugInfo(
         streamDecision: StreamDecision,
@@ -637,7 +642,10 @@ abstract class PlaybackFragment(
 
     @OptIn(UnstableApi::class)
     override fun onStart() {
+        // Always release the player and recreate
+        StashExoPlayer.releasePlayer()
         player = preparePlayer()
+        player!!.postSetupPlayer()
         super.onStart()
     }
 
