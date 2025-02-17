@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.maybeGetDestination
 import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.models.ServerViewModel
+import kotlin.properties.Delegates
 
 /**
  * The only activity in the app
@@ -37,6 +38,7 @@ class RootActivity :
     FragmentActivity(),
     NavigationListener {
     private val serverViewModel: ServerViewModel by viewModels<ServerViewModel>()
+    private var useCompose by Delegates.notNull<Boolean>()
     private lateinit var navigationManager: NavigationManager
     private var currentFragment: Fragment? = null
 
@@ -46,7 +48,7 @@ class RootActivity :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val useCompose =
+        useCompose =
             PreferenceManager
                 .getDefaultSharedPreferences(this)
                 .getBoolean(getString(R.string.pref_key_use_compose_ui), false)
@@ -140,7 +142,7 @@ class RootActivity :
         super.onResume()
         Log.v(TAG, "onResume")
         hasCheckedForUpdate = false
-        if (appHasPin()) {
+        if (!useCompose && appHasPin()) {
             navigationManager.navigate(Destination.Pin)
         } else {
             loadingView.hide()
