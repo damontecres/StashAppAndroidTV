@@ -119,8 +119,8 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.asMarkerData
-import com.github.damontecres.stashapp.util.asVideoSceneData
 import com.github.damontecres.stashapp.util.bitRateString
+import com.github.damontecres.stashapp.util.fakeMarker
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
@@ -679,36 +679,7 @@ fun SceneDetails(
                             searchForDataType = null
                             if (item is TagData && id >= 0) {
                                 // Marker primary tag
-                                val marker =
-                                    MarkerData(
-                                        id = "",
-                                        title = "",
-                                        created_at = "",
-                                        updated_at = "",
-                                        stream = "",
-                                        screenshot = "",
-                                        seconds = id.toMilliseconds,
-                                        preview = "",
-                                        primary_tag =
-                                            MarkerData.Primary_tag(
-                                                __typename = "",
-                                                slimTagData =
-                                                    SlimTagData(
-                                                        id = item.id,
-                                                        name = "",
-                                                        description = "",
-                                                        favorite = false,
-                                                        image_path = "",
-                                                    ),
-                                            ),
-                                        tags = listOf(),
-                                        scene =
-                                            MarkerData.Scene(
-                                                __typename = "",
-                                                videoSceneData = scene.asVideoSceneData,
-                                            ),
-                                        __typename = "",
-                                    )
+                                val marker = fakeMarker(item.id, id.toMilliseconds, scene)
                                 addItem.invoke(marker)
                             } else {
                                 addItem.invoke(item)

@@ -558,6 +558,43 @@ fun FullMarkerData.asMarkerData(scene: FullSceneData): MarkerData =
         __typename = "",
     )
 
+/**
+ * Create a fake [MarkerData] with minimal details
+ */
+fun fakeMarker(
+    tagId: String,
+    seconds: Double,
+    scene: FullSceneData,
+) = MarkerData(
+    id = "",
+    title = "",
+    created_at = "",
+    updated_at = "",
+    stream = "",
+    screenshot = "",
+    seconds = seconds,
+    preview = "",
+    primary_tag =
+        MarkerData.Primary_tag(
+            __typename = "",
+            slimTagData =
+                SlimTagData(
+                    id = tagId,
+                    name = "",
+                    description = "",
+                    favorite = false,
+                    image_path = "",
+                ),
+        ),
+    tags = listOf(),
+    scene =
+        MarkerData.Scene(
+            __typename = "",
+            videoSceneData = scene.asVideoSceneData,
+        ),
+    __typename = "",
+)
+
 fun ScrollView.onlyScrollIfNeeded() {
     viewTreeObserver.addOnGlobalLayoutListener {
         val childHeight = getChildAt(0).height
@@ -695,9 +732,9 @@ fun getMaxMeasuredWidth(
 /**
  * Gets the [SlimSceneData.resume_time] in milliseconds
  */
-val SlimSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
+val SlimSceneData.resume_position get() = resume_time?.toLongMilliseconds
 
-val FullSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
+val FullSceneData.resume_position get() = resume_time?.toLongMilliseconds
 
 val Long.toMilliseconds get() = this / 1000.0
 

@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components
 
+import android.view.KeyEvent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -99,6 +101,7 @@ fun DialogPopup(
     onDismissRequest: () -> Unit,
     dismissOnClick: Boolean = true,
     waitToLoad: Boolean = true,
+    properties: DialogProperties = DialogProperties(),
 ) {
     var waiting by remember { mutableStateOf(waitToLoad) }
     if (showDialog) {
@@ -106,8 +109,9 @@ fun DialogPopup(
             LaunchedEffect(Unit) {
                 // This is a hack because a long click will propagate here and click the first list item
                 // So this disables the list items assuming the user will stop pressing when the dialog appears
+                // This is also bypassed in the code below if the user releases the enter/d-pad center button
                 waiting = true
-                delay(500)
+                delay(1000)
                 waiting = false
             }
         } else {
@@ -115,7 +119,7 @@ fun DialogPopup(
         }
         Dialog(
             onDismissRequest = onDismissRequest,
-            properties = DialogProperties(),
+            properties = properties,
         ) {
             val elevatedContainerColor = MaterialTheme.colorScheme.secondaryContainer
             Column(
@@ -127,7 +131,21 @@ fun DialogPopup(
                             this.clip = true
                             this.shape = RoundedCornerShape(28.0.dp)
                         }.drawBehind { drawRect(color = elevatedContainerColor) }
-                        .padding(PaddingValues(24.dp)),
+                        .padding(PaddingValues(24.dp))
+                        .onKeyEvent { event ->
+                            val code = event.nativeKeyEvent.keyCode
+                            if (event.nativeKeyEvent.action == KeyEvent.ACTION_UP &&
+                                code in
+                                setOf(
+                                    KeyEvent.KEYCODE_ENTER,
+                                    KeyEvent.KEYCODE_DPAD_CENTER,
+                                    KeyEvent.KEYCODE_NUMPAD_ENTER,
+                                )
+                            ) {
+                                waiting = false
+                            }
+                            false
+                        },
             ) {
                 Text(
                     text = title,
