@@ -32,15 +32,14 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
-import com.github.damontecres.stashapp.ui.components.StashGridControls
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
+import com.github.damontecres.stashapp.ui.components.createTabFunc
+import com.github.damontecres.stashapp.ui.components.tabFindFilter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.PageFilterKey
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -77,22 +76,7 @@ fun PerformerPage(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    fun createTab(
-        dataType: DataType,
-        initialFilter: FilterArgs,
-    ): TabProvider =
-        TabProvider(context.getString(dataType.pluralStringId)) { positionCallback ->
-            StashGridControls(
-                server = server,
-                initialFilter = initialFilter,
-                itemOnClick = itemOnClick,
-                longClicker = longClicker,
-                filterUiMode = FilterUiMode.CREATE_FILTER,
-                modifier = Modifier,
-                positionCallback = positionCallback,
-                uiConfig = ComposeUiConfig.fromStashServer(server),
-            )
-        }
+    val createTab = createTabFunc(server, itemOnClick, longClicker)
 
     performer?.let { perf ->
         val performers =
@@ -153,54 +137,30 @@ fun PerformerPage(
                     )
                 },
                 createTab(
-                    DataType.SCENE,
                     FilterArgs(
                         dataType = DataType.SCENE,
-                        findFilter =
-                            server!!
-                                .serverPreferences
-                                .getDefaultPageFilter(
-                                    PageFilterKey.PERFORMER_SCENES,
-                                ).findFilter,
+                        findFilter = tabFindFilter(server, PageFilterKey.PERFORMER_SCENES),
                         objectFilter = SceneFilterType(performers = performers),
                     ),
                 ),
                 createTab(
-                    DataType.GALLERY,
                     FilterArgs(
                         dataType = DataType.GALLERY,
-                        findFilter =
-                            server!!
-                                .serverPreferences
-                                .getDefaultPageFilter(
-                                    PageFilterKey.PERFORMER_GALLERIES,
-                                ).findFilter,
+                        findFilter = tabFindFilter(server, PageFilterKey.PERFORMER_GALLERIES),
                         objectFilter = GalleryFilterType(performers = performers),
                     ),
                 ),
                 createTab(
-                    DataType.IMAGE,
                     FilterArgs(
                         dataType = DataType.IMAGE,
-                        findFilter =
-                            server!!
-                                .serverPreferences
-                                .getDefaultPageFilter(
-                                    PageFilterKey.PERFORMER_IMAGES,
-                                ).findFilter,
+                        findFilter = tabFindFilter(server, PageFilterKey.PERFORMER_IMAGES),
                         objectFilter = ImageFilterType(performers = performers),
                     ),
                 ),
                 createTab(
-                    DataType.GROUP,
                     FilterArgs(
                         dataType = DataType.GROUP,
-                        findFilter =
-                            server!!
-                                .serverPreferences
-                                .getDefaultPageFilter(
-                                    PageFilterKey.PERFORMER_GROUPS,
-                                ).findFilter,
+                        findFilter = tabFindFilter(server, PageFilterKey.PERFORMER_GROUPS),
                         objectFilter = GroupFilterType(performers = performers),
                     ),
                 ),

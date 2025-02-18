@@ -14,7 +14,6 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.RootActivity
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.StashSearchFragment
-import com.github.damontecres.stashapp.StudioFragment
 import com.github.damontecres.stashapp.UpdateAppFragment
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterFragment
@@ -77,7 +76,7 @@ class NavigationManagerCompose(
                         DataType.TAG -> null
                         DataType.GROUP -> GroupFragment()
                         DataType.PERFORMER -> null
-                        DataType.STUDIO -> StudioFragment()
+                        DataType.STUDIO -> null
                         DataType.GALLERY -> GalleryFragment()
                         DataType.MARKER -> throw IllegalArgumentException("Marker not supported here")
                         DataType.IMAGE -> throw IllegalArgumentException("Image not supported here")

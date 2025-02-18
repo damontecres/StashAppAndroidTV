@@ -73,6 +73,7 @@ import com.github.damontecres.stashapp.ui.pages.FilterPage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
 import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
+import com.github.damontecres.stashapp.ui.pages.StudioPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -494,6 +495,16 @@ fun NavDrawerContent(
                         server = server,
                         id = destination.id,
                         includeSubTags = false,
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
+                    )
+
+                DataType.STUDIO ->
+                    StudioPage(
+                        modifier = modifier,
+                        server = server,
+                        id = destination.id,
+                        includeSubStudios = false,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
                     )

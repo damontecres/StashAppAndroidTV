@@ -94,5 +94,6 @@
     <string name="add_tag">Add Tag</string>
     <string name="add_performer">Add Performer</string>
     <string name="add_group">Add Group</string>
+    <string name="studio_favorited">Studio favorited!</string>
 
 </resources>

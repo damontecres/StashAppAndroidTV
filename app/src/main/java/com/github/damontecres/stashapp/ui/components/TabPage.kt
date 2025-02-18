@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +26,12 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.data.StashFindFilter
+import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.util.PageFilterKey
+import com.github.damontecres.stashapp.util.StashServer
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -82,6 +89,7 @@ fun TabPage(
             }
         }
         if (tabs.isNotEmpty()) {
+            Log.i("Tabs", "selectedTabIndex=$selectedTabIndex")
             tabs[selectedTabIndex].content(this) { columns, position ->
                 showTabRowRaw = position <= columns
             }
@@ -98,3 +106,30 @@ data class TabProvider(
         positionCallback: (columns: Int, position: Int) -> Unit,
     ) -> Unit,
 )
+
+fun createTabFunc(
+    server: StashServer,
+    itemOnClick: ItemOnClicker<Any>,
+    longClicker: LongClicker<Any>,
+): (initialFilter: FilterArgs) -> TabProvider =
+    { initialFilter ->
+        TabProvider(
+            StashApplication.getApplication().getString(initialFilter.dataType.pluralStringId),
+        ) { positionCallback ->
+            StashGridControls(
+                server = server,
+                initialFilter = initialFilter,
+                itemOnClick = itemOnClick,
+                longClicker = longClicker,
+                filterUiMode = FilterUiMode.CREATE_FILTER,
+                modifier = Modifier,
+                positionCallback = positionCallback,
+                uiConfig = ComposeUiConfig.fromStashServer(server),
+            )
+        }
+    }
+
+fun tabFindFilter(
+    server: StashServer,
+    pageFilterKey: PageFilterKey,
+): StashFindFilter? = server.serverPreferences.getDefaultPageFilter(pageFilterKey).findFilter
