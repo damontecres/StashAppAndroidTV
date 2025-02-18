@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.playback
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -19,7 +20,6 @@ import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.StashData
-import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
@@ -109,10 +109,6 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
             },
         )
         StashExoPlayer.addListener(PlaylistListener())
-        if (playlistViewModel.filterArgs.value?.dataType == DataType.SCENE) {
-            // Only track activity for scene playback
-            maybeAddActivityTracking(this)
-        }
         repeatMode = Player.REPEAT_MODE_OFF
         if (videoView.controllerShowTimeoutMs > 0) {
             videoView.hideController()
@@ -219,6 +215,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      */
     abstract fun builderCallback(item: D): (MediaItem.Builder.() -> Unit)?
 
+    @SuppressLint("SetTextI18n")
     private fun updatePlaylistDebug() {
         debugPlaylistTextView.text =
             "${player?.currentMediaItemIndex?.plus(1)} of ${player?.mediaItemCount} ($totalCount)"
@@ -250,11 +247,11 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 updatePlaylistDebug()
 
                 // Replace activity tracker
-                if (trackActivityListener != null) {
-                    trackActivityListener?.release()
-                    player!!.removeListener(trackActivityListener!!)
+                trackActivityListener?.let {
+                    it.release()
+                    StashExoPlayer.removeListener(it)
                 }
-                maybeAddActivityTracking(player!!)
+                maybeAddActivityTracking(scene)
             }
             if (hasMorePages) {
                 val count = player!!.mediaItemCount

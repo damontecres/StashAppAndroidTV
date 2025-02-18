@@ -32,8 +32,9 @@ class PlaybackSceneFragment : PlaybackFragment() {
 
     @OptIn(UnstableApi::class)
     override fun Player.postSetupPlayer() {
-        maybeAddActivityTracking(this)
-
+        currentScene?.let {
+            maybeAddActivityTracking(it)
+        }
         val finishedBehavior =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
@@ -91,10 +92,10 @@ class PlaybackSceneFragment : PlaybackFragment() {
 
         viewModel.scene.observe(viewLifecycleOwner) { scene ->
             currentScene = scene
-
             if (scene == null) {
                 return@observe
             }
+            maybeAddActivityTracking(scene)
             val position =
                 if (playbackPosition >= 0) {
                     playbackPosition

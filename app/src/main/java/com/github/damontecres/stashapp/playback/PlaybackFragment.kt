@@ -48,7 +48,6 @@ import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getDataType
@@ -697,22 +696,22 @@ abstract class PlaybackFragment(
         }
     }
 
-    protected fun maybeAddActivityTracking(exoPlayer: Player) {
+    protected fun maybeAddActivityTracking(scene: Scene) {
         val appTracking =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_playback_track_activity), true)
-        val server = StashServer.requireCurrentServer()
-        if (appTracking && server.serverPreferences.trackActivity && currentScene != null) {
+        val server = serverViewModel.requireServer()
+        if (appTracking && server.serverPreferences.trackActivity) {
             Log.v(TAG, "Adding TrackActivityPlaybackListener")
             trackActivityListener =
                 TrackActivityPlaybackListener(
                     context = requireContext(),
-                    mutationEngine = MutationEngine(server),
-                    scene = currentScene!!,
+                    server = server,
+                    scene = scene,
                     getCurrentPosition = ::currentVideoPosition,
                 )
-            exoPlayer.addListener(trackActivityListener!!)
+            StashExoPlayer.addListener(trackActivityListener!!)
         }
     }
 
