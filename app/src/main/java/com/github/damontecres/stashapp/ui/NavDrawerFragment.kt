@@ -441,7 +441,7 @@ fun NavDrawerContent(
         is Destination.Filter -> {
             FilterPage(
                 server = server,
-                filterArgs = destination.filterArgs,
+                initialFilter = destination.filterArgs,
                 scrollToNextPage = destination.scrollToNextPage,
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,

@@ -27,12 +27,10 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
-import com.github.damontecres.stashapp.ui.components.StashGridControls
+import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
@@ -153,48 +151,22 @@ fun TagPage(
                         objectFilter = StudioFilterType(tags = tags),
                     ),
                 ),
-                TabProvider(stringResource(R.string.stashapp_sub_tags)) { positionCallback ->
-                    StashGridControls(
-                        server = server,
-                        initialFilter =
-                            FilterArgs(
-                                dataType = DataType.TAG,
-                                objectFilter = TagFilterType(parents = tags),
-                            ),
-                        itemOnClick = itemOnClick,
-                        longClicker = longClicker,
-                        filterUiMode = FilterUiMode.CREATE_FILTER,
-                        modifier = Modifier,
-                        positionCallback = positionCallback,
-                        uiConfig = ComposeUiConfig.fromStashServer(server),
-                    )
-                },
-                TabProvider(stringResource(R.string.stashapp_parent_tags)) { positionCallback ->
-                    StashGridControls(
-                        server = server,
-                        initialFilter =
-                            FilterArgs(
-                                dataType = DataType.TAG,
-                                objectFilter =
-                                    TagFilterType(
-                                        children =
-                                            Optional.present(
-                                                HierarchicalMultiCriterionInput(
-                                                    value = Optional.present(listOf(tag.id)),
-                                                    modifier = CriterionModifier.INCLUDES_ALL,
-                                                    depth = Optional.present(0),
-                                                ),
-                                            ),
-                                    ),
-                            ),
-                        itemOnClick = itemOnClick,
-                        longClicker = longClicker,
-                        filterUiMode = FilterUiMode.CREATE_FILTER,
-                        modifier = Modifier,
-                        positionCallback = positionCallback,
-                        uiConfig = ComposeUiConfig.fromStashServer(server),
-                    )
-                },
+                TabProvider
+                    (stringResource(R.string.stashapp_sub_tags)) { positionCallback ->
+                        StashGridTab(
+                            name = stringResource(R.string.stashapp_sub_tags),
+                            server = server,
+                            initialFilter =
+                                FilterArgs(
+                                    dataType = DataType.TAG,
+                                    objectFilter = TagFilterType(parents = tags),
+                                ),
+                            itemOnClick = itemOnClick,
+                            longClicker = longClicker,
+                            modifier = Modifier,
+                            positionCallback = positionCallback,
+                        )
+                    },
             ).filter { it.name in uiTabs }
         val title = AnnotatedString(tag.name)
         TabPage(title, tabs, modifier)

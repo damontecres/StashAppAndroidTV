@@ -30,12 +30,10 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.ui.ComposeUiConfig
-import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
-import com.github.damontecres.stashapp.ui.components.StashGridControls
+import com.github.damontecres.stashapp.ui.components.StashGridTab
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
@@ -161,7 +159,7 @@ fun StudioPage(
                     FilterArgs(
                         dataType = DataType.PERFORMER,
                         findFilter = tabFindFilter(server, PageFilterKey.STUDIO_PERFORMERS),
-                        objectFilter = PerformerFilterType(tags = studios),
+                        objectFilter = PerformerFilterType(studios = studios),
                     ),
                 ),
                 createTab(
@@ -178,7 +176,8 @@ fun StudioPage(
                     ),
                 ),
                 TabProvider(stringResource(R.string.stashapp_subsidiary_studios)) { positionCallback ->
-                    StashGridControls(
+                    StashGridTab(
+                        name = stringResource(R.string.stashapp_subsidiary_studios),
                         server = server,
                         initialFilter =
                             FilterArgs(
@@ -197,10 +196,8 @@ fun StudioPage(
                             ),
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
-                        filterUiMode = FilterUiMode.CREATE_FILTER,
                         modifier = Modifier,
                         positionCallback = positionCallback,
-                        uiConfig = ComposeUiConfig.fromStashServer(server),
                     )
                 },
                 createTab(
