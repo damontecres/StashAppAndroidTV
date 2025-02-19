@@ -115,6 +115,7 @@ fun createTabFunc(
     server: StashServer,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    subToggleLabel: String? = null,
 ): (initialFilter: FilterArgs) -> TabProvider =
     { initialFilter ->
         val name =
@@ -128,6 +129,7 @@ fun createTabFunc(
                 longClicker = longClicker,
                 modifier = Modifier,
                 positionCallback = positionCallback,
+                subToggleLabel = subToggleLabel,
             )
         }
     }
@@ -141,6 +143,7 @@ fun StashGridTab(
     longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
+    subToggleLabel: String? = null,
 ) {
     val viewModel = viewModel<FilterViewModel>(key = name)
     LaunchedEffect(server, initialFilter) {
@@ -159,6 +162,7 @@ fun StashGridTab(
             uiConfig = ComposeUiConfig.fromStashServer(server),
             updateFilter = { viewModel.setFilter(server, it) },
             letterPosition = viewModel::findLetterPosition,
+            subToggleLabel = subToggleLabel,
         )
     }
 }

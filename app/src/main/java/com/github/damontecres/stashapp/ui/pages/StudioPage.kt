@@ -73,7 +73,13 @@ fun StudioPage(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val createTab = createTabFunc(server, itemOnClick, longClicker)
+    val createTab =
+        createTabFunc(
+            server,
+            itemOnClick,
+            longClicker,
+            stringResource(R.string.stashapp_include_sub_studio_content),
+        )
 
     studio?.let { studio ->
         val studios =
@@ -198,6 +204,7 @@ fun StudioPage(
                         longClicker = longClicker,
                         modifier = Modifier,
                         positionCallback = positionCallback,
+                        subToggleLabel = stringResource(R.string.stashapp_include_sub_studio_content),
                     )
                 },
                 createTab(

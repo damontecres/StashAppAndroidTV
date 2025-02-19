@@ -67,7 +67,13 @@ fun TagPage(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val createTab = createTabFunc(server, itemOnClick, longClicker)
+    val createTab =
+        createTabFunc(
+            server,
+            itemOnClick,
+            longClicker,
+            stringResource(R.string.stashapp_include_sub_tag_content),
+        )
 
     tag?.let { tag ->
         val tags =
@@ -165,6 +171,7 @@ fun TagPage(
                             longClicker = longClicker,
                             modifier = Modifier,
                             positionCallback = positionCallback,
+                            subToggleLabel = stringResource(R.string.stashapp_include_sub_tag_content),
                         )
                     },
             ).filter { it.name in uiTabs }

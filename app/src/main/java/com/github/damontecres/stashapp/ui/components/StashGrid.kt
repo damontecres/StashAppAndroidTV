@@ -86,6 +86,7 @@ fun StashGridControls(
     initialPosition: Int = 0,
     itemOnLongClick: ((Any) -> Unit)? = null,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
+    subToggleLabel: String? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -139,16 +140,10 @@ fun StashGridControls(
                             Text(text = "Create Filter")
                         }
                     }
-                    if (dataType.supportsSubContent) {
-                        val labelRes =
-                            when (dataType) {
-                                DataType.TAG -> R.string.stashapp_include_sub_tag_content
-                                DataType.STUDIO -> R.string.stashapp_include_sub_studio_content
-                                else -> throw IllegalStateException("Unsupported DataType $dataType")
-                            }
+                    if (subToggleLabel != null) {
                         SwitchWithLabel(
                             modifier = Modifier,
-                            label = stringResource(labelRes),
+                            label = subToggleLabel,
                             state = checked,
                             onStateChange = { isChecked ->
                                 checked = isChecked
