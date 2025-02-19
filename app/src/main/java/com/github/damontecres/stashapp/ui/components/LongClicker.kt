@@ -1,12 +1,23 @@
 package com.github.damontecres.stashapp.ui.components
 
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
+import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.util.resume_position
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -15,6 +26,111 @@ fun interface LongClicker<T> {
         item: T,
         filterAndPosition: FilterAndPosition?,
     )
+}
+
+class DefaultLongClicker(
+    private val nav: NavigationManager,
+    private val itemOnClick: ItemOnClicker<Any>,
+    private val onLongClick: (DialogParams) -> Unit,
+) : LongClicker<Any> {
+    override fun longClick(
+        item: Any,
+        filterAndPosition: FilterAndPosition?,
+    ) {
+        item as StashData
+        val context = StashApplication.getApplication()
+        val title = extractTitle(item) ?: ""
+        val items =
+            buildList {
+                if (item is MarkerData) {
+                    add(
+                        DialogItem(
+                            context.getString(R.string.play_scene),
+                            Icons.Default.PlayArrow,
+                        ) {
+                            itemOnClick.onClick(item, filterAndPosition)
+                        },
+                    )
+                    add(
+                        DialogItem(
+                            context.getString(R.string.go_to_scene),
+                            Icons.AutoMirrored.Default.ArrowForward,
+                        ) {
+                            nav.navigate(
+                                Destination.Item(DataType.SCENE, item.scene.videoSceneData.id),
+                            )
+                        },
+                    )
+                    add(
+                        DialogItem(
+                            context.getString(R.string.stashapp_details),
+                            Icons.Default.Info,
+                        ) {
+                            nav.navigate(
+                                Destination.MarkerDetails(item.id, item.scene.videoSceneData.id),
+                            )
+                        },
+                    )
+                } else {
+                    add(
+                        DialogItem(context.getString(R.string.go_to), Icons.Default.Info) {
+                            itemOnClick.onClick(
+                                item,
+                                filterAndPosition,
+                            )
+                        },
+                    )
+                }
+                if (item is SlimSceneData) {
+                    if (item.resume_time != null && item.resume_time > 0) {
+                        add(
+                            DialogItem(
+                                context.getString(R.string.resume),
+                                Icons.Default.PlayArrow,
+                            ) {
+                                nav.navigate(
+                                    Destination.Playback(
+                                        item.id,
+                                        item.resume_position!!,
+                                        PlaybackMode.CHOOSE,
+                                    ),
+                                )
+                            },
+                        )
+                        add(
+                            DialogItem(
+                                context.getString(R.string.restart),
+                                Icons.Default.Refresh,
+                            ) {
+                                nav.navigate(
+                                    Destination.Playback(
+                                        item.id,
+                                        0L,
+                                        PlaybackMode.CHOOSE,
+                                    ),
+                                )
+                            },
+                        )
+                    } else {
+                        add(
+                            DialogItem(
+                                context.getString(R.string.play_scene),
+                                Icons.Default.PlayArrow,
+                            ) {
+                                nav.navigate(
+                                    Destination.Playback(
+                                        item.id,
+                                        0L,
+                                        PlaybackMode.CHOOSE,
+                                    ),
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+        onLongClick.invoke(DialogParams(true, title, items))
+    }
 }
 
 data class LongClickerAction<T>(

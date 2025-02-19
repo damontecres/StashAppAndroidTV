@@ -7,23 +7,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.preference.PreferenceManager
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
+import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
+import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
-import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StashGridControls
 import com.github.damontecres.stashapp.util.StashServer
 
@@ -34,7 +40,7 @@ fun FilterPage(
     scrollToNextPage: Boolean,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
-    longClicker: LongClicker<Any>,
+    navManager: NavigationManager,
     modifier: Modifier = Modifier,
     viewModel: FilterViewModel = viewModel(),
 ) {
@@ -52,6 +58,18 @@ fun FilterPage(
         } else {
             0
         }
+
+    var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
+    val longClicker =
+        remember {
+            DefaultLongClicker(
+                navManager,
+                itemOnClick,
+            ) {
+                dialogParams = it
+            }
+        }
+
     Column(
         modifier = modifier,
     ) {
@@ -79,5 +97,16 @@ fun FilterPage(
                 letterPosition = viewModel::findLetterPosition,
             )
         }
+    }
+    dialogParams?.let { params ->
+        DialogPopup(
+            showDialog = true,
+            title = params.title,
+            items = params.items,
+            onDismissRequest = { dialogParams = null },
+            dismissOnClick = true,
+            waitToLoad = true,
+            properties = DialogProperties(),
+        )
     }
 }

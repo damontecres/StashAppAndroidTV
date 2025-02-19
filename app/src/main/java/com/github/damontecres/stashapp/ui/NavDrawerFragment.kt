@@ -433,7 +433,7 @@ fun NavDrawerContent(
                 uiConfig = composeUiConfig,
                 cardUiSettings = cardUiSettings,
                 itemOnClick = itemOnClick,
-                longClicker = longClicker,
+                navManager = navManager,
                 modifier = modifier,
             )
         }
@@ -444,7 +444,7 @@ fun NavDrawerContent(
                 initialFilter = destination.filterArgs,
                 scrollToNextPage = destination.scrollToNextPage,
                 itemOnClick = itemOnClick,
-                longClicker = longClicker,
+                navManager = navManager,
                 uiConfig = composeUiConfig,
                 modifier = modifier,
             )
