@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -26,7 +25,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -41,12 +39,9 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.navigation.NavigationManager
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.cards.ViewAllCard
-import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
-import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.util.FilterParser
@@ -114,7 +109,7 @@ fun MainPage(
     uiConfig: ComposeUiConfig,
     cardUiSettings: ServerViewModel.CardUiSettings,
     itemOnClick: ItemOnClicker<Any>,
-    navManager: NavigationManager,
+    longClicker: LongClicker<Any>,
     modifier: Modifier = Modifier,
 ) {
     val viewModel =
@@ -127,16 +122,6 @@ fun MainPage(
         )[MainPageViewModel::class]
 
     val frontPageRows by viewModel.frontPageRows.observeAsState()
-    var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
-    val longClicker =
-        remember {
-            DefaultLongClicker(
-                navManager,
-                itemOnClick,
-            ) {
-                dialogParams = it
-            }
-        }
 
     HomePage(
         modifier = Modifier.padding(16.dp),
@@ -145,17 +130,6 @@ fun MainPage(
         itemOnClick = itemOnClick,
         longClicker = longClicker,
     )
-    dialogParams?.let { params ->
-        DialogPopup(
-            showDialog = true,
-            title = params.title,
-            items = params.items,
-            onDismissRequest = { dialogParams = null },
-            dismissOnClick = true,
-            waitToLoad = true,
-            properties = DialogProperties(),
-        )
-    }
 }
 
 @Composable

@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
-import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
@@ -41,11 +39,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.tv.material3.DrawerValue
 import androidx.tv.material3.Icon
-import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
@@ -59,16 +57,15 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.filter.extractDescription
-import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.NavDrawerFragment.Companion.TAG
+import com.github.damontecres.stashapp.ui.components.DefaultLongClicker
+import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
-import com.github.damontecres.stashapp.ui.components.LongClickPopup
 import com.github.damontecres.stashapp.ui.components.LongClicker
-import com.github.damontecres.stashapp.ui.components.buildLongClickActionList
+import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
@@ -170,19 +167,11 @@ fun FragmentContent(
                 else -> TODO(item::class.qualifiedName.toString())
             }
         }
-    var popUpAction by remember { mutableStateOf<LongClickPopup?>(null) }
-    val longClickerActions = buildLongClickActionList(navigationManager, itemOnClick)
+
+    var dialogParams by remember { mutableStateOf<DialogParams?>(null) }
     val longClicker =
         remember {
-            LongClicker<Any> { item, filterAndPosition ->
-                val actions =
-                    longClickerActions
-                        .filter { it.filter.invoke(item) }
-                        .sortedBy { it.id }
-                val texts = actions.map { context.getString(it.title) }
-                Log.v(TAG, "actions=$texts")
-                popUpAction = LongClickPopup(item, filterAndPosition, actions)
-            }
+            DefaultLongClicker(navigationManager, itemOnClick) { dialogParams = it }
         }
     setSingletonImageLoaderFactory { context ->
         ImageLoader
@@ -226,61 +215,9 @@ fun FragmentContent(
         }
 
     val initialFocus = remember { FocusRequester() }
-    var showPopup by remember { mutableStateOf(false) }
 
     NavHost(navigationManager.controller, modifier = modifier) { destination ->
-        if (popUpAction != null) {
-            val (item, filterAndPosition, actions) = popUpAction!!
-            BackHandler {
-                popUpAction = null
-            }
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxHeight(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                if (item is StashData) {
-                    Text(
-                        text = extractTitle(item) ?: "",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier =
-                            Modifier
-                                .align(Alignment.CenterHorizontally),
-                    )
-                    Text(
-                        text = extractDescription(item) ?: "",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        modifier =
-                            Modifier
-                                .align(Alignment.CenterHorizontally),
-                    )
-                }
-                actions.forEach {
-                    ListItem(
-                        modifier =
-                            Modifier
-                                .wrapContentWidth()
-                                .align(Alignment.CenterHorizontally),
-                        selected = false,
-                        onClick = {
-                            it.action.invoke(item, filterAndPosition)
-                            popUpAction = null
-                        },
-                        headlineContent = {
-                            Text(
-                                stringResource(it.title),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onBackground,
-                            )
-                        },
-                    )
-                }
-            }
-        } else if (destination.fullScreen) {
+        if (destination.fullScreen) {
             FragmentView(navigationManager, destination)
         } else {
             NavigationDrawer(
@@ -412,6 +349,17 @@ fun FragmentContent(
                 )
             }
         }
+        dialogParams?.let { params ->
+            DialogPopup(
+                showDialog = true,
+                title = params.title,
+                items = params.items,
+                onDismissRequest = { dialogParams = null },
+                dismissOnClick = true,
+                waitToLoad = true,
+                properties = DialogProperties(),
+            )
+        }
     }
 }
 
@@ -433,7 +381,7 @@ fun NavDrawerContent(
                 uiConfig = composeUiConfig,
                 cardUiSettings = cardUiSettings,
                 itemOnClick = itemOnClick,
-                navManager = navManager,
+                longClicker = longClicker,
                 modifier = modifier,
             )
         }
@@ -444,7 +392,7 @@ fun NavDrawerContent(
                 initialFilter = destination.filterArgs,
                 scrollToNextPage = destination.scrollToNextPage,
                 itemOnClick = itemOnClick,
-                navManager = navManager,
+                longClicker = longClicker,
                 uiConfig = composeUiConfig,
                 modifier = modifier,
             )
@@ -467,8 +415,6 @@ fun NavDrawerContent(
                         server = server,
                         sceneId = destination.id,
                         itemOnClick = itemOnClick,
-                        // TODO longClicker for scene to add remove actions?
-                        longClicker = longClicker,
                         playOnClick = { position, mode ->
                             navManager.navigate(
                                 Destination.Playback(

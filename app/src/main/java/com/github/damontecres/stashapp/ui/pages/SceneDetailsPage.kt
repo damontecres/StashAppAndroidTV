@@ -305,7 +305,6 @@ fun SceneDetailsPage(
     server: StashServer,
     sceneId: String,
     itemOnClick: ItemOnClicker<Any>,
-    longClicker: LongClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -353,7 +352,6 @@ fun SceneDetailsPage(
                 markers = markers,
                 uiConfig = ComposeUiConfig.fromStashServer(server),
                 itemOnClick = itemOnClick,
-                longClicker = longClicker,
                 playOnClick = playOnClick,
                 addItem = { item ->
                     when (item) {
@@ -414,7 +412,6 @@ fun SceneDetails(
     markers: List<MarkerData>,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
-    longClicker: LongClicker<Any>,
     playOnClick: (position: Long, mode: PlaybackMode) -> Unit,
     addItem: (item: StashData) -> Unit,
     removeItem: (item: StashData) -> Unit,
