@@ -125,7 +125,10 @@ class ImageViewFragment :
                                 target: Target<Drawable?>?,
                                 dataSource: DataSource,
                                 isFirstResource: Boolean,
-                            ): Boolean = false
+                            ): Boolean {
+                                viewModel.pulseSlideshow()
+                                return false
+                            }
                         },
                     )
             filterViewModel.maybeGetSavedFilter()
@@ -169,6 +172,7 @@ class ImageViewFragment :
                     // Should never occur
                     throw IllegalStateException()
                 }
+                viewModel.pulseSlideshow()
                 return true
             }
         }
@@ -290,6 +294,7 @@ class ImageViewFragment :
 
     fun resetZoom() {
         mainImage.zoomTo(1.0f, true)
+        viewModel.pulseSlideshow()
     }
 
     override fun reset(animate: Boolean) {
@@ -308,6 +313,7 @@ class ImageViewFragment :
                     }.start()
             }
         } else {
+            viewModel.pulseSlideshow()
             mainImage.cancelAnimations()
             mainImage.moveTo(1f, 0f, 0f, false)
             mainImage.rotation = 0f

@@ -65,7 +65,7 @@ class ImageViewModel(
     /**
      * Set the current image to a new one
      */
-    fun setImage(newImage: ImageData) {
+    private fun setImage(newImage: ImageData) {
         _image.value = newImage
         state["imageId"] = newImage.id
     }
@@ -106,6 +106,7 @@ class ImageViewModel(
         val curr = currentPosition.value
         if (curr != null) {
             switchImage(curr + 1, causedByUser)
+            pulseSlideshow()
         }
     }
 
@@ -113,10 +114,11 @@ class ImageViewModel(
         val curr = currentPosition.value
         if (curr != null) {
             switchImage(curr - 1, causedByUser)
+            pulseSlideshow()
         }
     }
 
-    fun switchImage(
+    private fun switchImage(
         newPosition: Int,
         showToast: Boolean = true,
     ) {
