@@ -276,6 +276,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                             detailsActionsAdapter.size() - 1,
                             Action(R.string.play_slideshow.toLong()),
                         )
+                        viewModel.stopSlideshow()
                     } else {
                         // Start slideshow
                         detailsActionsAdapter.replace(
@@ -283,12 +284,12 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                             Action(R.string.stop_slideshow.toLong()),
                         )
                         (requireParentFragment() as ImageFragment).hideOverlay()
+                        viewModel.startSlideshow()
                     }
                     detailsActionsAdapter.notifyItemRangeChanged(
                         detailsActionsAdapter.size() - 1,
                         1,
                     )
-                    viewModel.slideshow.value = viewModel.slideshow.value!!.not()
                 } else if (action.id.toInt() == R.string.apply_filters) {
                     (requireParentFragment() as ImageFragment).showFilterOverlay()
                 }
