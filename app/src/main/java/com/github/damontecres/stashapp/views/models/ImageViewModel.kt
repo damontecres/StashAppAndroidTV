@@ -23,7 +23,10 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.StashSparseFilterFetcher
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isImageClip
+import com.github.damontecres.stashapp.util.maxFileSize
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -148,6 +151,19 @@ class ImageViewModel(
                                 "No more images",
                                 Toast.LENGTH_SHORT,
                             ).show()
+                    }
+                }
+            }
+            viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                listOf(newPosition + 1, newPosition - 1).forEach { position ->
+                    val image = pager.get(position)
+                    if (image?.isImageClip == false) {
+                        image.paths.image?.let {
+                            Log.v(TAG, "Preloading ${image.id}")
+                            StashGlide
+                                .with(StashApplication.getApplication(), it, image.maxFileSize)
+                                .preload()
+                        }
                     }
                 }
             }
