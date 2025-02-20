@@ -107,10 +107,11 @@ class ImageFragment :
 
     override fun onStop() {
         super.onStop()
-        timer?.cancel()
+        viewModel.tearDownSlideshow()
     }
 
     private fun showOverlay() {
+        viewModel.pulseSlideshow(Long.MAX_VALUE)
         childFragmentManager.commitNow {
             setCustomAnimations(
                 androidx.leanback.R.anim.abc_slide_in_bottom,
@@ -130,11 +131,13 @@ class ImageFragment :
                 )
                 hide(overlayFragment)
             }
+            viewModel.pulseSlideshow()
         }
     }
 
     fun showFilterOverlay() {
         hideOverlay()
+        viewModel.pulseSlideshow(Long.MAX_VALUE)
         childFragmentManager.commitNow {
             setCustomAnimations(
                 androidx.leanback.R.anim.abc_slide_in_top,
@@ -158,6 +161,7 @@ class ImageFragment :
                 )
                 hide(videoFiltersFragment)
             }
+            viewModel.pulseSlideshow()
         }
     }
 

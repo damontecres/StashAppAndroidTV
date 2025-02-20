@@ -173,14 +173,20 @@ class ImageViewModel(
 
     fun pulseSlideshow(milliseconds: Long = slideshowDelay) {
         slideshowJob?.cancel()
-        slideshowJob =
-            viewModelScope
-                .launch(StashCoroutineExceptionHandler()) {
-                    delay(milliseconds)
-                    nextImage(false)
-                }.apply {
-                    invokeOnCompletion { if (it !is CancellationException) pulseSlideshow() }
-                }
+        if (slideshow.value!!) {
+            slideshowJob =
+                viewModelScope
+                    .launch(StashCoroutineExceptionHandler()) {
+                        delay(milliseconds)
+                        nextImage(false)
+                    }.apply {
+                        invokeOnCompletion { if (it !is CancellationException) pulseSlideshow() }
+                    }
+        }
+    }
+
+    fun tearDownSlideshow() {
+        slideshowJob?.cancel()
     }
 
     companion object {
