@@ -131,7 +131,9 @@ class ImageFragment :
                 )
                 hide(overlayFragment)
             }
-            viewModel.pulseSlideshow()
+            if (viewModel.image.value?.isImageClip == false) {
+                viewModel.pulseSlideshow()
+            }
         }
     }
 
@@ -161,7 +163,9 @@ class ImageFragment :
                 )
                 hide(videoFiltersFragment)
             }
-            viewModel.pulseSlideshow()
+            if (viewModel.image.value?.isImageClip == false) {
+                viewModel.pulseSlideshow()
+            }
         }
     }
 
