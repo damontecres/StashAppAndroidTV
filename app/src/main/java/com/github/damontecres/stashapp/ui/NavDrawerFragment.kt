@@ -69,6 +69,7 @@ import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
+import com.github.damontecres.stashapp.ui.pages.PlaybackPage
 import com.github.damontecres.stashapp.ui.pages.SceneDetailsPage
 import com.github.damontecres.stashapp.ui.pages.StudioPage
 import com.github.damontecres.stashapp.ui.pages.TagPage
@@ -218,7 +219,18 @@ fun FragmentContent(
 
     NavHost(navigationManager.controller, modifier = modifier) { destination ->
         if (destination.fullScreen) {
-            FragmentView(navigationManager, destination)
+            when (destination) {
+                is Destination.Playback -> {
+                    PlaybackPage(
+                        server = server,
+                        sceneId = destination.sceneId,
+                        startPosition = destination.position,
+                        playbackMode = destination.mode,
+                    )
+                }
+
+                else -> FragmentView(navigationManager, destination)
+            }
         } else {
             NavigationDrawer(
                 modifier = Modifier,

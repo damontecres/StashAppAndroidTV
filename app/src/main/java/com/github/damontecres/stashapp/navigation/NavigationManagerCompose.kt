@@ -18,7 +18,6 @@ import com.github.damontecres.stashapp.UpdateAppFragment
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.CreateFilterFragment
 import com.github.damontecres.stashapp.image.ImageFragment
-import com.github.damontecres.stashapp.playback.PlaybackSceneFragment
 import com.github.damontecres.stashapp.playback.PlaylistMarkersFragment
 import com.github.damontecres.stashapp.playback.PlaylistScenesFragment
 import com.github.damontecres.stashapp.setup.ManageServersFragment
@@ -92,7 +91,7 @@ class NavigationManagerCompose(
                 is Destination.SearchFor -> null
                 is Destination.UpdateMarker -> MarkerPickerFragment()
 
-                is Destination.Playback -> PlaybackSceneFragment()
+                is Destination.Playback -> null // PlaybackSceneFragment()
                 is Destination.Playlist -> {
                     when (destination.filterArgs.dataType) {
                         DataType.SCENE -> PlaylistScenesFragment()

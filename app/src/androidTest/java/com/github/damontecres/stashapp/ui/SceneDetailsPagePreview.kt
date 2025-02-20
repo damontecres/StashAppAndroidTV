@@ -100,7 +100,6 @@ private fun SceneDetailsPreview() {
             galleries = listOf(),
             uiConfig = ComposeUiConfig(true, 1.0f, true),
             itemOnClick = { items, filterAndPosition -> },
-            longClicker = { item, filterAndPosition -> },
             playOnClick = { position, mode -> },
             removeItem = {},
             modifier = Modifier,

@@ -101,3 +101,9 @@ fun Modifier.dialogFocusable() =
                 .focusGroup(),
         )
     }
+
+fun Modifier.ifElse(
+    condition: Boolean,
+    ifTrueModifier: Modifier,
+    ifFalseModifier: Modifier = Modifier,
+): Modifier = then(if (condition) ifTrueModifier else ifFalseModifier)

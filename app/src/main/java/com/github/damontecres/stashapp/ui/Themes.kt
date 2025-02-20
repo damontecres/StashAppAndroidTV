@@ -120,3 +120,11 @@ fun Material3MainTheme(content: @Composable () -> Unit) {
         content = content,
     )
 }
+
+sealed class AppColors private constructor() {
+    companion object {
+        val TransparentBlack25 = Color(0x40000000)
+        val TransparentBlack50 = Color(0x80000000)
+        val TransparentBlack75 = Color(0xBF000000)
+    }
+}
