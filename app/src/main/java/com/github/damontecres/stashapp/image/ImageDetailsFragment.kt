@@ -83,11 +83,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
     private lateinit var queryEngine: QueryEngine
     private lateinit var mutationEngine: MutationEngine
 
-    private val detailsPresenter = FullWidthDetailsOverviewRowPresenter(ImageDetailsRowPresenter())
-    private val mPresenterSelector =
-        ClassPresenterSelector()
-            .addClassPresenter(ListRow::class.java, ListRowPresenter())
-            .addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
+    private var detailsPresenter: FullWidthDetailsOverviewRowPresenter? = null
+    private val mPresenterSelector = ClassPresenterSelector()
     private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
 
     private lateinit var firstButton: Button
@@ -253,72 +250,83 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         configRowManager({ viewLifecycleOwner.lifecycleScope }, studioRowManager, ::StudioPresenter)
 
         adapter = mAdapter
-
-        detailsPresenter.actionsBackgroundColor =
-            ContextCompat.getColor(
-                requireActivity(),
-                R.color.transparent_default_card_background_25,
-            )
-        detailsPresenter.backgroundColor =
-            ContextCompat.getColor(
-                requireActivity(),
-                R.color.transparent_default_card_background_50,
-            )
-
         val detailsActionsAdapter = ArrayObjectAdapter(DetailsActionsPresenter())
-
-        detailsPresenter.onActionClickedListener =
-            OnActionClickedListener { action ->
-                if (action.id.toInt() == R.string.play_slideshow || action.id.toInt() == R.string.stop_slideshow) {
-                    Log.v(TAG, "Clicked play/stop slideshow")
-                    if (viewModel.slideshow.value!!) {
-                        detailsActionsAdapter.replace(
-                            detailsActionsAdapter.size() - 1,
-                            Action(R.string.play_slideshow.toLong()),
-                        )
-                        viewModel.stopSlideshow()
-                    } else {
-                        // Start slideshow
-                        detailsActionsAdapter.replace(
-                            detailsActionsAdapter.size() - 1,
-                            Action(R.string.stop_slideshow.toLong()),
-                        )
-                        (requireParentFragment() as ImageFragment).hideOverlay()
-                        viewModel.startSlideshow()
-                    }
-                    detailsActionsAdapter.notifyItemRangeChanged(
-                        detailsActionsAdapter.size() - 1,
-                        1,
+        detailsPresenter =
+            FullWidthDetailsOverviewRowPresenter(ImageDetailsRowPresenter()).apply {
+                actionsBackgroundColor =
+                    ContextCompat.getColor(
+                        requireActivity(),
+                        R.color.transparent_default_card_background_25,
                     )
-                } else if (action.id.toInt() == R.string.apply_filters) {
-                    (requireParentFragment() as ImageFragment).showFilterOverlay()
-                }
-                val controller = viewModel.imageController
-                if (controller != null) {
-                    when (action.id.toInt()) {
-                        R.string.fa_rotate_left -> controller.rotateLeft()
-                        R.string.fa_rotate_right -> controller.rotateRight()
-                        R.string.fa_magnifying_glass_plus -> controller.zoomIn()
-                        R.string.fa_magnifying_glass_minus -> controller.zoomOut()
-                        R.string.fa_arrow_right_arrow_left -> controller.flip()
-                        R.string.stashapp_effect_filters_reset_transforms -> controller.reset()
-                    }
-                }
-                val videoController = viewModel.videoController
-                if (videoController != null) {
-                    when (action.id.toInt()) {
-                        R.string.fa_play -> {
-                            videoController.play()
-                            detailsActionsAdapter.replace(0, Action(R.string.fa_pause.toLong()))
-                        }
+                backgroundColor =
+                    ContextCompat.getColor(
+                        requireActivity(),
+                        R.color.transparent_default_card_background_50,
+                    )
 
-                        R.string.fa_pause -> {
-                            videoController.pause()
-                            detailsActionsAdapter.replace(0, Action(R.string.fa_play.toLong()))
+                onActionClickedListener =
+                    OnActionClickedListener { action ->
+                        if (action.id.toInt() == R.string.play_slideshow || action.id.toInt() == R.string.stop_slideshow) {
+                            Log.v(TAG, "Clicked play/stop slideshow")
+                            if (viewModel.slideshow.value!!) {
+                                detailsActionsAdapter.replace(
+                                    detailsActionsAdapter.size() - 1,
+                                    Action(R.string.play_slideshow.toLong()),
+                                )
+                                viewModel.stopSlideshow()
+                            } else {
+                                // Start slideshow
+                                detailsActionsAdapter.replace(
+                                    detailsActionsAdapter.size() - 1,
+                                    Action(R.string.stop_slideshow.toLong()),
+                                )
+                                (requireParentFragment() as ImageFragment).hideOverlay()
+                                viewModel.startSlideshow()
+                            }
+                            detailsActionsAdapter.notifyItemRangeChanged(
+                                detailsActionsAdapter.size() - 1,
+                                1,
+                            )
+                        } else if (action.id.toInt() == R.string.apply_filters) {
+                            (requireParentFragment() as ImageFragment).showFilterOverlay()
+                        }
+                        val controller = viewModel.imageController
+                        if (controller != null) {
+                            when (action.id.toInt()) {
+                                R.string.fa_rotate_left -> controller.rotateLeft()
+                                R.string.fa_rotate_right -> controller.rotateRight()
+                                R.string.fa_magnifying_glass_plus -> controller.zoomIn()
+                                R.string.fa_magnifying_glass_minus -> controller.zoomOut()
+                                R.string.fa_arrow_right_arrow_left -> controller.flip()
+                                R.string.stashapp_effect_filters_reset_transforms -> controller.reset()
+                            }
+                        }
+                        val videoController = viewModel.videoController
+                        if (videoController != null) {
+                            when (action.id.toInt()) {
+                                R.string.fa_play -> {
+                                    videoController.play()
+                                    detailsActionsAdapter.replace(
+                                        0,
+                                        Action(R.string.fa_pause.toLong()),
+                                    )
+                                }
+
+                                R.string.fa_pause -> {
+                                    videoController.pause()
+                                    detailsActionsAdapter.replace(
+                                        0,
+                                        Action(R.string.fa_play.toLong()),
+                                    )
+                                }
+                            }
                         }
                     }
-                }
             }
+
+        mPresenterSelector
+            .addClassPresenter(ListRow::class.java, ListRowPresenter())
+            .addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
 
         if (readOnlyModeDisabled()) {
             mAdapter.set(
@@ -426,6 +434,13 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         showTitle(true)
     }
 
+    override fun onDestroyView() {
+        detailsPresenter?.onActionClickedListener = null
+        detailsPresenter = null
+        onItemViewClickedListener = null
+        super.onDestroyView()
+    }
+
     private inner class ImageDetailsRowPresenter : AbstractDetailsDescriptionPresenter() {
         override fun onBindDescription(
             vh: ViewHolder,
@@ -526,7 +541,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         var mButton: Button = button
     }
 
-    private inner class DetailsActionsPresenter : Presenter() {
+    private class DetailsActionsPresenter : Presenter() {
         override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
             val view =
                 LayoutInflater
@@ -556,9 +571,9 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 vh.mButton.typeface = StashApplication.getFont(R.font.fa_solid_900)
             }
             vh.mButton.text = vh.view.context.getString(action.id.toInt())
-            if (action.id.toInt() == R.string.fa_rotate_left) {
-                firstButton = vh.mButton
-            }
+//            if (action.id.toInt() == R.string.fa_rotate_left) {
+//                firstButton = vh.mButton
+//            }
         }
 
         override fun onUnbindViewHolder(viewHolder: ViewHolder) {
