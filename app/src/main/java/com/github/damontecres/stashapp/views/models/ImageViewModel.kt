@@ -8,6 +8,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.CountImagesQuery
 import com.github.damontecres.stashapp.api.FindImagesQuery
@@ -22,7 +23,12 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.suppliers.StashSparseFilterFetcher
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isImageClip
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -47,7 +53,13 @@ class ImageViewModel(
     /**
      * Whether the slideshow is running or not
      */
-    val slideshow = MutableLiveData(false)
+    private val _slideshow = MutableLiveData(false)
+    val slideshow: LiveData<Boolean> = _slideshow
+    val slideshowDelay =
+        PreferenceManager.getDefaultSharedPreferences(StashApplication.getApplication()).getInt(
+            StashApplication.getApplication().getString(R.string.pref_key_slideshow_duration),
+            StashApplication.getApplication().resources.getInteger(R.integer.pref_key_slideshow_duration_default),
+        ) * 1000L
 
     val currentPosition = MutableLiveData(-1)
     val totalCount = MutableLiveData(-1)
@@ -55,7 +67,7 @@ class ImageViewModel(
     /**
      * Set the current image to a new one
      */
-    fun setImage(newImage: ImageData) {
+    private fun setImage(newImage: ImageData) {
         _image.value = newImage
         state["imageId"] = newImage.id
     }
@@ -67,7 +79,9 @@ class ImageViewModel(
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
             totalCount.value = pager.source.getCount()
             switchImage(slideshow.position, false)
-            this@ImageViewModel.slideshow.value = slideshow.automatic
+            if (slideshow.automatic) {
+                startSlideshow()
+            }
         }
     }
 
@@ -94,6 +108,7 @@ class ImageViewModel(
         val curr = currentPosition.value
         if (curr != null) {
             switchImage(curr + 1, causedByUser)
+            pulseSlideshow()
         }
     }
 
@@ -101,10 +116,11 @@ class ImageViewModel(
         val curr = currentPosition.value
         if (curr != null) {
             switchImage(curr - 1, causedByUser)
+            pulseSlideshow()
         }
     }
 
-    fun switchImage(
+    private fun switchImage(
         newPosition: Int,
         showToast: Boolean = true,
     ) {
@@ -137,6 +153,19 @@ class ImageViewModel(
                     }
                 }
             }
+            viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                listOf(newPosition + 1, newPosition - 1).forEach { position ->
+                    val image = pager.get(position)
+                    if (image?.isImageClip == false) {
+                        image.paths.image?.let {
+                            Log.v(TAG, "Preloading ${image.id}")
+                            StashGlide
+                                .withCaching(StashApplication.getApplication(), it)
+                                .preload()
+                        }
+                    }
+                }
+            }
         } else if (showToast) {
             Toast
                 .makeText(
@@ -145,6 +174,36 @@ class ImageViewModel(
                     Toast.LENGTH_SHORT,
                 ).show()
         }
+    }
+
+    private var slideshowJob: Job? = null
+
+    fun startSlideshow() {
+        _slideshow.value = true
+        pulseSlideshow()
+    }
+
+    fun stopSlideshow() {
+        slideshowJob?.cancel()
+        _slideshow.value = false
+    }
+
+    fun pulseSlideshow(milliseconds: Long = slideshowDelay) {
+        slideshowJob?.cancel()
+        if (slideshow.value!!) {
+            slideshowJob =
+                viewModelScope
+                    .launch(StashCoroutineExceptionHandler()) {
+                        delay(milliseconds)
+                        nextImage(false)
+                    }.apply {
+                        invokeOnCompletion { if (it !is CancellationException) pulseSlideshow() }
+                    }
+        }
+    }
+
+    fun tearDownSlideshow() {
+        slideshowJob?.cancel()
     }
 
     companion object {

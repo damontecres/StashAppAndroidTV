@@ -27,7 +27,6 @@ import com.github.damontecres.stashapp.playback.VideoFilterViewModel
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isImageClip
-import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashZoomImageView
 import com.github.damontecres.stashapp.views.models.ImageViewModel
@@ -98,7 +97,7 @@ class ImageViewFragment :
                     .build()
             val imageLoader =
                 StashGlide
-                    .with(requireContext(), imageUrl, image.maxFileSize)
+                    .withCaching(requireContext(), imageUrl)
                     .transition(withCrossFade(factory))
                     .placeholder(placeholder)
                     .listener(
@@ -125,7 +124,10 @@ class ImageViewFragment :
                                 target: Target<Drawable?>?,
                                 dataSource: DataSource,
                                 isFirstResource: Boolean,
-                            ): Boolean = false
+                            ): Boolean {
+                                viewModel.pulseSlideshow()
+                                return false
+                            }
                         },
                     )
             filterViewModel.maybeGetSavedFilter()
@@ -169,6 +171,7 @@ class ImageViewFragment :
                     // Should never occur
                     throw IllegalStateException()
                 }
+                viewModel.pulseSlideshow()
                 return true
             }
         }
@@ -290,6 +293,7 @@ class ImageViewFragment :
 
     fun resetZoom() {
         mainImage.zoomTo(1.0f, true)
+        viewModel.pulseSlideshow()
     }
 
     override fun reset(animate: Boolean) {
@@ -308,6 +312,7 @@ class ImageViewFragment :
                     }.start()
             }
         } else {
+            viewModel.pulseSlideshow()
             mainImage.cancelAnimations()
             mainImage.moveTo(1f, 0f, 0f, false)
             mainImage.rotation = 0f

@@ -71,6 +71,23 @@ class ImageClipFragment :
                 player?.setMediaItem(mediaItem)
                 player?.prepare()
                 player?.play()
+
+                if (imageViewModel.slideshow.value!!) {
+                    player?.repeatMode = Player.REPEAT_MODE_OFF
+                } else {
+                    player?.repeatMode = Player.REPEAT_MODE_ONE
+                }
+                imageViewModel.pulseSlideshow(Long.MAX_VALUE)
+                player?.addListener(
+                    object : Player.Listener {
+                        override fun onPlaybackStateChanged(playbackState: Int) {
+                            if (playbackState == Player.STATE_ENDED) {
+                                imageViewModel.pulseSlideshow()
+                                player?.removeListener(this)
+                            }
+                        }
+                    },
+                )
             } else {
                 player?.stop()
             }
@@ -82,9 +99,8 @@ class ImageClipFragment :
     }
 
     override fun Player.postSetupPlayer() {
-        repeatMode = Player.REPEAT_MODE_ONE
-        prepare()
-        play()
+//        prepare()
+//        play()
     }
 
     override fun play() {
