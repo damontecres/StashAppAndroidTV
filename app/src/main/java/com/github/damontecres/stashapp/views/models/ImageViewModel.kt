@@ -26,7 +26,6 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
-import com.github.damontecres.stashapp.util.maxFileSize
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -161,7 +160,7 @@ class ImageViewModel(
                         image.paths.image?.let {
                             Log.v(TAG, "Preloading ${image.id}")
                             StashGlide
-                                .with(StashApplication.getApplication(), it, image.maxFileSize)
+                                .withCaching(StashApplication.getApplication(), it)
                                 .preload()
                         }
                     }

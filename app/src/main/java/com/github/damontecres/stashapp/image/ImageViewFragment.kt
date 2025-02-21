@@ -27,7 +27,6 @@ import com.github.damontecres.stashapp.playback.VideoFilterViewModel
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isImageClip
-import com.github.damontecres.stashapp.util.maxFileSize
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashZoomImageView
 import com.github.damontecres.stashapp.views.models.ImageViewModel
@@ -98,7 +97,7 @@ class ImageViewFragment :
                     .build()
             val imageLoader =
                 StashGlide
-                    .with(requireContext(), imageUrl, image.maxFileSize)
+                    .withCaching(requireContext(), imageUrl)
                     .transition(withCrossFade(factory))
                     .placeholder(placeholder)
                     .listener(
