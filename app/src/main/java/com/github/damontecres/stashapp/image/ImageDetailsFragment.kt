@@ -68,6 +68,7 @@ import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
+import com.github.damontecres.stashapp.views.formatBytes
 import com.github.damontecres.stashapp.views.models.ImageViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
@@ -489,13 +490,23 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     if (showDebug) {
                         add("Image ID: ${image.id}")
                         add("Image ${viewModel.currentPosition.value} of ${viewModel.totalCount.value}")
-                        add("")
+                        val size =
+                            formatBytes(
+                                image.visual_files
+                                    .firstOrNull()
+                                    ?.onBaseFile
+                                    ?.size
+                                    ?.toString()
+                                    ?.toIntOrNull() ?: 0,
+                            )
+                        add("Size: $size")
                     }
                     if (image.photographer.isNotNullOrBlank()) {
+                        add("")
                         add("${context.getString(R.string.stashapp_photographer)}: ${image.photographer}")
                     }
-                    add("")
-                    if (image.details != null) {
+                    if (image.details.isNotNullOrBlank()) {
+                        add("")
                         add(image.details)
                     }
                     add("")
