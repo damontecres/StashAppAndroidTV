@@ -3,14 +3,15 @@ package com.github.damontecres.stashapp.image
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.OptIn
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.playback.CodecSupport
-import com.github.damontecres.stashapp.playback.PlaybackFragment
+import com.github.damontecres.stashapp.StashExoPlayer
+import com.github.damontecres.stashapp.playback.StashPlayerView
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.views.models.ImageViewModel
 
@@ -19,50 +20,25 @@ import com.github.damontecres.stashapp.views.models.ImageViewModel
  */
 @OptIn(UnstableApi::class)
 class ImageClipFragment :
-    PlaybackFragment(),
-    VideoController {
+    Fragment(R.layout.image_clip_playback),
+    VideoController,
+    Player.Listener {
     private val imageViewModel: ImageViewModel by viewModels(ownerProducer = { requireParentFragment() })
-
-    override val previewsEnabled: Boolean
-        get() = false
-
-    override val optionsButtonOptions: OptionsButtonOptions
-        get() = OptionsButtonOptions(DataType.IMAGE, false)
+    private lateinit var videoView: StashPlayerView
+    private var player: Player? = null
 
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-
+        videoView = view.findViewById(R.id.video_view)
         videoView.useController = false
-        hideControlsIfVisible()
 
         imageViewModel.videoController = this
 
         imageViewModel.image.observe(viewLifecycleOwner) { imageData ->
             if (imageData.isImageClip) {
-                val videoFile = imageData.visual_files.firstOrNull()?.onVideoFile
-
-                val supportedCodecs = CodecSupport.getSupportedCodecs(requireContext())
-                val videoCodec = videoFile?.video_codec
-                val audioCodec = videoFile?.audio_codec
-                val videoSupported = supportedCodecs.isVideoSupported(videoCodec)
-                val audioSupported = supportedCodecs.isAudioSupported(audioCodec)
-                val formatSupported = supportedCodecs.isContainerFormatSupported(videoFile?.format)
-
-                val unsupportedStr = getString(R.string.unsupported)
-                debugPlaybackTextView.text = getString(R.string.force_direct)
-                debugVideoTextView.text =
-                    if (videoSupported) videoCodec else "$videoCodec ($unsupportedStr)"
-                debugAudioTextView.text =
-                    if (audioSupported) audioCodec else "$audioCodec ($unsupportedStr)"
-                debugContainerTextView.text =
-                    if (formatSupported) videoFile?.format else "${videoFile?.format} ($unsupportedStr)"
-
-                titleText.text = imageData.title
-                dateText.text = imageData.date
-
                 val mediaItem =
                     MediaItem
                         .Builder()
@@ -78,29 +54,41 @@ class ImageClipFragment :
                     player?.repeatMode = Player.REPEAT_MODE_ONE
                 }
                 imageViewModel.pulseSlideshow(Long.MAX_VALUE)
-                player?.addListener(
-                    object : Player.Listener {
-                        override fun onPlaybackStateChanged(playbackState: Int) {
-                            if (playbackState == Player.STATE_ENDED) {
-                                imageViewModel.pulseSlideshow()
-                                player?.removeListener(this)
-                            }
-                        }
-                    },
-                )
             } else {
                 player?.stop()
             }
         }
+
+        imageViewModel.slideshow.observe(viewLifecycleOwner) { slideshow ->
+            player?.repeatMode =
+                if (slideshow) {
+                    Player.REPEAT_MODE_OFF
+                } else {
+                    Player.REPEAT_MODE_ONE
+                }
+        }
     }
 
-    override fun Player.setupPlayer() {
-        // no-op
-    }
-
-    override fun Player.postSetupPlayer() {
-//        prepare()
-//        play()
+    @OptIn(UnstableApi::class)
+    override fun onStart() {
+        // Always release the player and recreate
+        StashExoPlayer.releasePlayer()
+        player =
+            StashExoPlayer
+                .getInstance(
+                    requireContext(),
+                    StashServer.requireCurrentServer(),
+                ).also {
+                    videoView.player = it
+                    it.repeatMode =
+                        if (imageViewModel.slideshow.value == true) {
+                            Player.REPEAT_MODE_OFF
+                        } else {
+                            Player.REPEAT_MODE_ONE
+                        }
+                }
+        StashExoPlayer.addListener(this)
+        super.onStart()
     }
 
     override fun play() {
@@ -109,5 +97,22 @@ class ImageClipFragment :
 
     override fun pause() {
         player?.pause()
+    }
+
+    override fun onPlaybackStateChanged(playbackState: Int) {
+        if (playbackState == Player.STATE_ENDED) {
+            imageViewModel.pulseSlideshow()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        StashExoPlayer.releasePlayer()
+        videoView.player = null
+        player = null
+    }
+
+    companion object {
+        private const val TAG = "ImageClipFragment"
     }
 }

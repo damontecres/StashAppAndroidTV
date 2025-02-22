@@ -108,7 +108,6 @@ class ImageViewModel(
         val curr = currentPosition.value
         if (curr != null) {
             switchImage(curr + 1, causedByUser)
-            pulseSlideshow()
         }
     }
 
@@ -116,7 +115,6 @@ class ImageViewModel(
         val curr = currentPosition.value
         if (curr != null) {
             switchImage(curr - 1, causedByUser)
-            pulseSlideshow()
         }
     }
 
@@ -180,7 +178,9 @@ class ImageViewModel(
 
     fun startSlideshow() {
         _slideshow.value = true
-        pulseSlideshow()
+        if (_image.value?.isImageClip == false) {
+            pulseSlideshow()
+        }
     }
 
     fun stopSlideshow() {
