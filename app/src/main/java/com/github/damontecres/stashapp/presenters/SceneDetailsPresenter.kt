@@ -1,7 +1,9 @@
 package com.github.damontecres.stashapp.presenters
 
+import android.util.Log
 import androidx.core.widget.NestedScrollView
 import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
+import androidx.leanback.widget.Presenter
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -21,7 +23,7 @@ import com.github.damontecres.stashapp.views.parseTimeToString
  * [AbstractDetailsDescriptionPresenter] for [com.github.damontecres.stashapp.SceneDetailsFragment]
  */
 class SceneDetailsPresenter(
-    val ratingCallback: StashRatingBar.RatingCallback,
+    var ratingCallback: StashRatingBar.RatingCallback?,
 ) : AbstractDetailsDescriptionPresenter() {
     override fun onBindDescription(
         viewHolder: ViewHolder,
@@ -149,5 +151,12 @@ class SceneDetailsPresenter(
         } else {
             ratingBar.disable()
         }
+    }
+
+    override fun onUnbindViewHolder(viewHolder: Presenter.ViewHolder) {
+        super.onUnbindViewHolder(viewHolder)
+        val ratingBar = viewHolder.view.findViewById<StashRatingBar>(R.id.rating_bar)
+        ratingBar.setRatingCallback(null)
+        Log.v("SceneDetailsPresenter", "onUnbindViewHolder")
     }
 }

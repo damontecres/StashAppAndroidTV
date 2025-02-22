@@ -195,26 +195,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
     private val playActionsAdapter = SparseArrayObjectAdapter()
 
-    private val detailsPresenter =
-        FullWidthDetailsOverviewRowPresenter(
-            SceneDetailsPresenter { rating100: Int ->
-                viewLifecycleOwner.lifecycleScope.launch(
-                    StashCoroutineExceptionHandler(
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to set rating",
-                            Toast.LENGTH_SHORT,
-                        ),
-                    ),
-                ) {
-                    mutationEngine.setRating(
-                        sceneId,
-                        rating100,
-                    )
-                    showSetRatingToast(requireContext(), rating100)
-                }
-            },
-        )
+    private var scenePresenter: SceneDetailsPresenter? = null
+    private var detailsPresenter: FullWidthDetailsOverviewRowPresenter? = null
 
     override fun onInflateTitleView(
         inflater: LayoutInflater?,
@@ -565,52 +547,65 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupDetailsOverviewRowPresenter() {
-        // Set detail background.
-        detailsPresenter.backgroundColor =
-            ContextCompat.getColor(requireActivity(), R.color.default_card_background)
-
-        // Hook up transition element.
-//        val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
-//        sharedElementHelper.setSharedElementEnterTransition(
-//            activity,
-//            SceneDetailsActivity.SHARED_ELEMENT_NAME,
-//        )
-//        detailsPresenter.setListener(sharedElementHelper)
-        detailsPresenter.isParticipatingEntranceTransition = true
-
-        detailsPresenter.onActionClickedListener =
-            OnActionClickedListener { action ->
-                if (this.sceneData != null) {
-                    if (action.id in
-                        longArrayOf(
-                            ACTION_PLAY_SCENE,
-                            ACTION_RESUME_SCENE,
-                            ACTION_TRANSCODE_RESUME_SCENE,
-                            ACTION_DIRECT_PLAY_RESUME_SCENE,
-                        )
-                    ) {
-                        val position =
-                            if (action.id == ACTION_RESUME_SCENE ||
-                                action.id == ACTION_TRANSCODE_RESUME_SCENE ||
-                                action.id == ACTION_DIRECT_PLAY_RESUME_SCENE
-                            ) {
-                                viewModel.currentPosition.value ?: 0L
-                            } else {
-                                0L
-                            }
-                        val mode =
-                            when (action.id) {
-                                ACTION_TRANSCODE_RESUME_SCENE -> PlaybackMode.FORCED_TRANSCODE
-                                ACTION_DIRECT_PLAY_RESUME_SCENE -> PlaybackMode.FORCED_DIRECT_PLAY
-                                else -> PlaybackMode.CHOOSE
-                            }
-
-                        val playbackDest = Destination.Playback(sceneId, position, mode)
-                        serverViewModel.navigationManager.navigate(playbackDest)
-                    } else {
-                        throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
-                    }
+        scenePresenter =
+            SceneDetailsPresenter { rating100: Int ->
+                viewLifecycleOwner.lifecycleScope.launch(
+                    StashCoroutineExceptionHandler(
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to set rating",
+                            Toast.LENGTH_SHORT,
+                        ),
+                    ),
+                ) {
+                    mutationEngine.setRating(
+                        sceneId,
+                        rating100,
+                    )
+                    showSetRatingToast(requireContext(), rating100)
                 }
+            }
+        detailsPresenter =
+            FullWidthDetailsOverviewRowPresenter(scenePresenter).apply {
+                // Set detail background.
+                backgroundColor =
+                    ContextCompat.getColor(requireActivity(), R.color.default_card_background)
+                isParticipatingEntranceTransition = false
+
+                onActionClickedListener =
+                    OnActionClickedListener { action ->
+                        if (this@SceneDetailsFragment.sceneData != null) {
+                            if (action.id in
+                                longArrayOf(
+                                    ACTION_PLAY_SCENE,
+                                    ACTION_RESUME_SCENE,
+                                    ACTION_TRANSCODE_RESUME_SCENE,
+                                    ACTION_DIRECT_PLAY_RESUME_SCENE,
+                                )
+                            ) {
+                                val position =
+                                    if (action.id == ACTION_RESUME_SCENE ||
+                                        action.id == ACTION_TRANSCODE_RESUME_SCENE ||
+                                        action.id == ACTION_DIRECT_PLAY_RESUME_SCENE
+                                    ) {
+                                        viewModel.currentPosition.value ?: 0L
+                                    } else {
+                                        0L
+                                    }
+                                val mode =
+                                    when (action.id) {
+                                        ACTION_TRANSCODE_RESUME_SCENE -> PlaybackMode.FORCED_TRANSCODE
+                                        ACTION_DIRECT_PLAY_RESUME_SCENE -> PlaybackMode.FORCED_DIRECT_PLAY
+                                        else -> PlaybackMode.CHOOSE
+                                    }
+
+                                val playbackDest = Destination.Playback(sceneId, position, mode)
+                                serverViewModel.navigationManager.navigate(playbackDest)
+                            } else {
+                                throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
+                            }
+                        }
+                    }
             }
         mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
     }
@@ -647,13 +642,13 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     ),
                 )
             } else if (action == StashAction.FORCE_TRANSCODE) {
-                detailsPresenter.onActionClickedListener.onActionClicked(
+                detailsPresenter!!.onActionClickedListener.onActionClicked(
                     Action(
                         ACTION_TRANSCODE_RESUME_SCENE,
                     ),
                 )
             } else if (action == StashAction.FORCE_DIRECT_PLAY) {
-                detailsPresenter.onActionClickedListener.onActionClicked(
+                detailsPresenter!!.onActionClickedListener.onActionClicked(
                     Action(
                         ACTION_DIRECT_PLAY_RESUME_SCENE,
                     ),
@@ -697,6 +692,15 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         } else {
             playActionsAdapter.clear()
         }
+    }
+
+    override fun onDestroyView() {
+        scenePresenter?.ratingCallback = null
+        detailsPresenter?.onActionClickedListener = null
+        detailsPresenter = null
+        onItemViewClickedListener = null
+        scenePresenter = null
+        super.onDestroyView()
     }
 
     companion object {

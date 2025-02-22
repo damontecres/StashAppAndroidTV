@@ -135,7 +135,7 @@ class StashRatingBar(
         decimalRatingBar.onFocusChangeListener = focusChangeListener
     }
 
-    fun setRatingCallback(ratingCallback: RatingCallback) {
+    fun setRatingCallback(ratingCallback: RatingCallback?) {
         this.ratingCallback = ratingCallback
     }
 
