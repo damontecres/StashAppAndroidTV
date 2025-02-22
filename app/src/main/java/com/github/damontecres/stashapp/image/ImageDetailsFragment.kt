@@ -84,8 +84,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
     private lateinit var mutationEngine: MutationEngine
 
     private var detailsPresenter: FullWidthDetailsOverviewRowPresenter? = null
-    private val mPresenterSelector = ClassPresenterSelector()
-    private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
+    private val mAdapter = SparseArrayObjectAdapter()
 
     private lateinit var firstButton: Button
 
@@ -249,19 +248,18 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         configRowManager({ viewLifecycleOwner.lifecycleScope }, galleriesRowManager, ::GalleryPresenter)
         configRowManager({ viewLifecycleOwner.lifecycleScope }, studioRowManager, ::StudioPresenter)
 
-        adapter = mAdapter
         val detailsActionsAdapter = ArrayObjectAdapter(DetailsActionsPresenter())
         detailsPresenter =
             FullWidthDetailsOverviewRowPresenter(ImageDetailsRowPresenter()).apply {
                 actionsBackgroundColor =
                     ContextCompat.getColor(
                         requireActivity(),
-                        R.color.transparent_default_card_background_25,
+                        R.color.transparent_black_25,
                     )
                 backgroundColor =
                     ContextCompat.getColor(
                         requireActivity(),
-                        R.color.transparent_default_card_background_50,
+                        R.color.transparent_default_card_background_75,
                     )
 
                 onActionClickedListener =
@@ -323,10 +321,10 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                         }
                     }
             }
-
-        mPresenterSelector
-            .addClassPresenter(ListRow::class.java, ListRowPresenter())
-            .addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
+        mAdapter.presenterSelector =
+            ClassPresenterSelector()
+                .addClassPresenter(ListRow::class.java, ListRowPresenter())
+                .addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
 
         if (readOnlyModeDisabled()) {
             mAdapter.set(
@@ -349,6 +347,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 }.addListenerForClass(OCounter::class.java) { oCounter ->
                     actionListener.incrementOCounter(oCounter)
                 }
+
+        adapter = mAdapter
 
         viewModel.image.observe(viewLifecycleOwner) { newImage ->
 
