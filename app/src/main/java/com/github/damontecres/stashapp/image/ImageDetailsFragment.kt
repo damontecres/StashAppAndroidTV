@@ -68,6 +68,7 @@ import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.StashRatingBar
+import com.github.damontecres.stashapp.views.formatBytes
 import com.github.damontecres.stashapp.views.models.ImageViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
@@ -84,8 +85,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
     private lateinit var mutationEngine: MutationEngine
 
     private var detailsPresenter: FullWidthDetailsOverviewRowPresenter? = null
-    private val mPresenterSelector = ClassPresenterSelector()
-    private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
+    private val mAdapter = SparseArrayObjectAdapter()
 
     private lateinit var firstButton: Button
 
@@ -249,19 +249,18 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         configRowManager({ viewLifecycleOwner.lifecycleScope }, galleriesRowManager, ::GalleryPresenter)
         configRowManager({ viewLifecycleOwner.lifecycleScope }, studioRowManager, ::StudioPresenter)
 
-        adapter = mAdapter
         val detailsActionsAdapter = ArrayObjectAdapter(DetailsActionsPresenter())
         detailsPresenter =
             FullWidthDetailsOverviewRowPresenter(ImageDetailsRowPresenter()).apply {
                 actionsBackgroundColor =
                     ContextCompat.getColor(
                         requireActivity(),
-                        R.color.transparent_default_card_background_25,
+                        R.color.transparent_black_25,
                     )
                 backgroundColor =
                     ContextCompat.getColor(
                         requireActivity(),
-                        R.color.transparent_default_card_background_50,
+                        R.color.transparent_default_card_background_75,
                     )
 
                 onActionClickedListener =
@@ -323,10 +322,10 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                         }
                     }
             }
-
-        mPresenterSelector
-            .addClassPresenter(ListRow::class.java, ListRowPresenter())
-            .addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
+        mAdapter.presenterSelector =
+            ClassPresenterSelector()
+                .addClassPresenter(ListRow::class.java, ListRowPresenter())
+                .addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
 
         if (readOnlyModeDisabled()) {
             mAdapter.set(
@@ -349,6 +348,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 }.addListenerForClass(OCounter::class.java) { oCounter ->
                     actionListener.incrementOCounter(oCounter)
                 }
+
+        adapter = mAdapter
 
         viewModel.image.observe(viewLifecycleOwner) { newImage ->
 
@@ -489,13 +490,23 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     if (showDebug) {
                         add("Image ID: ${image.id}")
                         add("Image ${viewModel.currentPosition.value} of ${viewModel.totalCount.value}")
-                        add("")
+                        val size =
+                            formatBytes(
+                                image.visual_files
+                                    .firstOrNull()
+                                    ?.onBaseFile
+                                    ?.size
+                                    ?.toString()
+                                    ?.toIntOrNull() ?: 0,
+                            )
+                        add("Size: $size")
                     }
                     if (image.photographer.isNotNullOrBlank()) {
+                        add("")
                         add("${context.getString(R.string.stashapp_photographer)}: ${image.photographer}")
                     }
-                    add("")
-                    if (image.details != null) {
+                    if (image.details.isNotNullOrBlank()) {
+                        add("")
                         add(image.details)
                     }
                     add("")

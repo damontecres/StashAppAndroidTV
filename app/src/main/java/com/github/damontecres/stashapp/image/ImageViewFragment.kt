@@ -108,13 +108,14 @@ class ImageViewFragment :
                                 target: Target<Drawable?>,
                                 isFirstResource: Boolean,
                             ): Boolean {
-                                Log.v(TAG, "onLoadFailed for ${image.id}")
+                                Log.e(TAG, "onLoadFailed for ${image.id}", e)
                                 Toast
                                     .makeText(
                                         requireContext(),
-                                        "Image loading failed!",
+                                        "Error loading ${image.title}!",
                                         Toast.LENGTH_LONG,
                                     ).show()
+                                viewModel.pulseSlideshow()
                                 return true
                             }
 
