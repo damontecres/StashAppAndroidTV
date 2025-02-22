@@ -27,6 +27,8 @@ class ImageClipFragment :
     private lateinit var videoView: StashPlayerView
     private var player: Player? = null
 
+    val isPlaying: Boolean get() = player?.isPlaying == true
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,

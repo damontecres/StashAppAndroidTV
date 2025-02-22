@@ -111,7 +111,7 @@ class ImageFragment :
     }
 
     private fun showOverlay() {
-        viewModel.pulseSlideshow(Long.MAX_VALUE)
+        viewModel.pauseSlideshow()
         childFragmentManager.commitNow {
             setCustomAnimations(
                 androidx.leanback.R.anim.abc_slide_in_bottom,
@@ -131,7 +131,8 @@ class ImageFragment :
                 )
                 hide(overlayFragment)
             }
-            if (viewModel.image.value?.isImageClip == false) {
+            viewModel.unpauseSlideshow()
+            if (viewModel.image.value?.isImageClip == false || !imageClipFragment.isPlaying) {
                 viewModel.pulseSlideshow()
             }
         }
@@ -139,7 +140,7 @@ class ImageFragment :
 
     fun showFilterOverlay() {
         hideOverlay()
-        viewModel.pulseSlideshow(Long.MAX_VALUE)
+        viewModel.pauseSlideshow()
         childFragmentManager.commitNow {
             setCustomAnimations(
                 androidx.leanback.R.anim.abc_slide_in_top,
@@ -163,7 +164,8 @@ class ImageFragment :
                 )
                 hide(videoFiltersFragment)
             }
-            if (viewModel.image.value?.isImageClip == false) {
+            viewModel.unpauseSlideshow()
+            if (viewModel.image.value?.isImageClip == false || !imageClipFragment.isPlaying) {
                 viewModel.pulseSlideshow()
             }
         }

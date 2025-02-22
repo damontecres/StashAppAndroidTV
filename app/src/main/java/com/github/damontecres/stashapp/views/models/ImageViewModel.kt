@@ -55,6 +55,9 @@ class ImageViewModel(
      */
     private val _slideshow = MutableLiveData(false)
     val slideshow: LiveData<Boolean> = _slideshow
+    private val _slideshowPaused = MutableLiveData(false)
+    val slideshowPaused: LiveData<Boolean> = _slideshowPaused
+
     val slideshowDelay =
         PreferenceManager.getDefaultSharedPreferences(StashApplication.getApplication()).getInt(
             StashApplication.getApplication().getString(R.string.pref_key_slideshow_duration),
@@ -188,6 +191,15 @@ class ImageViewModel(
         _slideshow.value = false
     }
 
+    fun pauseSlideshow() {
+        _slideshowPaused.value = true
+        slideshowJob?.cancel()
+    }
+
+    fun unpauseSlideshow() {
+        _slideshowPaused.value = false
+    }
+
     fun pulseSlideshow(milliseconds: Long = slideshowDelay) {
         slideshowJob?.cancel()
         if (slideshow.value!!) {
@@ -195,7 +207,9 @@ class ImageViewModel(
                 viewModelScope
                     .launch(StashCoroutineExceptionHandler()) {
                         delay(milliseconds)
-                        nextImage(false)
+                        if (_slideshowPaused.value == false) {
+                            nextImage(false)
+                        }
                     }.apply {
                         invokeOnCompletion { if (it !is CancellationException) pulseSlideshow() }
                     }
