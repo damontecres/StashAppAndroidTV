@@ -94,6 +94,16 @@ class StashGlide private constructor() {
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .skipMemoryCache(false)
 
+        fun withMemoryCaching(
+            context: Context,
+            url: String,
+        ): RequestBuilder<Drawable> =
+            Glide
+                .with(context)
+                .load(createGlideUrl(url, context))
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(false)
+
         const val TAG = "StashGlide"
     }
 }
