@@ -91,8 +91,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private lateinit var queryEngine: QueryEngine
     private lateinit var mutationEngine: MutationEngine
 
-    private val mPresenterSelector = ClassPresenterSelector()
-    private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
+    private val mAdapter = SparseArrayObjectAdapter()
 
     private val studioRowManager =
         ListRowManager<StudioData>(
@@ -329,9 +328,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 }.addListenerForClass(OCounter::class.java) { oCounter ->
                     actionListener.incrementOCounter(oCounter)
                 }
-
-        setupDetailsOverviewRowPresenter()
-        mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -340,6 +336,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        setupDetailsOverviewRowPresenter()
 
         if (mAdapter.lookup(ACTIONS_POS) == null) {
             if (readOnlyModeDisabled()) {
@@ -405,9 +402,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
             setupDetailsOverviewRow(sceneData)
 
-            if (adapter == null) {
-                adapter = mAdapter
-            }
+            adapter = mAdapter
 
             initializeBackground(sceneData)
 
@@ -607,7 +602,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         }
                     }
             }
-        mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
+        val presenterSelector =
+            ClassPresenterSelector()
+                .addClassPresenter(ListRow::class.java, ListRowPresenter())
+                .addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
+        mAdapter.presenterSelector = presenterSelector
     }
 
     private fun convertDpToPixel(
