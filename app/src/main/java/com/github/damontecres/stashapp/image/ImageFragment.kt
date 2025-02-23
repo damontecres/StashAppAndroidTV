@@ -8,7 +8,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.fragment.app.viewModels
-import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
@@ -82,36 +81,37 @@ class ImageFragment :
             }
         }
 
-        val delay =
-            PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt(
-                getString(R.string.pref_key_slideshow_duration),
-                resources.getInteger(R.integer.pref_key_slideshow_duration_default),
-            ) * 1000L
-        viewModel.slideshow.observe(this) { newValue ->
-            timer?.cancel()
-            if (newValue) {
-                Log.i(TAG, "Setting up slideshow timer")
-                timer =
-                    kotlin.concurrent.timer(
-                        name = "imageSlideshow",
-                        daemon = true,
-                        initialDelay = delay,
-                        period = delay,
-                    ) {
-                        if (!overlayIsVisible) {
-                            viewModel.nextImage(false)
-                        }
-                    }
-            }
-        }
+//        val delay =
+//            PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt(
+//                getString(R.string.pref_key_slideshow_duration),
+//                resources.getInteger(R.integer.pref_key_slideshow_duration_default),
+//            ) * 1000L
+//        viewModel.slideshow.observe(this) { newValue ->
+//            timer?.cancel()
+//            if (newValue) {
+//                Log.i(TAG, "Setting up slideshow timer")
+//                timer =
+//                    kotlin.concurrent.timer(
+//                        name = "imageSlideshow",
+//                        daemon = true,
+//                        initialDelay = delay,
+//                        period = delay,
+//                    ) {
+//                        if (!overlayIsVisible) {
+//                            viewModel.nextImage(false)
+//                        }
+//                    }
+//            }
+//        }
     }
 
     override fun onStop() {
         super.onStop()
-        timer?.cancel()
+        viewModel.tearDownSlideshow()
     }
 
     private fun showOverlay() {
+        viewModel.pauseSlideshow()
         childFragmentManager.commitNow {
             setCustomAnimations(
                 androidx.leanback.R.anim.abc_slide_in_bottom,
@@ -131,11 +131,16 @@ class ImageFragment :
                 )
                 hide(overlayFragment)
             }
+            viewModel.unpauseSlideshow()
+            if (viewModel.image.value?.isImageClip == false || !imageClipFragment.isPlaying) {
+                viewModel.pulseSlideshow()
+            }
         }
     }
 
     fun showFilterOverlay() {
         hideOverlay()
+        viewModel.pauseSlideshow()
         childFragmentManager.commitNow {
             setCustomAnimations(
                 androidx.leanback.R.anim.abc_slide_in_top,
@@ -158,6 +163,10 @@ class ImageFragment :
                     androidx.leanback.R.anim.abc_slide_out_top,
                 )
                 hide(videoFiltersFragment)
+            }
+            viewModel.unpauseSlideshow()
+            if (viewModel.image.value?.isImageClip == false || !imageClipFragment.isPlaying) {
+                viewModel.pulseSlideshow()
             }
         }
     }

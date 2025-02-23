@@ -116,16 +116,18 @@ class StashExoPlayer private constructor() {
 
         fun addListener(listener: Player.Listener) {
             if (instance == null) {
-                Log.w(TAG, "Cannot add listener to null instance")
+                Log.w(TAG, "Cannot add listener to null instance: $listener")
             } else if (listeners.contains(listener)) {
-                Log.w(TAG, "Listener already added")
+                Log.w(TAG, "Listener already added: $listener")
             } else {
+                Log.v(TAG, "Added listener: $listener")
                 listeners.add(listener)
                 instance?.addListener(listener)
             }
         }
 
         fun removeListeners() {
+            Log.v(TAG, "Removing ${listeners.size} listeners")
             listeners.forEach {
                 instance?.removeListener(it)
             }
@@ -136,7 +138,7 @@ class StashExoPlayer private constructor() {
             if (listeners.remove(listener)) {
                 instance?.removeListener(listener)
             } else {
-                Log.w(TAG, "Listener was not added previously")
+                Log.w(TAG, "Listener was not added previously: $listener")
             }
         }
     }

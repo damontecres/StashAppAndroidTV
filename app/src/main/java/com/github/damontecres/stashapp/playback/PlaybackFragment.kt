@@ -673,6 +673,7 @@ abstract class PlaybackFragment(
 
     @OptIn(UnstableApi::class)
     override fun onStop() {
+        Log.v(TAG, "onStop")
         releasePlayer()
         super.onStop()
     }

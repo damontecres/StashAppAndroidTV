@@ -596,21 +596,19 @@ fun fakeMarker(
 )
 
 fun ScrollView.onlyScrollIfNeeded() {
-    viewTreeObserver.addOnGlobalLayoutListener {
-        val childHeight = getChildAt(0).height
-        val isScrollable =
-            height < childHeight + paddingTop + paddingBottom
-        isFocusable = isScrollable
-    }
+    val childHeight = getChildAt(0).height
+    val isScrollable =
+        height < childHeight + paddingTop + paddingBottom
+    isFocusable = isScrollable
+    isVerticalScrollBarEnabled = isScrollable
 }
 
 fun NestedScrollView.onlyScrollIfNeeded() {
-    viewTreeObserver.addOnGlobalLayoutListener {
-        val childHeight = getChildAt(0).height
-        val isScrollable =
-            height < childHeight + paddingTop + paddingBottom
-        isFocusable = isScrollable
-    }
+    val childHeight = getChildAt(0).height
+    val isScrollable =
+        height < childHeight + paddingTop + paddingBottom
+    isFocusable = isScrollable
+    isVerticalScrollBarEnabled = isScrollable
 }
 
 fun SharedPreferences.getStringNotNull(

@@ -159,7 +159,7 @@ class StashImageCardView(
 //                videoView?.player?.playWhenReady = true
             } else {
                 showImage()
-                StashExoPlayer.removeListeners()
+                StashExoPlayer.removeListener(listener)
                 videoView?.player?.stop()
                 videoView?.player = null
             }
