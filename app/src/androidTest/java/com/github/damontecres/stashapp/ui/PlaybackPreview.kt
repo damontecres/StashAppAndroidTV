@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.github.damontecres.stashapp.ui.components.playback.ControllerViewState
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackControls
 import com.github.damontecres.stashapp.ui.components.playback.PlaybackState
 import com.github.damontecres.stashapp.ui.components.playback.PlayerControls
@@ -37,7 +38,7 @@ private fun PlaybackControlsPreview() {
                 },
             playbackState = PlaybackState(true, true, false),
             modifier = Modifier.align(Alignment.BottomCenter),
-            controllerViewState = controllerViewState,
+            controllerViewState = ControllerViewState(3),
         )
     }
 }
