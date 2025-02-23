@@ -91,9 +91,8 @@ class StashGlide private constructor() {
             Glide
                 .with(context)
                 .load(createGlideUrl(url, context))
-                .diskCacheStrategy(DiskCacheStrategy.DATA)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                 .skipMemoryCache(false)
-                .signature(ObjectKey(System.currentTimeMillis()))
 
         const val TAG = "StashGlide"
     }
