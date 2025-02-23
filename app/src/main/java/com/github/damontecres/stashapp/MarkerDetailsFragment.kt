@@ -77,12 +77,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     private val viewModel by viewModels<MarkerDetailsViewModel>()
 
     private val mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
-    private val mPresenterSelector =
-        ClassPresenterSelector().addClassPresenter(
-            ListRow::class.java,
-            ListRowPresenter(),
-        )
-    private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
+    private val mAdapter = SparseArrayObjectAdapter()
 
     private val primaryTagPresenter =
         TagPresenter()
@@ -250,6 +245,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        setupDetailsOverviewRowPresenter()
         adapter = mAdapter
 
         onItemViewClickedListener =
@@ -268,39 +264,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             }
             val sceneData = viewModel.scene.value!!
 
-            detailsPresenter =
-                FullWidthDetailsOverviewRowPresenter(
-                    object : AbstractDetailsDescriptionPresenter() {
-                        @SuppressLint("SetTextI18n")
-                        override fun onBindDescription(
-                            vh: ViewHolder,
-                            item: Any,
-                        ) {
-                            val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
-                            ratingBar.visibility = View.GONE
-
-                            vh.title.text =
-                                if (marker.title.isNotNullOrBlank()) {
-                                    marker.title
-                                } else {
-                                    marker.primary_tag.tagData.name
-                                }
-                            if (PreferenceManager
-                                    .getDefaultSharedPreferences(requireContext())
-                                    .getBoolean(
-                                        getString(R.string.pref_key_show_playback_debug_info),
-                                        false,
-                                    )
-                            ) {
-                                vh.body.text =
-                                    "${getString(R.string.id)}: ${marker.id}\n" +
-                                    "${getString(R.string.stashapp_scene_id)}: ${sceneData.id}"
-                            }
-                        }
-                    },
-                )
             initializeBackground(marker.screenshot)
-            setupDetailsOverviewRowPresenter()
             setupDetailsOverviewRow(marker)
 
             primaryTagRowManager.setItems(listOf(marker.primary_tag.tagData))
@@ -333,11 +297,45 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupDetailsOverviewRowPresenter() {
+        detailsPresenter =
+            FullWidthDetailsOverviewRowPresenter(
+                object : AbstractDetailsDescriptionPresenter() {
+                    @SuppressLint("SetTextI18n")
+                    override fun onBindDescription(
+                        vh: ViewHolder,
+                        item: Any,
+                    ) {
+                        item as FullSceneData.Scene_marker
+                        val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
+                        ratingBar.visibility = View.GONE
+
+                        vh.title.text =
+                            if (item.title.isNotNullOrBlank()) {
+                                item.title
+                            } else {
+                                item.primary_tag.tagData.name
+                            }
+                        if (PreferenceManager
+                                .getDefaultSharedPreferences(requireContext())
+                                .getBoolean(
+                                    getString(R.string.pref_key_show_playback_debug_info),
+                                    false,
+                                )
+                        ) {
+                            vh.body.text = "${getString(R.string.id)}: ${item.id}\n"
+                        }
+                    }
+                },
+            )
         // Set detail background.
         detailsPresenter.backgroundColor =
             ContextCompat.getColor(requireActivity(), R.color.default_card_background)
 
-        mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
+        val presenterSelector =
+            ClassPresenterSelector()
+                .addClassPresenter(ListRow::class.java, ListRowPresenter())
+                .addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
+        mAdapter.presenterSelector = presenterSelector
     }
 
     private fun setupDetailsOverviewRow(marker: FullSceneData.Scene_marker) {
