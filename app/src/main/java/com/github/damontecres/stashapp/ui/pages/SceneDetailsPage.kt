@@ -1,12 +1,11 @@
 package com.github.damontecres.stashapp.ui.pages
 
-import android.util.Log
 import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,13 +26,16 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -45,8 +47,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
@@ -58,6 +62,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -809,38 +814,83 @@ fun SceneDetailsHeader(
                     )
                     // Description
                     if (scene.details.isNotNullOrBlank()) {
-//                            var borderColor by remember { mutableStateOf(Color.Transparent) }
                         val interactionSource = remember { MutableInteractionSource() }
                         val isFocused = interactionSource.collectIsFocusedAsState().value
-                        val borderColor =
+                        val bgColor =
                             if (isFocused) {
-//                                    scope.launch { bringIntoViewRequester.bringIntoView() }
-                                Color.Red
+                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f)
                             } else {
                                 Color.Unspecified
                             }
-                        Text(
-                            text = scene.details,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
+                        var textOverflow by remember { mutableStateOf(false) }
+                        var showDetailsDialog by remember { mutableStateOf(false) }
+                        Box(
                             modifier =
                                 Modifier
-                                    .padding(top = 8.dp)
-//                                        .clickable { Toast.makeText(context, "Details clicked", Toast.LENGTH_SHORT).show() }
-                                    .focusable(interactionSource = interactionSource)
-                                    .border(3.dp, color = borderColor)
-                                    .onFocusChanged {
-                                        Log.v("SceneDetails", "Details focused: ${it.isFocused}")
+                                    .background(bgColor, shape = RoundedCornerShape(8.dp))
+                                    .focusable(
+                                        enabled = textOverflow,
+                                        interactionSource = interactionSource,
+                                    ).onFocusChanged {
                                         if (it.isFocused) {
-//                                                borderColor = Color.DarkGray
                                             scope.launch { bringIntoViewRequester.bringIntoView() }
-                                        } else {
-//                                                borderColor = Color.Transparent
                                         }
-                                    },
-                        )
+                                    }.clickable(enabled = textOverflow) { showDetailsDialog = true },
+                        ) {
+                            Text(
+                                text = scene.details,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                                onTextLayout = { textLayoutResult ->
+                                    textOverflow = textLayoutResult.hasVisualOverflow
+                                },
+                                modifier = Modifier.padding(8.dp),
+                            )
+                        }
+                        // TODO, need to focus so d-pad can scroll the dialog
+                        if (showDetailsDialog) {
+                            val focusRequester = remember { FocusRequester() }
+                            val focusManager = LocalFocusManager.current
+
+                            LaunchedEffect(Unit) {
+                                focusRequester.requestFocus()
+                                focusManager.moveFocus(FocusDirection.Enter)
+                            }
+                            Dialog(
+                                onDismissRequest = { showDetailsDialog = false },
+                                properties = DialogProperties(),
+                            ) {
+                                Column(
+                                    modifier =
+                                        Modifier
+                                            .focusRequester(focusRequester)
+                                            .focusProperties { exit = { FocusRequester.Cancel } }
+                                            .focusGroup()
+                                            .height(400.dp)
+                                            .background(
+                                                MaterialTheme.colorScheme.secondaryContainer,
+                                                shape = RoundedCornerShape(8.dp),
+                                            ),
+                                ) {
+                                    Text(
+                                        text = scene.details,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        modifier =
+                                            Modifier
+                                                .padding(8.dp)
+                                                .verticalScroll(rememberScrollState()),
+//                                                .focusable()
+//                                                .focusRequester(focusRequester)
+//                                                .onFocusChanged {
+//                                                    Log.v("SceneDetails", "isFocused=${it.isFocused}")
+//                                                },
+                                    )
+                                }
+                            }
+                        }
                     }
                     // Key-Values
                     Row(
