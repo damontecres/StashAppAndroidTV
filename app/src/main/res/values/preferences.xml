@@ -38,4 +38,6 @@
 
     <string name="pref_key_slideshow_duration" translatable="false">image.slideshow.duration</string>
     <integer name="pref_key_slideshow_duration_default">5</integer>
+    <string name="pref_key_slideshow_duration_image_clip" translatable="false">image.clip.slideshow.duration</string>
+    <integer name="pref_key_slideshow_duration_default_image_clip">250</integer>
 </resources>
