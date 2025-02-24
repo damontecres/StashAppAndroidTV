@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.filter.FilterOption
 import com.github.damontecres.stashapp.views.getString
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -25,6 +26,15 @@ class DatePickerFragment(
     filterOption: FilterOption<StashDataFilter, DateCriterionInput>,
 ) : TwoValuePicker<String, DateCriterionInput>(filterOption) {
     private val format = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    private val defaultDate =
+        if (filterOption.nameStringId == R.string.stashapp_birthdate) {
+            val cal = Calendar.getInstance()
+            cal.time = Date()
+            cal.add(Calendar.YEAR, -18)
+            cal.time
+        } else {
+            Date()
+        }
 
     override val modifierOptions: List<CriterionModifier>
         get() =
@@ -58,26 +68,26 @@ class DatePickerFragment(
         val dateLong =
             if (value1 != null) {
                 try {
-                    format.parse(value1!!)?.time ?: Date().time
+                    format.parse(value1!!) ?: defaultDate
                 } catch (ex: ParseException) {
                     Log.w(TAG, "Parse error ($value1)", ex)
-                    Date().time
+                    defaultDate
                 }
             } else {
-                Date().time
-            }
+                defaultDate
+            }.time
 
         val dateLong2 =
             if (value2 != null) {
                 try {
-                    format.parse(value2!!)?.time ?: Date().time
+                    format.parse(value2!!) ?: defaultDate
                 } catch (ex: ParseException) {
                     Log.w(TAG, "Parse error ($value2)", ex)
-                    Date().time
+                    defaultDate
                 }
             } else {
-                Date().time
-            }
+                defaultDate
+            }.time
 
         val modifierOptions = this.modifierOptions.map(::modifierAction)
         actions.add(
