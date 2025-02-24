@@ -83,6 +83,20 @@ fun MultiCriterionInput.toMap(labelMapping: Map<String, String?>): Map<String, A
         )
     }
 
+fun MultiCriterionInput.toGalleryMap(labelMapping: Map<String, String?>): Map<String, Any> =
+    buildMap {
+        put("modifier", modifier.rawValue)
+        put(
+            "value",
+            value.getOrNull().orEmpty().map { id ->
+                buildMap {
+                    put("id", id)
+                    put("label", labelMapping[id] ?: id)
+                }
+            },
+        )
+    }
+
 fun HierarchicalMultiCriterionInput.getAllIds() = value.getOrNull().orEmpty() + excludes.getOrNull().orEmpty()
 
 fun HierarchicalMultiCriterionInput.toMap(labelMapping: Map<String, String?>): Map<String, Any> =
