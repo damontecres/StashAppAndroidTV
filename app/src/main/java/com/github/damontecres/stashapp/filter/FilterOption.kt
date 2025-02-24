@@ -110,6 +110,14 @@ private val SceneFilterOptions =
             { it.details },
             { filter, value -> filter.copy(details = value) },
         ),
+        FilterOption<SceneFilterType, IntCriterionInput>(
+            "duration",
+            R.string.stashapp_duration,
+            null,
+            IntCriterionInput::class,
+            { it.duration },
+            { filter, value -> filter.copy(duration = value) },
+        ),
         FilterOption<SceneFilterType, StringCriterionInput>(
             "director",
             R.string.stashapp_director,

@@ -50,6 +50,8 @@ import com.github.damontecres.stashapp.views.getString
 import java.util.Locale
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /**
  * Get the default title for a [StashData] item usable as a sub-filter label
@@ -259,10 +261,15 @@ fun filterSummaryRating(f: IntCriterionInput): String {
     }
 }
 
-fun filterSummary(f: IntCriterionInput): String {
+fun filterSummaryDuration(f: IntCriterionInput): String = filterSummary(f, { it.toDuration(DurationUnit.SECONDS).toString() })
+
+fun filterSummary(
+    f: IntCriterionInput,
+    valueMapper: ((Int) -> String) = { it.toString() },
+): String {
     val modStr = f.modifier.getString(StashApplication.getApplication())
-    val value = f.value
-    val value2 = f.value2.getOrNull()
+    val value = valueMapper(f.value)
+    val value2 = f.value2.getOrNull()?.let { valueMapper(it) }
     val toStr =
         when (f.modifier) {
             CriterionModifier.EQUALS,
@@ -486,6 +493,8 @@ fun filterSummary(
 ): String =
     if (name == "rating100") {
         filterSummaryRating(value as IntCriterionInput)
+    } else if (name == "duration") {
+        filterSummaryDuration(value as IntCriterionInput)
     } else {
         when (value) {
             is IntCriterionInput -> filterSummary(value)
