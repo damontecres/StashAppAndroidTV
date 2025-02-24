@@ -8,12 +8,15 @@ import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.playback.StashPlayerView
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.views.models.ImageViewModel
+import kotlin.properties.Delegates
 
 /**
  * Playback for an image clip (a video)
@@ -29,11 +32,21 @@ class ImageClipFragment :
 
     val isPlaying: Boolean get() = player?.isPlaying == true
 
+    private var delay by Delegates.notNull<Long>()
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        delay =
+            PreferenceManager
+                .getDefaultSharedPreferences(StashApplication.getApplication())
+                .getInt(
+                    requireContext().getString(R.string.pref_key_slideshow_duration_image_clip),
+                    resources.getInteger(R.integer.pref_key_slideshow_duration_default_image_clip),
+                ).toLong()
+
         videoView = view.findViewById(R.id.video_view)
         videoView.useController = false
 
@@ -103,7 +116,7 @@ class ImageClipFragment :
 
     override fun onPlaybackStateChanged(playbackState: Int) {
         if (playbackState == Player.STATE_ENDED) {
-            imageViewModel.pulseSlideshow()
+            imageViewModel.pulseSlideshow(delay)
         }
     }
 
