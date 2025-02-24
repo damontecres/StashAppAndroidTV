@@ -113,7 +113,14 @@ class FilterParser(
                     excludes = Optional.presentIfNotNull(excludes),
                 )
             } else if (it["value"] != null && it["value"] is List<*>) {
-                val items = (it["value"] as List<*>).map { it.toString() }
+                val items =
+                    (it["value"] as List<*>).map {
+                        if (it is Map<*, *>) {
+                            it["id"].toString()
+                        } else {
+                            it.toString()
+                        }
+                    }
                 MultiCriterionInput(
                     value = Optional.presentIfNotNull(items),
                     modifier = CriterionModifier.valueOf(it["modifier"]!!.toString()),

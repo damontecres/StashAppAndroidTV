@@ -86,5 +86,7 @@
     <string name="supported">Supported</string>
     <string name="labels">Labels</string>
     <string name="stream_details">Stream Details</string>
+    <string name="hours">Hours</string>
+    <string name="minutes">Minutes</string>
 
 </resources>

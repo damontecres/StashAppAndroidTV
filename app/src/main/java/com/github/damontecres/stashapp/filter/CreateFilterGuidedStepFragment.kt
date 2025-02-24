@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.filter
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
 import androidx.leanback.widget.GuidedAction
+import androidx.leanback.widget.GuidedActionsStylist
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.StashDataFilter
@@ -15,7 +16,9 @@ abstract class CreateFilterGuidedStepFragment : GuidedStepSupportFragment() {
         add(requireActivity().supportFragmentManager, step, R.id.root_fragment)
     }
 
-    override fun onProvideTheme(): Int = com.github.damontecres.stashapp.R.style.Theme_StashAppAndroidTV_GuidedStep
+    override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep
+
+    override fun onCreateActionsStylist(): GuidedActionsStylist = StashGuidedActionsStylist()
 
     /**
      * Create a [GuidedAction] for a [CriterionModifier]
