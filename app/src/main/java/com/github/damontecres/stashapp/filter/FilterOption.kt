@@ -1083,6 +1083,14 @@ private val GroupFilterOptions =
             { it.director },
             { filter, value -> filter.copy(director = value) },
         ),
+        FilterOption<GroupFilterType, IntCriterionInput>(
+            "duration",
+            R.string.stashapp_duration,
+            null,
+            IntCriterionInput::class,
+            { it.duration },
+            { filter, value -> filter.copy(duration = value) },
+        ),
         FilterOption<GroupFilterType, StringCriterionInput>(
             "name",
             R.string.stashapp_name,
