@@ -1,8 +1,10 @@
 package com.github.damontecres.stashapp.playback
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.annotation.OptIn
 import androidx.fragment.app.commit
@@ -14,12 +16,10 @@ import androidx.media3.common.Player
 import androidx.media3.common.Player.Listener
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
-import androidx.media3.exoplayer.ExoPlayer
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.StashData
-import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
@@ -43,23 +43,17 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
 
     protected lateinit var pagingSource: StashPagingSource<T, D, D, C>
 
-    /**
-     * Override the skip forward/back, if -1 then the user's settings will be used
-     */
-    protected var skipForwardOverride = -1L
-    protected var skipBackOverride = -1L
-
     private val playlistListFragment = PlaylistListFragment<T, D, C>()
 
     // Pages are 1-indexed
     private var currentPage = 1
     private var totalCount = -1
+    private lateinit var destination: Destination.Playlist
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val dest = requireArguments().getDestination<Destination.Playlist>()
-        playlistViewModel.setFilter(dest.filterArgs)
-        // TODO position
+        destination = requireArguments().getDestination<Destination.Playlist>()
+        playlistViewModel.setFilter(destination.filterArgs)
     }
 
     override fun onViewCreated(
@@ -98,38 +92,24 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         }
     }
 
-    override fun createPlayer(): ExoPlayer {
-        val server = StashServer.requireCurrentServer()
-        return if (skipForwardOverride == -1L || skipBackOverride == -1L) {
-            StashExoPlayer.createInstance(requireContext(), server)
-        } else {
-            StashExoPlayer.createInstance(
-                requireContext(),
-                server,
-                skipForwardOverride,
-                skipBackOverride,
-            )
-        }
+    override fun Player.setupPlayer() {
+        // no-op
     }
 
     @OptIn(UnstableApi::class)
-    override fun postCreatePlayer(player: Player) {
-        player.addListener(
+    override fun Player.postSetupPlayer() {
+        StashExoPlayer.addListener(
             object : Listener {
                 override fun onPlayerError(error: PlaybackException) {
                     // If there is an error, just skip the video
-                    player.seekToNext()
-                    player.prepare()
-                    player.playWhenReady = true
+                    seekToNext()
+                    prepare()
+                    playWhenReady = true
                 }
             },
         )
-        player.addListener(PlaylistListener())
-        if (playlistViewModel.filterArgs.value?.dataType == DataType.SCENE) {
-            // Only track activity for scene playback
-            maybeAddActivityTracking(player)
-        }
-        player.repeatMode = Player.REPEAT_MODE_OFF
+        StashExoPlayer.addListener(PlaylistListener())
+        repeatMode = Player.REPEAT_MODE_OFF
         if (videoView.controllerShowTimeoutMs > 0) {
             videoView.hideController()
         }
@@ -150,6 +130,9 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         addNextPageToPlaylist()
         maybeSetupVideoEffects(player!!)
         player!!.prepare()
+        if (destination.position > 0) {
+            playIndex(destination.position)
+        }
         player!!.play()
         totalCount = pagingSource.getCount()
         withContext(Dispatchers.Main) {
@@ -185,6 +168,39 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         }
     }
 
+    fun playIndex(index: Int) {
+        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+            val player = player!!
+            Log.v(
+                TAG,
+                "index=$index, player.mediaItemCount=${player.mediaItemCount}",
+            )
+            // The play will ignore requests to play something not in the playlist
+            // So check if the index is out of bounds and add pages until either the item is available or there are not more pages
+            // The latter shouldn't happen until there's a bug
+            while (index >= player.mediaItemCount) {
+                if (!addNextPageToPlaylist()) {
+                    // This condition is most likely a bug
+                    Log.w(
+                        TAG,
+                        "Requested $index with ${player.mediaItemCount} media items in player, " +
+                            "but addNextPageToPlaylist returned no additional items",
+                    )
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Unable to find item to play. This might be a bug!",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    return@launch
+                }
+                Log.v(TAG, "after fetch: player.mediaItemCount=${player.mediaItemCount}")
+            }
+            hidePlaylist()
+            player.seekTo(index, androidx.media3.common.C.TIME_UNSET)
+        }
+    }
+
     /**
      * Convert items provided by the data supplier into a [Scene]
      */
@@ -199,6 +215,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      */
     abstract fun builderCallback(item: D): (MediaItem.Builder.() -> Unit)?
 
+    @SuppressLint("SetTextI18n")
     private fun updatePlaylistDebug() {
         debugPlaylistTextView.text =
             "${player?.currentMediaItemIndex?.plus(1)} of ${player?.mediaItemCount} ($totalCount)"
@@ -230,11 +247,11 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 updatePlaylistDebug()
 
                 // Replace activity tracker
-                if (trackActivityListener != null) {
-                    trackActivityListener?.release()
-                    player!!.removeListener(trackActivityListener!!)
+                trackActivityListener?.let {
+                    it.release()
+                    StashExoPlayer.removeListener(it)
                 }
-                maybeAddActivityTracking(player!!)
+                maybeAddActivityTracking(scene)
             }
             if (hasMorePages) {
                 val count = player!!.mediaItemCount
@@ -277,11 +294,13 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      * Hide the playlist list. This will enable the video controls.
      */
     fun hidePlaylist() {
-        childFragmentManager.commit {
-            setCustomAnimations(android.R.anim.slide_in_left, R.anim.slide_out_left)
-            hide(playlistListFragment)
+        if (!playlistListFragment.isHidden) {
+            childFragmentManager.commit {
+                setCustomAnimations(android.R.anim.slide_in_left, R.anim.slide_out_left)
+                hide(playlistListFragment)
+            }
+            videoView.useController = true
         }
-        videoView.useController = true
     }
 
     /**

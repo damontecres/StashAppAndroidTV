@@ -59,13 +59,14 @@ import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.RemoveLongClickListener
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.configRowManager
+import com.github.damontecres.stashapp.util.createOCounterLongClickCallBack
+import com.github.damontecres.stashapp.util.createRemoveLongClickListener
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
@@ -90,8 +91,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private lateinit var queryEngine: QueryEngine
     private lateinit var mutationEngine: MutationEngine
 
-    private val mPresenterSelector = ClassPresenterSelector()
-    private val mAdapter = SparseArrayObjectAdapter(mPresenterSelector)
+    private val mAdapter = SparseArrayObjectAdapter()
 
     private val studioRowManager =
         ListRowManager<StudioData>(
@@ -172,7 +172,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 ).addClassPresenter(
                     OCounter::class.java,
                     OCounterPresenter(
-                        OCounterLongClickCallBack(
+                        createOCounterLongClickCallBack(
                             DataType.SCENE,
                             sceneId,
                             mutationEngine,
@@ -194,26 +194,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
     private val playActionsAdapter = SparseArrayObjectAdapter()
 
-    private val detailsPresenter =
-        FullWidthDetailsOverviewRowPresenter(
-            SceneDetailsPresenter { rating100: Int ->
-                viewLifecycleOwner.lifecycleScope.launch(
-                    StashCoroutineExceptionHandler(
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to set rating",
-                            Toast.LENGTH_SHORT,
-                        ),
-                    ),
-                ) {
-                    mutationEngine.setRating(
-                        sceneId,
-                        rating100,
-                    )
-                    showSetRatingToast(requireContext(), rating100)
-                }
-            },
-        )
+    private var scenePresenter: SceneDetailsPresenter? = null
+    private var detailsPresenter: FullWidthDetailsOverviewRowPresenter? = null
 
     override fun onInflateTitleView(
         inflater: LayoutInflater?,
@@ -227,8 +209,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         sceneId = requireArguments().getDestination<Destination.Item>().id
         Log.d(TAG, "onCreate: sceneId=$sceneId")
 
-        queryEngine = QueryEngine(serverViewModel.requireServer())
-        mutationEngine = MutationEngine(serverViewModel.requireServer())
+        queryEngine = QueryEngine(StashServer.requireCurrentServer())
+        mutationEngine = MutationEngine(StashServer.requireCurrentServer())
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         mDetailsBackground.enableParallax()
@@ -343,10 +325,9 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     actionListener.onClicked(StashAction.CREATE_MARKER)
                 }.addListenerForClass(Action::class.java) { _ ->
                     // no-op, detailsPresenter.onActionClickedListener will handle
+                }.addListenerForClass(OCounter::class.java) { oCounter ->
+                    actionListener.incrementOCounter(oCounter)
                 }
-
-        setupDetailsOverviewRowPresenter()
-        mPresenterSelector.addClassPresenter(ListRow::class.java, ListRowPresenter())
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
@@ -355,6 +336,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        setupDetailsOverviewRowPresenter()
 
         if (mAdapter.lookup(ACTIONS_POS) == null) {
             if (readOnlyModeDisabled()) {
@@ -378,19 +360,16 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         markersRowManager.adapter.presenterSelector =
             SinglePresenterSelector(
                 MarkerPresenter(
-                    RemoveLongClickListener(
+                    createRemoveLongClickListener(
                         { viewLifecycleOwner.lifecycleScope },
                         markersRowManager,
-                        listOf(MARKER_DETAILS_POPUP),
-                    ) { context, item, popUpItem ->
-                        if (popUpItem.id == MARKER_DETAILS_POPUP.id) {
-                            serverViewModel.navigationManager.navigate(
-                                Destination.MarkerDetails(
-                                    item.id,
-                                    item.scene.videoSceneData.id,
-                                ),
-                            )
-                        }
+                    ).addAction(MARKER_DETAILS_POPUP) { _, item ->
+                        serverViewModel.navigationManager.navigate(
+                            Destination.MarkerDetails(
+                                item.id,
+                                item.scene.videoSceneData.id,
+                            ),
+                        )
                     },
                 ),
             )
@@ -423,9 +402,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
             setupDetailsOverviewRow(sceneData)
 
-            if (adapter == null) {
-                adapter = mAdapter
-            }
+            adapter = mAdapter
 
             initializeBackground(sceneData)
 
@@ -565,54 +542,71 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     }
 
     private fun setupDetailsOverviewRowPresenter() {
-        // Set detail background.
-        detailsPresenter.backgroundColor =
-            ContextCompat.getColor(requireActivity(), R.color.default_card_background)
-
-        // Hook up transition element.
-//        val sharedElementHelper = FullWidthDetailsOverviewSharedElementHelper()
-//        sharedElementHelper.setSharedElementEnterTransition(
-//            activity,
-//            SceneDetailsActivity.SHARED_ELEMENT_NAME,
-//        )
-//        detailsPresenter.setListener(sharedElementHelper)
-        detailsPresenter.isParticipatingEntranceTransition = true
-
-        detailsPresenter.onActionClickedListener =
-            OnActionClickedListener { action ->
-                if (this.sceneData != null) {
-                    if (action.id in
-                        longArrayOf(
-                            ACTION_PLAY_SCENE,
-                            ACTION_RESUME_SCENE,
-                            ACTION_TRANSCODE_RESUME_SCENE,
-                            ACTION_DIRECT_PLAY_RESUME_SCENE,
-                        )
-                    ) {
-                        val position =
-                            if (action.id == ACTION_RESUME_SCENE ||
-                                action.id == ACTION_TRANSCODE_RESUME_SCENE ||
-                                action.id == ACTION_DIRECT_PLAY_RESUME_SCENE
-                            ) {
-                                viewModel.currentPosition.value ?: 0L
-                            } else {
-                                0L
-                            }
-                        val mode =
-                            when (action.id) {
-                                ACTION_TRANSCODE_RESUME_SCENE -> PlaybackMode.FORCED_TRANSCODE
-                                ACTION_DIRECT_PLAY_RESUME_SCENE -> PlaybackMode.FORCED_DIRECT_PLAY
-                                else -> PlaybackMode.CHOOSE
-                            }
-
-                        val playbackDest = Destination.Playback(sceneId, position, mode)
-                        serverViewModel.navigationManager.navigate(playbackDest)
-                    } else {
-                        throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
-                    }
+        scenePresenter =
+            SceneDetailsPresenter { rating100: Int ->
+                viewLifecycleOwner.lifecycleScope.launch(
+                    StashCoroutineExceptionHandler(
+                        Toast.makeText(
+                            requireContext(),
+                            "Failed to set rating",
+                            Toast.LENGTH_SHORT,
+                        ),
+                    ),
+                ) {
+                    mutationEngine.setRating(
+                        sceneId,
+                        rating100,
+                    )
+                    showSetRatingToast(requireContext(), rating100)
                 }
             }
-        mPresenterSelector.addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
+        detailsPresenter =
+            FullWidthDetailsOverviewRowPresenter(scenePresenter).apply {
+                // Set detail background.
+                backgroundColor =
+                    ContextCompat.getColor(requireActivity(), R.color.default_card_background)
+                isParticipatingEntranceTransition = false
+
+                onActionClickedListener =
+                    OnActionClickedListener { action ->
+                        if (this@SceneDetailsFragment.sceneData != null) {
+                            if (action.id in
+                                longArrayOf(
+                                    ACTION_PLAY_SCENE,
+                                    ACTION_RESUME_SCENE,
+                                    ACTION_TRANSCODE_RESUME_SCENE,
+                                    ACTION_DIRECT_PLAY_RESUME_SCENE,
+                                )
+                            ) {
+                                val position =
+                                    if (action.id == ACTION_RESUME_SCENE ||
+                                        action.id == ACTION_TRANSCODE_RESUME_SCENE ||
+                                        action.id == ACTION_DIRECT_PLAY_RESUME_SCENE
+                                    ) {
+                                        viewModel.currentPosition.value ?: 0L
+                                    } else {
+                                        0L
+                                    }
+                                val mode =
+                                    when (action.id) {
+                                        ACTION_TRANSCODE_RESUME_SCENE -> PlaybackMode.FORCED_TRANSCODE
+                                        ACTION_DIRECT_PLAY_RESUME_SCENE -> PlaybackMode.FORCED_DIRECT_PLAY
+                                        else -> PlaybackMode.CHOOSE
+                                    }
+
+                                val playbackDest = Destination.Playback(sceneId, position, mode)
+                                serverViewModel.navigationManager.navigate(playbackDest)
+                            } else {
+                                throw IllegalArgumentException("Action $action (id=${action.id} is not supported!")
+                            }
+                        }
+                    }
+            }
+        val presenterSelector =
+            ClassPresenterSelector()
+                .addClassPresenter(ListRow::class.java, ListRowPresenter())
+                .addClassPresenter(DetailsOverviewRow::class.java, detailsPresenter)
+        mAdapter.presenterSelector = presenterSelector
     }
 
     private fun convertDpToPixel(
@@ -647,13 +641,13 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     ),
                 )
             } else if (action == StashAction.FORCE_TRANSCODE) {
-                detailsPresenter.onActionClickedListener.onActionClicked(
+                detailsPresenter!!.onActionClickedListener.onActionClicked(
                     Action(
                         ACTION_TRANSCODE_RESUME_SCENE,
                     ),
                 )
             } else if (action == StashAction.FORCE_DIRECT_PLAY) {
-                detailsPresenter.onActionClickedListener.onActionClicked(
+                detailsPresenter!!.onActionClickedListener.onActionClicked(
                     Action(
                         ACTION_DIRECT_PLAY_RESUME_SCENE,
                     ),
@@ -697,6 +691,15 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         } else {
             playActionsAdapter.clear()
         }
+    }
+
+    override fun onDestroyView() {
+        scenePresenter?.ratingCallback = null
+        detailsPresenter?.onActionClickedListener = null
+        detailsPresenter = null
+        onItemViewClickedListener = null
+        scenePresenter = null
+        super.onDestroyView()
     }
 
     companion object {

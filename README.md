@@ -88,11 +88,13 @@ If you plan to submit a pull request, please read the [contributing guide](CONTR
 
 ### Scene list with sorting & filters
 
-![0_4_2_scenes](https://github.com/user-attachments/assets/438fe917-1ea0-4f65-9c96-ddd2ace0504a)
+![0_5_8_scenes](https://github.com/user-attachments/assets/61b04c1a-26f9-4b47-8d1e-fd88cff2a516)
 
 ### Performer page
-![0_4_0_performer](https://github.com/user-attachments/assets/16ae2514-6b00-425a-82a2-9db0f4de51d6)
-![0_4_0_performer_scenes_sort](https://github.com/user-attachments/assets/c5b4e89b-b4de-4499-88a1-828eeda1b550)
+
+![0_5_8_performer](https://github.com/user-attachments/assets/63db910b-510a-4915-8c58-06ffa7ee1a99)
+![0_5_8_performer_scenes](https://github.com/user-attachments/assets/77f3ef59-8d6b-4a49-97f5-bd7660756ad7)
+
 
 ### Playlist
 ![0_4_0_playlist](https://github.com/user-attachments/assets/f06b0ce3-82fe-4cbd-a8b5-c2213d8c33f7)

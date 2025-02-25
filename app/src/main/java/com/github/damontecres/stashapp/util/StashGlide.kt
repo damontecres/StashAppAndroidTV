@@ -65,13 +65,44 @@ class StashGlide private constructor() {
         fun withBitmap(
             context: Context,
             url: String,
+            size: Int = 0,
         ): RequestBuilder<Bitmap> =
+            if (size >= GLIDE_IMAGE_MAX_SIZE) {
+                Glide
+                    .with(context)
+                    .asBitmap()
+                    .load(url)
+                    .diskCacheStrategy(DiskCacheStrategy.DATA)
+                    .skipMemoryCache(true)
+                    .signature(ObjectKey(System.currentTimeMillis()))
+            } else {
+                Glide
+                    .with(context)
+                    .asBitmap()
+                    .load(url)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
+            }
+
+        fun withCaching(
+            context: Context,
+            url: String,
+        ): RequestBuilder<Drawable> =
             Glide
                 .with(context)
-                .asBitmap()
-                .load(url)
+                .load(createGlideUrl(url, context))
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .skipMemoryCache(false)
+
+        fun withMemoryCaching(
+            context: Context,
+            url: String,
+        ): RequestBuilder<Drawable> =
+            Glide
+                .with(context)
+                .load(createGlideUrl(url, context))
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
-                .skipMemoryCache(true)
+                .skipMemoryCache(false)
 
         const val TAG = "StashGlide"
     }

@@ -114,7 +114,9 @@ sealed class Destination {
     @Serializable
     data class UpdateApp(
         val release: Release,
-    ) : Destination()
+    ) : Destination() {
+        override fun toString(): String = "UpdateApp(version=${release.version})"
+    }
 
     @Serializable
     data class ManageServers(

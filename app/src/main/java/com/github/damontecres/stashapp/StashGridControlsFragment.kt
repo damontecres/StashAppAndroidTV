@@ -8,12 +8,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.PresenterSelector
+import androidx.leanback.widget.SearchEditText
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
@@ -21,12 +21,14 @@ import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
+import com.github.damontecres.stashapp.presenters.ClassPresenterSelector
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.addExtraGridLongClicks
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
@@ -55,7 +57,7 @@ class StashGridControlsFragment() :
     private lateinit var playAllButton: Button
     private lateinit var filterButton: Button
     private lateinit var subContentSwitch: SwitchMaterial
-    private lateinit var searchButton: SearchView
+    private lateinit var searchEditText: SearchEditText
 
     private lateinit var fragment: StashDataGridFragment
 
@@ -66,7 +68,6 @@ class StashGridControlsFragment() :
 
     // State
     private lateinit var gridHeaderTransitionHelper: TitleTransitionHelper
-    private var scrollToNextPage = false
 
     // Modifiable properties
 
@@ -123,34 +124,29 @@ class StashGridControlsFragment() :
 
     constructor(
         filterArgs: FilterArgs,
-        scrollToNextPage: Boolean = false,
     ) : this() {
         this.initialFilter = filterArgs
-        this.scrollToNextPage = scrollToNextPage
     }
 
     constructor(
         dataType: DataType,
         findFilter: StashFindFilter? = null,
         objectFilter: StashDataFilter? = null,
-        scrollToNextPage: Boolean = false,
-    ) : this(FilterArgs(dataType, null, findFilter, objectFilter), scrollToNextPage)
+    ) : this(FilterArgs(dataType, null, findFilter, objectFilter))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            name = savedInstanceState.getString(STATE_NAME)
+            initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
+            Log.v(TAG, "sortAndDirection=${initialFilter.sortAndDirection}")
+        }
+
         Log.v(TAG, "onCreate: dataType=$dataType")
 
         viewModel.init(
             NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
         )
-
-        if (savedInstanceState != null) {
-            name = savedInstanceState.getString(STATE_NAME)
-            initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER) ?: initialFilter
-            Log.v(TAG, "sortAndDirection=${initialFilter.sortAndDirection}")
-        }
-
-        currentFilter = initialFilter
 
         remoteButtonPaging =
             PreferenceManager
@@ -178,8 +174,7 @@ class StashGridControlsFragment() :
         filterButton.onFocusChangeListener = onFocusChangeListener
         subContentSwitch = root.findViewById(R.id.sub_content_switch)
         subContentSwitch.onFocusChangeListener = onFocusChangeListener
-        searchButton = root.findViewById(R.id.search_button_view)
-        searchButton.onFocusChangeListener = onFocusChangeListener
+        searchEditText = root.findViewById(R.id.search_edit_text)
 
         if (name == null) {
             name = getString(dataType.pluralStringId)
@@ -187,7 +182,6 @@ class StashGridControlsFragment() :
 
         fragment =
             childFragmentManager.findFragmentById(R.id.grid_fragment) as StashDataGridFragment
-        fragment.scrollToNextPage = scrollToNextPage
         fragment.init(dataType)
         if (onItemViewClickedListener != null) {
             fragment.onItemViewClickedListener = onItemViewClickedListener
@@ -248,6 +242,15 @@ class StashGridControlsFragment() :
             playAllButton.text = getString(R.string.play_slideshow)
         }
 
+        if (presenterSelector is ClassPresenterSelector) {
+            addExtraGridLongClicks(presenterSelector as ClassPresenterSelector, dataType) {
+                FilterAndPosition(
+                    viewModel.filterArgs.value!!,
+                    viewModel.currentPosition.value ?: -1,
+                )
+            }
+        }
+
         filterButton.nextFocusUpId = R.id.tab_layout
         filterButton.setOnClickListener {
             serverViewModel.navigationManager.navigate(
@@ -268,11 +271,14 @@ class StashGridControlsFragment() :
             }
         }
 
-        viewModel.setupSearchButton(searchButton)
+        viewModel.setupSearch(searchEditText)
 
-        viewModel.searchBarFocus.observe(viewLifecycleOwner) { hasFocus ->
-            // If the search text has focus, then the fragment shouldn't take it
-            fragment.requestFocus = !hasFocus
+        val initialRequestFocus = fragment.requestFocus
+        if (initialRequestFocus) {
+            viewModel.searchBarFocus.observe(viewLifecycleOwner) { hasFocus ->
+                // If the search text has focus, then the fragment shouldn't take it
+                fragment.requestFocus = !hasFocus
+            }
         }
     }
 

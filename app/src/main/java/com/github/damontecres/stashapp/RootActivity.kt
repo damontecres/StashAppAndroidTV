@@ -8,11 +8,14 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.annotation.OptIn
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
+import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationManager
@@ -20,8 +23,9 @@ import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.maybeGetDestination
+import com.github.damontecres.stashapp.util.putDestination
 import com.github.damontecres.stashapp.views.models.ServerViewModel
-import kotlin.properties.Delegates
 
 /**
  * The only activity in the app
@@ -31,7 +35,6 @@ class RootActivity :
     NavigationManager.NavigationListener {
     private val serverViewModel: ServerViewModel by viewModels<ServerViewModel>()
     private lateinit var navigationManager: NavigationManager
-    private var appHasPin by Delegates.notNull<Boolean>()
     private var currentFragment: Fragment? = null
 
     private var hasCheckedForUpdate = false
@@ -40,17 +43,16 @@ class RootActivity :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setUpLifeCycleListeners()
-        Log.v(TAG, "onCreate: savedInstanceState==null:${savedInstanceState == null}")
+        Log.v(
+            TAG,
+            "onCreate: savedInstanceState==null:${savedInstanceState == null}, currentFragment==null:${currentFragment == null}",
+        )
         window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE,
         )
 
-        appHasPin =
-            PreferenceManager
-                .getDefaultSharedPreferences(this)
-                .getString("pinCode", "")
-                .isNotNullOrBlank()
+        val appHasPin = appHasPin()
 
         navigationManager = NavigationManager(this)
         navigationManager.addListener(this)
@@ -60,24 +62,59 @@ class RootActivity :
 
         // Ensure everything is initialized
         super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            navigationManager.previousDestination = savedInstanceState.maybeGetDestination()
+            Log.d(TAG, "Restoring destination: ${navigationManager.previousDestination}")
+        }
         loadingView = findViewById(R.id.loading_progress_bar)
         bgLogo = findViewById(R.id.background_logo)
 
         val currentServer = StashServer.findConfiguredStashServer(StashApplication.getApplication())
         if (currentServer != null) {
             Log.i(TAG, "Server configured")
+            StashServer.setCurrentStashServer(StashApplication.getApplication(), currentServer)
             serverViewModel.init(currentServer)
+
+            serverViewModel.serverConnection.observe(this) { result ->
+                loadingView.hide()
+                when (result) {
+                    is ServerViewModel.ServerConnection.Failure -> {
+                        Log.w(TAG, "Exception connecting to server", result.exception)
+                        Toast
+                            .makeText(
+                                this,
+                                "Error connecting to ${result.server.url}",
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        if (!appHasPin) {
+                            navigationManager.navigate(Destination.ManageServers(true))
+                        }
+                    }
+
+                    ServerViewModel.ServerConnection.NotConfigured -> {
+                        Log.i(TAG, "No server, starting setup")
+                        navigationManager.navigate(Destination.Setup)
+                    }
+
+                    ServerViewModel.ServerConnection.Pending -> {}
+                    ServerViewModel.ServerConnection.Success -> {}
+                }
+            }
+
             serverViewModel.currentServer.observe(this) { server ->
                 if (server != null) {
                     if (savedInstanceState == null) {
                         if (!appHasPin) {
                             serverViewModel.currentServer.removeObservers(this@RootActivity)
-                            navigationManager.goToMain()
+                            if (!navigationManager.showingFragment) {
+                                navigationManager.goToMain()
+                            }
                         }
                     }
                 }
             }
         } else {
+            loadingView.hide()
             Log.i(TAG, "No server, starting setup")
             // No server configured
             navigationManager.navigate(Destination.Setup)
@@ -86,12 +123,30 @@ class RootActivity :
 
     override fun onResume() {
         super.onResume()
+        Log.v(TAG, "onResume")
         hasCheckedForUpdate = false
-        if (appHasPin) {
+        if (appHasPin()) {
             navigationManager.navigate(Destination.Pin)
         } else {
+            loadingView.hide()
+            bgLogo.animateToInvisible(View.GONE)
             serverViewModel.updateServerPreferences()
         }
+    }
+
+    override fun onPause() {
+        Log.v(TAG, "onPause")
+        if (appHasPin()) {
+            navigationManager.navigate(Destination.Pin)
+        }
+        super.onPause()
+    }
+
+    @OptIn(UnstableApi::class)
+    override fun onStop() {
+        Log.v(TAG, "onStop")
+        StashExoPlayer.releasePlayer()
+        super.onStop()
     }
 
     override fun onNavigate(
@@ -111,6 +166,23 @@ class RootActivity :
             hasCheckedForUpdate = true
         }
     }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        Log.v(TAG, "onSaveInstanceState")
+        super.onSaveInstanceState(outState)
+        val dest = navigationManager.previousDestination
+        if (dest != null) {
+            outState.putDestination(dest)
+        } else {
+            outState.putParcelable(NavigationManager.DESTINATION_ARG, null)
+        }
+    }
+
+    private fun appHasPin(): Boolean =
+        PreferenceManager
+            .getDefaultSharedPreferences(this)
+            .getString("pinCode", "")
+            .isNotNullOrBlank()
 
     // Delegate key events to the current fragment
 

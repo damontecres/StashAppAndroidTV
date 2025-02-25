@@ -49,8 +49,10 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
+import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.maybeStartPlayback
+import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
 import com.github.damontecres.stashapp.views.formatNumber
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -84,11 +86,10 @@ class StashDataGridFragment :
     private lateinit var jumpButtonLayout: LinearLayout
 
     private var remoteButtonPaging: Boolean = true
-
-    // Arguments
-    var scrollToNextPage = false
+    private var prefBackPressScrollEnabled: Boolean = true
 
     // State
+    private var previousPosition = -1
     private var selectedPosition = -1
 
     private var onBackPressedCallback: OnBackPressedCallback? = null
@@ -160,7 +161,8 @@ class StashDataGridFragment :
 
     private fun onSelectedOrJump(position: Int) {
         if (position != selectedPosition) {
-            if (DEBUG) Log.v(TAG, "gridOnItemSelected=$position")
+            if (DEBUG) Log.v(TAG, "newPosition=$position, previousPosition=$previousPosition")
+            previousPosition = selectedPosition
             selectedPosition = position
             viewModel.position = position
             positionTextView.text = formatNumber(position + 1, false)
@@ -176,6 +178,9 @@ class StashDataGridFragment :
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
+        if (savedInstanceState != null) {
+            dataType = savedInstanceState.getDataType()
+        }
         Log.v(TAG, "onCreateView: dataType=$dataType")
         val root =
             inflater.inflate(
@@ -333,7 +338,11 @@ class StashDataGridFragment :
         viewModel.loadingStatus.observe(viewLifecycleOwner) { status ->
             when (status) {
                 is StashGridViewModel.LoadingStatus.AdapterReady -> {
-                    Log.v(TAG, "LoadingStatus.AdapterReady")
+                    val scrollToNextPage = viewModel.scrollToNextPage.value ?: false
+                    Log.v(
+                        TAG,
+                        "LoadingStatus.AdapterReady: previousPosition=$previousPosition, scrollToNextPage=$scrollToNextPage",
+                    )
                     pagingAdapter = status.pagingAdapter
                     itemBridgeAdapter.setAdapter(status.pagingAdapter)
                     if (previousPosition > 0) {
@@ -345,7 +354,7 @@ class StashDataGridFragment :
                                 .getInt("maxSearchResults", 25)
                         jumpTo(page)
                         // Only scroll the first time
-                        scrollToNextPage = false
+                        viewModel.scrollToNextPage.value = false
                     }
                     loadingProgressBar.hide()
                     if (requestFocus) {
@@ -374,7 +383,7 @@ class StashDataGridFragment :
             }
         }
 
-        val prefBackPressScrollEnabled =
+        prefBackPressScrollEnabled =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_back_button_scroll), true)
@@ -395,6 +404,7 @@ class StashDataGridFragment :
         Log.v(TAG, "onSaveInstanceState")
         super.onSaveInstanceState(outState)
         outState.putInt("mSelectedPosition", selectedPosition)
+        outState.putDataType(dataType)
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
@@ -521,6 +531,23 @@ class StashDataGridFragment :
             }
     }
 
+    override fun onKeyLongPress(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK && prefBackPressScrollEnabled) {
+            if (DEBUG) Log.d(TAG, "Long press back, maybe $selectedPosition=>$previousPosition")
+            if (previousPosition >= 0 &&
+                previousPosition != selectedPosition &&
+                requireActivity().currentFocus is StashImageCardView
+            ) {
+                jumpTo(previousPosition)
+                return true
+            }
+        }
+        return super.onKeyLongPress(keyCode, event)
+    }
+
     override fun onKeyUp(
         keyCode: Int,
         event: KeyEvent,
@@ -572,7 +599,7 @@ class StashDataGridFragment :
     companion object {
         private const val TAG = "StashDataGridFragment"
 
-        private const val DEBUG = true
+        private const val DEBUG = false
     }
 
     inner class VerticalGridItemBridgeAdapter : ItemBridgeAdapter() {

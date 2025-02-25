@@ -18,11 +18,18 @@
             app:defaultValue="@integer/pref_key_ui_card_overlay_delay_default" />
         <SeekBarPreference
             app:key="@string/pref_key_slideshow_duration"
-            app:title="Slideshow duration (seconds)"
+            app:title="Slideshow duration"
             app:seekBarIncrement="1"
-            app:showSeekBarValue="true"
-            android:max="20"
+            app:showSeekBarValue="false"
+            android:max="60"
             app:defaultValue="@integer/pref_key_slideshow_duration_default" />
+        <SeekBarPreference
+            app:key="@string/pref_key_slideshow_duration_image_clip"
+            app:title="Slideshow pause after image clip"
+            app:seekBarIncrement="250"
+            app:showSeekBarValue="false"
+            android:max="60000"
+            app:defaultValue="@integer/pref_key_slideshow_duration_default_image_clip" />
     </PreferenceCategory>
 
     <PreferenceCategory

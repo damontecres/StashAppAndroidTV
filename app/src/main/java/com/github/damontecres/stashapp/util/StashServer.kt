@@ -7,6 +7,7 @@ import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.SettingsFragment
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Represents a server
@@ -46,13 +47,25 @@ data class StashServer(
         return serverPreferences
     }
 
+    override fun toString(): String = "StashServer(url=$url, apiKey?=${apiKey.isNotNullOrBlank()})"
+
     companion object {
         private const val SERVER_PREF_PREFIX = "server_"
         private const val SERVER_APIKEY_PREF_PREFIX = "apikey_"
 
+        private val servers = ConcurrentHashMap<String, StashServer>()
+
         fun getCurrentServerVersion(): Version = ServerPreferences(requireCurrentServer()).serverVersion
 
-        fun requireCurrentServer(): StashServer = getCurrentStashServer() ?: throw QueryEngine.StashNotConfiguredException()
+        fun requireCurrentServer(): StashServer {
+            if (StashApplication.currentServer == null) {
+                val server =
+                    findConfiguredStashServer(StashApplication.getApplication())
+                        ?: throw QueryEngine.StashNotConfiguredException()
+                setCurrentStashServer(StashApplication.getApplication(), server)
+            }
+            return StashApplication.requireCurrentServer()
+        }
 
         fun getCurrentStashServer(): StashServer? = StashApplication.currentServer
 
@@ -61,7 +74,7 @@ data class StashServer(
             val url = manager.getString(SettingsFragment.PREF_STASH_URL, null)
             val apiKey = manager.getString(SettingsFragment.PREF_STASH_API_KEY, null)
             return if (url.isNotNullOrBlank()) {
-                StashServer(url, apiKey)
+                servers.getOrPut(url) { StashServer(url, apiKey) }
             } else {
                 null
             }

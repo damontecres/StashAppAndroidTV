@@ -21,107 +21,112 @@ import com.github.damontecres.stashapp.views.models.GroupViewModel
 class GroupFragment : TabbedFragment(DataType.GROUP.name) {
     private val viewModel: GroupViewModel by viewModels()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        viewModel.init(requireArguments())
-    }
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.item.observe(viewLifecycleOwner) { group ->
-            if (group == null) {
-                Toast
-                    .makeText(
-                        requireContext(),
-                        "Group '${viewModel.itemId}' not found",
-                        Toast.LENGTH_LONG,
-                    ).show()
-                serverViewModel.navigationManager.goBack()
-                return@observe
-            }
-            tabViewModel.title.value = group.name
-            val groupSceneFilter =
-                serverViewModel.requireServer().serverPreferences.getDefaultFilter(PageFilterKey.GROUP_SCENES)
-            val subGroupFilter =
-                serverViewModel.requireServer().serverPreferences.getDefaultFilter(PageFilterKey.GROUP_SUB_GROUPS)
-            tabViewModel.tabs.value =
-                listOf(
-                    StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
-                        GroupDetailsFragment()
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
-                        StashGridControlsFragment(
-                            dataType = DataType.SCENE,
-                            findFilter = groupSceneFilter.findFilter,
-                            objectFilter =
-                                SceneFilterType(
-                                    groups =
-                                        Optional.present(
-                                            HierarchicalMultiCriterionInput(
-                                                value = Optional.present(listOf(group.id)),
-                                                modifier = CriterionModifier.INCLUDES,
-                                            ),
-                                        ),
-                                ),
-                        )
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
-                        StashGridControlsFragment(
-                            dataType = DataType.MARKER,
-                            objectFilter =
-                                SceneMarkerFilterType(
-                                    scene_filter =
-                                        Optional.present(
-                                            SceneFilterType(
-                                                groups =
-                                                    Optional.present(
-                                                        HierarchicalMultiCriterionInput(
-                                                            value = Optional.present(listOf(group.id)),
-                                                            modifier = CriterionModifier.INCLUDES,
-                                                        ),
-                                                    ),
-                                            ),
-                                        ),
-                                ),
-                        )
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
-                        StashGridControlsFragment(
-                            FilterArgs(
-                                DataType.TAG,
-                                override = DataSupplierOverride.GroupTags(group.id),
-                            ),
-                        )
-                    },
-                    StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_containing_groups)) {
-                        StashGridControlsFragment(
-                            FilterArgs(
-                                DataType.GROUP,
-                                override =
-                                    DataSupplierOverride.GroupRelationship(
-                                        group.id,
-                                        GroupRelationshipType.CONTAINING,
-                                    ),
-                            ),
-                        )
-                    },
-                    // TODO use subgroup filter
-                    StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_sub_groups)) {
-                        StashGridControlsFragment(
-                            FilterArgs(
-                                DataType.GROUP,
-                                override =
-                                    DataSupplierOverride.GroupRelationship(
-                                        group.id,
-                                        GroupRelationshipType.SUB,
-                                    ),
-                            ),
-                        )
-                    },
-                ).filter { it.title in getUiTabs(requireContext(), DataType.GROUP) }
+
+        serverViewModel.currentServer.observe(viewLifecycleOwner) {
+            viewModel.init(requireArguments())
         }
+        serverViewModel
+            .withLiveData(viewModel.item)
+            .observe(viewLifecycleOwner) { (server, group) ->
+                if (group == null) {
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Group '${viewModel.itemId}' not found",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    serverViewModel.navigationManager.goBack()
+                    return@observe
+                }
+                tabViewModel.title.value = group.name
+                val groupSceneFilter =
+                    serverViewModel.requireServer().serverPreferences.getDefaultPageFilter(
+                        PageFilterKey.GROUP_SCENES,
+                    )
+                val subGroupFilter =
+                    serverViewModel.requireServer().serverPreferences.getDefaultPageFilter(
+                        PageFilterKey.GROUP_SUB_GROUPS,
+                    )
+                tabViewModel.tabs.value =
+                    listOf(
+                        StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_details)) {
+                            GroupDetailsFragment()
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
+                            StashGridControlsFragment(
+                                dataType = DataType.SCENE,
+                                findFilter = groupSceneFilter.findFilter,
+                                objectFilter =
+                                    SceneFilterType(
+                                        groups =
+                                            Optional.present(
+                                                HierarchicalMultiCriterionInput(
+                                                    value = Optional.present(listOf(group.id)),
+                                                    modifier = CriterionModifier.INCLUDES,
+                                                ),
+                                            ),
+                                    ),
+                            )
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
+                            StashGridControlsFragment(
+                                dataType = DataType.MARKER,
+                                objectFilter =
+                                    SceneMarkerFilterType(
+                                        scene_filter =
+                                            Optional.present(
+                                                SceneFilterType(
+                                                    groups =
+                                                        Optional.present(
+                                                            HierarchicalMultiCriterionInput(
+                                                                value = Optional.present(listOf(group.id)),
+                                                                modifier = CriterionModifier.INCLUDES,
+                                                            ),
+                                                        ),
+                                                ),
+                                            ),
+                                    ),
+                            )
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
+                            StashGridControlsFragment(
+                                FilterArgs(
+                                    DataType.TAG,
+                                    override = DataSupplierOverride.GroupTags(group.id),
+                                ),
+                            )
+                        },
+                        StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_containing_groups)) {
+                            StashGridControlsFragment(
+                                FilterArgs(
+                                    DataType.GROUP,
+                                    override =
+                                        DataSupplierOverride.GroupRelationship(
+                                            group.id,
+                                            GroupRelationshipType.CONTAINING,
+                                        ),
+                                ),
+                            )
+                        },
+                        // TODO use subgroup filter
+                        StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_sub_groups)) {
+                            StashGridControlsFragment(
+                                FilterArgs(
+                                    DataType.GROUP,
+                                    override =
+                                        DataSupplierOverride.GroupRelationship(
+                                            group.id,
+                                            GroupRelationshipType.SUB,
+                                        ),
+                                ),
+                            )
+                        },
+                    ).filter { it.title in getUiTabs(requireContext(), DataType.GROUP) }
+            }
     }
 }

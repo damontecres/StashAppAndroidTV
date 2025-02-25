@@ -8,6 +8,8 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.TableLayout
+import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -15,6 +17,7 @@ import androidx.activity.addCallback
 import androidx.annotation.LayoutRes
 import androidx.annotation.OptIn
 import androidx.core.os.bundleOf
+import androidx.core.view.get
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -26,8 +29,8 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
 import androidx.preference.PreferenceManager
@@ -42,9 +45,9 @@ import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.KeyEventDispatcher
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.OCounterLongClickCallBack
+import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashPreviewLoader
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getDataType
@@ -64,6 +67,7 @@ import okhttp3.Request
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import kotlin.collections.set
 
 /**
  * Parent [Fragment] for playing videos
@@ -81,6 +85,8 @@ abstract class PlaybackFragment(
     protected val controllerVisibilityListener = ControllerVisibilityListenerList()
     private var backCallback: OnBackPressedCallback? = null
 
+    protected var skipParams: SkipParams = SkipParams.Default
+
     /**
      * Whether to show video previews when scrubbing
      */
@@ -92,14 +98,14 @@ abstract class PlaybackFragment(
     abstract val optionsButtonOptions: OptionsButtonOptions
 
     /**
-     * Create an [ExoPlayer]. Users should start with [com.github.damontecres.stashapp.StashExoPlayer]!
+     * Setup the [ExoPlayer]
      */
-    protected abstract fun createPlayer(): ExoPlayer
+    protected abstract fun Player.setupPlayer()
 
     /**
      * Called after creating the player
      */
-    protected abstract fun postCreatePlayer(player: Player)
+    protected abstract fun Player.postSetupPlayer()
 
     var player: ExoPlayer? = null
         private set
@@ -110,6 +116,7 @@ abstract class PlaybackFragment(
     protected lateinit var titleText: TextView
     protected lateinit var dateText: TextView
     protected lateinit var debugView: View
+    protected lateinit var debugSupportedTable: TableLayout
     protected lateinit var debugSceneId: TextView
     protected lateinit var debugPlaybackTextView: TextView
     protected lateinit var debugVideoTextView: TextView
@@ -150,16 +157,19 @@ abstract class PlaybackFragment(
         trackActivityListener?.release(currentVideoPosition)
         trackActivityListener = null
         player?.let { exoPlayer ->
-
             playbackPosition = exoPlayer.currentPosition
-            exoPlayer.release()
+            StashExoPlayer.releasePlayer()
+            if (!exoPlayer.isReleased) {
+                exoPlayer.release()
+            }
         }
         player = null
-        StashExoPlayer.releasePlayer()
     }
 
     private fun preparePlayer(): ExoPlayer =
-        createPlayer()
+        StashExoPlayer
+            .getInstance(requireContext(), serverViewModel.requireServer(), skipParams)
+            .also { it.setupPlayer() }
             .also { exoPlayer ->
                 exoPlayer.addListener(
                     object : Player.Listener {
@@ -187,7 +197,40 @@ abstract class PlaybackFragment(
             }.also { exoPlayer ->
                 videoView.player = exoPlayer
                 exoPlayer.addListener(AmbientPlaybackListener())
-            }.also(::postCreatePlayer)
+            }.also {
+                it.addListener(
+                    object : Player.Listener {
+                        override fun onTracksChanged(tracks: Tracks) {
+                            val tracksSupported = checkForSupport(tracks)
+                            viewLifecycleOwner.lifecycleScope.launch(
+                                StashCoroutineExceptionHandler(
+                                    autoToast = true,
+                                ) + Dispatchers.Main,
+                            ) {
+                                (1..<debugSupportedTable.childCount).forEach { _ ->
+                                    debugSupportedTable.removeViewAt(1)
+                                }
+
+                                tracksSupported.forEach { ts ->
+                                    val row =
+                                        requireActivity().layoutInflater.inflate(
+                                            R.layout.debug_supported_row,
+                                            debugSupportedTable,
+                                            false,
+                                        ) as TableRow
+                                    (row[0] as TextView).text = ts.id
+                                    (row[1] as TextView).text = ts.type.name
+                                    (row[2] as TextView).text = ts.selected.toString()
+                                    (row[3] as TextView).text = ts.codecs
+                                    (row[4] as TextView).text = ts.supported.name
+                                    (row[5] as TextView).text = ts.labels.joinToString(", ")
+                                    debugSupportedTable.addView(row)
+                                }
+                            }
+                        }
+                    },
+                )
+            }
 
     protected fun updateDebugInfo(
         streamDecision: StreamDecision,
@@ -373,6 +416,7 @@ abstract class PlaybackFragment(
         exoCenterControls = view.findViewById(androidx.media3.ui.R.id.exo_center_controls)
 
         debugView = view.findViewById(R.id.playback_debug_info)
+        debugSupportedTable = view.findViewById(R.id.debug_supported_table)
         debugSceneId = view.findViewById(R.id.debug_scene_id)
         debugPlaybackTextView = view.findViewById(R.id.debug_playback)
         debugVideoTextView = view.findViewById(R.id.debug_video)
@@ -597,18 +641,11 @@ abstract class PlaybackFragment(
 
     @OptIn(UnstableApi::class)
     override fun onStart() {
+        // Always release the player and recreate
+        StashExoPlayer.releasePlayer()
+        player = preparePlayer()
+        player!!.postSetupPlayer()
         super.onStart()
-        if (Util.SDK_INT > 23) {
-            player = preparePlayer()
-        }
-    }
-
-    @OptIn(UnstableApi::class)
-    override fun onResume() {
-        super.onResume()
-        if ((Util.SDK_INT <= 23 || player == null)) {
-            player = preparePlayer()
-        }
     }
 
     @OptIn(UnstableApi::class)
@@ -632,18 +669,13 @@ abstract class PlaybackFragment(
             Constants.POSITION_REQUEST_KEY,
             bundleOf(Constants.POSITION_REQUEST_KEY to positionToSave),
         )
-
-        if (Util.SDK_INT <= 23) {
-            releasePlayer()
-        }
     }
 
     @OptIn(UnstableApi::class)
     override fun onStop() {
+        Log.v(TAG, "onStop")
+        releasePlayer()
         super.onStop()
-        if (Util.SDK_INT > 23) {
-            releasePlayer()
-        }
     }
 
     fun showAndFocusSeekBar() {
@@ -665,22 +697,22 @@ abstract class PlaybackFragment(
         }
     }
 
-    protected fun maybeAddActivityTracking(exoPlayer: Player) {
+    protected fun maybeAddActivityTracking(scene: Scene) {
         val appTracking =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_playback_track_activity), true)
-        val server = StashServer.requireCurrentServer()
-        if (appTracking && server.serverPreferences.trackActivity && currentScene != null) {
+        val server = serverViewModel.requireServer()
+        if (appTracking && server.serverPreferences.trackActivity) {
             Log.v(TAG, "Adding TrackActivityPlaybackListener")
             trackActivityListener =
                 TrackActivityPlaybackListener(
                     context = requireContext(),
-                    mutationEngine = MutationEngine(server),
-                    scene = currentScene!!,
+                    server = server,
+                    scene = scene,
                     getCurrentPosition = ::currentVideoPosition,
                 )
-            exoPlayer.addListener(trackActivityListener!!)
+            StashExoPlayer.addListener(trackActivityListener!!)
         }
     }
 

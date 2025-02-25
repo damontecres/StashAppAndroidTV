@@ -61,7 +61,11 @@ class FilterWriter(
 
                                 is MultiCriterionInput -> {
                                     val items = associateIdsToNames(dataType!!, o.getAllIds())
-                                    o.toMap(items)
+                                    if (param.name == "galleries") {
+                                        o.toGalleryMap(items)
+                                    } else {
+                                        o.toMap(items)
+                                    }
                                 }
 
                                 is HierarchicalMultiCriterionInput -> {

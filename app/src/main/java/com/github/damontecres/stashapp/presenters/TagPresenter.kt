@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.presenters
 
-import android.content.Context
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
@@ -10,6 +9,7 @@ import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpAction
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import java.util.EnumMap
 
@@ -58,83 +58,65 @@ class TagPresenter(
         }
     }
 
-    override fun getDefaultLongClickCallBack(cardView: StashImageCardView): LongClickCallBack<TagData> = DefaultTagLongClickCallBack()
-
-    open class DefaultTagLongClickCallBack : LongClickCallBack<TagData> {
-        override fun getPopUpItems(
-            context: Context,
-            item: TagData,
-        ): List<PopUpItem> =
-            buildList {
-                add(PopUpItem.getDefault(context))
-                if (item.parent_count > 0) {
-                    val str = context.getString(R.string.stashapp_parent_tags)
-                    add(PopUpItem(POPUP_PARENTS_ID, str))
-                }
-                if (item.child_count > 0) {
-                    val str = context.getString(R.string.stashapp_sub_tags)
-                    add(PopUpItem(POPUP_CHILDREN_ID, str))
-                }
+    override fun getDefaultLongClickCallBack(): LongClickCallBack<TagData> =
+        LongClickCallBack<TagData>(PopUpItem.DEFAULT to PopUpAction { cardView, _ -> cardView.performClick() })
+            .addAction(
+                PopUpItem(POPUP_PARENTS_ID, R.string.stashapp_parent_tags),
+                { it.parent_count > 0 },
+            ) { cardView, item ->
+                StashApplication.navigationManager.navigate(
+                    Destination.Filter(
+                        FilterArgs(
+                            dataType = DataType.TAG,
+                            name =
+                                cardView.context.getString(
+                                    R.string.stashapp_parent_of,
+                                    item.name,
+                                ),
+                            objectFilter =
+                                TagFilterType(
+                                    children =
+                                        Optional.present(
+                                            HierarchicalMultiCriterionInput(
+                                                value = Optional.present(listOf(item.id)),
+                                                modifier = CriterionModifier.INCLUDES,
+                                                depth = Optional.present(-1),
+                                            ),
+                                        ),
+                                ),
+                        ),
+                        false,
+                    ),
+                )
+            }.addAction(
+                PopUpItem(POPUP_CHILDREN_ID, R.string.stashapp_sub_tags),
+                { it.child_count > 0 },
+            ) { cardView, item ->
+                StashApplication.navigationManager.navigate(
+                    Destination.Filter(
+                        FilterArgs(
+                            dataType = DataType.TAG,
+                            name =
+                                cardView.context.getString(
+                                    R.string.stashapp_sub_tag_of,
+                                    item.name,
+                                ),
+                            objectFilter =
+                                TagFilterType(
+                                    parents =
+                                        Optional.present(
+                                            HierarchicalMultiCriterionInput(
+                                                value = Optional.present(listOf(item.id)),
+                                                modifier = CriterionModifier.INCLUDES,
+                                                depth = Optional.present(-1),
+                                            ),
+                                        ),
+                                ),
+                        ),
+                        false,
+                    ),
+                )
             }
-
-        override fun onItemLongClick(
-            context: Context,
-            item: TagData,
-            popUpItem: PopUpItem,
-        ) {
-            val destination =
-                when (popUpItem.id) {
-                    PopUpItem.DEFAULT_ID -> {
-                        Destination.fromStashData(item)
-                    }
-
-                    POPUP_PARENTS_ID -> {
-                        Destination.Filter(
-                            FilterArgs(
-                                dataType = DataType.TAG,
-                                name = context.getString(R.string.stashapp_parent_of, item.name),
-                                objectFilter =
-                                    TagFilterType(
-                                        children =
-                                            Optional.present(
-                                                HierarchicalMultiCriterionInput(
-                                                    value = Optional.present(listOf(item.id)),
-                                                    modifier = CriterionModifier.INCLUDES,
-                                                    depth = Optional.present(-1),
-                                                ),
-                                            ),
-                                    ),
-                            ),
-                            false,
-                        )
-                    }
-
-                    POPUP_CHILDREN_ID -> {
-                        Destination.Filter(
-                            FilterArgs(
-                                dataType = DataType.TAG,
-                                name = context.getString(R.string.stashapp_sub_tag_of, item.name),
-                                objectFilter =
-                                    TagFilterType(
-                                        parents =
-                                            Optional.present(
-                                                HierarchicalMultiCriterionInput(
-                                                    value = Optional.present(listOf(item.id)),
-                                                    modifier = CriterionModifier.INCLUDES,
-                                                    depth = Optional.present(-1),
-                                                ),
-                                            ),
-                                    ),
-                            ),
-                            false,
-                        )
-                    }
-
-                    else -> throw IllegalStateException("Unsupported tags popup: ${popUpItem.id}")
-                }
-            StashApplication.navigationManager.navigate(destination)
-        }
-    }
 
     companion object {
         private const val TAG = "TagPresenter"

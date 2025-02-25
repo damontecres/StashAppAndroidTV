@@ -35,7 +35,8 @@
             android:banner="@mipmap/stash_logo"
             android:exported="true"
             android:icon="@mipmap/stash_logo"
-            android:logo="@mipmap/stash_logo">
+            android:logo="@mipmap/stash_logo"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

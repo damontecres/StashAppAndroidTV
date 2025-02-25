@@ -2,7 +2,10 @@ package com.github.damontecres.stashapp.views.models
 
 import android.content.Context
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
@@ -12,6 +15,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.getInt
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -21,6 +25,9 @@ open class ServerViewModel : ViewModel() {
     private val _currentServer = EqualityMutableLiveData<StashServer?>()
     val currentServer: LiveData<StashServer?> = _currentServer
 
+    private val _serverConnection = MutableLiveData<ServerConnection>(ServerConnection.Pending)
+    val serverConnection: LiveData<ServerConnection> = _serverConnection
+
     fun requireServer(): StashServer = currentServer.value!!
 
     private val _cardUiSettings = EqualityMutableLiveData(createUiSettings())
@@ -29,14 +36,22 @@ open class ServerViewModel : ViewModel() {
     lateinit var navigationManager: NavigationManager
 
     fun switchServer(newServer: StashServer?) {
+        _serverConnection.value = ServerConnection.Pending
         if (newServer != null) {
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                newServer.updateServerPrefs()
-                StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
-                _currentServer.value = newServer
+                try {
+                    newServer.updateServerPrefs()
+                    StashServer.setCurrentStashServer(StashApplication.getApplication(), newServer)
+                    _currentServer.value = newServer
+                    _serverConnection.value = ServerConnection.Success
+                } catch (ex: Exception) {
+                    _currentServer.setValueNoCheck(null)
+                    _serverConnection.value = ServerConnection.Failure(newServer, ex)
+                }
             }
         } else {
-            _currentServer.value = null
+            _currentServer.setValueNoCheck(null)
+            _serverConnection.value = ServerConnection.NotConfigured
         }
     }
 
@@ -48,7 +63,7 @@ open class ServerViewModel : ViewModel() {
     private fun createUiSettings(): CardUiSettings {
         val context = StashApplication.getApplication()
         val manager = PreferenceManager.getDefaultSharedPreferences(context)
-        val maxSearchResults = manager.getInt("maxSearchResults", 0)
+        val maxSearchResults = manager.getInt("maxSearchResults", 25)
         val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
         val columns = manager.getInt("cardSize", context.getString(R.string.card_size_default))
         val showRatings = manager.getBoolean(context.getString(R.string.pref_key_show_rating), true)
@@ -94,6 +109,13 @@ open class ServerViewModel : ViewModel() {
         }
     }
 
+    fun <T> withLiveData(liveData: LiveData<T?>): LiveData<Pair<StashServer, T?>> =
+        currentServer
+            .asFlow()
+            .combine(liveData.asFlow()) { server, item ->
+                server!! to item
+            }.asLiveData()
+
     /**
      * Basic UI settings that affect the cards
      */
@@ -105,4 +127,17 @@ open class ServerViewModel : ViewModel() {
         val imageCrop: Boolean,
         val videoDelay: Int,
     )
+
+    sealed interface ServerConnection {
+        data object Pending : ServerConnection
+
+        data object Success : ServerConnection
+
+        data class Failure(
+            val server: StashServer,
+            val exception: Exception,
+        ) : ServerConnection
+
+        data object NotConfigured : ServerConnection
+    }
 }

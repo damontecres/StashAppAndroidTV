@@ -10,9 +10,9 @@ import androidx.fragment.app.setFragmentResult
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.exoplayer.ExoPlayer
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
@@ -26,12 +26,15 @@ class PlaybackSceneFragment : PlaybackFragment() {
     override val optionsButtonOptions: OptionsButtonOptions
         get() = OptionsButtonOptions(DataType.SCENE, false)
 
-    override fun createPlayer(): ExoPlayer = StashExoPlayer.createInstance(requireContext(), serverViewModel.requireServer())
+    override fun Player.setupPlayer() {
+        repeatMode = Player.REPEAT_MODE_OFF
+    }
 
     @OptIn(UnstableApi::class)
-    override fun postCreatePlayer(player: Player) {
-        maybeAddActivityTracking(player)
-
+    override fun Player.postSetupPlayer() {
+        currentScene?.let {
+            maybeAddActivityTracking(it)
+        }
         val finishedBehavior =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
@@ -41,21 +44,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
                 )
         when (finishedBehavior) {
             getString(R.string.playback_finished_repeat) -> {
-                StashExoPlayer.addListener(
-                    object :
-                        Player.Listener {
-                        override fun onAvailableCommandsChanged(availableCommands: Player.Commands) {
-                            if (Player.COMMAND_SET_REPEAT_MODE in availableCommands) {
-                                Log.v(
-                                    TAG,
-                                    "Listener setting repeatMode to REPEAT_MODE_ONE",
-                                )
-                                player.repeatMode = Player.REPEAT_MODE_ONE
-                                player.removeListener(this)
-                            }
-                        }
-                    },
-                )
+                repeatMode = Player.REPEAT_MODE_ONE
             }
 
             getString(R.string.playback_finished_return) ->
@@ -64,11 +53,11 @@ class PlaybackSceneFragment : PlaybackFragment() {
                         Player.Listener {
                         override fun onPlaybackStateChanged(playbackState: Int) {
                             if (playbackState == Player.STATE_ENDED) {
-                                Log.v(TAG, "Finishing activity")
                                 setFragmentResult(
                                     Constants.POSITION_REQUEST_KEY,
                                     bundleOf(Constants.POSITION_REQUEST_KEY to 0L),
                                 )
+                                StashApplication.navigationManager.goBack()
                             }
                         }
                     },
@@ -103,10 +92,10 @@ class PlaybackSceneFragment : PlaybackFragment() {
 
         viewModel.scene.observe(viewLifecycleOwner) { scene ->
             currentScene = scene
-
             if (scene == null) {
                 return@observe
             }
+            maybeAddActivityTracking(scene)
             val position =
                 if (playbackPosition >= 0) {
                     playbackPosition

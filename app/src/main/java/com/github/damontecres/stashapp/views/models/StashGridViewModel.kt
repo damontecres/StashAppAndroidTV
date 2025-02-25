@@ -1,10 +1,13 @@
 package com.github.damontecres.stashapp.views.models
 
 import android.util.Log
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.SearchView
+import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.widget.doOnTextChanged
 import androidx.leanback.widget.ObjectAdapter
 import androidx.leanback.widget.PresenterSelector
+import androidx.leanback.widget.SearchEditText
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -45,6 +48,8 @@ class StashGridViewModel : ViewModel() {
         }
 
     val searchBarFocus = EqualityMutableLiveData(false)
+
+    val scrollToNextPage = MutableLiveData<Boolean?>()
 
     sealed interface LoadingStatus {
         data object NoOp : LoadingStatus
@@ -122,49 +127,48 @@ class StashGridViewModel : ViewModel() {
         }
     }
 
-    fun setupSearchButton(searchButton: SearchView) {
+    fun setupSearch(searchEditText: SearchEditText) {
         if (filterArgs.isInitialized) {
             val query = filterArgs.value!!.findFilter?.q
             if (query.isNotNullOrBlank()) {
-                searchButton.setQuery(query, false)
+                searchEditText.setText(query)
             }
         }
-        searchButton.setOnQueryTextFocusChangeListener { v, hasFocus ->
-            if (hasFocus) {
-                // Show keyboard
-                val imm: InputMethodManager =
-                    v.context.getSystemService<InputMethodManager>(
-                        InputMethodManager::class.java,
-                    )
-                imm.showSoftInput(v, 0)
-            }
+        searchEditText.setOnFocusChangeListener { v, hasFocus ->
             searchBarFocus.value = hasFocus
         }
-        searchButton.setOnQueryTextListener(
-            object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean = onQueryTextChange(query)
+        searchEditText.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                actionId == EditorInfo.IME_ACTION_DONE ||
+                actionId == EditorInfo.IME_ACTION_GO
+            ) {
+                val imm = getSystemService(v.context, InputMethodManager::class.java)
+                imm!!.hideSoftInputFromWindow(v.windowToken, 0)
+                true
+            } else {
+                false
+            }
+        }
+        searchEditText.doOnTextChanged { text, start, before, count ->
+            val newQuery = searchEditText.text.toString().ifBlank { null }
+            searchJob?.cancel()
 
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    searchJob?.cancel()
-                    val newQuery = newText?.ifBlank { null }
-
-                    val currentFilter = filterArgs.value!!
-                    val findFilter =
-                        currentFilter.findFilter
-                            ?: StashFindFilter(currentFilter.dataType.defaultSort)
-                    if (findFilter.q != newQuery) {
-                        searchJob =
-                            viewModelScope.launch(StashCoroutineExceptionHandler()) {
-                                delay(searchDelay)
-                                Log.v(TAG, "New query")
-                                setFilter(currentFilter.copy(findFilter = findFilter.copy(q = newQuery)))
-                            }
-                    }
-
-                    return true
+            val currentFilter = filterArgs.value
+            if (currentFilter != null) {
+                val findFilter =
+                    currentFilter.findFilter
+                        ?: StashFindFilter(currentFilter.dataType.defaultSort)
+                val oldQuery = findFilter.q?.ifBlank { null }
+                if (oldQuery != newQuery) {
+                    searchJob =
+                        viewModelScope.launch(StashCoroutineExceptionHandler()) {
+                            delay(searchDelay)
+                            Log.v(TAG, "New query")
+                            setFilter(currentFilter.copy(findFilter = findFilter.copy(q = newQuery)))
+                        }
                 }
-            },
-        )
+            }
+        }
     }
 
     companion object {
