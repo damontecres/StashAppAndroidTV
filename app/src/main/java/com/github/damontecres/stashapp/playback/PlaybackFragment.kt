@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
-import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TableLayout
@@ -51,6 +50,7 @@ import com.github.damontecres.stashapp.util.StashPreviewLoader
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getDataType
+import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.util.toMilliseconds
@@ -688,12 +688,7 @@ abstract class PlaybackFragment(
 
     inner class AmbientPlaybackListener : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
-            Log.v(TAG, "Keep screen on: $isPlaying")
-            if (isPlaying) {
-                requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            } else {
-                requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            }
+            keepScreenOn(isPlaying)
         }
     }
 

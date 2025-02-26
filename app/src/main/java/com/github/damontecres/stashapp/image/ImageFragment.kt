@@ -4,6 +4,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
+import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
@@ -16,16 +17,14 @@ import com.github.damontecres.stashapp.playback.VideoFilterViewModel
 import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isImageClip
+import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.views.models.ImageViewModel
-import java.util.Timer
 
 class ImageFragment :
     Fragment(R.layout.image_fragment),
     DefaultKeyEventCallback {
     private val viewModel: ImageViewModel by viewModels()
     private val filterViewModel: VideoFilterViewModel by viewModels()
-
-    private var timer: Timer? = null
 
     private val imageViewFragment = ImageViewFragment()
     private val imageClipFragment = ImageClipFragment()
@@ -80,34 +79,20 @@ class ImageFragment :
                 hide(overlayFragment)
             }
         }
+    }
 
-//        val delay =
-//            PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt(
-//                getString(R.string.pref_key_slideshow_duration),
-//                resources.getInteger(R.integer.pref_key_slideshow_duration_default),
-//            ) * 1000L
-//        viewModel.slideshow.observe(this) { newValue ->
-//            timer?.cancel()
-//            if (newValue) {
-//                Log.i(TAG, "Setting up slideshow timer")
-//                timer =
-//                    kotlin.concurrent.timer(
-//                        name = "imageSlideshow",
-//                        daemon = true,
-//                        initialDelay = delay,
-//                        period = delay,
-//                    ) {
-//                        if (!overlayIsVisible) {
-//                            viewModel.nextImage(false)
-//                        }
-//                    }
-//            }
-//        }
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        viewModel.slideshowActive.observe(viewLifecycleOwner) { keepScreenOn(it) }
     }
 
     override fun onStop() {
         super.onStop()
         viewModel.tearDownSlideshow()
+        keepScreenOn(false)
     }
 
     private fun showOverlay() {
