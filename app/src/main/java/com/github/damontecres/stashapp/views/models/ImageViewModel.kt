@@ -191,6 +191,7 @@ class ImageViewModel(
 
     fun startSlideshow() {
         _slideshow.value = true
+        _slideshowPaused.value = false
         if (_image.value?.isImageClip == false) {
             pulseSlideshow()
         }
