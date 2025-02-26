@@ -6,6 +6,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
@@ -29,6 +31,7 @@ import com.github.damontecres.stashapp.util.isImageClip
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -57,6 +60,13 @@ class ImageViewModel(
     val slideshow: LiveData<Boolean> = _slideshow
     private val _slideshowPaused = MutableLiveData(false)
     val slideshowPaused: LiveData<Boolean> = _slideshowPaused
+
+    val slideshowActive =
+        slideshow
+            .asFlow()
+            .combine(slideshowPaused.asFlow()) { slideshow, paused ->
+                slideshow && !paused
+            }.asLiveData()
 
     val slideshowDelay =
         PreferenceManager.getDefaultSharedPreferences(StashApplication.getApplication()).getInt(
@@ -181,6 +191,7 @@ class ImageViewModel(
 
     fun startSlideshow() {
         _slideshow.value = true
+        _slideshowPaused.value = false
         if (_image.value?.isImageClip == false) {
             pulseSlideshow()
         }
@@ -192,12 +203,16 @@ class ImageViewModel(
     }
 
     fun pauseSlideshow() {
-        _slideshowPaused.value = true
-        slideshowJob?.cancel()
+        if (_slideshow.value == true) {
+            _slideshowPaused.value = true
+            slideshowJob?.cancel()
+        }
     }
 
     fun unpauseSlideshow() {
-        _slideshowPaused.value = false
+        if (_slideshow.value == true) {
+            _slideshowPaused.value = false
+        }
     }
 
     fun pulseSlideshow(milliseconds: Long = slideshowDelay) {
@@ -207,7 +222,7 @@ class ImageViewModel(
                 viewModelScope
                     .launch(StashCoroutineExceptionHandler()) {
                         delay(milliseconds)
-                        if (_slideshowPaused.value == false) {
+                        if (slideshowActive.value == true) {
                             nextImage(false)
                         }
                     }.apply {

@@ -15,6 +15,7 @@ import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.playback.StashPlayerView
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
+import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.views.models.ImageViewModel
 import kotlin.properties.Delegates
 
@@ -117,6 +118,13 @@ class ImageClipFragment :
     override fun onPlaybackStateChanged(playbackState: Int) {
         if (playbackState == Player.STATE_ENDED) {
             imageViewModel.pulseSlideshow(delay)
+        }
+    }
+
+    override fun onIsPlayingChanged(isPlaying: Boolean) {
+        if (imageViewModel.slideshow.value == false) {
+            // Only adjust if not in slideshow mode
+            keepScreenOn(isPlaying)
         }
     }
 
