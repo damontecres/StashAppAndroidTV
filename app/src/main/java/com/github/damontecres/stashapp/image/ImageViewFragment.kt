@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
@@ -24,12 +25,17 @@ import com.github.damontecres.stashapp.image.ImageFragment.Companion.isLeft
 import com.github.damontecres.stashapp.image.ImageFragment.Companion.isRight
 import com.github.damontecres.stashapp.image.ImageFragment.Companion.isUp
 import com.github.damontecres.stashapp.playback.VideoFilterViewModel
+import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashZoomImageView
 import com.github.damontecres.stashapp.views.models.ImageViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 /**
@@ -86,10 +92,16 @@ class ImageViewFragment :
         placeholder.strokeWidth = 3f
         placeholder.centerRadius = 12f
         placeholder.setColorSchemeColors(requireContext().getColor(R.color.selected_background))
-        placeholder.start()
 
         val imageUrl = image.paths.image
         if (imageUrl != null) {
+            val job =
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler() + Dispatchers.IO) {
+                    delay(300)
+                    withContext(Dispatchers.Main) {
+                        placeholder.start()
+                    }
+                }
             val factory =
                 DrawableCrossFadeFactory
                     .Builder(300)
@@ -116,6 +128,7 @@ class ImageViewFragment :
                                         Toast.LENGTH_LONG,
                                     ).show()
                                 viewModel.pulseSlideshow()
+                                job.cancel()
                                 return true
                             }
 
@@ -127,6 +140,7 @@ class ImageViewFragment :
                                 isFirstResource: Boolean,
                             ): Boolean {
                                 viewModel.pulseSlideshow()
+                                job.cancel()
                                 return false
                             }
                         },

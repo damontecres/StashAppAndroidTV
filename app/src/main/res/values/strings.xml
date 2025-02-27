@@ -95,5 +95,7 @@
     <string name="add_performer">Add Performer</string>
     <string name="add_group">Add Group</string>
     <string name="studio_favorited">Studio favorited!</string>
+    <string name="hours">Hours</string>
+    <string name="minutes">Minutes</string>
 
 </resources>

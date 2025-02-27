@@ -9,6 +9,7 @@ import android.text.TextUtils
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
+import android.view.WindowManager
 import android.widget.Adapter
 import android.widget.FrameLayout
 import android.widget.ListAdapter
@@ -17,6 +18,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.widget.NestedScrollView
+import androidx.fragment.app.Fragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.Visibility
 import androidx.preference.PreferenceManager
@@ -1023,3 +1025,12 @@ fun <T : StashDataFilter> toReadableString(
     }.replace(Optional.absent().toString(), "Absent")
 
 fun SceneFilterType.toReadableString(): String = toReadableString(DataType.SCENE, this)
+
+fun Fragment.keepScreenOn(keep: Boolean) {
+    Log.v("keepScreenOn", "Keep screen on: $keep")
+    if (keep) {
+        requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    } else {
+        requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+}

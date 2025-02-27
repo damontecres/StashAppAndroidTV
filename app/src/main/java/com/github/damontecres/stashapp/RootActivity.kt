@@ -97,6 +97,7 @@ class RootActivity :
             serverViewModel.init(currentServer)
 
             serverViewModel.serverConnection.observe(this) { result ->
+                loadingView.hide()
                 when (result) {
                     is ServerViewModel.ServerConnection.Failure -> {
                         Log.w(TAG, "Exception connecting to server", result.exception)
@@ -132,6 +133,7 @@ class RootActivity :
                 }
             }
         } else {
+            loadingView.hide()
             Log.i(TAG, "No server, starting setup")
             // No server configured
             navigationManager.navigate(Destination.Setup)
