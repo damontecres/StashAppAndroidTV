@@ -437,7 +437,7 @@ class FilterParser(
                 tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
-                custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>)),
+                custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>?)),
             )
         } else {
             null
