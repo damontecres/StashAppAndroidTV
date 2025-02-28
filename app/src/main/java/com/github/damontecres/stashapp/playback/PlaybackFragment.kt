@@ -55,6 +55,7 @@ import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
+import com.github.damontecres.stashapp.views.SkipIndicator
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.models.PlaybackViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -126,6 +127,7 @@ abstract class PlaybackFragment(
     protected lateinit var oCounterButton: ImageButton
     protected lateinit var oCounterText: TextView
     private lateinit var moreOptionsButton: ImageButton
+    private lateinit var skipIndicator: SkipIndicator
 
     // Track whether the video is playing before calling the resultLauncher
     protected var wasPlayingBeforeResultLauncher: Boolean? = null
@@ -428,10 +430,14 @@ abstract class PlaybackFragment(
             debugView.visibility = View.VISIBLE
         }
 
+        skipIndicator = view.findViewById(R.id.skip_indicator)
         videoView = view.findViewById(R.id.video_view)
         videoView.controllerShowTimeoutMs =
             manager.getInt("controllerShowTimeoutMs", PlayerControlView.DEFAULT_SHOW_TIMEOUT_MS)
         videoView.setControllerVisibilityListener(controllerVisibilityListener)
+        if (manager.getBoolean(getString(R.string.pref_key_show_dpad_skip), true)) {
+            videoView.skipIndicator = skipIndicator
+        }
 
         backCallback =
             requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, false) {

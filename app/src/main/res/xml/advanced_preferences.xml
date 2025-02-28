@@ -58,6 +58,10 @@
             app:summaryOn="Skip back/forward with D-Pad left/right"
             app:summaryOff="Don't skip back/forward with D-Pad left/right"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_show_dpad_skip"
+            app:title="Show D-Pad skipping indicator"
+            app:defaultValue="true" />
         <ListPreference
             app:key="stream_choice"
             app:title="Stream Choice"
