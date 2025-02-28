@@ -11,6 +11,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
 import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.views.SkipIndicator
 
 /**
  * A [PlayerView] which overrides button presses
@@ -26,6 +27,8 @@ class StashPlayerView(
 
     private val dPadSkipEnabled: Boolean =
         PreferenceManager.getDefaultSharedPreferences(context).getBoolean("skipWithDpad", true)
+
+    var skipIndicator: SkipIndicator? = null
 
     @OptIn(UnstableApi::class)
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -81,12 +84,14 @@ class StashPlayerView(
                 if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
                     if (dPadSkipEnabled) {
                         player!!.seekForward()
+                        skipIndicator?.update(player!!.seekForwardIncrement)
                     } else {
                         fragment.showAndFocusSeekBar()
                     }
                 } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
                     if (dPadSkipEnabled) {
                         player!!.seekBack()
+                        skipIndicator?.update(-1 * player!!.seekBackIncrement)
                     } else {
                         fragment.showAndFocusSeekBar()
                     }

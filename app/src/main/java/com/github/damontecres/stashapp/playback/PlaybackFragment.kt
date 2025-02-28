@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
-import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TableLayout
@@ -51,10 +50,12 @@ import com.github.damontecres.stashapp.util.StashPreviewLoader
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getDataType
+import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.util.toMilliseconds
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
+import com.github.damontecres.stashapp.views.SkipIndicator
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.models.PlaybackViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
@@ -126,6 +127,7 @@ abstract class PlaybackFragment(
     protected lateinit var oCounterButton: ImageButton
     protected lateinit var oCounterText: TextView
     private lateinit var moreOptionsButton: ImageButton
+    private lateinit var skipIndicator: SkipIndicator
 
     // Track whether the video is playing before calling the resultLauncher
     protected var wasPlayingBeforeResultLauncher: Boolean? = null
@@ -428,10 +430,14 @@ abstract class PlaybackFragment(
             debugView.visibility = View.VISIBLE
         }
 
+        skipIndicator = view.findViewById(R.id.skip_indicator)
         videoView = view.findViewById(R.id.video_view)
         videoView.controllerShowTimeoutMs =
             manager.getInt("controllerShowTimeoutMs", PlayerControlView.DEFAULT_SHOW_TIMEOUT_MS)
         videoView.setControllerVisibilityListener(controllerVisibilityListener)
+        if (manager.getBoolean(getString(R.string.pref_key_show_dpad_skip), true)) {
+            videoView.skipIndicator = skipIndicator
+        }
 
         backCallback =
             requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, false) {
@@ -688,12 +694,7 @@ abstract class PlaybackFragment(
 
     inner class AmbientPlaybackListener : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
-            Log.v(TAG, "Keep screen on: $isPlaying")
-            if (isPlaying) {
-                requireActivity().window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            } else {
-                requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            }
+            keepScreenOn(isPlaying)
         }
     }
 
