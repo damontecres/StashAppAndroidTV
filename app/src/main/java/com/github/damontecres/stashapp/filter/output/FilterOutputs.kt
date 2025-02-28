@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.filter.output
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.CustomFieldCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
@@ -266,4 +267,13 @@ fun CircumcisionCriterionInput.toMap(): Map<String, Any> =
                     }
                 }.orEmpty()
         put("value", values)
+    }
+
+fun CustomFieldCriterionInput.toMap(): Map<String, Any> =
+    buildMap {
+        put("modifier", modifier.rawValue)
+        put("field", field)
+        value.getOrNull()?.let {
+            put("value", it)
+        }
     }

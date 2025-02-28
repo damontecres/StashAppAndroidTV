@@ -201,6 +201,33 @@ class ObjectFilterParsingTests {
     }
 
     @Test
+    fun testPerformerCustomFieldsFilter() {
+        val savedFilterData = getSavedFilterData("performer_custom_fields.json")
+        val performerFilter =
+            FilterParser(Version.MINIMUM_STASH_VERSION).convertPerformerFilterType(savedFilterData.object_filter)
+        Assert.assertNotNull(performerFilter!!)
+        Assert.assertEquals(FilterMode.PERFORMERS, savedFilterData.mode)
+        println(performerFilter.custom_fields.getOrNull())
+
+        Assert.assertNotNull(performerFilter.custom_fields.getOrNull())
+        val customFields = performerFilter.custom_fields.getOrNull()!!
+        Assert.assertEquals(3, customFields.size)
+        Assert.assertEquals(CriterionModifier.EQUALS, customFields[0].modifier)
+        Assert.assertEquals("Field1", customFields[0].field)
+        Assert.assertNotNull(customFields[0].value.getOrNull())
+        Assert.assertEquals(1, customFields[0].value.getOrNull()!!.size)
+        Assert.assertEquals("Whatever", customFields[0].value.getOrNull()!![0])
+
+        Assert.assertEquals(CriterionModifier.IS_NULL, customFields[1].modifier)
+        Assert.assertEquals("Field2", customFields[1].field)
+        Assert.assertNull(customFields[1].value.getOrNull())
+
+        Assert.assertEquals(CriterionModifier.BETWEEN, customFields[2].modifier)
+        Assert.assertEquals("Field3", customFields[2].field)
+        Assert.assertEquals(listOf(1, 5), customFields[2].value.getOrNull())
+    }
+
+    @Test
     fun testGenderFilter() {
         val savedFilterData = getSavedFilterData("gender_savedfilter.json")
         val performerFilter =
@@ -401,6 +428,16 @@ class ObjectFilterParsingTests {
     fun testPerformerFilterWriter() {
         checkFilterOutput(
             "performer_savedfilter.json",
+            DataType.PERFORMER,
+            PerformerFilterType::class,
+            filterParser::convertPerformerFilterType,
+        )
+    }
+
+    @Test
+    fun testPerformerCustomFieldFilterWriter() {
+        checkFilterOutput(
+            "performer_custom_fields.json",
             DataType.PERFORMER,
             PerformerFilterType::class,
             filterParser::convertPerformerFilterType,

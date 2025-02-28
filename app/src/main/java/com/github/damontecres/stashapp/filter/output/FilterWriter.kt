@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.filter.output
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.CustomFieldCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GenderCriterionInput
@@ -37,49 +38,54 @@ class FilterWriter(
                     if (obj != Optional.Absent) {
                         val o = obj.getOrNull()!!
                         val dataType = getType(filterDataType, param.name)
-                        val value =
-                            when (o) {
-                                is IntCriterionInput -> o.toMap()
-                                is FloatCriterionInput -> o.toMap()
-                                is StringCriterionInput -> o.toMap()
-                                is PhashDistanceCriterionInput -> o.toMap()
-                                is PHashDuplicationCriterionInput -> o.toMap()
-                                is ResolutionCriterionInput -> o.toMap()
-                                is OrientationCriterionInput -> o.toMap()
-                                is StashIDCriterionInput -> o.toMap()
-                                is TimestampCriterionInput -> o.toMap()
-                                is DateCriterionInput -> o.toMap()
-                                is GenderCriterionInput -> o.toMap()
-                                is CircumcisionCriterionInput -> o.toMap()
+                        if (param.name == "custom_fields") {
+                            val customFields = o as List<CustomFieldCriterionInput>
+                            put(param.name, customFields.map { it.toMap() })
+                        } else {
+                            val value =
+                                when (o) {
+                                    is IntCriterionInput -> o.toMap()
+                                    is FloatCriterionInput -> o.toMap()
+                                    is StringCriterionInput -> o.toMap()
+                                    is PhashDistanceCriterionInput -> o.toMap()
+                                    is PHashDuplicationCriterionInput -> o.toMap()
+                                    is ResolutionCriterionInput -> o.toMap()
+                                    is OrientationCriterionInput -> o.toMap()
+                                    is StashIDCriterionInput -> o.toMap()
+                                    is TimestampCriterionInput -> o.toMap()
+                                    is DateCriterionInput -> o.toMap()
+                                    is GenderCriterionInput -> o.toMap()
+                                    is CircumcisionCriterionInput -> o.toMap()
 
-                                is Boolean, is String -> {
-                                    mapOf(
-                                        "value" to o.toString(),
-                                        "modifier" to CriterionModifier.EQUALS.rawValue,
-                                    )
-                                }
+                                    is Boolean, is String -> {
+                                        mapOf(
+                                            "value" to o.toString(),
+                                            "modifier" to CriterionModifier.EQUALS.rawValue,
+                                        )
+                                    }
 
-                                is MultiCriterionInput -> {
-                                    val items = associateIdsToNames(dataType!!, o.getAllIds())
-                                    if (param.name == "galleries") {
-                                        o.toGalleryMap(items)
-                                    } else {
+                                    is MultiCriterionInput -> {
+                                        val items = associateIdsToNames(dataType!!, o.getAllIds())
+                                        if (param.name == "galleries") {
+                                            o.toGalleryMap(items)
+                                        } else {
+                                            o.toMap(items)
+                                        }
+                                    }
+
+                                    is HierarchicalMultiCriterionInput -> {
+                                        val items = associateIdsToNames(dataType!!, o.getAllIds())
                                         o.toMap(items)
                                     }
+
+                                    is StashDataFilter -> convertFilter(o)
+
+                                    else -> throw UnsupportedOperationException(
+                                        "Unable to convert ${filter::class.simpleName}.${param.name} (${o::class.qualifiedName})",
+                                    )
                                 }
-
-                                is HierarchicalMultiCriterionInput -> {
-                                    val items = associateIdsToNames(dataType!!, o.getAllIds())
-                                    o.toMap(items)
-                                }
-
-                                is StashDataFilter -> convertFilter(o)
-
-                                else -> throw UnsupportedOperationException(
-                                    "Unable to convert ${filter::class.simpleName}.${param.name} (${o::class.qualifiedName})",
-                                )
-                            }
-                        put(param.name, value)
+                            put(param.name, value)
+                        }
                     }
                 }
             }

@@ -1,0 +1,45 @@
+{
+  "data": {
+    "findSavedFilter": {
+      "id": "19",
+      "mode": "PERFORMERS",
+      "name": "Custom",
+      "find_filter": {
+        "q": "",
+        "page": 1,
+        "per_page": 40,
+        "sort": "name",
+        "direction": "ASC",
+        "__typename": "SavedFindFilterType"
+      },
+      "object_filter": {
+        "custom_fields": [
+          {
+            "field": "Field1",
+            "modifier": "EQUALS",
+            "value": [
+              "Whatever"
+            ]
+          },
+          {
+            "field": "Field2",
+            "modifier": "IS_NULL"
+          },
+          {
+            "field": "Field3",
+            "modifier": "BETWEEN",
+            "value": [
+              1,
+              5
+            ]
+          }
+        ]
+      },
+      "ui_options": {
+        "display_mode": 0,
+        "zoom_index": 1
+      },
+      "__typename": "SavedFilter"
+    }
+  }
+}

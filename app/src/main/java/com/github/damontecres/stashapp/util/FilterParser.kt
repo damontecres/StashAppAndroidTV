@@ -4,6 +4,7 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CircumcisionCriterionInput
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
+import com.github.damontecres.stashapp.api.type.CustomFieldCriterionInput
 import com.github.damontecres.stashapp.api.type.DateCriterionInput
 import com.github.damontecres.stashapp.api.type.FloatCriterionInput
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -315,6 +316,20 @@ class FilterParser(
             null
         }
 
+    private fun convertCustomFieldCriterionInput(it: List<*>?): List<CustomFieldCriterionInput>? =
+        if (it != null) {
+            it.map { item ->
+                item as Map<String, *>
+                CustomFieldCriterionInput(
+                    field = item["field"].toString(),
+                    value = Optional.presentIfNotNull(item["value"] as List<Any>?),
+                    modifier = CriterionModifier.valueOf(item["modifier"]!!.toString()),
+                )
+            }
+        } else {
+            null
+        }
+
     fun convertFilterMap(
         dataType: DataType,
         filterMap: Map<String, *>,
@@ -422,6 +437,7 @@ class FilterParser(
                 tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
+                custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>)),
             )
         } else {
             null
