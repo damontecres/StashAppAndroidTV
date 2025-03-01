@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.VideoFile
-import com.github.damontecres.stashapp.ui.pages.SceneDetails
+import com.github.damontecres.stashapp.ui.pages.SceneDetailsHeader
 
 @Preview(
     widthDp = 1920 / 2,
@@ -94,24 +94,37 @@ private fun SceneDetailsPreview() {
             __typename = "",
         )
     MainTheme {
-        SceneDetails(
+//        SceneDetails(
+//            scene = scene,
+//            performers = listOf(),
+//            galleries = listOf(),
+//            uiConfig = ComposeUiConfig(true, 1.0f, true),
+//            itemOnClick = { items, filterAndPosition -> },
+//            playOnClick = { position, mode -> },
+//            removeItem = {},
+//            modifier = Modifier,
+//            showRatingBar = true,
+//            server = StashServer("", null),
+//            rating100 = 60,
+//            oCount = 1,
+//            tags = listOf(),
+//            groups = listOf(),
+//            markers = listOf(),
+//            addItem = { },
+//            oCountAction = {  },
+//        )
+        SceneDetailsHeader(
             scene = scene,
-            performers = listOf(),
-            galleries = listOf(),
-            uiConfig = ComposeUiConfig(true, 1.0f, true),
-            itemOnClick = { items, filterAndPosition -> },
-            playOnClick = { position, mode -> },
-            removeItem = {},
+            rating100 = 60,
+            oCount = 1,
+            uiConfig = ComposeUiConfig(true, 1f, true),
+            itemOnClick = { _, _ -> },
+            playOnClick = { _, _ -> },
+            moreOnClick = {},
+            oCounterOnClick = { },
+            oCounterOnLongClick = {},
             modifier = Modifier,
-            showRatingBar = false,
-            server = TODO(),
-            rating100 = TODO(),
-            oCount = TODO(),
-            tags = TODO(),
-            groups = TODO(),
-            markers = TODO(),
-            addItem = TODO(),
-            oCountAction = TODO(),
+            showRatingBar = true,
         )
     }
 }

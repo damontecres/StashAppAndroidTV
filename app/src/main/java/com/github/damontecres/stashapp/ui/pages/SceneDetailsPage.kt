@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.pages
 
-import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -68,7 +67,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.MutableLiveData
@@ -88,6 +86,7 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.surfaceColorAtElevation
 import coil3.compose.AsyncImage
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -118,6 +117,7 @@ import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.StarRating
 import com.github.damontecres.stashapp.ui.components.TitleValueText
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -130,10 +130,10 @@ import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.resume_position
+import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import com.github.damontecres.stashapp.util.toMilliseconds
-import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
 import kotlinx.coroutines.launch
 
@@ -281,6 +281,15 @@ class SceneDetailsViewModel(
         }
     }
 
+    fun updateRating(rating100: Int) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val newRating =
+                mutationEngine.setRating(sceneId, rating100)?.rating100 ?: 0
+            this@SceneDetailsViewModel.rating100.value = newRating
+            showSetRatingToast(StashApplication.getApplication(), newRating)
+        }
+    }
+
     companion object {
         val SERVER_KEY = object : CreationExtras.Key<StashServer> {}
         val SCENE_ID_KEY = object : CreationExtras.Key<String> {}
@@ -386,6 +395,9 @@ fun SceneDetailsPage(
                     }
                 },
                 oCountAction = viewModel::updateOCount,
+                onRatingChange = {
+                    viewModel.updateRating(it)
+                },
                 modifier = modifier.animateContentSize(),
             )
 
@@ -421,6 +433,7 @@ fun SceneDetails(
     addItem: (item: StashData) -> Unit,
     removeItem: (item: StashData) -> Unit,
     oCountAction: (action: suspend MutationEngine.(String) -> OCounter) -> Unit,
+    onRatingChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
 ) {
@@ -480,6 +493,7 @@ fun SceneDetails(
                 itemOnClick = itemOnClick,
                 playOnClick = playOnClick,
                 showRatingBar = showRatingBar,
+                onRatingChange = onRatingChange,
                 moreOnClick = {
                     showDialog =
                         DialogParams(
@@ -707,6 +721,7 @@ fun SceneDetailsHeader(
     moreOnClick: () -> Unit,
     oCounterOnClick: () -> Unit,
     oCounterOnLongClick: () -> Unit,
+    onRatingChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
     showRatingBar: Boolean = true,
 ) {
@@ -782,27 +797,17 @@ fun SceneDetailsHeader(
                 ) {
                     // Rating
                     if (showRatingBar) {
-                        AndroidView(
-                            modifier = Modifier.height(40.dp),
-                            factory = { context ->
-                                StashRatingBar(
-                                    context,
-                                    uiConfig.ratingAsStars,
-                                    uiConfig.starPrecision,
-                                )
-                            },
-                            update = { view ->
-                                view.rating100 = rating100
-                                val lp = view.layoutParams
-                                lp.height = ViewGroup.LayoutParams.MATCH_PARENT
-                                view.layoutParams = lp
-                            },
+                        StarRating(
+                            rating100 = rating100,
+                            onRatingChange = onRatingChange,
+                            enabled = true,
+                            modifier = Modifier.height(30.dp),
                         )
                     }
                     // Quick info
                     val file = scene.files.firstOrNull()?.videoFile
                     DotSeparatedRow(
-                        modifier = Modifier.padding(top = 20.dp),
+                        modifier = Modifier.padding(top = 6.dp),
                         textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         texts =
                             listOfNotNullOrBlank(
