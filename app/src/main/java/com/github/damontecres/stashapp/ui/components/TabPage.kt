@@ -47,7 +47,7 @@ fun TabPage(
 ) {
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
     val tabRowFocusRequester = remember { FocusRequester() }
-    var showTabRowRaw by remember { mutableStateOf(true) }
+    var showTabRowRaw by rememberSaveable { mutableStateOf(true) }
     val showTabRow by remember { derivedStateOf { showTabRowRaw } }
 
     Column(
