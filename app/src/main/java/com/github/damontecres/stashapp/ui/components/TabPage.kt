@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
@@ -61,12 +62,16 @@ fun TabPage(
             )
         }
         if (showTabRow) {
+            LaunchedEffect(Unit) {
+                tabRowFocusRequester.requestFocus()
+            }
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 modifier =
                     Modifier
                         .align(Alignment.CenterHorizontally)
-                        .focusRestorer(),
+                        .focusRestorer()
+                        .focusRequester(tabRowFocusRequester),
             ) {
                 tabs.forEachIndexed { index, tab ->
                     key(index) {
@@ -163,6 +168,7 @@ fun StashGridTab(
             updateFilter = { viewModel.setFilter(server, it) },
             letterPosition = viewModel::findLetterPosition,
             subToggleLabel = subToggleLabel,
+            requestFocus = false,
         )
     }
 }

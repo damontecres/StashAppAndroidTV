@@ -82,6 +82,7 @@ fun StashGridControls(
     uiConfig: ComposeUiConfig,
     filterUiMode: FilterUiMode,
     letterPosition: suspend (Char) -> Int,
+    requestFocus: Boolean,
     modifier: Modifier = Modifier,
     initialPosition: Int = 0,
     itemOnLongClick: ((Any) -> Unit)? = null,
@@ -203,6 +204,7 @@ fun StashGridControls(
             uiConfig,
             itemOnClick,
             longClicker,
+            requestFocus = requestFocus,
             letterPosition = letterPosition,
             modifier = Modifier.fillMaxSize(),
             initialPosition = initialPosition,
@@ -222,6 +224,7 @@ fun StashGrid(
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
     letterPosition: suspend (Char) -> Int,
+    requestFocus: Boolean,
     modifier: Modifier = Modifier,
     initialPosition: Int = 0,
     positionCallback: ((columns: Int, position: Int) -> Unit)? = null,
@@ -313,6 +316,11 @@ fun StashGrid(
                                             .wrapContentWidth(Alignment.CenterHorizontally),
                                 )
                             } else {
+                                if (requestFocus && focusedIndex == index) {
+                                    LaunchedEffect(Unit) {
+                                        firstFocus.requestFocus()
+                                    }
+                                }
                                 StashCard(
                                     modifier =
                                         mod.onFocusChanged { focusState ->

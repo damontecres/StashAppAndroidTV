@@ -77,6 +77,7 @@ fun FilterPage(
                     viewModel.setFilter(server, it)
                 },
                 letterPosition = viewModel::findLetterPosition,
+                requestFocus = true,
             )
         }
     }

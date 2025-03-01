@@ -801,7 +801,10 @@ fun SceneDetailsHeader(
                             rating100 = rating100,
                             onRatingChange = onRatingChange,
                             enabled = true,
-                            modifier = Modifier.height(30.dp),
+                            modifier =
+                                Modifier
+                                    .height(30.dp)
+                                    .padding(start = 12.dp),
                         )
                     }
                     // Quick info
@@ -975,6 +978,7 @@ fun PlayButtons(
     ) {
         if (resume > 0) {
             item {
+                LaunchedEffect(Unit) { firstFocus.requestFocus() }
                 PlayButton(
                     R.string.resume,
                     resume,
@@ -1001,6 +1005,7 @@ fun PlayButtons(
             }
         } else {
             item {
+                LaunchedEffect(Unit) { firstFocus.requestFocus() }
                 PlayButton(
                     R.string.play_scene,
                     0L,
