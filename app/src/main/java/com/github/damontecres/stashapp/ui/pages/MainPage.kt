@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
@@ -123,8 +125,15 @@ fun MainPage(
 
     val frontPageRows by viewModel.frontPageRows.observeAsState()
 
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(server, frontPageRows) {
+        focusRequester.requestFocus()
+    }
     HomePage(
-        modifier = Modifier.padding(16.dp),
+        modifier =
+            Modifier
+                .padding(16.dp)
+                .focusRequester(focusRequester),
         uiConfig = uiConfig,
         rows = frontPageRows!!,
         itemOnClick = itemOnClick,
@@ -132,6 +141,7 @@ fun MainPage(
     )
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun HomePage(
     uiConfig: ComposeUiConfig,
@@ -141,7 +151,7 @@ fun HomePage(
     modifier: Modifier = Modifier,
 ) {
     val focusRequester = remember { FocusRequester() }
-
+    var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(20.dp),
         contentPadding = PaddingValues(bottom = 75.dp),
@@ -149,10 +159,20 @@ fun HomePage(
             modifier
                 .fillMaxSize()
                 .focusGroup()
-                .focusRequester(focusRequester),
+                .focusRestorer { focusRequester },
     ) {
-        items(rows) { row ->
-            HomePageRow(uiConfig, row, itemOnClick, longClicker)
+        itemsIndexed(rows) { index, row ->
+            HomePageRow(
+                uiConfig,
+                row,
+                itemOnClick,
+                longClicker,
+                onFocus = {
+                    focusedIndex = index
+                },
+                rowFocusRequester = if (index == focusedIndex) focusRequester else null,
+                modifier = Modifier,
+            )
         }
     }
 }
@@ -164,6 +184,8 @@ fun HomePageRow(
     row: FrontPageParser.FrontPageRow.Success,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
+    onFocus: (Int) -> Unit,
+    rowFocusRequester: FocusRequester?,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -175,10 +197,16 @@ fun HomePageRow(
         }
         val firstFocus = remember { FocusRequester() }
         var focusedIndex by rememberSaveable { mutableIntStateOf(0) }
+        val rowModifier =
+            if (rowFocusRequester != null) Modifier.focusRequester(rowFocusRequester) else Modifier
         LazyRow(
             modifier =
-                Modifier
-                    .focusGroup()
+                rowModifier
+                    .onFocusChanged {
+                        if (it.isFocused) {
+                            firstFocus.requestFocus()
+                        }
+                    }.focusGroup()
                     .focusRestorer { firstFocus }
                     .fillMaxWidth(),
             contentPadding = PaddingValues(start = 16.dp),
@@ -194,6 +222,7 @@ fun HomePageRow(
                     }.onFocusChanged { focusState ->
                         if (focusState.isFocused) {
                             focusedIndex = index
+                            onFocus(index)
                         }
                     }
                 if (item != null) {
