@@ -22,7 +22,8 @@ class MarkerDataSupplier(
     override fun createQuery(filter: FindFilterType?): Query<FindMarkersQuery.Data> =
         FindMarkersQuery(
             filter = filter,
-            markerFilter,
+            scene_marker_filter = markerFilter,
+            ids = null,
         )
 
     override fun parseQuery(data: FindMarkersQuery.Data): List<MarkerData> = data.findSceneMarkers.scene_markers.map { it.markerData }

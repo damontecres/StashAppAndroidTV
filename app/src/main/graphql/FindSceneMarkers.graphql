@@ -1,5 +1,5 @@
-query FindMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType) {
-  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter) {
+query FindMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType, $ids: [ID!]) {
+  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter, ids: $ids) {
     scene_markers {
       ...MarkerData
     }
@@ -10,6 +10,15 @@ query FindMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilt
 query CountMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType) {
   findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter) {
     count
+  }
+}
+
+query GetMarker($ids: [ID!]) {
+  findSceneMarkers(ids: $ids) {
+    scene_markers {
+      ...FullMarkerData
+    }
+    __typename
   }
 }
 

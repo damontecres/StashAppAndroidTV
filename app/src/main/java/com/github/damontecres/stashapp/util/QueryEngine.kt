@@ -22,11 +22,13 @@ import com.github.damontecres.stashapp.api.FindStudiosQuery
 import com.github.damontecres.stashapp.api.FindTagsQuery
 import com.github.damontecres.stashapp.api.GetExtraImageQuery
 import com.github.damontecres.stashapp.api.GetGalleryQuery
+import com.github.damontecres.stashapp.api.GetMarkerQuery
 import com.github.damontecres.stashapp.api.GetPerformerQuery
 import com.github.damontecres.stashapp.api.GetSceneQuery
 import com.github.damontecres.stashapp.api.GetStudioQuery
 import com.github.damontecres.stashapp.api.GetTagQuery
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
+import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.GroupData
@@ -248,6 +250,7 @@ class QueryEngine(
     suspend fun findMarkers(
         findFilter: FindFilterType? = null,
         markerFilter: SceneMarkerFilterType? = null,
+        markerIds: List<String>? = null,
         useRandom: Boolean = true,
     ): List<MarkerData> {
         val query =
@@ -255,6 +258,7 @@ class QueryEngine(
                 FindMarkersQuery(
                     filter = updateFilter(findFilter, useRandom),
                     scene_marker_filter = markerFilter,
+                    ids = markerIds,
                 ),
             )
         return executeQuery(query)
@@ -263,6 +267,16 @@ class QueryEngine(
             ?.scene_markers
             ?.map { it.markerData }
             .orEmpty()
+    }
+
+    suspend fun getMarker(markerId: String): FullMarkerData? {
+        val query = client.query(GetMarkerQuery(listOf(markerId)))
+        return executeQuery(query)
+            .data
+            ?.findSceneMarkers
+            ?.scene_markers
+            ?.firstOrNull()
+            ?.fullMarkerData
     }
 
     suspend fun findMarkersInScene(sceneId: String): List<MarkerData> =

@@ -34,7 +34,7 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val dest = requireArguments().getDestination<Destination.UpdateMarker>()
-        viewModel.init(dest.markerId, dest.sceneId)
+        viewModel.init(dest.markerId)
     }
 
     override fun onViewCreated(
@@ -52,7 +52,9 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
                 return@observe
             }
 
-            sceneTitle.text = viewModel.scene.value!!.titleOrFilename
+            sceneTitle.text =
+                viewModel.item.value!!
+                    .scene.videoSceneData.titleOrFilename
             markerTitle.text =
                 "${marker.primary_tag.tagData.name} - ${durationToString(marker.seconds)}"
 
@@ -84,7 +86,11 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
                             mutationEngine.updateMarker(
                                 SceneMarkerUpdateInput(
                                     id = marker.id,
-                                    scene_id = Optional.present(viewModel.scene.value!!.id),
+                                    scene_id =
+                                        Optional.present(
+                                            viewModel.item.value!!
+                                                .scene.videoSceneData.id,
+                                        ),
                                     seconds = Optional.present(seconds),
                                 ),
                             )
