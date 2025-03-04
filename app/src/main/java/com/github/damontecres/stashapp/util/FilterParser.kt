@@ -437,7 +437,6 @@ class FilterParser(
                 tags_filter = Optional.presentIfNotNull(convertTagFilterType(filter["tags_filter"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
-                custom_fields = Optional.presentIfNotNull(convertCustomFieldCriterionInput(filter["custom_fields"] as List<*>?)),
             )
         } else {
             null
@@ -561,6 +560,7 @@ class FilterParser(
                 OR = Optional.presentIfNotNull(convertTagFilterType(filter["OR"])),
                 NOT = Optional.presentIfNotNull(convertTagFilterType(filter["NOT"])),
                 name = Optional.presentIfNotNull(convertStringCriterionInput(filter["name"])),
+                sort_name = Optional.presentIfNotNull(convertStringCriterionInput(filter["sort_name"])),
                 aliases = Optional.presentIfNotNull(convertStringCriterionInput(filter["aliases"])),
                 favorite = Optional.presentIfNotNull(convertBoolean(filter["favorite"])),
                 description = Optional.presentIfNotNull(convertStringCriterionInput(filter["description"])),
@@ -637,6 +637,7 @@ class FilterParser(
                 scene_tags = Optional.presentIfNotNull(convertHierarchicalMultiCriterionInput(filter["scene_tags"])),
                 performers = Optional.presentIfNotNull(convertMultiCriterionInput(filter["performers"])),
                 scenes = Optional.presentIfNotNull(convertMultiCriterionInput(filter["scenes"])),
+                duration = Optional.presentIfNotNull(convertFloatCriterionInput(filter["duration"])),
                 created_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["created_at"])),
                 updated_at = Optional.presentIfNotNull(convertTimestampCriterionInput(filter["updated_at"])),
                 scene_date = Optional.presentIfNotNull(convertDateCriterionInput(filter["scene_date"])),

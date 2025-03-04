@@ -320,6 +320,7 @@ sealed interface SortOption {
         val MARKER_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
+                Duration,
                 SceneId,
                 ScenesUpdatedAt,
                 Seconds,
