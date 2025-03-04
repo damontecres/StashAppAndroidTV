@@ -2,27 +2,28 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/card_icon_row"
+    android:id="@+id/card_extra_content_row"
+    android:visibility="gone"
     android:layout_width="match_parent"
     android:layout_height="18dp"
     android:layout_alignParentStart="true"
-    android:layout_below="@+id/card_extra_content_row"
+    android:layout_below="@+id/content_text"
     android:layout_marginStart="0dp"
     android:layout_marginEnd="0dp"
     android:layout_gravity="center_horizontal"
-    android:gravity="center_horizontal">
+    android:gravity="center_horizontal"
+    tools:visibility="visible">
 
         <TextView
-            android:id="@+id/icon_text"
-            android:visibility="visible"
+            android:id="@+id/extra_content_text"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintHorizontal_chainStyle="packed"
-            style="@style/Widget.Theme.StashAppAndroidTV.SceneExtraText"
+            style="@style/Widget.Leanback.ImageCardView.ContentStyle"
             android:singleLine="true"
             android:marqueeRepeatLimit="-1"
             android:ellipsize="marquee"
-            tools:text="1" />
+            tools:text="Some content text" />
 </androidx.constraintlayout.widget.ConstraintLayout>
