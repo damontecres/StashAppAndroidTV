@@ -10,6 +10,7 @@ fragment TagData on Tag {
   id
   name
   description
+  sort_name
   favorite
   aliases
   scene_count
