@@ -1,40 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/scene_title"
+    <ImageView
+        android:id="@+id/image_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="22sp"
-        android:textAlignment="center"
-        tools:text="Scene Title"/>
+        android:layout_height="match_parent"
+        android:contentDescription="@null"
+        tools:visibility="invisible" />
 
-    <TextView
-        android:id="@+id/marker_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textAlignment="center"
-        tools:text="Tag - 10m30s"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:textSize="16sp"
-        android:textAlignment="center"
-        android:text="Shift by..."/>
-
-    <androidx.leanback.widget.picker.Picker
-        android:id="@+id/picker"
+    <androidx.core.widget.ContentLoadingProgressBar
+        android:id="@+id/loading_progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:padding="12dp"
-        />
-</LinearLayout>
+        android:visibility="visible"
+        android:background="@android:color/transparent"
+        style="?android:attr/progressBarStyleLarge" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:orientation="vertical"
+        android:background="@color/transparent_black_25">
+
+        <TextView
+            android:id="@+id/scene_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textAlignment="center"
+            tools:text="Scene Title" />
+
+        <TextView
+            android:id="@+id/marker_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textAlignment="center"
+            tools:text="Tag - 10m30s" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textAlignment="center"
+            android:text="Set to..." />
+
+        <com.github.damontecres.stashapp.views.DurationPicker2
+            android:id="@+id/duration_picker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:padding="8dp" />
+
+    </LinearLayout>
+
+
+</FrameLayout>

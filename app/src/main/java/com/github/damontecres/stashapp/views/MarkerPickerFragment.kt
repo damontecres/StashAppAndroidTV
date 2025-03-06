@@ -3,14 +3,14 @@ package com.github.damontecres.stashapp.views
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
+import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.leanback.widget.picker.Picker
-import androidx.leanback.widget.picker.PickerColumn
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
@@ -20,6 +20,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.titleOrFilename
+import com.github.damontecres.stashapp.util.toLongMilliseconds
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
@@ -43,12 +44,55 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val picker = view.findViewById<Picker>(R.id.picker)
+        val picker = view.findViewById<DurationPicker2>(R.id.duration_picker)
         val sceneTitle = view.findViewById<TextView>(R.id.scene_title)
         val markerTitle = view.findViewById<TextView>(R.id.marker_title)
+        val imageView = view.findViewById<ImageView>(R.id.image_view)
+        val progressBar = view.findViewById<ContentLoadingProgressBar>(R.id.loading_progress_bar)
+
+        viewModel.screenshot.observe(viewLifecycleOwner) { imageLoading ->
+            when (imageLoading) {
+                MarkerDetailsViewModel.ImageLoadState.Initialized -> {
+                    viewModel.getImageFor(picker.duration, 500)
+                }
+
+                MarkerDetailsViewModel.ImageLoadState.Initializing,
+                MarkerDetailsViewModel.ImageLoadState.Loading,
+                -> {
+                    progressBar.visibility = View.VISIBLE
+                    progressBar.show()
+                }
+
+                is MarkerDetailsViewModel.ImageLoadState.Success -> {
+                    Log.v(TAG, "New image is null: ${imageLoading.image == null}")
+                    imageView.setImageBitmap(
+                        imageLoading.image,
+                    )
+                    progressBar.hide()
+                }
+
+                is MarkerDetailsViewModel.ImageLoadState.Error -> {
+                    Toast
+                        .makeText(
+                            requireContext(),
+                            "Video doesn't support fetching screenshots: ${imageLoading.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                }
+            }
+        }
 
         viewModel.item.observe(viewLifecycleOwner) { marker ->
             if (marker == null) {
+                return@observe
+            }
+            val duration =
+                marker.scene.videoSceneData.files
+                    .firstOrNull()
+                    ?.videoFile
+                    ?.duration
+                    ?.toLongMilliseconds
+            if (duration == null) {
                 return@observe
             }
 
@@ -58,44 +102,38 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
             markerTitle.text =
                 "${marker.primary_tag.tagData.name} - ${durationToString(marker.seconds)}"
 
-            val preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-            val skipForward = preferences.getInt("skip_forward_time", 30)
-            val skipBack = preferences.getInt("skip_back_time", 10)
-            val maxShift = skipBack.coerceAtMost(skipForward)
-
-            val column = PickerColumn()
-            column.labelFormat = "%1\$d seconds"
-            column.minValue = marker.seconds
-                .toInt()
-                .coerceAtMost(maxShift) * -1
-            column.maxValue = maxShift
-            column.currentValue = column.minValue
-
-            picker.separator = ""
-            picker.setColumns(listOf(column))
-            picker.setColumnValue(0, 0, true)
+            picker.setMaxDuration(duration)
+            picker.duration = marker.seconds.toLongMilliseconds
             picker.isActivated = true
+
+            picker.addOnValueChangedListener { _, _ ->
+                viewModel.getImageFor(picker.duration, 500L)
+            }
+
             picker.setOnClickListener {
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                    if (column.currentValue != 0) {
-                        val seconds =
-                            (marker.seconds + column.currentValue).coerceAtLeast(0.0)
-                        val mutationEngine =
-                            MutationEngine(StashServer.requireCurrentServer())
-                        val result =
-                            mutationEngine.updateMarker(
-                                SceneMarkerUpdateInput(
-                                    id = marker.id,
-                                    scene_id =
-                                        Optional.present(
-                                            viewModel.item.value!!
-                                                .scene.videoSceneData.id,
-                                        ),
-                                    seconds = Optional.present(seconds),
-                                ),
-                            )
-                        Log.v(TAG, "newSeconds=${result?.seconds}")
-                    }
+                viewLifecycleOwner.lifecycleScope.launch(
+                    StashCoroutineExceptionHandler(
+                        autoToast = true,
+                    ),
+                ) {
+                    picker.isActivated = false
+                    val seconds = picker.duration.coerceAtLeast(0) / 1000.0
+                    val mutationEngine =
+                        MutationEngine(StashServer.requireCurrentServer())
+                    val result =
+                        mutationEngine.updateMarker(
+                            SceneMarkerUpdateInput(
+                                id = marker.id,
+                                scene_id =
+                                    Optional.present(
+                                        viewModel.item.value!!
+                                            .scene.videoSceneData.id,
+                                    ),
+                                seconds = Optional.present(seconds),
+                            ),
+                        )
+                    Log.v(TAG, "newSeconds=${result?.seconds}")
+
                     serverViewModel.navigationManager.goBack()
                 }
             }
