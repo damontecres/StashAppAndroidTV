@@ -48,7 +48,7 @@ class DurationPicker2(
 
     var duration: Long
         get() {
-            var result = milliseconds.toLong()
+            var result = milliseconds.toLong() * MILLISECONDS_STEP
             if (minutesEnabled) result += minutes * 60 * 1000
             if (hoursEnabled) result += hours * 3600 * 1000
             if (secondsEnabled) result += seconds * 1000
@@ -64,7 +64,7 @@ class DurationPicker2(
             if (secondsEnabled) {
                 seconds = getSeconds(value)
             }
-            milliseconds = getMilliseconds(value)
+            milliseconds = getMilliseconds(value) / MILLISECONDS_STEP
         }
 
     init {
@@ -97,8 +97,12 @@ class DurationPicker2(
         val millisecondColumn =
             PickerColumn().apply {
                 minValue = 0
-                maxValue = if (secondsEnabled) 1000 else getMilliseconds(value)
-                labelFormat = " %d " + context.getString(R.string.milliseconds)
+                maxValue = 1000 / MILLISECONDS_STEP - 1
+                staticLabels =
+                    (0..<(1000 / MILLISECONDS_STEP))
+                        .map { " ${it * MILLISECONDS_STEP} " + context.getString(R.string.milliseconds) }
+                        .toTypedArray()
+//                labelFormat = " %d " + context.getString(R.string.milliseconds)
             }
         if (hoursEnabled) {
             setColumns(listOf(hourColumn, minuteColumn, secondColumn, millisecondColumn))
@@ -113,6 +117,7 @@ class DurationPicker2(
 
     companion object {
         private const val TAG = "DurationPicker"
+        private const val MILLISECONDS_STEP = 50
 
         private fun getHours(value: Long) = (value / (3600 * 1000)).toInt()
 
