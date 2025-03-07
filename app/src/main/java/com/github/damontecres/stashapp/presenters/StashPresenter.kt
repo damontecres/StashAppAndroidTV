@@ -113,6 +113,7 @@ abstract class StashPresenter<T>(
     override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         val cardView = viewHolder.view as StashImageCardView
         cardView.onUnbindViewHolder()
+        cardView.setOnLongClickListener(null)
     }
 
     open fun getDefaultLongClickCallBack(): LongClickCallBack<T> =

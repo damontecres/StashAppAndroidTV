@@ -165,6 +165,7 @@ abstract class PlaybackFragment(
                 exoPlayer.release()
             }
         }
+        videoView.player = null
         player = null
     }
 
@@ -172,8 +173,8 @@ abstract class PlaybackFragment(
         StashExoPlayer
             .getInstance(requireContext(), serverViewModel.requireServer(), skipParams)
             .also { it.setupPlayer() }
-            .also { exoPlayer ->
-                exoPlayer.addListener(
+            .also {
+                StashExoPlayer.addListener(
                     object : Player.Listener {
                         override fun onPlayerError(error: PlaybackException) {
                             Toast
@@ -198,9 +199,9 @@ abstract class PlaybackFragment(
                 )
             }.also { exoPlayer ->
                 videoView.player = exoPlayer
-                exoPlayer.addListener(AmbientPlaybackListener())
+                StashExoPlayer.addListener(AmbientPlaybackListener())
             }.also {
-                it.addListener(
+                StashExoPlayer.addListener(
                     object : Player.Listener {
                         override fun onTracksChanged(tracks: Tracks) {
                             val tracksSupported = checkForSupport(tracks)
