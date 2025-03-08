@@ -431,14 +431,6 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                     sprite = this.paths.sprite,
                     caption = this.paths.caption,
                 ),
-            sceneStreams =
-                this.sceneStreams.map {
-                    SlimSceneData.SceneStream(
-                        it.url,
-                        it.mime_type,
-                        it.label,
-                    )
-                },
             scene_markers = this.scene_markers.map { SlimSceneData.Scene_marker(it.id, it.title) },
             galleries = this.galleries.map { SlimSceneData.Gallery(it.id, it.title) },
             studio =
@@ -462,13 +454,6 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                 },
             tags = this.tags.map { SlimSceneData.Tag("", it.tagData.asSlimTagData) },
             performers = this.performers.map { SlimSceneData.Performer(it.id, it.name) },
-            captions =
-                this.captions?.map {
-                    SlimSceneData.Caption(
-                        __typename = "SlimSceneData.Caption",
-                        caption = it.caption,
-                    )
-                },
         )
 
 val FullSceneData.asVideoSceneData: VideoSceneData
