@@ -32,6 +32,7 @@ import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerControlView
+import androidx.media3.ui.PlayerView
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.SearchForFragment
@@ -153,20 +154,6 @@ abstract class PlaybackFragment(
             return true
         }
         return false
-    }
-
-    protected open fun releasePlayer() {
-        trackActivityListener?.release(currentVideoPosition)
-        trackActivityListener = null
-        player?.let { exoPlayer ->
-            playbackPosition = exoPlayer.currentPosition
-            StashExoPlayer.releasePlayer()
-            if (!exoPlayer.isReleased) {
-                exoPlayer.release()
-            }
-        }
-        videoView.player = null
-        player = null
     }
 
     private fun preparePlayer(): ExoPlayer =
@@ -678,11 +665,31 @@ abstract class PlaybackFragment(
         )
     }
 
+    protected open fun releasePlayer() {
+        trackActivityListener?.release(currentVideoPosition)
+        trackActivityListener = null
+        player?.let { exoPlayer ->
+            playbackPosition = exoPlayer.currentPosition
+            StashExoPlayer.releasePlayer()
+            if (!exoPlayer.isReleased) {
+                exoPlayer.release()
+            }
+        }
+        videoView.player = null
+        player = null
+    }
+
     @OptIn(UnstableApi::class)
     override fun onStop() {
         Log.v(TAG, "onStop")
         releasePlayer()
         super.onStop()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        controllerVisibilityListener.removeAllListeners()
+        videoView.setControllerVisibilityListener(null as PlayerView.ControllerVisibilityListener?)
     }
 
     fun showAndFocusSeekBar() {
@@ -700,6 +707,11 @@ abstract class PlaybackFragment(
     }
 
     protected fun maybeAddActivityTracking(scene: Scene) {
+        // Remove activity tracker if exists
+        trackActivityListener?.let {
+            it.release()
+            StashExoPlayer.removeListener(it)
+        }
         val appTracking =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
