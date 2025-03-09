@@ -6,6 +6,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.preference.PreferenceManager
@@ -87,7 +88,17 @@ class StashExoPlayer private constructor() {
                     .setCacheControl(CacheControl.FORCE_NETWORK)
             return ExoPlayer
                 .Builder(context)
-                .setMediaSourceFactory(
+                .setLoadControl(
+                    DefaultLoadControl
+                        .Builder()
+                        .setBufferDurationsMs(
+                            5_000,
+                            30_000,
+                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
+                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
+                        ).setPrioritizeTimeOverSizeThresholds(false)
+                        .build(),
+                ).setMediaSourceFactory(
                     DefaultMediaSourceFactory(context).setDataSourceFactory(
                         dataSourceFactory,
                     ),
