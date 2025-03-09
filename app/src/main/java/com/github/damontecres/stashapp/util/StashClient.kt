@@ -34,29 +34,14 @@ class StashClient private constructor() {
         private const val TAG = "StashClient"
         private const val OK_HTTP_TAG = "$TAG.OkHttpClient"
 
-        /**
-         * Get an [OkHttpClient] for use in [StashGlideModule].
-         *
-         * This client is not cached and does not include the API key in requests
-         */
-        fun getGlideHttpClient(server: StashServer): OkHttpClient {
-            Log.v(TAG, "Creating new OkHttpClient for Glide")
-            return createOkHttpClient(server, false, true)
-        }
+        val okHttpClient = createOkHttpClient()
 
-        /**
-         * Create an [OkHttpClient]. Prefer using [StashServer.okHttpClient] when possible
-         */
-        fun createOkHttpClient(
-            server: StashServer,
-            useApiKey: Boolean,
-            useCache: Boolean,
-        ): OkHttpClient {
+        private fun createOkHttpClient(): OkHttpClient {
             val context = StashApplication.getApplication()
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
-            val serverUrlRoot = getServerRoot(server.url)
             val trustAll = manager.getBoolean("trustAllCerts", false)
-            val cacheDuration = cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
+            val cacheDuration =
+                cacheDurationPrefToDuration(manager.getInt("networkCacheDuration", 3))
             val cacheLogging = manager.getBoolean("networkCacheLogging", false)
             val networkTimeout = manager.getInt("networkTimeout", 15).toLong()
 
@@ -90,7 +75,75 @@ class StashClient private constructor() {
                             true
                         }
             }
-            if (useApiKey && server.apiKey.isNotNullOrBlank()) {
+            if (cacheLogging) {
+                Log.d(
+                    OK_HTTP_TAG,
+                    "cacheDuration in hours: ${
+                        cacheDuration?.toInt(
+                            DurationUnit.HOURS,
+                        )
+                    }",
+                )
+                builder =
+                    builder.eventListener(
+                        object : EventListener() {
+                            override fun cacheHit(
+                                call: Call,
+                                response: Response,
+                            ) {
+                                Log.v(
+                                    OK_HTTP_TAG,
+                                    "cacheHit: ${call.request().url} => ${response.code}",
+                                )
+                            }
+
+                            override fun cacheMiss(call: Call) {
+                                Log.v(OK_HTTP_TAG, "cacheMiss: ${call.request().url}")
+                            }
+
+                            override fun cacheConditionalHit(
+                                call: Call,
+                                cachedResponse: Response,
+                            ) {
+                                Log.v(
+                                    OK_HTTP_TAG,
+                                    "cacheConditionalHit: ${call.request().url} => ${cachedResponse.code}",
+                                )
+                            }
+                        },
+                    )
+            }
+            if (cacheDuration != null) {
+                builder =
+                    builder.addInterceptor {
+                        val request =
+                            it
+                                .request()
+                                .newBuilder()
+                                .cacheControl(
+                                    CacheControl
+                                        .Builder()
+                                        .maxAge(
+                                            cacheDuration.toInt(DurationUnit.HOURS),
+                                            TimeUnit.HOURS,
+                                        ).build(),
+                                ).build()
+                        it.proceed(request)
+                    }
+            }
+            builder.cache(Constants.getNetworkCache(context))
+            return builder.build()
+        }
+
+        /**
+         * Create an [OkHttpClient]. Prefer using [StashServer.okHttpClient] when possible
+         */
+        fun createOkHttpClient(server: StashServer): OkHttpClient {
+            val serverUrlRoot = getServerRoot(server.url)
+
+            var builder = okHttpClient.newBuilder()
+
+            if (server.apiKey.isNotNullOrBlank()) {
                 val cleanedApiKey = server.apiKey.trim()
                 builder =
                     builder.addInterceptor {
@@ -113,61 +166,6 @@ class StashClient private constructor() {
                         it.proceed(request)
                     }
             }
-            if (useCache && cacheLogging) {
-                Log.d(
-                    OK_HTTP_TAG,
-                    "cacheDuration in hours: ${cacheDuration?.toInt(
-                        DurationUnit.HOURS,
-                    )}",
-                )
-                builder =
-                    builder.eventListener(
-                        object : EventListener() {
-                            override fun cacheHit(
-                                call: Call,
-                                response: Response,
-                            ) {
-                                Log.v(OK_HTTP_TAG, "cacheHit: ${call.request().url} => ${response.code}")
-                            }
-
-                            override fun cacheMiss(call: Call) {
-                                Log.v(OK_HTTP_TAG, "cacheMiss: ${call.request().url}")
-                            }
-
-                            override fun cacheConditionalHit(
-                                call: Call,
-                                cachedResponse: Response,
-                            ) {
-                                Log.v(
-                                    OK_HTTP_TAG,
-                                    "cacheConditionalHit: ${call.request().url} => ${cachedResponse.code}",
-                                )
-                            }
-                        },
-                    )
-            }
-            if (useCache && cacheDuration != null) {
-                builder =
-                    builder.addInterceptor {
-                        val request =
-                            it
-                                .request()
-                                .newBuilder()
-                                .cacheControl(
-                                    CacheControl
-                                        .Builder()
-                                        .maxAge(cacheDuration.toInt(DurationUnit.HOURS), TimeUnit.HOURS)
-                                        .build(),
-                                ).build()
-                        it.proceed(request)
-                    }
-            }
-            builder =
-                if (useCache) {
-                    builder.cache(Constants.getNetworkCache(context))
-                } else {
-                    builder.cache(null)
-                }
             return builder.build()
         }
 
@@ -275,21 +273,11 @@ class StashClient private constructor() {
             trustCerts: Boolean,
         ): ApolloClient {
             val url = cleanServerUrl(server.url)
-            val userAgent = createUserAgent(context)
             var builder =
-                OkHttpClient
-                    .Builder()
+                okHttpClient
+                    .newBuilder()
                     .readTimeout(30, TimeUnit.SECONDS)
                     .writeTimeout(30, TimeUnit.SECONDS)
-                    .addNetworkInterceptor {
-                        it.proceed(
-                            it
-                                .request()
-                                .newBuilder()
-                                .header("User-Agent", userAgent)
-                                .build(),
-                        )
-                    }
 
             if (trustCerts) {
                 val sslContext = SSLContext.getInstance("SSL")

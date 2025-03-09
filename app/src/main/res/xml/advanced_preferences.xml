@@ -224,6 +224,13 @@
             app:summaryOn="Log playback events"
             app:summaryOff="Don't log"
             app:defaultValue="false"/>
+        <ListPreference
+            app:key="@string/pref_key_playback_http_client"
+            app:title="Playback Streaming Client"
+            app:summary="%s"
+            app:defaultValue="@string/playback_http_client_okhttp"
+            app:entries="@array/playback_http_client"
+            app:entryValues="@array/playback_http_client" />
         <SwitchPreference
             app:key="trustAllCerts"
             app:title="Trust self-signed certificates"

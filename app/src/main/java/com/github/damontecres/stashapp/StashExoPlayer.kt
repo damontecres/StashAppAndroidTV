@@ -6,6 +6,7 @@ import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -94,20 +95,35 @@ class StashExoPlayer private constructor() {
             skipBack: Long,
         ): ExoPlayer {
             releasePlayer()
-//            val dataSourceFactory =
-//            OkHttpDataSource
-//                .Factory(server.streamingOkHttpClient)
-//                .setCacheControl(CacheControl.FORCE_NETWORK)
-
             val dataSourceFactory =
-                DefaultHttpDataSource
-                    .Factory()
-                    .setConnectTimeoutMs(5_000)
-                    .setReadTimeoutMs(30_000)
-                    .setUserAgent(StashClient.createUserAgent(context))
-            if (server.apiKey.isNotNullOrBlank()) {
-                dataSourceFactory.setDefaultRequestProperties(mapOf(Constants.STASH_API_HEADER to server.apiKey))
-            }
+                when (
+                    val httpClientChoice =
+                        getPreference(
+                            context,
+                            R.string.pref_key_playback_http_client,
+                            context.getString(R.string.playback_http_client_okhttp),
+                        )
+                ) {
+                    context.getString(R.string.playback_http_client_okhttp) -> {
+                        OkHttpDataSource
+                            .Factory(server.okHttpClient)
+                    }
+
+                    context.getString(R.string.playback_http_client_default) -> {
+                        DefaultHttpDataSource
+                            .Factory()
+                            .setConnectTimeoutMs(5_000)
+                            .setReadTimeoutMs(30_000)
+                            .setUserAgent(StashClient.createUserAgent(context))
+                            .apply {
+                                if (server.apiKey.isNotNullOrBlank()) {
+                                    setDefaultRequestProperties(mapOf(Constants.STASH_API_HEADER to server.apiKey))
+                                }
+                            }
+                    }
+
+                    else -> throw IllegalArgumentException("Unknown HTTP client: $httpClientChoice")
+                }
             return ExoPlayer
                 .Builder(context)
 //                .setLoadControl(
