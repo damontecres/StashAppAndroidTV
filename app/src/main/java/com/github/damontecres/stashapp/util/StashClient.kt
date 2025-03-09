@@ -68,7 +68,7 @@ class StashClient private constructor() {
                     .Builder()
                     .readTimeout(networkTimeout, TimeUnit.SECONDS)
                     .writeTimeout(networkTimeout, TimeUnit.SECONDS)
-                    .addNetworkInterceptor {
+                    .addInterceptor {
                         it.proceed(
                             it
                                 .request()

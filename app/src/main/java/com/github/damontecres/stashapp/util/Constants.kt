@@ -17,6 +17,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.annotation.StringRes
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -27,7 +28,6 @@ import com.apollographql.apollo.api.Optional
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloHttpException
 import com.bumptech.glide.load.model.GlideUrl
-import com.bumptech.glide.load.model.LazyHeaders
 import com.chrynan.parcelable.core.getParcelable
 import com.chrynan.parcelable.core.putParcelable
 import com.github.damontecres.stashapp.R
@@ -56,7 +56,6 @@ import com.github.damontecres.stashapp.presenters.MarkerPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.util.Constants.STASH_API_HEADER
 import com.github.damontecres.stashapp.views.fileNameFromPath
 import com.github.damontecres.stashapp.views.getRatingString
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -133,10 +132,10 @@ fun createGlideUrl(
     } else {
         GlideUrl(
             url,
-            LazyHeaders
-                .Builder()
-                .addHeader(STASH_API_HEADER, apiKey.trim())
-                .build(),
+//            LazyHeaders
+//                .Builder()
+//                .addHeader(STASH_API_HEADER, apiKey.trim())
+//                .build(),
         )
     }
 
@@ -942,3 +941,11 @@ fun Fragment.keepScreenOn(keep: Boolean) {
         requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }
+
+fun getPreference(
+    context: Context,
+    @StringRes key: Int,
+    default: Boolean,
+) = PreferenceManager
+    .getDefaultSharedPreferences(context)
+    .getBoolean(context.getString(key), default)

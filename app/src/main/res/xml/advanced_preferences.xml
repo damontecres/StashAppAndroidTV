@@ -219,6 +219,12 @@
             android:max="120"
             app:defaultValue="15" />
         <SwitchPreference
+            app:key="@string/pref_key_playback_debug_logging"
+            app:title="Playback debug logging"
+            app:summaryOn="Log playback events"
+            app:summaryOff="Don't log"
+            app:defaultValue="false"/>
+        <SwitchPreference
             app:key="trustAllCerts"
             app:title="Trust self-signed certificates"
             app:summary="Restart may be required after changing this"

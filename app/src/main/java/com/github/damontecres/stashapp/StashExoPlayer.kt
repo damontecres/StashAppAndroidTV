@@ -5,14 +5,18 @@ import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.okhttp.OkHttpDataSource
-import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.util.EventLogger
 import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.util.Constants
 import com.github.damontecres.stashapp.util.SkipParams
+import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashServer
-import okhttp3.CacheControl
+import com.github.damontecres.stashapp.util.getPreference
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 /**
  * Manages a static [ExoPlayer] which might be reused between views
@@ -65,6 +69,14 @@ class StashExoPlayer private constructor() {
                     if (instance == null || skipParams != this.skipParams) {
                         this.skipParams = skipParams
                         instance = createInstance(context, server, skipForward, skipBack)
+                        if (getPreference(
+                                context,
+                                R.string.pref_key_playback_debug_logging,
+                                false,
+                            )
+                        ) {
+                            instance?.addAnalyticsListener(EventLogger())
+                        }
                     }
                 }
             }
@@ -82,26 +94,41 @@ class StashExoPlayer private constructor() {
             skipBack: Long,
         ): ExoPlayer {
             releasePlayer()
+//            val dataSourceFactory =
+//            OkHttpDataSource
+//                .Factory(server.streamingOkHttpClient)
+//                .setCacheControl(CacheControl.FORCE_NETWORK)
+
             val dataSourceFactory =
-                OkHttpDataSource
-                    .Factory(server.streamingOkHttpClient)
-                    .setCacheControl(CacheControl.FORCE_NETWORK)
+                DefaultHttpDataSource
+                    .Factory()
+                    .setConnectTimeoutMs(5_000)
+                    .setReadTimeoutMs(30_000)
+                    .setUserAgent(StashClient.createUserAgent(context))
+            if (server.apiKey.isNotNullOrBlank()) {
+                dataSourceFactory.setDefaultRequestProperties(mapOf(Constants.STASH_API_HEADER to server.apiKey))
+            }
             return ExoPlayer
                 .Builder(context)
-                .setLoadControl(
-                    DefaultLoadControl
-                        .Builder()
-                        .setBufferDurationsMs(
-                            5_000,
-                            30_000,
-                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
-                        ).setPrioritizeTimeOverSizeThresholds(false)
-                        .build(),
-                ).setMediaSourceFactory(
+//                .setLoadControl(
+//                    DefaultLoadControl
+//                        .Builder()
+//                        .setBufferDurationsMs(
+//                            5_000,
+//                            30_000,
+//                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
+//                            DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
+//                        ).setPrioritizeTimeOverSizeThresholds(false)
+//                        .build(),
+//                )
+                .setMediaSourceFactory(
                     DefaultMediaSourceFactory(context).setDataSourceFactory(
                         dataSourceFactory,
                     ),
+                ).setRenderersFactory(
+                    DefaultRenderersFactory(context)
+                        .setEnableDecoderFallback(true)
+                        .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON),
                 ).setSeekBackIncrementMs(skipBack)
                 .setSeekForwardIncrementMs(skipForward)
                 .build()
