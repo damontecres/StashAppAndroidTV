@@ -154,7 +154,7 @@
 
     <PreferenceCategory app:title="Cache">
         <SeekBarPreference
-            app:key="networkCacheSize"
+            app:key="@string/pref_key_network_cache_size"
             app:title="Max network cache size (MB)"
             app:seekBarIncrement="25"
             app:showSeekBarValue="true"

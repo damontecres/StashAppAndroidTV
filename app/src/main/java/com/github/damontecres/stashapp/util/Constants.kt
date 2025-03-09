@@ -107,7 +107,10 @@ object Constants {
         val cacheSize =
             PreferenceManager
                 .getDefaultSharedPreferences(context)
-                .getLong("networkCache", 100) * 1024 * 1024
+                .getInt(
+                    context.getString(R.string.pref_key_network_cache_size),
+                    100,
+                ) * 1024L * 1024L
         return Cache(File(context.cacheDir, OK_HTTP_CACHE_DIR), cacheSize)
     }
 }
