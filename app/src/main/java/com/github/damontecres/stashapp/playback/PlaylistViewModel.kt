@@ -8,6 +8,7 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.AlphabetSearchUtils
 
@@ -37,9 +38,13 @@ class PlaylistViewModel : ViewModel() {
                             ),
                         ),
                 )
-            _filterArgs.value = filter.copy(objectFilter = newObjectFilter)
+            _filterArgs.value =
+                filter.copy(
+                    objectFilter = newObjectFilter,
+                    override = DataSupplierOverride.Playlist,
+                )
         } else {
-            _filterArgs.value = filter
+            _filterArgs.value = filter.copy(override = DataSupplierOverride.Playlist)
         }
     }
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="pref_key_network_cache_size">networkCacheSize</string>
     <string name="pref_key_salt">salt</string>
     <string name="pref_key_pin_code" translatable="false">pinCode</string>
     <string name="pref_key_pin_code_auto" translatable="false">pinCodeAuto</string>
@@ -21,6 +22,14 @@
     <string name="pref_key_back_button_scroll" translatable="false">grid_back_button_scroll</string>
     <string name="pref_key_video_filters" translatable="false">playback.videoFilters</string>
     <string name="pref_key_show_dpad_skip" translatable="false">playback.showDpadSkip</string>
+    <string name="pref_key_playback_debug_logging" translatable="false">playback.debug.logging</string>
+    <string name="pref_key_playback_http_client" translatable="false">playback.http.client</string>
+    <string name="playback_http_client_default" translatable="false">default</string>
+    <string name="playback_http_client_okhttp" translatable="false">okhttp</string>
+    <string-array name="playback_http_client">
+        <item>@string/playback_http_client_default</item>
+        <item>@string/playback_http_client_okhttp</item>
+    </string-array>
 
     <string name="pref_key_ui_performer_tabs" translatable="false">ui.tabs.performer</string>
     <string name="pref_key_ui_gallery_tabs" translatable="false">ui.tabs.gallery</string>

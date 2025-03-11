@@ -12,6 +12,20 @@ query GetScene($id: ID!) {
   }
 }
 
+query FindVideoScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $ids: [ID!]) {
+  findScenes(filter: $filter, scene_filter: $scene_filter, ids: $ids) {
+    scenes {
+      ...VideoSceneData
+    }
+  }
+}
+
+query GetVideoScene($id: ID!) {
+  findScene(id: $id) {
+    ...VideoSceneData
+  }
+}
+
 query CountScenes($filter: FindFilterType, $scene_filter: SceneFilterType, $ids: [ID!]) {
   findScenes(filter: $filter, scene_filter: $scene_filter, ids: $ids) {
     count
@@ -41,14 +55,6 @@ fragment SlimSceneData on Scene {
     stream
     sprite
     caption
-  }
-  sceneStreams {
-    url
-    mime_type
-    label
-  }
-  captions {
-    ...Caption
   }
   scene_markers {
     id
