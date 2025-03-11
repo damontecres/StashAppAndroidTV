@@ -55,6 +55,7 @@ class TrackActivityPlaybackListener(
         timer =
             kotlin.concurrent.timer(
                 name = "playbackTrackerTimer",
+                daemon = true,
                 initialDelay = delay,
                 period = delay,
             ) {
@@ -78,11 +79,12 @@ class TrackActivityPlaybackListener(
 
     fun release() {
         timer.cancel()
+        timer.purge()
     }
 
     fun release(position: Long) {
         Log.v(TAG, "release: position=$position")
-        timer.cancel()
+        release()
         if (position >= 0) {
             saveSceneActivity(position, currentDurationSeconds.getAndSet(0))
         }

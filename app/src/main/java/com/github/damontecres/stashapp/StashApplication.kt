@@ -124,6 +124,17 @@ class StashApplication : Application() {
                 .build()
     }
 
+    @Deprecated("Deprecated in Java")
+    override fun onLowMemory() {
+        Log.w(TAG, "onLowMemory")
+        super.onLowMemory()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        Log.w(TAG, "onTrimMemory: level=$level")
+        super.onTrimMemory(level)
+    }
+
     companion object {
         private lateinit var application: StashApplication
         private lateinit var database: AppDatabase

@@ -154,7 +154,7 @@
 
     <PreferenceCategory app:title="Cache">
         <SeekBarPreference
-            app:key="networkCacheSize"
+            app:key="@string/pref_key_network_cache_size"
             app:title="Max network cache size (MB)"
             app:seekBarIncrement="25"
             app:showSeekBarValue="true"
@@ -218,6 +218,19 @@
             app:showSeekBarValue="true"
             android:max="120"
             app:defaultValue="15" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_debug_logging"
+            app:title="Playback debug logging"
+            app:summaryOn="Log playback events"
+            app:summaryOff="Don't log"
+            app:defaultValue="false"/>
+        <ListPreference
+            app:key="@string/pref_key_playback_http_client"
+            app:title="Playback Streaming Client"
+            app:summary="%s"
+            app:defaultValue="@string/playback_http_client_okhttp"
+            app:entries="@array/playback_http_client"
+            app:entryValues="@array/playback_http_client" />
         <SwitchPreference
             app:key="trustAllCerts"
             app:title="Trust self-signed certificates"

@@ -33,8 +33,7 @@ data class StashServer(
             return serverPreferences.serverVersion
         }
 
-    val okHttpClient = StashClient.createOkHttpClient(this, true, true)
-    val streamingOkHttpClient = StashClient.createOkHttpClient(this, true, false)
+    val okHttpClient = StashClient.createOkHttpClient(this)
     val apolloClient = StashClient.createApolloClient(this)
 
     /**

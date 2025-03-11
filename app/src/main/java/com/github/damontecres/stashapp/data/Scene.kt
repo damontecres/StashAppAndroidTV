@@ -2,7 +2,6 @@ package com.github.damontecres.stashapp.data
 
 import com.github.damontecres.stashapp.api.fragment.Caption
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -31,34 +30,6 @@ data class Scene(
 
     companion object {
         fun fromFullSceneData(data: FullSceneData): Scene {
-            val streams =
-                data.sceneStreams
-                    .filter { it.label != null }
-                    .associate {
-                        Pair(it.label.toString(), it.url)
-                    }
-            val fileData = data.files.firstOrNull()?.videoFile
-            return Scene(
-                id = data.id,
-                title = data.titleOrFilename,
-                date = data.date,
-                streamUrl = data.paths.stream,
-                screenshotUrl = data.paths.screenshot,
-                streams = streams,
-                spriteUrl = data.paths.sprite,
-                duration = fileData?.duration,
-                resumeTime = data.resume_time,
-                videoCodec = fileData?.video_codec,
-                videoResolution = fileData?.height,
-                audioCodec = fileData?.audio_codec,
-                format = fileData?.format,
-                oCounter = data.o_counter,
-                captionUrl = data.paths.caption,
-                captions = data.captions?.map { it.caption }.orEmpty(),
-            )
-        }
-
-        fun fromSlimSceneData(data: SlimSceneData): Scene {
             val streams =
                 data.sceneStreams
                     .filter { it.label != null }
