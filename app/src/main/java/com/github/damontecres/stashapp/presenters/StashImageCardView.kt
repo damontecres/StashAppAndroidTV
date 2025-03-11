@@ -409,7 +409,7 @@ class StashImageCardView(
         badgeImage = null
         mainImage = null
         videoUrl = null
-        videoView?.player?.release()
+//        videoView?.player?.release()
         videoView?.player = null
 
         textOverlays.values.forEach {

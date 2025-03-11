@@ -25,7 +25,6 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 
@@ -84,7 +83,7 @@ class UpdateChecker {
                         ),
                     )
 
-                val client = OkHttpClient.Builder().build()
+                val client = StashClient.okHttpClient
                 val request =
                     Request
                         .Builder()
@@ -138,7 +137,7 @@ class UpdateChecker {
         ) {
             withContext(Dispatchers.IO) {
                 cleanup(activity)
-                val client = OkHttpClient.Builder().build()
+                val client = StashClient.okHttpClient
                 val request =
                     Request
                         .Builder()

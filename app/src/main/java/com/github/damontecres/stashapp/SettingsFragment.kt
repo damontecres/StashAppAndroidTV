@@ -553,7 +553,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             findPreference<SeekBarPreference>("maxSearchResults")!!.min = 5
             findPreference<SeekBarPreference>("searchDelay")!!.min = 50
 
-            val cacheSizePref = findPreference<SeekBarPreference>("networkCacheSize")!!
+            val cacheSizePref =
+                findPreference<SeekBarPreference>(getString(R.string.pref_key_network_cache_size))!!
             cacheSizePref.min = 25
             val cache = Constants.getNetworkCache(requireContext())
             setUsedCachedSummary(cacheSizePref, cache)

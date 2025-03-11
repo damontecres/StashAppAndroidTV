@@ -16,7 +16,9 @@ import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.views.StashRatingBar
+import com.github.damontecres.stashapp.views.byteRateSuffixes
 import com.github.damontecres.stashapp.views.durationToString
+import com.github.damontecres.stashapp.views.formatBytes
 import com.github.damontecres.stashapp.views.parseTimeToString
 
 /**
@@ -83,11 +85,17 @@ class SceneDetailsPresenter(
                 val containerSupported =
                     supportedCodecs.isContainerFormatSupported(videoFile.format)
 
+                val res = "${videoFile.width}x${videoFile.height} @ ${
+                    formatBytes(
+                        videoFile.bit_rate,
+                        byteRateSuffixes,
+                    )
+                }"
                 val video =
                     if (videoSupported) {
-                        "Video: ${videoFile.video_codec}"
+                        "Video: ${videoFile.video_codec} - $res"
                     } else {
-                        "Video: ${videoFile.video_codec} (unsupported)"
+                        "Video: ${videoFile.video_codec} (unsupported) - $res"
                     }
                 val audio =
                     if (audioSupported) {
