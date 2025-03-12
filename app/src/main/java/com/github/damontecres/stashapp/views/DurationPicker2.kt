@@ -7,7 +7,7 @@ import androidx.leanback.widget.picker.PickerColumn
 import com.github.damontecres.stashapp.R
 
 /**
- * [Picker] to select hours, minutes, & seconds as a duration
+ * [Picker] to select hours, minutes, seconds, & milliseconds timestamp
  */
 class DurationPicker2(
     context: Context,

@@ -2,7 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
 
     <ImageView
         android:id="@+id/image_view"
@@ -26,7 +27,7 @@
         android:layout_marginTop="8dp"
         android:layout_gravity="center_horizontal"
         android:orientation="vertical"
-        android:background="@color/transparent_black_25">
+        android:background="@color/transparent_black_50">
 
         <TextView
             android:id="@+id/scene_title"
@@ -49,7 +50,7 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:textAlignment="center"
-            android:text="Set to..." />
+            android:text="Click to set to..." />
 
         <com.github.damontecres.stashapp.views.DurationPicker2
             android:id="@+id/duration_picker"
