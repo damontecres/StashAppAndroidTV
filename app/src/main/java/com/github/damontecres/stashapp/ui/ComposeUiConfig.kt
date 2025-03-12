@@ -7,6 +7,7 @@ data class ComposeUiConfig(
     val ratingAsStars: Boolean,
     val starPrecision: Float,
     val showStudioAsText: Boolean,
+    val debugTextEnabled: Boolean = false,
 ) {
     companion object {
         fun fromStashServer(server: StashServer): ComposeUiConfig =

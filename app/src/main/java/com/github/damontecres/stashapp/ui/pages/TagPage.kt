@@ -190,12 +190,12 @@ fun TagDetails(
     val rows =
         buildList {
             if (showDebugInfo()) {
-                add(TableRow(R.string.id, tag.id))
+                add(TableRow.from(R.string.id, tag.id))
             }
             add(TableRow.from(R.string.stashapp_description, tag.description))
             if (tag.aliases.isNotEmpty()) {
                 add(
-                    TableRow(
+                    TableRow.from(
                         R.string.stashapp_aliases,
                         tag.aliases.joinToString(", "),
                     ),

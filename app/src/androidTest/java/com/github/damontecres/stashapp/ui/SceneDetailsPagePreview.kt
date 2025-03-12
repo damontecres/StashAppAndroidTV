@@ -123,6 +123,7 @@ private fun SceneDetailsPreview() {
             moreOnClick = {},
             oCounterOnClick = { },
             oCounterOnLongClick = {},
+            onRatingChange = {},
             modifier = Modifier,
             showRatingBar = true,
         )

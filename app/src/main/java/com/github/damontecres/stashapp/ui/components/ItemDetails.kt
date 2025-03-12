@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,7 +19,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.tv.material3.Button
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
@@ -27,10 +27,8 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.views.StashRatingBar
 
 @Composable
 fun ItemDetails(
@@ -86,13 +84,14 @@ fun ItemDetails(
             }
             if (rating100Click != null) {
                 item {
-                    AndroidView(
-                        factory = { context ->
-                            val ratingBar = StashRatingBar(context)
-                            ratingBar.rating100 = rating100 ?: 0
-                            ratingBar.setRatingCallback(rating100Click)
-                            ratingBar
-                        },
+                    StarRating(
+                        rating100 = rating100 ?: 0,
+                        onRatingChange = rating100Click,
+                        enabled = true,
+                        modifier =
+                            Modifier
+                                .height(30.dp)
+                                .padding(start = 12.dp),
                     )
                 }
             }
@@ -121,18 +120,14 @@ data class TableRow(
         { modifier: Modifier -> Text(text = value, modifier = modifier) },
     )
 
-    constructor(
-        @StringRes keyStringId: Int,
-        value: String,
-    ) : this(StashApplication.getApplication().getString(keyStringId), value)
-
     companion object {
+        @Composable
         fun from(
             @StringRes keyStringId: Int,
             value: String?,
         ): TableRow? =
             if (value.isNotNullOrBlank()) {
-                TableRow(keyStringId, value)
+                TableRow(stringResource(keyStringId), value)
             } else {
                 null
             }

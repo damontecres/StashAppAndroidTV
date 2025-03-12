@@ -237,7 +237,7 @@ fun StudioDetails(
     val rows =
         buildList {
             if (showDebugInfo()) {
-                add(TableRow(R.string.id, studio.id))
+                add(TableRow.from(R.string.id, studio.id))
             }
             add(TableRow.from(R.string.stashapp_description, studio.details))
             add(TableRow.from(R.string.stashapp_parent_studio, studio.parent_studio?.name))

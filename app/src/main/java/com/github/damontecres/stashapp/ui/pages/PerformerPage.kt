@@ -1,7 +1,9 @@
 package com.github.damontecres.stashapp.ui.pages
 
+import android.content.res.Configuration
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,20 +20,24 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import androidx.preference.PreferenceManager
+import androidx.tv.material3.MaterialTheme
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
+import com.github.damontecres.stashapp.api.type.GenderEnum
 import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
+import com.github.damontecres.stashapp.ui.MainTheme
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -52,6 +58,7 @@ import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
 import kotlin.math.floor
+import kotlin.math.round
 import kotlin.math.roundToInt
 
 @Composable
@@ -93,6 +100,7 @@ fun PerformerPage(
                     PerformerDetails(
                         modifier = Modifier.fillMaxSize(),
                         perf = perf,
+                        uiConfig = ComposeUiConfig.fromStashServer(server),
                         favorite = favorite,
                         favoriteClick = {
                             val mutationEngine = MutationEngine(server)
@@ -188,6 +196,7 @@ fun PerformerDetails(
     favoriteClick: () -> Unit,
     rating100: Int,
     rating100Click: (rating100: Int) -> Unit,
+    uiConfig: ComposeUiConfig,
     modifier: Modifier = Modifier,
 ) {
     val rows =
@@ -226,7 +235,7 @@ fun PerformerDetails(
                 add(TableRow.from(R.string.stashapp_weight, "${perf.weight} kg ($pounds lbs)"))
             }
             if (perf.penis_length != null) {
-                val inches = kotlin.math.round(perf.penis_length / 2.54 * 100) / 100
+                val inches = round(perf.penis_length / 2.54 * 100) / 100
                 add(
                     TableRow.from(
                         R.string.stashapp_penis_length,
@@ -247,10 +256,7 @@ fun PerformerDetails(
             add(TableRow.from(R.string.stashapp_career_length, perf.career_length))
             add(TableRow.from(R.string.stashapp_created_at, parseTimeToString(perf.created_at)))
             add(TableRow.from(R.string.stashapp_updated_at, parseTimeToString(perf.updated_at)))
-            if (PreferenceManager
-                    .getDefaultSharedPreferences(LocalContext.current)
-                    .getBoolean(stringResource(R.string.pref_key_show_playback_debug_info), false)
-            ) {
+            if (uiConfig.debugTextEnabled) {
                 add(TableRow.from(R.string.id, perf.id))
             }
         }.filterNotNull()
@@ -263,4 +269,65 @@ fun PerformerDetails(
         rating100 = rating100,
         rating100Click = rating100Click,
     )
+}
+
+@Preview(device = "id:tv_1080p", uiMode = Configuration.UI_MODE_TYPE_TELEVISION)
+@Composable
+private fun PerformerDetailsPreview() {
+    val performer =
+        PerformerData(
+            id = "123",
+            name = "Performer Name",
+            disambiguation = "Disambiguation",
+            gender = GenderEnum.FEMALE,
+            birthdate = "1980-01-01",
+            ethnicity = "White",
+            country = null,
+            eye_color = "Blue",
+            height_cm = 155,
+            measurements = null,
+            fake_tits = null,
+            penis_length = null,
+            circumcised = null,
+            career_length = "2001-2007",
+            tattoos = null,
+            piercings = null,
+            alias_list = listOf("Alias1", "Alias2"),
+            favorite = true,
+            image_path = "image",
+            scene_count = 10,
+            image_count = 150,
+            gallery_count = 3,
+            group_count = 3,
+            o_counter = 1,
+            created_at = "2024-03-11T13:42:30-04:00",
+            updated_at = "2024-03-11T13:42:30-04:00",
+            tags = listOf(),
+            rating100 = 80,
+            details = "Some details here",
+            death_date = null,
+            hair_color = null,
+            weight = 55,
+            __typename = "__typename",
+        )
+    MainTheme {
+        PerformerDetails(
+            perf = performer,
+            favorite = performer.favorite,
+            favoriteClick = {},
+            rating100 = performer.rating100 ?: 0,
+            rating100Click = {},
+            uiConfig =
+                ComposeUiConfig(
+                    ratingAsStars = true,
+                    starPrecision = .5f,
+                    showStudioAsText = true,
+                    debugTextEnabled = true,
+                ),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background),
+        )
+    }
 }
