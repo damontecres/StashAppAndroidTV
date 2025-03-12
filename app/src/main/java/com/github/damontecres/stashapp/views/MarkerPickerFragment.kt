@@ -75,6 +75,7 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
                             "Error fetching screenshot: ${imageLoading.message}",
                             Toast.LENGTH_LONG,
                         ).show()
+                    progressBar.hide()
                 }
             }
         }

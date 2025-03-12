@@ -69,7 +69,7 @@ class MarkerDetailsViewModel : ViewModel() {
         delayMs: Long,
     ) {
         job?.cancel()
-        if (screenshot.value == ImageLoadState.Initializing) {
+        if (!canFetch(screenshot.value)) {
             return
         }
         job =
@@ -80,12 +80,16 @@ class MarkerDetailsViewModel : ViewModel() {
                 screenshot.value =
                     withContext(Dispatchers.IO) {
                         try {
-                            ImageLoadState.Success(
+                            val image =
                                 retriever?.getFrameAtTime(
                                     positionMs * 1000,
                                     FFmpegMediaMetadataRetriever.OPTION_CLOSEST,
-                                ),
-                            )
+                                )
+                            if (image != null) {
+                                ImageLoadState.Success(image)
+                            } else {
+                                ImageLoadState.Error("No image")
+                            }
                         } catch (ex: Exception) {
                             Log.w(TAG, "Error extracting frame", ex)
                             ImageLoadState.Error(ex.message)
@@ -114,6 +118,9 @@ class MarkerDetailsViewModel : ViewModel() {
             val message: String?,
         ) : ImageLoadState
     }
+
+    private fun canFetch(state: ImageLoadState?): Boolean =
+        state == ImageLoadState.Initialized || state == ImageLoadState.Loading || state is ImageLoadState.Success
 
     companion object {
         private const val TAG = "MarkerDetailsViewModel"
