@@ -229,6 +229,9 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    implementation(libs.ffmpegmediametadataretriever.core)
+    implementation(libs.ffmpegmediametadataretriever.native)
+
     testImplementation(libs.androidx.test.core.ktx)
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)

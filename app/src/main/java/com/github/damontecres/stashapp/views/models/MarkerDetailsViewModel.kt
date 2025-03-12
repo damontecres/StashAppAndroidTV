@@ -1,7 +1,6 @@
 package com.github.damontecres.stashapp.views.models
 
 import android.graphics.Bitmap
-import android.media.MediaMetadataRetriever
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -21,9 +20,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import wseemann.media.FFmpegMediaMetadataRetriever
 
 class MarkerDetailsViewModel : ViewModel() {
-    private val retriever = MediaMetadataRetriever()
+    private val retriever = FFmpegMediaMetadataRetriever()
     private var job: Job? = null
 
     val seconds = MutableLiveData<Double>()
@@ -75,12 +75,17 @@ class MarkerDetailsViewModel : ViewModel() {
                 screenshot.value = ImageLoadState.Loading
                 screenshot.value =
                     withContext(Dispatchers.IO) {
-                        ImageLoadState.Success(
-                            retriever.getFrameAtTime(
-                                positionMs * 1000,
-                                MediaMetadataRetriever.OPTION_CLOSEST,
-                            ),
-                        )
+                        try {
+                            ImageLoadState.Success(
+                                retriever.getFrameAtTime(
+                                    positionMs * 1000,
+                                    FFmpegMediaMetadataRetriever.OPTION_CLOSEST,
+                                ),
+                            )
+                        } catch (ex: Exception) {
+                            Log.w(TAG, "Error extracting frame", ex)
+                            ImageLoadState.Error(ex.message)
+                        }
                     }
                 Log.v(TAG, "getImageFor: positionMs=$positionMs DONE")
             }

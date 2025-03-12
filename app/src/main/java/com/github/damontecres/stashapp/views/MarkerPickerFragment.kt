@@ -75,7 +75,7 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
                     Toast
                         .makeText(
                             requireContext(),
-                            "Video doesn't support fetching screenshots: ${imageLoading.message}",
+                            "Error fetching screenshot: ${imageLoading.message}",
                             Toast.LENGTH_LONG,
                         ).show()
                 }
