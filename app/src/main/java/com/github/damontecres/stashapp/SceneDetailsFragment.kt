@@ -54,6 +54,7 @@ import com.github.damontecres.stashapp.presenters.PerformerInScenePresenter
 import com.github.damontecres.stashapp.presenters.SceneDetailsPresenter
 import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpItem
 import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.util.Constants
@@ -370,7 +371,18 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                 item.scene.videoSceneData.id,
                             ),
                         )
-                    },
+                    }.addAction(
+                        PopUpItem(MARKER_DETAILS_POPUP.id + 1, R.string.shift_seconds),
+                        { readOnlyModeDisabled() },
+                        { _, item ->
+                            StashApplication.navigationManager.navigate(
+                                Destination.UpdateMarker(
+                                    item.id,
+                                    item.scene.videoSceneData.id,
+                                ),
+                            )
+                        },
+                    ),
                 ),
             )
 

@@ -89,5 +89,6 @@
     <string name="hours">Hours</string>
     <string name="minutes">Minutes</string>
     <string name="milliseconds">Milliseconds</string>
+    <string name="shift_seconds">Shift Seconds</string>
 
 </resources>
