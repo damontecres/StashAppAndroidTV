@@ -379,7 +379,7 @@ class QueryEngine(
         type: DataType,
         findFilter: FindFilterType,
         useRandom: Boolean = true,
-    ): List<*> =
+    ): List<StashData> =
         when (type) {
             DataType.SCENE -> findScenes(findFilter, useRandom = useRandom)
             DataType.PERFORMER -> findPerformers(findFilter, useRandom = useRandom)
