@@ -32,17 +32,14 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
     private val serverViewModel by activityViewModels<ServerViewModel>()
     private val viewModel by viewModels<MarkerDetailsViewModel>()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val dest = requireArguments().getDestination<Destination.UpdateMarker>()
-        viewModel.init(dest.markerId)
-    }
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        val dest = requireArguments().getDestination<Destination.UpdateMarker>()
+        viewModel.init(dest.markerId, true)
 
         val picker = view.findViewById<DurationPicker2>(R.id.duration_picker)
         val sceneTitle = view.findViewById<TextView>(R.id.scene_title)
@@ -138,6 +135,11 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
                 }
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.release()
     }
 
     companion object {

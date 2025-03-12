@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 import wseemann.media.FFmpegMediaMetadataRetriever
 
 class MarkerDetailsViewModel : ViewModel() {
-    private val retriever = FFmpegMediaMetadataRetriever()
+    private var retriever: FFmpegMediaMetadataRetriever? = null
     private var job: Job? = null
 
     val seconds = MutableLiveData<Double>()
@@ -33,20 +33,24 @@ class MarkerDetailsViewModel : ViewModel() {
 
     val screenshot = MutableLiveData<ImageLoadState>(ImageLoadState.Initializing)
 
-    fun init(id: String) {
+    fun init(
+        id: String,
+        initializeRetriever: Boolean,
+    ) {
         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
             val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             val marker = queryEngine.getMarker(id)
             _item.value = marker
             seconds.value = marker?.seconds
-            if (marker?.seconds != null) {
+            if (initializeRetriever && marker?.seconds != null) {
                 val context = StashApplication.getApplication()
                 val scene = Scene.fromVideoSceneData(item.value!!.scene.videoSceneData)
                 val streamDecision =
                     getStreamDecision(context, scene, PlaybackMode.FORCED_DIRECT_PLAY)
                 val mediaItem = buildMediaItem(context, streamDecision, scene)
                 try {
-                    retriever.setDataSource(mediaItem.localConfiguration!!.uri.toString())
+                    retriever = FFmpegMediaMetadataRetriever()
+                    retriever!!.setDataSource(mediaItem.localConfiguration!!.uri.toString())
                     screenshot.value = ImageLoadState.Initialized
                 } catch (ex: Exception) {
                     Log.w(TAG, "Exception initializing", ex)
@@ -77,7 +81,7 @@ class MarkerDetailsViewModel : ViewModel() {
                     withContext(Dispatchers.IO) {
                         try {
                             ImageLoadState.Success(
-                                retriever.getFrameAtTime(
+                                retriever?.getFrameAtTime(
                                     positionMs * 1000,
                                     FFmpegMediaMetadataRetriever.OPTION_CLOSEST,
                                 ),
@@ -89,6 +93,10 @@ class MarkerDetailsViewModel : ViewModel() {
                     }
                 Log.v(TAG, "getImageFor: positionMs=$positionMs DONE")
             }
+    }
+
+    fun release() {
+        retriever?.release()
     }
 
     sealed interface ImageLoadState {
