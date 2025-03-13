@@ -401,7 +401,7 @@ class StashImageCardView(
                     context.getString(R.string.pref_key_ui_card_overlay_delay),
                     context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
                 ).toLong()
-        videoPreviewAudio = prefs.getBoolean("videoPreviewAudio", false) ||
+        videoPreviewAudio = prefs.getBoolean("videoPreviewAudio", false) &&
             !prefs.getBoolean(
                 context.getString(R.string.pref_key_playback_start_muted),
                 false,
