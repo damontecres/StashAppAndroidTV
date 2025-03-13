@@ -129,6 +129,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
             )
         addNextPageToPlaylist()
         maybeSetupVideoEffects(player!!)
+        maybeMuteAudio(requireContext(), player!!)
         player!!.prepare()
         if (destination.position > 0) {
             playIndex(destination.position)
