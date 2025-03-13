@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.leanback.widget.ClassPresenterSelector
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -23,9 +24,11 @@ import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
+import com.github.damontecres.stashapp.presenters.StudioPresenter
 import com.github.damontecres.stashapp.presenters.TagPresenter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -186,18 +189,32 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                 )
                             },
                             StashFragmentPagerAdapter.PagerEntry(DataType.STUDIO) {
-                                StashGridControlsFragment(
-                                    dataType = DataType.STUDIO,
-                                    objectFilter =
-                                        StudioFilterType(
-                                            scenes_filter =
-                                                Optional.present(
-                                                    SceneFilterType(
-                                                        performers = performers,
-                                                    ),
+                                val presenter =
+                                    ClassPresenterSelector()
+                                        .addClassPresenter(
+                                            StudioData::class.java,
+                                            StudioPresenter(
+                                                scenesWithStudioLongClickCallback(
+                                                    performer,
                                                 ),
-                                        ),
-                                )
+                                            ),
+                                        )
+                                val fragment =
+                                    StashGridControlsFragment(
+                                        dataType = DataType.STUDIO,
+                                        findFilter = StashFindFilter(sortAndDirection = DataType.STUDIO.defaultSort),
+                                        objectFilter =
+                                            StudioFilterType(
+                                                scenes_filter =
+                                                    Optional.present(
+                                                        SceneFilterType(
+                                                            performers = performers,
+                                                        ),
+                                                    ),
+                                            ),
+                                    )
+                                fragment.presenterSelector = presenter
+                                fragment
                             },
                         ).filter { it.title in getUiTabs(requireContext(), DataType.PERFORMER) }
                 }
@@ -252,6 +269,37 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                             value = Optional.present(listOf(item.id)),
                                             modifier = CriterionModifier.INCLUDES_ALL,
                                             depth = Optional.absent(),
+                                        ),
+                                    ),
+                            ),
+                    )
+                serverViewModel.navigationManager.navigate(Destination.Filter(filter))
+            }
+
+    private fun scenesWithStudioLongClickCallback(performer: PerformerData) =
+        StashPresenter
+            .LongClickCallBack<StudioData>(
+                StashPresenter.PopUpItem.DEFAULT to StashPresenter.PopUpAction { cardView, _ -> cardView.performClick() },
+            ).addAction(StashPresenter.PopUpItem(1L, "View scenes with")) { _, item ->
+                val name = "${performer.name} scenes for ${item.name}"
+                val filter =
+                    FilterArgs(
+                        dataType = DataType.SCENE,
+                        name = name,
+                        objectFilter =
+                            SceneFilterType(
+                                performers =
+                                    Optional.present(
+                                        MultiCriterionInput(
+                                            value = Optional.present(listOf(performer.id)),
+                                            modifier = CriterionModifier.INCLUDES,
+                                        ),
+                                    ),
+                                studios =
+                                    Optional.present(
+                                        HierarchicalMultiCriterionInput(
+                                            value = Optional.present(listOf(item.id)),
+                                            modifier = CriterionModifier.INCLUDES,
                                         ),
                                     ),
                             ),
