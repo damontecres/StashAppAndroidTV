@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.ui.pages
 
 import android.content.res.Configuration
 import android.os.Build
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -47,6 +48,7 @@ import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.PerformerData
+import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CircumisedEnum
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -55,6 +57,7 @@ import com.github.damontecres.stashapp.api.type.GroupFilterType
 import com.github.damontecres.stashapp.api.type.ImageFilterType
 import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
+import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
@@ -86,6 +89,8 @@ import kotlin.math.floor
 import kotlin.math.round
 import kotlin.math.roundToInt
 
+private const val TAG = "PerformerPage"
+
 class PerformerDetailsViewModel(
     server: StashServer,
     val performerId: String,
@@ -97,6 +102,7 @@ class PerformerDetailsViewModel(
 
     val loadingState = MutableLiveData<PerformerLoadingState>(PerformerLoadingState.Loading)
     val tags = MutableLiveData<List<TagData>>(listOf())
+    val studios = MutableLiveData<List<StudioData>>(listOf())
 
     val favorite = MutableLiveData(false)
     val rating100 = MutableLiveData(0)
@@ -114,7 +120,28 @@ class PerformerDetailsViewModel(
                     if (performer.tags.isNotEmpty()) {
                         tags.value =
                             queryEngine.getTags(performer.tags.map { it.slimTagData.id })
+                        Log.v(TAG, "Got ${tags.value?.size} tags")
                     }
+                    studios.value =
+                        queryEngine.findStudios(
+                            studioFilter =
+                                StudioFilterType(
+                                    scenes_filter =
+                                        Optional.present(
+                                            SceneFilterType(
+                                                performers =
+                                                    Optional.present(
+                                                        MultiCriterionInput(
+                                                            value = Optional.present(listOf(performerId)),
+                                                            modifier = CriterionModifier.INCLUDES_ALL,
+                                                            excludes = Optional.absent(),
+                                                        ),
+                                                    ),
+                                            ),
+                                        ),
+                                ),
+                        )
+                    Log.v(TAG, "Got ${studios.value?.size} studios")
                 } else {
                     loadingState.value = PerformerLoadingState.Error
                 }
@@ -155,7 +182,7 @@ class PerformerDetailsViewModel(
                 mutationEngine
                     .updatePerformer(
                         performerId,
-                        favorite = favorite.value ?: false,
+                        favorite = !favorite.value!!,
                     )?.favorite
             this@PerformerDetailsViewModel.favorite.value = newFavorite
             // TODO show toast
@@ -205,6 +232,7 @@ fun PerformerPage(
         )[PerformerDetailsViewModel::class]
     val loadingState by viewModel.loadingState.observeAsState()
     val tags by viewModel.tags.observeAsState(listOf())
+    val studios by viewModel.studios.observeAsState(listOf())
     val favorite by viewModel.favorite.observeAsState(false)
     val rating100 by viewModel.rating100.observeAsState(0)
 
@@ -228,6 +256,7 @@ fun PerformerPage(
                 server = server,
                 perf = state.performer,
                 tags = tags,
+                studios = studios,
                 uiConfig = ComposeUiConfig.fromStashServer(server),
                 favorite = favorite,
                 onFavoriteClick = viewModel::toggleFavorite,
@@ -247,6 +276,7 @@ fun PerformerDetailsPage(
     server: StashServer,
     perf: PerformerData,
     tags: List<TagData>,
+    studios: List<StudioData>,
     uiConfig: ComposeUiConfig,
     favorite: Boolean,
     onFavoriteClick: () -> Unit,
@@ -272,6 +302,7 @@ fun PerformerDetailsPage(
                     modifier = Modifier.fillMaxSize(),
                     perf = perf,
                     tags = tags,
+                    studios = studios,
                     uiConfig = uiConfig,
                     favorite = favorite,
                     favoriteClick = onFavoriteClick,
@@ -329,6 +360,7 @@ fun PerformerDetailsPage(
 fun PerformerDetails(
     perf: PerformerData,
     tags: List<TagData>,
+    studios: List<StudioData>,
     favorite: Boolean,
     favoriteClick: () -> Unit,
     rating100: Int,
@@ -416,6 +448,7 @@ fun PerformerDetails(
                 contentScale = ContentScale.FillHeight,
             )
         }
+        val topPadding = 12.dp
         LazyColumn(
             modifier =
                 Modifier
@@ -457,7 +490,19 @@ fun PerformerDetails(
                         uiConfig = uiConfig,
                         itemOnClick = itemOnClick,
                         longClicker = longClicker,
-                        modifier = Modifier.padding(top = 12.dp),
+                        modifier = Modifier.padding(top = topPadding),
+                    )
+                }
+            }
+            if (studios.isNotEmpty()) {
+                item {
+                    ItemsRow(
+                        title = R.string.stashapp_studios,
+                        items = studios,
+                        uiConfig = uiConfig,
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
+                        modifier = Modifier.padding(top = topPadding),
                     )
                 }
             }
@@ -469,7 +514,7 @@ fun PerformerDetails(
                     updatedAt = perf.updated_at.toString(),
                     modifier =
                         Modifier
-                            .padding(top = 12.dp)
+                            .padding(top = topPadding)
                             .fillMaxWidth(),
                 )
             }
@@ -519,6 +564,7 @@ private fun PerformerDetailsPreview() {
         PerformerDetails(
             perf = performer,
             tags = listOf(tagPreview, tagPreview.copy(id = "723")),
+            studios = listOf(),
             favorite = performer.favorite,
             favoriteClick = {},
             rating100 = performer.rating100 ?: 0,
