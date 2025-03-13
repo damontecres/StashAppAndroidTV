@@ -21,6 +21,7 @@ import com.github.damontecres.stashapp.api.type.MultiCriterionInput
 import com.github.damontecres.stashapp.api.type.PerformerFilterType
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
+import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.PerformerPresenter
@@ -182,6 +183,20 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                 StashGridControlsFragment(
                                     dataType = DataType.MARKER,
                                     objectFilter = SceneMarkerFilterType(performers = performers),
+                                )
+                            },
+                            StashFragmentPagerAdapter.PagerEntry(DataType.STUDIO) {
+                                StashGridControlsFragment(
+                                    dataType = DataType.STUDIO,
+                                    objectFilter =
+                                        StudioFilterType(
+                                            scenes_filter =
+                                                Optional.present(
+                                                    SceneFilterType(
+                                                        performers = performers,
+                                                    ),
+                                                ),
+                                        ),
                                 )
                             },
                         ).filter { it.title in getUiTabs(requireContext(), DataType.PERFORMER) }
