@@ -12,7 +12,6 @@ auto-service = "1.1.1"
 constraintlayout = "2.2.0"
 core = "4.6.2"
 core-ktx = "1.15.0"
-ffmpegmediametadataretriever = "1.0.19"
 glide = "4.16.0"
 junit = "4.13.2"
 kotlin = "2.1.0"
@@ -71,8 +70,6 @@ apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime", version.r
 auto-service = { module = "com.google.auto.service:auto-service", version.ref = "auto-service" }
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-service" }
 core = { module = "io.noties.markwon:core", version.ref = "core" }
-ffmpegmediametadataretriever-core = { module = "com.github.wseemann:FFmpegMediaMetadataRetriever-core", version.ref = "ffmpegmediametadataretriever" }
-ffmpegmediametadataretriever-native = { module = "com.github.wseemann:FFmpegMediaMetadataRetriever-native", version.ref = "ffmpegmediametadataretriever" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 glide-okhttp3-integration = { module = "com.github.bumptech.glide:okhttp3-integration", version.ref = "glide" }
 glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }

@@ -3,23 +3,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@android:color/black">
 
-    <ImageView
-        android:id="@+id/image_view"
+    <com.github.damontecres.stashapp.playback.StashPlayerView
+        android:id="@+id/player_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:contentDescription="@null"
+        app:use_controller="false"
         tools:visibility="invisible" />
-
-    <androidx.core.widget.ContentLoadingProgressBar
-        android:id="@+id/loading_progress_bar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="visible"
-        android:background="@android:color/transparent"
-        style="?android:attr/progressBarStyleLarge" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -50,14 +43,38 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:textAlignment="center"
-            android:text="Click to set to..." />
+            android:text="Set timestamp to..." />
 
         <com.github.damontecres.stashapp.views.DurationPicker2
             android:id="@+id/duration_picker"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:padding="8dp" />
+            android:layout_margin="8dp"
+            android:background="@drawable/button_selector_marker_picker" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+
+            <Button
+                android:id="@+id/play_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:fontFamily="@font/fa_solid_900"
+                android:text="@string/fa_play"
+                android:background="@drawable/button_selector_marker_picker" />
+
+            <Button
+                android:id="@+id/save_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:text="@string/stashapp_actions_save"
+                android:background="@drawable/button_selector_marker_picker" />
+        </LinearLayout>
 
     </LinearLayout>
 

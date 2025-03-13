@@ -3,18 +3,23 @@ package com.github.damontecres.stashapp.views
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.ImageView
+import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
-import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.Player
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.type.SceneMarkerUpdateInput
+import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.playback.StashPlayerView
+import com.github.damontecres.stashapp.playback.buildMediaItem
+import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
@@ -23,7 +28,11 @@ import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /**
  * Select a value to shift a Marker's seconds by
@@ -39,46 +48,14 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
         super.onViewCreated(view, savedInstanceState)
 
         val dest = requireArguments().getDestination<Destination.UpdateMarker>()
-        viewModel.init(dest.markerId, true)
+        viewModel.init(dest.markerId)
 
         val picker = view.findViewById<DurationPicker2>(R.id.duration_picker)
         val sceneTitle = view.findViewById<TextView>(R.id.scene_title)
         val markerTitle = view.findViewById<TextView>(R.id.marker_title)
-        val imageView = view.findViewById<ImageView>(R.id.image_view)
-        val progressBar = view.findViewById<ContentLoadingProgressBar>(R.id.loading_progress_bar)
-
-        viewModel.screenshot.observe(viewLifecycleOwner) { imageLoading ->
-            when (imageLoading) {
-                MarkerDetailsViewModel.ImageLoadState.Initialized -> {
-                    viewModel.getImageFor(picker.duration, 500)
-                }
-
-                MarkerDetailsViewModel.ImageLoadState.Initializing,
-                MarkerDetailsViewModel.ImageLoadState.Loading,
-                -> {
-                    progressBar.visibility = View.VISIBLE
-                    progressBar.show()
-                }
-
-                is MarkerDetailsViewModel.ImageLoadState.Success -> {
-                    Log.v(TAG, "New image is null: ${imageLoading.image == null}")
-                    imageView.setImageBitmap(
-                        imageLoading.image,
-                    )
-                    progressBar.hide()
-                }
-
-                is MarkerDetailsViewModel.ImageLoadState.Error -> {
-                    Toast
-                        .makeText(
-                            requireContext(),
-                            "Error fetching screenshot: ${imageLoading.message}",
-                            Toast.LENGTH_LONG,
-                        ).show()
-                    progressBar.hide()
-                }
-            }
-        }
+        val playerView = view.findViewById<StashPlayerView>(R.id.player_view)
+        val playButton = view.findViewById<Button>(R.id.play_button)
+        val saveButton = view.findViewById<Button>(R.id.save_button)
 
         viewModel.item.observe(viewLifecycleOwner) { marker ->
             if (marker == null) {
@@ -93,22 +70,74 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
             if (duration == null) {
                 return@observe
             }
+            val scene = Scene.fromVideoSceneData(marker.scene.videoSceneData)
+            val streamDecision =
+                getStreamDecision(requireContext(), scene, PlaybackMode.CHOOSE)
+            val mediaItem = buildMediaItem(requireContext(), streamDecision, scene)
+            val player =
+                StashExoPlayer
+                    .getInstance(requireContext(), serverViewModel.requireServer())
+            playerView.player = player
 
             sceneTitle.text =
                 viewModel.item.value!!
                     .scene.videoSceneData.titleOrFilename
-            markerTitle.text =
-                "${marker.primary_tag.tagData.name} - ${durationToString(marker.seconds)}"
+            val title = "${marker.primary_tag.tagData.name} - ${
+                marker.seconds.toLongMilliseconds.toDuration(DurationUnit.MILLISECONDS)
+            }"
+            markerTitle.text = title
 
             picker.setMaxDuration(duration)
             picker.duration = marker.seconds.toLongMilliseconds
             picker.isActivated = true
 
-            picker.addOnValueChangedListener { _, _ ->
-                viewModel.getImageFor(picker.duration, 500L)
+            picker.setOnClickListener {
+                picker.isActivated = !picker.isActivated
+                if (!picker.isActivated) {
+                    playButton.requestFocus()
+                }
             }
 
-            picker.setOnClickListener {
+            StashExoPlayer.addListener(
+                object : Player.Listener {
+                    override fun onIsPlayingChanged(isPlaying: Boolean) {
+                        if (isPlaying) {
+                            Log.v(TAG, "Paused")
+                            player.pause()
+                            StashExoPlayer.removeListener(this)
+                        }
+                    }
+                },
+            )
+
+            fun setPosition(position: Long) {
+                player.setMediaItem(mediaItem, position)
+                player.prepare()
+            }
+
+            setPosition(marker.seconds.toLongMilliseconds)
+
+            var job: Job? = null
+            picker.addOnValueChangedListener { _, _ ->
+                job?.cancel()
+                job =
+                    viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                        delay(500L)
+                        setPosition(picker.duration)
+                    }
+            }
+
+            playButton.setOnClickListener {
+                if (player.isPlaying) {
+                    player.pause()
+                    playButton.text = getString(R.string.fa_play)
+                } else {
+                    player.play()
+                    playButton.text = getString(R.string.fa_pause)
+                }
+            }
+
+            saveButton.setOnClickListener {
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(
                         autoToast = true,
@@ -140,7 +169,7 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
 
     override fun onStop() {
         super.onStop()
-        viewModel.release()
+        StashExoPlayer.releasePlayer()
     }
 
     companion object {

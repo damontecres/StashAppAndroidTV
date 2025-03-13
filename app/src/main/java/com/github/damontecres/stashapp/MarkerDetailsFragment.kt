@@ -240,7 +240,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     override fun onResume() {
         super.onResume()
         val markerDetailsDest = requireArguments().getDestination<Destination.MarkerDetails>()
-        viewModel.init(markerDetailsDest.id, false)
+        viewModel.init(markerDetailsDest.id)
     }
 
     override fun onViewCreated(
