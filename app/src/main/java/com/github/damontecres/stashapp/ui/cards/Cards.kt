@@ -79,7 +79,6 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
-import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.ICON_ORDER
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -139,6 +138,18 @@ fun ImageOverlay(
     }
 }
 
+val iconOrder =
+    listOf(
+        DataType.SCENE,
+        DataType.GROUP,
+        DataType.IMAGE,
+        DataType.GALLERY,
+        DataType.TAG,
+        DataType.PERFORMER,
+        DataType.MARKER,
+        DataType.STUDIO,
+    )
+
 @Suppress("ktlint:standard:function-naming")
 @Composable
 fun IconRowText(
@@ -148,7 +159,7 @@ fun IconRowText(
 ) {
     val annotatedString =
         buildAnnotatedString {
-            ICON_ORDER.forEach {
+            iconOrder.forEach {
                 val count = iconMap[it]
                 if (count != null && count > 0) {
                     withStyle(SpanStyle(fontFamily = FontAwesome)) {

@@ -62,13 +62,6 @@ fun ItemDetails(
                 contentScale = ContentScale.FillHeight,
             )
         }
-        val keyModifier =
-            Modifier
-                .weight(.3f)
-                .focusable() // TODO, this allows scrolling, but is difficult to see
-        val valueModifier =
-            Modifier
-                .weight(.7f)
         LazyColumn(modifier = Modifier.padding(12.dp)) {
             if (favorite != null && favoriteClick != null) {
                 val color = if (favorite)Color.Red else Color.LightGray
@@ -95,17 +88,32 @@ fun ItemDetails(
                     )
                 }
             }
-            items(tableRows) { (key, value) ->
-                Row(Modifier.fillMaxWidth()) {
-                    ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground)) {
-                        Box(modifier = keyModifier) {
-                            key.invoke(this, Modifier.padding(4.dp))
-                        }
-                        Box(modifier = valueModifier) {
-                            value.invoke(this, Modifier.padding(4.dp))
-                        }
-                    }
-                }
+            items(tableRows) { row ->
+                TableRowComposable(row)
+            }
+        }
+    }
+}
+
+@Composable
+fun TableRowComposable(
+    row: TableRow,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+) {
+    Row(modifier) {
+        val keyModifier =
+            Modifier
+                .weight(.3f)
+                .focusable() // TODO, this allows scrolling, but is difficult to see
+        val valueModifier =
+            Modifier
+                .weight(.7f)
+        ProvideTextStyle(MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground)) {
+            Box(modifier = keyModifier) {
+                row.key.invoke(this, Modifier.padding(4.dp))
+            }
+            Box(modifier = valueModifier) {
+                row.value.invoke(this, Modifier.padding(4.dp))
             }
         }
     }

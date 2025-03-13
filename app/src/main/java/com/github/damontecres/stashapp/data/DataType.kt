@@ -13,14 +13,6 @@ import com.github.damontecres.stashapp.api.type.SortDirectionEnum
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
-import com.github.damontecres.stashapp.presenters.GalleryPresenter
-import com.github.damontecres.stashapp.presenters.GroupPresenter
-import com.github.damontecres.stashapp.presenters.ImagePresenter
-import com.github.damontecres.stashapp.presenters.MarkerPresenter
-import com.github.damontecres.stashapp.presenters.PerformerPresenter
-import com.github.damontecres.stashapp.presenters.ScenePresenter
-import com.github.damontecres.stashapp.presenters.StudioPresenter
-import com.github.damontecres.stashapp.presenters.TagPresenter
 import kotlin.reflect.KClass
 
 /**
@@ -119,32 +111,6 @@ enum class DataType(
     ;
 
     val asDefaultFindFilterType get() = defaultSort.asFindFilterType
-
-    val defaultCardWidth
-        get() =
-            when (this) {
-                SCENE -> ScenePresenter.CARD_WIDTH
-                GROUP -> GroupPresenter.CARD_WIDTH
-                MARKER -> MarkerPresenter.CARD_WIDTH
-                PERFORMER -> PerformerPresenter.CARD_WIDTH
-                STUDIO -> StudioPresenter.CARD_WIDTH
-                TAG -> TagPresenter.CARD_WIDTH
-                IMAGE -> ImagePresenter.CARD_WIDTH
-                GALLERY -> GalleryPresenter.CARD_WIDTH
-            }
-
-    val defaultCardHeight
-        get() =
-            when (this) {
-                SCENE -> ScenePresenter.CARD_HEIGHT
-                GROUP -> GroupPresenter.CARD_HEIGHT
-                MARKER -> MarkerPresenter.CARD_HEIGHT
-                PERFORMER -> PerformerPresenter.CARD_HEIGHT
-                STUDIO -> StudioPresenter.CARD_HEIGHT
-                TAG -> TagPresenter.CARD_HEIGHT
-                IMAGE -> ImagePresenter.CARD_HEIGHT
-                GALLERY -> GalleryPresenter.CARD_HEIGHT
-            }
 
     val filterType
         get() =
