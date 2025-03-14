@@ -122,6 +122,13 @@ class StashImageCardView(
 
     private var delayJob: Job? = null
 
+    private var mSelected = false
+    private val selectedMessage = {
+        if (mSelected) {
+            super.setSelected(true)
+        }
+    }
+
     init {
         mainImageView.visibility = View.VISIBLE
         val infoArea = findViewById<ViewGroup>(R.id.info_field)
@@ -151,6 +158,7 @@ class StashImageCardView(
         selected: Boolean,
         overrideDelay: Boolean,
     ) {
+        mSelected = selected
         delayJob?.cancel()
         if (playVideoPreviews && videoUrl.isNotNullOrBlank()) {
             if (selected) {
@@ -188,7 +196,12 @@ class StashImageCardView(
             cardOverlay.animateToVisible(animateTime)
         }
         updateCardBackgroundColor(this, selected)
-        super.setSelected(selected)
+        if (selected) {
+            this.postDelayed(selectedMessage, videoDelay.coerceAtLeast(500L))
+        } else {
+            this.removeCallbacks(selectedMessage)
+            super.setSelected(false)
+        }
     }
 
     override fun setSelected(selected: Boolean) {
