@@ -196,7 +196,7 @@ class StashImageCardView(
             cardOverlay.clearAnimation()
             cardOverlay.animateToVisible(animateTime)
         }
-        updateCardBackgroundColor(this, selected)
+        updateCardBackgroundColor(selected)
         if (selected) {
             this.postDelayed(selectedMessage, videoDelay.coerceAtLeast(500L))
         } else {
@@ -248,15 +248,13 @@ class StashImageCardView(
         imageDimensionsSet = true
     }
 
-    fun updateCardBackgroundColor(
-        view: ImageCardView,
-        selected: Boolean,
-    ) {
+    fun updateCardBackgroundColor(selected: Boolean) {
         val color = if (selected) sSelectedBackgroundColor else sDefaultBackgroundColor
         // Both background colors should be set because the view"s background is temporarily visible
         // during animations.
-        view.setBackgroundColor(color)
-        view.setInfoAreaBackgroundColor(color)
+        mainImageView.setBackgroundColor(color)
+        setBackgroundColor(color)
+        setInfoAreaBackgroundColor(color)
     }
 
     private fun initPlayer() {

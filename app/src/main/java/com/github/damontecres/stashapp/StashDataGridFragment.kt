@@ -266,70 +266,74 @@ class StashDataGridFragment :
         loadingProgressBar = root.findViewById(R.id.loading_progress_bar)
 
         alphabetFilterLayout = root.findViewById(R.id.alphabet_scrollview)
-        val alphabetAdapter =
-            ArrayObjectAdapter(
-                object : Presenter() {
-                    override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
-                        val button =
-                            inflater.inflate(
-                                R.layout.alphabet_button,
-                                alphabetFilterLayout,
-                                false,
-                            ) as Button
-                        button.onFocusChangeListener = backPressFocusChangeListener
-                        return ViewHolder(button)
-                    }
+        if (!SortOption.isJumpSupported(dataType)) {
+            alphabetFilterLayout.visibility = View.GONE
+        } else {
+            val alphabetAdapter =
+                ArrayObjectAdapter(
+                    object : Presenter() {
+                        override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
+                            val button =
+                                inflater.inflate(
+                                    R.layout.alphabet_button,
+                                    alphabetFilterLayout,
+                                    false,
+                                ) as Button
+                            button.onFocusChangeListener = backPressFocusChangeListener
+                            return ViewHolder(button)
+                        }
 
-                    override fun onBindViewHolder(
-                        viewHolder: ViewHolder,
-                        item: Any,
-                    ) {
-                        val letter = item as Char
-                        (viewHolder.view as Button).text = letter.toString()
-                        viewHolder.view.setOnClickListener {
-                            loadingProgressBar.show()
-                            viewLifecycleOwner.lifecycleScope.launch(
-                                StashCoroutineExceptionHandler(
-                                    autoToast = true,
-                                ),
-                            ) {
-                                val server = StashServer.requireCurrentServer()
-                                val factory =
-                                    DataSupplierFactory(server.serverPreferences.serverVersion)
-                                val letterPosition =
-                                    AlphabetSearchUtils.findPosition(
-                                        letter,
-                                        viewModel.filterArgs.value!!,
-                                        QueryEngine(server),
-                                        factory,
-                                    )
-                                Log.v(TAG, "Found position for $letter: $letterPosition")
-                                val jumpPosition =
-                                    if (viewModel.filterArgs.value
-                                            ?.sortAndDirection
-                                            ?.direction == SortDirectionEnum.DESC
-                                    ) {
-                                        // Reverse if sorting descending
-                                        pagingAdapter!!.size() - letterPosition - 1
-                                    } else {
-                                        letterPosition
-                                    }
+                        override fun onBindViewHolder(
+                            viewHolder: ViewHolder,
+                            item: Any,
+                        ) {
+                            val letter = item as Char
+                            (viewHolder.view as Button).text = letter.toString()
+                            viewHolder.view.setOnClickListener {
+                                loadingProgressBar.show()
+                                viewLifecycleOwner.lifecycleScope.launch(
+                                    StashCoroutineExceptionHandler(
+                                        autoToast = true,
+                                    ),
+                                ) {
+                                    val server = StashServer.requireCurrentServer()
+                                    val factory =
+                                        DataSupplierFactory(server.serverPreferences.serverVersion)
+                                    val letterPosition =
+                                        AlphabetSearchUtils.findPosition(
+                                            letter,
+                                            viewModel.filterArgs.value!!,
+                                            QueryEngine(server),
+                                            factory,
+                                        )
+                                    Log.v(TAG, "Found position for $letter: $letterPosition")
+                                    val jumpPosition =
+                                        if (viewModel.filterArgs.value
+                                                ?.sortAndDirection
+                                                ?.direction == SortDirectionEnum.DESC
+                                        ) {
+                                            // Reverse if sorting descending
+                                            pagingAdapter!!.size() - letterPosition - 1
+                                        } else {
+                                            letterPosition
+                                        }
 
-                                jumpTo(jumpPosition)
-                                gridView.requestFocus()
-                                loadingProgressBar.hide()
+                                    jumpTo(jumpPosition)
+                                    gridView.requestFocus()
+                                    loadingProgressBar.hide()
+                                }
                             }
                         }
-                    }
 
-                    override fun onUnbindViewHolder(viewHolder: ViewHolder) {
-                        (viewHolder.view as Button).text = null
-                        viewHolder.view.setOnClickListener(null)
-                    }
-                },
-            )
-        alphabetAdapter.addAll(0, AlphabetSearchUtils.LETTERS.toList())
-        alphabetFilterLayout.adapter = ItemBridgeAdapter(alphabetAdapter)
+                        override fun onUnbindViewHolder(viewHolder: ViewHolder) {
+                            (viewHolder.view as Button).text = null
+                            viewHolder.view.setOnClickListener(null)
+                        }
+                    },
+                )
+            alphabetAdapter.addAll(0, AlphabetSearchUtils.LETTERS.toList())
+            alphabetFilterLayout.adapter = ItemBridgeAdapter(alphabetAdapter)
+        }
         return root
     }
 
@@ -476,8 +480,12 @@ class StashDataGridFragment :
             )
         ) {
             alphabetFilterLayout.animateToVisible(400L)
-        } else {
+        } else if (SortOption.isJumpSupported(dataType)) {
+            // If the data type supports jump, let the buttons occupy space
             alphabetFilterLayout.animateToInvisible(View.INVISIBLE, 400L)
+        } else {
+            // If the data type doesn't support jumping, use the space for the grid
+            alphabetFilterLayout.animateToInvisible(View.GONE, 400L)
         }
 
         val showFooter =

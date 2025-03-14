@@ -48,7 +48,7 @@ abstract class StashPresenter<T>(
         val cardView = StashImageCardView(parent.context)
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = false
-        cardView.updateCardBackgroundColor(cardView, false)
+        cardView.updateCardBackgroundColor(false)
         return ViewHolder(cardView)
     }
 
