@@ -58,6 +58,10 @@
             app:summaryOn="Skip back/forward with D-Pad left/right"
             app:summaryOff="Don't skip back/forward with D-Pad left/right"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_show_dpad_skip"
+            app:title="Show D-Pad skipping indicator"
+            app:defaultValue="true" />
         <ListPreference
             app:key="stream_choice"
             app:title="Stream Choice"
@@ -114,6 +118,12 @@
             app:summaryOn="Save if also enabled on server"
             app:summaryOff="Don't save any history"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_start_muted"
+            app:title="@string/start_playback_without_audio"
+            app:summaryOn="Manually enable audio track"
+            app:summaryOff="Play audio normally"
+            app:defaultValue="false" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Scene Video Filters">
@@ -150,7 +160,7 @@
 
     <PreferenceCategory app:title="Cache">
         <SeekBarPreference
-            app:key="networkCacheSize"
+            app:key="@string/pref_key_network_cache_size"
             app:title="Max network cache size (MB)"
             app:seekBarIncrement="25"
             app:showSeekBarValue="true"
@@ -220,6 +230,19 @@
             app:showSeekBarValue="true"
             android:max="120"
             app:defaultValue="15" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_debug_logging"
+            app:title="Playback debug logging"
+            app:summaryOn="Log playback events"
+            app:summaryOff="Don't log"
+            app:defaultValue="false"/>
+        <ListPreference
+            app:key="@string/pref_key_playback_http_client"
+            app:title="Playback Streaming Client"
+            app:summary="%s"
+            app:defaultValue="@string/playback_http_client_okhttp"
+            app:entries="@array/playback_http_client"
+            app:entryValues="@array/playback_http_client" />
         <SwitchPreference
             app:key="trustAllCerts"
             app:title="Trust self-signed certificates"

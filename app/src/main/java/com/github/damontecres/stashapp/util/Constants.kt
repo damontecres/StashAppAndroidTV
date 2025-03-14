@@ -17,6 +17,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.annotation.StringRes
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.leanback.widget.ArrayObjectAdapter
@@ -108,7 +109,10 @@ object Constants {
         val cacheSize =
             PreferenceManager
                 .getDefaultSharedPreferences(context)
-                .getLong("networkCache", 100) * 1024 * 1024
+                .getInt(
+                    context.getString(R.string.pref_key_network_cache_size),
+                    100,
+                ) * 1024L * 1024L
         return Cache(File(context.cacheDir, OK_HTTP_CACHE_DIR), cacheSize)
     }
 }
@@ -436,14 +440,6 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                     sprite = this.paths.sprite,
                     caption = this.paths.caption,
                 ),
-            sceneStreams =
-                this.sceneStreams.map {
-                    SlimSceneData.SceneStream(
-                        it.url,
-                        it.mime_type,
-                        it.label,
-                    )
-                },
             scene_markers = this.scene_markers.map { SlimSceneData.Scene_marker(it.id, it.title) },
             galleries = this.galleries.map { SlimSceneData.Gallery(it.id, it.title) },
             studio =
@@ -467,13 +463,6 @@ val FullSceneData.asSlimeSceneData: SlimSceneData
                 },
             tags = this.tags.map { SlimSceneData.Tag("", it.tagData.asSlimTagData) },
             performers = this.performers.map { SlimSceneData.Performer(it.id, it.name) },
-            captions =
-                this.captions?.map {
-                    SlimSceneData.Caption(
-                        __typename = "SlimSceneData.Caption",
-                        caption = it.caption,
-                    )
-                },
         )
 
 val FullSceneData.asVideoSceneData: VideoSceneData
@@ -1034,3 +1023,19 @@ fun Fragment.keepScreenOn(keep: Boolean) {
         requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 }
+
+fun getPreference(
+    context: Context,
+    @StringRes key: Int,
+    default: Boolean,
+) = PreferenceManager
+    .getDefaultSharedPreferences(context)
+    .getBoolean(context.getString(key), default)
+
+fun getPreference(
+    context: Context,
+    @StringRes key: Int,
+    default: String,
+) = PreferenceManager
+    .getDefaultSharedPreferences(context)
+    .getString(context.getString(key), default)

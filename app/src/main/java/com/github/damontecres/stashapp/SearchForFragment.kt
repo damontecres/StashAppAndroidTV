@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.os.bundleOf
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResult
@@ -21,7 +22,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.actions.StashAction
+import com.github.damontecres.stashapp.api.fragment.GroupData
+import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.GalleryFilterType
@@ -33,15 +37,14 @@ import com.github.damontecres.stashapp.api.type.TagCreateInput
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.room.RecentSearchItem
 import com.github.damontecres.stashapp.navigation.Destination
-import com.github.damontecres.stashapp.presenters.ActionPresenter.Companion.CARD_HEIGHT
-import com.github.damontecres.stashapp.presenters.ActionPresenter.Companion.CARD_WIDTH
 import com.github.damontecres.stashapp.presenters.StashImageCardView
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
-import com.github.damontecres.stashapp.util.SingleItemObjectAdapter
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.defaultCardHeight
+import com.github.damontecres.stashapp.util.defaultCardWidth
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
@@ -72,8 +75,6 @@ class SearchForFragment :
     private val adapter = SparseArrayObjectAdapter(ListRowPresenter())
     private val searchResultsAdapter = ArrayObjectAdapter()
     private var perPage by Delegates.notNull<Int>()
-    private var createNewAdapter =
-        SingleItemObjectAdapter(CreateNewPresenter(), StashAction.CREATE_NEW)
 
     private val exceptionHandler =
         CoroutineExceptionHandler { _: CoroutineContext, ex: Throwable ->
@@ -99,7 +100,10 @@ class SearchForFragment :
                 .getInt("maxSearchResults", 25)
         title = searchFor.title ?: getString(dataType.pluralStringId)
 
-        searchResultsAdapter.presenterSelector = StashPresenter.defaultClassPresenterSelector()
+        searchResultsAdapter.presenterSelector =
+            StashPresenter
+                .defaultClassPresenterSelector()
+                .addClassPresenter(StashAction::class.java, CreateNewPresenter(dataType))
         adapter.set(
             RESULTS_POS,
             ListRow(HeaderItem(getString(R.string.waiting_for_query)), ArrayObjectAdapter()),
@@ -333,19 +337,23 @@ class SearchForFragment :
 
                         else -> queryEngine.find(dataType, filter)
                     }
+                val createAllowed = allowCreate(query, results)
+                if (createAllowed && readOnlyModeDisabled()) {
+                    searchResultsAdapter.add(StashAction.CREATE_NEW)
+                }
                 if (results.isNotEmpty()) {
-                    searchResultsAdapter.addAll(0, results)
+                    searchResultsAdapter.addAll(searchResultsAdapter.size(), results)
                     adapter.set(
                         RESULTS_POS,
                         ListRow(HeaderItem(getString(R.string.results)), searchResultsAdapter),
                     )
                 } else {
-                    if (dataType in DATA_TYPE_ALLOW_CREATE && readOnlyModeDisabled()) {
+                    if (createAllowed && readOnlyModeDisabled()) {
                         adapter.set(
                             RESULTS_POS,
                             ListRow(
                                 HeaderItem(getString(R.string.stashapp_component_tagger_results_match_failed_no_result)),
-                                createNewAdapter,
+                                searchResultsAdapter,
                             ),
                         )
                     } else {
@@ -367,14 +375,47 @@ class SearchForFragment :
         }
     }
 
-    private inner class CreateNewPresenter : StashPresenter<StashAction>() {
+    private fun allowCreate(
+        query: String,
+        items: List<StashData>,
+    ): Boolean {
+        val q = query.lowercase()
+        return when (dataType) {
+            DataType.GROUP -> {
+                items as List<GroupData>
+                items.none { it.name.lowercase() == q || it.aliases?.lowercase() == q }
+            }
+
+            DataType.PERFORMER -> {
+                items as List<PerformerData>
+                items.none { it.name.lowercase() == q || it.alias_list.any { it.lowercase() == q } }
+            }
+
+            DataType.TAG -> {
+                items as List<TagData>
+                items.none { it.name.lowercase() == q || it.aliases.any { it.lowercase() == q } }
+            }
+
+            DataType.SCENE -> false
+            DataType.MARKER -> false
+            DataType.STUDIO -> false
+            DataType.IMAGE -> false
+            DataType.GALLERY -> false
+        }
+    }
+
+    private inner class CreateNewPresenter(
+        val dataType: DataType,
+    ) : StashPresenter<StashAction>() {
         override fun doOnBindViewHolder(
             cardView: StashImageCardView,
             item: StashAction,
         ) {
-            cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT / 2)
+            cardView.setMainImageDimensions(dataType.defaultCardWidth, dataType.defaultCardHeight)
             cardView.titleText = "Create new ${getString(dataType.stringId)}"
             cardView.contentText = query?.replaceFirstChar(Char::titlecase)
+            cardView.mainImage =
+                AppCompatResources.getDrawable(requireContext(), R.drawable.baseline_add_box_24)
         }
     }
 
@@ -398,8 +439,5 @@ class SearchForFragment :
                 DataType.GALLERY,
                 DataType.GROUP,
             )
-
-        // List of data types that support creating a new one
-        val DATA_TYPE_ALLOW_CREATE = setOf(DataType.TAG, DataType.PERFORMER, DataType.GROUP)
     }
 }

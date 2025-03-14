@@ -26,6 +26,7 @@ import com.github.damontecres.stashapp.api.GetPerformerQuery
 import com.github.damontecres.stashapp.api.GetSceneQuery
 import com.github.damontecres.stashapp.api.GetStudioQuery
 import com.github.damontecres.stashapp.api.GetTagQuery
+import com.github.damontecres.stashapp.api.GetVideoSceneQuery
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
@@ -39,6 +40,7 @@ import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.StashJob
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
+import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.FindFilterType
 import com.github.damontecres.stashapp.api.type.FindJobInput
@@ -115,6 +117,11 @@ class QueryEngine(
     suspend fun getScene(sceneId: String): FullSceneData? {
         val query = client.query(GetSceneQuery(id = sceneId))
         return executeQuery(query).data?.findScene?.fullSceneData
+    }
+
+    suspend fun getVideoScene(sceneId: String): VideoSceneData? {
+        val query = client.query(GetVideoSceneQuery(id = sceneId))
+        return executeQuery(query).data?.findScene?.videoSceneData
     }
 
     suspend fun findPerformers(

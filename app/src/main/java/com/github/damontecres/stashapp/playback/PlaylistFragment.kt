@@ -129,6 +129,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
             )
         addNextPageToPlaylist()
         maybeSetupVideoEffects(player!!)
+        maybeMuteAudio(requireContext(), player!!)
         player!!.prepare()
         if (destination.position > 0) {
             playIndex(destination.position)
@@ -245,12 +246,6 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 currentScene = scene
                 updateDebugInfo(tag.streamDecision, scene)
                 updatePlaylistDebug()
-
-                // Replace activity tracker
-                trackActivityListener?.let {
-                    it.release()
-                    StashExoPlayer.removeListener(it)
-                }
                 maybeAddActivityTracking(scene)
             }
             if (hasMorePages) {

@@ -33,6 +33,20 @@ class DataSupplierFactory(
                         args.override.groupId,
                         args.override.type,
                     )
+
+                DataSupplierOverride.Playlist -> {
+                    if (args.dataType == DataType.SCENE) {
+                        VideoSceneDataSupplier(
+                            args.findFilter?.toFindFilterType(),
+                            filterParser.convertSceneFilterType(args.objectFilter),
+                        )
+                    } else {
+                        MarkerDataSupplier(
+                            args.findFilter?.toFindFilterType(),
+                            filterParser.convertSceneMarkerFilterType(args.objectFilter),
+                        )
+                    }
+                }
             } as StashPagingSource.DataSupplier<T, D, C>
         } else {
             return when (args.dataType) {
@@ -125,4 +139,6 @@ sealed interface DataSupplierOverride {
         val groupId: String,
         val type: GroupRelationshipType,
     ) : DataSupplierOverride
+
+    data object Playlist : DataSupplierOverride
 }
