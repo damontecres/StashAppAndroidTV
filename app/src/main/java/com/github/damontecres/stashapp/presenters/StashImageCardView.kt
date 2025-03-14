@@ -18,6 +18,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.ViewSwitcher
 import androidx.core.content.ContextCompat
+import androidx.core.view.setPadding
 import androidx.leanback.widget.ImageCardView
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -219,6 +220,14 @@ class StashImageCardView(
         width: Int,
         height: Int,
     ) {
+        setMainImageDimensions(width, height, 0)
+    }
+
+    fun setMainImageDimensions(
+        width: Int,
+        height: Int,
+        paddingDp: Int,
+    ) {
         val cardSize =
             PreferenceManager
                 .getDefaultSharedPreferences(context)
@@ -229,6 +238,12 @@ class StashImageCardView(
         lp.width = scaledWidth
         lp.height = scaledHeight
         mainView.layoutParams = lp
+
+        if (paddingDp > 0) {
+            val scale = resources.displayMetrics.density
+            val paddingPixels = (paddingDp * scale + 0.5f).toInt()
+            mainImageView.setPadding(paddingPixels)
+        }
 
         imageDimensionsSet = true
     }
@@ -428,6 +443,8 @@ class StashImageCardView(
         videoUrl = null
 //        videoView?.player?.release()
         videoView?.player = null
+
+        mainImageView.setPadding(0)
 
         textOverlays.values.forEach {
             it.text = null
