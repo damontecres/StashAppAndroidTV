@@ -39,6 +39,8 @@
             android:id="@+id/lb_details_description_body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingStart="0dp"
+            android:paddingEnd="8dp"
             style="?attr/detailsDescriptionBodyStyle" />
     </androidx.core.widget.NestedScrollView>
 </LinearLayout>
