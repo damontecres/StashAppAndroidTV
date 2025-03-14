@@ -60,7 +60,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .id(FILTER_NAME)
                 .hasNext(false)
                 .title(getString(R.string.stashapp_filter_name))
-                .descriptionEditInputType(InputType.TYPE_CLASS_TEXT)
+                .descriptionEditInputType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS)
                 .descriptionEditable(true)
                 .description(viewModel.filterName.value)
                 .build(),
