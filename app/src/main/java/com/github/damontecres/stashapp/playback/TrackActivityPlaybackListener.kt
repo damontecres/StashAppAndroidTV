@@ -63,10 +63,9 @@ class TrackActivityPlaybackListener(
 
                 override fun run() {
                     try {
+                        val now = System.currentTimeMillis()
                         if (isPlaying.get()) {
-                            val now = System.currentTimeMillis()
                             val diffTime = now - timestamp
-                            timestamp = now
                             // If it is playing, add the interval to currently tracked duration
                             val current = currentDurationMilliseconds.addAndGet(diffTime)
                             // TODO currentDuration.getAndUpdate would be better, but requires API 24+
@@ -77,6 +76,7 @@ class TrackActivityPlaybackListener(
                                 saveSceneActivity(-1L, current)
                             }
                         }
+                        timestamp = now
                     } catch (ex: Exception) {
                         Log.w(TAG, "Exception during track activity timer", ex)
                     }
