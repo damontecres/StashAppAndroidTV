@@ -14,6 +14,8 @@ import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.SkipParams
 import com.github.damontecres.stashapp.util.getDestination
 import kotlin.properties.Delegates
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 /**
  * A [PlaylistFragment] that plays [MarkerData] videos
@@ -27,6 +29,9 @@ class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, MarkerDa
 
     override val previewsEnabled: Boolean
         get() = false
+
+    override val activityTrackingEnabled: Boolean
+        get() = duration < 2.toDuration(DurationUnit.MINUTES).inWholeMilliseconds
 
     override fun builderCallback(item: MarkerData): (MediaItem.Builder.() -> Unit) =
         {
