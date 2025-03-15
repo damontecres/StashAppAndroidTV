@@ -62,7 +62,6 @@ class TrackActivityPlaybackListener(
                 private var timestamp = System.currentTimeMillis()
 
                 override fun run() {
-                    Log.v(TAG, "Firing")
                     try {
                         if (isPlaying.get()) {
                             val now = System.currentTimeMillis()

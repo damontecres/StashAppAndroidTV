@@ -31,7 +31,7 @@ class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, MarkerDa
         get() = false
 
     override val activityTrackingEnabled: Boolean
-        get() = duration < 2.toDuration(DurationUnit.MINUTES).inWholeMilliseconds
+        get() = duration > 2.toDuration(DurationUnit.MINUTES).inWholeMilliseconds
 
     override fun builderCallback(item: MarkerData): (MediaItem.Builder.() -> Unit) =
         {
