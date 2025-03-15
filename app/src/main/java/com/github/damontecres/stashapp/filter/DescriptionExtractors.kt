@@ -535,6 +535,7 @@ fun filterSummary(
  * @param idLookup a function associate IDs to a [CreateFilterViewModel.NameDescription]
  */
 fun filterSummary(
+    context: Context,
     dataType: DataType,
     type: KClass<in StashDataFilter>,
     f: StashDataFilter,
@@ -551,9 +552,21 @@ fun filterSummary(
                     val valueStr = filterSummary(param.name, dataType, value, idLookup)
                     val key =
                         if (nameStringId != null) {
-                            StashApplication.getApplication().getString(nameStringId)
+                            context.getString(nameStringId)
                         } else {
-                            param.name
+                            // Attempt to lookup the localized string by parameter name
+                            // This can happen if the filter isn't directly supported by the app
+                            val resId =
+                                context.resources.getIdentifier(
+                                    "stashapp_${param.name}",
+                                    "string",
+                                    context.packageName,
+                                )
+                            if (resId != 0) {
+                                context.getString(resId)
+                            } else {
+                                param.name
+                            }
                         }
                     key to valueStr
                 } else {

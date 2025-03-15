@@ -76,6 +76,7 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val text =
             filterSummary(
+                requireContext(),
                 viewModel.dataType.value!!,
                 viewModel.dataType.value!!.filterType,
                 viewModel.objectFilter.value!!,

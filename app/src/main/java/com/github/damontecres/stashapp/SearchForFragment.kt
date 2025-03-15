@@ -340,7 +340,7 @@ class SearchForFragment :
                     searchResultsAdapter.add(StashAction.CREATE_NEW)
                 }
                 if (results.isNotEmpty()) {
-                    searchResultsAdapter.addAll(searchResultsAdapter.size(), results)
+                    searchResultsAdapter.addAll(0, results)
                     adapter.set(
                         RESULTS_POS,
                         ListRow(HeaderItem(getString(R.string.results)), searchResultsAdapter),

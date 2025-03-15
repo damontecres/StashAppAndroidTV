@@ -38,6 +38,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val text =
             filterSummary(
+                requireContext(),
                 viewModel.dataType.value!!,
                 viewModel.dataType.value!!.filterType,
                 viewModel.objectFilter.value!!,
@@ -59,7 +60,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .id(FILTER_NAME)
                 .hasNext(false)
                 .title(getString(R.string.stashapp_filter_name))
-                .descriptionEditInputType(InputType.TYPE_CLASS_TEXT)
+                .descriptionEditInputType(InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS)
                 .descriptionEditable(true)
                 .description(viewModel.filterName.value)
                 .build(),

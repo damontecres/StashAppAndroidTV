@@ -174,18 +174,42 @@ class ImageViewFragment :
             val panDistance =
                 mainImage.drawable.intrinsicWidth.coerceAtMost(mainImage.drawable.intrinsicHeight) * .05f
             if (ImageFragment.isDirectionalDpadKey(event.keyCode)) {
+                val rotation = abs(mainImage.rotation).toInt()
+                var panX = 0f
+                var panY = 0f
                 if (isLeft(event.keyCode)) {
-                    mainImage.panBy(panDistance, 0f, true)
+                    panX = panDistance
                 } else if (isRight(event.keyCode)) {
-                    mainImage.panBy(-panDistance, 0f, true)
+                    panX = -panDistance
                 } else if (isUp(event.keyCode)) {
-                    mainImage.panBy(0f, panDistance, true)
+                    panY = panDistance
                 } else if (isDown(event.keyCode)) {
-                    mainImage.panBy(0f, -panDistance, true)
+                    panY = -panDistance
                 } else {
                     // Should never occur
                     throw IllegalStateException()
                 }
+                when (rotation) {
+                    0 -> {}
+                    90 ->
+                        (panX to panY).apply {
+                            panX = second
+                            panY = -first
+                        }
+
+                    180 -> {
+                        panX = -panX
+                        panY = -panY
+                    }
+
+                    270 ->
+                        (panX to panY).apply {
+                            panX = -second
+                            panY = first
+                        }
+                }
+                panX *= mainImage.scaleX
+                mainImage.panBy(panX, panY, true)
                 viewModel.pulseSlideshow()
                 return true
             }
