@@ -1039,3 +1039,5 @@ fun getPreference(
 ) = PreferenceManager
     .getDefaultSharedPreferences(context)
     .getString(context.getString(key), default)
+
+fun composeEnabled(context: Context = StashApplication.getApplication()) = getPreference(context, R.string.pref_key_use_compose_ui, false)

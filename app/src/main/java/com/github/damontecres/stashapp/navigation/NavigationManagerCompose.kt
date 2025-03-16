@@ -60,7 +60,7 @@ class NavigationManagerCompose(
             when (destination) {
                 Destination.Main -> null // ComposeMainFragment()
                 Destination.Search -> StashSearchFragment()
-                Destination.Settings -> SettingsFragment()
+                is Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()
                 Destination.SettingsPin -> SettingsPinEntryFragment()
                 Destination.Setup -> SetupFragment()

@@ -42,6 +42,8 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.SubscriptionEngine
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.cacheDurationPrefToDuration
+import com.github.damontecres.stashapp.util.composeEnabled
+import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.launchIO
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
@@ -52,23 +54,53 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import okhttp3.Cache
 import java.io.File
 
+@Serializable
+enum class PreferenceScreenOption {
+    BASIC,
+    ADVANCED,
+    USER_INTERFACE,
+    ;
+
+    companion object {
+        fun fromString(name: String?) = entries.firstOrNull { it.name == name } ?: BASIC
+    }
+}
+
 class SettingsFragment : LeanbackSettingsFragmentCompat() {
     override fun onPreferenceStartInitialScreen() {
-        // PREFERENCE_FRAGMENT_TAG is private, so hardcoded here
-        val prevFragment =
-            childFragmentManager
-                .findFragmentByTag("androidx.leanback.preference.LeanbackSettingsFragment.PREFERENCE_FRAGMENT")
-        // If the previous fragment was not a preference, then the current one should be, so do not start a new one
-        if (prevFragment !is LeanbackPreferenceFragmentCompat) {
-            startPreferenceFragment(
-                PreferencesFragment(
-                    ::startPreferenceFragment,
-                    ::startImmersiveFragment,
-                ),
-            )
+        val destination = requireArguments().getDestination<Destination.Settings>()
+        val compose = composeEnabled(requireContext())
+        if (compose) {
+            val prefFragment =
+                when (destination.screenOption) {
+                    PreferenceScreenOption.BASIC ->
+                        PreferencesFragment(
+                            ::startPreferenceFragment,
+                            ::startImmersiveFragment,
+                        )
+
+                    PreferenceScreenOption.ADVANCED -> AdvancedPreferencesFragment()
+                    PreferenceScreenOption.USER_INTERFACE -> SettingsUiFragment()
+                }
+            startPreferenceFragment(prefFragment)
+        } else {
+            // PREFERENCE_FRAGMENT_TAG is private, so hardcoded here
+            val prevFragment =
+                childFragmentManager
+                    .findFragmentByTag("androidx.leanback.preference.LeanbackSettingsFragment.PREFERENCE_FRAGMENT")
+            // If the previous fragment was not a preference, then the current one should be, so do not start a new one
+            if (prevFragment !is LeanbackPreferenceFragmentCompat) {
+                startPreferenceFragment(
+                    PreferencesFragment(
+                        ::startPreferenceFragment,
+                        ::startImmersiveFragment,
+                    ),
+                )
+            }
         }
     }
 
@@ -238,12 +270,28 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
 
             val advancedPreferences = findPreference<Preference>("advancedPreferences")!!
             advancedPreferences.setOnPreferenceClickListener {
-                startPreferenceFragmentFunc(AdvancedPreferencesFragment())
+                if (composeEnabled()) {
+                    serverViewModel.navigationManager.navigate(
+                        Destination.Settings(
+                            PreferenceScreenOption.ADVANCED,
+                        ),
+                    )
+                } else {
+                    startPreferenceFragmentFunc(AdvancedPreferencesFragment())
+                }
                 true
             }
             val advancedUiPreferences = findPreference<Preference>("advancedUiPreferences")!!
             advancedUiPreferences.setOnPreferenceClickListener {
-                startPreferenceFragmentFunc(SettingsUiFragment())
+                if (composeEnabled()) {
+                    serverViewModel.navigationManager.navigate(
+                        Destination.Settings(
+                            PreferenceScreenOption.USER_INTERFACE,
+                        ),
+                    )
+                } else {
+                    startPreferenceFragmentFunc(SettingsUiFragment())
+                }
                 true
             }
         }

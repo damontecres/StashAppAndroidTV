@@ -141,7 +141,7 @@ class NavigationManagerLeanback(
             when (destination) {
                 Destination.Main -> MainFragment()
                 Destination.Search -> StashSearchFragment()
-                Destination.Settings -> SettingsFragment()
+                is Destination.Settings -> SettingsFragment()
                 Destination.Pin -> PinFragment()
                 Destination.SettingsPin -> SettingsPinEntryFragment()
                 Destination.Setup -> SetupFragment()

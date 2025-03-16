@@ -53,6 +53,7 @@ import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
+import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -494,7 +495,7 @@ data class DrawerPage(
 
         val SETTINGS_PAGE =
             DrawerPage(
-                Destination.Settings,
+                Destination.Settings(PreferenceScreenOption.BASIC),
                 R.string.fa_arrow_right_arrow_left, // Ignored
                 R.string.stashapp_settings,
             )

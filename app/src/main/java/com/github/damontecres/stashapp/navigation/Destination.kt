@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.navigation
 
+import com.github.damontecres.stashapp.PreferenceScreenOption
 import com.github.damontecres.stashapp.api.fragment.ExtraImageData
 import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
@@ -42,7 +43,9 @@ sealed class Destination(
     data object Main : Destination()
 
     @Serializable
-    data object Settings : Destination(true)
+    data class Settings(
+        val screenOption: PreferenceScreenOption,
+    ) : Destination(true)
 
     @Serializable
     data object Search : Destination()
