@@ -3,11 +3,10 @@ package com.github.damontecres.stashapp.ui.components.playback
 import android.content.res.Configuration
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -16,23 +15,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
+import androidx.tv.material3.Button
+import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Surface
-import androidx.tv.material3.SurfaceDefaults
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.MainTheme
@@ -106,7 +103,7 @@ private fun PlaybackControlsPreview() {
                     }
                 },
             playbackState = PlaybackState(true, true, false),
-            modifier = Modifier.background(Color.Magenta),
+            modifier = Modifier.background(Color.DarkGray),
             initialFocusRequester = focusRequester,
             controllerViewState = ControllerViewState(4),
         )
@@ -200,34 +197,23 @@ fun PlaybackButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    var color by remember { mutableStateOf(AppColors.TransparentBlack25) }
-    val selectedColor = MaterialTheme.colorScheme.primary
-    Surface(
+    val selectedColor = MaterialTheme.colorScheme.border
+    Button(
+        onClick = onClick,
+        shape = ButtonDefaults.shape(CircleShape),
+        colors =
+            ButtonDefaults.colors(
+                containerColor = AppColors.TransparentBlack25,
+                focusedContainerColor = selectedColor,
+            ),
+        contentPadding = PaddingValues(8.dp),
         modifier =
             modifier
                 .padding(8.dp)
-                .size(50.dp, 50.dp)
-                .clickable(onClick = {
-                    onControllerInteraction.invoke()
-                    onClick.invoke()
-                })
-                .onFocusChanged {
-                    color =
-                        if (it.isFocused) {
-                            onControllerInteraction.invoke()
-                            selectedColor
-                        } else {
-                            AppColors.TransparentBlack25
-                        }
-                }.focusable(),
-        shape = CircleShape,
-        colors = SurfaceDefaults.colors(containerColor = color, contentColor = color),
+                .size(56.dp, 56.dp),
     ) {
         Icon(
-            modifier =
-                Modifier
-                    .fillMaxSize(.9f)
-                    .align(Alignment.Center),
+            modifier = Modifier.fillMaxSize(),
             painter = painterResource(iconRes),
             contentDescription = "",
             tint = MaterialTheme.colorScheme.onSurface,

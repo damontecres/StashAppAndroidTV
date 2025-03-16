@@ -31,8 +31,10 @@ class ControllerViewState internal constructor(
 
     fun showControls(seconds: Int = hideSeconds) {
         _controlsVisible = true
-        channel.trySend(seconds)
+        pulseControls(seconds)
     }
+
+    fun pulseControls(seconds: Int = hideSeconds) = channel.trySend(seconds)
 
     @OptIn(FlowPreview::class)
     suspend fun observe() {

@@ -39,6 +39,7 @@ fun PlaybackPage(
         PlaybackPageContent(
             server = server,
             scene = it,
+            startPosition = startPosition,
             playbackMode = playbackMode,
             modifier =
                 modifier

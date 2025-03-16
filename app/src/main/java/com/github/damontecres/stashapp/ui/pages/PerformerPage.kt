@@ -18,6 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -432,12 +434,29 @@ fun PerformerDetails(
                 .fillMaxSize(),
     ) {
         if (perf.image_path.isNotNullOrBlank()) {
+            val gradientColor = MaterialTheme.colorScheme.background
             AsyncImage(
                 modifier =
                     Modifier
                         .padding(8.dp)
                         .fillMaxWidth(.4f)
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .drawWithContent {
+                            drawContent()
+                            drawRect(
+                                Brush.verticalGradient(
+                                    colors = listOf(Color.Transparent, gradientColor),
+                                    startY = 200f,
+                                ),
+                            )
+                            drawRect(
+                                Brush.horizontalGradient(
+                                    colors = listOf(gradientColor, Color.Transparent),
+                                    endX = 200f,
+                                    startX = 50f,
+                                ),
+                            )
+                        },
                 model =
                     ImageRequest
                         .Builder(LocalContext.current)

@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
-import android.view.KeyEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
@@ -13,8 +12,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
@@ -27,6 +32,8 @@ import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.util.StashServer
 
+private const val TAG = "PlaybackPageContent"
+
 data class PlaybackState(
     val isPlaying: Boolean,
     val hasPrevious: Boolean,
@@ -37,6 +44,7 @@ data class PlaybackState(
 fun PlaybackPageContent(
     server: StashServer,
     scene: Scene,
+    startPosition: Long,
     playbackMode: PlaybackMode,
     modifier: Modifier = Modifier,
 ) {
@@ -74,7 +82,7 @@ fun PlaybackPageContent(
 
         val streamDecision = getStreamDecision(context, scene, playbackMode)
         val media = buildMediaItem(context, streamDecision, scene)
-        player.setMediaItem(media)
+        player.setMediaItem(media, startPosition.coerceAtLeast(0L))
         player.prepare()
     }
 
@@ -84,22 +92,47 @@ fun PlaybackPageContent(
                 it.observe()
             }
         }
-
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
     Box(
         modifier
             .background(Color.Black)
             .onKeyEvent {
-                if (!controllerViewState.controlsVisible) {
-                    if (it.nativeKeyEvent.action == KeyEvent.ACTION_UP &&
-                        it.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_DPAD_UP
-                    ) {
-                        controllerViewState.showControls()
+                var result = true
+                if (it.type != KeyEventType.KeyUp) {
+                    result = false
+                } else if (isDpad(it)) {
+                    if (!controllerViewState.controlsVisible) {
+                        if (it.key == Key.DirectionLeft) {
+                            player.seekBack()
+                        } else if (it.key == Key.DirectionRight) {
+                            player.seekForward()
+                        } else {
+                            controllerViewState.showControls()
+                        }
+                    } else {
+                        controllerViewState.pulseControls()
                     }
-                    true
+                } else if (isMedia(it)) {
+                    when (it.key) {
+                        Key.MediaPlay -> player.play()
+                        Key.MediaPause -> player.pause()
+                        Key.MediaPlayPause -> if (playbackState.isPlaying) player.pause() else player.play()
+                        Key.MediaFastForward, Key.MediaSkipForward -> player.seekForward()
+                        Key.MediaRewind, Key.MediaSkipBackward -> player.seekBack()
+                        Key.MediaNext -> player.seekToNext()
+                        Key.MediaPrevious -> player.seekToPrevious()
+                        else -> result = false
+                    }
                 } else {
-                    false
+                    controllerViewState.pulseControls()
+                    result = false
                 }
-            }.focusable(),
+                result
+            }.focusRequester(focusRequester)
+            .focusable(),
     ) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
@@ -109,7 +142,10 @@ fun PlaybackPageContent(
                 }
             },
             update = { it.player = player },
-            onRelease = { player.release() },
+            onRelease = {
+                it.player = null
+                player.release()
+            },
         )
 
         PlaybackOverlay(
