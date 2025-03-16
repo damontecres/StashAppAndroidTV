@@ -97,18 +97,19 @@ class MutationEngine(
      *
      * @param sceneId the scene ID
      * @param position the video playback position in milliseconds
+     * @param duration how long has the playback been in milliseconds
      */
     suspend fun saveSceneActivity(
         sceneId: String,
         position: Long,
-        duration: Int? = null,
+        duration: Long? = null,
     ): Boolean {
+        val resumeTime = position / 1000.0
+        val playDuration = if (duration != null && duration >= 1) duration / 1000.0 else null
         Log.v(
             TAG,
-            "SceneSaveActivity sceneId=$sceneId, position=$position, playDuration=$duration",
+            "SceneSaveActivity sceneId=$sceneId, position=$position, playDuration=$playDuration",
         )
-        val resumeTime = position / 1000.0
-        val playDuration = if (duration != null && duration >= 1) duration.toDouble() else null
         val mutation =
             SceneSaveActivityMutation(
                 scene_id = sceneId,
@@ -301,7 +302,7 @@ class MutationEngine(
         val input =
             SceneMarkerCreateInput(
                 title = "",
-                seconds = position.toMilliseconds,
+                seconds = position.toSeconds,
                 scene_id = sceneId,
                 primary_tag_id = primaryTagId,
                 tag_ids = Optional.absent(),

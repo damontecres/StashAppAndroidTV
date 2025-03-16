@@ -21,6 +21,9 @@ class PlaylistScenesFragment : PlaylistFragment<FindVideoScenesQuery.Data, Video
     override val optionsButtonOptions: OptionsButtonOptions
         get() = OptionsButtonOptions(DataType.SCENE, true)
 
+    override val activityTrackingEnabled: Boolean
+        get() = true
+
     override fun builderCallback(item: VideoSceneData): (MediaItem.Builder.() -> Unit)? = null
 
     override fun convertToScene(item: VideoSceneData): Scene = Scene.fromVideoSceneData(item)

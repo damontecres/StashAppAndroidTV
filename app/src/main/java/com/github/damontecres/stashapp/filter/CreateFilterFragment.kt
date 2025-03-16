@@ -19,8 +19,7 @@ class CreateFilterFragment : Fragment(R.layout.frame) {
         val startingFilter = dest.startingFilter
         viewModel.initialize(
             dest.dataType,
-            startingFilter?.objectFilter,
-            startingFilter?.findFilter,
+            startingFilter,
         )
     }
 

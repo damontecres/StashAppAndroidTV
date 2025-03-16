@@ -45,7 +45,7 @@ class StudioPresenter(
 
         cardView.setUpExtraRow(dataTypeMap, null)
 
-        cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
+        cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT, 8)
         cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER)
         if (item.image_path.isNotNullOrBlank()) {
             loadImage(cardView, item.image_path)
@@ -61,7 +61,7 @@ class StudioPresenter(
     companion object {
         private const val TAG = "StudioPresenter"
 
-        const val CARD_WIDTH = ScenePresenter.CARD_WIDTH
-        const val CARD_HEIGHT = ScenePresenter.CARD_HEIGHT
+        const val CARD_WIDTH = (ScenePresenter.CARD_WIDTH * .95).toInt()
+        const val CARD_HEIGHT = (ScenePresenter.CARD_HEIGHT * .95).toInt()
     }
 }

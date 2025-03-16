@@ -18,6 +18,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.ViewSwitcher
 import androidx.core.content.ContextCompat
+import androidx.core.view.setPadding
 import androidx.leanback.widget.ImageCardView
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -122,6 +123,13 @@ class StashImageCardView(
 
     private var delayJob: Job? = null
 
+    private var mSelected = false
+    private val selectedMessage = {
+        if (mSelected) {
+            super.setSelected(true)
+        }
+    }
+
     init {
         mainImageView.visibility = View.VISIBLE
         val infoArea = findViewById<ViewGroup>(R.id.info_field)
@@ -151,6 +159,7 @@ class StashImageCardView(
         selected: Boolean,
         overrideDelay: Boolean,
     ) {
+        mSelected = selected
         delayJob?.cancel()
         if (playVideoPreviews && videoUrl.isNotNullOrBlank()) {
             if (selected) {
@@ -187,8 +196,13 @@ class StashImageCardView(
             cardOverlay.clearAnimation()
             cardOverlay.animateToVisible(animateTime)
         }
-        updateCardBackgroundColor(this, selected)
-        super.setSelected(selected)
+        updateCardBackgroundColor(selected)
+        if (selected) {
+            this.postDelayed(selectedMessage, videoDelay.coerceAtLeast(500L))
+        } else {
+            this.removeCallbacks(selectedMessage)
+            super.setSelected(false)
+        }
     }
 
     override fun setSelected(selected: Boolean) {
@@ -206,6 +220,14 @@ class StashImageCardView(
         width: Int,
         height: Int,
     ) {
+        setMainImageDimensions(width, height, 0)
+    }
+
+    fun setMainImageDimensions(
+        width: Int,
+        height: Int,
+        paddingDp: Int,
+    ) {
         val cardSize =
             PreferenceManager
                 .getDefaultSharedPreferences(context)
@@ -217,18 +239,22 @@ class StashImageCardView(
         lp.height = scaledHeight
         mainView.layoutParams = lp
 
+        if (paddingDp > 0) {
+            val scale = resources.displayMetrics.density
+            val paddingPixels = (paddingDp * scale + 0.5f).toInt()
+            mainImageView.setPadding(paddingPixels)
+        }
+
         imageDimensionsSet = true
     }
 
-    fun updateCardBackgroundColor(
-        view: ImageCardView,
-        selected: Boolean,
-    ) {
+    fun updateCardBackgroundColor(selected: Boolean) {
         val color = if (selected) sSelectedBackgroundColor else sDefaultBackgroundColor
         // Both background colors should be set because the view"s background is temporarily visible
         // during animations.
-        view.setBackgroundColor(color)
-        view.setInfoAreaBackgroundColor(color)
+        mainImageView.setBackgroundColor(color)
+        setBackgroundColor(color)
+        setInfoAreaBackgroundColor(color)
     }
 
     private fun initPlayer() {
@@ -401,7 +427,7 @@ class StashImageCardView(
                     context.getString(R.string.pref_key_ui_card_overlay_delay),
                     context.resources.getInteger(R.integer.pref_key_ui_card_overlay_delay_default),
                 ).toLong()
-        videoPreviewAudio = prefs.getBoolean("videoPreviewAudio", false) ||
+        videoPreviewAudio = prefs.getBoolean("videoPreviewAudio", false) &&
             !prefs.getBoolean(
                 context.getString(R.string.pref_key_playback_start_muted),
                 false,
@@ -415,6 +441,8 @@ class StashImageCardView(
         videoUrl = null
 //        videoView?.player?.release()
         videoView?.player = null
+
+        mainImageView.setPadding(0)
 
         textOverlays.values.forEach {
             it.text = null

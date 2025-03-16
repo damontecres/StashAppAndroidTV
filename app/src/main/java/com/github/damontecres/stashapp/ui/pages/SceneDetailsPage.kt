@@ -133,7 +133,7 @@ import com.github.damontecres.stashapp.util.resume_position
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toLongMilliseconds
-import com.github.damontecres.stashapp.util.toMilliseconds
+import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.durationToString
 import kotlinx.coroutines.launch
 
@@ -695,7 +695,7 @@ fun SceneDetails(
                             searchForDataType = null
                             if (item is TagData && id >= 0) {
                                 // Marker primary tag
-                                val marker = fakeMarker(item.id, id.toMilliseconds, scene)
+                                val marker = fakeMarker(item.id, id.toSeconds, scene)
                                 addItem.invoke(marker)
                             } else {
                                 addItem.invoke(item)

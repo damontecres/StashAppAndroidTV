@@ -48,7 +48,7 @@ abstract class StashPresenter<T>(
         val cardView = StashImageCardView(parent.context)
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = false
-        cardView.updateCardBackgroundColor(cardView, false)
+        cardView.updateCardBackgroundColor(false)
         return ViewHolder(cardView)
     }
 
@@ -84,11 +84,11 @@ abstract class StashPresenter<T>(
             PreferenceManager
                 .getDefaultSharedPreferences(cardView.context)
                 .getBoolean(cardView.context.getString(R.string.pref_key_crop_card_images), true)
-        if (url.contains("default=true")) {
-            cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.transparent))
-        } else {
-            cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.black))
-        }
+//        if (url.contains("default=true")) {
+//            cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.transparent))
+//        } else {
+//            cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.black))
+//        }
         if (cropImages) {
             cardView.mainImageView.scaleType = ImageView.ScaleType.CENTER_CROP
             StashGlide

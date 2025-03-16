@@ -54,7 +54,7 @@ import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
-import com.github.damontecres.stashapp.util.toMilliseconds
+import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.ListPopupWindowBuilder
 import com.github.damontecres.stashapp.views.SkipIndicator
 import com.github.damontecres.stashapp.views.durationToString
@@ -650,12 +650,12 @@ abstract class PlaybackFragment(
         val position = currentVideoPosition
         val maxPlayPercent = 98 // TODO: Hard coded on the server
         val positionToSave =
-            if (sceneDuration == null || (position.toMilliseconds / sceneDuration) * 100 < maxPlayPercent) {
+            if (sceneDuration == null || (position.toSeconds / sceneDuration) * 100 < maxPlayPercent) {
                 position
             } else {
                 Log.v(
                     TAG,
-                    "Setting position to 0 since played percent (${(position.toMilliseconds / sceneDuration) * 100} >= $maxPlayPercent",
+                    "Setting position to 0 since played percent (${(position.toSeconds / sceneDuration) * 100} >= $maxPlayPercent",
                 )
                 0L
             }
