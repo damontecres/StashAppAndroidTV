@@ -13,6 +13,8 @@ class GalleryPresenter(
         cardView: StashImageCardView,
         item: GalleryData,
     ) {
+        cardView.blackImageBackground = false
+        cardView.imageMatchParent = true
         cardView.titleText = item.name
 
         val details = mutableListOf<String?>()

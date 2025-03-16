@@ -9,6 +9,7 @@ import android.text.TextUtils
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Adapter
 import android.widget.FrameLayout
@@ -962,3 +963,9 @@ fun getPreference(
 ) = PreferenceManager
     .getDefaultSharedPreferences(context)
     .getString(context.getString(key), default)
+
+fun View.updateLayoutParams(transform: ViewGroup.LayoutParams.() -> Unit) {
+    val lp = layoutParams
+    transform(layoutParams)
+    layoutParams = lp
+}

@@ -19,6 +19,9 @@ open class PerformerPresenter(
         cardView: StashImageCardView,
         item: PerformerData,
     ) {
+        cardView.blackImageBackground = false
+        cardView.imageMatchParent = true
+
         cardView.titleText =
             SpannableStringBuilder().apply {
                 append(item.name)
@@ -50,7 +53,7 @@ open class PerformerPresenter(
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         if (item.image_path != null) {
-            loadImage(cardView, item.image_path)
+            loadImage(cardView, item.image_path, true)
         }
 
         cardView.setRating100(item.rating100)

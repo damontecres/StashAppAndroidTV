@@ -7,9 +7,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import androidx.leanback.widget.ImageCardView
 import androidx.leanback.widget.Presenter
-import androidx.preference.PreferenceManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -32,6 +30,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpFilter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
+import com.github.damontecres.stashapp.util.updateLayoutParams
 
 abstract class StashPresenter<T>(
     private var callback: LongClickCallBack<T>? = null,
@@ -48,7 +47,6 @@ abstract class StashPresenter<T>(
         val cardView = StashImageCardView(parent.context)
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = false
-        cardView.updateCardBackgroundColor(false)
         return ViewHolder(cardView)
     }
 
@@ -57,7 +55,6 @@ abstract class StashPresenter<T>(
         item: Any?,
     ) {
         val cardView = viewHolder.view as StashImageCardView
-        cardView.onBindViewHolder()
         if (item != null) {
             val localCallBack = callback ?: getDefaultLongClickCallBack()
             val popUpItems = localCallBack.getPopUpItems(item as T)
@@ -70,26 +67,33 @@ abstract class StashPresenter<T>(
             )
 
             cardView.mainImageView.visibility = View.VISIBLE
+            if (!cardView.imageMatchParent) {
+                cardView.mainImageView.updateLayoutParams {
+                    height = ViewGroup.LayoutParams.WRAP_CONTENT
+                }
+            }
             doOnBindViewHolder(viewHolder.view as StashImageCardView, item as T)
         } else if (this is NullPresenter) {
             bindNull(cardView)
         }
+        cardView.onBindViewHolder()
     }
 
     fun loadImage(
-        cardView: ImageCardView,
+        cardView: StashImageCardView,
         url: String,
+        forceCrop: Boolean = false,
     ) {
-        val cropImages =
-            PreferenceManager
-                .getDefaultSharedPreferences(cardView.context)
-                .getBoolean(cardView.context.getString(R.string.pref_key_crop_card_images), true)
-//        if (url.contains("default=true")) {
+//        val cropImages =
+//            PreferenceManager
+//                .getDefaultSharedPreferences(cardView.context)
+//                .getBoolean(cardView.context.getString(R.string.pref_key_crop_card_images), true)
+        if (url.contains("default=true")) {
+            cardView.blackImageBackground = false
+            cardView.imageMatchParent = true
 //            cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.transparent))
-//        } else {
-//            cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.black))
-//        }
-        if (cropImages) {
+        }
+        if (forceCrop) {
             cardView.mainImageView.scaleType = ImageView.ScaleType.CENTER_CROP
             StashGlide
                 .with(cardView.context, url)

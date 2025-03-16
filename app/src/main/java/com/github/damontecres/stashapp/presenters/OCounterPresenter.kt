@@ -11,6 +11,9 @@ class OCounterPresenter(
         cardView: StashImageCardView,
         item: OCounter,
     ) {
+        cardView.blackImageBackground = false
+        cardView.imageMatchParent = true
+
         val text = cardView.context.getString(R.string.stashapp_o_counter)
         cardView.titleText = "$text (${item.count})"
         cardView.setMainImageDimensions(ActionPresenter.CARD_WIDTH, ActionPresenter.CARD_HEIGHT)
