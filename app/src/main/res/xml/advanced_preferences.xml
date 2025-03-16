@@ -37,12 +37,12 @@
             app:summaryOn="Play audio"
             app:summaryOff="Don't play audio"
             app:defaultValue="false" />
-        <SwitchPreference
-            app:key="@string/pref_key_crop_card_images"
-            app:title="Card image handling"
-            app:summaryOn="Crop center"
-            app:summaryOff="Don't crop, scale to fit"
-            app:defaultValue="true" />
+<!--        <SwitchPreference-->
+<!--            app:key="@string/pref_key_crop_card_images"-->
+<!--            app:title="Card image handling"-->
+<!--            app:summaryOn="Crop center"-->
+<!--            app:summaryOff="Don't crop, scale to fit"-->
+<!--            app:defaultValue="true" />-->
         <SwitchPreference
             app:key="@string/pref_key_remote_page_buttons"
             app:title="Page up/down with remote buttons"

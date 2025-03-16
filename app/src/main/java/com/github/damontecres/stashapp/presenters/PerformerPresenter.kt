@@ -50,7 +50,7 @@ open class PerformerPresenter(
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         if (item.image_path != null) {
-            loadImage(cardView, item.image_path)
+            loadImage(cardView, item.image_path, true)
         }
 
         cardView.setRating100(item.rating100)

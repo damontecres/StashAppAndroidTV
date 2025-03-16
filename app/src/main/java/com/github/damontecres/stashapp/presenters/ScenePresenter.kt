@@ -22,6 +22,7 @@ class ScenePresenter(
         cardView: StashImageCardView,
         item: SlimSceneData,
     ) {
+        cardView.blackImageBackground = true
         cardView.titleText = item.titleOrFilename
 
         val details = mutableListOf<String?>()

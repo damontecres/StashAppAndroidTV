@@ -19,6 +19,7 @@ class MarkerPresenter(
         cardView: StashImageCardView,
         item: MarkerData,
     ) {
+        cardView.blackImageBackground = true
         val title =
             item.title.ifBlank {
                 item.primary_tag.slimTagData.name
