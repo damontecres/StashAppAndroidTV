@@ -432,11 +432,6 @@ class StashImageCardView(
         val bgColor = if (blackImageBackground) blackColor else sDefaultBackgroundColor
         mainView.setBackgroundColor(bgColor)
         mainImageView.setBackgroundColor(bgColor)
-        if (!imageMatchParent) {
-            mainImageView.updateLayoutParams {
-                height = ViewGroup.LayoutParams.WRAP_CONTENT
-            }
-        }
 
         val prefs =
             PreferenceManager

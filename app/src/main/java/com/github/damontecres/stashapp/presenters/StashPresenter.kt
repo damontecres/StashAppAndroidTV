@@ -30,6 +30,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpFilter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
+import com.github.damontecres.stashapp.util.updateLayoutParams
 
 abstract class StashPresenter<T>(
     private var callback: LongClickCallBack<T>? = null,
@@ -66,6 +67,11 @@ abstract class StashPresenter<T>(
             )
 
             cardView.mainImageView.visibility = View.VISIBLE
+            if (!cardView.imageMatchParent) {
+                cardView.mainImageView.updateLayoutParams {
+                    height = ViewGroup.LayoutParams.WRAP_CONTENT
+                }
+            }
             doOnBindViewHolder(viewHolder.view as StashImageCardView, item as T)
         } else if (this is NullPresenter) {
             bindNull(cardView)
