@@ -17,6 +17,9 @@ class GroupPresenter(
         cardView: StashImageCardView,
         item: GroupData,
     ) {
+        cardView.blackImageBackground = false
+        cardView.imageMatchParent = true
+
         cardView.titleText = item.name
         cardView.contentText = item.date
 

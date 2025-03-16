@@ -14,6 +14,9 @@ class ImagePresenter(
         cardView: StashImageCardView,
         item: ImageData,
     ) {
+        cardView.blackImageBackground = false
+        cardView.imageMatchParent = false
+
         cardView.titleText = item.title
 
         val details = mutableListOf<String?>()

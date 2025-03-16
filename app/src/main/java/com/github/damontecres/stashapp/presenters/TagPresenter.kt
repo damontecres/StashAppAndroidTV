@@ -20,6 +20,9 @@ class TagPresenter(
         cardView: StashImageCardView,
         item: TagData,
     ) {
+        cardView.blackImageBackground = false
+        cardView.imageMatchParent = false
+
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.SCENE] = item.scene_count
         dataTypeMap[DataType.PERFORMER] = item.performer_count

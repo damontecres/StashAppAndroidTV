@@ -44,6 +44,7 @@ import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.enableMarquee
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.updateLayoutParams
 import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import kotlinx.coroutines.Dispatchers
@@ -84,6 +85,7 @@ class StashImageCardView(
     private val transparentColor = ContextCompat.getColor(context, android.R.color.transparent)
 
     var blackImageBackground: Boolean = false
+    var imageMatchParent: Boolean = true
 
     private val animateTime = resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
 
@@ -430,6 +432,11 @@ class StashImageCardView(
         val bgColor = if (blackImageBackground) blackColor else sDefaultBackgroundColor
         mainView.setBackgroundColor(bgColor)
         mainImageView.setBackgroundColor(bgColor)
+        if (!imageMatchParent) {
+            mainImageView.updateLayoutParams {
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+        }
 
         val prefs =
             PreferenceManager
@@ -456,6 +463,11 @@ class StashImageCardView(
         videoView?.player = null
 
         mainImageView.setPadding(0)
+        if (!imageMatchParent) {
+            mainImageView.updateLayoutParams {
+                height = ViewGroup.LayoutParams.MATCH_PARENT
+            }
+        }
 
         textOverlays.values.forEach {
             it.text = null

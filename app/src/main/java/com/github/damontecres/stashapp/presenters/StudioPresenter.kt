@@ -15,6 +15,9 @@ class StudioPresenter(
         cardView: StashImageCardView,
         item: StudioData,
     ) {
+        cardView.blackImageBackground = false
+        cardView.imageMatchParent = true
+
         cardView.titleText = item.name
 
         val partOfText =

@@ -84,6 +84,7 @@ abstract class StashPresenter<T>(
 //                .getBoolean(cardView.context.getString(R.string.pref_key_crop_card_images), true)
         if (url.contains("default=true")) {
             cardView.blackImageBackground = false
+            cardView.imageMatchParent = true
 //            cardView.mainImageView.setBackgroundColor(cardView.context.getColor(android.R.color.transparent))
         }
         if (forceCrop) {

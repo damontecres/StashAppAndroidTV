@@ -23,6 +23,7 @@ class ScenePresenter(
         item: SlimSceneData,
     ) {
         cardView.blackImageBackground = true
+        cardView.imageMatchParent = true
         cardView.titleText = item.titleOrFilename
 
         val details = mutableListOf<String?>()

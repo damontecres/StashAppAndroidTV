@@ -19,6 +19,9 @@ open class PerformerPresenter(
         cardView: StashImageCardView,
         item: PerformerData,
     ) {
+        cardView.blackImageBackground = false
+        cardView.imageMatchParent = true
+
         cardView.titleText =
             SpannableStringBuilder().apply {
                 append(item.name)
