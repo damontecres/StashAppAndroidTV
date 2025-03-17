@@ -85,7 +85,6 @@ class StashImageCardView(
     private val transparentColor = ContextCompat.getColor(context, android.R.color.transparent)
 
     var blackImageBackground: Boolean = false
-    var imageMatchParent: Boolean = true
 
     private val animateTime = resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
 
@@ -426,6 +425,21 @@ class StashImageCardView(
         textView.textSize = 18.0f
     }
 
+    fun updateImageLayoutParams(imageMatchParent: Boolean) {
+        val current = mainImageView.layoutParams.height
+        if (imageMatchParent &&
+            current != ViewGroup.LayoutParams.MATCH_PARENT ||
+            !imageMatchParent &&
+            current != ViewGroup.LayoutParams.WRAP_CONTENT
+        ) {
+            mainImageView.setImageDrawable(null)
+            mainImageView.updateLayoutParams {
+                height =
+                    if (imageMatchParent) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+        }
+    }
+
     fun onBindViewHolder() {
         setBackgroundColor(sDefaultBackgroundColor)
         setInfoAreaBackgroundColor(sDefaultBackgroundColor)
@@ -458,10 +472,8 @@ class StashImageCardView(
         videoView?.player = null
 
         mainImageView.setPadding(0)
-        if (!imageMatchParent) {
-            mainImageView.updateLayoutParams {
-                height = ViewGroup.LayoutParams.MATCH_PARENT
-            }
+        mainImageView.updateLayoutParams {
+            height = ViewGroup.LayoutParams.MATCH_PARENT
         }
 
         textOverlays.values.forEach {

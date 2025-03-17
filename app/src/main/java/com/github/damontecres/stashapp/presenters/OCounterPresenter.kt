@@ -1,6 +1,5 @@
 package com.github.damontecres.stashapp.presenters
 
-import androidx.appcompat.content.res.AppCompatResources
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.OCounter
 
@@ -12,7 +11,6 @@ class OCounterPresenter(
         item: OCounter,
     ) {
         cardView.blackImageBackground = false
-        cardView.imageMatchParent = true
 
         val text = cardView.context.getString(R.string.stashapp_o_counter)
         cardView.titleText = "$text (${item.count})"
@@ -23,12 +21,7 @@ class OCounterPresenter(
             IMAGE_PADDING,
             IMAGE_PADDING,
         )
-        cardView.mainImageView.setImageDrawable(
-            AppCompatResources.getDrawable(
-                cardView.context,
-                R.drawable.sweat_drops,
-            ),
-        )
+        loadImage(cardView, R.drawable.sweat_drops)
     }
 
     companion object {

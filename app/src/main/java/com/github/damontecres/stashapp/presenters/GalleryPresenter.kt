@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.presenters
 
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.concatIfNotBlank
@@ -14,7 +15,6 @@ class GalleryPresenter(
         item: GalleryData,
     ) {
         cardView.blackImageBackground = false
-        cardView.imageMatchParent = true
         cardView.titleText = item.name
 
         val details = mutableListOf<String?>()
@@ -32,10 +32,12 @@ class GalleryPresenter(
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
         val coverImage = item.paths.cover
-        loadImage(cardView, coverImage)
+        loadImage(cardView, coverImage, defaultDrawable = R.drawable.default_gallery)
 
         cardView.setRating100(item.rating100)
     }
+
+    override fun imageMatchParent(item: GalleryData): Boolean = item.paths.cover.isBlank() || item.paths.cover.isDefaultUrl
 
     companion object {
         private const val TAG = "GalleryPresenter"
