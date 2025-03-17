@@ -129,6 +129,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
             )
         addNextPageToPlaylist()
         maybeSetupVideoEffects(player!!)
+        maybeMuteAudio(requireContext(), player!!)
         player!!.prepare()
         if (destination.position > 0) {
             playIndex(destination.position)
@@ -215,6 +216,11 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
      */
     abstract fun builderCallback(item: D): (MediaItem.Builder.() -> Unit)?
 
+    /**
+     * Whether activity tracking should be enabled while playing the playlist
+     */
+    abstract val activityTrackingEnabled: Boolean
+
     @SuppressLint("SetTextI18n")
     private fun updatePlaylistDebug() {
         debugPlaylistTextView.text =
@@ -245,7 +251,9 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 currentScene = scene
                 updateDebugInfo(tag.streamDecision, scene)
                 updatePlaylistDebug()
-                maybeAddActivityTracking(scene)
+                if (activityTrackingEnabled) {
+                    maybeAddActivityTracking(scene)
+                }
             }
             if (hasMorePages) {
                 val count = player!!.mediaItemCount

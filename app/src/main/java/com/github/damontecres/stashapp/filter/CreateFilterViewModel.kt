@@ -50,15 +50,16 @@ class CreateFilterViewModel : ViewModel() {
      */
     fun initialize(
         dataType: DataType,
-        initialFilter: StashDataFilter?,
-        initialFindFilter: StashFindFilter?,
+        initialFilter: FilterArgs?,
     ) {
         ready.value = false
 
         this.dataType.value = dataType
-        this.objectFilter.value = initialFilter ?: dataType.filterType.createInstance()
+        this.objectFilter.value =
+            initialFilter?.objectFilter ?: dataType.filterType.createInstance()
         this.findFilter.value =
-            initialFindFilter ?: StashFindFilter(sortAndDirection = dataType.defaultSort)
+            initialFilter?.findFilter ?: StashFindFilter(sortAndDirection = dataType.defaultSort)
+        this.filterName.value = initialFilter?.name
 
         // Fetch all of the labels for any existing IDs in the initial object filter
         viewModelScope.launch(StashCoroutineExceptionHandler()) {

@@ -92,6 +92,19 @@ class AppUpgradeHandler(
                 }
             }
         }
+
+        if (previousVersion.isEqualOrBefore(Version.fromString("v0.5.11-3-gf0cf79e2"))) {
+            Log.i(TAG, "Migrating tabs for v0.5.11-3-gf0cf79e2")
+            val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+            preferences.ensureSetHas(
+                context,
+                R.string.pref_key_ui_performer_tabs,
+                R.array.performer_tabs,
+                listOf(
+                    context.getString(R.string.stashapp_studio),
+                ),
+            )
+        }
     }
 
     private fun SharedPreferences.ensureSetHas(

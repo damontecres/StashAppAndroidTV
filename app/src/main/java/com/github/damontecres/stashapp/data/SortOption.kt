@@ -212,15 +212,16 @@ sealed interface SortOption {
         fun isJumpSupported(
             dataType: DataType,
             sortOption: SortOption,
-        ): Boolean =
+        ): Boolean = isJumpSupported(dataType) && sortOption == Name
+
+        fun isJumpSupported(dataType: DataType): Boolean =
             dataType in
                 setOf(
                     DataType.TAG,
                     DataType.GROUP,
                     DataType.PERFORMER,
                     DataType.STUDIO,
-                ) &&
-                sortOption == Name
+                )
 
         private val COMMON_SORT_OPTIONS =
             arrayOf(

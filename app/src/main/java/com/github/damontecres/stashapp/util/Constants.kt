@@ -9,6 +9,7 @@ import android.text.TextUtils
 import android.util.DisplayMetrics
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Adapter
 import android.widget.FrameLayout
@@ -666,7 +667,7 @@ fun getMaxMeasuredWidth(
  */
 val SlimSceneData.resume_position get() = resume_time?.times(1000L)?.toLong()
 
-val Long.toMilliseconds get() = this / 1000.0
+val Long.toSeconds get() = this / 1000.0
 
 val Double.toLongMilliseconds get() = (this * 1000).toLong()
 
@@ -963,3 +964,9 @@ fun getPreference(
 ) = PreferenceManager
     .getDefaultSharedPreferences(context)
     .getString(context.getString(key), default)
+
+fun View.updateLayoutParams(transform: ViewGroup.LayoutParams.() -> Unit) {
+    val lp = layoutParams
+    transform(layoutParams)
+    layoutParams = lp
+}
