@@ -44,6 +44,7 @@ import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.enableMarquee
 import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.updateLayoutParams
 import com.github.damontecres.stashapp.views.FontSpan
 import com.github.damontecres.stashapp.views.getRatingAsDecimalString
 import kotlinx.coroutines.Dispatchers
@@ -80,7 +81,11 @@ class StashImageCardView(
         ContextCompat.getColor(context, R.color.selected_background)
     private val sDefaultBackgroundColor: Int =
         ContextCompat.getColor(context, R.color.default_card_background)
+    private val blackColor: Int = ContextCompat.getColor(context, android.R.color.black)
     private val transparentColor = ContextCompat.getColor(context, android.R.color.transparent)
+
+    var blackImageBackground: Boolean = false
+
     private val animateTime = resources.getInteger(android.R.integer.config_mediumAnimTime).toLong()
 
     var videoUrl: String? = null
@@ -248,13 +253,17 @@ class StashImageCardView(
         imageDimensionsSet = true
     }
 
-    fun updateCardBackgroundColor(selected: Boolean) {
+    private fun updateCardBackgroundColor(selected: Boolean) {
         val color = if (selected) sSelectedBackgroundColor else sDefaultBackgroundColor
         // Both background colors should be set because the view"s background is temporarily visible
         // during animations.
-        mainImageView.setBackgroundColor(color)
-        setBackgroundColor(color)
+        val mainViewColor = if (blackImageBackground) blackColor else color
+        mainView.setBackgroundColor(mainViewColor)
+        mainImageView.setBackgroundColor(mainViewColor)
         setInfoAreaBackgroundColor(color)
+        if (!blackImageBackground) {
+            setBackgroundColor(color)
+        }
     }
 
     private fun initPlayer() {
@@ -416,7 +425,28 @@ class StashImageCardView(
         textView.textSize = 18.0f
     }
 
+    fun updateImageLayoutParams(imageMatchParent: Boolean) {
+        val current = mainImageView.layoutParams.height
+        if (imageMatchParent &&
+            current != ViewGroup.LayoutParams.MATCH_PARENT ||
+            !imageMatchParent &&
+            current != ViewGroup.LayoutParams.WRAP_CONTENT
+        ) {
+            mainImageView.setImageDrawable(null)
+            mainImageView.updateLayoutParams {
+                height =
+                    if (imageMatchParent) ViewGroup.LayoutParams.MATCH_PARENT else ViewGroup.LayoutParams.WRAP_CONTENT
+            }
+        }
+    }
+
     fun onBindViewHolder() {
+        setBackgroundColor(sDefaultBackgroundColor)
+        setInfoAreaBackgroundColor(sDefaultBackgroundColor)
+        val bgColor = if (blackImageBackground) blackColor else sDefaultBackgroundColor
+        mainView.setBackgroundColor(bgColor)
+        mainImageView.setBackgroundColor(bgColor)
+
         val prefs =
             PreferenceManager
                 .getDefaultSharedPreferences(context)
@@ -439,10 +469,12 @@ class StashImageCardView(
         badgeImage = null
         mainImage = null
         videoUrl = null
-//        videoView?.player?.release()
         videoView?.player = null
 
         mainImageView.setPadding(0)
+        mainImageView.updateLayoutParams {
+            height = ViewGroup.LayoutParams.MATCH_PARENT
+        }
 
         textOverlays.values.forEach {
             it.text = null

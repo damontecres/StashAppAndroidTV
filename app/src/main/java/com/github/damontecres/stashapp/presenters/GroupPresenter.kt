@@ -6,7 +6,6 @@ import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.FA_FONT
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.ICON_SPACING
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.FontSpan
 import java.util.EnumMap
 
@@ -17,6 +16,8 @@ class GroupPresenter(
         cardView: StashImageCardView,
         item: GroupData,
     ) {
+        cardView.blackImageBackground = false
+
         cardView.titleText = item.name
         cardView.contentText = item.date
 
@@ -59,9 +60,7 @@ class GroupPresenter(
         }
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-        if (item.front_image_path.isNotNullOrBlank()) {
-            loadImage(cardView, item.front_image_path)
-        }
+        loadImage(cardView, item.front_image_path, defaultDrawable = R.drawable.default_group)
 
         cardView.setRating100(item.rating100)
     }

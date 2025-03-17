@@ -19,6 +19,8 @@ class MarkerPresenter(
         cardView: StashImageCardView,
         item: MarkerData,
     ) {
+        cardView.blackImageBackground = true
+
         val title =
             item.title.ifBlank {
                 item.primary_tag.slimTagData.name
@@ -35,7 +37,7 @@ class MarkerPresenter(
         cardView.setUpExtraRow(dataTypeMap, null)
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-        loadImage(cardView, item.screenshot)
+        loadImage(cardView, item.screenshot, defaultDrawable = R.drawable.default_scene)
         cardView.videoUrl = item.stream
     }
 
