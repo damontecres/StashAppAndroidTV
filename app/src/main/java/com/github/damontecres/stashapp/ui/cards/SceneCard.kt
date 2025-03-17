@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
@@ -61,6 +62,7 @@ fun SceneCard(
         imageWidth = ScenePresenter.CARD_WIDTH.dp / 2,
         imageHeight = ScenePresenter.CARD_HEIGHT.dp / 2,
         imageUrl = item.paths.screenshot,
+        defaultImageDrawableRes = R.drawable.default_scene,
         videoUrl = item.paths.preview,
         title = item.titleOrFilename ?: "",
         subtitle = { Text(item.date ?: "") },

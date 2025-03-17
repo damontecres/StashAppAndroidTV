@@ -50,6 +50,7 @@ fun TagCard(
         imageWidth = TagPresenter.CARD_WIDTH.dp / 2,
         imageHeight = TagPresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,
+        defaultImageDrawableRes = R.drawable.default_tag,
         videoUrl = null,
         title = title,
         subtitle = {

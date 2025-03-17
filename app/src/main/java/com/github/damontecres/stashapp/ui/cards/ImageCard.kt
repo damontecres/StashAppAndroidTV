@@ -7,6 +7,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
@@ -58,6 +59,7 @@ fun ImageCard(
         imageWidth = ImagePresenter.CARD_WIDTH.dp / 2,
         imageHeight = ImagePresenter.CARD_HEIGHT.dp / 2,
         imageUrl = imageUrl,
+        defaultImageDrawableRes = R.drawable.default_image,
         videoUrl = item.paths.preview,
         title = item.title ?: "",
         subtitle = {

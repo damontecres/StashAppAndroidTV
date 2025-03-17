@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.ui.cards
 import android.net.Uri
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.FrameLayout
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -79,6 +80,7 @@ import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
+import com.github.damontecres.stashapp.presenters.StashPresenter.Companion.isDefaultUrl
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -214,6 +216,7 @@ fun RootCard(
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
+    @DrawableRes defaultImageDrawableRes: Int? = null,
     imageContent: @Composable BoxScope.() -> Unit = {},
     videoUrl: String? = null,
     imageOverlay: @Composable BoxScope.() -> Unit = {},
@@ -236,6 +239,7 @@ fun RootCard(
     getFilterAndPosition,
     modifier,
     imageUrl,
+    defaultImageDrawableRes,
     imageContent,
     videoUrl,
     imageOverlay,
@@ -265,6 +269,7 @@ fun RootCard(
     getFilterAndPosition: ((item: Any) -> FilterAndPosition)?,
     modifier: Modifier = Modifier,
     imageUrl: String? = null,
+    @DrawableRes defaultImageDrawableRes: Int? = null,
     imageContent: @Composable BoxScope.() -> Unit = {},
     videoUrl: String? = null,
     imageOverlay: @Composable BoxScope.() -> Unit = {},
@@ -318,8 +323,7 @@ fun RootCard(
                 modifier =
                     Modifier
                         .height(imageHeight)
-                        .fillMaxWidth()
-                        .background(Color.Black),
+                        .fillMaxWidth(),
                 contentAlignment = Alignment.Center,
             ) {
                 if (playVideoPreviews && focused && videoUrl.isNotNullOrBlank()) {
@@ -374,13 +378,12 @@ fun RootCard(
                                 .padding(0.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        if (imageUrl.isNotNullOrBlank()) {
-//                            GlideImage(
-//                                model = imageUrl,
-//                                contentDescription = "",
-//                                contentScale = ContentScale.Fit, // TODO setting
-//                                modifier = Modifier.fillMaxSize(),
-//                            )
+                        if (imageUrl.isDefaultUrl && defaultImageDrawableRes != null) {
+                            Image(
+                                painter = painterResource(id = defaultImageDrawableRes),
+                                contentDescription = null,
+                            )
+                        } else if (imageUrl.isNotNullOrBlank()) {
                             AsyncImage(
                                 modifier = Modifier,
                                 model =
