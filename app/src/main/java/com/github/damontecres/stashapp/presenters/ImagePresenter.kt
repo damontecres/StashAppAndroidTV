@@ -1,9 +1,9 @@
 package com.github.damontecres.stashapp.presenters
 
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.concatIfNotBlank
-import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
 
@@ -15,7 +15,6 @@ class ImagePresenter(
         item: ImageData,
     ) {
         cardView.blackImageBackground = false
-        cardView.imageMatchParent = false
 
         cardView.titleText = item.title
 
@@ -32,17 +31,25 @@ class ImagePresenter(
         cardView.setUpExtraRow(dataTypeMap, item.o_counter)
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-        if (item.paths.thumbnail.isNotNullOrBlank()) {
-            loadImage(cardView, item.paths.thumbnail)
-        } else if (item.paths.image.isNotNullOrBlank() && !item.isImageClip) {
-            loadImage(cardView, item.paths.image)
-        }
+
+        loadImage(
+            cardView,
+            item.paths.thumbnail ?: item.paths.image,
+            defaultDrawable = R.drawable.default_image,
+        )
+
         if (item.paths.preview.isNotNullOrBlank()) {
             cardView.videoUrl = item.paths.preview
         }
 
         cardView.setRating100(item.rating100)
     }
+
+    override fun imageMatchParent(item: ImageData): Boolean =
+        item.paths.thumbnail?.contains("default=true") == true ||
+            item.paths.image?.contains("default=true") == true ||
+            item.paths.thumbnail.isNullOrBlank() ||
+            item.paths.image.isNullOrBlank()
 
     companion object {
         private const val TAG = "ImagePresenter"

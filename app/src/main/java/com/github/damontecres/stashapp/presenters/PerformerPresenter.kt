@@ -20,7 +20,6 @@ open class PerformerPresenter(
         item: PerformerData,
     ) {
         cardView.blackImageBackground = false
-        cardView.imageMatchParent = true
 
         cardView.titleText =
             SpannableStringBuilder().apply {

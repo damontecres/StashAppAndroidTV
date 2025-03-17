@@ -4,7 +4,6 @@ import android.widget.ImageView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import java.util.EnumMap
 
@@ -16,7 +15,6 @@ class StudioPresenter(
         item: StudioData,
     ) {
         cardView.blackImageBackground = false
-        cardView.imageMatchParent = true
 
         cardView.titleText = item.name
 
@@ -50,9 +48,7 @@ class StudioPresenter(
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT, 8)
         cardView.setMainImageScaleType(ImageView.ScaleType.FIT_CENTER)
-        if (item.image_path.isNotNullOrBlank()) {
-            loadImage(cardView, item.image_path)
-        }
+        loadImage(cardView, item.image_path, defaultDrawable = R.drawable.default_studio)
 
         cardView.setRating100(item.rating100)
 

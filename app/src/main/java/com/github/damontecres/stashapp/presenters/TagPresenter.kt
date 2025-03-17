@@ -21,7 +21,6 @@ class TagPresenter(
         item: TagData,
     ) {
         cardView.blackImageBackground = false
-        cardView.imageMatchParent = false
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.SCENE] = item.scene_count
@@ -52,9 +51,7 @@ class TagPresenter(
             cardView.setTextOverlayText(StashImageCardView.OverlayPosition.BOTTOM_LEFT, childText)
         }
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
-        if (item.image_path != null) {
-            loadImage(cardView, item.image_path)
-        }
+        loadImage(cardView, item.image_path, defaultDrawable = R.drawable.default_tag)
 
         if (item.favorite) {
             cardView.setIsFavorite()
