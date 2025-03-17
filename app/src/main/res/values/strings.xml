@@ -88,5 +88,6 @@
     <string name="stream_details">Stream Details</string>
     <string name="hours">Hours</string>
     <string name="minutes">Minutes</string>
+    <string name="start_playback_without_audio">Always start playback without audio</string>
 
 </resources>

@@ -37,12 +37,12 @@
             app:summaryOn="Play audio"
             app:summaryOff="Don't play audio"
             app:defaultValue="false" />
-        <SwitchPreference
-            app:key="@string/pref_key_crop_card_images"
-            app:title="Card image handling"
-            app:summaryOn="Crop center"
-            app:summaryOff="Don't crop, scale to fit"
-            app:defaultValue="true" />
+<!--        <SwitchPreference-->
+<!--            app:key="@string/pref_key_crop_card_images"-->
+<!--            app:title="Card image handling"-->
+<!--            app:summaryOn="Crop center"-->
+<!--            app:summaryOff="Don't crop, scale to fit"-->
+<!--            app:defaultValue="true" />-->
         <SwitchPreference
             app:key="@string/pref_key_remote_page_buttons"
             app:title="Page up/down with remote buttons"
@@ -118,6 +118,12 @@
             app:summaryOn="Save if also enabled on server"
             app:summaryOff="Don't save any history"
             app:defaultValue="true" />
+        <SwitchPreference
+            app:key="@string/pref_key_playback_start_muted"
+            app:title="@string/start_playback_without_audio"
+            app:summaryOn="Manually enable audio track"
+            app:summaryOff="Play audio normally"
+            app:defaultValue="false" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Scene Video Filters">

@@ -13,6 +13,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.playback.StashPlayerView
+import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.keepScreenOn
@@ -61,6 +62,7 @@ class ImageClipFragment :
                         .setUri(imageData.paths.image)
                         .build()
                 player?.setMediaItem(mediaItem)
+                maybeMuteAudio(requireContext(), player)
                 player?.prepare()
                 player?.play()
 

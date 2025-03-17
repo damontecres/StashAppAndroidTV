@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.presenters
 
 import android.graphics.Typeface
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.data.DataType
@@ -22,6 +23,7 @@ class ScenePresenter(
         cardView: StashImageCardView,
         item: SlimSceneData,
     ) {
+        cardView.blackImageBackground = true
         cardView.titleText = item.titleOrFilename
 
         val details = mutableListOf<String?>()
@@ -69,9 +71,7 @@ class ScenePresenter(
             }
         }
 
-        if (!item.paths.screenshot.isNullOrBlank()) {
-            loadImage(cardView, item.paths.screenshot)
-        }
+        loadImage(cardView, item.paths.screenshot, defaultDrawable = R.drawable.default_scene)
         if (item.paths.preview.isNotNullOrBlank()) {
             cardView.videoUrl = item.paths.preview
         }

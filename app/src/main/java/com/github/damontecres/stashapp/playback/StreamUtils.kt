@@ -8,12 +8,14 @@ import androidx.media3.common.C
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.Caption
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.util.getPreference
 import kotlinx.serialization.Serializable
 import java.util.Locale
 
@@ -288,3 +290,23 @@ fun checkForSupport(tracks: Tracks): List<TrackSupport> =
             }
         }
     }
+
+/**
+ * If [R.string.pref_key_playback_start_muted] is true, disable gselection of audio tracks by default on the given [Player]
+ */
+fun maybeMuteAudio(
+    context: Context,
+    player: Player?,
+) {
+    if (getPreference(context, R.string.pref_key_playback_start_muted, false)) {
+        player?.let {
+            if (C.TRACK_TYPE_AUDIO !in it.trackSelectionParameters.disabledTrackTypes) {
+                it.trackSelectionParameters =
+                    it.trackSelectionParameters
+                        .buildUpon()
+                        .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
+                        .build()
+            }
+        }
+    }
+}

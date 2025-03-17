@@ -23,15 +23,15 @@
     <ViewSwitcher
         android:id="@+id/main_view"
         lb:layout_viewType="main"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:inAnimation="@android:anim/fade_in"
         android:outAnimation="@android:anim/fade_out"
         android:animateFirstView="true"
         tools:layout_width="351dp"
         tools:layout_height="198dp">
 
-        <RelativeLayout
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             tools:ignore="UselessParent"> <!-- Another view is added in code so the parent is not useless -->
@@ -41,17 +41,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:adjustViewBounds="true"
-                android:contentDescription="@null"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                android:contentDescription="@null" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/card_overlay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/transparent">
+                android:id="@+id/card_overlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent">
 
                 <TextView
                     android:id="@+id/card_overlay_bottom_left"
@@ -106,7 +102,7 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </RelativeLayout>
+        </FrameLayout>
 
     </ViewSwitcher>
     <androidx.leanback.widget.NonOverlappingFrameLayout

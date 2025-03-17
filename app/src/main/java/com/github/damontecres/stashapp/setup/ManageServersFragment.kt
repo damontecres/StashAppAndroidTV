@@ -31,13 +31,21 @@ class ManageServersFragment : GuidedStepSupportFragment() {
 
     override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep
 
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
-        GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
+        val server = viewModel.currentServer.value
+        val current =
+            if (server != null) {
+                "\n\nCurrent:\n${server.url}"
+            } else {
+                ""
+            }
+        return GuidanceStylist.Guidance(
             "Manage servers",
-            "Add, remove, or change servers",
+            "Add, remove, or change servers$current",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
+    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,

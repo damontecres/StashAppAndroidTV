@@ -71,7 +71,7 @@ class StashGlide private constructor() {
                 Glide
                     .with(context)
                     .asBitmap()
-                    .load(url)
+                    .load(createGlideUrl(url, context))
                     .diskCacheStrategy(DiskCacheStrategy.DATA)
                     .skipMemoryCache(true)
                     .signature(ObjectKey(System.currentTimeMillis()))
@@ -79,7 +79,7 @@ class StashGlide private constructor() {
                 Glide
                     .with(context)
                     .asBitmap()
-                    .load(url)
+                    .load(createGlideUrl(url, context))
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
             }

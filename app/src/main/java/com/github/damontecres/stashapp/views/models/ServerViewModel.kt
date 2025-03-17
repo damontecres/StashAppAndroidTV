@@ -65,6 +65,7 @@ open class ServerViewModel : ViewModel() {
         val manager = PreferenceManager.getDefaultSharedPreferences(context)
         val maxSearchResults = manager.getInt("maxSearchResults", 25)
         val playVideoPreviews = manager.getBoolean("playVideoPreviews", true)
+        val videoPreviewAudio = manager.getBoolean("videoPreviewAudio", false)
         val columns = manager.getInt("cardSize", context.getString(R.string.card_size_default))
         val showRatings = manager.getBoolean(context.getString(R.string.pref_key_show_rating), true)
         val imageCrop =
@@ -77,6 +78,7 @@ open class ServerViewModel : ViewModel() {
         return CardUiSettings(
             maxSearchResults,
             playVideoPreviews,
+            videoPreviewAudio,
             columns,
             showRatings,
             imageCrop,
@@ -122,6 +124,7 @@ open class ServerViewModel : ViewModel() {
     data class CardUiSettings(
         val maxSearchResults: Int,
         val playVideoPreviews: Boolean,
+        val videoPreviewAudio: Boolean,
         val columns: Int,
         val showRatings: Boolean,
         val imageCrop: Boolean,
