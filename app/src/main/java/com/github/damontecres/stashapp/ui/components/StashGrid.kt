@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +23,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -67,6 +69,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private const val TAG = "StashGrid"
+
 enum class FilterUiMode {
     SAVED_FILTERS,
     CREATE_FILTER,
@@ -103,6 +107,7 @@ fun StashGridControls(
     val showTopRow by remember { derivedStateOf { showTopRowRaw } }
     var checked by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf(filterArgs.findFilter?.q ?: "") }
+    var shouldRequestFocus by remember { mutableStateOf(requestFocus) }
 
     Column(modifier = modifier) {
         if (showTopRow) {
@@ -162,6 +167,26 @@ fun StashGridControls(
                             .getInt(context.getString(R.string.pref_key_search_delay), 500)
                             .toLong()
                     TextField(
+                        modifier =
+                            Modifier.onFocusChanged {
+                                if (it.isFocused) {
+                                    shouldRequestFocus = false
+                                } else {
+                                    shouldRequestFocus = requestFocus
+                                }
+                            },
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                        colors =
+                            TextFieldDefaults.colors().copy(
+                                unfocusedContainerColor =
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(
+                                        alpha = 0.8f,
+                                    ),
+                                focusedContainerColor =
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(
+                                        alpha = 0.8f,
+                                    ),
+                            ),
                         value = searchQuery,
                         onValueChange = { newQuery ->
                             searchQuery = newQuery
@@ -206,7 +231,7 @@ fun StashGridControls(
             uiConfig,
             itemOnClick,
             longClicker,
-            requestFocus = requestFocus,
+            requestFocus = shouldRequestFocus,
             letterPosition = letterPosition,
             modifier = Modifier.fillMaxSize(),
             initialPosition = initialPosition,
@@ -238,157 +263,156 @@ fun StashGrid(
     val firstFocus = remember { FocusRequester() }
     var focusedIndex by rememberSaveable { mutableIntStateOf(initialPosition) }
     if (initialPosition > 0) {
-        LaunchedEffect(filterArgs, initialPosition) {
+        Log.v(TAG, "Scroll to $initialPosition")
+        LaunchedEffect(Unit) {
             gridState.scrollToItem(focusedIndex, -columns)
         }
     }
-    pager?.let { pager ->
-        Row(
-            modifier =
-                modifier
-                    .fillMaxSize(),
+    Row(
+        modifier =
+            modifier
+                .fillMaxSize(),
+    ) {
+        JumpButtons(
+            itemCount = pager.size(),
+            jumpClick = { jump ->
+                scope.launch {
+                    val newPosition =
+                        (gridState.firstVisibleItemIndex + jump).coerceIn(0..<pager.size())
+                    gridState.scrollToItem(newPosition)
+                }
+            },
+            modifier = Modifier.align(Alignment.CenterVertically),
+        )
+        Box(
+            modifier = Modifier,
         ) {
-            JumpButtons(
-                itemCount = pager.size(),
-                jumpClick = { jump ->
-                    scope.launch {
-                        val newPosition =
-                            (gridState.firstVisibleItemIndex + jump).coerceIn(0..<pager.size())
-                        gridState.scrollToItem(newPosition)
-                    }
-                },
-                modifier = Modifier.align(Alignment.CenterVertically),
-            )
-            Box(
-                modifier = Modifier,
-            ) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(columns),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    state = gridState,
-                    contentPadding = PaddingValues(16.dp),
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .focusGroup()
-                            .focusRestorer { firstFocus },
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(columns),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                state = gridState,
+                contentPadding = PaddingValues(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .focusGroup()
+                        .focusRestorer { firstFocus },
 //                    .focusRestorer(),
-                ) {
-                    if (pager.size() < 0) {
-                        item {
-                            Text(
-                                text = "Waiting for items to load from the backend",
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .wrapContentWidth(Alignment.CenterHorizontally)
-                                        .wrapContentHeight(Alignment.CenterVertically),
-                            )
-                        }
-                    } else if (pager.size() == 0) {
-                        item {
-                            Text(
-                                text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
-                                color = MaterialTheme.colorScheme.onBackground,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .wrapContentWidth(Alignment.CenterHorizontally)
-                                        .wrapContentHeight(Alignment.CenterVertically),
-                            )
-                        }
-                    } else {
-                        items(pager.size()) { index ->
-                            val mod =
-                                if (index == focusedIndex) {
-                                    Modifier.focusRequester(firstFocus)
-                                } else {
-                                    Modifier
-                                }
-                            val item = pager[index]
-                            if (item == null) {
-                                Text(
-                                    text = "Loading...",
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                    modifier =
-                                        mod
-                                            .fillMaxWidth()
-                                            .wrapContentWidth(Alignment.CenterHorizontally),
-                                )
+            ) {
+                if (pager.size() < 0) {
+                    item {
+                        Text(
+                            text = "Waiting for items to load from the backend",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentWidth(Alignment.CenterHorizontally)
+                                    .wrapContentHeight(Alignment.CenterVertically),
+                        )
+                    }
+                } else if (pager.size() == 0) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.stashapp_studio_tagger_no_results_found),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentWidth(Alignment.CenterHorizontally)
+                                    .wrapContentHeight(Alignment.CenterVertically),
+                        )
+                    }
+                } else {
+                    items(pager.size()) { index ->
+                        val mod =
+                            if (index == focusedIndex) {
+                                Modifier.focusRequester(firstFocus)
                             } else {
-                                if (requestFocus && focusedIndex == index) {
-                                    LaunchedEffect(Unit) {
-                                        firstFocus.requestFocus()
-                                    }
-                                }
-                                StashCard(
-                                    modifier =
-                                        mod.onFocusChanged { focusState ->
-                                            if (focusState.isFocused) {
-                                                focusedIndex = index
-                                                positionCallback?.invoke(columns, index)
-                                            }
-                                        },
-                                    uiConfig = uiConfig,
-                                    item = item,
-                                    itemOnClick = {
-                                        itemOnClick.onClick(
-                                            it,
-                                            FilterAndPosition(filterArgs, index),
-                                        )
-                                    },
-                                    longClicker = longClicker,
-                                    getFilterAndPosition = {
-                                        FilterAndPosition(
-                                            filterArgs,
-                                            index,
-                                        )
-                                    },
-                                )
+                                Modifier
                             }
+                        val item = pager[index]
+                        if (item == null) {
+                            Text(
+                                text = "Loading...",
+                                color = MaterialTheme.colorScheme.onBackground,
+                                modifier =
+                                    mod
+                                        .fillMaxWidth()
+                                        .wrapContentWidth(Alignment.CenterHorizontally),
+                            )
+                        } else {
+                            if (requestFocus && focusedIndex == index) {
+                                LaunchedEffect(Unit) {
+                                    firstFocus.requestFocus()
+                                }
+                            }
+                            StashCard(
+                                modifier =
+                                    mod.onFocusChanged { focusState ->
+                                        if (focusState.isFocused) {
+                                            focusedIndex = index
+                                            positionCallback?.invoke(columns, index)
+                                        }
+                                    },
+                                uiConfig = uiConfig,
+                                item = item,
+                                itemOnClick = {
+                                    itemOnClick.onClick(
+                                        it,
+                                        FilterAndPosition(filterArgs, index),
+                                    )
+                                },
+                                longClicker = longClicker,
+                                getFilterAndPosition = {
+                                    FilterAndPosition(
+                                        filterArgs,
+                                        index,
+                                    )
+                                },
+                            )
                         }
                     }
                 }
-                // Footer
-                Box(
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomCenter)
-                            .background(
-                                Color(
-                                    LocalContext.current.resources.getColor(
-                                        R.color.transparent_black_50,
-                                        null,
-                                    ),
+            }
+            // Footer
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            Color(
+                                LocalContext.current.resources.getColor(
+                                    R.color.transparent_black_50,
+                                    null,
                                 ),
                             ),
-                ) {
-                    Text(
-                        modifier = Modifier.padding(4.dp),
-                        color = MaterialTheme.colorScheme.onBackground,
-                        text = "${focusedIndex + 1} / ${pager.size()}",
-                    )
-                }
-            }
-            // Letters
-            if (pager.size() > 0 &&
-                SortOption.isJumpSupported(
-                    filterArgs.dataType,
-                    filterArgs.sortAndDirection.sort,
-                )
+                        ),
             ) {
-                AlphabetButtons(
-                    modifier = Modifier.align(Alignment.CenterVertically),
-                    letterClicked = { letter ->
-                        scope.launch {
-                            val jumpPosition = letterPosition.invoke(letter)
-                            gridState.scrollToItem(jumpPosition)
-                        }
-                    },
+                Text(
+                    modifier = Modifier.padding(4.dp),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    text = "${focusedIndex + 1} / ${pager.size()}",
                 )
             }
+        }
+        // Letters
+        if (pager.size() > 0 &&
+            SortOption.isJumpSupported(
+                filterArgs.dataType,
+                filterArgs.sortAndDirection.sort,
+            )
+        ) {
+            AlphabetButtons(
+                modifier = Modifier.align(Alignment.CenterVertically),
+                letterClicked = { letter ->
+                    scope.launch {
+                        val jumpPosition = letterPosition.invoke(letter)
+                        gridState.scrollToItem(jumpPosition)
+                    }
+                },
+            )
         }
     }
 }

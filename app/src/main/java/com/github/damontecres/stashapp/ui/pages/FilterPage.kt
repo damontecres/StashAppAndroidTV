@@ -42,8 +42,11 @@ fun FilterPage(
     modifier: Modifier = Modifier,
     viewModel: FilterViewModel = viewModel(),
 ) {
-    LaunchedEffect(server, initialFilter) {
-        viewModel.setFilter(server, initialFilter)
+    if (viewModel.currentFilter == null) {
+        // If the view model is populated, don't do it again
+        LaunchedEffect(server, initialFilter) {
+            viewModel.setFilter(server, initialFilter)
+        }
     }
     val pager by viewModel.pager.observeAsState()
 

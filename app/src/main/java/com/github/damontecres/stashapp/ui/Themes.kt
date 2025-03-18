@@ -116,6 +116,7 @@ fun Material3MainTheme(content: @Composable () -> Unit) {
                 onSurface = Color.White,
                 surfaceVariant = Color(0xFF30404d),
                 onSurfaceVariant = Color.White,
+                surfaceContainerHighest = Color(0xFF111a20),
             ),
         content = content,
     )
