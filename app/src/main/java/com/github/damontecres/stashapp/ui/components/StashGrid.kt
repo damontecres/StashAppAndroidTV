@@ -53,6 +53,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
@@ -84,7 +85,7 @@ enum class CreateFilter {
 @Composable
 fun StashGridControls(
     server: StashServer,
-    pager: ComposePager,
+    pager: ComposePager<StashData>,
     updateFilter: (FilterArgs) -> Unit,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
@@ -246,7 +247,7 @@ fun StashGridControls(
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StashGrid(
-    pager: ComposePager,
+    pager: ComposePager<StashData>,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,

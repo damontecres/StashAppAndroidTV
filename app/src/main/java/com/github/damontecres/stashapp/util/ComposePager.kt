@@ -14,31 +14,44 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-class ComposePager(
+class ComposePager<T : StashData>(
     val filter: FilterArgs,
-    private val source: StashPagingSource<*, *, StashData, *>,
+    private val source: StashPagingSource<*, *, T, *>,
     private val scope: CoroutineScope,
     private val pageSize: Int = 25,
     cacheSize: Long = 8,
 ) {
-    private var items by mutableStateOf(ItemList<StashData>(0, pageSize, mapOf()))
+    private var items by mutableStateOf(ItemList<T>(0, pageSize, mapOf()))
     private var totalCount by mutableIntStateOf(-1)
     private val mutex = Mutex()
     private val cachedPages =
         CacheBuilder
             .newBuilder()
             .maximumSize(cacheSize)
-            .build<Int, List<StashData>>()
+            .build<Int, List<T>>()
 
     suspend fun init() {
         totalCount = source.getCount()
     }
 
-    operator fun get(position: Int): StashData? {
+    operator fun get(position: Int): T? {
         if (position in 0..<totalCount) {
             val item = items[position]
             if (item == null) {
                 fetchPage(position)
+            }
+            return item
+        } else {
+            throw IndexOutOfBoundsException("$position of $totalCount")
+        }
+    }
+
+    suspend fun getBlocking(position: Int): T? {
+        if (position in 0..<totalCount) {
+            val item = items[position]
+            if (item == null) {
+                fetchPage(position).join()
+                return items[position]
             }
             return item
         } else {

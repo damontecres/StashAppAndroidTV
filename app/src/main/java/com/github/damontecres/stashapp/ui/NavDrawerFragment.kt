@@ -68,6 +68,7 @@ import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.pages.DialogParams
 import com.github.damontecres.stashapp.ui.pages.FilterPage
+import com.github.damontecres.stashapp.ui.pages.ImagePage
 import com.github.damontecres.stashapp.ui.pages.MainPage
 import com.github.damontecres.stashapp.ui.pages.PerformerPage
 import com.github.damontecres.stashapp.ui.pages.PlaybackPage
@@ -227,6 +228,19 @@ fun FragmentContent(
                         sceneId = destination.sceneId,
                         startPosition = destination.position,
                         playbackMode = destination.mode,
+                    )
+                }
+
+                is Destination.Slideshow -> {
+                    ImagePage(
+                        server = server,
+                        navigationManager = navigationManager,
+                        filter = destination.filterArgs,
+                        startPosition = destination.position,
+                        startSlideshow = destination.automatic,
+                        itemOnClick = itemOnClick,
+                        longClicker = longClicker,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
 

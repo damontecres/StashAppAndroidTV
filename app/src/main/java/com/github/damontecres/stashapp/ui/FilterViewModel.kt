@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 class FilterViewModel : ViewModel() {
     private var server: StashServer? = null
-    val pager = MutableLiveData<ComposePager>()
+    val pager = MutableLiveData<ComposePager<StashData>>()
 
     val currentFilter: FilterArgs? get() = pager.value?.filter
     val dataType: DataType? get() = currentFilter?.dataType
