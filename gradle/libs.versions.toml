@@ -3,7 +3,7 @@ acra = "5.11.3"
 activity-compose = "1.10.1"
 androidsvg-aar = "1.4"
 android-application = "8.7.3"
-apollo = "4.0.0"
+apollo = "4.1.1"
 androidx-media3 = "1.6.0-rc01"
 androidx-test = "1.6.1"
 androidx-test-runner = "1.6.2"
@@ -14,15 +14,15 @@ coil-compose = "3.0.4"
 compose-bom = "2025.03.00"
 compose-runtime = "1.7.8"
 constraintlayout = "2.2.1"
-core = "4.6.2"
+markwon-core = "4.6.2"
 core-ktx = "1.15.0"
 glide = "4.16.0"
 glide-compose = "1.0.0-beta01"
 junit = "4.13.2"
-kotlin = "2.1.0"
+kotlin = "2.1.10"
 kotlinx-coroutines-android = "1.10.1"
 kotlinx-serialization = "1.7.2"
-ksp = "2.0.21-1.0.26"
+ksp = "2.1.10-1.0.30"
 leanback = "1.1.0-rc02"
 leanback-preference = "1.1.0-rc01"
 leanback-tab = "1.1.0-beta01"
@@ -83,7 +83,7 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil-c
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil-compose" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil-compose" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil-compose" }
-core = { module = "io.noties.markwon:core", version.ref = "core" }
+markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon-core" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 glide-okhttp3-integration = { module = "com.github.bumptech.glide:okhttp3-integration", version.ref = "glide" }
 glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }

@@ -219,7 +219,7 @@ dependencies {
 
     implementation(libs.zoomlayout)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.core)
+    implementation(libs.markwon.core)
     implementation(libs.parcelable.core)
 
     implementation(libs.acra.http)
