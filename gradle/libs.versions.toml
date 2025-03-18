@@ -2,7 +2,7 @@
 acra = "5.11.3"
 androidsvg-aar = "1.4"
 android-application = "8.7.3"
-apollo = "4.0.0"
+apollo = "4.1.1"
 androidx-media3 = "1.6.0-rc01"
 androidx-test = "1.6.1"
 androidx-test-runner = "1.6.2"
@@ -10,14 +10,14 @@ androidx-test-ext-junit = "1.2.1"
 androidx-test-ext-truth = "1.6.0"
 auto-service = "1.1.1"
 constraintlayout = "2.2.1"
-core = "4.6.2"
+markwon-core = "4.6.2"
 core-ktx = "1.15.0"
 glide = "4.16.0"
 junit = "4.13.2"
-kotlin = "2.1.0"
+kotlin = "2.1.10"
 kotlinx-coroutines-android = "1.10.1"
 kotlinx-serialization = "1.7.2"
-ksp = "2.0.21-1.0.26"
+ksp = "2.1.10-1.0.30"
 leanback = "1.1.0-rc02"
 leanback-preference = "1.1.0-rc01"
 leanback-tab = "1.1.0-beta01"
@@ -69,7 +69,7 @@ apollo-compiler = { module = "com.apollographql.apollo:apollo-compiler", version
 apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime", version.ref = "apollo" }
 auto-service = { module = "com.google.auto.service:auto-service", version.ref = "auto-service" }
 auto-service-annotations = { module = "com.google.auto.service:auto-service-annotations", version.ref = "auto-service" }
-core = { module = "io.noties.markwon:core", version.ref = "core" }
+markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon-core" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 glide-okhttp3-integration = { module = "com.github.bumptech.glide:okhttp3-integration", version.ref = "glide" }
 glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }
