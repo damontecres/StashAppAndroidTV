@@ -132,7 +132,7 @@ sealed class Destination(
     data class CreateFilter(
         val dataType: DataType,
         val startingFilter: FilterArgs?,
-    ) : Destination() {
+    ) : Destination(true) {
         override fun toString(): String = "CreateFilter(destId=$destId, dataType=$dataType)"
     }
 

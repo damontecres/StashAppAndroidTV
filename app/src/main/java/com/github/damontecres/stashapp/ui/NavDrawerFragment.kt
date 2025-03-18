@@ -402,6 +402,7 @@ fun NavDrawerContent(
         is Destination.Filter -> {
             FilterPage(
                 server = server,
+                navigationManager = navManager,
                 initialFilter = destination.filterArgs,
                 scrollToNextPage = destination.scrollToNextPage,
                 itemOnClick = itemOnClick,

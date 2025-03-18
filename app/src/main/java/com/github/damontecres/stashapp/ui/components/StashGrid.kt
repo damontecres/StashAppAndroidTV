@@ -72,6 +72,11 @@ enum class FilterUiMode {
     CREATE_FILTER,
 }
 
+enum class CreateFilter {
+    FROM_CURRENT,
+    NEW_FILTER,
+}
+
 @Composable
 fun StashGridControls(
     server: StashServer,
@@ -81,6 +86,7 @@ fun StashGridControls(
     longClicker: LongClicker<Any>,
     uiConfig: ComposeUiConfig,
     filterUiMode: FilterUiMode,
+    createFilter: (CreateFilter) -> Unit,
     letterPosition: suspend (Char) -> Int,
     requestFocus: Boolean,
     modifier: Modifier = Modifier,
@@ -113,12 +119,8 @@ fun StashGridControls(
                             modifier = Modifier,
                             dataType = dataType,
                             onFilterChange = { updateFilter(it) },
-                            onCreateFilter = {
-                                // TODO
-                            },
-                            onUpdateFilter = {
-                                // TODO
-                            },
+                            onCreateFilter = { createFilter.invoke(CreateFilter.NEW_FILTER) },
+                            onFCreateFromFilter = { createFilter.invoke(CreateFilter.FROM_CURRENT) },
                         )
                     }
                     SortByButton(

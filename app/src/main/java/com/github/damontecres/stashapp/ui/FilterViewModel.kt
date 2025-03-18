@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.type.SortDirectionEnum
+import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
@@ -19,6 +20,9 @@ import kotlinx.coroutines.launch
 class FilterViewModel : ViewModel() {
     private var server: StashServer? = null
     val pager = MutableLiveData<ComposePager>()
+
+    val currentFilter: FilterArgs? get() = pager.value?.filter
+    val dataType: DataType? get() = currentFilter?.dataType
 
     fun setFilter(
         server: StashServer,

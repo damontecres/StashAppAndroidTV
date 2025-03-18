@@ -18,9 +18,12 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FilterViewModel
+import com.github.damontecres.stashapp.ui.components.CreateFilter
 import com.github.damontecres.stashapp.ui.components.FilterUiMode
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -30,6 +33,7 @@ import com.github.damontecres.stashapp.util.StashServer
 @Composable
 fun FilterPage(
     server: StashServer,
+    navigationManager: NavigationManagerCompose,
     initialFilter: FilterArgs,
     scrollToNextPage: Boolean,
     uiConfig: ComposeUiConfig,
@@ -70,6 +74,27 @@ fun FilterPage(
                 server = server,
                 pager = it,
                 filterUiMode = FilterUiMode.SAVED_FILTERS,
+                createFilter = {
+                    val dataType = initialFilter.dataType
+                    val currentFilter = viewModel.currentFilter
+                    when (it) {
+                        CreateFilter.FROM_CURRENT ->
+                            navigationManager.navigate(
+                                Destination.CreateFilter(
+                                    dataType,
+                                    currentFilter,
+                                ),
+                            )
+
+                        CreateFilter.NEW_FILTER ->
+                            navigationManager.navigate(
+                                Destination.CreateFilter(
+                                    dataType,
+                                    null,
+                                ),
+                            )
+                    }
+                },
                 itemOnClick = itemOnClick,
                 longClicker = longClicker,
                 initialPosition = initialPosition,

@@ -162,6 +162,9 @@ fun StashGridTab(
             itemOnClick = itemOnClick,
             longClicker = longClicker,
             filterUiMode = FilterUiMode.CREATE_FILTER,
+            createFilter = {
+                TODO()
+            },
             modifier = modifier,
             positionCallback = positionCallback,
             uiConfig = ComposeUiConfig.fromStashServer(server),
