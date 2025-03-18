@@ -52,7 +52,6 @@ import com.github.damontecres.stashapp.util.convertDpToPixel
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
-import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashRatingBar
@@ -62,6 +61,8 @@ import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class MarkerDetailsFragment : DetailsSupportFragment() {
     companion object {
@@ -319,6 +320,20 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                                 item.primary_tag.tagData.name
                             }
                         val body = mutableListOf<String>()
+                        if (item.end_seconds != null) {
+                            val endTime =
+                                item.end_seconds
+                                    .toDuration(
+                                        DurationUnit.SECONDS,
+                                    )
+                            body.add(
+                                "${getString(R.string.stashapp_time_end)}: $endTime",
+                            )
+                            val duration = endTime - item.seconds.toDuration(DurationUnit.SECONDS)
+                            body.add(
+                                "${getString(R.string.stashapp_duration)}: $duration",
+                            )
+                        }
                         if (PreferenceManager
                                 .getDefaultSharedPreferences(requireContext())
                                 .getBoolean(
@@ -326,8 +341,10 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                                     false,
                                 )
                         ) {
+                            if (body.isNotEmpty()) {
+                                body.add("\n")
+                            }
                             body.add("${getString(R.string.id)}: ${item.id}")
-                            body.add("\n")
                         }
                         val createdAt =
                             getString(R.string.stashapp_created_at) + ": " +
@@ -341,7 +358,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                                 )
                         body.add(createdAt)
                         body.add(updatedAt)
-                        vh.body.text = body.joinNotNullOrBlank("\n")
+                        vh.body.text = body.joinToString("\n")
                     }
                 },
             )

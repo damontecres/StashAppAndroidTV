@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpAction
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
 import kotlin.time.DurationUnit
@@ -67,6 +68,17 @@ class MarkerPresenter(
                         ),
                     )
                 },
+        ).addAction(
+            PopUpItem(3L, R.string.shift_seconds),
+            { readOnlyModeDisabled() },
+            { _, item ->
+                StashApplication.navigationManager.navigate(
+                    Destination.UpdateMarker(
+                        item.id,
+                        item.scene.videoSceneData.id,
+                    ),
+                )
+            },
         )
 
     companion object {

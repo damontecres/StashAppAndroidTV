@@ -1,40 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_gravity="center"
-    android:orientation="vertical">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/black">
 
-    <TextView
-        android:id="@+id/scene_title"
+    <com.github.damontecres.stashapp.playback.StashPlayerView
+        android:id="@+id/player_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="22sp"
-        android:textAlignment="center"
-        tools:text="Scene Title"/>
+        android:layout_height="match_parent"
+        android:contentDescription="@null"
+        app:use_controller="false"
+        tools:visibility="invisible" />
 
-    <TextView
-        android:id="@+id/marker_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textAlignment="center"
-        tools:text="Tag - 10m30s"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:textSize="16sp"
-        android:textAlignment="center"
-        android:text="Shift by..."/>
-
-    <androidx.leanback.widget.picker.Picker
-        android:id="@+id/picker"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:padding="12dp"
-        />
-</LinearLayout>
+        android:layout_marginTop="8dp"
+        android:layout_gravity="center_horizontal"
+        android:orientation="vertical"
+        android:background="@color/transparent_black_50">
+
+        <TextView
+            android:id="@+id/scene_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textAlignment="center"
+            tools:text="Scene Title" />
+
+        <TextView
+            android:id="@+id/marker_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textAlignment="center"
+            tools:text="Tag - 10m30s" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textAlignment="center"
+            android:text="Set timestamp to..." />
+
+        <com.github.damontecres.stashapp.views.DurationPicker2
+            android:id="@+id/duration_picker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="8dp"
+            android:background="@drawable/button_selector_marker_picker" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+
+            <Button
+                android:id="@+id/play_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:fontFamily="@font/fa_solid_900"
+                android:text="@string/fa_play"
+                android:background="@drawable/button_selector_marker_picker" />
+
+            <Button
+                android:id="@+id/save_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:text="@string/stashapp_actions_save"
+                android:background="@drawable/button_selector_marker_picker" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+</FrameLayout>

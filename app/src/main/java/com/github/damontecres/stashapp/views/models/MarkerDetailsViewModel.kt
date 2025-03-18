@@ -28,4 +28,8 @@ class MarkerDetailsViewModel : ViewModel() {
     fun setMarker(marker: FullMarkerData) {
         _item.value = marker
     }
+
+    companion object {
+        private const val TAG = "MarkerDetailsViewModel"
+    }
 }
