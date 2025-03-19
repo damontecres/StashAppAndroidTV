@@ -88,7 +88,7 @@ class ScenePresenter(
                     Destination.Playback(
                         item.id,
                         0L,
-                        PlaybackMode.CHOOSE,
+                        PlaybackMode.Choose,
                     ),
                 )
             }.addAction(
@@ -99,7 +99,7 @@ class ScenePresenter(
                     Destination.Playback(
                         item.id,
                         item.resume_position ?: 0L,
-                        PlaybackMode.CHOOSE,
+                        PlaybackMode.Choose,
                     ),
                 )
             }.addAction(
@@ -110,7 +110,7 @@ class ScenePresenter(
                     Destination.Playback(
                         item.id,
                         0L,
-                        PlaybackMode.CHOOSE,
+                        PlaybackMode.Choose,
                     ),
                 )
             }

@@ -228,18 +228,18 @@ abstract class PlaybackFragment(
     ) {
         debugSceneId.text = scene.id
         when (streamDecision.transcodeDecision) {
-            TranscodeDecision.TRANSCODE ->
+            TranscodeDecision.Transcode ->
                 debugPlaybackTextView.text =
                     getString(R.string.transcode)
 
-            TranscodeDecision.FORCED_TRANSCODE ->
+            is TranscodeDecision.ForcedTranscode ->
                 debugPlaybackTextView.text =
-                    getString(R.string.force_transcode)
+                    getString(R.string.force_transcode) + " " + streamDecision.transcodeDecision.resolution.label
 
-            TranscodeDecision.DIRECT_PLAY ->
+            TranscodeDecision.DirectPlay ->
                 debugPlaybackTextView.text = getString(R.string.direct)
 
-            TranscodeDecision.FORCED_DIRECT_PLAY ->
+            TranscodeDecision.ForcedDirectPlay ->
                 debugPlaybackTextView.text =
                     getString(R.string.force_direct)
         }

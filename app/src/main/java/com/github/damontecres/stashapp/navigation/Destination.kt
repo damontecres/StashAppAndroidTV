@@ -151,7 +151,7 @@ sealed class Destination {
                             Playback(
                                 item.scene.videoSceneData.id,
                                 item.seconds.toLongMilliseconds,
-                                PlaybackMode.CHOOSE,
+                                PlaybackMode.Choose,
                             )
                         }
 
@@ -159,7 +159,7 @@ sealed class Destination {
                             Playback(
                                 item.scene.videoSceneData.id,
                                 item.seconds.toLongMilliseconds,
-                                PlaybackMode.CHOOSE,
+                                PlaybackMode.Choose,
                             )
                         }
 

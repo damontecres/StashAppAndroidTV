@@ -72,7 +72,7 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
             }
             val scene = Scene.fromVideoSceneData(marker.scene.videoSceneData)
             val streamDecision =
-                getStreamDecision(requireContext(), scene, PlaybackMode.CHOOSE)
+                getStreamDecision(requireContext(), scene, PlaybackMode.Choose)
             val mediaItem = buildMediaItem(requireContext(), streamDecision, scene)
 
             StashExoPlayer.releasePlayer()

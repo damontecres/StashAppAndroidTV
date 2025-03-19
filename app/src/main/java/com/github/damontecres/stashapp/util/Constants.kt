@@ -841,7 +841,7 @@ fun maybeStartPlayback(
                 Destination.Playback(
                     item.id,
                     item.resume_position ?: 0L,
-                    PlaybackMode.CHOOSE,
+                    PlaybackMode.Choose,
                 ),
             )
         }
@@ -851,7 +851,7 @@ fun maybeStartPlayback(
                 Destination.Playback(
                     item.scene.videoSceneData.id,
                     (item.seconds * 1000).toLong(),
-                    PlaybackMode.CHOOSE,
+                    PlaybackMode.Choose,
                 ),
             )
         }

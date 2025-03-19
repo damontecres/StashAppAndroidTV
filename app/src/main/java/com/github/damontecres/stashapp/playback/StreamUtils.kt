@@ -22,17 +22,39 @@ import java.util.Locale
 private const val TAG = "StreamUtils"
 
 @Serializable
-enum class PlaybackMode {
-    FORCED_DIRECT_PLAY,
-    FORCED_TRANSCODE,
-    CHOOSE,
+enum class TranscodeResolution(
+    val label: String,
+) {
+    ORIGINAL("Original"),
+    RES_720("HD (720p)"),
+    RES_480("Standard (480p)"),
+    RES_240("Low (240p)"),
 }
 
-enum class TranscodeDecision {
-    DIRECT_PLAY,
-    FORCED_DIRECT_PLAY,
-    TRANSCODE,
-    FORCED_TRANSCODE,
+@Serializable
+sealed interface PlaybackMode {
+    @Serializable
+    data object ForcedDirectPlay : PlaybackMode
+
+    @Serializable
+    data class ForcedTranscode(
+        val resolution: TranscodeResolution,
+    ) : PlaybackMode
+
+    @Serializable
+    data object Choose : PlaybackMode
+}
+
+sealed interface TranscodeDecision {
+    data object DirectPlay : TranscodeDecision
+
+    data object ForcedDirectPlay : TranscodeDecision
+
+    data object Transcode : TranscodeDecision
+
+    data class ForcedTranscode(
+        val resolution: TranscodeResolution,
+    ) : TranscodeDecision
 }
 
 data class StreamDecision(
@@ -54,21 +76,38 @@ fun buildMediaItem(
     }
     val format =
         when (streamDecision.transcodeDecision) {
-            TranscodeDecision.TRANSCODE, TranscodeDecision.FORCED_TRANSCODE -> {
+            TranscodeDecision.Transcode, is TranscodeDecision.ForcedTranscode -> {
                 PreferenceManager
                     .getDefaultSharedPreferences(context)
                     .getString("stream_choice", "HLS")
             }
-            TranscodeDecision.DIRECT_PLAY, TranscodeDecision.FORCED_DIRECT_PLAY -> {
+
+            TranscodeDecision.DirectPlay, TranscodeDecision.ForcedDirectPlay -> {
                 scene.format
             }
         }
     val url =
-        when (streamDecision.transcodeDecision) {
-            TranscodeDecision.TRANSCODE, TranscodeDecision.FORCED_TRANSCODE -> {
+        when (val decision = streamDecision.transcodeDecision) {
+            TranscodeDecision.Transcode -> {
                 scene.streams[format]!!
             }
-            TranscodeDecision.DIRECT_PLAY, TranscodeDecision.FORCED_DIRECT_PLAY -> {
+
+            is TranscodeDecision.ForcedTranscode -> {
+                val key =
+                    if (decision.resolution == TranscodeResolution.ORIGINAL) {
+                        format
+                    } else {
+                        "$format ${decision.resolution.label}"
+                    }
+                if (key in scene.streams) {
+                    scene.streams[key]!!
+                } else {
+                    Log.w(TAG, "Couldn't find $key for scene ${scene.id}")
+                    scene.streams[format]!!
+                }
+            }
+
+            TranscodeDecision.DirectPlay, TranscodeDecision.ForcedDirectPlay -> {
                 scene.streamUrl!!
             }
         }
@@ -134,7 +173,7 @@ fun getStreamDecision(
     val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
     val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
     if (
-        mode == PlaybackMode.CHOOSE &&
+        mode == PlaybackMode.Choose &&
         videoSupported &&
         audioSupported &&
         containerSupported &&
@@ -146,19 +185,19 @@ fun getStreamDecision(
         )
         return StreamDecision(
             scene.id,
-            TranscodeDecision.DIRECT_PLAY,
+            TranscodeDecision.DirectPlay,
             true,
             true,
             true,
         )
-    } else if (mode == PlaybackMode.FORCED_DIRECT_PLAY) {
+    } else if (mode == PlaybackMode.ForcedDirectPlay) {
         Log.v(
             PlaybackSceneFragment.TAG,
             "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
         )
         return StreamDecision(
             scene.id,
-            TranscodeDecision.FORCED_DIRECT_PLAY,
+            TranscodeDecision.ForcedDirectPlay,
             videoSupported,
             audioSupported,
             containerSupported,
@@ -171,7 +210,7 @@ fun getStreamDecision(
         )
         return StreamDecision(
             scene.id,
-            if (mode == PlaybackMode.FORCED_TRANSCODE) TranscodeDecision.FORCED_TRANSCODE else TranscodeDecision.TRANSCODE,
+            if (mode is PlaybackMode.ForcedTranscode) TranscodeDecision.ForcedTranscode(mode.resolution) else TranscodeDecision.Transcode,
             videoSupported,
             audioSupported,
             containerSupported,

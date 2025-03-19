@@ -35,7 +35,7 @@ class NavigationOnItemViewClickedListener(
                     Destination.Playback(
                         item.scene.videoSceneData.id,
                         (item.seconds * 1000L).toLong(),
-                        PlaybackMode.CHOOSE,
+                        PlaybackMode.Choose,
                     )
 
                 is ImageData -> {
