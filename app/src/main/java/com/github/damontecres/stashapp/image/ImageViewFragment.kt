@@ -112,7 +112,9 @@ class ImageViewFragment :
                     .withCaching(requireContext(), imageUrl)
                     .transition(withCrossFade(factory))
                     .placeholder(placeholder)
-                    .listener(
+                    .thumbnail(
+                        image.paths.thumbnail?.let { StashGlide.withCaching(requireContext(), it) },
+                    ).listener(
                         object : RequestListener<Drawable?> {
                             override fun onLoadFailed(
                                 e: GlideException?,
