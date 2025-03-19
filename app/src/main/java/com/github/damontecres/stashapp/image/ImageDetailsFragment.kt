@@ -64,6 +64,7 @@ import com.github.damontecres.stashapp.util.name
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.util.showSetRatingToast
+import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -449,7 +450,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         ) {
             val context = vh.view.context
             val image = item as ImageData
-            vh.title.text = image.title
+            vh.title.text = image.titleOrFilename
             vh.subtitle.text =
                 listOf(
                     image.date,

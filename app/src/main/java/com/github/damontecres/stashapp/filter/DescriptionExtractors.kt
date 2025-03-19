@@ -62,7 +62,7 @@ fun extractTitle(item: StashData): String? =
         is PerformerData -> item.name
         is StudioData -> item.name
         is GalleryData -> item.name
-        is ImageData -> item.title
+        is ImageData -> item.titleOrFilename
         is MarkerData ->
             item.title.ifBlank {
                 item.primary_tag.slimTagData.name
