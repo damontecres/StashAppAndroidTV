@@ -105,7 +105,7 @@ class ImageViewFragment :
             val factory =
                 DrawableCrossFadeFactory
                     .Builder(300)
-                    .setCrossFadeEnabled(true)
+                    .setCrossFadeEnabled(image.paths.thumbnail.isNullOrBlank())
                     .build()
             val imageLoader =
                 StashGlide
