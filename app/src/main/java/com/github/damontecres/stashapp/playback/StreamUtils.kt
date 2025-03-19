@@ -14,25 +14,44 @@ import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.Caption
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.getPreference
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.serialization.Serializable
 import java.util.Locale
 
 private const val TAG = "StreamUtils"
 
+data class StreamLabel(
+    val readableName: String,
+    val label: String,
+)
+
 @Serializable
-enum class PlaybackMode {
-    FORCED_DIRECT_PLAY,
-    FORCED_TRANSCODE,
-    CHOOSE,
+sealed interface PlaybackMode {
+    @Serializable
+    data object ForcedDirectPlay : PlaybackMode
+
+    @Serializable
+    data class ForcedTranscode(
+        val streamLabel: String,
+    ) : PlaybackMode
+
+    @Serializable
+    data object Choose : PlaybackMode
 }
 
-enum class TranscodeDecision {
-    DIRECT_PLAY,
-    FORCED_DIRECT_PLAY,
-    TRANSCODE,
-    FORCED_TRANSCODE,
+sealed interface TranscodeDecision {
+    data object DirectPlay : TranscodeDecision
+
+    data object ForcedDirectPlay : TranscodeDecision
+
+    data object Transcode : TranscodeDecision
+
+    data class ForcedTranscode(
+        val streamLabel: String,
+    ) : TranscodeDecision
 }
 
 data class StreamDecision(
@@ -54,21 +73,33 @@ fun buildMediaItem(
     }
     val format =
         when (streamDecision.transcodeDecision) {
-            TranscodeDecision.TRANSCODE, TranscodeDecision.FORCED_TRANSCODE -> {
+            TranscodeDecision.Transcode, is TranscodeDecision.ForcedTranscode -> {
                 PreferenceManager
                     .getDefaultSharedPreferences(context)
                     .getString("stream_choice", "HLS")
             }
-            TranscodeDecision.DIRECT_PLAY, TranscodeDecision.FORCED_DIRECT_PLAY -> {
+
+            TranscodeDecision.DirectPlay, TranscodeDecision.ForcedDirectPlay -> {
                 scene.format
             }
         }
     val url =
-        when (streamDecision.transcodeDecision) {
-            TranscodeDecision.TRANSCODE, TranscodeDecision.FORCED_TRANSCODE -> {
+        when (val decision = streamDecision.transcodeDecision) {
+            TranscodeDecision.Transcode -> {
                 scene.streams[format]!!
             }
-            TranscodeDecision.DIRECT_PLAY, TranscodeDecision.FORCED_DIRECT_PLAY -> {
+
+            is TranscodeDecision.ForcedTranscode -> {
+                val key = decision.streamLabel
+                if (key in scene.streams) {
+                    scene.streams[key]!!
+                } else {
+                    Log.w(TAG, "Couldn't find $key for scene ${scene.id}")
+                    scene.streams[format]!!
+                }
+            }
+
+            TranscodeDecision.DirectPlay, TranscodeDecision.ForcedDirectPlay -> {
                 scene.streamUrl!!
             }
         }
@@ -134,7 +165,7 @@ fun getStreamDecision(
     val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
     val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
     if (
-        mode == PlaybackMode.CHOOSE &&
+        mode == PlaybackMode.Choose &&
         videoSupported &&
         audioSupported &&
         containerSupported &&
@@ -146,19 +177,19 @@ fun getStreamDecision(
         )
         return StreamDecision(
             scene.id,
-            TranscodeDecision.DIRECT_PLAY,
+            TranscodeDecision.DirectPlay,
             true,
             true,
             true,
         )
-    } else if (mode == PlaybackMode.FORCED_DIRECT_PLAY) {
+    } else if (mode == PlaybackMode.ForcedDirectPlay) {
         Log.v(
             PlaybackSceneFragment.TAG,
             "Forcing direct play for video (${scene.videoCodec}), audio (${scene.audioCodec}), & container (${scene.format})",
         )
         return StreamDecision(
             scene.id,
-            TranscodeDecision.FORCED_DIRECT_PLAY,
+            TranscodeDecision.ForcedDirectPlay,
             videoSupported,
             audioSupported,
             containerSupported,
@@ -171,7 +202,7 @@ fun getStreamDecision(
         )
         return StreamDecision(
             scene.id,
-            if (mode == PlaybackMode.FORCED_TRANSCODE) TranscodeDecision.FORCED_TRANSCODE else TranscodeDecision.TRANSCODE,
+            if (mode is PlaybackMode.ForcedTranscode) TranscodeDecision.ForcedTranscode(mode.streamLabel) else TranscodeDecision.Transcode,
             videoSupported,
             audioSupported,
             containerSupported,
@@ -309,4 +340,29 @@ fun maybeMuteAudio(
             }
         }
     }
+}
+
+fun findPossibleTranscodeLabels(
+    context: Context,
+    streams: List<FullSceneData.SceneStream>?,
+): List<StreamLabel> {
+    if (streams == null) {
+        return listOf()
+    }
+    val format =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getString("stream_choice", "HLS")!!
+    return streams
+        .filter { it.label.isNotNullOrBlank() && it.label.startsWith(format) }
+        .mapNotNull {
+            if (it.label.isNotNullOrBlank()) {
+                StreamLabel(
+                    if (it.label == format) "${it.label} (Original)" else it.label,
+                    it.label,
+                )
+            } else {
+                null
+            }
+        }
 }

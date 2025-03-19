@@ -24,6 +24,10 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnActionClickedListener
+import androidx.leanback.widget.OnItemViewClickedListener
+import androidx.leanback.widget.Presenter
+import androidx.leanback.widget.Row
+import androidx.leanback.widget.RowPresenter
 import androidx.leanback.widget.SinglePresenterSelector
 import androidx.leanback.widget.SparseArrayObjectAdapter
 import androidx.lifecycle.lifecycleScope
@@ -44,6 +48,7 @@ import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.playback.findPossibleTranscodeLabels
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
@@ -76,6 +81,7 @@ import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.views.ClassOnItemViewClickedListener
 import com.github.damontecres.stashapp.views.models.SceneViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
+import com.github.damontecres.stashapp.views.showSimpleListPopupWindow
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -320,9 +326,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         val actionListener = SceneActionListener()
         onItemViewClickedListener =
             ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
-                .addListenerForClass(StashAction::class.java) { item ->
-                    actionListener.onClicked(item)
-                }.addListenerForClass(CreateMarkerAction::class.java) { _ ->
+                .addListenerForClass(StashAction::class.java, actionListener)
+                .addListenerForClass(CreateMarkerAction::class.java) { _ ->
                     actionListener.onClicked(StashAction.CREATE_MARKER)
                 }.addListenerForClass(Action::class.java) { _ ->
                     // no-op, detailsPresenter.onActionClickedListener will handle
@@ -601,9 +606,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                     }
                                 val mode =
                                     when (action.id) {
-                                        ACTION_TRANSCODE_RESUME_SCENE -> PlaybackMode.FORCED_TRANSCODE
-                                        ACTION_DIRECT_PLAY_RESUME_SCENE -> PlaybackMode.FORCED_DIRECT_PLAY
-                                        else -> PlaybackMode.CHOOSE
+                                        ACTION_DIRECT_PLAY_RESUME_SCENE -> PlaybackMode.ForcedDirectPlay
+                                        else -> PlaybackMode.Choose
                                     }
 
                                 val playbackDest = Destination.Playback(sceneId, position, mode)
@@ -629,7 +633,9 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         return (dp.toFloat() * density).roundToInt()
     }
 
-    private inner class SceneActionListener : StashActionClickedListener {
+    private inner class SceneActionListener :
+        StashActionClickedListener,
+        OnItemViewClickedListener {
         override fun onClicked(action: StashAction) {
             if (action in StashAction.SEARCH_FOR_ACTIONS) {
                 val dataType =
@@ -652,18 +658,20 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         title,
                     ),
                 )
-            } else if (action == StashAction.FORCE_TRANSCODE) {
-                detailsPresenter!!.onActionClickedListener.onActionClicked(
-                    Action(
-                        ACTION_TRANSCODE_RESUME_SCENE,
-                    ),
-                )
             } else if (action == StashAction.FORCE_DIRECT_PLAY) {
                 detailsPresenter!!.onActionClickedListener.onActionClicked(
                     Action(
                         ACTION_DIRECT_PLAY_RESUME_SCENE,
                     ),
                 )
+            } else if (action == StashAction.FORCE_TRANSCODE) {
+                Toast
+                    .makeText(
+                        requireContext(),
+                        "A bug occurred! Cannot play scene.",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                Log.w(TAG, "This should not occur\n" + Log.getStackTraceString(Exception()))
             }
         }
 
@@ -680,6 +688,41 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 val newCounter = mutationEngine.incrementOCounter(counter.id)
                 sceneData = sceneData!!.copy(o_counter = newCounter.count)
                 sceneActionsAdapter.set(O_COUNTER_POS, newCounter)
+            }
+        }
+
+        override fun onItemClicked(
+            itemViewHolder: Presenter.ViewHolder,
+            item: Any,
+            rowViewHolder: RowPresenter.ViewHolder?,
+            row: Row?,
+        ) {
+            if (item is StashAction) {
+                if (item == StashAction.FORCE_TRANSCODE) {
+                    val options =
+                        findPossibleTranscodeLabels(
+                            requireContext(),
+                            viewModel.scene.value?.sceneStreams,
+                        )
+                    Log.d(TAG, "options=$options")
+                    showSimpleListPopupWindow(
+                        anchorView = itemViewHolder.view,
+                        options = options.map { it.readableName },
+                    ) { index ->
+                        val label = options[index].label
+                        Log.v(TAG, "Transcode as $label")
+                        val position = viewModel.currentPosition.value ?: 0L
+                        val playbackDest =
+                            Destination.Playback(
+                                sceneId,
+                                position,
+                                PlaybackMode.ForcedTranscode(label),
+                            )
+                        serverViewModel.navigationManager.navigate(playbackDest)
+                    }
+                } else {
+                    onClicked(item)
+                }
             }
         }
     }

@@ -280,7 +280,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                         Destination.Playback(
                             sceneId,
                             (viewModel.seconds.value!! * 1000).toLong(),
-                            PlaybackMode.CHOOSE,
+                            PlaybackMode.Choose,
                         ),
                     )
                 }

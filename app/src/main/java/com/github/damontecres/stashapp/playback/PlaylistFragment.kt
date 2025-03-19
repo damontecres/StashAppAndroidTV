@@ -153,7 +153,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
         val mediaItems =
             newItems.map { item ->
                 val scene = convertToScene(item)
-                val streamDecision = getStreamDecision(requireContext(), scene, PlaybackMode.CHOOSE)
+                val streamDecision = getStreamDecision(requireContext(), scene, PlaybackMode.Choose)
                 Log.d(TAG, "streamDecision=$streamDecision")
                 buildMediaItem(requireContext(), streamDecision, scene) {
                     builderCallback(item)?.invoke(this)
