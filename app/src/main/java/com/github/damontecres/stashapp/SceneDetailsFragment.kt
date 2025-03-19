@@ -48,7 +48,7 @@ import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedListener
 import com.github.damontecres.stashapp.playback.PlaybackMode
-import com.github.damontecres.stashapp.playback.TranscodeResolution
+import com.github.damontecres.stashapp.playback.findPossibleTranscodeLabels
 import com.github.damontecres.stashapp.presenters.ActionPresenter
 import com.github.damontecres.stashapp.presenters.CreateMarkerActionPresenter
 import com.github.damontecres.stashapp.presenters.GalleryPresenter
@@ -606,11 +606,6 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                                     }
                                 val mode =
                                     when (action.id) {
-                                        ACTION_TRANSCODE_RESUME_SCENE ->
-                                            PlaybackMode.ForcedTranscode(
-                                                TranscodeResolution.ORIGINAL,
-                                            )
-
                                         ACTION_DIRECT_PLAY_RESUME_SCENE -> PlaybackMode.ForcedDirectPlay
                                         else -> PlaybackMode.Choose
                                     }
@@ -704,18 +699,24 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         ) {
             if (item is StashAction) {
                 if (item == StashAction.FORCE_TRANSCODE) {
-                    val options = TranscodeResolution.entries.map { it.label }
+                    val options =
+                        findPossibleTranscodeLabels(
+                            requireContext(),
+                            viewModel.scene.value?.sceneStreams,
+                        )
+                    Log.d(TAG, "options=$options")
                     showSimpleListPopupWindow(
                         anchorView = itemViewHolder.view,
-                        options = options,
+                        options = options.map { it.readableName },
                     ) { index ->
-                        val resolution = TranscodeResolution.entries[index]
+                        val label = options[index].label
+                        Log.v(TAG, "Transcode as $label")
                         val position = viewModel.currentPosition.value ?: 0L
                         val playbackDest =
                             Destination.Playback(
                                 sceneId,
                                 position,
-                                PlaybackMode.ForcedTranscode(resolution),
+                                PlaybackMode.ForcedTranscode(label),
                             )
                         serverViewModel.navigationManager.navigate(playbackDest)
                     }

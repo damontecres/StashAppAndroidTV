@@ -234,7 +234,7 @@ abstract class PlaybackFragment(
 
             is TranscodeDecision.ForcedTranscode ->
                 debugPlaybackTextView.text =
-                    getString(R.string.force_transcode) + " " + streamDecision.transcodeDecision.resolution.label
+                    getString(R.string.force_transcode) + " " + streamDecision.transcodeDecision.streamLabel
 
             TranscodeDecision.DirectPlay ->
                 debugPlaybackTextView.text = getString(R.string.direct)

@@ -14,22 +14,19 @@ import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.Caption
+import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.util.getPreference
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import kotlinx.serialization.Serializable
 import java.util.Locale
 
 private const val TAG = "StreamUtils"
 
-@Serializable
-enum class TranscodeResolution(
+data class StreamLabel(
+    val readableName: String,
     val label: String,
-) {
-    ORIGINAL("Original"),
-    RES_720("HD (720p)"),
-    RES_480("Standard (480p)"),
-    RES_240("Low (240p)"),
-}
+)
 
 @Serializable
 sealed interface PlaybackMode {
@@ -38,7 +35,7 @@ sealed interface PlaybackMode {
 
     @Serializable
     data class ForcedTranscode(
-        val resolution: TranscodeResolution,
+        val streamLabel: String,
     ) : PlaybackMode
 
     @Serializable
@@ -53,7 +50,7 @@ sealed interface TranscodeDecision {
     data object Transcode : TranscodeDecision
 
     data class ForcedTranscode(
-        val resolution: TranscodeResolution,
+        val streamLabel: String,
     ) : TranscodeDecision
 }
 
@@ -93,12 +90,7 @@ fun buildMediaItem(
             }
 
             is TranscodeDecision.ForcedTranscode -> {
-                val key =
-                    if (decision.resolution == TranscodeResolution.ORIGINAL) {
-                        format
-                    } else {
-                        "$format ${decision.resolution.label}"
-                    }
+                val key = decision.streamLabel
                 if (key in scene.streams) {
                     scene.streams[key]!!
                 } else {
@@ -210,7 +202,7 @@ fun getStreamDecision(
         )
         return StreamDecision(
             scene.id,
-            if (mode is PlaybackMode.ForcedTranscode) TranscodeDecision.ForcedTranscode(mode.resolution) else TranscodeDecision.Transcode,
+            if (mode is PlaybackMode.ForcedTranscode) TranscodeDecision.ForcedTranscode(mode.streamLabel) else TranscodeDecision.Transcode,
             videoSupported,
             audioSupported,
             containerSupported,
@@ -348,4 +340,29 @@ fun maybeMuteAudio(
             }
         }
     }
+}
+
+fun findPossibleTranscodeLabels(
+    context: Context,
+    streams: List<FullSceneData.SceneStream>?,
+): List<StreamLabel> {
+    if (streams == null) {
+        return listOf()
+    }
+    val format =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getString("stream_choice", "HLS")!!
+    return streams
+        .filter { it.label.isNotNullOrBlank() && it.label.startsWith(format) }
+        .mapNotNull {
+            if (it.label.isNotNullOrBlank()) {
+                StreamLabel(
+                    if (it.label == format) "${it.label} (Original)" else it.label,
+                    it.label,
+                )
+            } else {
+                null
+            }
+        }
 }
