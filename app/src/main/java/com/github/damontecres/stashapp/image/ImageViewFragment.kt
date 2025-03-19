@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
 import com.github.damontecres.stashapp.util.height
 import com.github.damontecres.stashapp.util.isImageClip
+import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.width
 import com.github.damontecres.stashapp.views.StashZoomImageView
 import com.github.damontecres.stashapp.views.models.ImageViewModel
@@ -126,7 +127,7 @@ class ImageViewFragment :
                                 Toast
                                     .makeText(
                                         requireContext(),
-                                        "Error loading ${image.title}!",
+                                        "Error loading ${image.titleOrFilename}!",
                                         Toast.LENGTH_LONG,
                                     ).show()
                                 viewModel.pulseSlideshow()

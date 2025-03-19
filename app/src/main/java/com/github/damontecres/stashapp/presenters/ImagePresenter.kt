@@ -5,6 +5,7 @@ import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
 
 class ImagePresenter(
@@ -16,7 +17,7 @@ class ImagePresenter(
     ) {
         cardView.blackImageBackground = false
 
-        cardView.titleText = item.title
+        cardView.titleText = item.titleOrFilename
 
         val details = mutableListOf<String?>()
         details.add(item.studio?.name)
