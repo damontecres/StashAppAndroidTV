@@ -51,7 +51,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_margin="8dp"
-            android:background="@drawable/button_selector_marker_picker" />
+            android:background="@drawable/button_selector_marker_picker"
+            android:nextFocusDown="@id/play_button" />
 
         <LinearLayout
             android:layout_width="wrap_content"

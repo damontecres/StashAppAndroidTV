@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.Player
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
@@ -99,18 +98,6 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
                     playButton.requestFocus()
                 }
             }
-
-            StashExoPlayer.addListener(
-                object : Player.Listener {
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        if (isPlaying) {
-                            Log.v(TAG, "Paused")
-                            player.pause()
-                            StashExoPlayer.removeListener(this)
-                        }
-                    }
-                },
-            )
 
             fun setPosition(position: Long) {
                 player.setMediaItem(mediaItem, position)
