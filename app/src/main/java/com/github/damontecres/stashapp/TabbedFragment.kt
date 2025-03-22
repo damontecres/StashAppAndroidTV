@@ -12,7 +12,7 @@ import androidx.fragment.app.viewModels
 import androidx.leanback.tab.LeanbackTabLayout
 import androidx.leanback.tab.LeanbackViewPager
 import androidx.preference.PreferenceManager
-import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
+import com.github.damontecres.stashapp.util.DelegateKeyEventCallback
 import com.github.damontecres.stashapp.util.StashFragmentPagerAdapter
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
@@ -26,7 +26,7 @@ import com.google.android.material.tabs.TabLayout
 abstract class TabbedFragment(
     private val tabKey: String,
 ) : Fragment(R.layout.tabbed_grid_view),
-    DefaultKeyEventCallback,
+    DelegateKeyEventCallback,
     StashGridControlsFragment.HeaderVisibilityListener {
     private lateinit var viewPager: LeanbackViewPager
     protected val serverViewModel by activityViewModels<ServerViewModel>()
@@ -120,17 +120,16 @@ abstract class TabbedFragment(
         }
     }
 
-    override fun onKeyUp(
-        keyCode: Int,
-        event: KeyEvent,
-    ): Boolean {
-        val tabIndex = currentTabPosition
-        val fragment = fragments[tabIndex]
-        if (fragment != null && fragment is KeyEvent.Callback && fragment.onKeyUp(keyCode, event)) {
-            return true
+    override val keyEventDelegate: KeyEvent.Callback?
+        get() {
+            val tabIndex = currentTabPosition
+            val fragment = fragments[tabIndex]
+            return if (fragment != null && fragment is KeyEvent.Callback) {
+                fragment
+            } else {
+                null
+            }
         }
-        return super.onKeyUp(keyCode, event)
-    }
 
     override fun onHeaderVisibilityChanged(
         fragment: StashGridControlsFragment,
