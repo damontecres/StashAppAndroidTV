@@ -22,9 +22,32 @@ query GetMarker($ids: [ID!]) {
   }
 }
 
+query FindFullMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType, $ids: [ID!]) {
+  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter, ids: $ids) {
+    scene_markers {
+      ...FullMarkerData
+    }
+    __typename
+  }
+}
+
 mutation UpdateMarker($input: SceneMarkerUpdateInput!){
   sceneMarkerUpdate(input: $input){
     ...FullMarkerData
+  }
+}
+
+fragment MinimalSceneData on Scene {
+  id
+  title
+  urls
+  date
+  rating100
+  o_counter
+  created_at
+  updated_at
+  files {
+    ...VideoFile
   }
 }
 
@@ -74,7 +97,7 @@ fragment MarkerData on SceneMarker {
     ...SlimTagData
   }
   scene {
-    ...VideoSceneData
+    ...MinimalSceneData
   }
   __typename
 }

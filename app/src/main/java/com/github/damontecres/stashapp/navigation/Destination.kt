@@ -8,6 +8,7 @@ import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.GroupRelationshipData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.MinimalSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimPerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -149,7 +150,7 @@ sealed class Destination {
                     when (item) {
                         is MarkerData -> {
                             Playback(
-                                item.scene.videoSceneData.id,
+                                item.scene.minimalSceneData.id,
                                 item.seconds.toLongMilliseconds,
                                 PlaybackMode.Choose,
                             )
@@ -179,7 +180,7 @@ sealed class Destination {
 
         fun getDataType(item: StashData): DataType =
             when (item) {
-                is SlimSceneData, is FullSceneData, is VideoSceneData -> DataType.SCENE
+                is SlimSceneData, is FullSceneData, is VideoSceneData, is MinimalSceneData -> DataType.SCENE
                 is PerformerData, is SlimPerformerData -> DataType.PERFORMER
                 is TagData, is SlimTagData -> DataType.TAG
                 is GroupData, is GroupRelationshipData -> DataType.GROUP

@@ -373,7 +373,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         serverViewModel.navigationManager.navigate(
                             Destination.MarkerDetails(
                                 item.id,
-                                item.scene.videoSceneData.id,
+                                item.scene.minimalSceneData.id,
                             ),
                         )
                     }.addAction(
@@ -383,7 +383,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                             StashApplication.navigationManager.navigate(
                                 Destination.UpdateMarker(
                                     item.id,
-                                    item.scene.videoSceneData.id,
+                                    item.scene.minimalSceneData.id,
                                 ),
                             )
                         },

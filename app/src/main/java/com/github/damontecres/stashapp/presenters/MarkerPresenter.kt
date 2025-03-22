@@ -36,7 +36,7 @@ class MarkerPresenter(
             } else {
                 startTime
             }
-        cardView.contentExtra = item.scene.videoSceneData.titleOrFilename
+        cardView.contentExtra = item.scene.minimalSceneData.titleOrFilename
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
         dataTypeMap[DataType.TAG] = item.tags.size + 1
@@ -55,7 +55,7 @@ class MarkerPresenter(
                     StashApplication.navigationManager.navigate(
                         Destination.Item(
                             DataType.SCENE,
-                            item.scene.videoSceneData.id,
+                            item.scene.minimalSceneData.id,
                         ),
                     )
                 },
@@ -64,7 +64,7 @@ class MarkerPresenter(
                     StashApplication.navigationManager.navigate(
                         Destination.MarkerDetails(
                             item.id,
-                            item.scene.videoSceneData.id,
+                            item.scene.minimalSceneData.id,
                         ),
                     )
                 },
@@ -75,7 +75,7 @@ class MarkerPresenter(
                 StashApplication.navigationManager.navigate(
                     Destination.UpdateMarker(
                         item.id,
-                        item.scene.videoSceneData.id,
+                        item.scene.minimalSceneData.id,
                     ),
                 )
             },

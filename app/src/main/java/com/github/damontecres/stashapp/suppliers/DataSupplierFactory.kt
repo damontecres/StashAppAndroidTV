@@ -41,7 +41,7 @@ class DataSupplierFactory(
                             filterParser.convertSceneFilterType(args.objectFilter),
                         )
                     } else {
-                        MarkerDataSupplier(
+                        FullMarkerDataSupplier(
                             args.findFilter?.toFindFilterType(),
                             filterParser.convertSceneMarkerFilterType(args.objectFilter),
                         )
