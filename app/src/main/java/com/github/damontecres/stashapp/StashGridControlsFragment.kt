@@ -26,7 +26,7 @@ import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
+import com.github.damontecres.stashapp.util.DelegateKeyEventCallback
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.addExtraGridLongClicks
 import com.github.damontecres.stashapp.util.getFilterArgs
@@ -44,7 +44,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial
  */
 class StashGridControlsFragment() :
     Fragment(),
-    DefaultKeyEventCallback {
+    DelegateKeyEventCallback {
     private val serverViewModel: ServerViewModel by activityViewModels()
     private val viewModel: StashGridViewModel by viewModels()
 
@@ -60,6 +60,9 @@ class StashGridControlsFragment() :
     private lateinit var searchEditText: SearchEditText
 
     private lateinit var fragment: StashDataGridFragment
+
+    override val keyEventDelegate: KeyEvent.Callback?
+        get() = if (this::fragment.isInitialized) fragment else null
 
     private var remoteButtonPaging: Boolean = true
 
@@ -297,11 +300,6 @@ class StashGridControlsFragment() :
         gridHeaderTransitionHelper.showTitle(show)
         headerVisibilityListener?.onHeaderVisibilityChanged(this, show)
     }
-
-    override fun onKeyUp(
-        keyCode: Int,
-        event: KeyEvent,
-    ): Boolean = fragment.onKeyUp(keyCode, event) || super.onKeyUp(keyCode, event)
 
     companion object {
         private const val TAG = "StashGridControlsFragment"

@@ -130,6 +130,7 @@ abstract class StashPresenter<T>(
 
     override fun onUnbindViewHolder(viewHolder: ViewHolder) {
         val cardView = viewHolder.view as StashImageCardView
+        StashGlide.clear(cardView.mainImageView)
         cardView.onUnbindViewHolder()
         cardView.setOnLongClickListener(null)
     }

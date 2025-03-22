@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.util.Log
+import android.widget.ImageView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -103,6 +104,8 @@ class StashGlide private constructor() {
                 .load(createGlideUrl(url, context))
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .skipMemoryCache(false)
+
+        fun clear(imageView: ImageView) = Glide.with(imageView).clear(imageView)
 
         const val TAG = "StashGlide"
     }

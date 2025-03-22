@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="pref_key_network_cache_size">networkCacheSize</string>
+    <string name="pref_key_image_cache_size">iamge.cacheSize</string>
     <string name="pref_key_salt">salt</string>
     <string name="pref_key_pin_code" translatable="false">pinCode</string>
     <string name="pref_key_pin_code_auto" translatable="false">pinCodeAuto</string>
@@ -51,4 +52,6 @@
     <integer name="pref_key_slideshow_duration_default">5</integer>
     <string name="pref_key_slideshow_duration_image_clip" translatable="false">image.clip.slideshow.duration</string>
     <integer name="pref_key_slideshow_duration_default_image_clip">250</integer>
+
+    <string name="pref_key_image_loading_threads">image.loadingThreads</string>
 </resources>
