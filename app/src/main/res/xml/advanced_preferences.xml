@@ -167,6 +167,14 @@
             android:max="500"
             app:defaultValue="100" />
         <SeekBarPreference
+            app:key="@string/pref_key_image_cache_size"
+            app:title="Max image disk cache size (MB)"
+            app:summary="Requires restart"
+            app:seekBarIncrement="25"
+            app:showSeekBarValue="true"
+            android:max="1000"
+            app:defaultValue="100" />
+        <SeekBarPreference
             app:key="networkCacheDuration"
             app:title="Invalidate cache after"
             app:seekBarIncrement="1"
@@ -237,6 +245,10 @@
             app:defaultValue="@string/playback_http_client_okhttp"
             app:entries="@array/playback_http_client"
             app:entryValues="@array/playback_http_client" />
+        <SeekBarPreference
+            app:key="@string/pref_key_image_loading_threads"
+            app:title="Threads for loading images"
+            app:min="0" />
         <SwitchPreference
             app:key="trustAllCerts"
             app:title="Trust self-signed certificates"
