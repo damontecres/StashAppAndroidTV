@@ -10,7 +10,9 @@ import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.HierarchicalMultiCriterionInput
 import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.SceneMarkerFilterType
+import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.StashFindFilter
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.PageFilterKey
@@ -58,39 +60,28 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                             GroupDetailsFragment()
                         },
                         StashFragmentPagerAdapter.PagerEntry(DataType.SCENE) {
-                            StashGridControlsFragment(
+                            createStashGridFragment(
+                                groupId = group.id,
                                 dataType = DataType.SCENE,
-                                findFilter = groupSceneFilter.findFilter,
-                                objectFilter =
-                                    SceneFilterType(
-                                        groups =
-                                            Optional.present(
-                                                HierarchicalMultiCriterionInput(
-                                                    value = Optional.present(listOf(group.id)),
-                                                    modifier = CriterionModifier.INCLUDES,
-                                                ),
-                                            ),
-                                    ),
+                                defaultFindFilter = groupSceneFilter.findFilter,
+                                createObjectFilter = { SceneFilterType(groups = it) },
                             )
                         },
                         StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
-                            StashGridControlsFragment(
+                            createStashGridFragment(
+                                groupId = group.id,
                                 dataType = DataType.MARKER,
-                                objectFilter =
+                                defaultFindFilter = null,
+                                createObjectFilter = {
                                     SceneMarkerFilterType(
                                         scene_filter =
                                             Optional.present(
                                                 SceneFilterType(
-                                                    groups =
-                                                        Optional.present(
-                                                            HierarchicalMultiCriterionInput(
-                                                                value = Optional.present(listOf(group.id)),
-                                                                modifier = CriterionModifier.INCLUDES,
-                                                            ),
-                                                        ),
+                                                    groups = it,
                                                 ),
                                             ),
-                                    ),
+                                    )
+                                },
                             )
                         },
                         StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
@@ -129,4 +120,43 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
                     ).filter { it.title in getUiTabs(requireContext(), DataType.GROUP) }
             }
     }
+
+    private fun createStashGridFragment(
+        groupId: String,
+        dataType: DataType,
+        defaultFindFilter: StashFindFilter?,
+        createObjectFilter: (Optional<HierarchicalMultiCriterionInput>) -> StashDataFilter,
+    ): StashGridControlsFragment {
+        val fragment =
+            StashGridControlsFragment(
+                dataType = dataType,
+                findFilter = defaultFindFilter,
+                objectFilter = createObjectFilter(createCriterionInput(false, groupId)),
+            )
+        fragment.subContentSwitchInitialIsChecked = false
+        fragment.subContentText = getString(R.string.stashapp_include_sub_group_content)
+        fragment.subContentSwitchCheckedListener = { isChecked ->
+            val newFilter =
+                fragment.currentFilter.copy(
+                    objectFilter =
+                        createObjectFilter(
+                            createCriterionInput(isChecked, groupId),
+                        ),
+                )
+            fragment.currentFilter = newFilter
+        }
+        return fragment
+    }
+
+    private fun createCriterionInput(
+        subTags: Boolean,
+        groupId: String,
+    ): Optional.Present<HierarchicalMultiCriterionInput> =
+        Optional.present(
+            HierarchicalMultiCriterionInput(
+                value = Optional.present(listOf(groupId)),
+                modifier = CriterionModifier.INCLUDES_ALL,
+                depth = Optional.present(if (subTags) -1 else 0),
+            ),
+        )
 }
