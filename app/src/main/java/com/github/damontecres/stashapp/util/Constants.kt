@@ -750,7 +750,14 @@ suspend fun showToastOnMain(
     Toast.makeText(context, message, length).show()
 }
 
-fun VideoFile.resolutionName(): CharSequence {
+fun VideoFile.resolutionName() = resolutionName(width, height)
+
+fun ImageData.OnVideoFile.resolutionName() = resolutionName(width, height)
+
+fun resolutionName(
+    width: Int,
+    height: Int,
+): CharSequence {
     val number = if (width > height) height else width
     return if (number >= 6144) {
         "HUGE"
