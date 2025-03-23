@@ -90,6 +90,7 @@ class ImageDetailsViewModel : ViewModel() {
     private var server: StashServer? = null
 
     val pager = MutableLiveData<ComposePager<ImageData>>()
+    private var position = 0
 
     private val _image = MutableLiveData<ImageData>()
     val image: LiveData<ImageData> = _image
@@ -129,6 +130,29 @@ class ImageDetailsViewModel : ViewModel() {
         return this
     }
 
+    fun nextImage(): Boolean {
+        val size = pager.value?.size()
+        val newPosition = position + 1
+        return if (size != null && newPosition < size) {
+            updatePosition(newPosition)
+            true
+        } else {
+            // TODO
+            false
+        }
+    }
+
+    fun previousImage(): Boolean {
+        val newPosition = position - 1
+        return if (newPosition >= 0) {
+            updatePosition(newPosition)
+            true
+        } else {
+            // TODO
+            false
+        }
+    }
+
     fun updatePosition(position: Int) {
         pager.value?.let { pager ->
             viewModelScope.launch {
@@ -136,6 +160,7 @@ class ImageDetailsViewModel : ViewModel() {
                     val image = pager.getBlocking(position)
                     Log.v(TAG, "Got image for $position: ${image != null}")
                     if (image != null) {
+                        this@ImageDetailsViewModel.position = position
                         val queryEngine = QueryEngine(server!!)
                         rating100.value = image.rating100 ?: 0
                         _image.value = image
@@ -272,6 +297,10 @@ fun ImagePage(
         if (resetRotate) rotation = 0
     }
 
+    LaunchedEffect(imageState) {
+        reset(true)
+    }
+
     Box(
         modifier =
             modifier
@@ -294,6 +323,11 @@ fun ImagePage(
                     } else if (!showOverlay && zoomFactor * 100 > 105 && it.key == Key.Back) {
                         reset(false)
                         result = true
+                    } else if (!showOverlay && (it.key == Key.DirectionLeft || it.key == Key.DirectionRight)) {
+                        when (it.key) {
+                            Key.DirectionLeft -> viewModel.previousImage()
+                            Key.DirectionRight -> viewModel.nextImage()
+                        }
                     } else if (showOverlay && it.key == Key.Back) {
                         showOverlay = false
                         result = true
