@@ -1,6 +1,7 @@
 package com.github.damontecres.stashapp.data.room
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -20,4 +21,7 @@ interface RecentSearchItemsDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(vararg items: RecentSearchItem)
+
+    @Delete
+    fun delete(vararg items: RecentSearchItem)
 }
