@@ -1,21 +1,37 @@
 package com.github.damontecres.stashapp.ui.pages
 
 import android.util.Log
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -23,17 +39,27 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.tv.material3.Button
+import androidx.tv.material3.ButtonDefaults
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.apollographql.apollo.api.Query
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
@@ -43,8 +69,12 @@ import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
+import com.github.damontecres.stashapp.ui.AppColors
+import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.MainTheme
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
+import com.github.damontecres.stashapp.ui.components.playback.isDpad
 import com.github.damontecres.stashapp.util.ComposePager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
@@ -204,9 +234,28 @@ fun ImagePage(
     val tags by viewModel.tags.observeAsState(listOf())
     val performers by viewModel.performers.observeAsState(listOf())
 
-    val zoomFactor by rememberSaveable { mutableDoubleStateOf(0.0) }
-    val rotation by rememberSaveable { mutableIntStateOf(0) }
+    var zoomFactor by rememberSaveable { mutableFloatStateOf(1f) }
+    var rotation by rememberSaveable { mutableIntStateOf(0) }
     var showOverlay by rememberSaveable { mutableStateOf(false) }
+    var panX by rememberSaveable { mutableFloatStateOf(0f) }
+    var panY by rememberSaveable { mutableFloatStateOf(0f) }
+
+    val rotateAnimation: Float by animateFloatAsState(
+        targetValue = rotation.toFloat(),
+        label = "image_rotation",
+    )
+    val zoomAnimation: Float by animateFloatAsState(
+        targetValue = zoomFactor,
+        label = "image_zoom",
+    )
+    val panXAnimation: Float by animateFloatAsState(
+        targetValue = panX,
+        label = "image_panX",
+    )
+    val panYAnimation: Float by animateFloatAsState(
+        targetValue = panY,
+        label = "image_panY",
+    )
 
     val focusRequester = remember { FocusRequester() }
 
@@ -214,19 +263,42 @@ fun ImagePage(
         focusRequester.requestFocus()
     }
 
+    val density = LocalDensity.current
+
+    fun reset(resetRotate: Boolean) {
+        zoomFactor = 1f
+        panX = 0f
+        panY = 0f
+        if (resetRotate) rotation = 0
+    }
+
     Box(
         modifier =
             modifier
+                .background(Color.Black)
                 .focusRequester(focusRequester)
+                .focusable()
                 .onKeyEvent {
                     var result = false
                     if (it.type != KeyEventType.KeyUp) {
                         result = false
-                    } else if (!showOverlay) {
-                        showOverlay = true
+                    } else if (!showOverlay && zoomFactor * 100 > 105 && isDpad(it)) {
+                        // Image is zoomed in
+                        when (it.key) {
+                            Key.DirectionLeft -> panX += with(density) { 30.dp.toPx() }
+                            Key.DirectionRight -> panX -= with(density) { 30.dp.toPx() }
+                            Key.DirectionUp -> panY += with(density) { 30.dp.toPx() }
+                            Key.DirectionDown -> panY -= with(density) { 30.dp.toPx() }
+                        }
+                        result = true
+                    } else if (!showOverlay && zoomFactor * 100 > 105 && it.key == Key.Back) {
+                        reset(false)
                         result = true
                     } else if (showOverlay && it.key == Key.Back) {
                         showOverlay = false
+                        result = true
+                    } else if (!showOverlay && it.key != Key.Back) {
+                        showOverlay = true
                         result = true
                     }
                     result
@@ -235,7 +307,15 @@ fun ImagePage(
         imageState?.let { image ->
             if (image.paths.image.isNotNullOrBlank()) {
                 AsyncImage(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = zoomAnimation
+                                scaleY = zoomAnimation
+                                translationX = panXAnimation
+                                translationY = panYAnimation
+                            }.rotate(rotateAnimation),
                     model =
                         ImageRequest
                             .Builder(LocalContext.current)
@@ -253,8 +333,9 @@ fun ImagePage(
                     performers = performers,
                     itemOnClick = itemOnClick,
                     longClicker = longClicker,
-                    onZoom = {},
-                    onRotate = {},
+                    onZoom = { zoomFactor = (zoomFactor + it).coerceIn(1f, 5f) },
+                    onRotate = { rotation += it },
+                    onReset = { reset(true) },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -269,14 +350,111 @@ fun ImageOverlay(
     performers: List<PerformerData>,
     itemOnClick: ItemOnClicker<Any>,
     longClicker: LongClicker<Any>,
-    onZoom: (Double) -> Unit,
+    onZoom: (Float) -> Unit,
     onRotate: (Int) -> Unit,
+    onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box {
-        Text(
-            text = "This is the image overlay",
-            style = MaterialTheme.typography.displayLarge,
+    Box(modifier = modifier.fillMaxSize()) {
+        ImageControlsOverlay(
+            onZoom = onZoom,
+            onRotate = onRotate,
+            onReset = onReset,
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
+    }
+}
+
+@Composable
+fun ImageControlsOverlay(
+    onZoom: (Float) -> Unit,
+    onRotate: (Int) -> Unit,
+    onReset: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+    Row(
+        modifier =
+            modifier
+                .focusGroup(),
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        ImageControlButton(
+            stringRes = R.string.fa_rotate_left,
+            onClick = { onRotate(-90) },
+            modifier =
+                Modifier
+                    .focusRequester(focusRequester),
+        )
+        ImageControlButton(
+            stringRes = R.string.fa_rotate_right,
+            onClick = { onRotate(90) },
+        )
+        ImageControlButton(
+            stringRes = R.string.fa_magnifying_glass_plus,
+            onClick = { onZoom(.15f) },
+        )
+        ImageControlButton(
+            stringRes = R.string.fa_magnifying_glass_minus,
+            onClick = { onZoom(-.15f) },
+        )
+        ImageControlButton(
+            drawableRes = R.drawable.baseline_undo_24,
+            onClick = onReset,
+        )
+    }
+}
+
+@Composable
+fun ImageControlButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    @StringRes stringRes: Int = 0,
+    @DrawableRes drawableRes: Int = 0,
+) {
+    Button(
+        onClick = onClick,
+        shape = ButtonDefaults.shape(CircleShape),
+        colors =
+            ButtonDefaults.colors(
+                containerColor = AppColors.TransparentBlack25,
+                focusedContainerColor = MaterialTheme.colorScheme.border,
+            ),
+        contentPadding = PaddingValues(8.dp),
+        modifier =
+            modifier
+                .padding(8.dp)
+                .size(56.dp, 56.dp),
+    ) {
+        if (stringRes != 0) {
+            Text(
+                text = stringResource(stringRes),
+                fontFamily = FontAwesome,
+                fontSize = 32.sp,
+            )
+        } else {
+            Icon(
+                modifier = Modifier.fillMaxSize(),
+                painter = painterResource(drawableRes),
+                contentDescription = "",
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun ImageControlsOverlayPreview() {
+    MainTheme {
+        ImageControlsOverlay(
+            onZoom = {},
+            onRotate = {},
+            onReset = {},
         )
     }
 }
