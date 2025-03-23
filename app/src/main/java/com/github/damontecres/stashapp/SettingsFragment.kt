@@ -678,6 +678,19 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 }
                 newValue == false
             }
+
+            val cpus = Runtime.getRuntime().availableProcessors()
+            val imageThreads =
+                findPreference<SeekBarPreference>(getString(R.string.pref_key_image_loading_threads))!!
+            imageThreads.min = 1
+            imageThreads.max = cpus * 3
+            imageThreads.setDefaultValue(cpus)
+            imageThreads.value =
+                PreferenceManager.getDefaultSharedPreferences(requireContext()).getInt(
+                    getString(R.string.pref_key_image_loading_threads),
+                    Runtime.getRuntime().availableProcessors(),
+                )
+            imageThreads.summary = "Requires restart, default is $cpus"
         }
 
         override fun onViewCreated(

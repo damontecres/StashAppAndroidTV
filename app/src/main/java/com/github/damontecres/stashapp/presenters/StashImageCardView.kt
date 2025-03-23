@@ -240,9 +240,11 @@ class StashImageCardView(
         val scaledWidth = (width * 5.0 / cardSize).toInt()
         val scaledHeight = (height * 5.0 / cardSize).toInt()
         val lp = mainView.layoutParams
-        lp.width = scaledWidth
-        lp.height = scaledHeight
-        mainView.layoutParams = lp
+        if (lp.width != scaledWidth || lp.height != scaledHeight) {
+            lp.width = scaledWidth
+            lp.height = scaledHeight
+            mainView.layoutParams = lp
+        }
 
         if (paddingDp > 0) {
             val scale = resources.displayMetrics.density
@@ -472,8 +474,10 @@ class StashImageCardView(
         videoView?.player = null
 
         mainImageView.setPadding(0)
-        mainImageView.updateLayoutParams {
-            height = ViewGroup.LayoutParams.MATCH_PARENT
+        if (mainImageView.layoutParams.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+            mainImageView.updateLayoutParams {
+                height = ViewGroup.LayoutParams.MATCH_PARENT
+            }
         }
 
         textOverlays.values.forEach {

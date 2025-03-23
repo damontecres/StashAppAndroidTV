@@ -416,6 +416,15 @@ val VideoSceneData.titleOrFilename: String?
             title
         }
 
+val ImageData.titleOrFilename: String?
+    get() =
+        if (title.isNullOrBlank()) {
+            val path = visual_files.firstOrNull()?.onBaseFile?.path
+            path?.fileNameFromPath
+        } else {
+            title
+        }
+
 val FullSceneData.asSlimeSceneData: SlimSceneData
     get() =
         SlimSceneData(

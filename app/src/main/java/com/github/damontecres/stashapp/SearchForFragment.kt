@@ -233,42 +233,75 @@ class SearchForFragment :
                     ListRow(HeaderItem(getString(R.string.suggestions)), resultsAdapter),
                 )
             }
-            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
-                val currentServer = serverViewModel.requireServer()
-                val mostRecentIds =
-                    StashApplication
-                        .getDatabase()
-                        .recentSearchItemsDao()
-                        .getMostRecent(perPage, currentServer.url, dataType)
-                        .map { it.id }
-                Log.v(TAG, "Got ${mostRecentIds.size} recent items")
-                if (mostRecentIds.isNotEmpty()) {
-                    val items =
-                        when (dataType) {
-                            DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
-                            DataType.TAG -> queryEngine.getTags(mostRecentIds)
-                            DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
-                            DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
-                            DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
-                            else -> {
-                                listOf()
-                            }
+            getMostRecent()
+        }
+    }
+
+    private fun getMostRecent(count: Int = 0) {
+        if (count > 25) {
+            // Just in case
+            return
+        }
+        val currentServer = serverViewModel.requireServer()
+        val handler =
+            CoroutineExceptionHandler { _, ex ->
+                if (ex !is QueryEngine.QueryException || ex.cause != null || ex.message.isNullOrBlank()) {
+                    Log.e(TAG, "Exception during recent items check")
+                } else {
+                    val match = Regex("with id (\\d+) not found").find(ex.message!!)
+                    if (match != null) {
+                        val id = match.groupValues[1]
+                        val toDelete =
+                            RecentSearchItem(
+                                serverUrl = currentServer.url,
+                                id = id,
+                                dataType = dataType,
+                            )
+                        Log.i(TAG, "Deleting recent item ${toDelete.dataType} id=${toDelete.id}")
+                        StashApplication
+                            .getDatabase()
+                            .recentSearchItemsDao()
+                            .delete(toDelete)
+                        getMostRecent(count + 1)
+                    }
+                }
+            }
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO + handler) {
+            val mostRecent =
+                StashApplication
+                    .getDatabase()
+                    .recentSearchItemsDao()
+                    .getMostRecent(perPage, currentServer.url, dataType)
+            val mostRecentIds = mostRecent.map { it.id }
+            Log.v(TAG, "Got ${mostRecentIds.size} recent items")
+            if (mostRecentIds.isNotEmpty()) {
+                val items =
+                    when (dataType) {
+                        DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
+                        DataType.TAG -> queryEngine.getTags(mostRecentIds)
+                        DataType.STUDIO -> queryEngine.findStudios(studioIds = mostRecentIds)
+                        DataType.GALLERY -> queryEngine.findGalleries(galleryIds = mostRecentIds)
+                        DataType.GROUP -> queryEngine.findGroups(groupIds = mostRecentIds)
+                        else -> {
+                            listOf()
                         }
-                    val results = ArrayObjectAdapter(presenterSelector)
-                    if (items.isNotEmpty()) {
-                        Log.v(
-                            TAG,
-                            "${mostRecentIds.size} recent items resolved to ${results.size()} items",
-                        )
-                        results.addAll(0, items)
-                        withContext(Dispatchers.Main) {
-                            val headerName =
-                                getString(
-                                    R.string.format_recently_used,
-                                    getString(dataType.pluralStringId).lowercase(),
-                                )
-                            adapter.set(RECENT_POS, ListRow(HeaderItem(headerName), results))
-                        }
+                    }
+
+                if (items.isNotEmpty()) {
+                    val results =
+                        ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
+                    Log.v(
+                        TAG,
+                        "${mostRecentIds.size} recent items resolved to ${results.size()} items",
+                    )
+                    results.addAll(0, items)
+                    withContext(Dispatchers.Main) {
+                        val headerName =
+                            getString(
+                                R.string.format_recently_used,
+                                getString(dataType.pluralStringId).lowercase(),
+                            )
+                        adapter.set(RECENT_POS, ListRow(HeaderItem(headerName), results))
                     }
                 }
             }
