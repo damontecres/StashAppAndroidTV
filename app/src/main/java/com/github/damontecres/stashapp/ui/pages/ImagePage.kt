@@ -16,16 +16,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,6 +45,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
@@ -63,6 +70,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -73,6 +82,7 @@ import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.tv.material3.surfaceColorAtElevation
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
@@ -84,6 +94,8 @@ import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
+import com.github.damontecres.stashapp.data.OCounter
+import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
@@ -92,6 +104,9 @@ import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.ui.MainTheme
+import com.github.damontecres.stashapp.ui.Material3MainTheme
+import com.github.damontecres.stashapp.ui.components.DialogItem
+import com.github.damontecres.stashapp.ui.components.DialogPopup
 import com.github.damontecres.stashapp.ui.components.DotSeparatedRow
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -105,6 +120,7 @@ import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.showSetRatingToast
 import com.github.damontecres.stashapp.util.titleOrFilename
@@ -193,6 +209,8 @@ class ImageDetailsViewModel : ViewModel() {
                         val queryEngine = QueryEngine(server!!)
                         rating100.value = image.rating100 ?: 0
                         oCount.value = image.o_counter ?: 0
+                        tags.value = listOf()
+                        performers.value = listOf()
                         _image.value = image
 
                         loadingState.value = ImageLoadingState.Success(image)
@@ -215,17 +233,58 @@ class ImageDetailsViewModel : ViewModel() {
         }
     }
 
-    fun addTag(id: String) = mutateTags { add(id) }
+    fun addTag(
+        imageId: String,
+        tagId: String,
+    ) = mutateTags(imageId) { add(tagId) }
 
-    fun removeTag(id: String) = mutateTags { remove(id) }
+    fun removeTag(
+        imageId: String,
+        tagId: String,
+    ) = mutateTags(imageId) { remove(tagId) }
 
-    private fun mutateTags(mutator: MutableList<String>.() -> Unit) {
+    private fun mutateTags(
+        imageId: String,
+        mutator: MutableList<String>.() -> Unit,
+    ) {
         val ids = tags.value?.map { it.id }
         ids?.let {
             val mutable = it.toMutableList()
             mutator.invoke(mutable)
             viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
-                TODO()
+                val mutationEngine = MutationEngine(server!!)
+                val result = mutationEngine.updateImage(imageId = imageId, tagIds = mutable)
+                if (result != null) {
+                    tags.value = result.tags.map { it.tagData }
+                }
+            }
+        }
+    }
+
+    fun addPerformer(
+        imageId: String,
+        performerId: String,
+    ) = mutatePerformers(imageId) { add(performerId) }
+
+    fun removePerformer(
+        imageId: String,
+        performerId: String,
+    ) = mutatePerformers(imageId) { remove(performerId) }
+
+    private fun mutatePerformers(
+        imageId: String,
+        mutator: MutableList<String>.() -> Unit,
+    ) {
+        val perfs = performers.value?.map { it.id }
+        perfs?.let {
+            val mutable = it.toMutableList()
+            mutator.invoke(mutable)
+            viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+                val mutationEngine = MutationEngine(server!!)
+                val result = mutationEngine.updateImage(imageId = imageId, performerIds = mutable)
+                if (result != null) {
+                    performers.value = result.performers.map { it.performerData }
+                }
             }
         }
     }
@@ -240,6 +299,14 @@ class ImageDetailsViewModel : ViewModel() {
                 mutationEngine.updateImage(imageId, rating100 = rating100)?.rating100 ?: 0
             this@ImageDetailsViewModel.rating100.value = newRating
             showSetRatingToast(StashApplication.getApplication(), newRating)
+        }
+    }
+
+    fun updateOCount(action: suspend MutationEngine.(String) -> OCounter) {
+        viewModelScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
+            val mutationEngine = MutationEngine(server!!)
+            val newOCount = action.invoke(mutationEngine, _image.value!!.id)
+            oCount.value = newOCount.count
         }
     }
 
@@ -398,6 +465,7 @@ fun ImagePage(
                         Modifier
                             .fillMaxSize()
                             .padding(16.dp),
+                    server = server,
                     image = image,
                     tags = tags,
                     performers = performers,
@@ -409,10 +477,22 @@ fun ImagePage(
                     rating100 = rating100,
                     oCount = oCount,
                     uiConfig = ComposeUiConfig.fromStashServer(server),
-                    moreOnClick = {},
-                    oCounterOnClick = {},
-                    oCounterOnLongClick = {},
-                    onRatingChange = {},
+                    oCountAction = viewModel::updateOCount,
+                    onRatingChange = { viewModel.updateRating(image.id, it) },
+                    addItem = { item ->
+                        when (item) {
+                            is TagData -> viewModel.addTag(image.id, item.id)
+                            is PerformerData -> viewModel.addPerformer(image.id, item.id)
+                            else -> {}
+                        }
+                    },
+                    removeItem = { item ->
+                        when (item) {
+                            is TagData -> viewModel.removeTag(image.id, item.id)
+                            is PerformerData -> viewModel.removePerformer(image.id, item.id)
+                            else -> {}
+                        }
+                    },
                 )
             }
         }
@@ -421,6 +501,7 @@ fun ImagePage(
 
 @Composable
 fun ImageOverlay(
+    server: StashServer,
     image: ImageData,
     tags: List<TagData>,
     performers: List<PerformerData>,
@@ -428,19 +509,56 @@ fun ImageOverlay(
     oCount: Int,
     uiConfig: ComposeUiConfig,
     itemOnClick: ItemOnClicker<Any>,
-    moreOnClick: () -> Unit,
-    oCounterOnClick: () -> Unit,
-    oCounterOnLongClick: () -> Unit,
+    oCountAction: (action: suspend MutationEngine.(String) -> OCounter) -> Unit,
     onRatingChange: (Int) -> Unit,
     longClicker: LongClicker<Any>,
+    addItem: (item: StashData) -> Unit,
+    removeItem: (item: StashData) -> Unit,
     onZoom: (Float) -> Unit,
     onRotate: (Int) -> Unit,
     onReset: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    var showDialog by remember { mutableStateOf<DialogParams?>(null) }
+    var searchForDataType by remember { mutableStateOf<SearchForParams?>(null) }
+
     val removeLongClicker =
         LongClicker<Any> { item, filterAndPosition ->
             item as StashData
+            showDialog =
+                DialogParams(
+                    title = extractTitle(item) ?: "",
+                    fromLongClick = true,
+                    items =
+                        buildList {
+                            add(
+                                DialogItem("Go to", Icons.Default.PlayArrow) {
+                                    itemOnClick.onClick(
+                                        item,
+                                        filterAndPosition,
+                                    )
+                                },
+                            )
+                            if (readOnlyModeDisabled()) {
+                                add(
+                                    DialogItem(
+                                        onClick = { removeItem(item) },
+                                        headlineContent = {
+                                            Text(stringResource(R.string.stashapp_actions_remove))
+                                        },
+                                        leadingContent = {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = stringResource(R.string.stashapp_actions_remove),
+                                                tint = Color.Red,
+                                            )
+                                        },
+                                    ),
+                                )
+                            }
+                        },
+                )
         }
     LazyColumn(
         contentPadding = PaddingValues(bottom = 135.dp),
@@ -453,9 +571,48 @@ fun ImageOverlay(
                 oCount = oCount,
                 uiConfig = uiConfig,
                 itemOnClick = itemOnClick,
-                moreOnClick = moreOnClick,
-                oCounterOnClick = oCounterOnClick,
-                oCounterOnLongClick = oCounterOnLongClick,
+                moreOnClick = {
+                    showDialog =
+                        DialogParams(
+                            title = context.getString(R.string.more) + "...",
+                            fromLongClick = false,
+                            items =
+                                listOf(
+                                    DialogItem(
+                                        context.getString(R.string.add_performer),
+                                        DataType.PERFORMER.iconStringId,
+                                    ) {
+                                        searchForDataType = SearchForParams(DataType.PERFORMER)
+                                    },
+                                    DialogItem(
+                                        context.getString(R.string.add_tag),
+                                        DataType.TAG.iconStringId,
+                                    ) {
+                                        searchForDataType = SearchForParams(DataType.TAG)
+                                    },
+                                ),
+                        )
+                },
+                oCounterOnClick = { oCountAction.invoke(MutationEngine::incrementImageOCounter) },
+                oCounterOnLongClick = {
+                    showDialog =
+                        DialogParams(
+                            title = context.getString(R.string.stashapp_o_counter),
+                            fromLongClick = true,
+                            items =
+                                listOf(
+                                    DialogItem(context.getString(R.string.increment)) {
+                                        oCountAction.invoke(MutationEngine::incrementImageOCounter)
+                                    },
+                                    DialogItem(context.getString(R.string.decrement)) {
+                                        oCountAction.invoke(MutationEngine::decrementImageOCounter)
+                                    },
+                                    DialogItem(context.getString(R.string.reset)) {
+                                        oCountAction.invoke(MutationEngine::resetImageOCounter)
+                                    },
+                                ),
+                        )
+                },
                 onRatingChange = onRatingChange,
                 onZoom = onZoom,
                 onRotate = onRotate,
@@ -497,6 +654,53 @@ fun ImageOverlay(
             )
         }
     }
+    showDialog?.let { params ->
+        DialogPopup(
+            showDialog = true,
+            title = params.title,
+            items = params.items,
+            onDismissRequest = { showDialog = null },
+            waitToLoad = params.fromLongClick,
+        )
+    }
+    searchForDataType?.let { params ->
+        Material3MainTheme {
+            Dialog(
+                onDismissRequest = { searchForDataType = null },
+                properties =
+                    DialogProperties(
+                        usePlatformDefaultWidth = false,
+                    ),
+            ) {
+                val elevatedContainerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp)
+                val color = MaterialTheme.colorScheme.secondaryContainer
+                Box(
+                    Modifier
+                        .fillMaxSize(.9f)
+                        .graphicsLayer {
+                            this.clip = true
+                            this.shape = RoundedCornerShape(28.0.dp)
+                        }.drawBehind { drawRect(color = color) }
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        .padding(PaddingValues(12.dp)),
+                    propagateMinConstraints = true,
+                ) {
+                    SearchForPage(
+                        server = server,
+                        title = "Add " + stringResource(params.dataType.stringId),
+                        searchId = params.id,
+                        dataType = params.dataType,
+                        itemOnClick = { id, item ->
+                            // Close dialog
+                            searchForDataType = null
+                            addItem.invoke(item)
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -524,7 +728,7 @@ fun ImageDetailsHeader(
         modifier =
             modifier
                 .fillMaxWidth(0.8f)
-                .height(460.dp)
+                .height(440.dp)
                 .bringIntoViewRequester(bringIntoViewRequester),
     ) {
         // Title
@@ -638,11 +842,15 @@ fun ImageDetailsHeader(
             }
         }
         ImageControlsOverlay(
+            oCount = oCount,
             bringIntoViewRequester = bringIntoViewRequester,
             onZoom = onZoom,
             onRotate = onRotate,
             onReset = onReset,
-//                modifier = Modifier.align(Alignment.CenterHorizontally),
+            moreOnClick = moreOnClick,
+            oCounterOnClick = oCounterOnClick,
+            oCounterOnLongClick = oCounterOnLongClick,
+            modifier = Modifier,
         )
     }
 }
@@ -650,9 +858,13 @@ fun ImageDetailsHeader(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ImageControlsOverlay(
+    oCount: Int,
     onZoom: (Float) -> Unit,
     onRotate: (Int) -> Unit,
     onReset: () -> Unit,
+    moreOnClick: () -> Unit,
+    oCounterOnClick: () -> Unit,
+    oCounterOnLongClick: () -> Unit,
     bringIntoViewRequester: BringIntoViewRequester?,
     modifier: Modifier = Modifier,
 ) {
@@ -667,48 +879,103 @@ fun ImageControlsOverlay(
             scope.launch { bringIntoViewRequester.bringIntoView() }
         }
     }
-    Row(
+    LazyRow(
         modifier =
             modifier
                 .focusGroup(),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        ImageControlButton(
-            stringRes = R.string.fa_rotate_left,
-            onClick = { onRotate(-90) },
-            modifier =
-                Modifier
-                    .focusRequester(focusRequester)
-                    .onFocusChanged(onFocused),
-        )
-        ImageControlButton(
-            stringRes = R.string.fa_rotate_right,
-            onClick = { onRotate(90) },
-            modifier =
-                Modifier
-                    .onFocusChanged(onFocused),
-        )
-        ImageControlButton(
-            stringRes = R.string.fa_magnifying_glass_plus,
-            onClick = { onZoom(.15f) },
-            modifier =
-                Modifier
-                    .onFocusChanged(onFocused),
-        )
-        ImageControlButton(
-            stringRes = R.string.fa_magnifying_glass_minus,
-            onClick = { onZoom(-.15f) },
-            modifier =
-                Modifier
-                    .onFocusChanged(onFocused),
-        )
-        ImageControlButton(
-            drawableRes = R.drawable.baseline_undo_24,
-            onClick = onReset,
-            modifier =
-                Modifier
-                    .onFocusChanged(onFocused),
-        )
+        item {
+            ImageControlButton(
+                stringRes = R.string.fa_rotate_left,
+                onClick = { onRotate(-90) },
+                modifier =
+                    Modifier
+                        .focusRequester(focusRequester)
+                        .onFocusChanged(onFocused),
+            )
+        }
+        item {
+            ImageControlButton(
+                stringRes = R.string.fa_rotate_right,
+                onClick = { onRotate(90) },
+                modifier =
+                    Modifier
+                        .onFocusChanged(onFocused),
+            )
+        }
+        item {
+            ImageControlButton(
+                stringRes = R.string.fa_magnifying_glass_plus,
+                onClick = { onZoom(.15f) },
+                modifier =
+                    Modifier
+                        .onFocusChanged(onFocused),
+            )
+        }
+        item {
+            ImageControlButton(
+                stringRes = R.string.fa_magnifying_glass_minus,
+                onClick = { onZoom(-.15f) },
+                modifier =
+                    Modifier
+                        .onFocusChanged(onFocused),
+            )
+        }
+        item {
+            ImageControlButton(
+                drawableRes = R.drawable.baseline_undo_24,
+                onClick = onReset,
+                modifier =
+                    Modifier
+                        .onFocusChanged(onFocused),
+            )
+        }
+        // O-Counter
+        item {
+            Button(
+                onClick = oCounterOnClick,
+                onLongClick = oCounterOnLongClick,
+                modifier =
+                    Modifier
+                        .padding(start = 8.dp, end = 8.dp)
+                        .onFocusChanged(onFocused),
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.sweat_drops),
+                    contentDescription = null,
+                    modifier = Modifier.size(ButtonDefaults.IconSize),
+                )
+                Spacer(Modifier.size(8.dp))
+                Text(
+                    text = oCount.toString(),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            }
+        }
+        // More button
+        item {
+            Button(
+                onClick = moreOnClick,
+                onLongClick = {},
+                modifier =
+                    Modifier
+                        .padding(start = 8.dp, end = 8.dp)
+                        .onFocusChanged(onFocused),
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = null,
+                )
+                Spacer(Modifier.size(8.dp))
+                Text(
+                    text = stringResource(R.string.more),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+            }
+        }
     }
 }
 
@@ -813,6 +1080,11 @@ private fun ImageControlsOverlayPreview() {
             onRotate = {},
             onReset = {},
             bringIntoViewRequester = null,
+            oCount = 1,
+            moreOnClick = {},
+            oCounterOnClick = {},
+            oCounterOnLongClick = {},
+            modifier = Modifier,
         )
     }
 }
