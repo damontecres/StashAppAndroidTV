@@ -71,12 +71,16 @@ class StashGridViewModel : ViewModel() {
             .getInt("searchDelay", 500)
             .toLong()
 
-    private var numberOfColumns = -1
+    private var pageSize: Int = 25
     private lateinit var presenterSelector: PresenterSelector
     private lateinit var pagingAdapter: PagingObjectAdapter
 
-    fun init(presenterSelector: PresenterSelector) {
+    fun init(
+        presenterSelector: PresenterSelector,
+        pageSize: Int,
+    ) {
         this.presenterSelector = presenterSelector
+        this.pageSize = pageSize
     }
 
     fun setFilter(sortAndDirection: SortAndDirection) {
@@ -89,6 +93,7 @@ class StashGridViewModel : ViewModel() {
             _loadingStatus.value = LoadingStatus.NoOp
             return
         }
+        Log.d(TAG, "Setting new filter, Paging")
         _filterArgs.value = filterArgs
         _loadingStatus.value = LoadingStatus.Start
 
@@ -106,8 +111,7 @@ class StashGridViewModel : ViewModel() {
         val pagingAdapter =
             PagingObjectAdapter(
                 pagingSource,
-                // TODO pageSize = numberOfColumns * 10,
-                100,
+                pageSize,
                 viewModelScope,
                 NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
             )
@@ -168,6 +172,13 @@ class StashGridViewModel : ViewModel() {
                         }
                 }
             }
+        }
+    }
+
+    fun clearCache() {
+        val status = loadingStatus.value
+        if (status is LoadingStatus.AdapterReady) {
+            status.pagingAdapter.clearCache()
         }
     }
 

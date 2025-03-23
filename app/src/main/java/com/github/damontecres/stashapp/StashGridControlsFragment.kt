@@ -24,12 +24,14 @@ import com.github.damontecres.stashapp.navigation.NavigationOnItemViewClickedLis
 import com.github.damontecres.stashapp.presenters.ClassPresenterSelector
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
+import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.DelegateKeyEventCallback
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.addExtraGridLongClicks
 import com.github.damontecres.stashapp.util.getFilterArgs
+import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
 import com.github.damontecres.stashapp.views.SortButtonManager
@@ -147,8 +149,16 @@ class StashGridControlsFragment() :
 
         Log.v(TAG, "onCreate: dataType=$dataType")
 
+        val cardSize =
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
+                .getInt("cardSize", requireContext().getString(R.string.card_size_default))
+        val numberOfColumns =
+            (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
+
         viewModel.init(
             NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
+            numberOfColumns * 5,
         )
 
         remoteButtonPaging =
@@ -299,6 +309,11 @@ class StashGridControlsFragment() :
         headerShowing = show
         gridHeaderTransitionHelper.showTitle(show)
         headerVisibilityListener?.onHeaderVisibilityChanged(this, show)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+//        viewModel.clearCache()
     }
 
     companion object {
