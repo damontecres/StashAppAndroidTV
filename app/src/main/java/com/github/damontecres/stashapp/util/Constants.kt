@@ -577,9 +577,10 @@ fun FullMarkerData.asMarkerData(scene: FullSceneData): MarkerData =
         stream = stream,
         screenshot = screenshot,
         seconds = seconds,
+        end_seconds = end_seconds,
         preview = preview,
         primary_tag = MarkerData.Primary_tag("", primary_tag.tagData.asSlimTagData),
-        scene = MarkerData.Scene(scene.id, scene.asVideoSceneData),
+        scene = MarkerData.Scene(scene.id, scene.asMinimalSceneData),
         tags = tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
         __typename = "",
     )
@@ -599,6 +600,7 @@ fun fakeMarker(
     stream = "",
     screenshot = "",
     seconds = seconds,
+    end_seconds = null,
     preview = "",
     primary_tag =
         MarkerData.Primary_tag(
@@ -607,16 +609,13 @@ fun fakeMarker(
                 SlimTagData(
                     id = tagId,
                     name = "",
-                    description = "",
-                    favorite = false,
-                    image_path = "",
                 ),
         ),
     tags = listOf(),
     scene =
         MarkerData.Scene(
             __typename = "",
-            videoSceneData = scene.asVideoSceneData,
+            minimalSceneData = scene.asMinimalSceneData,
         ),
     __typename = "",
 )

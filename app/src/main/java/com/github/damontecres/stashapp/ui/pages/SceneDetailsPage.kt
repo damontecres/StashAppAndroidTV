@@ -95,6 +95,7 @@ import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.api.fragment.GroupRelationshipData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.MinimalSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimPerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
@@ -378,7 +379,7 @@ fun SceneDetailsPage(
 
                         is FullMarkerData -> throw UnsupportedOperationException()
                         is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
-                        is SlimSceneData, is FullSceneData, is VideoSceneData -> throw UnsupportedOperationException()
+                        is SlimSceneData, is FullSceneData, is VideoSceneData, is MinimalSceneData -> throw UnsupportedOperationException()
                     }
                 },
                 removeItem = { item ->
@@ -391,7 +392,7 @@ fun SceneDetailsPage(
                         is MarkerData, is FullMarkerData -> viewModel.removeMarker(item.id)
 
                         is ImageData, is ExtraImageData -> throw UnsupportedOperationException()
-                        is SlimSceneData, is FullSceneData, is VideoSceneData -> throw UnsupportedOperationException()
+                        is SlimSceneData, is FullSceneData, is VideoSceneData, is MinimalSceneData -> throw UnsupportedOperationException()
                     }
                 },
                 oCountAction = viewModel::updateOCount,
@@ -507,7 +508,7 @@ fun SceneDetails(
                                     ) {
                                         playOnClick(
                                             scene.resume_position ?: 0,
-                                            PlaybackMode.FORCED_DIRECT_PLAY,
+                                            PlaybackMode.ForcedDirectPlay,
                                         )
                                     },
                                     DialogItem(
@@ -516,7 +517,7 @@ fun SceneDetails(
                                     ) {
                                         playOnClick(
                                             scene.resume_position ?: 0,
-                                            PlaybackMode.FORCED_TRANSCODE,
+                                            PlaybackMode.ForcedTranscode("HLS"), // TODO
                                         )
                                     },
                                     DialogItem(
@@ -984,7 +985,7 @@ fun PlayButtons(
                     R.string.resume,
                     resume,
                     Icons.Default.PlayArrow,
-                    PlaybackMode.CHOOSE,
+                    PlaybackMode.Choose,
                     playOnClick,
                     Modifier
                         .padding(start = 8.dp, end = 8.dp)
@@ -997,7 +998,7 @@ fun PlayButtons(
                     R.string.restart,
                     0L,
                     Icons.Default.Refresh,
-                    PlaybackMode.CHOOSE,
+                    PlaybackMode.Choose,
                     playOnClick,
                     Modifier
                         .padding(start = 8.dp, end = 8.dp)
@@ -1011,7 +1012,7 @@ fun PlayButtons(
                     R.string.play_scene,
                     0L,
                     Icons.Default.PlayArrow,
-                    PlaybackMode.CHOOSE,
+                    PlaybackMode.Choose,
                     playOnClick,
                     Modifier
                         .padding(start = 8.dp, end = 8.dp)

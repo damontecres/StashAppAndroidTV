@@ -41,9 +41,6 @@ val performerPreview =
                         SlimTagData(
                             id = "12",
                             name = "The tag",
-                            description = null,
-                            favorite = false,
-                            image_path = "image",
                         ),
                 ),
             ),
@@ -52,6 +49,7 @@ val performerPreview =
         death_date = null,
         hair_color = null,
         weight = 55,
+        custom_fields = Unit,
         __typename = "__typename",
     )
 
@@ -72,4 +70,5 @@ val tagPreview =
         child_count = 1,
         created_at = "2024-03-11T13:42:30-04:00",
         updated_at = "2024-03-11T13:42:30-04:00",
+        sort_name = null,
     )

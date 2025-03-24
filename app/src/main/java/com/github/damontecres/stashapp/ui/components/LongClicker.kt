@@ -57,7 +57,7 @@ class DefaultLongClicker(
                             Icons.AutoMirrored.Default.ArrowForward,
                         ) {
                             nav.navigate(
-                                Destination.Item(DataType.SCENE, item.scene.videoSceneData.id),
+                                Destination.Item(DataType.SCENE, item.scene.minimalSceneData.id),
                             )
                         },
                     )
@@ -67,7 +67,7 @@ class DefaultLongClicker(
                             Icons.Default.Info,
                         ) {
                             nav.navigate(
-                                Destination.MarkerDetails(item.id, item.scene.videoSceneData.id),
+                                Destination.MarkerDetails(item.id, item.scene.minimalSceneData.id),
                             )
                         },
                     )
@@ -92,7 +92,7 @@ class DefaultLongClicker(
                                     Destination.Playback(
                                         item.id,
                                         item.resume_position!!,
-                                        PlaybackMode.CHOOSE,
+                                        PlaybackMode.Choose,
                                     ),
                                 )
                             },
@@ -106,7 +106,7 @@ class DefaultLongClicker(
                                     Destination.Playback(
                                         item.id,
                                         0L,
-                                        PlaybackMode.CHOOSE,
+                                        PlaybackMode.Choose,
                                     ),
                                 )
                             },
@@ -121,7 +121,7 @@ class DefaultLongClicker(
                                     Destination.Playback(
                                         item.id,
                                         0L,
-                                        PlaybackMode.CHOOSE,
+                                        PlaybackMode.Choose,
                                     ),
                                 )
                             },
@@ -166,7 +166,7 @@ fun buildLongClickActionList(
             { it is SlimSceneData && (it.resume_position == null || it.resume_position!! <= 0) },
             { item, _ ->
                 item as SlimSceneData
-                nav.navigate(Destination.Playback(item.id, 0L, PlaybackMode.CHOOSE))
+                nav.navigate(Destination.Playback(item.id, 0L, PlaybackMode.Choose))
             },
         ),
         LongClickerAction<Any>(
@@ -178,7 +178,7 @@ fun buildLongClickActionList(
                     Destination.Playback(
                         item.id,
                         item.resume_position ?: 0,
-                        PlaybackMode.CHOOSE,
+                        PlaybackMode.Choose,
                     ),
                 )
             },
@@ -188,7 +188,7 @@ fun buildLongClickActionList(
             { it is SlimSceneData && (it.resume_position != null && it.resume_position!! > 0) },
             { item, _ ->
                 item as SlimSceneData
-                nav.navigate(Destination.Playback(item.id, 0L, PlaybackMode.CHOOSE))
+                nav.navigate(Destination.Playback(item.id, 0L, PlaybackMode.Choose))
             },
         ),
     )

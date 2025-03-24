@@ -44,7 +44,7 @@ fun MarkerCard(
     val details =
         listOf(
             if (item.title.isNotBlank()) item.primary_tag.slimTagData.name else null,
-            item.scene.videoSceneData.titleOrFilename,
+            item.scene.minimalSceneData.titleOrFilename,
         ).joinNotNullOrBlank(" - ")
 
     RootCard(
