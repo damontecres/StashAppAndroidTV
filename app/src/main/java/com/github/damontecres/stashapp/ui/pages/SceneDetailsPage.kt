@@ -799,6 +799,7 @@ fun SceneDetailsHeader(
                     if (showRatingBar) {
                         StarRating(
                             rating100 = rating100,
+                            precision = uiConfig.starPrecision,
                             onRatingChange = onRatingChange,
                             enabled = true,
                             modifier =

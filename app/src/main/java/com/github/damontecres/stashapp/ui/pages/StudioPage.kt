@@ -30,6 +30,7 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.DataSupplierOverride
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -96,6 +97,7 @@ fun StudioPage(
                 TabProvider(stringResource(R.string.stashapp_details)) {
                     StudioDetails(
                         modifier = Modifier.fillMaxSize(),
+                        uiConfig = ComposeUiConfig.fromStashServer(server),
                         studio = studio,
                         favorite = favorite,
                         favoriteClick = {
@@ -228,6 +230,7 @@ fun StudioPage(
 @Composable
 fun StudioDetails(
     studio: StudioData,
+    uiConfig: ComposeUiConfig,
     favorite: Boolean,
     favoriteClick: () -> Unit,
     rating100: Int,
@@ -255,6 +258,7 @@ fun StudioDetails(
         }.filterNotNull()
     ItemDetails(
         modifier = modifier,
+        uiConfig = uiConfig,
         imageUrl = studio.image_path,
         tableRows = rows,
         favorite = favorite,

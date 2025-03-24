@@ -27,11 +27,13 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 
 @Composable
 fun ItemDetails(
+    uiConfig: ComposeUiConfig,
     imageUrl: String?,
     tableRows: List<TableRow>,
     modifier: Modifier = Modifier,
@@ -79,6 +81,7 @@ fun ItemDetails(
                 item {
                     StarRating(
                         rating100 = rating100 ?: 0,
+                        precision = uiConfig.starPrecision,
                         onRatingChange = rating100Click,
                         enabled = true,
                         modifier =

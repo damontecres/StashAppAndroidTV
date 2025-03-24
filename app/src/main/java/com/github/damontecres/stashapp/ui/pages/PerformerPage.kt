@@ -68,6 +68,7 @@ import com.github.damontecres.stashapp.ui.MainTheme
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
 import com.github.damontecres.stashapp.ui.components.StarRating
+import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
 import com.github.damontecres.stashapp.ui.components.TabPage
 import com.github.damontecres.stashapp.ui.components.TabProvider
 import com.github.damontecres.stashapp.ui.components.TableRow
@@ -488,6 +489,7 @@ fun PerformerDetails(
             item {
                 StarRating(
                     rating100 = rating100,
+                    precision = uiConfig.starPrecision,
                     onRatingChange = rating100Click,
                     enabled = true,
                     modifier =
@@ -591,7 +593,7 @@ private fun PerformerDetailsPreview() {
             uiConfig =
                 ComposeUiConfig(
                     ratingAsStars = true,
-                    starPrecision = .5f,
+                    starPrecision = StarRatingPrecision.HALF,
                     showStudioAsText = true,
                     debugTextEnabled = true,
                 ),

@@ -3,6 +3,7 @@ package com.github.damontecres.stashapp.ui.pages
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -459,7 +460,7 @@ fun ImagePage(
                     contentScale = ContentScale.FillHeight,
                 )
             }
-            if (showOverlay) {
+            AnimatedVisibility(showOverlay) {
                 ImageOverlay(
                     modifier =
                         Modifier
@@ -752,6 +753,7 @@ fun ImageDetailsHeader(
             // Rating
             StarRating(
                 rating100 = rating100,
+                precision = uiConfig.starPrecision,
                 onRatingChange = onRatingChange,
                 enabled = true,
                 modifier =

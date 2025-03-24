@@ -27,6 +27,7 @@ import com.github.damontecres.stashapp.api.type.StudioFilterType
 import com.github.damontecres.stashapp.api.type.TagFilterType
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.components.ItemDetails
 import com.github.damontecres.stashapp.ui.components.ItemOnClicker
 import com.github.damontecres.stashapp.ui.components.LongClicker
@@ -90,6 +91,7 @@ fun TagPage(
                 TabProvider(stringResource(R.string.stashapp_details)) {
                     TagDetails(
                         modifier = Modifier.fillMaxSize(),
+                        uiConfig = ComposeUiConfig.fromStashServer(server),
                         tag = tag,
                         favorite = favorite,
                         favoriteClick = {
@@ -182,6 +184,7 @@ fun TagPage(
 
 @Composable
 fun TagDetails(
+    uiConfig: ComposeUiConfig,
     tag: TagData,
     favorite: Boolean,
     favoriteClick: () -> Unit,
@@ -207,6 +210,7 @@ fun TagDetails(
         }.filterNotNull()
     ItemDetails(
         modifier = modifier,
+        uiConfig = uiConfig,
         imageUrl = tag.image_path,
         tableRows = rows,
         favorite = favorite,
