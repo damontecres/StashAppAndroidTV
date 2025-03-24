@@ -33,9 +33,9 @@ class NavigationOnItemViewClickedListener(
             when (item) {
                 is MarkerData ->
                     Destination.Playback(
-                        item.scene.videoSceneData.id,
+                        item.scene.minimalSceneData.id,
                         (item.seconds * 1000L).toLong(),
-                        PlaybackMode.CHOOSE,
+                        PlaybackMode.Choose,
                     )
 
                 is ImageData -> {

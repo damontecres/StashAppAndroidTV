@@ -97,6 +97,9 @@
     <string name="studio_favorited">Studio favorited!</string>
     <string name="hours">Hours</string>
     <string name="minutes">Minutes</string>
+    <string name="milliseconds">Milliseconds</string>
+    <string name="shift_seconds">Shift Seconds</string>
     <string name="start_playback_without_audio">Always start playback without audio</string>
+    <string name="save_end_time">Save end time</string>
 
 </resources>

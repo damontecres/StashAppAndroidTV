@@ -18,12 +18,14 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.SearchEditText
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.filter.FilterOptions
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.presenters.NullPresenter
 import com.github.damontecres.stashapp.presenters.NullPresenterSelector
+import com.github.damontecres.stashapp.presenters.ScenePresenter
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
@@ -33,6 +35,7 @@ import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.addExtraGridLongClicks
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.getFilterArgs
+import com.github.damontecres.stashapp.util.getInt
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
@@ -83,12 +86,19 @@ class FilterFragment :
                 stashGridViewModel.currentPosition.value ?: -1,
             )
         }
+        val cardSize =
+            PreferenceManager
+                .getDefaultSharedPreferences(requireContext())
+                .getInt("cardSize", requireContext().getString(R.string.card_size_default))
+        val numberOfColumns =
+            (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
 
         stashGridViewModel.init(
             NullPresenterSelector(
                 presenterSelector,
                 NullPresenter(dataType),
             ),
+            numberOfColumns * 5,
         )
     }
 
@@ -255,6 +265,7 @@ class FilterFragment :
                             savedFilter
                                 .toFilterArgs(filterParser)
                                 .withResolvedRandom()
+                        fragment.cleanup()
                         serverViewModel.navigationManager.navigate(Destination.Filter(filterArgs))
                     } catch (ex: Exception) {
                         Log.e(TAG, "Exception parsing filter ${savedFilter.id}", ex)

@@ -151,6 +151,9 @@ sealed interface SortOption {
     data object ResumeTime : SortOptionImpl("resume_time", R.string.stashapp_resume_time)
 
     @Serializable
+    data object SceneCode : SortOptionImpl("code", R.string.stashapp_scene_code, Version.V0_28_0)
+
+    @Serializable
     data object SceneId : SortOptionImpl("scene_id", R.string.stashapp_scene_id)
 
     @Serializable
@@ -254,6 +257,7 @@ sealed interface SortOption {
                 PlayDuration,
                 Rating,
                 ResumeTime,
+                SceneCode,
                 TagCount,
                 Title,
             )
@@ -321,6 +325,7 @@ sealed interface SortOption {
         val MARKER_SORT_OPTIONS =
             listOf(
                 *COMMON_SORT_OPTIONS,
+                Duration,
                 SceneId,
                 ScenesUpdatedAt,
                 Seconds,

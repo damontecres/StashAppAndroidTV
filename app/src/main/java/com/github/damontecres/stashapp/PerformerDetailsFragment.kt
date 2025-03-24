@@ -122,6 +122,15 @@ class PerformerDetailsFragment : DetailsFragment() {
         addRow(R.string.stashapp_career_length, perf.career_length)
         addRow(R.string.stashapp_created_at, parseTimeToString(perf.created_at))
         addRow(R.string.stashapp_updated_at, parseTimeToString(perf.updated_at))
+
+        val customFields = perf.custom_fields as Map<String, *>
+        if (customFields.isNotEmpty()) {
+            addRow("", null, true)
+            addRow(R.string.stashapp_custom_fields_title, null, true)
+            customFields.forEach {
+                addRow(it.key, it.value?.toString())
+            }
+        }
         if (PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
                 .getBoolean(getString(R.string.pref_key_show_playback_debug_info), false)

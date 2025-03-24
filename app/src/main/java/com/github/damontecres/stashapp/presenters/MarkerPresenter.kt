@@ -6,7 +6,7 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpAction
-import com.github.damontecres.stashapp.util.joinNotNullOrBlank
+import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
 import kotlin.time.DurationUnit
@@ -21,19 +21,25 @@ class MarkerPresenter(
     ) {
         cardView.blackImageBackground = true
 
-        val title =
+        cardView.titleText =
             item.title.ifBlank {
                 item.primary_tag.slimTagData.name
             }
-        cardView.titleText = "$title - ${item.seconds.toInt().toDuration(DurationUnit.SECONDS)}"
+        val startTime =
+            item.seconds
+                .toInt()
+                .toDuration(DurationUnit.SECONDS)
+                .toString()
         cardView.contentText =
-            listOf(
-                if (item.title.isNotBlank()) item.primary_tag.slimTagData.name else null,
-                item.scene.videoSceneData.titleOrFilename,
-            ).joinNotNullOrBlank(" - ")
+            if (item.end_seconds != null) {
+                "$startTime - ${item.end_seconds.toInt().toDuration(DurationUnit.SECONDS)}"
+            } else {
+                startTime
+            }
+        cardView.contentExtra = item.scene.minimalSceneData.titleOrFilename
 
         val dataTypeMap = EnumMap<DataType, Int>(DataType::class.java)
-        dataTypeMap[DataType.TAG] = item.tags.size
+        dataTypeMap[DataType.TAG] = item.tags.size + 1
         cardView.setUpExtraRow(dataTypeMap, null)
 
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT)
@@ -49,7 +55,7 @@ class MarkerPresenter(
                     StashApplication.navigationManager.navigate(
                         Destination.Item(
                             DataType.SCENE,
-                            item.scene.videoSceneData.id,
+                            item.scene.minimalSceneData.id,
                         ),
                     )
                 },
@@ -58,10 +64,21 @@ class MarkerPresenter(
                     StashApplication.navigationManager.navigate(
                         Destination.MarkerDetails(
                             item.id,
-                            item.scene.videoSceneData.id,
+                            item.scene.minimalSceneData.id,
                         ),
                     )
                 },
+        ).addAction(
+            PopUpItem(3L, R.string.shift_seconds),
+            { readOnlyModeDisabled() },
+            { _, item ->
+                StashApplication.navigationManager.navigate(
+                    Destination.UpdateMarker(
+                        item.id,
+                        item.scene.minimalSceneData.id,
+                    ),
+                )
+            },
         )
 
     companion object {

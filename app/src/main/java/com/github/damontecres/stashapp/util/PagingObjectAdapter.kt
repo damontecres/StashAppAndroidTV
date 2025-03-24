@@ -123,6 +123,12 @@ class PagingObjectAdapter(
             }
         }
 
+    fun clearCache() {
+        Log.d(TAG, "Clearing cache $this")
+        cachedPages.invalidateAll()
+        cachedPages.cleanUp()
+    }
+
     companion object {
         private const val TAG = "PagingObjectAdapter"
 

@@ -40,6 +40,7 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.MinimalSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
@@ -416,6 +417,15 @@ val VideoSceneData.titleOrFilename: String?
             title
         }
 
+val MinimalSceneData.titleOrFilename: String?
+    get() =
+        if (title.isNullOrBlank()) {
+            val path = files.firstOrNull()?.videoFile?.path
+            path?.fileNameFromPath
+        } else {
+            title
+        }
+
 val ImageData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
@@ -492,8 +502,22 @@ val FullSceneData.asVideoSceneData: VideoSceneData
             captions?.map { VideoSceneData.Caption("", it.caption) },
         )
 
+val FullSceneData.asMinimalSceneData: MinimalSceneData
+    get() =
+        MinimalSceneData(
+            id,
+            title,
+            urls,
+            date,
+            rating100,
+            o_counter,
+            created_at,
+            updated_at,
+            files.map { MinimalSceneData.File("", it.videoFile) },
+        )
+
 val TagData.asSlimTagData: SlimTagData
-    get() = SlimTagData(id, name, description, favorite, image_path)
+    get() = SlimTagData(id, name)
 
 val PerformerData.ageInYears: Int?
     @RequiresApi(Build.VERSION_CODES.O)
@@ -536,9 +560,10 @@ fun FullSceneData.Scene_marker.asMarkerData(scene: FullSceneData): MarkerData =
         stream = stream,
         screenshot = screenshot,
         seconds = seconds,
+        end_seconds = end_seconds,
         preview = preview,
         primary_tag = MarkerData.Primary_tag("", primary_tag.tagData.asSlimTagData),
-        scene = MarkerData.Scene(scene.id, scene.asVideoSceneData),
+        scene = MarkerData.Scene(scene.id, scene.asMinimalSceneData),
         tags = tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
         __typename = "",
     )
@@ -933,7 +958,7 @@ fun maybeStartPlayback(
                 Destination.Playback(
                     item.id,
                     item.resume_position ?: 0L,
-                    PlaybackMode.CHOOSE,
+                    PlaybackMode.Choose,
                 ),
             )
         }
@@ -941,9 +966,9 @@ fun maybeStartPlayback(
         is MarkerData -> {
             StashApplication.navigationManager.navigate(
                 Destination.Playback(
-                    item.scene.videoSceneData.id,
+                    item.scene.minimalSceneData.id,
                     (item.seconds * 1000).toLong(),
-                    PlaybackMode.CHOOSE,
+                    PlaybackMode.Choose,
                 ),
             )
         }

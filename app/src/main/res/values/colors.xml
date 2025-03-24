@@ -16,6 +16,7 @@
     <color name="transparent_default_card_background_25">#4030404d</color>
     <color name="transparent_default_card_background_50">#8030404d</color>
     <color name="transparent_default_card_background_75">#BF30404d</color>
+    <color name="selected_background_50">#804785b5</color>
 
     <array name="rating_colors">
         <item>#80939393</item>

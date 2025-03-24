@@ -1,5 +1,5 @@
-query FindMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType) {
-  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter) {
+query FindMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType, $ids: [ID!]) {
+  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter, ids: $ids) {
     scene_markers {
       ...MarkerData
     }
@@ -13,9 +13,41 @@ query CountMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFil
   }
 }
 
+query GetMarker($ids: [ID!]) {
+  findSceneMarkers(ids: $ids) {
+    scene_markers {
+      ...FullMarkerData
+    }
+    __typename
+  }
+}
+
+query FindFullMarkers($filter: FindFilterType, $scene_marker_filter: SceneMarkerFilterType, $ids: [ID!]) {
+  findSceneMarkers(filter: $filter, scene_marker_filter: $scene_marker_filter, ids: $ids) {
+    scene_markers {
+      ...FullMarkerData
+    }
+    __typename
+  }
+}
+
 mutation UpdateMarker($input: SceneMarkerUpdateInput!){
   sceneMarkerUpdate(input: $input){
     ...FullMarkerData
+  }
+}
+
+fragment MinimalSceneData on Scene {
+  id
+  title
+  urls
+  date
+  rating100
+  o_counter
+  created_at
+  updated_at
+  files {
+    ...VideoFile
   }
 }
 
@@ -55,6 +87,7 @@ fragment MarkerData on SceneMarker {
   stream
   screenshot
   seconds
+  end_seconds
   preview
   primary_tag {
     ...SlimTagData
@@ -64,7 +97,7 @@ fragment MarkerData on SceneMarker {
     ...SlimTagData
   }
   scene {
-    ...VideoSceneData
+    ...MinimalSceneData
   }
   __typename
 }
@@ -77,6 +110,7 @@ fragment FullMarkerData on SceneMarker {
   stream
   screenshot
   seconds
+  end_seconds
   preview
   primary_tag {
     ...TagData

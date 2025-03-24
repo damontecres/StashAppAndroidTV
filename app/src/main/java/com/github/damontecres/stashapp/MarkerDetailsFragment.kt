@@ -32,7 +32,7 @@ import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.github.damontecres.stashapp.actions.StashAction
 import com.github.damontecres.stashapp.actions.StashActionClickedListener
-import com.github.damontecres.stashapp.api.fragment.FullSceneData
+import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
@@ -58,8 +58,10 @@ import com.github.damontecres.stashapp.views.StashRatingBar
 import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
-import kotlinx.coroutines.CoroutineExceptionHandler
+import com.github.damontecres.stashapp.views.parseTimeToString
 import kotlinx.coroutines.launch
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class MarkerDetailsFragment : DetailsSupportFragment() {
     companion object {
@@ -86,27 +88,15 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     REPLACE_PRIMARY_ID,
                     R.string.replace,
                 ),
-            ) { _, item ->
-                viewLifecycleOwner.lifecycleScope.launch(
-                    CoroutineExceptionHandler { _, ex ->
-                        Log.e(TAG, "Exception setting tags", ex)
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Failed to remove tag: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                    },
-                ) {
-                    if (tagsRowManager.remove(item)) {
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Removed tag '${item.name}' from scene",
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                    }
-                }
+                { readOnlyModeDisabled() },
+            ) { _, _ ->
+                serverViewModel.navigationManager.navigate(
+                    Destination.SearchFor(
+                        MarkerDetailsFragment::class.simpleName!!,
+                        REPLACE_PRIMARY_ID,
+                        DataType.TAG,
+                    ),
+                )
             }
     private val primaryTagRowManager =
         ListRowManager<TagData>(
@@ -166,7 +156,8 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     serverViewModel.navigationManager.navigate(
                         Destination.UpdateMarker(
                             viewModel.item.value!!.id,
-                            viewModel.scene.value!!.id,
+                            viewModel.item.value!!
+                                .scene.videoSceneData.id,
                         ),
                     )
                 }
@@ -237,7 +228,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     override fun onResume() {
         super.onResume()
         val markerDetailsDest = requireArguments().getDestination<Destination.MarkerDetails>()
-        viewModel.init(markerDetailsDest.id, markerDetailsDest.sceneId)
+        viewModel.init(markerDetailsDest.id)
     }
 
     override fun onViewCreated(
@@ -262,7 +253,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                 serverViewModel.navigationManager.goBack()
                 return@observe
             }
-            val sceneData = viewModel.scene.value!!
+            val sceneId = marker.scene.videoSceneData.id
 
             initializeBackground(marker.screenshot)
             setupDetailsOverviewRow(marker)
@@ -274,9 +265,9 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                 OnActionClickedListener { _ ->
                     serverViewModel.navigationManager.navigate(
                         Destination.Playback(
-                            sceneData.id,
+                            sceneId,
                             (viewModel.seconds.value!! * 1000).toLong(),
-                            PlaybackMode.CHOOSE,
+                            PlaybackMode.Choose,
                         ),
                     )
                 }
@@ -305,7 +296,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                         vh: ViewHolder,
                         item: Any,
                     ) {
-                        item as FullSceneData.Scene_marker
+                        item as FullMarkerData
                         val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
                         ratingBar.visibility = View.GONE
 
@@ -315,6 +306,21 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                             } else {
                                 item.primary_tag.tagData.name
                             }
+                        val body = mutableListOf<String>()
+                        if (item.end_seconds != null) {
+                            val endTime =
+                                item.end_seconds
+                                    .toDuration(
+                                        DurationUnit.SECONDS,
+                                    )
+                            body.add(
+                                "${getString(R.string.stashapp_time_end)}: $endTime",
+                            )
+                            val duration = endTime - item.seconds.toDuration(DurationUnit.SECONDS)
+                            body.add(
+                                "${getString(R.string.stashapp_duration)}: $duration",
+                            )
+                        }
                         if (PreferenceManager
                                 .getDefaultSharedPreferences(requireContext())
                                 .getBoolean(
@@ -322,8 +328,24 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                                     false,
                                 )
                         ) {
-                            vh.body.text = "${getString(R.string.id)}: ${item.id}\n"
+                            if (body.isNotEmpty()) {
+                                body.add("\n")
+                            }
+                            body.add("${getString(R.string.id)}: ${item.id}")
                         }
+                        val createdAt =
+                            getString(R.string.stashapp_created_at) + ": " +
+                                parseTimeToString(
+                                    item.created_at,
+                                )
+                        val updatedAt =
+                            getString(R.string.stashapp_updated_at) + ": " +
+                                parseTimeToString(
+                                    item.updated_at,
+                                )
+                        body.add(createdAt)
+                        body.add(updatedAt)
+                        vh.body.text = body.joinToString("\n")
                     }
                 },
             )
@@ -338,7 +360,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         mAdapter.presenterSelector = presenterSelector
     }
 
-    private fun setupDetailsOverviewRow(marker: FullSceneData.Scene_marker) {
+    private fun setupDetailsOverviewRow(marker: FullMarkerData) {
         val row = DetailsOverviewRow(marker)
 
         val screenshotUrl = marker.screenshot

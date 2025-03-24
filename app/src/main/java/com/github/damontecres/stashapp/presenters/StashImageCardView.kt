@@ -98,6 +98,7 @@ class StashImageCardView(
     val mainView: ViewSwitcher = findViewById(R.id.main_view)
 
     private val iconTextView: TextView
+    private val content2: TextView
 
     private val cardOverlay = findViewById<View>(R.id.card_overlay)
     private val textOverlays = EnumMap<OverlayPosition, TextView>(OverlayPosition::class.java)
@@ -138,12 +139,15 @@ class StashImageCardView(
     init {
         mainImageView.visibility = View.VISIBLE
         val infoArea = findViewById<ViewGroup>(R.id.info_field)
+        val extraContent =
+            LayoutInflater.from(context).inflate(R.layout.image_card_extra_content_row, infoArea)
         val iconRow = LayoutInflater.from(context).inflate(R.layout.image_card_icon_row, infoArea)
 
         val titleTextView = findViewById<TextView>(androidx.leanback.R.id.title_text)
         titleTextView.enableMarquee(false)
         val contentTextView = findViewById<TextView>(androidx.leanback.R.id.content_text)
         contentTextView.enableMarquee(false)
+        content2 = extraContent.findViewById(R.id.extra_content_text)
 
         iconTextView = iconRow.findViewById(R.id.icon_text)
 
@@ -159,6 +163,18 @@ class StashImageCardView(
             )
         sweat.setBounds(0, 0, textSize.toInt(), textSize.toInt())
     }
+
+    var contentExtra: CharSequence?
+        get() = content2.text
+        set(value) {
+            content2.text = value
+            (content2.parent as View).visibility =
+                if (value == null) {
+                    View.GONE
+                } else {
+                    View.VISIBLE
+                }
+        }
 
     private fun setSelected(
         selected: Boolean,
@@ -489,6 +505,7 @@ class StashImageCardView(
         progressOverlay.layoutParams = lp
 
         topRightImageOverlay.visibility = View.INVISIBLE
+        contentExtra = null
     }
 
     fun setTopRightImage(

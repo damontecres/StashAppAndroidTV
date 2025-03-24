@@ -523,7 +523,7 @@ class StashDataGridFragment :
             } else {
                 columns * 6
             }
-        Log.i(TAG, "Setup jumps: $jump1 & $jump2, count=$count")
+        Log.v(TAG, "Setup jumps: $jump1 & $jump2, count=$count")
         jumpButtonLayout[0].setOnClickListener {
             jumpTo((selectedPosition - jump2).coerceIn(0, count - 1))
         }
@@ -567,6 +567,10 @@ class StashDataGridFragment :
                     null
                 }
             }
+    }
+
+    fun cleanup() {
+        pagingAdapter?.clearCache()
     }
 
     override fun onKeyLongPress(

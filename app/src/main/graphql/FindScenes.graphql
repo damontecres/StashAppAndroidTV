@@ -132,6 +132,7 @@ fragment FullSceneData on Scene {
     id
     title
     seconds
+    end_seconds
     created_at
     updated_at
     stream
