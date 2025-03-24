@@ -59,7 +59,6 @@ import com.github.damontecres.stashapp.views.durationToString
 import com.github.damontecres.stashapp.views.models.MarkerDetailsViewModel
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import com.github.damontecres.stashapp.views.parseTimeToString
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.launch
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -89,27 +88,15 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     REPLACE_PRIMARY_ID,
                     R.string.replace,
                 ),
-            ) { _, item ->
-                viewLifecycleOwner.lifecycleScope.launch(
-                    CoroutineExceptionHandler { _, ex ->
-                        Log.e(TAG, "Exception setting tags", ex)
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Failed to remove tag: ${ex.message}",
-                                Toast.LENGTH_LONG,
-                            ).show()
-                    },
-                ) {
-                    if (tagsRowManager.remove(item)) {
-                        Toast
-                            .makeText(
-                                requireContext(),
-                                "Removed tag '${item.name}' from scene",
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                    }
-                }
+                { readOnlyModeDisabled() },
+            ) { _, _ ->
+                serverViewModel.navigationManager.navigate(
+                    Destination.SearchFor(
+                        MarkerDetailsFragment::class.simpleName!!,
+                        REPLACE_PRIMARY_ID,
+                        DataType.TAG,
+                    ),
+                )
             }
     private val primaryTagRowManager =
         ListRowManager<TagData>(
