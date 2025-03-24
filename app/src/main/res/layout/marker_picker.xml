@@ -45,19 +45,60 @@
             android:textAlignment="center"
             android:text="Set timestamp to..." />
 
-        <com.github.damontecres.stashapp.views.DurationPicker2
-            android:id="@+id/duration_picker"
+        <TableLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            android:background="@drawable/button_selector_marker_picker"
-            android:nextFocusDown="@id/play_button" />
+            android:layout_margin="8dp">
+
+            <TableRow>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/stashapp_time"
+                    android:gravity="center_vertical" />
+
+                <com.github.damontecres.stashapp.views.DurationPicker2
+                    android:id="@+id/duration_picker"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/button_selector_marker_picker"
+                    android:nextFocusDown="@id/end_duration_picker" />
+            </TableRow>
+
+            <TableRow>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/stashapp_time_end"
+                    android:gravity="center_vertical" />
+
+                <com.github.damontecres.stashapp.views.DurationPicker2
+                    android:id="@+id/end_duration_picker"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/button_selector_marker_picker"
+                    android:nextFocusDown="@id/play_button" />
+
+            </TableRow>
+
+        </TableLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center">
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/save_end_time_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/save_end_time" />
 
             <Button
                 android:id="@+id/play_button"
