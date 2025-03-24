@@ -41,6 +41,7 @@ class RootActivity :
     private var useCompose by Delegates.notNull<Boolean>()
     private lateinit var navigationManager: NavigationManager
     private var currentFragment: Fragment? = null
+    lateinit var rootFragmentView: View
 
     private var hasCheckedForUpdate = false
     private lateinit var loadingView: ContentLoadingProgressBar
@@ -57,6 +58,8 @@ class RootActivity :
         } else {
             setContentView(R.layout.activity_root)
         }
+        rootFragmentView = findViewById(R.id.root_fragment)
+
         setUpLifeCycleListeners()
         Log.v(
             TAG,
@@ -144,7 +147,7 @@ class RootActivity :
         super.onResume()
         Log.v(TAG, "onResume")
         hasCheckedForUpdate = false
-        if (!useCompose && appHasPin()) {
+        if (appHasPin()) {
             navigationManager.navigate(Destination.Pin)
         } else {
             loadingView.hide()

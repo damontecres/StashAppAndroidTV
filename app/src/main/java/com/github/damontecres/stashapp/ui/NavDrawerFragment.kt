@@ -96,6 +96,7 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
             setContent {
                 MainTheme {
                     val server by serverViewModel.currentServer.observeAsState()
+                    val currDestination by serverViewModel.destination.observeAsState()
                     key(server) {
                         val navController = rememberNavController<Destination>(Destination.Main)
                         NavBackHandler(navController)
@@ -103,10 +104,12 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                         val navManager =
                             (serverViewModel.navigationManager as NavigationManagerCompose)
                         navManager.controller = navController
-                        FragmentContent(
-                            server = server ?: StashServer("http://0.0.0.0", null),
-                            navigationManager = navManager,
-                        )
+                        if (currDestination != Destination.Pin) {
+                            FragmentContent(
+                                server = server ?: StashServer("http://0.0.0.0", null),
+                                navigationManager = navManager,
+                            )
+                        }
                     }
                 }
             }

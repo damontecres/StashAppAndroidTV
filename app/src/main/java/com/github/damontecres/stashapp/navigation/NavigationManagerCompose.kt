@@ -2,6 +2,7 @@ package com.github.damontecres.stashapp.navigation
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
@@ -35,7 +36,9 @@ class NavigationManagerCompose(
 
     override fun navigate(destination: Destination) {
         if (DEBUG) Log.v(TAG, "navigate: ${destination.fragmentTag}")
-        if (destination == Destination.Main) {
+        if (destination == Destination.Pin) {
+            composeNavigate(destination)
+        } else if (destination == Destination.Main) {
             controller.popUpTo { it == Destination.Main }
         } else if (destination is Destination.Filter) {
             controller.popUpTo { it == Destination.Main }
@@ -52,6 +55,7 @@ class NavigationManagerCompose(
             return
         }
         if (destination == Destination.Pin) {
+            activity.rootFragmentView.visibility = View.VISIBLE
             // Enable so that backing out of the fragment will close the app
             onBackPressedCallback.isEnabled = true
         }
@@ -164,6 +168,8 @@ class NavigationManagerCompose(
         fragmentManager.popBackStackImmediate()
         if (getCurrentFragment() == null) {
             navigate(Destination.Main)
+            activity.rootFragmentView.visibility = View.GONE
+            notifyListeners(previousDestination, Destination.Main, null)
         }
         onBackPressedCallback.isEnabled = false
     }

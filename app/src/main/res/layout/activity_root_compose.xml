@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
     tools:deviceIds="tv"
     tools:ignore="MergeRootFrame"
     android:theme="@style/Widget.Theme.StashAppAndroidTV.MyView">
@@ -15,7 +14,7 @@
         android:name="com.github.damontecres.stashapp.ui.NavDrawerFragment" />
 
     <FrameLayout
-        android:id="@+id/root_fragment2"
+        android:id="@+id/root_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone">
@@ -38,4 +37,4 @@
         android:background="@android:color/transparent"
         style="?android:attr/progressBarStyleLarge" />
     </FrameLayout>
-</LinearLayout>
+</FrameLayout>
