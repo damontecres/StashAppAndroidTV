@@ -27,7 +27,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -44,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
@@ -70,7 +70,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.LiveData
@@ -465,7 +464,7 @@ fun ImagePage(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(16.dp),
+                            .background(AppColors.TransparentBlack50),
                     server = server,
                     image = image,
                     tags = tags,
@@ -562,7 +561,7 @@ fun ImageOverlay(
                 )
         }
     LazyColumn(
-        contentPadding = PaddingValues(bottom = 135.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 135.dp),
         modifier = modifier.fillMaxSize(),
     ) {
         item {
@@ -852,7 +851,10 @@ fun ImageDetailsHeader(
             moreOnClick = moreOnClick,
             oCounterOnClick = oCounterOnClick,
             oCounterOnLongClick = oCounterOnLongClick,
-            modifier = Modifier,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
         )
     }
 }
@@ -884,8 +886,10 @@ fun ImageControlsOverlay(
     LazyRow(
         modifier =
             modifier
-                .focusGroup(),
+                .focusGroup()
+                .padding(8.dp),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         item {
             ImageControlButton(
@@ -940,7 +944,6 @@ fun ImageControlsOverlay(
                 onLongClick = oCounterOnLongClick,
                 modifier =
                     Modifier
-                        .padding(start = 8.dp, end = 8.dp)
                         .onFocusChanged(onFocused),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             ) {
@@ -963,7 +966,6 @@ fun ImageControlsOverlay(
                 onLongClick = {},
                 modifier =
                     Modifier
-                        .padding(start = 8.dp, end = 8.dp)
                         .onFocusChanged(onFocused),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             ) {
@@ -990,30 +992,20 @@ fun ImageControlButton(
 ) {
     Button(
         onClick = onClick,
-        shape = ButtonDefaults.shape(CircleShape),
-        colors =
-            ButtonDefaults.colors(
-                containerColor = AppColors.TransparentBlack25,
-                focusedContainerColor = MaterialTheme.colorScheme.border,
-            ),
         contentPadding = PaddingValues(8.dp),
-        modifier =
-            modifier
-                .padding(8.dp)
-                .size(56.dp, 56.dp),
+        modifier = modifier,
     ) {
         if (stringRes != 0) {
             Text(
                 text = stringResource(stringRes),
                 fontFamily = FontAwesome,
-                fontSize = 32.sp,
+                style = MaterialTheme.typography.titleLarge,
             )
         } else {
             Icon(
-                modifier = Modifier.fillMaxSize(),
                 painter = painterResource(drawableRes),
                 contentDescription = "",
-                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp),
             )
         }
     }
@@ -1073,7 +1065,7 @@ fun ImageDetailsFooter(
 }
 
 @OptIn(ExperimentalFoundationApi::class)
-@Preview
+@Preview(widthDp = 600)
 @Composable
 private fun ImageControlsOverlayPreview() {
     MainTheme {
@@ -1086,7 +1078,7 @@ private fun ImageControlsOverlayPreview() {
             moreOnClick = {},
             oCounterOnClick = {},
             oCounterOnLongClick = {},
-            modifier = Modifier,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
