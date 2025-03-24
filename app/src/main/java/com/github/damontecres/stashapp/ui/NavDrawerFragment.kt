@@ -103,12 +103,10 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                         val navManager =
                             (serverViewModel.navigationManager as NavigationManagerCompose)
                         navManager.controller = navController
-                        server?.let {
-                            FragmentContent(
-                                server = it,
-                                navigationManager = navManager,
-                            )
-                        }
+                        FragmentContent(
+                            server = server ?: StashServer("http://0.0.0.0", null),
+                            navigationManager = navManager,
+                        )
                     }
                 }
             }
