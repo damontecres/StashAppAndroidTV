@@ -661,7 +661,7 @@ fun SceneDetails(
         DialogPopup(
             showDialog = true,
             title = params.title,
-            items = params.items,
+            dialogItems = params.items,
             onDismissRequest = { showDialog = null },
             waitToLoad = params.fromLongClick,
         )

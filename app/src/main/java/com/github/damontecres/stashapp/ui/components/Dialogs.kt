@@ -2,11 +2,15 @@ package com.github.damontecres.stashapp.ui.components
 
 import android.view.KeyEvent
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,6 +33,10 @@ import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.ui.FontAwesome
 import kotlinx.coroutines.delay
 
+sealed interface DialogItemEntry
+
+data object DialogItemDivider : DialogItemEntry
+
 data class DialogItem(
     val headlineContent: @Composable () -> Unit,
     val onClick: () -> Unit,
@@ -36,7 +44,8 @@ data class DialogItem(
     val supportingContent: @Composable (() -> Unit)? = null,
     val leadingContent: @Composable (BoxScope.() -> Unit)? = null,
     val trailingContent: @Composable (() -> Unit)? = null,
-) {
+    val enabled: Boolean = true,
+) : DialogItemEntry {
     constructor(
         text: String,
         @StringRes iconStringRes: Int,
@@ -91,13 +100,18 @@ data class DialogItem(
         },
         onClick = onClick,
     )
+
+    companion object {
+        fun divider(): DialogItemEntry = DialogItemDivider
+    }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DialogPopup(
     showDialog: Boolean,
     title: String,
-    items: List<DialogItem>,
+    dialogItems: List<DialogItemEntry>,
     onDismissRequest: () -> Unit,
     dismissOnClick: Boolean = true,
     waitToLoad: Boolean = true,
@@ -122,7 +136,7 @@ fun DialogPopup(
             properties = properties,
         ) {
             val elevatedContainerColor = MaterialTheme.colorScheme.secondaryContainer
-            Column(
+            LazyColumn(
                 modifier =
                     Modifier
 //                        .widthIn(min = 520.dp, max = 300.dp)
@@ -147,28 +161,35 @@ fun DialogPopup(
                             false
                         },
             ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                items.forEach {
-                    ListItem(
-                        selected = false,
-                        enabled = !waiting,
-                        onClick = {
-                            if (dismissOnClick) {
-                                onDismissRequest.invoke()
-                            }
-                            it.onClick.invoke()
-                        },
-                        headlineContent = it.headlineContent,
-                        overlineContent = it.overlineContent,
-                        supportingContent = it.supportingContent,
-                        leadingContent = it.leadingContent,
-                        trailingContent = it.trailingContent,
-                        modifier = Modifier,
+                stickyHeader {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
+                }
+                items(dialogItems) {
+                    when (it) {
+                        is DialogItemDivider -> HorizontalDivider(Modifier.height(16.dp))
+
+                        is DialogItem ->
+                            ListItem(
+                                selected = false,
+                                enabled = !waiting && it.enabled,
+                                onClick = {
+                                    if (dismissOnClick) {
+                                        onDismissRequest.invoke()
+                                    }
+                                    it.onClick.invoke()
+                                },
+                                headlineContent = it.headlineContent,
+                                overlineContent = it.overlineContent,
+                                supportingContent = it.supportingContent,
+                                leadingContent = it.leadingContent,
+                                trailingContent = it.trailingContent,
+                                modifier = Modifier,
+                            )
+                    }
                 }
             }
         }

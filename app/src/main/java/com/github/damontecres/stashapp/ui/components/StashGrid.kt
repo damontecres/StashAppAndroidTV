@@ -56,10 +56,12 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StashData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.SortOption
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.navigation.FilterAndPosition
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.ui.SwitchWithLabel
 import com.github.damontecres.stashapp.ui.cards.StashCard
@@ -110,6 +112,8 @@ fun StashGridControls(
     var searchQuery by rememberSaveable { mutableStateOf(filterArgs.findFilter?.q ?: "") }
     var shouldRequestFocus by remember { mutableStateOf(requestFocus) }
 
+    val navManager = LocalGlobalContext.current.navigationManager
+
     Column(modifier = modifier) {
         if (showTopRow) {
             Row(
@@ -137,14 +141,24 @@ fun StashGridControls(
                     )
                     if (dataType.supportsPlaylists || dataType == DataType.IMAGE) {
                         Button(
-                            onClick = {},
+                            onClick = {
+                                val destination =
+                                    if (dataType == DataType.IMAGE) {
+                                        Destination.Slideshow(filterArgs, 0, true)
+                                    } else {
+                                        Destination.Playlist(filterArgs, 0)
+                                    }
+                                navManager.navigate(destination)
+                            },
                         ) {
                             Text(text = stringResource(R.string.play_all))
                         }
                     }
                     if (filterUiMode == FilterUiMode.CREATE_FILTER) {
                         Button(
-                            onClick = {},
+                            onClick = {
+                                createFilter.invoke(CreateFilter.FROM_CURRENT)
+                            },
                         ) {
                             Text(text = "Create Filter")
                         }

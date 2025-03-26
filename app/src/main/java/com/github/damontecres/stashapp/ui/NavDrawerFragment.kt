@@ -390,7 +390,7 @@ fun FragmentContent(
             DialogPopup(
                 showDialog = true,
                 title = params.title,
-                items = params.items,
+                dialogItems = params.items,
                 onDismissRequest = { dialogParams = null },
                 dismissOnClick = true,
                 waitToLoad = true,

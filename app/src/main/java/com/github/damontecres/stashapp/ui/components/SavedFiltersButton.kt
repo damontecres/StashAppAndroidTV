@@ -1,7 +1,5 @@
 package com.github.damontecres.stashapp.ui.components
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,7 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -47,7 +44,7 @@ fun SavedFiltersButton(
         savedFilters = QueryEngine(StashServer.requireCurrentServer()).getSavedFilters(dataType)
     }
 
-    val dialogItems = mutableListOf<DialogItem>()
+    val dialogItems = mutableListOf<DialogItemEntry>()
     dialogItems.add(
         DialogItem("Create filter") {
             onCreateFilter.invoke()
@@ -58,12 +55,7 @@ fun SavedFiltersButton(
             onFCreateFromFilter.invoke()
         },
     )
-    dialogItems.add(
-        DialogItem(headlineContent = {
-            Spacer(Modifier.height(4.dp))
-        }, onClick = {
-        }),
-    )
+    dialogItems.add(DialogItem.divider())
     dialogItems.addAll(
         savedFilters.sortedBy { it.name }.map {
             DialogItem(it.name) {
@@ -81,7 +73,7 @@ fun SavedFiltersButton(
     DialogPopup(
         showDialog = showDialog,
         title = stringResource(R.string.stashapp_search_filter_saved_filters),
-        items = dialogItems,
+        dialogItems = dialogItems,
         onDismissRequest = { showDialog = false },
         waitToLoad = false,
     )
