@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.VideoFile
+import com.github.damontecres.stashapp.ui.components.StarRatingPrecision
 import com.github.damontecres.stashapp.ui.pages.SceneDetailsHeader
 
 @Preview(
@@ -117,7 +118,7 @@ private fun SceneDetailsPreview() {
             scene = scene,
             rating100 = 60,
             oCount = 1,
-            uiConfig = ComposeUiConfig(true, 1f, true),
+            uiConfig = ComposeUiConfig(true, StarRatingPrecision.HALF, true),
             itemOnClick = { _, _ -> },
             playOnClick = { _, _ -> },
             moreOnClick = {},

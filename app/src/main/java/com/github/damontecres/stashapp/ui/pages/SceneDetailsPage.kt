@@ -107,10 +107,12 @@ import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.filter.extractTitle
+import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.playback.PlaybackMode
 import com.github.damontecres.stashapp.playback.displayString
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
+import com.github.damontecres.stashapp.ui.LocalGlobalContext
 import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.ui.cards.StashCard
 import com.github.damontecres.stashapp.ui.components.DialogItem
@@ -911,9 +913,36 @@ fun SceneDetailsHeader(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         if (scene.studio != null) {
+                            val interactionSource = remember { MutableInteractionSource() }
+                            val isFocused = interactionSource.collectIsFocusedAsState().value
+                            val bgColor =
+                                if (isFocused) {
+                                    MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .75f)
+                                } else {
+                                    Color.Unspecified
+                                }
+                            val navigationManager = LocalGlobalContext.current.navigationManager
                             TitleValueText(
                                 stringResource(R.string.stashapp_studio),
                                 scene.studio.studioData.name,
+                                modifier =
+                                    Modifier
+                                        .background(bgColor, shape = RoundedCornerShape(8.dp))
+                                        .clickable(enabled = true) {
+                                            navigationManager.navigate(
+                                                Destination.Item(
+                                                    DataType.STUDIO,
+                                                    scene.studio.studioData.id,
+                                                ),
+                                            )
+                                        }.onFocusChanged {
+                                            if (it.isFocused) {
+                                                scope.launch { bringIntoViewRequester.bringIntoView() }
+                                            }
+                                        }.focusable(
+                                            enabled = true,
+                                            interactionSource = interactionSource,
+                                        ),
                             )
                         }
                         if (scene.code.isNotNullOrBlank()) {

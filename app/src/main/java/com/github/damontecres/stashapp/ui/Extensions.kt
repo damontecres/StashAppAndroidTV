@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -32,6 +33,16 @@ import androidx.tv.material3.ProvideTextStyle
 import androidx.tv.material3.Switch
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.navigation.Destination
+import com.github.damontecres.stashapp.navigation.NavigationManager
+import com.github.damontecres.stashapp.util.StashServer
+
+data class GlobalContext(
+    val server: StashServer,
+    val navigationManager: NavigationManager,
+)
+
+val LocalGlobalContext =
+    compositionLocalOf<GlobalContext> { throw IllegalStateException("Shouldn't call this") }
 
 fun Modifier.enableMarquee(focused: Boolean) =
     if (focused) {

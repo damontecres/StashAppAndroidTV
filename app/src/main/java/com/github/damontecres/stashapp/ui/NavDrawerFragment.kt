@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
@@ -105,10 +106,18 @@ class NavDrawerFragment : Fragment(R.layout.compose_frame) {
                             (serverViewModel.navigationManager as NavigationManagerCompose)
                         navManager.controller = navController
                         if (currDestination != Destination.Pin) {
-                            FragmentContent(
-                                server = server ?: StashServer("http://0.0.0.0", null),
-                                navigationManager = navManager,
-                            )
+                            CompositionLocalProvider(
+                                LocalGlobalContext provides
+                                    GlobalContext(
+                                        server ?: StashServer("http://0.0.0.0", null),
+                                        navManager,
+                                    ),
+                            ) {
+                                FragmentContent(
+                                    server = server ?: StashServer("http://0.0.0.0", null),
+                                    navigationManager = navManager,
+                                )
+                            }
                         }
                     }
                 }
