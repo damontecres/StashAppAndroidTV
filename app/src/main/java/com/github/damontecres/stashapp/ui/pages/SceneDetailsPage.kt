@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -20,19 +21,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,10 +49,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusState
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
@@ -59,9 +60,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -130,6 +135,7 @@ import com.github.damontecres.stashapp.util.asMarkerData
 import com.github.damontecres.stashapp.util.bitRateString
 import com.github.damontecres.stashapp.util.fakeMarker
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.resolutionName
 import com.github.damontecres.stashapp.util.resume_position
@@ -138,6 +144,7 @@ import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toLongMilliseconds
 import com.github.damontecres.stashapp.util.toSeconds
 import com.github.damontecres.stashapp.views.durationToString
+import com.github.damontecres.stashapp.views.formatBytes
 import kotlinx.coroutines.launch
 
 class SceneDetailsViewModel(
@@ -861,45 +868,81 @@ fun SceneDetailsHeader(
                                 modifier = Modifier.padding(8.dp),
                             )
                         }
-                        // TODO, need to focus so d-pad can scroll the dialog
                         if (showDetailsDialog) {
-                            val focusRequester = remember { FocusRequester() }
-                            val focusManager = LocalFocusManager.current
+                            val scrollAmount = 100f
+                            val columnState = rememberLazyListState()
 
-                            LaunchedEffect(Unit) {
-                                focusRequester.requestFocus()
-                                focusManager.moveFocus(FocusDirection.Enter)
+                            fun scroll(reverse: Boolean = false) {
+                                scope.launch {
+                                    columnState.scrollBy(if (reverse) -scrollAmount else scrollAmount)
+                                }
                             }
                             Dialog(
                                 onDismissRequest = { showDetailsDialog = false },
-                                properties = DialogProperties(),
+                                properties =
+                                    DialogProperties(
+                                        usePlatformDefaultWidth = false,
+                                    ),
                             ) {
-                                Column(
+                                LazyColumn(
+                                    state = columnState,
+                                    contentPadding = PaddingValues(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
                                     modifier =
                                         Modifier
-                                            .focusRequester(focusRequester)
-                                            .focusProperties { exit = { FocusRequester.Cancel } }
-                                            .focusGroup()
-                                            .height(400.dp)
+                                            .width(600.dp)
+                                            .height(380.dp)
+                                            .focusable()
                                             .background(
                                                 MaterialTheme.colorScheme.secondaryContainer,
                                                 shape = RoundedCornerShape(8.dp),
-                                            ),
+                                            ).onKeyEvent {
+                                                if (it.type == KeyEventType.KeyUp) {
+                                                    return@onKeyEvent false
+                                                }
+                                                if (it.key == Key.DirectionDown) {
+                                                    scroll(false)
+                                                    return@onKeyEvent true
+                                                }
+                                                if (it.key == Key.DirectionUp) {
+                                                    scroll(true)
+                                                    return@onKeyEvent true
+                                                }
+                                                return@onKeyEvent false
+                                            },
                                 ) {
-                                    Text(
-                                        text = scene.details,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onBackground,
-                                        modifier =
-                                            Modifier
-                                                .padding(8.dp)
-                                                .verticalScroll(rememberScrollState()),
-//                                                .focusable()
-//                                                .focusRequester(focusRequester)
-//                                                .onFocusChanged {
-//                                                    Log.v("SceneDetails", "isFocused=${it.isFocused}")
-//                                                },
-                                    )
+                                    item {
+                                        Text(
+                                            text = scene.details,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onBackground,
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth(),
+                                        )
+                                    }
+                                    if (scene.files.isNotEmpty()) {
+                                        item {
+                                            HorizontalDivider()
+                                            Text(
+                                                stringResource(R.string.stashapp_files) + ":",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onBackground,
+                                            )
+                                        }
+                                    }
+                                    items(scene.files.map { it.videoFile }) {
+                                        val size =
+                                            it.size
+                                                .toString()
+                                                .toIntOrNull()
+                                                ?.let(::formatBytes)
+                                        Text(
+                                            text = listOf(it.path, size).joinNotNullOrBlank(" - "),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onBackground,
+                                        )
+                                    }
                                 }
                             }
                         }
