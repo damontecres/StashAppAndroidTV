@@ -164,6 +164,22 @@ fun getStreamDecision(
     val videoSupported = supportedCodecs.isVideoSupported(scene.videoCodec)
     val audioSupported = supportedCodecs.isAudioSupported(scene.audioCodec)
     val containerSupported = supportedCodecs.isContainerFormatSupported(scene.format)
+
+    val alwaysTranscode = checkIfAlwaysTranscode(context, scene)
+    Log.d(TAG, "alwaysTranscode=$alwaysTranscode")
+    if (mode != PlaybackMode.ForcedDirectPlay &&
+        mode !is PlaybackMode.ForcedTranscode &&
+        alwaysTranscode != null
+    ) {
+        return StreamDecision(
+            scene.id,
+            TranscodeDecision.ForcedTranscode(alwaysTranscode),
+            videoSupported,
+            audioSupported,
+            containerSupported,
+        )
+    }
+
     if (
         mode == PlaybackMode.Choose &&
         videoSupported &&
@@ -207,6 +223,28 @@ fun getStreamDecision(
             audioSupported,
             containerSupported,
         )
+    }
+}
+
+fun checkIfAlwaysTranscode(
+    context: Context,
+    scene: Scene,
+    alwaysTarget: String =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getString(
+                context.getString(R.string.pref_key_playback_always_transcode),
+                context.getString(R.string.transcode_options_disabled),
+            )!!,
+): String? {
+    val format =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getString("stream_choice", "HLS")!!
+    return if (alwaysTarget != context.getString(R.string.transcode_options_disabled)) {
+        scene.streams.keys.firstOrNull { it.startsWith(format) && it.contains(alwaysTarget) }
+    } else {
+        null
     }
 }
 
