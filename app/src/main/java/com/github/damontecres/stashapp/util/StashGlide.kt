@@ -105,7 +105,12 @@ class StashGlide private constructor() {
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .skipMemoryCache(false)
 
-        fun clear(imageView: ImageView) = Glide.with(imageView).clear(imageView)
+        fun clear(imageView: ImageView) =
+            try {
+                Glide.with(imageView).clear(imageView)
+            } catch (ex: Exception) {
+                Log.w(TAG, "Exception during image clear", ex)
+            }
 
         const val TAG = "StashGlide"
     }
