@@ -142,6 +142,22 @@ class StashClient private constructor() {
             val serverUrlRoot = getServerRoot(server.url)
 
             var builder = okHttpClient.newBuilder()
+            val trustAll =
+                PreferenceManager
+                    .getDefaultSharedPreferences(StashApplication.getApplication())
+                    .getBoolean("trustAllCerts", false)
+            if (trustAll) {
+                val sslContext = SSLContext.getInstance("SSL")
+                sslContext.init(null, arrayOf(TRUST_ALL_CERTS), SecureRandom())
+                builder =
+                    builder
+                        .sslSocketFactory(
+                            sslContext.socketFactory,
+                            TRUST_ALL_CERTS,
+                        ).hostnameVerifier { _, _ ->
+                            true
+                        }
+            }
 
             if (server.apiKey.isNotNullOrBlank()) {
                 val cleanedApiKey = server.apiKey.trim()
@@ -311,25 +327,25 @@ class StashClient private constructor() {
                 .httpEngine(DefaultHttpEngine(httpClient))
                 .build()
         }
-
-        private val TRUST_ALL_CERTS: X509TrustManager =
-            @SuppressLint("CustomX509TrustManager")
-            object : X509TrustManager {
-                @SuppressLint("TrustAllX509TrustManager")
-                override fun checkClientTrusted(
-                    chain: Array<X509Certificate>,
-                    authType: String,
-                ) {
-                }
-
-                @SuppressLint("TrustAllX509TrustManager")
-                override fun checkServerTrusted(
-                    chain: Array<X509Certificate>,
-                    authType: String,
-                ) {
-                }
-
-                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-            }
     }
 }
+
+private val TRUST_ALL_CERTS: X509TrustManager =
+    @SuppressLint("CustomX509TrustManager")
+    object : X509TrustManager {
+        @SuppressLint("TrustAllX509TrustManager")
+        override fun checkClientTrusted(
+            chain: Array<X509Certificate>,
+            authType: String,
+        ) {
+        }
+
+        @SuppressLint("TrustAllX509TrustManager")
+        override fun checkServerTrusted(
+            chain: Array<X509Certificate>,
+            authType: String,
+        ) {
+        }
+
+        override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+    }
