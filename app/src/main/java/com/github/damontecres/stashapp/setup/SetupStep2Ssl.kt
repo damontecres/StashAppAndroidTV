@@ -17,7 +17,7 @@ class SetupStep2Ssl(
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
         GuidanceStylist.Guidance(
             "HTTPS Certificate",
-            "Allow self-signed certificates?",
+            "Allow self-signed certificates?\n\nNote: if enabled, the app must be restarted/force stopped after completing setup!",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )

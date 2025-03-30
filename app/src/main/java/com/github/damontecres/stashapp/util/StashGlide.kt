@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.util
 
+import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
@@ -105,7 +106,16 @@ class StashGlide private constructor() {
                 .diskCacheStrategy(DiskCacheStrategy.NONE)
                 .skipMemoryCache(false)
 
-        fun clear(imageView: ImageView) = Glide.with(imageView).clear(imageView)
+        fun clear(imageView: ImageView) {
+            try {
+                val context = imageView.context
+                if (context is Activity && !context.isDestroyed) {
+                    Glide.with(imageView).clear(imageView)
+                }
+            } catch (ex: Exception) {
+                Log.w(TAG, "Exception during image clear", ex)
+            }
+        }
 
         const val TAG = "StashGlide"
     }
