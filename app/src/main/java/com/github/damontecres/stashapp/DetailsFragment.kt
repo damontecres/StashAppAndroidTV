@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -61,12 +62,31 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
     protected fun addRow(
         key: Int,
         value: String?,
+        allowNulLValue: Boolean = false,
+    ) = addRow(getString(key), value, allowNulLValue, null)
+
+    protected fun addRow(
+        key: Int,
+        value: String?,
+        valueViewModifier: (TextView.() -> Unit)? = null,
+    ) = addRow(getString(key), value, false, valueViewModifier)
+
+    protected fun addRow(
+        key: Int,
+        value: String?,
+    ) = addRow(getString(key), value, false, null)
+
+    protected fun addRow(
+        key: String,
+        value: String?,
+        allowNulLValue: Boolean = false,
         valueViewModifier: (TextView.() -> Unit)? = null,
     ) {
-        if (value.isNullOrBlank()) {
+        if (value.isNullOrBlank() && !allowNulLValue) {
             return
         }
-        val keyString = getString(key) + ":"
+
+        val keyString = if (key.isNotNullOrBlank()) "$key:" else key
 
         val row =
             requireActivity().layoutInflater.inflate(R.layout.table_row, table, false) as TableRow

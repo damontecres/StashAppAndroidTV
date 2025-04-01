@@ -89,6 +89,7 @@ fragment PerformerData on Performer {
   death_date
   hair_color
   weight
+  custom_fields
   __typename
 }
 

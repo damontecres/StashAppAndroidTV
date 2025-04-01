@@ -18,6 +18,7 @@ import androidx.core.view.get
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.leanback.system.Settings
 import androidx.leanback.transition.TransitionHelper
@@ -522,7 +523,7 @@ class StashDataGridFragment :
             } else {
                 columns * 6
             }
-        Log.i(TAG, "Setup jumps: $jump1 & $jump2, count=$count")
+        Log.v(TAG, "Setup jumps: $jump1 & $jump2, count=$count")
         jumpButtonLayout[0].setOnClickListener {
             jumpTo((selectedPosition - jump2).coerceIn(0, count - 1))
         }
@@ -568,6 +569,10 @@ class StashDataGridFragment :
             }
     }
 
+    fun cleanup() {
+        pagingAdapter?.clearCache()
+    }
+
     override fun onKeyLongPress(
         keyCode: Int,
         event: KeyEvent,
@@ -589,6 +594,12 @@ class StashDataGridFragment :
         keyCode: Int,
         event: KeyEvent,
     ): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_D && event.isCtrlPressed) {
+            requireParentFragment().childFragmentManager.commit {
+                add(requireView().id, FilterDebugFragment())
+            }
+            return true
+        }
         // If play is pressed and the page contains scenes or markers and user is focused on a card (ie not a button)
         if ((keyCode == KeyEvent.KEYCODE_MEDIA_PLAY || keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) &&
             (dataType == DataType.SCENE || dataType == DataType.MARKER) &&

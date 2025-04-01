@@ -276,7 +276,7 @@ class MainFragment :
                                     Toast
                                         .makeText(
                                             requireContext(),
-                                            "Error loading row $index on front page",
+                                            "Error loading row ${index + 1} on front page",
                                             Toast.LENGTH_SHORT,
                                         ).show()
                                 }

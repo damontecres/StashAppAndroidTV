@@ -7,6 +7,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.CountMarkersQuery
 import com.github.damontecres.stashapp.api.FindMarkersQuery
+import com.github.damontecres.stashapp.api.fragment.FullMarkerData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
@@ -21,7 +22,7 @@ import kotlin.time.toDuration
  * A [PlaylistFragment] that plays [MarkerData] videos
  */
 @OptIn(UnstableApi::class)
-class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, MarkerData, CountMarkersQuery.Data>() {
+class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, FullMarkerData, CountMarkersQuery.Data>() {
     private var duration by Delegates.notNull<Long>()
 
     override val optionsButtonOptions: OptionsButtonOptions
@@ -33,7 +34,7 @@ class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, MarkerDa
     override val activityTrackingEnabled: Boolean
         get() = duration > 2.toDuration(DurationUnit.MINUTES).inWholeMilliseconds
 
-    override fun builderCallback(item: MarkerData): (MediaItem.Builder.() -> Unit) =
+    override fun builderCallback(item: FullMarkerData): (MediaItem.Builder.() -> Unit) =
         {
             // Clip the media item to a start position & duration
             val startPos = (item.seconds * 1000).toLong().coerceAtLeast(0L)
@@ -41,12 +42,13 @@ class PlaylistMarkersFragment : PlaylistFragment<FindMarkersQuery.Data, MarkerDa
                 MediaItem.ClippingConfiguration
                     .Builder()
                     .setStartPositionMs(startPos)
-                    .setEndPositionMs(startPos + duration)
-                    .build()
+                    .setEndPositionMs(
+                        item.end_seconds?.times(1000)?.toLong() ?: (startPos + duration),
+                    ).build()
             setClippingConfiguration(clipConfig)
         }
 
-    override fun convertToScene(item: MarkerData): Scene = Scene.fromVideoSceneData(item.scene.videoSceneData)
+    override fun convertToScene(item: FullMarkerData): Scene = Scene.fromVideoSceneData(item.scene.videoSceneData)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

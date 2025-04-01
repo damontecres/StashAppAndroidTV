@@ -32,9 +32,9 @@ fun MarkerData.toPlayListItem(index: Int): PlaylistItem {
     return PlaylistItem(
         index,
         title = "$name - ${seconds.toInt().toDuration(DurationUnit.SECONDS)}",
-        subtitle = scene.videoSceneData.titleOrFilename,
+        subtitle = scene.minimalSceneData.titleOrFilename,
         details1 = details,
-        details2 = scene.videoSceneData.date,
+        details2 = scene.minimalSceneData.date,
         imageUrl = screenshot,
     )
 }

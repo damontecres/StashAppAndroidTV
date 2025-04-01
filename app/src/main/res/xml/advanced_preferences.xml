@@ -124,6 +124,13 @@
             app:summaryOn="Manually enable audio track"
             app:summaryOff="Play audio normally"
             app:defaultValue="false" />
+        <ListPreference
+            app:key="@string/pref_key_playback_always_transcode"
+            app:title="Transcode when resolution above"
+            app:summary="%s"
+            app:defaultValue="@string/transcode_options_disabled"
+            app:entries="@array/transcode_options"
+            app:entryValues="@array/transcode_options"/>
     </PreferenceCategory>
 
     <PreferenceCategory app:title="Scene Video Filters">

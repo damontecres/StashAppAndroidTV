@@ -66,6 +66,7 @@ class TagDetailsFragment : DetailsFragment() {
 
         table.removeAllViews()
 
+        addRow(R.string.stashapp_sort_name, tag.sort_name)
         addRow(R.string.stashapp_description, tag.description)
 
         if (tag.aliases.isNotEmpty()) {

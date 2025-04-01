@@ -1,15 +1,13 @@
 fragment SlimTagData on Tag {
   id
   name
-  description
-  favorite
-  image_path
 }
 
 fragment TagData on Tag {
   id
   name
   description
+  sort_name
   favorite
   aliases
   scene_count

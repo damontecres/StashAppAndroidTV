@@ -83,7 +83,7 @@ fun extractDescription(item: StashData): String? =
         is StudioData -> null
         is GalleryData -> item.date
         is ImageData -> item.date
-        is MarkerData -> "${item.scene.videoSceneData.titleOrFilename} (${durationToString(item.seconds)})"
+        is MarkerData -> "${item.scene.minimalSceneData.titleOrFilename} (${durationToString(item.seconds)})"
         is GroupData -> item.date
         is SlimSceneData -> item.date
         is FullSceneData -> item.date

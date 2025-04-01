@@ -39,13 +39,13 @@ import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.MarkerData
+import com.github.damontecres.stashapp.api.fragment.MinimalSceneData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFile
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
-import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
@@ -81,7 +81,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.math.roundToInt
 import kotlin.random.Random
-import kotlin.reflect.full.cast
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -411,6 +411,15 @@ val VideoSceneData.titleOrFilename: String?
             title
         }
 
+val MinimalSceneData.titleOrFilename: String?
+    get() =
+        if (title.isNullOrBlank()) {
+            val path = files.firstOrNull()?.videoFile?.path
+            path?.fileNameFromPath
+        } else {
+            title
+        }
+
 val ImageData.titleOrFilename: String?
     get() =
         if (title.isNullOrBlank()) {
@@ -487,8 +496,22 @@ val FullSceneData.asVideoSceneData: VideoSceneData
             captions?.map { VideoSceneData.Caption("", it.caption) },
         )
 
+val FullSceneData.asMinimalSceneData: MinimalSceneData
+    get() =
+        MinimalSceneData(
+            id,
+            title,
+            urls,
+            date,
+            rating100,
+            o_counter,
+            created_at,
+            updated_at,
+            files.map { MinimalSceneData.File("", it.videoFile) },
+        )
+
 val TagData.asSlimTagData: SlimTagData
-    get() = SlimTagData(id, name, description, favorite, image_path)
+    get() = SlimTagData(id, name)
 
 val PerformerData.ageInYears: Int?
     @RequiresApi(Build.VERSION_CODES.O)
@@ -531,9 +554,10 @@ fun FullSceneData.Scene_marker.asMarkerData(scene: FullSceneData): MarkerData =
         stream = stream,
         screenshot = screenshot,
         seconds = seconds,
+        end_seconds = end_seconds,
         preview = preview,
         primary_tag = MarkerData.Primary_tag("", primary_tag.tagData.asSlimTagData),
-        scene = MarkerData.Scene(scene.id, scene.asVideoSceneData),
+        scene = MarkerData.Scene(scene.id, scene.asMinimalSceneData),
         tags = tags.map { MarkerData.Tag("", it.tagData.asSlimTagData) },
         __typename = "",
     )
@@ -849,7 +873,7 @@ fun maybeStartPlayback(
                 Destination.Playback(
                     item.id,
                     item.resume_position ?: 0L,
-                    PlaybackMode.CHOOSE,
+                    PlaybackMode.Choose,
                 ),
             )
         }
@@ -857,9 +881,9 @@ fun maybeStartPlayback(
         is MarkerData -> {
             StashApplication.navigationManager.navigate(
                 Destination.Playback(
-                    item.scene.videoSceneData.id,
+                    item.scene.minimalSceneData.id,
                     (item.seconds * 1000).toLong(),
-                    PlaybackMode.CHOOSE,
+                    PlaybackMode.Choose,
                 ),
             )
         }
@@ -919,34 +943,57 @@ fun addExtraGridLongClicks(
  *
  * This is useful for debugging
  */
-fun <T : StashDataFilter> toReadableString(
-    dataType: DataType,
-    filter: T,
-): String =
+fun StashDataFilter.toReadableString(newlines: Boolean = false): String =
     buildString {
-        append(filter::class.simpleName)
+        append(this@toReadableString::class.simpleName)
         append("(")
         val params =
-            dataType.filterType.declaredMemberProperties
-                .map { param ->
-                    val obj = param.get(filter) as Optional<*>
+            this@toReadableString::class
+                .declaredMemberProperties
+                .mapNotNull { param ->
+                    val obj =
+                        (param as KProperty1<StashDataFilter, *>).get(this@toReadableString) as Optional<*>
                     val value = obj.getOrNull()
-                    if (value != null) {
-                        if (param.name in setOf("AND", "OR", "NOT")) {
-                            val str = toReadableString(dataType, dataType.filterType.cast(value))
-                            "${param.name}=$str"
+                    val str =
+                        if (value != null) {
+                            if (value is StashDataFilter) {
+                                val str = value.toReadableString()
+                                "${param.name}=$str"
+                            } else if (value::class.simpleName?.endsWith("CriterionInput") == true) {
+                                "${param.name}=${value.toReadableString()}"
+                            } else {
+                                "${param.name}=$value"
+                            }
                         } else {
-                            "${param.name}=$value"
+                            null
                         }
+                    if (newlines && str != null) "\t$str" else str
+                }
+        if (newlines && params.isNotEmpty()) append("\n")
+        append(params.joinNotNullOrBlank(if (newlines) ",\n" else ", "))
+        if (newlines && params.isNotEmpty()) append("\n")
+        append(")")
+    }.replace(Optional.absent().toString(), "Absent")
+
+fun Any.toReadableString() =
+    buildString {
+        append(this@toReadableString::class.simpleName)
+        append("(")
+        val params =
+            this@toReadableString::class
+                .declaredMemberProperties
+                .map { param ->
+                    param as KProperty1<Any, *>
+                    val value = param.get(this@toReadableString)
+                    if (value is Optional<*>) {
+                        "${param.name}=${value.getOrNull()}"
                     } else {
-                        null
+                        "${param.name}=$value"
                     }
                 }.joinNotNullOrBlank(", ")
         append(params)
         append(")")
-    }.replace(Optional.absent().toString(), "Absent")
-
-fun SceneFilterType.toReadableString(): String = toReadableString(DataType.SCENE, this)
+    }
 
 fun Fragment.keepScreenOn(keep: Boolean) {
     Log.v("keepScreenOn", "Keep screen on: $keep")
@@ -977,4 +1024,27 @@ fun View.updateLayoutParams(transform: ViewGroup.LayoutParams.() -> Unit) {
     val lp = layoutParams
     transform(layoutParams)
     layoutParams = lp
+}
+
+fun calculatePageSize(
+    context: Context,
+    dataType: DataType,
+): Int {
+    val cardSize =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getInt("cardSize", context.getString(R.string.card_size_default))
+    val numberOfColumns =
+        (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
+    val maxSearchResults =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getInt("maxSearchResults", 25)
+    val number = (numberOfColumns * 5).coerceAtLeast(maxSearchResults + numberOfColumns * 2)
+    val remainder = number % numberOfColumns
+    return if (remainder == 0) {
+        number
+    } else {
+        number + (numberOfColumns - remainder)
+    }
 }

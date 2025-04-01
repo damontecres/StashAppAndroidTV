@@ -16,7 +16,7 @@ enum class StashAction(
     FORCE_DIRECT_PLAY(5L, "Play directly"),
     CREATE_NEW(6L, "Create new"),
     SET_STUDIO(7L, "Set Studio"),
-    SHIFT_MARKERS(8L, "Shift marker timestamp"),
+    SHIFT_MARKERS(8L, "Change marker timestamp"),
     ADD_GALLERY(9L, "Add Gallery"),
     ADD_GROUP(10L, "Add Group"),
     ;

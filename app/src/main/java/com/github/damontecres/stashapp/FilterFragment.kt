@@ -31,6 +31,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.addExtraGridLongClicks
+import com.github.damontecres.stashapp.util.calculatePageSize
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.getMaxMeasuredWidth
@@ -83,12 +84,12 @@ class FilterFragment :
                 stashGridViewModel.currentPosition.value ?: -1,
             )
         }
-
         stashGridViewModel.init(
             NullPresenterSelector(
                 presenterSelector,
                 NullPresenter(dataType),
             ),
+            calculatePageSize(requireContext(), dataType),
         )
     }
 
@@ -255,6 +256,7 @@ class FilterFragment :
                             savedFilter
                                 .toFilterArgs(filterParser)
                                 .withResolvedRandom()
+                        fragment.cleanup()
                         serverViewModel.navigationManager.navigate(Destination.Filter(filterArgs))
                     } catch (ex: Exception) {
                         Log.e(TAG, "Exception parsing filter ${savedFilter.id}", ex)

@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
  */
 class PagingObjectAdapter(
     private val source: StashPagingSource<*, *, *, *>,
-    private val pageSize: Int = 25,
+    val pageSize: Int = 25,
     private val scope: CoroutineScope,
     presenterSelector: PresenterSelector,
     cacheSize: Long = 8,
@@ -78,14 +78,14 @@ class PagingObjectAdapter(
         if (DEBUG) {
             Log.v(
                 TAG,
-                "maybePrefetch: position=$position, minPage=$minPage, maxPage=$maxPage",
+                "maybePrefetch: position=$position, minPage=$minPage, maxPage=$maxPage, pageNumber=$pageNumber",
             )
         }
         val toFetch =
             if (maxPage != null && pageNumber + 2 > maxPage) {
                 (maxPage + 1).coerceAtMost(totalCount / pageSize + 1)
             } else if (minPage != null && pageNumber - 2 < minPage) {
-                (minPage - 1).coerceAtLeast(0)
+                (minPage - 1).coerceAtLeast(1)
             } else {
                 null
             }
@@ -123,13 +123,21 @@ class PagingObjectAdapter(
             }
         }
 
+    fun clearCache() {
+        Log.d(TAG, "Clearing cache $this")
+        cachedPages.invalidateAll()
+        cachedPages.cleanUp()
+    }
+
+    fun getPages(): Map<Int, Page> = cachedPages.asMap()
+
     companion object {
         private const val TAG = "PagingObjectAdapter"
 
         private const val DEBUG = false
     }
 
-    private data class Page(
+    data class Page(
         val number: Int,
         val items: List<Any>,
     )

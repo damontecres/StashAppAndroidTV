@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.DelegateKeyEventCallback
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.addExtraGridLongClicks
+import com.github.damontecres.stashapp.util.calculatePageSize
 import com.github.damontecres.stashapp.util.getFilterArgs
 import com.github.damontecres.stashapp.util.putFilterArgs
 import com.github.damontecres.stashapp.views.PlayAllOnClickListener
@@ -149,6 +150,7 @@ class StashGridControlsFragment() :
 
         viewModel.init(
             NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
+            calculatePageSize(requireContext(), dataType),
         )
 
         remoteButtonPaging =
@@ -299,6 +301,11 @@ class StashGridControlsFragment() :
         headerShowing = show
         gridHeaderTransitionHelper.showTitle(show)
         headerVisibilityListener?.onHeaderVisibilityChanged(this, show)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+//        viewModel.clearCache()
     }
 
     companion object {

@@ -28,6 +28,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.toReadableString
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -71,12 +72,16 @@ class StashGridViewModel : ViewModel() {
             .getInt("searchDelay", 500)
             .toLong()
 
-    private var numberOfColumns = -1
+    private var pageSize: Int = 25
     private lateinit var presenterSelector: PresenterSelector
     private lateinit var pagingAdapter: PagingObjectAdapter
 
-    fun init(presenterSelector: PresenterSelector) {
+    fun init(
+        presenterSelector: PresenterSelector,
+        pageSize: Int,
+    ) {
         this.presenterSelector = presenterSelector
+        this.pageSize = pageSize
     }
 
     fun setFilter(sortAndDirection: SortAndDirection) {
@@ -89,6 +94,13 @@ class StashGridViewModel : ViewModel() {
             _loadingStatus.value = LoadingStatus.NoOp
             return
         }
+        Log.d(TAG, "Setting new filter, pageSize=$pageSize")
+        Log.v(
+            TAG,
+            "filterArgs: dataType=${filterArgs.dataType}\n" +
+                "findFilter=${filterArgs.findFilter}\n" +
+                "objectFilter=${filterArgs.objectFilter?.toReadableString(true)}",
+        )
         _filterArgs.value = filterArgs
         _loadingStatus.value = LoadingStatus.Start
 
@@ -106,8 +118,7 @@ class StashGridViewModel : ViewModel() {
         val pagingAdapter =
             PagingObjectAdapter(
                 pagingSource,
-                // TODO pageSize = numberOfColumns * 10,
-                100,
+                pageSize,
                 viewModelScope,
                 NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
             )
@@ -168,6 +179,13 @@ class StashGridViewModel : ViewModel() {
                         }
                 }
             }
+        }
+    }
+
+    fun clearCache() {
+        val status = loadingStatus.value
+        if (status is LoadingStatus.AdapterReady) {
+            status.pagingAdapter.clearCache()
         }
     }
 
