@@ -1025,3 +1025,26 @@ fun View.updateLayoutParams(transform: ViewGroup.LayoutParams.() -> Unit) {
     transform(layoutParams)
     layoutParams = lp
 }
+
+fun calculatePageSize(
+    context: Context,
+    dataType: DataType,
+): Int {
+    val cardSize =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getInt("cardSize", context.getString(R.string.card_size_default))
+    val numberOfColumns =
+        (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
+    val maxSearchResults =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getInt("maxSearchResults", 25)
+    val number = (numberOfColumns * 5).coerceAtLeast(maxSearchResults + numberOfColumns * 2)
+    val remainder = number % numberOfColumns
+    return if (remainder == 0) {
+        number
+    } else {
+        number + (numberOfColumns - remainder)
+    }
+}

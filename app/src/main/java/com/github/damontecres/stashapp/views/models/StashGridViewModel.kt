@@ -94,7 +94,7 @@ class StashGridViewModel : ViewModel() {
             _loadingStatus.value = LoadingStatus.NoOp
             return
         }
-        Log.d(TAG, "Setting new filter, Paging")
+        Log.d(TAG, "Setting new filter, pageSize=$pageSize")
         Log.v(
             TAG,
             "filterArgs: dataType=${filterArgs.dataType}\n" +
