@@ -23,7 +23,7 @@ class VideoFilterViewModel : ViewModel() {
     lateinit var dataType: DataType
     lateinit var fetchCurrentId: () -> String
 
-    private val serverUrl = StashServer.getCurrentStashServer()?.url
+    var server: StashServer? = null
 
     val saveVideoFilter =
         PreferenceManager.getDefaultSharedPreferences(StashApplication.getApplication()).getBoolean(
@@ -32,7 +32,7 @@ class VideoFilterViewModel : ViewModel() {
         )
 
     fun maybeGetSavedFilter() {
-        if (saveVideoFilter && serverUrl != null) {
+        if (saveVideoFilter && server != null) {
             viewModelScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 getSavedFilter()
             }
@@ -42,15 +42,16 @@ class VideoFilterViewModel : ViewModel() {
         }
     }
 
-    suspend fun getSavedFilter(): PlaybackEffect? =
-        if (saveVideoFilter && serverUrl != null) {
+    suspend fun getSavedFilter(): PlaybackEffect? {
+        val currentServer = server
+        return if (saveVideoFilter && currentServer != null) {
             val id = fetchCurrentId.invoke()
             withContext(Dispatchers.IO) {
                 val vf =
                     StashApplication
                         .getDatabase()
                         .playbackEffectsDao()
-                        .getPlaybackEffect(serverUrl, id, dataType)
+                        .getPlaybackEffect(currentServer.url, id, dataType)
                 if (vf != null) {
                     Log.d(TAG, "Loaded VideoFilter for $dataType $id")
                 }
@@ -62,12 +63,14 @@ class VideoFilterViewModel : ViewModel() {
         } else {
             null
         }
+    }
 
     /**
      * If saving video effects is enabled, save the current one to the database
      */
     fun maybeSaveFilter() {
-        if (saveVideoFilter && serverUrl != null) {
+        val currentServer = server
+        if (saveVideoFilter && currentServer != null) {
             val id = fetchCurrentId.invoke()
             viewModelScope.launch(Dispatchers.IO + StashCoroutineExceptionHandler()) {
                 val vf = videoFilter.value
@@ -75,7 +78,7 @@ class VideoFilterViewModel : ViewModel() {
                     StashApplication
                         .getDatabase()
                         .playbackEffectsDao()
-                        .insert(PlaybackEffect(serverUrl, id, dataType, vf))
+                        .insert(PlaybackEffect(currentServer.url, id, dataType, vf))
                     Log.d(TAG, "Saved VideoFilter for $dataType $id")
                     withContext(Dispatchers.Main) {
                         Toast

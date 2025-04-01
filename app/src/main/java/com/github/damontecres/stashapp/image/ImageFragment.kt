@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.fragment.app.viewModels
@@ -19,10 +20,12 @@ import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.views.models.ImageViewModel
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 class ImageFragment :
     Fragment(R.layout.image_fragment),
     DefaultKeyEventCallback {
+    protected val serverViewModel: ServerViewModel by activityViewModels()
     private val viewModel: ImageViewModel by viewModels()
     private val filterViewModel: VideoFilterViewModel by viewModels()
 
@@ -43,7 +46,7 @@ class ImageFragment :
         super.onCreate(savedInstanceState)
 
         val slideshow = requireArguments().getDestination<Destination.Slideshow>()
-        viewModel.init(slideshow)
+        viewModel.init(serverViewModel.requireServer(), slideshow)
         filterViewModel.init(DataType.IMAGE) {
             viewModel.image.value!!.id
         }

@@ -12,7 +12,6 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.github.damontecres.stashapp.util.MutationEngine
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
@@ -49,8 +48,7 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
             ratingBar.disable()
         }
 
-        val server = StashServer.requireCurrentServer()
-        mutationEngine = MutationEngine(server)
+        mutationEngine = MutationEngine(serverViewModel.requireServer())
     }
 
     override fun onResume() {

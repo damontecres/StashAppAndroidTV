@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
@@ -32,8 +33,11 @@ import com.github.damontecres.stashapp.filter.picker.RatingPickerFragment
 import com.github.damontecres.stashapp.filter.picker.ResolutionPickerFragment
 import com.github.damontecres.stashapp.filter.picker.StringPickerFragment
 import com.github.damontecres.stashapp.views.formatNumber
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
+    private val serverViewModel: ServerViewModel by activityViewModels()
+
     private fun createActionList(): List<GuidedAction> {
         val dataType = viewModel.dataType.value!!
         return getFilterOptions(dataType)
@@ -42,7 +46,13 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                 val value = viewModel.getValue(filterOption)
                 val description =
                     if (value != null) {
-                        filterSummary(filterOption.name, dataType, value, viewModel::lookupIds)
+                        filterSummary(
+                            filterOption.name,
+                            dataType,
+                            value,
+                            serverViewModel.requireServer().serverPreferences.ratingsAsStars,
+                            viewModel::lookupIds,
+                        )
                     } else {
                         null
                     }
@@ -62,7 +72,11 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     ) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.resultCount.observe(viewLifecycleOwner) { count ->
-            val countStr = formatNumber(count, viewModel.abbreviateCounters)
+            val countStr =
+                formatNumber(
+                    count,
+                    serverViewModel.requireServer().serverPreferences.abbreviateCounters,
+                )
             if (count >= 0) {
                 findButtonActionById(SUBMIT).description = "$countStr results"
                 notifyButtonActionChanged(findButtonActionPositionById(SUBMIT))
@@ -80,6 +94,7 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                 viewModel.dataType.value!!,
                 viewModel.dataType.value!!.filterType,
                 viewModel.objectFilter.value!!,
+                serverViewModel.requireServer().serverPreferences.ratingsAsStars,
                 viewModel::lookupIds,
             )
         return GuidanceStylist.Guidance(

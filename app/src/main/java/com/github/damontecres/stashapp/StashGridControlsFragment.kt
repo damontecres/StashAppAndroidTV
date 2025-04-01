@@ -27,7 +27,6 @@ import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.DelegateKeyEventCallback
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.addExtraGridLongClicks
 import com.github.damontecres.stashapp.util.calculatePageSize
 import com.github.damontecres.stashapp.util.getFilterArgs
@@ -149,6 +148,7 @@ class StashGridControlsFragment() :
         Log.v(TAG, "onCreate: dataType=$dataType")
 
         viewModel.init(
+            serverViewModel.requireServer(),
             NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
             calculatePageSize(requireContext(), dataType),
         )
@@ -228,7 +228,7 @@ class StashGridControlsFragment() :
             }
 
         sortButton.nextFocusUpId = R.id.tab_layout
-        SortButtonManager(StashServer.getCurrentServerVersion()) {
+        SortButtonManager(serverViewModel.requireServer().version) {
             viewModel.setFilter(currentFilter.with(it))
         }.setUpSortButton(sortButton, dataType, filter.sortAndDirection)
 

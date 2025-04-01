@@ -29,7 +29,6 @@ import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.addExtraGridLongClicks
 import com.github.damontecres.stashapp.util.calculatePageSize
 import com.github.damontecres.stashapp.util.getDestination
@@ -85,6 +84,7 @@ class FilterFragment :
             )
         }
         stashGridViewModel.init(
+            serverViewModel.requireServer(),
             NullPresenterSelector(
                 presenterSelector,
                 NullPresenter(dataType),
@@ -116,7 +116,7 @@ class FilterFragment :
 
         serverViewModel.currentServer.observe(viewLifecycleOwner) {
             sortButtonManager =
-                SortButtonManager(StashServer.getCurrentServerVersion()) { sortAndDirection ->
+                SortButtonManager(serverViewModel.requireServer().version) { sortAndDirection ->
                     stashGridViewModel.setFilter(sortAndDirection)
                 }
             val filter =
@@ -192,7 +192,7 @@ class FilterFragment :
     }
 
     private suspend fun populateSavedFilters(dataType: DataType) {
-        val server = StashServer.requireCurrentServer()
+        val server = serverViewModel.requireServer()
         val savedFilters =
             QueryEngine(server).getSavedFilters(dataType)
 

@@ -477,7 +477,6 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
             }
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                val serverPrefs = StashServer.requireCurrentServer().updateServerPrefs()
                 if (serverPrefs.companionPluginInstalled) {
                     setupSendLogsPref()
                 } else {
@@ -509,8 +508,7 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                                             Toast.LENGTH_LONG,
                                         ).show()
                                 } else {
-                                    val serverPrefs =
-                                        StashServer.requireCurrentServer().updateServerPrefs()
+                                    serverViewModel.requireServer().updateServerPrefs()
                                     if (serverPrefs.companionPluginInstalled) {
                                         Toast
                                             .makeText(

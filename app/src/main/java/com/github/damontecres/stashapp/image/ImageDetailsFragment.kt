@@ -52,7 +52,6 @@ import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.configRowManager
 import com.github.damontecres.stashapp.util.createOCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.getDataType
@@ -242,7 +241,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        val server = StashServer.requireCurrentServer()
+        val server = serverViewModel.requireServer()
         queryEngine = QueryEngine(server)
         mutationEngine = MutationEngine(server)
 
@@ -477,7 +476,11 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
                         val result = mutationEngine.updateImage(image.id, rating100 = rating100)
                         ratingBar.rating100 = result?.rating100 ?: 0
-                        showSetRatingToast(requireContext(), rating100)
+                        showSetRatingToast(
+                            requireContext(),
+                            rating100,
+                            serverViewModel.requireServer().serverPreferences.ratingsAsStars,
+                        )
                     }
                 }
             }

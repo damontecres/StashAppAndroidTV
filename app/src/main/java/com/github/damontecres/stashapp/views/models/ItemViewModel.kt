@@ -32,10 +32,13 @@ abstract class ItemViewModel<T : StashData> : ViewModel() {
     /**
      * Initialize the [ViewModel] by fetching the item in the background and updating it
      */
-    fun init(args: Bundle) {
+    fun init(
+        server: StashServer,
+        args: Bundle,
+    ) {
         itemId = args.getDestination<Destination.Item>().id
         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
-            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
+            val queryEngine = QueryEngine(server)
             val newValue = fetch(queryEngine, itemId)
             if (newValue == null) {
                 _item.setValueNoCheck(null)

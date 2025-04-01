@@ -23,7 +23,6 @@ import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.titleOrFilename
 import com.github.damontecres.stashapp.util.toLongMilliseconds
@@ -49,7 +48,7 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
         super.onViewCreated(view, savedInstanceState)
 
         val dest = requireArguments().getDestination<Destination.UpdateMarker>()
-        viewModel.init(dest.markerId)
+        viewModel.init(serverViewModel.requireServer(), dest.markerId)
 
         val picker = view.findViewById<DurationPicker2>(R.id.duration_picker)
         val endPicker = view.findViewById<DurationPicker2>(R.id.end_duration_picker)
@@ -169,8 +168,7 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
                             autoToast = true,
                         ),
                     ) {
-                        val mutationEngine =
-                            MutationEngine(StashServer.requireCurrentServer())
+                        val mutationEngine = MutationEngine(serverViewModel.requireServer())
                         val newEnd =
                             if (saveEndSwitch.isChecked) {
                                 Optional.present(endSeconds)

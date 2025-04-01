@@ -24,7 +24,6 @@ import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.launch
@@ -75,7 +74,8 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : 
                 getString(filter.dataType.pluralStringId)
             }
 
-        val dataSupplier = DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, Count>(filter)
+        val dataSupplier =
+            DataSupplierFactory(serverViewModel.requireServer().version).create<T, D, Count>(filter)
         val pageSize = 25
         val pagingSource =
             StashPagingSource(QueryEngine(server), dataSupplier) { page, index, item ->

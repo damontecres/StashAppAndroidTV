@@ -69,7 +69,6 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashDiffCallback
 import com.github.damontecres.stashapp.util.StashGlide
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.configRowManager
 import com.github.damontecres.stashapp.util.createOCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.createRemoveLongClickListener
@@ -216,8 +215,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         sceneId = requireArguments().getDestination<Destination.Item>().id
         Log.d(TAG, "onCreate: sceneId=$sceneId")
 
-        queryEngine = QueryEngine(StashServer.requireCurrentServer())
-        mutationEngine = MutationEngine(StashServer.requireCurrentServer())
+        queryEngine = QueryEngine(serverViewModel.requireServer())
+        mutationEngine = MutationEngine(serverViewModel.requireServer())
 
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         mDetailsBackground.enableParallax()
@@ -396,7 +395,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.init(sceneId, true)
+        viewModel.init(serverViewModel.requireServer(), sceneId, true)
     }
 
     private fun setupObservers() {
@@ -574,7 +573,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         sceneId,
                         rating100,
                     )
-                    showSetRatingToast(requireContext(), rating100)
+                    showSetRatingToast(
+                        requireContext(),
+                        rating100,
+                        serverViewModel.requireServer().serverPreferences.ratingsAsStars,
+                    )
                 }
             }
         detailsPresenter =

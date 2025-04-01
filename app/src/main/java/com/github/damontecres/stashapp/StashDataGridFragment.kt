@@ -49,7 +49,6 @@ import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
 import com.github.damontecres.stashapp.util.getDataType
@@ -297,7 +296,7 @@ class StashDataGridFragment :
                                         autoToast = true,
                                     ),
                                 ) {
-                                    val server = StashServer.requireCurrentServer()
+                                    val server = serverViewModel.requireServer()
                                     val factory =
                                         DataSupplierFactory(server.serverPreferences.serverVersion)
                                     val letterPosition =

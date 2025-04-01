@@ -604,11 +604,9 @@ val ImageData.maxFileSize: Int
 fun showSetRatingToast(
     context: Context,
     rating100: Int,
-    ratingsAsStars: Boolean? = null,
+    ratingsAsStars: Boolean,
 ) {
-    val asStars =
-        ratingsAsStars ?: StashServer.requireCurrentServer().serverPreferences.ratingsAsStars
-    val ratingStr = getRatingString(rating100, asStars)
+    val ratingStr = getRatingString(rating100, ratingsAsStars)
     Toast
         .makeText(
             context,

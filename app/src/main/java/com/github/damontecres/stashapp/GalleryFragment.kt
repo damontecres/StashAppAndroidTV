@@ -31,7 +31,7 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
         super.onViewCreated(view, savedInstanceState)
 
         serverViewModel.currentServer.observe(viewLifecycleOwner) {
-            viewModel.init(requireArguments())
+            viewModel.init(serverViewModel.requireServer(), requireArguments())
         }
         serverViewModel
             .withLiveData(viewModel.item)

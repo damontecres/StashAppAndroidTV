@@ -88,7 +88,7 @@ class PlaybackSceneFragment : PlaybackFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val playback = requireArguments().getDestination<Destination.Playback>()
-        viewModel.setScene(playback.sceneId)
+        viewModel.setScene(serverViewModel.requireServer(), playback.sceneId)
 
         viewModel.scene.observe(viewLifecycleOwner) { scene ->
             currentScene = scene

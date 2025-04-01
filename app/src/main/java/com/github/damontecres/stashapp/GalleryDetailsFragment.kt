@@ -85,7 +85,11 @@ class GalleryDetailsFragment : DetailsFragment() {
                     val newItem =
                         mutationEngine.updateGallery(galleryData.id, rating100 = newRating100)
                     if (newItem != null) {
-                        showSetRatingToast(requireContext(), newRating100)
+                        showSetRatingToast(
+                            requireContext(),
+                            newRating100,
+                            serverViewModel.requireServer().serverPreferences.ratingsAsStars,
+                        )
                         viewModel.update(newItem)
                     }
                 }

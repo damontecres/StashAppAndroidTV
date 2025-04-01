@@ -46,7 +46,11 @@ class StudioDetailsFragment : DetailsFragment() {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val newStudio = mutationEngine.updateStudio(studio.id, rating100 = newRating100)
                 if (newStudio != null) {
-                    showSetRatingToast(requireContext(), newRating100)
+                    showSetRatingToast(
+                        requireContext(),
+                        newRating100,
+                        serverViewModel.requireServer().serverPreferences.ratingsAsStars,
+                    )
                     viewModel.update(newStudio)
                 }
             }

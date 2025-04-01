@@ -47,7 +47,6 @@ import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.convertDpToPixel
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getDestination
@@ -176,7 +175,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         super.onCreate(savedInstanceState)
 
         primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
-        mutationEngine = MutationEngine(StashServer.requireCurrentServer())
+        mutationEngine = MutationEngine(serverViewModel.requireServer())
 
         setFragmentResultListener(MarkerDetailsFragment::class.simpleName!!) { _, bundle ->
             val sourceId = bundle.getLong(SearchForFragment.RESULT_ID_KEY)
@@ -228,7 +227,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     override fun onResume() {
         super.onResume()
         val markerDetailsDest = requireArguments().getDestination<Destination.MarkerDetails>()
-        viewModel.init(markerDetailsDest.id)
+        viewModel.init(serverViewModel.requireServer(), markerDetailsDest.id)
     }
 
     override fun onViewCreated(

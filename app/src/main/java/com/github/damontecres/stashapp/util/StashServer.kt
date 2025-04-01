@@ -54,8 +54,6 @@ data class StashServer(
 
         private val servers = ConcurrentHashMap<String, StashServer>()
 
-        fun getCurrentServerVersion(): Version = ServerPreferences(requireCurrentServer()).serverVersion
-
         fun requireCurrentServer(): StashServer {
             if (StashApplication.currentServer == null) {
                 val server =

@@ -12,6 +12,7 @@ import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.data.DataType
@@ -21,13 +22,15 @@ import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashClient
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.plugin.CompanionPlugin
+import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class DebugFragment : Fragment(R.layout.debug) {
+    private val serverViewModel: ServerViewModel by activityViewModels()
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -47,7 +50,7 @@ class DebugFragment : Fragment(R.layout.debug) {
         }
         prefTable.isStretchAllColumns = true
 
-        val serverPrefs = StashServer.requireCurrentServer().serverPreferences
+        val serverPrefs = serverViewModel.requireServer().serverPreferences
         val serverPrefsRaw = serverPrefs.preferences.all
         serverPrefsRaw.keys.sorted().forEach {
             val row = createRow(it, serverPrefsRaw[it].toString())
@@ -76,7 +79,7 @@ class DebugFragment : Fragment(R.layout.debug) {
         )
         formatSupportedTable.isStretchAllColumns = true
 
-        val server = StashServer.getCurrentStashServer()
+        val server = serverViewModel.currentServer.value
         if (server != null) {
             otherTable.addView(
                 createRow(
@@ -165,7 +168,7 @@ class DebugFragment : Fragment(R.layout.debug) {
 
         viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
             try {
-                val server = StashServer.requireCurrentServer()
+                val server = serverViewModel.requireServer()
                 val queryEngine = QueryEngine(server)
                 val filterParser = FilterParser(server.serverPreferences.serverVersion)
                 DataType.entries.forEach { dataType ->

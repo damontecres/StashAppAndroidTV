@@ -42,7 +42,6 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
@@ -81,9 +80,6 @@ class SearchForFragment :
                 .makeText(requireContext(), "Search failed: ${ex.message}", Toast.LENGTH_LONG)
                 .show()
         }
-
-    private val server = StashServer.requireCurrentServer()
-    private val queryEngine = QueryEngine(server)
 
     private lateinit var searchFor: Destination.SearchFor
     private lateinit var dataType: DataType
@@ -129,7 +125,7 @@ class SearchForFragment :
     private suspend fun handleCreate(query: String?) {
         if (query.isNotNullOrBlank()) {
             val name = query.replaceFirstChar(Char::titlecase)
-            val mutationEngine = MutationEngine(server)
+            val mutationEngine = MutationEngine(serverViewModel.requireServer())
             val item =
                 when (dataType) {
                     DataType.TAG -> {
@@ -206,6 +202,7 @@ class SearchForFragment :
                         per_page = Optional.present(perPage),
                         sort = Optional.present(sortBy),
                     )
+                val queryEngine = QueryEngine(serverViewModel.requireServer())
                 val results =
                     when (dataType) {
                         DataType.GALLERY ->
@@ -273,6 +270,7 @@ class SearchForFragment :
             val mostRecentIds = mostRecent.map { it.id }
             Log.v(TAG, "Got ${mostRecentIds.size} recent items")
             if (mostRecentIds.isNotEmpty()) {
+                val queryEngine = QueryEngine(serverViewModel.requireServer())
                 val items =
                     when (dataType) {
                         DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
@@ -349,6 +347,7 @@ class SearchForFragment :
                     per_page = Optional.present(perPage),
                 )
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
+                val queryEngine = QueryEngine(serverViewModel.requireServer())
                 val results =
                     when (dataType) {
                         DataType.GALLERY ->
