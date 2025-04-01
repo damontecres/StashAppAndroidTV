@@ -464,13 +464,21 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 sendLogsPref.summary = "Send a copy of recent app logs to your current server"
                 sendLogsPref.setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        CompanionPlugin.sendLogCat(requireContext(), false)
+                        CompanionPlugin.sendLogCat(
+                            requireContext(),
+                            serverViewModel.requireServer(),
+                            false,
+                        )
                     }
                     true
                 }
                 sendLogsPref.setOnLongClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        CompanionPlugin.sendLogCat(requireContext(), true)
+                        CompanionPlugin.sendLogCat(
+                            requireContext(),
+                            serverViewModel.requireServer(),
+                            true,
+                        )
                     }
                     true
                 }

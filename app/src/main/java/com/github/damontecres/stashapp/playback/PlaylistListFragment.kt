@@ -14,8 +14,8 @@ import androidx.lifecycle.lifecycleScope
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.api.fragment.StashData
+import com.github.damontecres.stashapp.api.fragment.VideoSceneData
 import com.github.damontecres.stashapp.data.PlaylistItem
 import com.github.damontecres.stashapp.data.toPlayListItem
 import com.github.damontecres.stashapp.presenters.PlaylistItemPresenter
@@ -83,8 +83,8 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : 
                 val position = (page - 1) * pageSize + index
                 when (item) {
                     is MarkerData -> item.toPlayListItem(position)
-                    is SlimSceneData -> item.toPlayListItem(position)
-                    else -> throw UnsupportedOperationException()
+                    is VideoSceneData -> item.toPlayListItem(position)
+                    else -> throw UnsupportedOperationException("Unknown class: ${item::class.qualifiedName}")
                 }
             }
         val pagingAdapter =

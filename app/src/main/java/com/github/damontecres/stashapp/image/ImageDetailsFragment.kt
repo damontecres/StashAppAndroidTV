@@ -489,6 +489,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 ).joinNotNullOrBlank(" - ")
 
             val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
+            ratingBar.configure(serverViewModel.requireServer())
             ratingBar.rating100 = image.rating100 ?: 0
             if (readOnlyModeEnabled()) {
                 ratingBar.disable()

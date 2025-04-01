@@ -577,7 +577,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
     private fun setupDetailsOverviewRowPresenter() {
         scenePresenter =
-            SceneDetailsPresenter { rating100: Int ->
+            SceneDetailsPresenter(serverViewModel.requireServer()) { rating100: Int ->
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(
                         Toast.makeText(

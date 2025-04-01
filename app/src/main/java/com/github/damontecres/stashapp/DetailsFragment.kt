@@ -43,6 +43,7 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
         favoriteButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
         favoriteButton.isFocusable = true
         ratingBar = view.findViewById(R.id.rating_bar)
+        ratingBar.configure(serverViewModel.requireServer())
         if (readOnlyModeEnabled()) {
             favoriteButton.isFocusable = false
             ratingBar.disable()

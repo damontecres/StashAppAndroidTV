@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.SettingsFragment
-import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import java.util.concurrent.ConcurrentHashMap
 
@@ -54,18 +53,6 @@ data class StashServer(
 
         private val servers = ConcurrentHashMap<String, StashServer>()
 
-        fun requireCurrentServer(): StashServer {
-            if (StashApplication.currentServer == null) {
-                val server =
-                    findConfiguredStashServer(StashApplication.getApplication())
-                        ?: throw QueryEngine.StashNotConfiguredException()
-                setCurrentStashServer(StashApplication.getApplication(), server)
-            }
-            return StashApplication.requireCurrentServer()
-        }
-
-        fun getCurrentStashServer(): StashServer? = StashApplication.currentServer
-
         fun findConfiguredStashServer(context: Context): StashServer? {
             val manager = PreferenceManager.getDefaultSharedPreferences(context)
             val url = manager.getString(SettingsFragment.PREF_STASH_URL, null)
@@ -87,7 +74,6 @@ data class StashServer(
                 putString(SettingsFragment.PREF_STASH_API_KEY, server.apiKey)
             }
             StashExoPlayer.releasePlayer()
-            StashApplication.currentServer = server
         }
 
         fun removeStashServer(

@@ -301,6 +301,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     ) {
                         item as FullMarkerData
                         val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
+                        ratingBar.configure(serverViewModel.requireServer())
                         ratingBar.visibility = View.GONE
 
                         vh.title.text =

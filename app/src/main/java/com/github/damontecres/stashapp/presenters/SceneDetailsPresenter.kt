@@ -9,6 +9,7 @@ import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.FullSceneData
 import com.github.damontecres.stashapp.playback.CodecSupport
 import com.github.damontecres.stashapp.playback.displayString
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
@@ -25,6 +26,7 @@ import com.github.damontecres.stashapp.views.parseTimeToString
  * [AbstractDetailsDescriptionPresenter] for [com.github.damontecres.stashapp.SceneDetailsFragment]
  */
 class SceneDetailsPresenter(
+    val server: StashServer,
     var ratingCallback: StashRatingBar.RatingCallback?,
 ) : AbstractDetailsDescriptionPresenter() {
     override fun onBindDescription(
@@ -153,6 +155,7 @@ class SceneDetailsPresenter(
                 .joinToString("\n")
 
         val ratingBar = viewHolder.view.findViewById<StashRatingBar>(R.id.rating_bar)
+        ratingBar.configure(server)
         ratingBar.rating100 = scene.rating100 ?: 0
         if (readOnlyModeDisabled()) {
             ratingBar.setRatingCallback(ratingCallback)
