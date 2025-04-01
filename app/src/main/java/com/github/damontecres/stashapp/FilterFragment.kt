@@ -75,23 +75,6 @@ class FilterFragment :
         val startingFilter = dest.filterArgs
         dataType = startingFilter.dataType
         Log.d(TAG, "onCreate: dataType=$dataType")
-
-        val presenterSelector =
-            StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer())
-        addExtraGridLongClicks(presenterSelector, dataType) {
-            FilterAndPosition(
-                stashGridViewModel.filterArgs.value!!,
-                stashGridViewModel.currentPosition.value ?: -1,
-            )
-        }
-        stashGridViewModel.init(
-            serverViewModel.requireServer(),
-            NullPresenterSelector(
-                presenterSelector,
-                NullPresenter(serverViewModel.requireServer(), dataType),
-            ),
-            calculatePageSize(requireContext(), dataType),
-        )
     }
 
     override fun onViewCreated(
@@ -115,7 +98,26 @@ class FilterFragment :
         fragment.requestFocus = true
         fragment.init(dataType)
 
-        serverViewModel.currentServer.observe(viewLifecycleOwner) {
+        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            if (server == null) {
+                return@observe
+            }
+            val presenterSelector =
+                StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer())
+            addExtraGridLongClicks(presenterSelector, dataType) {
+                FilterAndPosition(
+                    stashGridViewModel.filterArgs.value!!,
+                    stashGridViewModel.currentPosition.value ?: -1,
+                )
+            }
+            stashGridViewModel.init(
+                server,
+                NullPresenterSelector(
+                    presenterSelector,
+                    NullPresenter(server, dataType),
+                ),
+                calculatePageSize(requireContext(), dataType),
+            )
             sortButtonManager =
                 SortButtonManager(serverViewModel.requireServer().version) { sortAndDirection ->
                     stashGridViewModel.setFilter(sortAndDirection)

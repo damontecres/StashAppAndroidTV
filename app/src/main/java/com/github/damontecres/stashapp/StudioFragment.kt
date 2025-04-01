@@ -40,7 +40,7 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
         serverViewModel
             .withLiveData(viewModel.item)
             .observe(viewLifecycleOwner) { (server, studio) ->
-                if (studio == null) {
+                if (server == null || studio == null) {
                     Toast
                         .makeText(
                             requireContext(),

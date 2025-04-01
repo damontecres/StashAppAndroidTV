@@ -86,6 +86,10 @@ class PlaybackSceneFragment : PlaybackFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        if (savedInstanceState != null) {
+            serverViewModel.navigationManager.goBack()
+            return
+        }
 
         val playback = requireArguments().getDestination<Destination.Playback>()
         viewModel.setScene(serverViewModel.requireServer(), playback.sceneId)

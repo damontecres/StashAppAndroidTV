@@ -61,51 +61,55 @@ class PlaylistListFragment<T : Query.Data, D : StashData, Count : Query.Data> : 
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        serverViewModel
+            .withLiveData(viewModel.filterArgs)
+            .observe(viewLifecycleOwner) { (server, filter) ->
+                if (server == null) {
+                    return@observe
+                }
 
-        val parent = (parentFragment as PlaylistFragment<*, *, *>)
-        val server = serverViewModel.requireServer()
-        val filter = viewModel.filterArgs.value!!
+                val parent = (parentFragment as PlaylistFragment<*, *, *>)
 
-        val playlistTitleView = view.findViewById<TextView>(R.id.playlist_title)
-        playlistTitleView.text =
-            if (filter.name.isNotNullOrBlank()) {
-                filter.name
-            } else {
-                getString(filter.dataType.pluralStringId)
-            }
+                val playlistTitleView = view.findViewById<TextView>(R.id.playlist_title)
+                playlistTitleView.text =
+                    if (filter.name.isNotNullOrBlank()) {
+                        filter.name
+                    } else {
+                        getString(filter.dataType.pluralStringId)
+                    }
 
-        val dataSupplier =
-            DataSupplierFactory(serverViewModel.requireServer().version).create<T, D, Count>(filter)
-        val pageSize = 25
-        val pagingSource =
-            StashPagingSource(QueryEngine(server), dataSupplier) { page, index, item ->
-                // Pages are 1 indexed
-                val position = (page - 1) * pageSize + index
-                when (item) {
-                    is MarkerData -> item.toPlayListItem(position)
-                    is VideoSceneData -> item.toPlayListItem(position)
-                    else -> throw UnsupportedOperationException("Unknown class: ${item::class.qualifiedName}")
+                val dataSupplier = DataSupplierFactory(server.version).create<T, D, Count>(filter)
+                val pageSize = 25
+                val pagingSource =
+                    StashPagingSource(QueryEngine(server), dataSupplier) { page, index, item ->
+                        // Pages are 1 indexed
+                        val position = (page - 1) * pageSize + index
+                        when (item) {
+                            is MarkerData -> item.toPlayListItem(position)
+                            is VideoSceneData -> item.toPlayListItem(position)
+                            else -> throw UnsupportedOperationException("Unknown class: ${item::class.qualifiedName}")
+                        }
+                    }
+                val pagingAdapter =
+                    PagingObjectAdapter(
+                        pagingSource,
+                        pageSize,
+                        viewLifecycleOwner.lifecycleScope,
+                        SinglePresenterSelector(PlaylistItemPresenter()),
+                    )
+
+                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                    pagingAdapter.init()
+                    val count = pagingAdapter.size()
+                    playlistTitleView.text = playlistTitleView.text.toString() + " ($count)"
+                }
+
+                mGridPresenter.onBindViewHolder(mGridViewHolder, pagingAdapter)
+                mGridPresenter.setOnItemViewClickedListener { itemViewHolder, item, rowViewHolder, row ->
+                    item as PlaylistItem
+                    parent.playIndex(item.index)
                 }
             }
-        val pagingAdapter =
-            PagingObjectAdapter(
-                pagingSource,
-                pageSize,
-                viewLifecycleOwner.lifecycleScope,
-                SinglePresenterSelector(PlaylistItemPresenter()),
-            )
-
-        viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-            pagingAdapter.init()
-            val count = pagingAdapter.size()
-            playlistTitleView.text = playlistTitleView.text.toString() + " ($count)"
-        }
-
-        mGridPresenter.onBindViewHolder(mGridViewHolder, pagingAdapter)
-        mGridPresenter.setOnItemViewClickedListener { itemViewHolder, item, rowViewHolder, row ->
-            item as PlaylistItem
-            parent.playIndex(item.index)
-        }
     }
 
     override fun onHiddenChanged(hidden: Boolean) {

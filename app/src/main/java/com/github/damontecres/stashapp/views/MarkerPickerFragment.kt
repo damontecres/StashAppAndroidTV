@@ -47,9 +47,6 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        val dest = requireArguments().getDestination<Destination.UpdateMarker>()
-        viewModel.init(serverViewModel.requireServer(), dest.markerId)
-
         val picker = view.findViewById<DurationPicker2>(R.id.duration_picker)
         val endPicker = view.findViewById<DurationPicker2>(R.id.end_duration_picker)
         val sceneTitle = view.findViewById<TextView>(R.id.scene_title)
@@ -58,6 +55,14 @@ class MarkerPickerFragment : Fragment(R.layout.marker_picker) {
         val saveEndSwitch = view.findViewById<SwitchCompat>(R.id.save_end_time_switch)
         val playButton = view.findViewById<Button>(R.id.play_button)
         val saveButton = view.findViewById<Button>(R.id.save_button)
+
+        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            if (server == null) {
+                return@observe
+            }
+            val dest = requireArguments().getDestination<Destination.UpdateMarker>()
+            viewModel.init(server, dest.markerId)
+        }
 
         viewModel.item.observe(viewLifecycleOwner) { marker ->
             if (marker == null) {

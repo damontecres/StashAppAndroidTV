@@ -51,8 +51,8 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
-import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getInt
+import com.github.damontecres.stashapp.util.maybeGetDataType
 import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -181,7 +181,8 @@ class StashDataGridFragment :
         savedInstanceState: Bundle?,
     ): View {
         if (savedInstanceState != null) {
-            dataType = savedInstanceState.getDataType()
+            dataType =
+                savedInstanceState.maybeGetDataType() ?: viewModel.filterArgs.value!!.dataType
         }
         Log.v(TAG, "onCreateView: dataType=$dataType")
         val root =

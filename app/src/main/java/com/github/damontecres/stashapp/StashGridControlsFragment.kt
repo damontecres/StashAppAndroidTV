@@ -159,15 +159,6 @@ class StashGridControlsFragment() :
 
         Log.v(TAG, "onCreate: dataType=$dataType")
 
-        viewModel.init(
-            serverViewModel.requireServer(),
-            NullPresenterSelector(
-                presenterSelector,
-                NullPresenter(serverViewModel.requireServer(), dataType),
-            ),
-            calculatePageSize(requireContext(), dataType),
-        )
-
         remoteButtonPaging =
             PreferenceManager
                 .getDefaultSharedPreferences(requireContext())
@@ -230,66 +221,80 @@ class StashGridControlsFragment() :
             showTitle(shouldShowTitle)
         }
 
-        val filter =
-            if (viewModel.filterArgs.isInitialized) {
-                viewModel.filterArgs.value!!
-            } else if (savedInstanceState != null) {
-                initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
-                viewModel.setFilter(initialFilter)
-                initialFilter
-            } else {
-                viewModel.setFilter(initialFilter)
-                initialFilter
+        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            if (server == null) {
+                return@observe
             }
-
-        sortButton.nextFocusUpId = R.id.tab_layout
-        SortButtonManager(serverViewModel.requireServer().version) {
-            viewModel.setFilter(currentFilter.with(it))
-        }.setUpSortButton(sortButton, dataType, filter.sortAndDirection)
-
-        val playAllListener =
-            PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
-                FilterAndPosition(viewModel.filterArgs.value!!, 0)
-            }
-        playAllButton.setOnClickListener(playAllListener)
-
-        if (dataType.supportsPlaylists) {
-            playAllButton.visibility = View.VISIBLE
-            playAllButton.nextFocusUpId = R.id.tab_layout
-        } else if (dataType == DataType.IMAGE) {
-            playAllButton.visibility = View.VISIBLE
-            playAllButton.nextFocusUpId = R.id.tab_layout
-            playAllButton.text = getString(R.string.play_slideshow)
-        }
-
-        addExtraGridLongClicks(presenterSelector, dataType) {
-            FilterAndPosition(
-                viewModel.filterArgs.value!!,
-                viewModel.currentPosition.value ?: -1,
-            )
-        }
-
-        filterButton.nextFocusUpId = R.id.tab_layout
-        filterButton.setOnClickListener {
-            serverViewModel.navigationManager.navigate(
-                Destination.CreateFilter(
-                    dataType,
-                    viewModel.filterArgs.value!!,
+            viewModel.init(
+                server,
+                NullPresenterSelector(
+                    presenterSelector,
+                    NullPresenter(server, dataType),
                 ),
+                calculatePageSize(requireContext(), dataType),
             )
-        }
 
-        subContentSwitch.nextFocusUpId = R.id.tab_layout
-        if (subContentSwitchCheckedListener != null) {
-            subContentSwitch.isChecked = subContentSwitchInitialIsChecked
-            subContentSwitch.text = subContentText
-            subContentSwitch.visibility = View.VISIBLE
-            subContentSwitch.setOnCheckedChangeListener { _, isChecked ->
-                subContentSwitchCheckedListener?.invoke(isChecked)
+            val filter =
+                if (viewModel.filterArgs.isInitialized) {
+                    viewModel.filterArgs.value!!
+                } else if (savedInstanceState != null) {
+                    initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
+                    viewModel.setFilter(initialFilter)
+                    initialFilter
+                } else {
+                    viewModel.setFilter(initialFilter)
+                    initialFilter
+                }
+
+            sortButton.nextFocusUpId = R.id.tab_layout
+            SortButtonManager(serverViewModel.requireServer().version) {
+                viewModel.setFilter(currentFilter.with(it))
+            }.setUpSortButton(sortButton, dataType, filter.sortAndDirection)
+
+            val playAllListener =
+                PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
+                    FilterAndPosition(viewModel.filterArgs.value!!, 0)
+                }
+            playAllButton.setOnClickListener(playAllListener)
+
+            if (dataType.supportsPlaylists) {
+                playAllButton.visibility = View.VISIBLE
+                playAllButton.nextFocusUpId = R.id.tab_layout
+            } else if (dataType == DataType.IMAGE) {
+                playAllButton.visibility = View.VISIBLE
+                playAllButton.nextFocusUpId = R.id.tab_layout
+                playAllButton.text = getString(R.string.play_slideshow)
             }
-        }
 
-        viewModel.setupSearch(searchEditText)
+            addExtraGridLongClicks(presenterSelector, dataType) {
+                FilterAndPosition(
+                    viewModel.filterArgs.value!!,
+                    viewModel.currentPosition.value ?: -1,
+                )
+            }
+
+            filterButton.nextFocusUpId = R.id.tab_layout
+            filterButton.setOnClickListener {
+                serverViewModel.navigationManager.navigate(
+                    Destination.CreateFilter(
+                        dataType,
+                        viewModel.filterArgs.value!!,
+                    ),
+                )
+            }
+
+            subContentSwitch.nextFocusUpId = R.id.tab_layout
+            if (subContentSwitchCheckedListener != null) {
+                subContentSwitch.isChecked = subContentSwitchInitialIsChecked
+                subContentSwitch.text = subContentText
+                subContentSwitch.visibility = View.VISIBLE
+                subContentSwitch.setOnCheckedChangeListener { _, isChecked ->
+                    subContentSwitchCheckedListener?.invoke(isChecked)
+                }
+            }
+
+            viewModel.setupSearch(searchEditText)
+        }
 
         val initialRequestFocus = fragment.requestFocus
         if (initialRequestFocus) {

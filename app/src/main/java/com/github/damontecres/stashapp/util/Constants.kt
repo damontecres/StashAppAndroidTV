@@ -777,6 +777,8 @@ fun Bundle.putDataType(dataType: DataType): Bundle {
 
 fun Bundle.getDataType(): DataType = DataType.valueOf(getString("dataType")!!)
 
+fun Bundle.maybeGetDataType(): DataType? = getString("dataType")?.let { DataType.valueOf(it) }
+
 @OptIn(ExperimentalSerializationApi::class)
 fun Bundle.getFilterArgs(name: String): FilterArgs? = getParcelable(name, FilterArgs::class, 0, StashParcelable)
 

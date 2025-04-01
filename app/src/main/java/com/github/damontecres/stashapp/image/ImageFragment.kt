@@ -44,25 +44,32 @@ class ImageFragment :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+    }
 
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
         val slideshow = requireArguments().getDestination<Destination.Slideshow>()
-        viewModel.init(serverViewModel.requireServer(), slideshow)
-        filterViewModel.init(DataType.IMAGE) {
-            viewModel.image.value!!.id
-        }
-
-        childFragmentManager.commit {
-            listOf(
-                imageViewFragment,
-                imageClipFragment,
-                imageDetailsFragment,
-            ).forEach {
-                add(R.id.root, it, it::class.java.simpleName)
-                hide(it)
+        serverViewModel.currentServer.observe(viewLifecycleOwner) {
+            viewModel.init(serverViewModel.requireServer(), slideshow)
+            filterViewModel.init(DataType.IMAGE) {
+                viewModel.image.value!!.id
+            }
+            childFragmentManager.commit {
+                listOf(
+                    imageViewFragment,
+                    imageClipFragment,
+                    imageDetailsFragment,
+                ).forEach {
+                    add(R.id.root, it, it::class.java.simpleName)
+                    hide(it)
+                }
             }
         }
 
-        viewModel.image.observe(this) { newImage ->
+        viewModel.image.observe(viewLifecycleOwner) { newImage ->
             Log.v(TAG, "newImage: id=${newImage.id}")
             childFragmentManager.commit {
                 // TODO switch to sliding transitions?
@@ -82,13 +89,6 @@ class ImageFragment :
                 hide(overlayFragment)
             }
         }
-    }
-
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-    ) {
-        super.onViewCreated(view, savedInstanceState)
         viewModel.slideshowActive.observe(viewLifecycleOwner) { keepScreenOn(it) }
     }
 

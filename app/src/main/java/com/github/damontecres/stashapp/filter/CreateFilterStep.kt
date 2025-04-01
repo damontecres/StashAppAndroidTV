@@ -35,6 +35,9 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
     private val serverViewModel: ServerViewModel by activityViewModels()
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
+        if (savedInstanceState != null) {
+            return super.onCreateGuidance(savedInstanceState)
+        }
         val text =
             filterSummary(
                 requireContext(),
@@ -122,14 +125,19 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
+        if (savedInstanceState != null) {
+            return
+        }
         updateActions(actions)
     }
 
     override fun onResume() {
         super.onResume()
-        val refreshActions = mutableListOf<GuidedAction>()
-        updateActions(refreshActions)
-        actions = refreshActions
+        if (viewModel.dataType.value != null) {
+            val refreshActions = mutableListOf<GuidedAction>()
+            updateActions(refreshActions)
+            actions = refreshActions
+        }
     }
 
     override fun onViewCreated(

@@ -14,23 +14,26 @@ class CreateFilterFragment : Fragment(R.layout.frame) {
     private val serverViewModel: ServerViewModel by activityViewModels()
     private val viewModel by activityViewModels<CreateFilterViewModel>()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val dest = requireArguments().getDestination<Destination.CreateFilter>()
-        val startingFilter = dest.startingFilter
-        viewModel.initialize(
-            serverViewModel.requireServer(),
-            dest.dataType,
-            startingFilter,
-        )
-    }
-
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+
+        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            if (server == null) {
+                serverViewModel.navigationManager.goBack()
+                return@observe
+            }
+            val dest = requireArguments().getDestination<Destination.CreateFilter>()
+            val startingFilter = dest.startingFilter
+            viewModel.initialize(
+                server,
+                dest.dataType,
+                startingFilter,
+            )
+        }
+
         viewModel.ready.observe(viewLifecycleOwner) { ready ->
             if (ready) {
                 GuidedStepSupportFragment.add(

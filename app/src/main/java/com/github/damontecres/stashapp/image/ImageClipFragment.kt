@@ -56,6 +56,29 @@ class ImageClipFragment :
 
         imageViewModel.videoController = this
 
+        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            if (server == null) {
+                return@observe
+            }
+            // Always release the player and recreate
+            StashExoPlayer.releasePlayer()
+            player =
+                StashExoPlayer
+                    .getInstance(
+                        requireContext(),
+                        server,
+                    ).also {
+                        videoView.player = it
+                        it.repeatMode =
+                            if (imageViewModel.slideshow.value == true) {
+                                Player.REPEAT_MODE_OFF
+                            } else {
+                                Player.REPEAT_MODE_ONE
+                            }
+                    }
+            StashExoPlayer.addListener(this)
+        }
+
         imageViewModel.image.observe(viewLifecycleOwner) { imageData ->
             if (imageData.isImageClip) {
                 val mediaItem =
@@ -87,28 +110,6 @@ class ImageClipFragment :
                     Player.REPEAT_MODE_ONE
                 }
         }
-    }
-
-    @OptIn(UnstableApi::class)
-    override fun onStart() {
-        // Always release the player and recreate
-        StashExoPlayer.releasePlayer()
-        player =
-            StashExoPlayer
-                .getInstance(
-                    requireContext(),
-                    serverViewModel.requireServer(),
-                ).also {
-                    videoView.player = it
-                    it.repeatMode =
-                        if (imageViewModel.slideshow.value == true) {
-                            Player.REPEAT_MODE_OFF
-                        } else {
-                            Player.REPEAT_MODE_ONE
-                        }
-                }
-        StashExoPlayer.addListener(this)
-        super.onStart()
     }
 
     override fun play() {

@@ -55,7 +55,7 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
         serverViewModel
             .withLiveData(viewModel.item)
             .observe(viewLifecycleOwner) { (server, performer) ->
-                if (performer == null) {
+                if (server == null || performer == null) {
                     Toast
                         .makeText(
                             requireContext(),

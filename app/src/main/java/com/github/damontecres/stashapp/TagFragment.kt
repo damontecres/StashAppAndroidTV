@@ -41,7 +41,7 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
         serverViewModel
             .withLiveData(viewModel.item)
             .observe(viewLifecycleOwner) { (server, tag) ->
-                if (tag == null) {
+                if (server == null || tag == null) {
                     Toast
                         .makeText(
                             requireContext(),

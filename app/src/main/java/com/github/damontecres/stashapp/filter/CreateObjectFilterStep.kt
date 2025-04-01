@@ -62,8 +62,10 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
 
     override fun onResume() {
         super.onResume()
-        actions = createActionList()
-        viewModel.updateCount()
+        if (viewModel.dataType.value != null) {
+            actions = createActionList()
+            viewModel.updateCount()
+        }
     }
 
     override fun onViewCreated(
@@ -71,6 +73,9 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        if (savedInstanceState != null) {
+            return
+        }
         viewModel.resultCount.observe(viewLifecycleOwner) { count ->
             val countStr =
                 formatNumber(
@@ -88,6 +93,9 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     }
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
+        if (savedInstanceState != null) {
+            return super.onCreateGuidance(savedInstanceState)
+        }
         val text =
             filterSummary(
                 requireContext(),
@@ -109,6 +117,9 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
+        if (savedInstanceState != null) {
+            return
+        }
         actions.addAll(createActionList())
     }
 
@@ -116,6 +127,9 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
+        if (savedInstanceState != null) {
+            return
+        }
         actions.add(
             GuidedAction
                 .Builder(requireContext())

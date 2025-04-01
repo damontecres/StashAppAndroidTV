@@ -66,6 +66,8 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 add(R.id.video_overlay, playlistListFragment)
                 hide(playlistListFragment)
             }
+        } else {
+            serverViewModel.navigationManager.goBack()
         }
     }
 

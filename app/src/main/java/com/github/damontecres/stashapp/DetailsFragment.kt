@@ -29,7 +29,7 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
     protected lateinit var favoriteButton: Button
     protected lateinit var ratingBar: StashRatingBar
 
-    protected lateinit var mutationEngine: MutationEngine
+    protected val mutationEngine by lazy { MutationEngine(serverViewModel.requireServer()) }
 
     override fun onViewCreated(
         view: View,
@@ -43,13 +43,15 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
         favoriteButton.onFocusChangeListener = StashOnFocusChangeListener(requireContext())
         favoriteButton.isFocusable = true
         ratingBar = view.findViewById(R.id.rating_bar)
-        ratingBar.configure(serverViewModel.requireServer())
         if (readOnlyModeEnabled()) {
             favoriteButton.isFocusable = false
             ratingBar.disable()
         }
-
-        mutationEngine = MutationEngine(serverViewModel.requireServer())
+        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
+            if (server != null) {
+                ratingBar.configure(server)
+            }
+        }
     }
 
     override fun onResume() {

@@ -87,6 +87,10 @@ class SearchForFragment :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            serverViewModel.navigationManager.goBack()
+            return
+        }
         searchFor = requireArguments().getDestination<Destination.SearchFor>()
         dataType = searchFor.dataType
         perPage =

@@ -111,11 +111,11 @@ open class ServerViewModel : ViewModel() {
         }
     }
 
-    fun <T> withLiveData(liveData: LiveData<T?>): LiveData<Pair<StashServer, T?>> =
+    fun <T> withLiveData(liveData: LiveData<T>): LiveData<Pair<StashServer?, T>> =
         currentServer
             .asFlow()
             .combine(liveData.asFlow()) { server, item ->
-                server!! to item
+                server to item
             }.asLiveData()
 
     /**
