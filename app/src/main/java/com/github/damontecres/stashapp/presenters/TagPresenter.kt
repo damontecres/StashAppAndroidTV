@@ -11,11 +11,13 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpAction
 import com.github.damontecres.stashapp.suppliers.FilterArgs
+import com.github.damontecres.stashapp.util.StashServer
 import java.util.EnumMap
 
 class TagPresenter(
+    server: StashServer,
     callback: LongClickCallBack<TagData>? = null,
-) : StashPresenter<TagData>(callback) {
+) : StashPresenter<TagData>(server, callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: TagData,

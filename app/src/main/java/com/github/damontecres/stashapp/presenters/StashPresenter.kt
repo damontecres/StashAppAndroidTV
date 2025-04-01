@@ -30,9 +30,11 @@ import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpAction
 import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpFilter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.svg.SvgSoftwareLayerSetter
 
 abstract class StashPresenter<T>(
+    val server: StashServer,
     private var callback: LongClickCallBack<T>? = null,
 ) : Presenter() {
     val longClickCallBack: LongClickCallBack<T>
@@ -44,7 +46,7 @@ abstract class StashPresenter<T>(
         }
 
     final override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
-        val cardView = StashImageCardView(parent.context)
+        val cardView = StashImageCardView(parent.context, server)
         cardView.isFocusable = true
         cardView.isFocusableInTouchMode = false
         return ViewHolder(cardView)
@@ -226,21 +228,26 @@ abstract class StashPresenter<T>(
     companion object {
         private const val TAG = "StashPresenter"
 
-        fun defaultClassPresenterSelector(): ClassPresenterSelector =
+        fun defaultClassPresenterSelector(server: StashServer): ClassPresenterSelector =
             ClassPresenterSelector()
-                .addClassPresenter(PerformerData::class.java, PerformerPresenter())
-                .addClassPresenter(SlimSceneData::class.java, ScenePresenter())
-                .addClassPresenter(StudioData::class.java, StudioPresenter())
-                .addClassPresenter(TagData::class.java, TagPresenter())
-                .addClassPresenter(GroupData::class.java, GroupPresenter())
-                .addClassPresenter(FilterArgs::class.java, FilterArgsPresenter())
-                .addClassPresenter(StashAction::class.java, ActionPresenter())
-                .addClassPresenter(MarkerData::class.java, MarkerPresenter())
-                .addClassPresenter(ImageData::class.java, ImagePresenter())
-                .addClassPresenter(GalleryData::class.java, GalleryPresenter())
-                .addClassPresenter(OCounter::class.java, OCounterPresenter())
-                .addClassPresenter(CreateMarkerAction::class.java, CreateMarkerActionPresenter())
-                .addClassPresenter(GroupRelationshipData::class.java, GroupRelationshipPresenter())
+                .addClassPresenter(PerformerData::class.java, PerformerPresenter(server))
+                .addClassPresenter(SlimSceneData::class.java, ScenePresenter(server))
+                .addClassPresenter(StudioData::class.java, StudioPresenter(server))
+                .addClassPresenter(TagData::class.java, TagPresenter(server))
+                .addClassPresenter(GroupData::class.java, GroupPresenter(server))
+                .addClassPresenter(FilterArgs::class.java, FilterArgsPresenter(server))
+                .addClassPresenter(StashAction::class.java, ActionPresenter(server))
+                .addClassPresenter(MarkerData::class.java, MarkerPresenter(server))
+                .addClassPresenter(ImageData::class.java, ImagePresenter(server))
+                .addClassPresenter(GalleryData::class.java, GalleryPresenter(server))
+                .addClassPresenter(OCounter::class.java, OCounterPresenter(server))
+                .addClassPresenter(
+                    CreateMarkerAction::class.java,
+                    CreateMarkerActionPresenter(server),
+                ).addClassPresenter(
+                    GroupRelationshipData::class.java,
+                    GroupRelationshipPresenter(server),
+                )
 
         fun glideError(context: Context): RequestBuilder<PictureDrawable> =
             Glide

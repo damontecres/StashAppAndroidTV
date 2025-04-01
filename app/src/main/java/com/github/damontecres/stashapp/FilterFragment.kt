@@ -76,7 +76,8 @@ class FilterFragment :
         dataType = startingFilter.dataType
         Log.d(TAG, "onCreate: dataType=$dataType")
 
-        val presenterSelector = StashPresenter.defaultClassPresenterSelector()
+        val presenterSelector =
+            StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer())
         addExtraGridLongClicks(presenterSelector, dataType) {
             FilterAndPosition(
                 stashGridViewModel.filterArgs.value!!,
@@ -87,7 +88,7 @@ class FilterFragment :
             serverViewModel.requireServer(),
             NullPresenterSelector(
                 presenterSelector,
-                NullPresenter(dataType),
+                NullPresenter(serverViewModel.requireServer(), dataType),
             ),
             calculatePageSize(requireContext(), dataType),
         )

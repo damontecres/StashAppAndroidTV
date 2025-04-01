@@ -80,8 +80,8 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     private val mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
     private val mAdapter = SparseArrayObjectAdapter()
 
-    private val primaryTagPresenter =
-        TagPresenter()
+    private val primaryTagPresenter by lazy {
+        TagPresenter(serverViewModel.requireServer())
             .addLongCLickAction(
                 StashPresenter.PopUpItem(
                     REPLACE_PRIMARY_ID,
@@ -97,7 +97,8 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     ),
                 )
             }
-    private val primaryTagRowManager =
+    }
+    private val primaryTagRowManager by lazy {
         ListRowManager<TagData>(
             DataType.TAG,
             ListRowManager.SparseArrayRowModifier(mAdapter, PRIMARY_TAG_POS),
@@ -114,12 +115,13 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             viewModel.setMarker(result!!)
             listOfNotNull(result.primary_tag.tagData)
         }
+    }
 
-    private val tagsRowManager =
+    private val tagsRowManager by lazy {
         ListRowManager<TagData>(
             DataType.TAG,
             ListRowManager.SparseArrayRowModifier(mAdapter, TAG_POS),
-            ArrayObjectAdapter(TagPresenter()),
+            ArrayObjectAdapter(TagPresenter(serverViewModel.requireServer())),
         ) { tagIds ->
             val marker = viewModel.item.value!!
             val result =
@@ -127,14 +129,16 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             viewModel.setMarker(result!!)
             result.tags.map { it.tagData }
         }
+    }
 
-    private val sceneActionsAdapter =
+    private val sceneActionsAdapter by lazy {
         SparseArrayObjectAdapter(
             ClassPresenterSelector().addClassPresenter(
                 StashAction::class.java,
-                ActionPresenter(),
+                ActionPresenter(serverViewModel.requireServer()),
             ),
         )
+    }
 
     private lateinit var mutationEngine: MutationEngine
 

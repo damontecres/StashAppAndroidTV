@@ -12,7 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.OnItemViewClickedListener
-import androidx.leanback.widget.PresenterSelector
+import androidx.leanback.widget.Presenter
 import androidx.leanback.widget.SearchEditText
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.type.StashDataFilter
@@ -72,6 +72,17 @@ class StashGridControlsFragment() :
     // State
     private lateinit var gridHeaderTransitionHelper: TitleTransitionHelper
 
+    /**
+     * The presenter for the items, defaults to [StashPresenter.defaultClassPresenterSelector]
+     */
+    private val presenterSelector: ClassPresenterSelector by lazy {
+        StashPresenter.defaultClassPresenterSelector(
+            serverViewModel.requireServer(),
+        )
+    }
+
+    val presenterSelectorOverrides = mutableMapOf<Class<*>, Presenter>()
+
     // Modifiable properties
 
     /**
@@ -83,11 +94,6 @@ class StashGridControlsFragment() :
      * An optional name for this fragment, not used in this View
      */
     var name: String? = null
-
-    /**
-     * The presenter for the items, defaults to [StashPresenter.defaultClassPresenterSelector]
-     */
-    var presenterSelector: PresenterSelector = StashPresenter.defaultClassPresenterSelector()
 
     /**
      * The item clicked listener, will default to [NavigationOnItemViewClickedListener] in [onViewCreated] if not specified before
@@ -144,12 +150,21 @@ class StashGridControlsFragment() :
             initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
             Log.v(TAG, "sortAndDirection=${initialFilter.sortAndDirection}")
         }
+        presenterSelectorOverrides.forEach { (cls, presenter) ->
+            presenterSelector.addClassPresenter(
+                cls,
+                presenter,
+            )
+        }
 
         Log.v(TAG, "onCreate: dataType=$dataType")
 
         viewModel.init(
             serverViewModel.requireServer(),
-            NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
+            NullPresenterSelector(
+                presenterSelector,
+                NullPresenter(serverViewModel.requireServer(), dataType),
+            ),
             calculatePageSize(requireContext(), dataType),
         )
 
@@ -247,13 +262,11 @@ class StashGridControlsFragment() :
             playAllButton.text = getString(R.string.play_slideshow)
         }
 
-        if (presenterSelector is ClassPresenterSelector) {
-            addExtraGridLongClicks(presenterSelector as ClassPresenterSelector, dataType) {
-                FilterAndPosition(
-                    viewModel.filterArgs.value!!,
-                    viewModel.currentPosition.value ?: -1,
-                )
-            }
+        addExtraGridLongClicks(presenterSelector, dataType) {
+            FilterAndPosition(
+                viewModel.filterArgs.value!!,
+                viewModel.currentPosition.value ?: -1,
+            )
         }
 
         filterButton.nextFocusUpId = R.id.tab_layout

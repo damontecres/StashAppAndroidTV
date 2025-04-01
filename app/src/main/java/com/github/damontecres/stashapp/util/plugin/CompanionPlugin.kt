@@ -88,43 +88,47 @@ class CompanionPlugin {
                 // Avoid individual lines being logged server-side
                 val logcat = sb.replace(Regex("\n"), "<newline>")
 
-                val server = StashServer.requireCurrentServer()
-                val mutationEngine = MutationEngine(server)
-                val mutation =
-                    RunPluginTaskMutation(
-                        plugin_id = PLUGIN_ID,
-                        task_name = LOGCAT_TASK_NAME,
-                        args_map = mapOf(LOGCAT_TASK_NAME to logcat),
-                    )
-                val jobId = mutationEngine.executeMutation(mutation).data?.runPluginTask
-                if (jobId.isNotNullOrBlank()) {
-                    val result = QueryEngine(server).waitForJob(jobId)
-                    withContext(Dispatchers.Main) {
-                        if (result is JobResult.Success) {
-                            val msg =
-                                buildString {
-                                    if (verbose) {
-                                        append("Verbose logs sent!")
-                                    } else {
-                                        append("Logs sent!")
+                val server = StashServer.findConfiguredStashServer(context)
+                if (server != null) {
+                    val mutationEngine = MutationEngine(server)
+                    val mutation =
+                        RunPluginTaskMutation(
+                            plugin_id = PLUGIN_ID,
+                            task_name = LOGCAT_TASK_NAME,
+                            args_map = mapOf(LOGCAT_TASK_NAME to logcat),
+                        )
+                    val jobId = mutationEngine.executeMutation(mutation).data?.runPluginTask
+                    if (jobId.isNotNullOrBlank()) {
+                        val result = QueryEngine(server).waitForJob(jobId)
+                        withContext(Dispatchers.Main) {
+                            if (result is JobResult.Success) {
+                                val msg =
+                                    buildString {
+                                        if (verbose) {
+                                            append("Verbose logs sent!")
+                                        } else {
+                                            append("Logs sent!")
+                                        }
+                                        append(" Check the server's log page.")
                                     }
-                                    append(" Check the server's log page.")
-                                }
 
-                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
-                        } else if (result is JobResult.NotFound) {
-                            Toast.makeText(context, "Error sending logs", Toast.LENGTH_LONG).show()
-                        } else if (result is JobResult.Failure) {
-                            Toast
-                                .makeText(
-                                    context,
-                                    "Error sending logs: ${result.message}",
-                                    Toast.LENGTH_LONG,
-                                ).show()
+                                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                            } else if (result is JobResult.NotFound) {
+                                Toast
+                                    .makeText(context, "Error sending logs", Toast.LENGTH_LONG)
+                                    .show()
+                            } else if (result is JobResult.Failure) {
+                                Toast
+                                    .makeText(
+                                        context,
+                                        "Error sending logs: ${result.message}",
+                                        Toast.LENGTH_LONG,
+                                    ).show()
+                            }
                         }
+                    } else {
+                        Toast.makeText(context, "Error sending logs", Toast.LENGTH_LONG).show()
                     }
-                } else {
-                    Toast.makeText(context, "Error sending logs", Toast.LENGTH_LONG).show()
                 }
             } catch (ex: Exception) {
                 Log.e(TAG, "Error sending logs", ex)

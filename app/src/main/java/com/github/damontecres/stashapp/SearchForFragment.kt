@@ -42,6 +42,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.putDataType
@@ -96,8 +97,11 @@ class SearchForFragment :
 
         searchResultsAdapter.presenterSelector =
             StashPresenter
-                .defaultClassPresenterSelector()
-                .addClassPresenter(StashAction::class.java, CreateNewPresenter(dataType))
+                .defaultClassPresenterSelector(serverViewModel.requireServer())
+                .addClassPresenter(
+                    StashAction::class.java,
+                    CreateNewPresenter(serverViewModel.requireServer(), dataType),
+                )
         adapter.set(
             RESULTS_POS,
             ListRow(HeaderItem(getString(R.string.waiting_for_query)), ArrayObjectAdapter()),
@@ -179,7 +183,8 @@ class SearchForFragment :
     override fun onResume() {
         super.onResume()
         if (dataType in DATA_TYPE_SUGGESTIONS) {
-            val presenterSelector = StashPresenter.defaultClassPresenterSelector()
+            val presenterSelector =
+                StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer())
 
             viewLifecycleOwner.lifecycleScope.launch(
                 StashCoroutineExceptionHandler {
@@ -285,7 +290,11 @@ class SearchForFragment :
 
                 if (items.isNotEmpty()) {
                     val results =
-                        ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
+                        ArrayObjectAdapter(
+                            StashPresenter.defaultClassPresenterSelector(
+                                serverViewModel.requireServer(),
+                            ),
+                        )
                     Log.v(
                         TAG,
                         "${mostRecentIds.size} recent items resolved to ${results.size()} items",
@@ -435,8 +444,9 @@ class SearchForFragment :
     }
 
     private inner class CreateNewPresenter(
+        server: StashServer,
         val dataType: DataType,
-    ) : StashPresenter<StashAction>() {
+    ) : StashPresenter<StashAction>(server) {
         override fun doOnBindViewHolder(
             cardView: StashImageCardView,
             item: StashAction,

@@ -8,7 +8,6 @@ import android.text.style.RelativeSizeSpan
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.viewModels
-import androidx.leanback.widget.ClassPresenterSelector
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StudioData
@@ -133,12 +132,6 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                 )
                             },
                             StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {
-                                val presenter =
-                                    ClassPresenterSelector()
-                                        .addClassPresenter(
-                                            TagData::class.java,
-                                            TagPresenter(performersWithTagLongClickCallback()),
-                                        )
                                 val fragment =
                                     StashGridControlsFragment(
                                         FilterArgs(
@@ -146,20 +139,14 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                             override = DataSupplierOverride.PerformerTags(performer.id),
                                         ),
                                     )
-                                fragment.presenterSelector = presenter
+                                fragment.presenterSelectorOverrides[TagData::class.java] =
+                                    TagPresenter(
+                                        serverViewModel.requireServer(),
+                                        performersWithTagLongClickCallback(),
+                                    )
                                 fragment
                             },
                             StashFragmentPagerAdapter.PagerEntry(getString(R.string.stashapp_appears_with)) {
-                                val presenter =
-                                    ClassPresenterSelector()
-                                        .addClassPresenter(
-                                            PerformerData::class.java,
-                                            PerformerPresenter(
-                                                performTogetherLongClickCallback(
-                                                    performer,
-                                                ),
-                                            ),
-                                        )
                                 val fragment =
                                     StashGridControlsFragment(
                                         dataType = DataType.PERFORMER,
@@ -179,7 +166,13 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                                     ),
                                             ),
                                     )
-                                fragment.presenterSelector = presenter
+                                fragment.presenterSelectorOverrides[PerformerData::class.java] =
+                                    PerformerPresenter(
+                                        serverViewModel.requireServer(),
+                                        performTogetherLongClickCallback(
+                                            performer,
+                                        ),
+                                    )
                                 fragment
                             },
                             StashFragmentPagerAdapter.PagerEntry(DataType.MARKER) {
@@ -189,16 +182,6 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                 )
                             },
                             StashFragmentPagerAdapter.PagerEntry(DataType.STUDIO) {
-                                val presenter =
-                                    ClassPresenterSelector()
-                                        .addClassPresenter(
-                                            StudioData::class.java,
-                                            StudioPresenter(
-                                                scenesWithStudioLongClickCallback(
-                                                    performer,
-                                                ),
-                                            ),
-                                        )
                                 val fragment =
                                     StashGridControlsFragment(
                                         dataType = DataType.STUDIO,
@@ -213,7 +196,13 @@ class PerformerFragment : TabbedFragment(DataType.PERFORMER.name) {
                                                     ),
                                             ),
                                     )
-                                fragment.presenterSelector = presenter
+                                fragment.presenterSelectorOverrides[StudioData::class.java] =
+                                    StudioPresenter(
+                                        serverViewModel.requireServer(),
+                                        scenesWithStudioLongClickCallback(
+                                            performer,
+                                        ),
+                                    )
                                 fragment
                             },
                         ).filter { it.title in getUiTabs(requireContext(), DataType.PERFORMER) }

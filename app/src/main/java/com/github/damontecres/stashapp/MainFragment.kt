@@ -260,7 +260,11 @@ class MainFragment :
                                 filterList.add(row.filter)
 
                                 val adapter =
-                                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
+                                    ArrayObjectAdapter(
+                                        StashPresenter.defaultClassPresenterSelector(
+                                            viewModel.requireServer(),
+                                        ),
+                                    )
                                 adapter.addAll(0, row.data)
                                 adapter.add(row.filter)
                                 adapters.add(adapter)

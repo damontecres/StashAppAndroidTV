@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.viewModels
-import androidx.leanback.widget.ClassPresenterSelector
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -81,11 +80,6 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                                 )
                             },
                             StashFragmentPagerAdapter.PagerEntry(DataType.PERFORMER) {
-                                val presenter =
-                                    ClassPresenterSelector().addClassPresenter(
-                                        PerformerData::class.java,
-                                        PerformerInScenePresenter(gallery.date),
-                                    )
                                 val fragment =
                                     StashGridControlsFragment(
                                         filterArgs =
@@ -94,7 +88,11 @@ class GalleryFragment : TabbedFragment(DataType.GALLERY.name) {
                                                 override = DataSupplierOverride.GalleryPerformer(gallery.id),
                                             ),
                                     )
-                                fragment.presenterSelector = presenter
+                                fragment.presenterSelectorOverrides[PerformerData::class.java] =
+                                    PerformerInScenePresenter(
+                                        serverViewModel.requireServer(),
+                                        gallery.date,
+                                    )
                                 fragment
                             },
                             StashFragmentPagerAdapter.PagerEntry(DataType.TAG) {

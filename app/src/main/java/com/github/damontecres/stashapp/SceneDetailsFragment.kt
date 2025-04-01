@@ -167,17 +167,18 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             queryEngine.findMarkersInScene(sceneData!!.id)
         }
 
-    private val galleriesAdapter = ArrayObjectAdapter(GalleryPresenter())
+    private val galleriesAdapter by lazy { ArrayObjectAdapter(GalleryPresenter(serverViewModel.requireServer())) }
 
     private val sceneActionsAdapter: SparseArrayObjectAdapter by lazy {
         SparseArrayObjectAdapter(
             ClassPresenterSelector()
                 .addClassPresenter(
                     StashAction::class.java,
-                    ActionPresenter(),
+                    ActionPresenter(serverViewModel.requireServer()),
                 ).addClassPresenter(
                     OCounter::class.java,
                     OCounterPresenter(
+                        serverViewModel.requireServer(),
                         createOCounterLongClickCallBack(
                             DataType.SCENE,
                             sceneId,
@@ -190,7 +191,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     ),
                 ).addClassPresenter(
                     CreateMarkerAction::class.java,
-                    CreateMarkerActionPresenter(),
+                    CreateMarkerActionPresenter(serverViewModel.requireServer()),
                 ),
         )
     }
@@ -358,13 +359,29 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             )
         }
 
-        configRowManager({ viewLifecycleOwner.lifecycleScope }, tagsRowManager, ::TagPresenter)
-        configRowManager({ viewLifecycleOwner.lifecycleScope }, studioRowManager, ::StudioPresenter)
-        configRowManager({ viewLifecycleOwner.lifecycleScope }, groupsRowManager, ::GroupPresenter)
+        configRowManager(
+            serverViewModel.requireServer(),
+            { viewLifecycleOwner.lifecycleScope },
+            tagsRowManager,
+            ::TagPresenter,
+        )
+        configRowManager(
+            serverViewModel.requireServer(),
+            { viewLifecycleOwner.lifecycleScope },
+            studioRowManager,
+            ::StudioPresenter,
+        )
+        configRowManager(
+            serverViewModel.requireServer(),
+            { viewLifecycleOwner.lifecycleScope },
+            groupsRowManager,
+            ::GroupPresenter,
+        )
 
         markersRowManager.adapter.presenterSelector =
             SinglePresenterSelector(
                 MarkerPresenter(
+                    serverViewModel.requireServer(),
                     createRemoveLongClickListener(
                         { viewLifecycleOwner.lifecycleScope },
                         markersRowManager,
@@ -410,10 +427,11 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             Log.v(TAG, "sceneData.id=${sceneData.id}")
 
             configRowManager(
+                serverViewModel.requireServer(),
                 { viewLifecycleOwner.lifecycleScope },
                 performersRowManager,
-            ) { callback ->
-                PerformerInScenePresenter(sceneData.date, callback)
+            ) { server, callback ->
+                PerformerInScenePresenter(server, sceneData.date, callback)
             }
 
             setupDetailsOverviewRow(sceneData)
@@ -469,7 +487,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 mAdapter.clear(SIMILAR_POS)
             } else {
                 val adapter =
-                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
+                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer()))
                 adapter.addAll(0, items)
                 mAdapter.set(
                     SIMILAR_POS,

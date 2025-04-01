@@ -122,7 +122,7 @@ class StashGridViewModel : ViewModel() {
                 pagingSource,
                 pageSize,
                 viewModelScope,
-                NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
+                NullPresenterSelector(presenterSelector, NullPresenter(server, dataType)),
             )
         pagingAdapter.registerObserver(
             object : ObjectAdapter.DataObserver() {

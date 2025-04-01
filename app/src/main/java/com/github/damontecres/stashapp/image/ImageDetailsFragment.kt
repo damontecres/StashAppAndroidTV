@@ -89,8 +89,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
     private lateinit var firstButton: Button
 
-    private val itemPresenter =
-        ClassPresenterSelector().addClassPresenter(StashAction::class.java, ActionPresenter())
+    private val itemPresenter = ClassPresenterSelector()
 
     /**
      * The bottom row of actions that can be performed on the image (add tags, etc)
@@ -166,6 +165,10 @@ class ImageDetailsFragment : DetailsSupportFragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        itemPresenter.addClassPresenter(
+            StashAction::class.java,
+            ActionPresenter(serverViewModel.requireServer()),
+        )
         val detailsBackground = DetailsSupportFragmentBackgroundController(this)
         detailsBackground.enableParallax()
 
@@ -245,9 +248,24 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         queryEngine = QueryEngine(server)
         mutationEngine = MutationEngine(server)
 
-        configRowManager({ viewLifecycleOwner.lifecycleScope }, tagsRowManager, ::TagPresenter)
-        configRowManager({ viewLifecycleOwner.lifecycleScope }, galleriesRowManager, ::GalleryPresenter)
-        configRowManager({ viewLifecycleOwner.lifecycleScope }, studioRowManager, ::StudioPresenter)
+        configRowManager(
+            server,
+            { viewLifecycleOwner.lifecycleScope },
+            tagsRowManager,
+            ::TagPresenter,
+        )
+        configRowManager(
+            server,
+            { viewLifecycleOwner.lifecycleScope },
+            galleriesRowManager,
+            ::GalleryPresenter,
+        )
+        configRowManager(
+            server,
+            { viewLifecycleOwner.lifecycleScope },
+            studioRowManager,
+            ::StudioPresenter,
+        )
 
         val detailsActionsAdapter = ArrayObjectAdapter(DetailsActionsPresenter())
         detailsPresenter =
@@ -378,13 +396,15 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
             if (newImage.date.isNotNullOrBlank()) {
                 configRowManager(
+                    server,
                     { viewLifecycleOwner.lifecycleScope },
                     performersRowManager,
-                ) { callback ->
-                    PerformerInScenePresenter(newImage.date, callback)
+                ) { server, callback ->
+                    PerformerInScenePresenter(server, newImage.date, callback)
                 }
             } else {
                 configRowManager(
+                    server,
                     { viewLifecycleOwner.lifecycleScope },
                     performersRowManager,
                     ::PerformerPresenter,
@@ -394,6 +414,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
             itemPresenter.addClassPresenter(
                 OCounter::class.java,
                 OCounterPresenter(
+                    server,
                     createOCounterLongClickCallBack(
                         DataType.IMAGE,
                         newImage.id,

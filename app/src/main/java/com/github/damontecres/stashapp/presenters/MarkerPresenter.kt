@@ -6,6 +6,7 @@ import com.github.damontecres.stashapp.api.fragment.MarkerData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.presenters.StashPresenter.PopUpAction
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.util.titleOrFilename
 import java.util.EnumMap
@@ -13,8 +14,9 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 class MarkerPresenter(
+    server: StashServer,
     callback: LongClickCallBack<MarkerData>? = null,
-) : StashPresenter<MarkerData>(callback) {
+) : StashPresenter<MarkerData>(server, callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: MarkerData,

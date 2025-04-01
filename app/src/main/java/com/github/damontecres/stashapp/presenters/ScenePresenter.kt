@@ -17,8 +17,9 @@ import com.github.damontecres.stashapp.views.durationToString
 import java.util.EnumMap
 
 class ScenePresenter(
+    server: StashServer,
     callback: LongClickCallBack<SlimSceneData>? = null,
-) : StashPresenter<SlimSceneData>(callback) {
+) : StashPresenter<SlimSceneData>(server, callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: SlimSceneData,
@@ -58,7 +59,7 @@ class ScenePresenter(
 
         cardView.setRating100(item.rating100)
         if (item.studio != null) {
-            if (StashServer.requireCurrentServer().serverPreferences.showStudioAsText) {
+            if (server.serverPreferences.showStudioAsText) {
                 cardView.setTextOverlayText(
                     StashImageCardView.OverlayPosition.TOP_RIGHT,
                     item.studio.name,
