@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.annotation.OptIn
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -15,10 +14,10 @@ import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.playback.StashPlayerView
 import com.github.damontecres.stashapp.playback.maybeMuteAudio
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.views.models.ImageViewModel
-import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlin.properties.Delegates
 
 /**
@@ -29,7 +28,6 @@ class ImageClipFragment :
     Fragment(R.layout.image_clip_playback),
     VideoController,
     Player.Listener {
-    private val serverViewModel by activityViewModels<ServerViewModel>()
     private val imageViewModel: ImageViewModel by viewModels(ownerProducer = { requireParentFragment() })
     private lateinit var videoView: StashPlayerView
     private var player: Player? = null
@@ -55,29 +53,6 @@ class ImageClipFragment :
         videoView.useController = false
 
         imageViewModel.videoController = this
-
-        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            if (server == null) {
-                return@observe
-            }
-            // Always release the player and recreate
-            StashExoPlayer.releasePlayer()
-            player =
-                StashExoPlayer
-                    .getInstance(
-                        requireContext(),
-                        server,
-                    ).also {
-                        videoView.player = it
-                        it.repeatMode =
-                            if (imageViewModel.slideshow.value == true) {
-                                Player.REPEAT_MODE_OFF
-                            } else {
-                                Player.REPEAT_MODE_ONE
-                            }
-                    }
-            StashExoPlayer.addListener(this)
-        }
 
         imageViewModel.image.observe(viewLifecycleOwner) { imageData ->
             if (imageData.isImageClip) {
@@ -110,6 +85,28 @@ class ImageClipFragment :
                     Player.REPEAT_MODE_ONE
                 }
         }
+    }
+
+    @OptIn(UnstableApi::class)
+    override fun onStart() {
+        // Always release the player and recreate
+        StashExoPlayer.releasePlayer()
+        player =
+            StashExoPlayer
+                .getInstance(
+                    requireContext(),
+                    StashServer.requireCurrentServer(),
+                ).also {
+                    videoView.player = it
+                    it.repeatMode =
+                        if (imageViewModel.slideshow.value == true) {
+                            Player.REPEAT_MODE_OFF
+                        } else {
+                            Player.REPEAT_MODE_ONE
+                        }
+                }
+        StashExoPlayer.addListener(this)
+        super.onStart()
     }
 
     override fun play() {

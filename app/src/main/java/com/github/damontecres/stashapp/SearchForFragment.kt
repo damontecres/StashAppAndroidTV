@@ -82,15 +82,14 @@ class SearchForFragment :
                 .show()
         }
 
+    private val server = StashServer.requireCurrentServer()
+    private val queryEngine = QueryEngine(server)
+
     private lateinit var searchFor: Destination.SearchFor
     private lateinit var dataType: DataType
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (savedInstanceState != null) {
-            serverViewModel.navigationManager.goBack()
-            return
-        }
         searchFor = requireArguments().getDestination<Destination.SearchFor>()
         dataType = searchFor.dataType
         perPage =
@@ -101,11 +100,8 @@ class SearchForFragment :
 
         searchResultsAdapter.presenterSelector =
             StashPresenter
-                .defaultClassPresenterSelector(serverViewModel.requireServer())
-                .addClassPresenter(
-                    StashAction::class.java,
-                    CreateNewPresenter(serverViewModel.requireServer(), dataType),
-                )
+                .defaultClassPresenterSelector()
+                .addClassPresenter(StashAction::class.java, CreateNewPresenter(dataType))
         adapter.set(
             RESULTS_POS,
             ListRow(HeaderItem(getString(R.string.waiting_for_query)), ArrayObjectAdapter()),
@@ -133,7 +129,7 @@ class SearchForFragment :
     private suspend fun handleCreate(query: String?) {
         if (query.isNotNullOrBlank()) {
             val name = query.replaceFirstChar(Char::titlecase)
-            val mutationEngine = MutationEngine(serverViewModel.requireServer())
+            val mutationEngine = MutationEngine(server)
             val item =
                 when (dataType) {
                     DataType.TAG -> {
@@ -187,8 +183,7 @@ class SearchForFragment :
     override fun onResume() {
         super.onResume()
         if (dataType in DATA_TYPE_SUGGESTIONS) {
-            val presenterSelector =
-                StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer())
+            val presenterSelector = StashPresenter.defaultClassPresenterSelector()
 
             viewLifecycleOwner.lifecycleScope.launch(
                 StashCoroutineExceptionHandler {
@@ -211,7 +206,6 @@ class SearchForFragment :
                         per_page = Optional.present(perPage),
                         sort = Optional.present(sortBy),
                     )
-                val queryEngine = QueryEngine(serverViewModel.requireServer())
                 val results =
                     when (dataType) {
                         DataType.GALLERY ->
@@ -279,7 +273,6 @@ class SearchForFragment :
             val mostRecentIds = mostRecent.map { it.id }
             Log.v(TAG, "Got ${mostRecentIds.size} recent items")
             if (mostRecentIds.isNotEmpty()) {
-                val queryEngine = QueryEngine(serverViewModel.requireServer())
                 val items =
                     when (dataType) {
                         DataType.PERFORMER -> queryEngine.findPerformers(performerIds = mostRecentIds)
@@ -294,11 +287,7 @@ class SearchForFragment :
 
                 if (items.isNotEmpty()) {
                     val results =
-                        ArrayObjectAdapter(
-                            StashPresenter.defaultClassPresenterSelector(
-                                serverViewModel.requireServer(),
-                            ),
-                        )
+                        ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
                     Log.v(
                         TAG,
                         "${mostRecentIds.size} recent items resolved to ${results.size()} items",
@@ -360,7 +349,6 @@ class SearchForFragment :
                     per_page = Optional.present(perPage),
                 )
             viewLifecycleOwner.lifecycleScope.launch(exceptionHandler) {
-                val queryEngine = QueryEngine(serverViewModel.requireServer())
                 val results =
                     when (dataType) {
                         DataType.GALLERY ->
@@ -448,9 +436,8 @@ class SearchForFragment :
     }
 
     private inner class CreateNewPresenter(
-        server: StashServer,
         val dataType: DataType,
-    ) : StashPresenter<StashAction>(server) {
+    ) : StashPresenter<StashAction>() {
         override fun doOnBindViewHolder(
             cardView: StashImageCardView,
             item: StashAction,

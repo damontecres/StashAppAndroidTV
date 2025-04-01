@@ -2,12 +2,10 @@ package com.github.damontecres.stashapp.presenters
 
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.OCounter
-import com.github.damontecres.stashapp.util.StashServer
 
 class OCounterPresenter(
-    server: StashServer,
     callback: LongClickCallBack<OCounter>? = null,
-) : StashPresenter<OCounter>(server, callback) {
+) : StashPresenter<OCounter>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: OCounter,

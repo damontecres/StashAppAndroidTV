@@ -1,7 +1,7 @@
 package com.github.damontecres.stashapp.data
 
 import com.github.damontecres.stashapp.api.fragment.MarkerData
-import com.github.damontecres.stashapp.api.fragment.VideoSceneData
+import com.github.damontecres.stashapp.api.fragment.SlimSceneData
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import com.github.damontecres.stashapp.util.titleOrFilename
 import kotlin.time.DurationUnit
@@ -39,12 +39,12 @@ fun MarkerData.toPlayListItem(index: Int): PlaylistItem {
     )
 }
 
-fun VideoSceneData.toPlayListItem(index: Int): PlaylistItem =
+fun SlimSceneData.toPlayListItem(index: Int): PlaylistItem =
     PlaylistItem(
         index,
         title = titleOrFilename,
-        subtitle = date,
-        details1 = null,
-        details2 = null,
+        subtitle = studio?.name,
+        details1 = performers.map { it.name }.joinNotNullOrBlank(", "),
+        details2 = date,
         imageUrl = paths.screenshot,
     )

@@ -30,7 +30,7 @@ class GroupFragment : TabbedFragment(DataType.GROUP.name) {
         super.onViewCreated(view, savedInstanceState)
 
         serverViewModel.currentServer.observe(viewLifecycleOwner) {
-            viewModel.init(serverViewModel.requireServer(), requireArguments())
+            viewModel.init(requireArguments())
         }
         serverViewModel
             .withLiveData(viewModel.item)

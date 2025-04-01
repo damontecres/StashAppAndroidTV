@@ -12,6 +12,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.github.damontecres.stashapp.util.MutationEngine
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.onlyScrollIfNeeded
 import com.github.damontecres.stashapp.util.readOnlyModeEnabled
@@ -29,7 +30,7 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
     protected lateinit var favoriteButton: Button
     protected lateinit var ratingBar: StashRatingBar
 
-    protected val mutationEngine by lazy { MutationEngine(serverViewModel.requireServer()) }
+    protected lateinit var mutationEngine: MutationEngine
 
     override fun onViewCreated(
         view: View,
@@ -47,11 +48,9 @@ abstract class DetailsFragment : Fragment(R.layout.details_view) {
             favoriteButton.isFocusable = false
             ratingBar.disable()
         }
-        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            if (server != null) {
-                ratingBar.configure(server)
-            }
-        }
+
+        val server = StashServer.requireCurrentServer()
+        mutationEngine = MutationEngine(server)
     }
 
     override fun onResume() {

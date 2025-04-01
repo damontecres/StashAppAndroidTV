@@ -6,14 +6,12 @@ import com.github.damontecres.stashapp.api.fragment.GroupData
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.FA_FONT
 import com.github.damontecres.stashapp.presenters.StashImageCardView.Companion.ICON_SPACING
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.FontSpan
 import java.util.EnumMap
 
 class GroupPresenter(
-    server: StashServer,
     callback: LongClickCallBack<GroupData>? = null,
-) : StashPresenter<GroupData>(server, callback) {
+) : StashPresenter<GroupData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: GroupData,

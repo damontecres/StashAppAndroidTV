@@ -19,6 +19,7 @@ import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
 import com.github.damontecres.stashapp.views.dialog.ConfirmationDialogFragment
@@ -35,16 +36,12 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
     private val serverViewModel: ServerViewModel by activityViewModels()
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        if (savedInstanceState != null) {
-            return super.onCreateGuidance(savedInstanceState)
-        }
         val text =
             filterSummary(
                 requireContext(),
                 viewModel.dataType.value!!,
                 viewModel.dataType.value!!.filterType,
                 viewModel.objectFilter.value!!,
-                serverViewModel.requireServer().serverPreferences.ratingsAsStars,
                 viewModel::lookupIds,
             ).ifBlank { "No filters set" }
         val typeStr = getString(viewModel.dataType.value!!.stringId)
@@ -94,11 +91,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
                 .build(),
         )
         val count = viewModel.resultCount.value ?: -1
-        val countStr =
-            formatNumber(
-                count,
-                serverViewModel.requireServer().serverPreferences.abbreviateCounters,
-            )
+        val countStr = formatNumber(count, viewModel.abbreviateCounters)
         actions.add(
             GuidedAction
                 .Builder(requireContext())
@@ -125,19 +118,14 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        if (savedInstanceState != null) {
-            return
-        }
         updateActions(actions)
     }
 
     override fun onResume() {
         super.onResume()
-        if (viewModel.dataType.value != null) {
-            val refreshActions = mutableListOf<GuidedAction>()
-            updateActions(refreshActions)
-            actions = refreshActions
-        }
+        val refreshActions = mutableListOf<GuidedAction>()
+        updateActions(refreshActions)
+        actions = refreshActions
     }
 
     override fun onViewCreated(
@@ -148,11 +136,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         if (savedInstanceState == null) {
             viewModel.updateCount()
             viewModel.resultCount.observe(viewLifecycleOwner) { count ->
-                val countStr =
-                    formatNumber(
-                        count,
-                        serverViewModel.requireServer().serverPreferences.abbreviateCounters,
-                    )
+                val countStr = formatNumber(count, viewModel.abbreviateCounters)
                 if (count >= 0) {
                     findActionById(SUBMIT).description = "$countStr results"
                     notifyActionChanged(findActionPositionById(SUBMIT))
@@ -184,7 +168,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(autoToast = true)) {
                 // If there is a name, try to save it to the server
                 if (action.id == SAVE_SUBMIT && filterName.isNotNullOrBlank()) {
-                    val queryEngine = QueryEngine(serverViewModel.requireServer())
+                    val queryEngine = QueryEngine(viewModel.server.value!!)
                     // Save it
                     val filterWriter =
                         FilterWriter(dataType) { dataType, ids ->
@@ -244,7 +228,7 @@ class CreateFilterStep : CreateFilterGuidedStepFragment() {
         newFilterInput: SaveFilterInput?,
     ) {
         if (newFilterInput != null) {
-            val mutationEngine = MutationEngine(serverViewModel.requireServer())
+            val mutationEngine = MutationEngine(StashServer.requireCurrentServer())
             val newSavedFilter = mutationEngine.saveFilter(newFilterInput)
             Log.i(TAG, "New SavedFilter: ${newSavedFilter.id}")
         }

@@ -40,7 +40,6 @@ import kotlinx.coroutines.launch
 class ImageViewModel(
     private val state: SavedStateHandle,
 ) : ViewModel() {
-    private lateinit var server: StashServer
     var imageController: ImageController? = null
     var videoController: VideoController? = null
     private lateinit var pager: StashSparseFilterFetcher<FindImagesQuery.Data, ImageData>
@@ -86,13 +85,9 @@ class ImageViewModel(
         state["imageId"] = newImage.id
     }
 
-    fun init(
-        server: StashServer,
-        slideshow: Destination.Slideshow,
-    ) {
-        this.server = server
+    fun init(slideshow: Destination.Slideshow) {
         currentPosition.value = slideshow.position
-        createPager(server, slideshow.filterArgs)
+        createPager(slideshow.filterArgs)
 
         viewModelScope.launch(StashCoroutineExceptionHandler()) {
             totalCount.value = pager.source.getCount()
@@ -103,19 +98,16 @@ class ImageViewModel(
         }
     }
 
-    private fun createPager(
-        server: StashServer,
-        filterArgs: FilterArgs,
-    ) {
+    private fun createPager(filterArgs: FilterArgs) {
         val dataSupplier =
             DataSupplierFactory(
-                server.version,
+                StashServer.getCurrentServerVersion(),
             ).create<FindImagesQuery.Data, ImageData, CountImagesQuery.Data>(
                 filterArgs,
             ) as ImageDataSupplier
         val pagingSource =
             StashPagingSource<FindImagesQuery.Data, ImageData, ImageData, CountImagesQuery.Data>(
-                QueryEngine(server),
+                QueryEngine(StashServer.requireCurrentServer()),
                 dataSupplier,
             )
         val pageSize =

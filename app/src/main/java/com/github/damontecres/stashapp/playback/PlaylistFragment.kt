@@ -26,6 +26,7 @@ import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.getDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -66,8 +67,6 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
                 add(R.id.video_overlay, playlistListFragment)
                 hide(playlistListFragment)
             }
-        } else {
-            serverViewModel.navigationManager.goBack()
         }
     }
 
@@ -122,7 +121,7 @@ abstract class PlaylistFragment<T : Query.Data, D : StashData, C : Query.Data> :
     private suspend fun buildPlaylist() {
         val filter = playlistViewModel.filterArgs.value!!
         val dataSupplier =
-            DataSupplierFactory(serverViewModel.requireServer().version).create<T, D, C>(filter)
+            DataSupplierFactory(StashServer.getCurrentServerVersion()).create<T, D, C>(filter)
         pagingSource =
             StashPagingSource(
                 QueryEngine(serverViewModel.requireServer()),

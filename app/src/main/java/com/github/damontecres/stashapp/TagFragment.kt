@@ -36,12 +36,12 @@ class TagFragment : TabbedFragment(DataType.TAG.name) {
         super.onViewCreated(view, savedInstanceState)
 
         serverViewModel.currentServer.observe(viewLifecycleOwner) {
-            viewModel.init(serverViewModel.requireServer(), requireArguments())
+            viewModel.init(requireArguments())
         }
         serverViewModel
             .withLiveData(viewModel.item)
             .observe(viewLifecycleOwner) { (server, tag) ->
-                if (server == null || tag == null) {
+                if (tag == null) {
                     Toast
                         .makeText(
                             requireContext(),

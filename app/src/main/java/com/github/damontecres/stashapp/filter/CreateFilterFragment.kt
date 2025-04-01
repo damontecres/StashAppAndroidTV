@@ -8,32 +8,26 @@ import androidx.leanback.app.GuidedStepSupportFragment
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.getDestination
-import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 class CreateFilterFragment : Fragment(R.layout.frame) {
-    private val serverViewModel: ServerViewModel by activityViewModels()
     private val viewModel by activityViewModels<CreateFilterViewModel>()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val dest = requireArguments().getDestination<Destination.CreateFilter>()
+        val startingFilter = dest.startingFilter
+        viewModel.initialize(
+            dest.dataType,
+            startingFilter,
+        )
+    }
 
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-
-        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            if (server == null) {
-                serverViewModel.navigationManager.goBack()
-                return@observe
-            }
-            val dest = requireArguments().getDestination<Destination.CreateFilter>()
-            val startingFilter = dest.startingFilter
-            viewModel.initialize(
-                server,
-                dest.dataType,
-                startingFilter,
-            )
-        }
-
         viewModel.ready.observe(viewLifecycleOwner) { ready ->
             if (ready) {
                 GuidedStepSupportFragment.add(

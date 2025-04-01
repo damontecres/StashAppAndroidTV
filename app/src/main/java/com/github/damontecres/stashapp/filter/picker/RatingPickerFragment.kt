@@ -2,21 +2,17 @@ package com.github.damontecres.stashapp.filter.picker
 
 import android.os.Bundle
 import android.text.InputType
-import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.GuidedAction
 import com.apollographql.apollo.api.Optional
 import com.github.damontecres.stashapp.api.type.CriterionModifier
 import com.github.damontecres.stashapp.api.type.IntCriterionInput
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.filter.FilterOption
-import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlin.properties.Delegates
 
 class RatingPickerFragment(
     filterOption: FilterOption<StashDataFilter, IntCriterionInput>,
 ) : TwoValuePicker<Int, IntCriterionInput>(filterOption) {
-    private val serverViewModel: ServerViewModel by activityViewModels()
-
     private var ratingsAsStars by Delegates.notNull<Boolean>()
 
     override val modifierOptions: List<CriterionModifier>
@@ -31,7 +27,9 @@ class RatingPickerFragment(
         get() = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        ratingsAsStars = serverViewModel.requireServer().serverPreferences.ratingsAsStars
+        ratingsAsStars =
+            viewModel.server.value!!
+                .serverPreferences.ratingsAsStars
         super.onCreate(savedInstanceState)
     }
 

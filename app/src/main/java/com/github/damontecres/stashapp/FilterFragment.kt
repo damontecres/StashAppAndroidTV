@@ -29,6 +29,7 @@ import com.github.damontecres.stashapp.suppliers.toFilterArgs
 import com.github.damontecres.stashapp.util.FilterParser
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.addExtraGridLongClicks
 import com.github.damontecres.stashapp.util.calculatePageSize
 import com.github.damontecres.stashapp.util.getDestination
@@ -75,6 +76,21 @@ class FilterFragment :
         val startingFilter = dest.filterArgs
         dataType = startingFilter.dataType
         Log.d(TAG, "onCreate: dataType=$dataType")
+
+        val presenterSelector = StashPresenter.defaultClassPresenterSelector()
+        addExtraGridLongClicks(presenterSelector, dataType) {
+            FilterAndPosition(
+                stashGridViewModel.filterArgs.value!!,
+                stashGridViewModel.currentPosition.value ?: -1,
+            )
+        }
+        stashGridViewModel.init(
+            NullPresenterSelector(
+                presenterSelector,
+                NullPresenter(dataType),
+            ),
+            calculatePageSize(requireContext(), dataType),
+        )
     }
 
     override fun onViewCreated(
@@ -98,28 +114,9 @@ class FilterFragment :
         fragment.requestFocus = true
         fragment.init(dataType)
 
-        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            if (server == null) {
-                return@observe
-            }
-            val presenterSelector =
-                StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer())
-            addExtraGridLongClicks(presenterSelector, dataType) {
-                FilterAndPosition(
-                    stashGridViewModel.filterArgs.value!!,
-                    stashGridViewModel.currentPosition.value ?: -1,
-                )
-            }
-            stashGridViewModel.init(
-                server,
-                NullPresenterSelector(
-                    presenterSelector,
-                    NullPresenter(server, dataType),
-                ),
-                calculatePageSize(requireContext(), dataType),
-            )
+        serverViewModel.currentServer.observe(viewLifecycleOwner) {
             sortButtonManager =
-                SortButtonManager(serverViewModel.requireServer().version) { sortAndDirection ->
+                SortButtonManager(StashServer.getCurrentServerVersion()) { sortAndDirection ->
                     stashGridViewModel.setFilter(sortAndDirection)
                 }
             val filter =
@@ -195,7 +192,7 @@ class FilterFragment :
     }
 
     private suspend fun populateSavedFilters(dataType: DataType) {
-        val server = serverViewModel.requireServer()
+        val server = StashServer.requireCurrentServer()
         val savedFilters =
             QueryEngine(server).getSavedFilters(dataType)
 

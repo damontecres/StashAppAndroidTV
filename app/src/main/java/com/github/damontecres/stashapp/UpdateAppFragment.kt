@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import com.github.damontecres.stashapp.navigation.Destination
 import com.github.damontecres.stashapp.util.Release
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.UpdateChecker
 import com.github.damontecres.stashapp.util.Version
 import com.github.damontecres.stashapp.util.getDestination
@@ -31,7 +32,7 @@ class UpdateAppFragment : GuidedStepSupportFragment() {
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
         val installedVersion = UpdateChecker.getInstalledVersion(requireActivity())
-        val serverVersion = serverViewModel.requireServer().version
+        val serverVersion = StashServer.getCurrentServerVersion()
         val description =
             buildList {
                 add("${getString(R.string.stashapp_package_manager_installed_version)}: $installedVersion")

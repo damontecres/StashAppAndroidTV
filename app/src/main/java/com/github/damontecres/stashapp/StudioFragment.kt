@@ -35,12 +35,12 @@ class StudioFragment : TabbedFragment(DataType.STUDIO.name) {
         super.onViewCreated(view, savedInstanceState)
 
         serverViewModel.currentServer.observe(viewLifecycleOwner) {
-            viewModel.init(serverViewModel.requireServer(), requireArguments())
+            viewModel.init(requireArguments())
         }
         serverViewModel
             .withLiveData(viewModel.item)
             .observe(viewLifecycleOwner) { (server, studio) ->
-                if (server == null || studio == null) {
+                if (studio == null) {
                     Toast
                         .makeText(
                             requireContext(),

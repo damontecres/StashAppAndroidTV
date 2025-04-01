@@ -140,16 +140,14 @@ class ListRowManager<T : StashData>(
 }
 
 fun <T : StashData> configRowManager(
-    server: StashServer,
     scope: () -> CoroutineScope,
     rowManager: ListRowManager<T>,
-    presenter: (server: StashServer, StashPresenter.LongClickCallBack<T>) -> StashPresenter<T>,
+    presenter: (StashPresenter.LongClickCallBack<T>) -> StashPresenter<T>,
 ) {
     if (rowManager.adapter.presenterSelector == null) {
         rowManager.adapter.presenterSelector =
             SinglePresenterSelector(
                 presenter.invoke(
-                    server,
                     createRemoveLongClickListener(
                         scope,
                         rowManager,

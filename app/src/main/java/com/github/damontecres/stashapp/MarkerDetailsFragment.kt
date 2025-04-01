@@ -47,6 +47,7 @@ import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashGlide
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.convertDpToPixel
 import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getDestination
@@ -80,8 +81,8 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
     private val mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
     private val mAdapter = SparseArrayObjectAdapter()
 
-    private val primaryTagPresenter by lazy {
-        TagPresenter(serverViewModel.requireServer())
+    private val primaryTagPresenter =
+        TagPresenter()
             .addLongCLickAction(
                 StashPresenter.PopUpItem(
                     REPLACE_PRIMARY_ID,
@@ -97,8 +98,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     ),
                 )
             }
-    }
-    private val primaryTagRowManager by lazy {
+    private val primaryTagRowManager =
         ListRowManager<TagData>(
             DataType.TAG,
             ListRowManager.SparseArrayRowModifier(mAdapter, PRIMARY_TAG_POS),
@@ -107,7 +107,7 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             // Kind of hacky
             val marker = viewModel.item.value!!
             val result =
-                MutationEngine(serverViewModel.requireServer()).setTagsOnMarker(
+                mutationEngine.setTagsOnMarker(
                     marker.id,
                     tagIds[1],
                     marker.tags.map { it.tagData.id },
@@ -115,34 +115,29 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
             viewModel.setMarker(result!!)
             listOfNotNull(result.primary_tag.tagData)
         }
-    }
 
-    private val tagsRowManager by lazy {
+    private val tagsRowManager =
         ListRowManager<TagData>(
             DataType.TAG,
             ListRowManager.SparseArrayRowModifier(mAdapter, TAG_POS),
-            ArrayObjectAdapter(TagPresenter(serverViewModel.requireServer())),
+            ArrayObjectAdapter(TagPresenter()),
         ) { tagIds ->
             val marker = viewModel.item.value!!
             val result =
-                MutationEngine(serverViewModel.requireServer()).setTagsOnMarker(
-                    marker.id,
-                    marker.primary_tag.tagData.id,
-                    tagIds,
-                )
+                mutationEngine.setTagsOnMarker(marker.id, marker.primary_tag.tagData.id, tagIds)
             viewModel.setMarker(result!!)
             result.tags.map { it.tagData }
         }
-    }
 
-    private val sceneActionsAdapter by lazy {
+    private val sceneActionsAdapter =
         SparseArrayObjectAdapter(
             ClassPresenterSelector().addClassPresenter(
                 StashAction::class.java,
-                ActionPresenter(serverViewModel.requireServer()),
+                ActionPresenter(),
             ),
         )
-    }
+
+    private lateinit var mutationEngine: MutationEngine
 
     private lateinit var detailsPresenter: FullWidthDetailsOverviewRowPresenter
 
@@ -179,6 +174,9 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
+        mutationEngine = MutationEngine(StashServer.requireCurrentServer())
 
         setFragmentResultListener(MarkerDetailsFragment::class.simpleName!!) { _, bundle ->
             val sourceId = bundle.getLong(SearchForFragment.RESULT_ID_KEY)
@@ -227,31 +225,27 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        val markerDetailsDest = requireArguments().getDestination<Destination.MarkerDetails>()
+        viewModel.init(markerDetailsDest.id)
+    }
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
+        setupDetailsOverviewRowPresenter()
+        adapter = mAdapter
 
-        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            if (server == null) {
-                return@observe
-            }
-            setupDetailsOverviewRowPresenter()
-            adapter = mAdapter
-
-            onItemViewClickedListener =
-                ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
-                    .addListenerForClass(StashAction::class.java) { item ->
-                        actionClickListener.onClicked(item)
-                    }.addListenerForClass(Action::class.java) { _ ->
-                        // no-op, detailsPresenter.onActionClickedListener will handle
-                    }
-            primaryTagRowManager.name = getString(R.string.stashapp_primary_tag)
-            val markerDetailsDest =
-                requireArguments().getDestination<Destination.MarkerDetails>()
-            viewModel.init(server, markerDetailsDest.id)
-        }
+        onItemViewClickedListener =
+            ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
+                .addListenerForClass(StashAction::class.java) { item ->
+                    actionClickListener.onClicked(item)
+                }.addListenerForClass(Action::class.java) { _ ->
+                    // no-op, detailsPresenter.onActionClickedListener will handle
+                }
 
         viewModel.item.observe(viewLifecycleOwner) { marker ->
             if (marker == null) {
@@ -304,7 +298,6 @@ class MarkerDetailsFragment : DetailsSupportFragment() {
                     ) {
                         item as FullMarkerData
                         val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
-                        ratingBar.configure(serverViewModel.requireServer())
                         ratingBar.visibility = View.GONE
 
                         vh.title.text =

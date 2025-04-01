@@ -31,7 +31,7 @@ class StashRatingBar(
     private val decimalRatingText: TextView
     private val decimalRatingBar: SeekBar
 
-    private var ratingAsStars: Boolean = true
+    val ratingAsStars: Boolean
 
     private var ratingCallback: RatingCallback? = null
 
@@ -48,6 +48,8 @@ class StashRatingBar(
     init {
         inflate(context, R.layout.stash_rating_bar, this)
 
+        val serverPreferences = StashServer.requireCurrentServer().serverPreferences
+
         starRatingBar = findViewById(R.id.rating_star)
         starRatingBar.setOnClickListener(RatingOnClickListener())
 
@@ -55,6 +57,13 @@ class StashRatingBar(
         decimalRatingText = findViewById(R.id.rating_decimal_text)
         decimalRatingBar = findViewById(R.id.rating_decimal)
         decimalRatingBar.setOnClickListener(RatingOnClickListener())
+
+        ratingAsStars = serverPreferences.ratingsAsStars
+        if (ratingAsStars) {
+            decimalLayout.visibility = View.GONE
+        } else {
+            starRatingBar.visibility = View.GONE
+        }
 
         var background: Drawable?
 
@@ -86,6 +95,10 @@ class StashRatingBar(
         starRatingBar.background = background
         decimalLayout.background = background
         decimalRatingBar.background = background
+
+        val precision =
+            serverPreferences.preferences.getFloat(ServerPreferences.PREF_RATING_PRECISION, 1.0f)
+        starRatingBar.stepSize = precision
 
         decimalRatingBar.setOnSeekBarChangeListener(
             object : SeekBar.OnSeekBarChangeListener {
@@ -149,23 +162,6 @@ class StashRatingBar(
         starRatingBar.setIsIndicator(true)
         starRatingBar.isFocusable = false
         decimalRatingBar.isFocusable = false
-    }
-
-    fun configure(server: StashServer) {
-        ratingAsStars = server.serverPreferences.ratingsAsStars
-        val precision =
-            server.serverPreferences.preferences.getFloat(
-                ServerPreferences.PREF_RATING_PRECISION,
-                1.0f,
-            )
-        starRatingBar.stepSize = precision
-        if (ratingAsStars) {
-            starRatingBar.visibility = View.VISIBLE
-            decimalLayout.visibility = View.GONE
-        } else {
-            starRatingBar.visibility = View.GONE
-            decimalLayout.visibility = View.VISIBLE
-        }
     }
 
     private inner class RatingOnClickListener : OnClickListener {

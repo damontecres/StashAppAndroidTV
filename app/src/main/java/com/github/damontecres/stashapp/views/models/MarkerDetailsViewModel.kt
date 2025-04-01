@@ -16,12 +16,9 @@ class MarkerDetailsViewModel : ViewModel() {
     private val _item = EqualityMutableLiveData<FullMarkerData?>()
     val item: LiveData<FullMarkerData?> = _item
 
-    fun init(
-        server: StashServer,
-        id: String,
-    ) {
+    fun init(id: String) {
         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
-            val queryEngine = QueryEngine(server)
+            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             val marker = queryEngine.getMarker(id)
             _item.value = marker
             seconds.value = marker?.seconds

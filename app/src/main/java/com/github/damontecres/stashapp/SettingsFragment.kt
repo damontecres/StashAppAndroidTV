@@ -464,27 +464,20 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                 sendLogsPref.summary = "Send a copy of recent app logs to your current server"
                 sendLogsPref.setOnPreferenceClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        CompanionPlugin.sendLogCat(
-                            requireContext(),
-                            serverViewModel.requireServer(),
-                            false,
-                        )
+                        CompanionPlugin.sendLogCat(requireContext(), false)
                     }
                     true
                 }
                 sendLogsPref.setOnLongClickListener {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                        CompanionPlugin.sendLogCat(
-                            requireContext(),
-                            serverViewModel.requireServer(),
-                            true,
-                        )
+                        CompanionPlugin.sendLogCat(requireContext(), true)
                     }
                     true
                 }
             }
 
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val serverPrefs = StashServer.requireCurrentServer().updateServerPrefs()
                 if (serverPrefs.companionPluginInstalled) {
                     setupSendLogsPref()
                 } else {
@@ -516,7 +509,8 @@ class SettingsFragment : LeanbackSettingsFragmentCompat() {
                                             Toast.LENGTH_LONG,
                                         ).show()
                                 } else {
-                                    serverViewModel.requireServer().updateServerPrefs()
+                                    val serverPrefs =
+                                        StashServer.requireCurrentServer().updateServerPrefs()
                                     if (serverPrefs.companionPluginInstalled) {
                                         Toast
                                             .makeText(

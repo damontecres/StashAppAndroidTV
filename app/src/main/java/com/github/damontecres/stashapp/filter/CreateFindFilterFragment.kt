@@ -15,25 +15,18 @@ class CreateFindFilterFragment(
     val dataType: DataType,
     private var currFindFilter: StashFindFilter,
 ) : CreateFilterGuidedStepFragment() {
-    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        if (savedInstanceState != null) {
-            return super.onCreateGuidance(savedInstanceState)
-        }
-        return GuidanceStylist.Guidance(
+    override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance =
+        GuidanceStylist.Guidance(
             getString(R.string.sort_by),
             "",
             null,
             ContextCompat.getDrawable(requireContext(), R.mipmap.stash_logo),
         )
-    }
 
     override fun onCreateActions(
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        if (savedInstanceState != null) {
-            return
-        }
         val sortOptions =
             dataType.sortOptions
                 .mapIndexed { index, sortOption ->

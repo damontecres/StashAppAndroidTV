@@ -4,14 +4,12 @@ import android.widget.ImageView
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.StudioData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.joinNotNullOrBlank
 import java.util.EnumMap
 
 class StudioPresenter(
-    server: StashServer,
     callback: LongClickCallBack<StudioData>? = null,
-) : StashPresenter<StudioData>(server, callback) {
+) : StashPresenter<StudioData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: StudioData,

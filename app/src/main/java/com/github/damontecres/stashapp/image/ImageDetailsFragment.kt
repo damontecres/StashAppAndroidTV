@@ -52,6 +52,7 @@ import com.github.damontecres.stashapp.util.ListRowManager
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.configRowManager
 import com.github.damontecres.stashapp.util.createOCounterLongClickCallBack
 import com.github.damontecres.stashapp.util.getDataType
@@ -89,7 +90,8 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
     private lateinit var firstButton: Button
 
-    private val itemPresenter = ClassPresenterSelector()
+    private val itemPresenter =
+        ClassPresenterSelector().addClassPresenter(StashAction::class.java, ActionPresenter())
 
     /**
      * The bottom row of actions that can be performed on the image (add tags, etc)
@@ -164,6 +166,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val detailsBackground = DetailsSupportFragmentBackgroundController(this)
         detailsBackground.enableParallax()
 
@@ -239,38 +242,13 @@ class ImageDetailsFragment : DetailsSupportFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            if (server == null) {
-                return@observe
-            }
+        val server = StashServer.requireCurrentServer()
+        queryEngine = QueryEngine(server)
+        mutationEngine = MutationEngine(server)
 
-            val server = serverViewModel.requireServer()
-            itemPresenter.addClassPresenter(
-                StashAction::class.java,
-                ActionPresenter(serverViewModel.requireServer()),
-            )
-            queryEngine = QueryEngine(server)
-            mutationEngine = MutationEngine(server)
-
-            configRowManager(
-                server,
-                { viewLifecycleOwner.lifecycleScope },
-                tagsRowManager,
-                ::TagPresenter,
-            )
-            configRowManager(
-                server,
-                { viewLifecycleOwner.lifecycleScope },
-                galleriesRowManager,
-                ::GalleryPresenter,
-            )
-            configRowManager(
-                server,
-                { viewLifecycleOwner.lifecycleScope },
-                studioRowManager,
-                ::StudioPresenter,
-            )
-        }
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, tagsRowManager, ::TagPresenter)
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, galleriesRowManager, ::GalleryPresenter)
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, studioRowManager, ::StudioPresenter)
 
         val detailsActionsAdapter = ArrayObjectAdapter(DetailsActionsPresenter())
         detailsPresenter =
@@ -372,96 +350,79 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     actionListener.incrementOCounter(oCounter)
                 }
 
-        serverViewModel
-            .withLiveData(viewModel.image)
-            .observe(viewLifecycleOwner) { (server, newImage) ->
-                if (server == null) {
-                    return@observe
-                }
+        adapter = mAdapter
 
-                val detailsRow = DetailsOverviewRow(newImage)
+        viewModel.image.observe(viewLifecycleOwner) { newImage ->
 
-                detailsActionsAdapter.clear()
-                if (newImage.isImageClip) {
-                    detailsActionsAdapter.add(Action(R.string.fa_pause.toLong()))
-                } else {
-                    detailsActionsAdapter.add(Action(R.string.fa_rotate_left.toLong()))
-                    detailsActionsAdapter.add(Action(R.string.fa_rotate_right.toLong()))
-                    detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_plus.toLong()))
-                    detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_minus.toLong()))
-                    detailsActionsAdapter.add(Action(R.string.fa_arrow_right_arrow_left.toLong()))
-                    detailsActionsAdapter.add(Action(R.string.apply_filters.toLong()))
-                    detailsActionsAdapter.add(Action(R.string.stashapp_effect_filters_reset_transforms.toLong()))
-                }
-                if (viewModel.slideshow.value!!) {
-                    detailsActionsAdapter.add(Action(R.string.stop_slideshow.toLong()))
-                } else {
-                    detailsActionsAdapter.add(Action(R.string.play_slideshow.toLong()))
-                }
-                detailsRow.actionsAdapter = detailsActionsAdapter
+            val detailsRow = DetailsOverviewRow(newImage)
 
-                mAdapter.set(DETAILS_POS, detailsRow)
-
-                if (newImage.date.isNotNullOrBlank()) {
-                    configRowManager(
-                        server,
-                        { viewLifecycleOwner.lifecycleScope },
-                        performersRowManager,
-                    ) { server, callback ->
-                        PerformerInScenePresenter(server, newImage.date, callback)
-                    }
-                } else {
-                    configRowManager(
-                        server,
-                        { viewLifecycleOwner.lifecycleScope },
-                        performersRowManager,
-                        ::PerformerPresenter,
-                    )
-                }
-
-                itemPresenter.addClassPresenter(
-                    OCounter::class.java,
-                    OCounterPresenter(
-                        server,
-                        createOCounterLongClickCallBack(
-                            DataType.IMAGE,
-                            newImage.id,
-                            mutationEngine,
-                            viewLifecycleOwner.lifecycleScope,
-                        ) { newCount ->
-                            itemActionsAdapter.set(O_COUNTER_POS, newCount)
-                        },
-                    ),
-                )
-
-                itemActionsAdapter.set(
-                    O_COUNTER_POS,
-                    OCounter(newImage.id, newImage.o_counter ?: 0),
-                )
-
-                viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
-                    val extraImageData = queryEngine.getImageExtra(newImage.id)
-                    tagsRowManager.setItems(extraImageData?.tags?.map { it.tagData }.orEmpty())
-                    performersRowManager.setItems(
-                        extraImageData
-                            ?.performers
-                            ?.map { it.performerData }
-                            .orEmpty(),
-                    )
-                    galleriesRowManager.setItems(
-                        extraImageData
-                            ?.galleries
-                            ?.map { it.galleryData }
-                            .orEmpty(),
-                    )
-                    if (extraImageData?.studio != null) {
-                        studioRowManager.setItems(listOf(extraImageData.studio.studioData))
-                    } else {
-                        studioRowManager.clear()
-                    }
-                }
-                adapter = mAdapter
+            detailsActionsAdapter.clear()
+            if (newImage.isImageClip) {
+                detailsActionsAdapter.add(Action(R.string.fa_pause.toLong()))
+            } else {
+                detailsActionsAdapter.add(Action(R.string.fa_rotate_left.toLong()))
+                detailsActionsAdapter.add(Action(R.string.fa_rotate_right.toLong()))
+                detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_plus.toLong()))
+                detailsActionsAdapter.add(Action(R.string.fa_magnifying_glass_minus.toLong()))
+                detailsActionsAdapter.add(Action(R.string.fa_arrow_right_arrow_left.toLong()))
+                detailsActionsAdapter.add(Action(R.string.apply_filters.toLong()))
+                detailsActionsAdapter.add(Action(R.string.stashapp_effect_filters_reset_transforms.toLong()))
             }
+            if (viewModel.slideshow.value!!) {
+                detailsActionsAdapter.add(Action(R.string.stop_slideshow.toLong()))
+            } else {
+                detailsActionsAdapter.add(Action(R.string.play_slideshow.toLong()))
+            }
+            detailsRow.actionsAdapter = detailsActionsAdapter
+
+            mAdapter.set(DETAILS_POS, detailsRow)
+
+            if (newImage.date.isNotNullOrBlank()) {
+                configRowManager(
+                    { viewLifecycleOwner.lifecycleScope },
+                    performersRowManager,
+                ) { callback ->
+                    PerformerInScenePresenter(newImage.date, callback)
+                }
+            } else {
+                configRowManager(
+                    { viewLifecycleOwner.lifecycleScope },
+                    performersRowManager,
+                    ::PerformerPresenter,
+                )
+            }
+
+            itemPresenter.addClassPresenter(
+                OCounter::class.java,
+                OCounterPresenter(
+                    createOCounterLongClickCallBack(
+                        DataType.IMAGE,
+                        newImage.id,
+                        mutationEngine,
+                        viewLifecycleOwner.lifecycleScope,
+                    ) { newCount ->
+                        itemActionsAdapter.set(O_COUNTER_POS, newCount)
+                    },
+                ),
+            )
+
+            itemActionsAdapter.set(
+                O_COUNTER_POS,
+                OCounter(newImage.id, newImage.o_counter ?: 0),
+            )
+
+            viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
+                val extraImageData = queryEngine.getImageExtra(newImage.id)
+                tagsRowManager.setItems(extraImageData?.tags?.map { it.tagData }.orEmpty())
+                performersRowManager.setItems(extraImageData?.performers?.map { it.performerData }.orEmpty())
+                galleriesRowManager.setItems(extraImageData?.galleries?.map { it.galleryData }.orEmpty())
+                if (extraImageData?.studio != null) {
+                    studioRowManager.setItems(listOf(extraImageData.studio.studioData))
+                } else {
+                    studioRowManager.clear()
+                }
+            }
+        }
     }
 
     /**
@@ -508,7 +469,6 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                 ).joinNotNullOrBlank(" - ")
 
             val ratingBar = vh.view.findViewById<StashRatingBar>(R.id.rating_bar)
-            ratingBar.configure(serverViewModel.requireServer())
             ratingBar.rating100 = image.rating100 ?: 0
             if (readOnlyModeEnabled()) {
                 ratingBar.disable()
@@ -517,11 +477,7 @@ class ImageDetailsFragment : DetailsSupportFragment() {
                     viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler(true)) {
                         val result = mutationEngine.updateImage(image.id, rating100 = rating100)
                         ratingBar.rating100 = result?.rating100 ?: 0
-                        showSetRatingToast(
-                            requireContext(),
-                            rating100,
-                            serverViewModel.requireServer().serverPreferences.ratingsAsStars,
-                        )
+                        showSetRatingToast(requireContext(), rating100)
                     }
                 }
             }

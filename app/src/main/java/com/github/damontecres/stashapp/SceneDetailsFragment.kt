@@ -95,7 +95,8 @@ class SceneDetailsFragment : DetailsSupportFragment() {
     private lateinit var sceneId: String
     private var sceneData: FullSceneData? = null
 
-    private val mutationEngine by lazy { MutationEngine(serverViewModel.requireServer()) }
+    private lateinit var queryEngine: QueryEngine
+    private lateinit var mutationEngine: MutationEngine
 
     private val mAdapter = SparseArrayObjectAdapter()
 
@@ -164,21 +165,20 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             removed.forEach { mutationEngine.deleteMarker(it) }
             sceneData =
                 sceneData!!.copy(scene_markers = sceneData!!.scene_markers.filter { it.id !in removed })
-            QueryEngine(serverViewModel.requireServer()).findMarkersInScene(sceneData!!.id)
+            queryEngine.findMarkersInScene(sceneData!!.id)
         }
 
-    private val galleriesAdapter by lazy { ArrayObjectAdapter(GalleryPresenter(serverViewModel.requireServer())) }
+    private val galleriesAdapter = ArrayObjectAdapter(GalleryPresenter())
 
     private val sceneActionsAdapter: SparseArrayObjectAdapter by lazy {
         SparseArrayObjectAdapter(
             ClassPresenterSelector()
                 .addClassPresenter(
                     StashAction::class.java,
-                    ActionPresenter(serverViewModel.requireServer()),
+                    ActionPresenter(),
                 ).addClassPresenter(
                     OCounter::class.java,
                     OCounterPresenter(
-                        serverViewModel.requireServer(),
                         createOCounterLongClickCallBack(
                             DataType.SCENE,
                             sceneId,
@@ -191,7 +191,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                     ),
                 ).addClassPresenter(
                     CreateMarkerAction::class.java,
-                    CreateMarkerActionPresenter(serverViewModel.requireServer()),
+                    CreateMarkerActionPresenter(),
                 ),
         )
     }
@@ -216,117 +216,17 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         sceneId = requireArguments().getDestination<Destination.Item>().id
         Log.d(TAG, "onCreate: sceneId=$sceneId")
 
+        queryEngine = QueryEngine(StashServer.requireCurrentServer())
+        mutationEngine = MutationEngine(StashServer.requireCurrentServer())
+
         mDetailsBackground = DetailsSupportFragmentBackgroundController(this)
         mDetailsBackground.enableParallax()
-    }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View? {
-        val actionListener = SceneActionListener()
-        onItemViewClickedListener =
-            ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
-                .addListenerForClass(StashAction::class.java, actionListener)
-                .addListenerForClass(CreateMarkerAction::class.java) { _ ->
-                    actionListener.onClicked(StashAction.CREATE_MARKER)
-                }.addListenerForClass(Action::class.java) { _ ->
-                    // no-op, detailsPresenter.onActionClickedListener will handle
-                }.addListenerForClass(OCounter::class.java) { oCounter ->
-                    actionListener.incrementOCounter(oCounter)
-                }
-        return super.onCreateView(inflater, container, savedInstanceState)
-    }
-
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-    ) {
-        super.onViewCreated(view, savedInstanceState)
-        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            if (server == null) {
-                return@observe
-            }
-            viewModel.init(server, sceneId, true)
-            setupDetailsOverviewRowPresenter()
-            setupFragmentResults(server)
-
-            if (mAdapter.lookup(ACTIONS_POS) == null) {
-                if (readOnlyModeDisabled()) {
-                    sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
-                    sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
-                    sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
-                    sceneActionsAdapter.set(ADD_GROUP_POS, StashAction.ADD_GROUP)
-                }
-                sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
-                sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
-                mAdapter.set(
-                    ACTIONS_POS,
-                    ListRow(
-                        HeaderItem(getString(R.string.stashapp_actions_name)),
-                        sceneActionsAdapter,
-                    ),
-                )
-            }
-
-            configRowManager(
-                serverViewModel.requireServer(),
-                { viewLifecycleOwner.lifecycleScope },
-                tagsRowManager,
-                ::TagPresenter,
-            )
-            configRowManager(
-                serverViewModel.requireServer(),
-                { viewLifecycleOwner.lifecycleScope },
-                studioRowManager,
-                ::StudioPresenter,
-            )
-            configRowManager(
-                serverViewModel.requireServer(),
-                { viewLifecycleOwner.lifecycleScope },
-                groupsRowManager,
-                ::GroupPresenter,
-            )
-
-            markersRowManager.adapter.presenterSelector =
-                SinglePresenterSelector(
-                    MarkerPresenter(
-                        serverViewModel.requireServer(),
-                        createRemoveLongClickListener(
-                            { viewLifecycleOwner.lifecycleScope },
-                            markersRowManager,
-                        ).addAction(MARKER_DETAILS_POPUP) { _, item ->
-                            serverViewModel.navigationManager.navigate(
-                                Destination.MarkerDetails(
-                                    item.id,
-                                    item.scene.minimalSceneData.id,
-                                ),
-                            )
-                        }.addAction(
-                            PopUpItem(MARKER_DETAILS_POPUP.id + 1, R.string.shift_seconds),
-                            { readOnlyModeDisabled() },
-                            { _, item ->
-                                StashApplication.navigationManager.navigate(
-                                    Destination.UpdateMarker(
-                                        item.id,
-                                        item.scene.minimalSceneData.id,
-                                    ),
-                                )
-                            },
-                        ),
-                    ),
-                )
-        }
-        setupObservers()
-    }
-
-    private fun setupFragmentResults(server: StashServer) {
         setFragmentResultListener(Constants.POSITION_REQUEST_KEY) { _, bundle ->
             val position = bundle.getLong(Constants.POSITION_REQUEST_KEY)
             Log.v(TAG, "setFragmentResultListener: position=$position")
             viewModel.currentPosition.value = position
-            if (server.serverPreferences.trackActivity &&
+            if (serverViewModel.requireServer().serverPreferences.trackActivity &&
                 PreferenceManager
                     .getDefaultSharedPreferences(requireContext())
                     .getBoolean(getString(R.string.pref_key_playback_track_activity), true)
@@ -418,9 +318,85 @@ class SceneDetailsFragment : DetailsSupportFragment() {
         }
     }
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View? {
+        val actionListener = SceneActionListener()
+        onItemViewClickedListener =
+            ClassOnItemViewClickedListener(NavigationOnItemViewClickedListener(serverViewModel.navigationManager))
+                .addListenerForClass(StashAction::class.java, actionListener)
+                .addListenerForClass(CreateMarkerAction::class.java) { _ ->
+                    actionListener.onClicked(StashAction.CREATE_MARKER)
+                }.addListenerForClass(Action::class.java) { _ ->
+                    // no-op, detailsPresenter.onActionClickedListener will handle
+                }.addListenerForClass(OCounter::class.java) { oCounter ->
+                    actionListener.incrementOCounter(oCounter)
+                }
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        setupDetailsOverviewRowPresenter()
+
+        if (mAdapter.lookup(ACTIONS_POS) == null) {
+            if (readOnlyModeDisabled()) {
+                sceneActionsAdapter.set(ADD_TAG_POS, StashAction.ADD_TAG)
+                sceneActionsAdapter.set(ADD_PERFORMER_POS, StashAction.ADD_PERFORMER)
+                sceneActionsAdapter.set(SET_STUDIO_POS, StashAction.SET_STUDIO)
+                sceneActionsAdapter.set(ADD_GROUP_POS, StashAction.ADD_GROUP)
+            }
+            sceneActionsAdapter.set(FORCE_TRANSCODE_POS, StashAction.FORCE_TRANSCODE)
+            sceneActionsAdapter.set(FORCE_DIRECT_PLAY_POS, StashAction.FORCE_DIRECT_PLAY)
+            mAdapter.set(
+                ACTIONS_POS,
+                ListRow(HeaderItem(getString(R.string.stashapp_actions_name)), sceneActionsAdapter),
+            )
+        }
+
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, tagsRowManager, ::TagPresenter)
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, studioRowManager, ::StudioPresenter)
+        configRowManager({ viewLifecycleOwner.lifecycleScope }, groupsRowManager, ::GroupPresenter)
+
+        markersRowManager.adapter.presenterSelector =
+            SinglePresenterSelector(
+                MarkerPresenter(
+                    createRemoveLongClickListener(
+                        { viewLifecycleOwner.lifecycleScope },
+                        markersRowManager,
+                    ).addAction(MARKER_DETAILS_POPUP) { _, item ->
+                        serverViewModel.navigationManager.navigate(
+                            Destination.MarkerDetails(
+                                item.id,
+                                item.scene.minimalSceneData.id,
+                            ),
+                        )
+                    }.addAction(
+                        PopUpItem(MARKER_DETAILS_POPUP.id + 1, R.string.shift_seconds),
+                        { readOnlyModeDisabled() },
+                        { _, item ->
+                            StashApplication.navigationManager.navigate(
+                                Destination.UpdateMarker(
+                                    item.id,
+                                    item.scene.minimalSceneData.id,
+                                ),
+                            )
+                        },
+                    ),
+                ),
+            )
+
+        setupObservers()
+    }
+
     override fun onResume() {
         super.onResume()
-//        viewModel.init(serverViewModel.requireServer(), sceneId, true)
+        viewModel.init(sceneId, true)
     }
 
     private fun setupObservers() {
@@ -435,11 +411,10 @@ class SceneDetailsFragment : DetailsSupportFragment() {
             Log.v(TAG, "sceneData.id=${sceneData.id}")
 
             configRowManager(
-                serverViewModel.requireServer(),
                 { viewLifecycleOwner.lifecycleScope },
                 performersRowManager,
-            ) { server, callback ->
-                PerformerInScenePresenter(server, sceneData.date, callback)
+            ) { callback ->
+                PerformerInScenePresenter(sceneData.date, callback)
             }
 
             setupDetailsOverviewRow(sceneData)
@@ -495,7 +470,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                 mAdapter.clear(SIMILAR_POS)
             } else {
                 val adapter =
-                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer()))
+                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
                 adapter.addAll(0, items)
                 mAdapter.set(
                     SIMILAR_POS,
@@ -585,7 +560,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
 
     private fun setupDetailsOverviewRowPresenter() {
         scenePresenter =
-            SceneDetailsPresenter(serverViewModel.requireServer()) { rating100: Int ->
+            SceneDetailsPresenter { rating100: Int ->
                 viewLifecycleOwner.lifecycleScope.launch(
                     StashCoroutineExceptionHandler(
                         Toast.makeText(
@@ -599,11 +574,7 @@ class SceneDetailsFragment : DetailsSupportFragment() {
                         sceneId,
                         rating100,
                     )
-                    showSetRatingToast(
-                        requireContext(),
-                        rating100,
-                        serverViewModel.requireServer().serverPreferences.ratingsAsStars,
-                    )
+                    showSetRatingToast(requireContext(), rating100)
                 }
             }
         detailsPresenter =

@@ -14,12 +14,9 @@ class PlaybackViewModel : ViewModel() {
     private val _scene = MutableLiveData<Scene>()
     val scene: LiveData<Scene?> = _scene
 
-    fun setScene(
-        server: StashServer,
-        id: String,
-    ) {
+    fun setScene(id: String) {
         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
-            val queryEngine = QueryEngine(server)
+            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             val result = queryEngine.getVideoScene(id)
             _scene.value = result?.let { Scene.fromVideoSceneData(it) }
         }

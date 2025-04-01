@@ -8,15 +8,13 @@ import android.text.style.RelativeSizeSpan
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.ageInYears
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import java.util.EnumMap
 
 open class PerformerPresenter(
-    server: StashServer,
     callback: LongClickCallBack<PerformerData>? = null,
-) : StashPresenter<PerformerData>(server, callback) {
+) : StashPresenter<PerformerData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: PerformerData,

@@ -63,11 +63,7 @@ class PerformerDetailsFragment : DetailsFragment() {
             viewLifecycleOwner.lifecycleScope.launch(StashCoroutineExceptionHandler()) {
                 val newPerformer = mutationEngine.updatePerformer(perf.id, rating100 = newRating100)
                 if (newPerformer != null) {
-                    showSetRatingToast(
-                        requireContext(),
-                        newRating100,
-                        serverViewModel.requireServer().serverPreferences.ratingsAsStars,
-                    )
+                    showSetRatingToast(requireContext(), newRating100)
                     viewModel.update(newPerformer)
                 }
             }

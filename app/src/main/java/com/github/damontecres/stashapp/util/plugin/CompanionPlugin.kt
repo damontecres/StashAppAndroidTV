@@ -78,7 +78,6 @@ class CompanionPlugin {
 
         suspend fun sendLogCat(
             context: Context,
-            server: StashServer,
             verbose: Boolean,
         ) = withContext(Dispatchers.IO + StashCoroutineExceptionHandler(autoToast = true)) {
             try {
@@ -88,6 +87,8 @@ class CompanionPlugin {
                 sb.append("\n** LOGCAT END **")
                 // Avoid individual lines being logged server-side
                 val logcat = sb.replace(Regex("\n"), "<newline>")
+
+                val server = StashServer.requireCurrentServer()
                 val mutationEngine = MutationEngine(server)
                 val mutation =
                     RunPluginTaskMutation(
@@ -112,9 +113,7 @@ class CompanionPlugin {
 
                             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
                         } else if (result is JobResult.NotFound) {
-                            Toast
-                                .makeText(context, "Error sending logs", Toast.LENGTH_LONG)
-                                .show()
+                            Toast.makeText(context, "Error sending logs", Toast.LENGTH_LONG).show()
                         } else if (result is JobResult.Failure) {
                             Toast
                                 .makeText(

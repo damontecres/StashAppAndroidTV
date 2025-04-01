@@ -49,10 +49,11 @@ import com.github.damontecres.stashapp.util.DefaultKeyEventCallback
 import com.github.damontecres.stashapp.util.PagingObjectAdapter
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.animateToInvisible
 import com.github.damontecres.stashapp.util.animateToVisible
+import com.github.damontecres.stashapp.util.getDataType
 import com.github.damontecres.stashapp.util.getInt
-import com.github.damontecres.stashapp.util.maybeGetDataType
 import com.github.damontecres.stashapp.util.maybeStartPlayback
 import com.github.damontecres.stashapp.util.putDataType
 import com.github.damontecres.stashapp.views.StashOnFocusChangeListener
@@ -181,8 +182,7 @@ class StashDataGridFragment :
         savedInstanceState: Bundle?,
     ): View {
         if (savedInstanceState != null) {
-            dataType =
-                savedInstanceState.maybeGetDataType() ?: viewModel.filterArgs.value!!.dataType
+            dataType = savedInstanceState.getDataType()
         }
         Log.v(TAG, "onCreateView: dataType=$dataType")
         val root =
@@ -297,7 +297,7 @@ class StashDataGridFragment :
                                         autoToast = true,
                                     ),
                                 ) {
-                                    val server = serverViewModel.requireServer()
+                                    val server = StashServer.requireCurrentServer()
                                     val factory =
                                         DataSupplierFactory(server.serverPreferences.serverVersion)
                                     val letterPosition =

@@ -12,7 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.leanback.widget.OnItemViewClickedListener
-import androidx.leanback.widget.Presenter
+import androidx.leanback.widget.PresenterSelector
 import androidx.leanback.widget.SearchEditText
 import androidx.preference.PreferenceManager
 import com.github.damontecres.stashapp.api.type.StashDataFilter
@@ -27,6 +27,7 @@ import com.github.damontecres.stashapp.presenters.NullPresenterSelector
 import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.DelegateKeyEventCallback
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.addExtraGridLongClicks
 import com.github.damontecres.stashapp.util.calculatePageSize
 import com.github.damontecres.stashapp.util.getFilterArgs
@@ -72,17 +73,6 @@ class StashGridControlsFragment() :
     // State
     private lateinit var gridHeaderTransitionHelper: TitleTransitionHelper
 
-    /**
-     * The presenter for the items, defaults to [StashPresenter.defaultClassPresenterSelector]
-     */
-    private val presenterSelector: ClassPresenterSelector by lazy {
-        StashPresenter.defaultClassPresenterSelector(
-            serverViewModel.requireServer(),
-        )
-    }
-
-    val presenterSelectorOverrides = mutableMapOf<Class<*>, Presenter>()
-
     // Modifiable properties
 
     /**
@@ -94,6 +84,11 @@ class StashGridControlsFragment() :
      * An optional name for this fragment, not used in this View
      */
     var name: String? = null
+
+    /**
+     * The presenter for the items, defaults to [StashPresenter.defaultClassPresenterSelector]
+     */
+    var presenterSelector: PresenterSelector = StashPresenter.defaultClassPresenterSelector()
 
     /**
      * The item clicked listener, will default to [NavigationOnItemViewClickedListener] in [onViewCreated] if not specified before
@@ -150,14 +145,13 @@ class StashGridControlsFragment() :
             initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
             Log.v(TAG, "sortAndDirection=${initialFilter.sortAndDirection}")
         }
-        presenterSelectorOverrides.forEach { (cls, presenter) ->
-            presenterSelector.addClassPresenter(
-                cls,
-                presenter,
-            )
-        }
 
         Log.v(TAG, "onCreate: dataType=$dataType")
+
+        viewModel.init(
+            NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
+            calculatePageSize(requireContext(), dataType),
+        )
 
         remoteButtonPaging =
             PreferenceManager
@@ -221,80 +215,68 @@ class StashGridControlsFragment() :
             showTitle(shouldShowTitle)
         }
 
-        serverViewModel.currentServer.observe(viewLifecycleOwner) { server ->
-            if (server == null) {
-                return@observe
-            }
-            viewModel.init(
-                server,
-                NullPresenterSelector(
-                    presenterSelector,
-                    NullPresenter(server, dataType),
-                ),
-                calculatePageSize(requireContext(), dataType),
-            )
-
-            val filter =
-                if (viewModel.filterArgs.isInitialized) {
-                    viewModel.filterArgs.value!!
-                } else if (savedInstanceState != null) {
-                    initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
-                    viewModel.setFilter(initialFilter)
-                    initialFilter
-                } else {
-                    viewModel.setFilter(initialFilter)
-                    initialFilter
-                }
-
-            sortButton.nextFocusUpId = R.id.tab_layout
-            SortButtonManager(serverViewModel.requireServer().version) {
-                viewModel.setFilter(currentFilter.with(it))
-            }.setUpSortButton(sortButton, dataType, filter.sortAndDirection)
-
-            val playAllListener =
-                PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
-                    FilterAndPosition(viewModel.filterArgs.value!!, 0)
-                }
-            playAllButton.setOnClickListener(playAllListener)
-
-            if (dataType.supportsPlaylists) {
-                playAllButton.visibility = View.VISIBLE
-                playAllButton.nextFocusUpId = R.id.tab_layout
-            } else if (dataType == DataType.IMAGE) {
-                playAllButton.visibility = View.VISIBLE
-                playAllButton.nextFocusUpId = R.id.tab_layout
-                playAllButton.text = getString(R.string.play_slideshow)
+        val filter =
+            if (viewModel.filterArgs.isInitialized) {
+                viewModel.filterArgs.value!!
+            } else if (savedInstanceState != null) {
+                initialFilter = savedInstanceState.getFilterArgs(STATE_FILTER)!!
+                viewModel.setFilter(initialFilter)
+                initialFilter
+            } else {
+                viewModel.setFilter(initialFilter)
+                initialFilter
             }
 
-            addExtraGridLongClicks(presenterSelector, dataType) {
+        sortButton.nextFocusUpId = R.id.tab_layout
+        SortButtonManager(StashServer.getCurrentServerVersion()) {
+            viewModel.setFilter(currentFilter.with(it))
+        }.setUpSortButton(sortButton, dataType, filter.sortAndDirection)
+
+        val playAllListener =
+            PlayAllOnClickListener(serverViewModel.navigationManager, dataType) {
+                FilterAndPosition(viewModel.filterArgs.value!!, 0)
+            }
+        playAllButton.setOnClickListener(playAllListener)
+
+        if (dataType.supportsPlaylists) {
+            playAllButton.visibility = View.VISIBLE
+            playAllButton.nextFocusUpId = R.id.tab_layout
+        } else if (dataType == DataType.IMAGE) {
+            playAllButton.visibility = View.VISIBLE
+            playAllButton.nextFocusUpId = R.id.tab_layout
+            playAllButton.text = getString(R.string.play_slideshow)
+        }
+
+        if (presenterSelector is ClassPresenterSelector) {
+            addExtraGridLongClicks(presenterSelector as ClassPresenterSelector, dataType) {
                 FilterAndPosition(
                     viewModel.filterArgs.value!!,
                     viewModel.currentPosition.value ?: -1,
                 )
             }
-
-            filterButton.nextFocusUpId = R.id.tab_layout
-            filterButton.setOnClickListener {
-                serverViewModel.navigationManager.navigate(
-                    Destination.CreateFilter(
-                        dataType,
-                        viewModel.filterArgs.value!!,
-                    ),
-                )
-            }
-
-            subContentSwitch.nextFocusUpId = R.id.tab_layout
-            if (subContentSwitchCheckedListener != null) {
-                subContentSwitch.isChecked = subContentSwitchInitialIsChecked
-                subContentSwitch.text = subContentText
-                subContentSwitch.visibility = View.VISIBLE
-                subContentSwitch.setOnCheckedChangeListener { _, isChecked ->
-                    subContentSwitchCheckedListener?.invoke(isChecked)
-                }
-            }
-
-            viewModel.setupSearch(searchEditText)
         }
+
+        filterButton.nextFocusUpId = R.id.tab_layout
+        filterButton.setOnClickListener {
+            serverViewModel.navigationManager.navigate(
+                Destination.CreateFilter(
+                    dataType,
+                    viewModel.filterArgs.value!!,
+                ),
+            )
+        }
+
+        subContentSwitch.nextFocusUpId = R.id.tab_layout
+        if (subContentSwitchCheckedListener != null) {
+            subContentSwitch.isChecked = subContentSwitchInitialIsChecked
+            subContentSwitch.text = subContentText
+            subContentSwitch.visibility = View.VISIBLE
+            subContentSwitch.setOnCheckedChangeListener { _, isChecked ->
+                subContentSwitchCheckedListener?.invoke(isChecked)
+            }
+        }
+
+        viewModel.setupSearch(searchEditText)
 
         val initialRequestFocus = fragment.requestFocus
         if (initialRequestFocus) {

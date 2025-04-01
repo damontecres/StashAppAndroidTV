@@ -34,7 +34,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class StashGridViewModel : ViewModel() {
-    private lateinit var server: StashServer
     private val _filterArgs = MutableLiveData<FilterArgs>()
     val filterArgs: LiveData<FilterArgs> = _filterArgs
 
@@ -78,11 +77,9 @@ class StashGridViewModel : ViewModel() {
     private lateinit var pagingAdapter: PagingObjectAdapter
 
     fun init(
-        server: StashServer,
         presenterSelector: PresenterSelector,
         pageSize: Int,
     ) {
-        this.server = server
         this.presenterSelector = presenterSelector
         this.pageSize = pageSize
     }
@@ -109,6 +106,7 @@ class StashGridViewModel : ViewModel() {
 
         val dataType = filterArgs.dataType
 
+        val server = StashServer.requireCurrentServer()
         val factory = DataSupplierFactory(server.serverPreferences.serverVersion)
         val dataSupplier =
             factory.create<Query.Data, StashData, Query.Data>(filterArgs)
@@ -122,7 +120,7 @@ class StashGridViewModel : ViewModel() {
                 pagingSource,
                 pageSize,
                 viewModelScope,
-                NullPresenterSelector(presenterSelector, NullPresenter(server, dataType)),
+                NullPresenterSelector(presenterSelector, NullPresenter(dataType)),
             )
         pagingAdapter.registerObserver(
             object : ObjectAdapter.DataObserver() {

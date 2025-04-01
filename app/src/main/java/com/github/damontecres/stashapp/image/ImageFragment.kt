@@ -6,7 +6,6 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.fragment.app.commitNow
 import androidx.fragment.app.viewModels
@@ -20,12 +19,10 @@ import com.github.damontecres.stashapp.util.getDestination
 import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.keepScreenOn
 import com.github.damontecres.stashapp.views.models.ImageViewModel
-import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 class ImageFragment :
     Fragment(R.layout.image_fragment),
     DefaultKeyEventCallback {
-    protected val serverViewModel: ServerViewModel by activityViewModels()
     private val viewModel: ImageViewModel by viewModels()
     private val filterViewModel: VideoFilterViewModel by viewModels()
 
@@ -44,32 +41,25 @@ class ImageFragment :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-    }
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-    ) {
-        super.onViewCreated(view, savedInstanceState)
         val slideshow = requireArguments().getDestination<Destination.Slideshow>()
-        serverViewModel.currentServer.observe(viewLifecycleOwner) {
-            viewModel.init(serverViewModel.requireServer(), slideshow)
-            filterViewModel.init(DataType.IMAGE) {
-                viewModel.image.value!!.id
-            }
-            childFragmentManager.commit {
-                listOf(
-                    imageViewFragment,
-                    imageClipFragment,
-                    imageDetailsFragment,
-                ).forEach {
-                    add(R.id.root, it, it::class.java.simpleName)
-                    hide(it)
-                }
+        viewModel.init(slideshow)
+        filterViewModel.init(DataType.IMAGE) {
+            viewModel.image.value!!.id
+        }
+
+        childFragmentManager.commit {
+            listOf(
+                imageViewFragment,
+                imageClipFragment,
+                imageDetailsFragment,
+            ).forEach {
+                add(R.id.root, it, it::class.java.simpleName)
+                hide(it)
             }
         }
 
-        viewModel.image.observe(viewLifecycleOwner) { newImage ->
+        viewModel.image.observe(this) { newImage ->
             Log.v(TAG, "newImage: id=${newImage.id}")
             childFragmentManager.commit {
                 // TODO switch to sliding transitions?
@@ -89,6 +79,13 @@ class ImageFragment :
                 hide(overlayFragment)
             }
         }
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
         viewModel.slideshowActive.observe(viewLifecycleOwner) { keepScreenOn(it) }
     }
 

@@ -56,7 +56,6 @@ import java.util.EnumMap
 
 class StashImageCardView(
     context: Context,
-    private val server: StashServer,
 ) : ImageCardView(context) {
     companion object {
         private const val TAG = "StashImageCardView"
@@ -292,7 +291,7 @@ class StashImageCardView(
                 .setUri(Uri.parse(videoUrl))
                 .setMimeType(MimeTypes.VIDEO_MP4)
                 .build()
-        val player = StashExoPlayer.getInstance(context, server)
+        val player = StashExoPlayer.getInstance(context, StashServer.requireCurrentServer())
         StashExoPlayer.addListener(listener)
 
         if (videoView == null) {
@@ -421,7 +420,7 @@ class StashImageCardView(
                 .getDefaultSharedPreferences(context)
                 .getBoolean(context.getString(R.string.pref_key_show_rating), true)
         if (rating100 != null && rating100 > 0 && showRatings) {
-            val serverPrefs = server.serverPreferences
+            val serverPrefs = StashServer.requireCurrentServer().serverPreferences
             val ratingText =
                 getRatingAsDecimalString(rating100, serverPrefs.ratingsAsStars)
             val text = context.getString(R.string.stashapp_rating) + ": $ratingText"

@@ -27,8 +27,9 @@ import kotlin.reflect.full.createInstance
  * Tracks state while the user builds a new filter
  */
 class CreateFilterViewModel : ViewModel() {
-    private lateinit var server: StashServer
-    private lateinit var queryEngine: QueryEngine
+    val server = MutableLiveData(StashServer.requireCurrentServer())
+    val abbreviateCounters: Boolean get() = server.value!!.serverPreferences.abbreviateCounters
+    val queryEngine = QueryEngine(server.value!!)
 
     val filterName = MutableLiveData<String?>(null)
     val dataType = MutableLiveData<DataType>()
@@ -48,14 +49,11 @@ class CreateFilterViewModel : ViewModel() {
      * Initialize the state
      */
     fun initialize(
-        server: StashServer,
         dataType: DataType,
         initialFilter: FilterArgs?,
     ) {
         ready.value = false
 
-        this.server = server
-        this.queryEngine = QueryEngine(server)
         this.dataType.value = dataType
         this.objectFilter.value =
             initialFilter?.objectFilter ?: dataType.filterType.createInstance()
@@ -116,7 +114,7 @@ class CreateFilterViewModel : ViewModel() {
                 },
             ) {
                 val supplier =
-                    DataSupplierFactory(server.version).create<Query.Data, StashData, Query.Data>(
+                    DataSupplierFactory(server.value!!.version).create<Query.Data, StashData, Query.Data>(
                         FilterArgs(
                             dataType = dataType.value!!,
                             findFilter = findFilter.value,

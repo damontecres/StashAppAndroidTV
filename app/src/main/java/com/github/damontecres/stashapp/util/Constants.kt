@@ -604,9 +604,11 @@ val ImageData.maxFileSize: Int
 fun showSetRatingToast(
     context: Context,
     rating100: Int,
-    ratingsAsStars: Boolean,
+    ratingsAsStars: Boolean? = null,
 ) {
-    val ratingStr = getRatingString(rating100, ratingsAsStars)
+    val asStars =
+        ratingsAsStars ?: StashServer.requireCurrentServer().serverPreferences.ratingsAsStars
+    val ratingStr = getRatingString(rating100, asStars)
     Toast
         .makeText(
             context,
@@ -776,8 +778,6 @@ fun Bundle.putDataType(dataType: DataType): Bundle {
 }
 
 fun Bundle.getDataType(): DataType = DataType.valueOf(getString("dataType")!!)
-
-fun Bundle.maybeGetDataType(): DataType? = getString("dataType")?.let { DataType.valueOf(it) }
 
 @OptIn(ExperimentalSerializationApi::class)
 fun Bundle.getFilterArgs(name: String): FilterArgs? = getParcelable(name, FilterArgs::class, 0, StashParcelable)

@@ -3,15 +3,13 @@ package com.github.damontecres.stashapp.presenters
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.api.fragment.GalleryData
 import com.github.damontecres.stashapp.data.DataType
-import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.concatIfNotBlank
 import com.github.damontecres.stashapp.util.name
 import java.util.EnumMap
 
 class GalleryPresenter(
-    server: StashServer,
     callback: LongClickCallBack<GalleryData>? = null,
-) : StashPresenter<GalleryData>(server, callback) {
+) : StashPresenter<GalleryData>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: GalleryData,

@@ -4,18 +4,15 @@ import androidx.appcompat.content.res.AppCompatResources
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.suppliers.FilterArgs
-import com.github.damontecres.stashapp.util.StashServer
 
 class FilterArgsPresenter(
-    server: StashServer,
     callback: LongClickCallBack<FilterArgs>? = null,
-) : StashPresenter<FilterArgs>(server, callback) {
+) : StashPresenter<FilterArgs>(callback) {
     override fun doOnBindViewHolder(
         cardView: StashImageCardView,
         item: FilterArgs,
     ) {
         cardView.titleText = cardView.context.getString(R.string.stashapp_view_all)
-        cardView.contentExtra = null
 
         when (item.dataType) {
             DataType.SCENE ->
@@ -54,7 +51,6 @@ class FilterArgsPresenter(
                     MarkerPresenter.CARD_WIDTH,
                     MarkerPresenter.CARD_HEIGHT,
                 )
-                cardView.contentExtra = ""
             }
 
             DataType.IMAGE -> {

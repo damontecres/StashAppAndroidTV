@@ -75,8 +75,7 @@ class SearchPickerFragment(
                 .getDefaultSharedPreferences(requireContext())
                 .getInt("maxSearchResults", 25)
         title = getString(dataType.pluralStringId)
-        searchResultsAdapter.presenterSelector =
-            StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer())
+        searchResultsAdapter.presenterSelector = StashPresenter.defaultClassPresenterSelector()
         adapter.set(
             RESULTS_POS,
             ListRow(HeaderItem(getString(R.string.waiting_for_query)), ArrayObjectAdapter()),
@@ -124,7 +123,7 @@ class SearchPickerFragment(
                 },
             ) {
                 val resultsAdapter =
-                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer()))
+                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
                 val sortBy =
                     when (dataType) {
                         DataType.GALLERY -> SortOption.ImagesCount
@@ -173,11 +172,7 @@ class SearchPickerFragment(
                 if (mostRecentIds.isNotEmpty()) {
                     val items = queryEngine.getByIds(dataType, mostRecentIds)
                     val results =
-                        ArrayObjectAdapter(
-                            StashPresenter.defaultClassPresenterSelector(
-                                serverViewModel.requireServer(),
-                            ),
-                        )
+                        ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
                     if (items.isNotEmpty()) {
                         Log.v(
                             TAG,

@@ -25,6 +25,7 @@ import com.github.damontecres.stashapp.presenters.StashPresenter
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
+import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.views.models.ServerViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -105,10 +106,9 @@ class StashSearchFragment :
                     per_page = Optional.present(perPage),
                     page = Optional.present(1),
                 )
-            val queryEngine = QueryEngine(serverViewModel.requireServer())
+            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             DataType.entries.forEach {
-                val adapter =
-                    ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector(serverViewModel.requireServer()))
+                val adapter = ArrayObjectAdapter(StashPresenter.defaultClassPresenterSelector())
                 rowsAdapter.set(
                     it.ordinal,
                     ListRow(HeaderItem(getString(it.pluralStringId)), adapter),

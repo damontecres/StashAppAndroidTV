@@ -35,8 +35,6 @@ import com.github.damontecres.stashapp.util.asMarkerData
 import kotlinx.coroutines.launch
 
 class SceneViewModel : ViewModel() {
-    private lateinit var server: StashServer
-
     private val _scene = EqualityMutableLiveData<FullSceneData?>()
     val scene: LiveData<FullSceneData?> = _scene
 
@@ -68,7 +66,7 @@ class SceneViewModel : ViewModel() {
         val position = currentPosition.value
         if (currentScene != null && position != null) {
             viewModelScope.launch(StashCoroutineExceptionHandler()) {
-                val mutationEngine = MutationEngine(server)
+                val mutationEngine = MutationEngine(StashServer.requireCurrentServer())
                 mutationEngine.saveSceneActivity(currentScene.id, position)
             }
         }
@@ -78,13 +76,11 @@ class SceneViewModel : ViewModel() {
      * Initialize the [FullSceneData] for the given id. Optionally also fetch extra data such as galleries and performers.
      */
     fun init(
-        server: StashServer,
         id: String,
         fetchAll: Boolean,
     ) {
-        this.server = server
         viewModelScope.launch(StashCoroutineExceptionHandler(true)) {
-            val queryEngine = QueryEngine(server)
+            val queryEngine = QueryEngine(StashServer.requireCurrentServer())
             val newScene = queryEngine.getScene(id)
             if (newScene == null) {
                 _scene.setValueNoCheck(null)
@@ -206,13 +202,13 @@ class SceneViewModel : ViewModel() {
                                         )
                                 val supplier =
                                     DataSupplierFactory(
-                                        server.version,
+                                        StashServer.requireCurrentServer().version,
                                     ).create<Query.Data, SlimSceneData, Query.Data>(
                                         filterArgs,
                                     )
                                 _suggestedScenes.value =
                                     StashPagingSource<Query.Data, SlimSceneData, SlimSceneData, Query.Data>(
-                                        QueryEngine(server),
+                                        QueryEngine(StashServer.requireCurrentServer()),
                                         supplier,
                                     ).fetchPage(1, pageSize)
                             }

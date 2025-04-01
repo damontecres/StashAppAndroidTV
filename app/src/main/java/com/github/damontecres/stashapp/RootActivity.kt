@@ -154,10 +154,8 @@ class RootActivity :
         nextDestination: Destination,
         fragment: Fragment,
     ) {
-        if (this::loadingView.isInitialized) {
-            loadingView.hide()
-            bgLogo.animateToInvisible(View.GONE)
-        }
+        loadingView.hide()
+        bgLogo.animateToInvisible(View.GONE)
         Log.v(
             TAG,
             "onNavigate: $previousDestination=>$nextDestination",

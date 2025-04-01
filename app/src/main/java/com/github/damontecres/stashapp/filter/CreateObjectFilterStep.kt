@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.activityViewModels
 import androidx.leanback.widget.GuidanceStylist
 import androidx.leanback.widget.GuidedAction
 import com.github.damontecres.stashapp.R
@@ -33,11 +32,8 @@ import com.github.damontecres.stashapp.filter.picker.RatingPickerFragment
 import com.github.damontecres.stashapp.filter.picker.ResolutionPickerFragment
 import com.github.damontecres.stashapp.filter.picker.StringPickerFragment
 import com.github.damontecres.stashapp.views.formatNumber
-import com.github.damontecres.stashapp.views.models.ServerViewModel
 
 class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
-    private val serverViewModel: ServerViewModel by activityViewModels()
-
     private fun createActionList(): List<GuidedAction> {
         val dataType = viewModel.dataType.value!!
         return getFilterOptions(dataType)
@@ -46,13 +42,7 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
                 val value = viewModel.getValue(filterOption)
                 val description =
                     if (value != null) {
-                        filterSummary(
-                            filterOption.name,
-                            dataType,
-                            value,
-                            serverViewModel.requireServer().serverPreferences.ratingsAsStars,
-                            viewModel::lookupIds,
-                        )
+                        filterSummary(filterOption.name, dataType, value, viewModel::lookupIds)
                     } else {
                         null
                     }
@@ -62,10 +52,8 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
 
     override fun onResume() {
         super.onResume()
-        if (viewModel.dataType.value != null) {
-            actions = createActionList()
-            viewModel.updateCount()
-        }
+        actions = createActionList()
+        viewModel.updateCount()
     }
 
     override fun onViewCreated(
@@ -73,15 +61,8 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
-        if (savedInstanceState != null) {
-            return
-        }
         viewModel.resultCount.observe(viewLifecycleOwner) { count ->
-            val countStr =
-                formatNumber(
-                    count,
-                    serverViewModel.requireServer().serverPreferences.abbreviateCounters,
-                )
+            val countStr = formatNumber(count, viewModel.abbreviateCounters)
             if (count >= 0) {
                 findButtonActionById(SUBMIT).description = "$countStr results"
                 notifyButtonActionChanged(findButtonActionPositionById(SUBMIT))
@@ -93,16 +74,12 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
     }
 
     override fun onCreateGuidance(savedInstanceState: Bundle?): GuidanceStylist.Guidance {
-        if (savedInstanceState != null) {
-            return super.onCreateGuidance(savedInstanceState)
-        }
         val text =
             filterSummary(
                 requireContext(),
                 viewModel.dataType.value!!,
                 viewModel.dataType.value!!.filterType,
                 viewModel.objectFilter.value!!,
-                serverViewModel.requireServer().serverPreferences.ratingsAsStars,
                 viewModel::lookupIds,
             )
         return GuidanceStylist.Guidance(
@@ -117,9 +94,6 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        if (savedInstanceState != null) {
-            return
-        }
         actions.addAll(createActionList())
     }
 
@@ -127,9 +101,6 @@ class CreateObjectFilterStep : CreateFilterGuidedStepFragment() {
         actions: MutableList<GuidedAction>,
         savedInstanceState: Bundle?,
     ) {
-        if (savedInstanceState != null) {
-            return
-        }
         actions.add(
             GuidedAction
                 .Builder(requireContext())
