@@ -1,12 +1,15 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,11 +23,14 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.ui.PlayerView
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.compose.PlayerSurface
+import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.compose.modifiers.resizeWithContentScale
+import androidx.media3.ui.compose.state.rememberPresentationState
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackMode
@@ -34,12 +40,7 @@ import com.github.damontecres.stashapp.util.StashServer
 
 private const val TAG = "PlaybackPageContent"
 
-data class PlaybackState(
-    val isPlaying: Boolean,
-    val hasPrevious: Boolean,
-    val hasNext: Boolean,
-)
-
+@OptIn(UnstableApi::class)
 @Composable
 fun PlaybackPageContent(
     server: StashServer,
@@ -57,29 +58,17 @@ fun PlaybackPageContent(
             }
         }
 
+    var showControls by remember { mutableStateOf(true) }
+    var currentContentScaleIndex by remember { mutableIntStateOf(0) }
+    val contentScale = ContentScale.Fit
+
+    val presentationState = rememberPresentationState(player)
+    val scaledModifier =
+        Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
+
     var contentCurrentPosition by remember { mutableLongStateOf(0L) }
-    var playbackState by remember { mutableStateOf(PlaybackState(false, false, false)) }
 
     LaunchedEffect(server, scene, player) {
-        StashExoPlayer.addListener(
-            object : Player.Listener {
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    playbackState = playbackState.copy(isPlaying = isPlaying)
-                }
-
-                override fun onMediaItemTransition(
-                    mediaItem: MediaItem?,
-                    reason: Int,
-                ) {
-                    playbackState =
-                        playbackState.copy(
-                            hasPrevious = player.hasPreviousMediaItem(),
-                            hasNext = player.hasNextMediaItem(),
-                        )
-                }
-            },
-        )
-
         val streamDecision = getStreamDecision(context, scene, playbackMode)
         val media = buildMediaItem(context, streamDecision, scene)
         player.setMediaItem(media, startPosition.coerceAtLeast(0L))
@@ -119,7 +108,7 @@ fun PlaybackPageContent(
                     when (it.key) {
                         Key.MediaPlay -> player.play()
                         Key.MediaPause -> player.pause()
-                        Key.MediaPlayPause -> if (playbackState.isPlaying) player.pause() else player.play()
+                        Key.MediaPlayPause -> if (player.isPlaying) player.pause() else player.play()
                         Key.MediaFastForward, Key.MediaSkipForward -> player.seekForward()
                         Key.MediaRewind, Key.MediaSkipBackward -> player.seekBack()
                         Key.MediaNext -> player.seekToNext()
@@ -134,19 +123,18 @@ fun PlaybackPageContent(
             }.focusRequester(focusRequester)
             .focusable(),
     ) {
-        AndroidView(
-            modifier = Modifier.fillMaxSize(),
-            factory = {
-                PlayerView(context).apply {
-                    useController = false
-                }
-            },
-            update = { it.player = player },
-            onRelease = {
-                it.player = null
-                player.release()
-            },
+        PlayerSurface(
+            player = player,
+            surfaceType = SURFACE_TYPE_SURFACE_VIEW,
+            modifier = scaledModifier.clickable { showControls = !showControls },
         )
+        if (presentationState.coverSurface) {
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .background(Color.Black),
+            )
+        }
 
         PlaybackOverlay(
             modifier =
@@ -156,7 +144,6 @@ fun PlaybackPageContent(
             server = server,
             scene = scene,
             player = player,
-            playbackState = playbackState,
             controllerViewState = controllerViewState,
         )
     }

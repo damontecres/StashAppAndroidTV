@@ -53,7 +53,6 @@ fun PlaybackOverlay(
     server: StashServer,
     scene: Scene,
     player: Player,
-    playbackState: PlaybackState,
     controllerViewState: ControllerViewState,
     modifier: Modifier = Modifier,
 ) {
@@ -68,8 +67,7 @@ fun PlaybackOverlay(
         ) {
             PlaybackControls(
                 modifier = Modifier.align(Alignment.BottomCenter),
-                player = ExoPlayerControls(player),
-                playbackState = playbackState,
+                player = player,
                 controllerViewState = controllerViewState,
             )
         }

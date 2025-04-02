@@ -1,38 +1,46 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
-import android.content.res.Configuration
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.background
+import androidx.annotation.OptIn
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.compose.state.rememberNextButtonState
+import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
+import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.ui.AppColors
-import com.github.damontecres.stashapp.ui.MainTheme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlin.time.Duration.Companion.seconds
 
 interface PlayerControls {
     fun seekBack()
@@ -76,44 +84,43 @@ class ExoPlayerControls(
     }
 }
 
-@Preview(uiMode = Configuration.UI_MODE_TYPE_TELEVISION, widthDp = 800)
-@Composable
-private fun PlaybackControlsPreview() {
-    MainTheme {
-        val focusRequester = remember { FocusRequester() }
-        PlaybackControls(
-            player =
-                object : PlayerControls {
-                    override fun seekBack() {
-                    }
-
-                    override fun seekForward() {
-                    }
-
-                    override fun seekToPrevious() {
-                    }
-
-                    override fun seekToNext() {
-                    }
-
-                    override fun pause() {
-                    }
-
-                    override fun play() {
-                    }
-                },
-            playbackState = PlaybackState(true, true, false),
-            modifier = Modifier.background(Color.DarkGray),
-            initialFocusRequester = focusRequester,
-            controllerViewState = ControllerViewState(4),
-        )
-    }
-}
+// @Preview(uiMode = Configuration.UI_MODE_TYPE_TELEVISION, widthDp = 800)
+// @Composable
+// private fun PlaybackControlsPreview() {
+//    MainTheme {
+//        val focusRequester = remember { FocusRequester() }
+//        PlaybackControls(
+//            player =
+//                object : Player {
+//                    override fun seekBack() {
+//                    }
+//
+//                    override fun seekForward() {
+//                    }
+//
+//                    override fun seekToPrevious() {
+//                    }
+//
+//                    override fun seekToNext() {
+//                    }
+//
+//                    override fun pause() {
+//                    }
+//
+//                    override fun play() {
+//                    }
+//                },
+//            playbackState = PlaybackState(true, true, false),
+//            modifier = Modifier.background(Color.DarkGray),
+//            initialFocusRequester = focusRequester,
+//            controllerViewState = ControllerViewState(4),
+//        )
+//    }
+// }
 
 @Composable
 fun PlaybackControls(
-    player: PlayerControls,
-    playbackState: PlaybackState,
+    player: Player,
     controllerViewState: ControllerViewState,
     modifier: Modifier = Modifier,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
@@ -127,10 +134,15 @@ fun PlaybackControls(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        SeekBar(player, playbackState, Modifier)
+        SeekBar(
+            player,
+            controllerViewState,
+            Modifier
+                .padding(vertical = 8.dp)
+                .fillMaxWidth(.95f),
+        )
         PlaybackButtons(
             player,
-            playbackState,
             initialFocusRequester,
             onControllerInteraction = { controllerViewState.showControls() },
             modifier = Modifier,
@@ -138,30 +150,84 @@ fun PlaybackControls(
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 fun SeekBar(
-    player: PlayerControls,
-    playbackState: PlaybackState,
+    player: Player,
+    controllerViewState: ControllerViewState,
     modifier: Modifier = Modifier,
 ) {
+    val scope = rememberCoroutineScope()
+    val state = rememberSeekBarState(player, scope)
+    var bufferedProgress by remember(player) { mutableFloatStateOf(player.bufferedPosition.toFloat() / player.duration) }
+    var position by remember(player) { mutableLongStateOf(player.currentPosition) }
+    var progress by remember(player) { mutableFloatStateOf(player.currentPosition.toFloat() / player.duration) }
+    LaunchedEffect(player) {
+        while (isActive) {
+            bufferedProgress = player.bufferedPosition.toFloat() / player.duration
+            position = player.currentPosition
+            progress = player.currentPosition.toFloat() / player.duration
+            delay(250L)
+        }
+    }
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row {
+            SeekBarImpl(
+                progress = progress,
+                bufferedProgress = bufferedProgress,
+                onSeek = state::onValueChange,
+                controllerViewState = controllerViewState,
+                intervals = 15,
+                modifier = Modifier,
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = (position / 1000).seconds.toString(),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.labelLarge,
+                modifier =
+                    Modifier
+                        .padding(8.dp),
+            )
+            Text(
+                text = "-" + ((player.duration - position) / 1000).seconds.toString(),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.labelLarge,
+                modifier =
+                    Modifier
+                        .padding(8.dp),
+            )
+        }
+    }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 fun PlaybackButtons(
-    player: PlayerControls,
-    playbackState: PlaybackState,
+    player: Player,
     initialFocusRequester: FocusRequester,
     onControllerInteraction: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val playPauseState = rememberPlayPauseButtonState(player)
+    val previousState = rememberPreviousButtonState(player)
+    val nextState = rememberNextButtonState(player)
+
     Row(
         modifier = modifier.focusGroup(),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         PlaybackButton(
             iconRes = R.drawable.baseline_skip_previous_24,
-            onClick = { player.seekToPrevious() },
-            enabled = playbackState.hasPrevious,
+            onClick = previousState::onClick,
+            enabled = previousState.isEnabled,
             onControllerInteraction = onControllerInteraction,
         )
         PlaybackButton(
@@ -171,8 +237,8 @@ fun PlaybackButtons(
         )
         PlaybackButton(
             modifier = Modifier.focusRequester(initialFocusRequester),
-            iconRes = if (playbackState.isPlaying) R.drawable.baseline_pause_24 else R.drawable.baseline_play_arrow_24,
-            onClick = { if (playbackState.isPlaying) player.pause() else player.play() },
+            iconRes = if (playPauseState.showPlay) R.drawable.baseline_play_arrow_24 else R.drawable.baseline_pause_24,
+            onClick = playPauseState::onClick,
             onControllerInteraction = onControllerInteraction,
         )
         PlaybackButton(
@@ -182,8 +248,8 @@ fun PlaybackButtons(
         )
         PlaybackButton(
             iconRes = R.drawable.baseline_skip_next_24,
-            onClick = { player.seekToNext() },
-            enabled = playbackState.hasNext,
+            onClick = nextState::onClick,
+            enabled = nextState.isEnabled && player.hasNextMediaItem(),
             onControllerInteraction = onControllerInteraction,
         )
     }
