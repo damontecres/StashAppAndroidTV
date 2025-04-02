@@ -67,6 +67,7 @@ fun PlaybackOverlay(
         ) {
             PlaybackControls(
                 modifier = Modifier.align(Alignment.BottomCenter),
+                scene = scene,
                 player = player,
                 controllerViewState = controllerViewState,
             )

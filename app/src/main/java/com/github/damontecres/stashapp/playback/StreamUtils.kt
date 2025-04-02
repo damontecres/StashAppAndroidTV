@@ -156,7 +156,7 @@ fun getStreamDecision(
         "getStreamDecision: mode=$mode, " +
             "sceneId=${scene.id}, " +
             "videoCodec=${scene.videoCodec}, " +
-            "resolution=${scene.videoResolution}, " +
+            "videoHeight=${scene.videoHeight}, " +
             "audioCodec=${scene.audioCodec}, " +
             "format=${scene.format}",
     )

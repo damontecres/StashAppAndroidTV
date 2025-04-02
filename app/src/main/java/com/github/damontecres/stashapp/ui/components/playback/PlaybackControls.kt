@@ -37,6 +37,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
+import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.ui.AppColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -120,6 +121,7 @@ class ExoPlayerControls(
 
 @Composable
 fun PlaybackControls(
+    scene: Scene,
     player: Player,
     controllerViewState: ControllerViewState,
     modifier: Modifier = Modifier,
@@ -135,6 +137,7 @@ fun PlaybackControls(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         SeekBar(
+            scene,
             player,
             controllerViewState,
             Modifier
@@ -153,6 +156,7 @@ fun PlaybackControls(
 @OptIn(UnstableApi::class)
 @Composable
 fun SeekBar(
+    scene: Scene,
     player: Player,
     controllerViewState: ControllerViewState,
     modifier: Modifier = Modifier,
@@ -174,16 +178,19 @@ fun SeekBar(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row {
-            SeekBarImpl(
-                progress = progress,
-                bufferedProgress = bufferedProgress,
-                onSeek = state::onValueChange,
-                controllerViewState = controllerViewState,
-                intervals = 15,
-                modifier = Modifier,
-            )
-        }
+        val aspectRatio =
+            if (scene.videoWidth != null && scene.videoHeight != null) scene.videoWidth.toFloat() / scene.videoHeight else 16f / 9
+        SeekBarImpl(
+            progress = progress,
+            bufferedProgress = bufferedProgress,
+            duration = player.duration,
+            onSeek = state::onValueChange,
+            controllerViewState = controllerViewState,
+            intervals = 15,
+            aspectRatio = aspectRatio,
+            previewImageUrl = scene.spriteUrl,
+            modifier = Modifier.fillMaxWidth(),
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

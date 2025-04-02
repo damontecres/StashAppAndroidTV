@@ -126,7 +126,7 @@ fun PlaybackPageContent(
         PlayerSurface(
             player = player,
             surfaceType = SURFACE_TYPE_SURFACE_VIEW,
-            modifier = scaledModifier.clickable { showControls = !showControls },
+            modifier = scaledModifier.clickable(enabled = false) { showControls = !showControls },
         )
         if (presentationState.coverSurface) {
             Box(
