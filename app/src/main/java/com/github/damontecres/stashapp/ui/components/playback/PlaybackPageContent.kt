@@ -25,6 +25,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.PlayerSurface
@@ -38,7 +39,7 @@ import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.util.StashServer
 
-private const val TAG = "PlaybackPageContent"
+const val TAG = "PlaybackPageContent"
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -57,6 +58,11 @@ fun PlaybackPageContent(
                 playWhenReady = true
             }
         }
+    LifecycleStartEffect(Unit) {
+        onStopOrDispose {
+            StashExoPlayer.releasePlayer()
+        }
+    }
 
     var showControls by remember { mutableStateOf(true) }
     var currentContentScaleIndex by remember { mutableIntStateOf(0) }
@@ -143,7 +149,9 @@ fun PlaybackPageContent(
                     .background(Color.Transparent),
             server = server,
             scene = scene,
+            oCounter = scene.oCounter ?: 0,
             player = player,
+            onPlaybackActionClick = {},
             controllerViewState = controllerViewState,
         )
     }

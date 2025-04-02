@@ -52,8 +52,10 @@ class ControllerViewState internal constructor(
 fun PlaybackOverlay(
     server: StashServer,
     scene: Scene,
+    oCounter: Int,
     player: Player,
     controllerViewState: ControllerViewState,
+    onPlaybackActionClick: (PlaybackAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
@@ -68,7 +70,9 @@ fun PlaybackOverlay(
             PlaybackControls(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 scene = scene,
+                oCounter = oCounter,
                 player = player,
+                onPlaybackActionClick = onPlaybackActionClick,
                 controllerViewState = controllerViewState,
             )
         }

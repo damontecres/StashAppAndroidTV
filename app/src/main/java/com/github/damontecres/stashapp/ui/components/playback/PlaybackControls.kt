@@ -1,9 +1,13 @@
 package com.github.damontecres.stashapp.ui.components.playback
 
+import android.util.Log
+import android.view.Gravity
 import androidx.annotation.DrawableRes
 import androidx.annotation.OptIn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,12 +15,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -24,8 +31,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.rememberNextButtonState
@@ -34,6 +47,7 @@ import androidx.media3.ui.compose.state.rememberPreviousButtonState
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
+import androidx.tv.material3.ListItem
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import com.github.damontecres.stashapp.R
@@ -43,87 +57,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.seconds
 
-interface PlayerControls {
-    fun seekBack()
+sealed interface PlaybackAction {
+    data object OCount : PlaybackAction
 
-    fun seekForward()
+    data object ShowDebug : PlaybackAction
 
-    fun seekToPrevious()
-
-    fun seekToNext()
-
-    fun pause()
-
-    fun play()
+    data object CreateMarker : PlaybackAction
 }
-
-class ExoPlayerControls(
-    private val player: Player,
-) : PlayerControls {
-    override fun seekBack() {
-        player.seekBack()
-    }
-
-    override fun seekForward() {
-        player.seekForward()
-    }
-
-    override fun seekToPrevious() {
-        player.seekToPrevious()
-    }
-
-    override fun seekToNext() {
-        player.seekToNext()
-    }
-
-    override fun pause() {
-        player.pause()
-    }
-
-    override fun play() {
-        player.play()
-    }
-}
-
-// @Preview(uiMode = Configuration.UI_MODE_TYPE_TELEVISION, widthDp = 800)
-// @Composable
-// private fun PlaybackControlsPreview() {
-//    MainTheme {
-//        val focusRequester = remember { FocusRequester() }
-//        PlaybackControls(
-//            player =
-//                object : Player {
-//                    override fun seekBack() {
-//                    }
-//
-//                    override fun seekForward() {
-//                    }
-//
-//                    override fun seekToPrevious() {
-//                    }
-//
-//                    override fun seekToNext() {
-//                    }
-//
-//                    override fun pause() {
-//                    }
-//
-//                    override fun play() {
-//                    }
-//                },
-//            playbackState = PlaybackState(true, true, false),
-//            modifier = Modifier.background(Color.DarkGray),
-//            initialFocusRequester = focusRequester,
-//            controllerViewState = ControllerViewState(4),
-//        )
-//    }
-// }
 
 @Composable
 fun PlaybackControls(
     scene: Scene,
+    oCounter: Int,
     player: Player,
     controllerViewState: ControllerViewState,
+    onPlaybackActionClick: (PlaybackAction) -> Unit,
     modifier: Modifier = Modifier,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
 ) {
@@ -144,12 +92,31 @@ fun PlaybackControls(
                 .padding(vertical = 8.dp)
                 .fillMaxWidth(.95f),
         )
-        PlaybackButtons(
-            player,
-            initialFocusRequester,
-            onControllerInteraction = { controllerViewState.showControls() },
-            modifier = Modifier,
-        )
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier =
+                Modifier
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth(),
+        ) {
+            LeftPlaybackButtons(
+                onControllerInteraction = { controllerViewState.showControls() },
+                onPlaybackActionClick = onPlaybackActionClick,
+                modifier = Modifier,
+            )
+            PlaybackButtons(
+                player,
+                initialFocusRequester,
+                onControllerInteraction = { controllerViewState.showControls() },
+                modifier = Modifier,
+            )
+            RightPlaybackButtons(
+                onControllerInteraction = { controllerViewState.showControls() },
+                onPlaybackActionClick = onPlaybackActionClick,
+                modifier = Modifier,
+            )
+        }
     }
 }
 
@@ -215,6 +182,78 @@ fun SeekBar(
     }
 }
 
+private val buttonSpacing = 4.dp
+
+@Composable
+fun LeftPlaybackButtons(
+    onControllerInteraction: () -> Unit,
+    onPlaybackActionClick: (PlaybackAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var showMoreOptions by remember { mutableStateOf(false) }
+    Row(
+        modifier = modifier.focusGroup(),
+        horizontalArrangement = Arrangement.spacedBy(buttonSpacing),
+    ) {
+        // More options
+        PlaybackButton(
+            iconRes = R.drawable.vector_settings,
+            onClick = { showMoreOptions = true },
+            enabled = true,
+            onControllerInteraction = onControllerInteraction,
+        )
+        // OCount
+        PlaybackButton(
+            iconRes = R.drawable.sweat_drops,
+            onClick = { onPlaybackActionClick.invoke(PlaybackAction.OCount) },
+            enabled = true,
+            onControllerInteraction = onControllerInteraction,
+        )
+    }
+    if (showMoreOptions) {
+        val options = listOf("Show debug", "Create Marker")
+        BottomDialog(
+            choices = options,
+            onDismissRequest = { showMoreOptions = false },
+            onSelectChoice = {
+                when (options.indexOf(it)) {
+                    0 -> onPlaybackActionClick.invoke(PlaybackAction.ShowDebug)
+                    1 -> onPlaybackActionClick.invoke(PlaybackAction.CreateMarker)
+                    else -> Log.w(TAG, "Unknown more option: $it")
+                }
+            },
+            gravity = Gravity.START,
+        )
+    }
+}
+
+@Composable
+fun RightPlaybackButtons(
+    onControllerInteraction: () -> Unit,
+    onPlaybackActionClick: (PlaybackAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.focusGroup(),
+        horizontalArrangement = Arrangement.spacedBy(buttonSpacing),
+    ) {
+        // Captions
+        PlaybackButton(
+            iconRes = R.drawable.baseline_more_vert_96,
+            onClick = { },
+            enabled = true,
+            onControllerInteraction = onControllerInteraction,
+        )
+        // Playback speed, etc
+        PlaybackButton(
+            iconRes = R.drawable.vector_settings,
+            onClick = {},
+            enabled = true,
+            onControllerInteraction = onControllerInteraction,
+        )
+    }
+}
+
 @OptIn(UnstableApi::class)
 @Composable
 fun PlaybackButtons(
@@ -229,7 +268,7 @@ fun PlaybackButtons(
 
     Row(
         modifier = modifier.focusGroup(),
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        horizontalArrangement = Arrangement.spacedBy(buttonSpacing),
     ) {
         PlaybackButton(
             iconRes = R.drawable.baseline_skip_previous_24,
@@ -291,5 +330,62 @@ fun PlaybackButton(
             contentDescription = "",
             tint = MaterialTheme.colorScheme.onSurface,
         )
+    }
+}
+
+@Composable
+private fun BottomDialog(
+    choices: List<String>,
+    onDismissRequest: () -> Unit,
+    onSelectChoice: (String) -> Unit,
+    gravity: Int,
+    currentChoice: String? = null,
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(usePlatformDefaultWidth = true),
+    ) {
+        val dialogWindowProvider = LocalView.current.parent as? DialogWindowProvider
+        dialogWindowProvider?.window?.let { window ->
+            window.setGravity(Gravity.BOTTOM or gravity) // Move down, by default dialogs are in the centre
+            window.setDimAmount(0f) // Remove dimmed background of ongoing playback
+        }
+
+        Box(
+            modifier =
+                Modifier
+                    .wrapContentSize()
+                    .padding(8.dp)
+                    .background(Color.DarkGray),
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .wrapContentWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                choices.forEach { choice ->
+                    ListItem(
+                        selected = false,
+                        onClick = {
+                            onDismissRequest()
+                            onSelectChoice(choice)
+                        },
+                        headlineContent = {
+                            var fontWeight = FontWeight(400)
+                            if (choice == currentChoice) {
+                                fontWeight = FontWeight(1000)
+                            }
+                            Text(
+                                text = choice,
+                                fontWeight = fontWeight,
+                            )
+                        },
+                    )
+                }
+            }
+        }
     }
 }
