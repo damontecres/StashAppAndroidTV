@@ -12,6 +12,7 @@
     <color name="transparent_black_75">#BF000000</color>
     <color name="transparent_grey_25">#40888888</color>
     <color name="seek_bar">#5db2e0</color>
+    <color name="transparent_red_50">#80FF0000</color>
 
     <color name="transparent_default_card_background_25">#4030404d</color>
     <color name="transparent_default_card_background_50">#8030404d</color>

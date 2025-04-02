@@ -1,5 +1,6 @@
 package com.github.damontecres.stashapp.util
 
+import android.util.Log
 import com.apollographql.apollo.api.Optional
 import com.chrynan.parcelable.core.Parcelable
 import com.github.damontecres.stashapp.api.type.CriterionModifier
@@ -86,7 +87,11 @@ class CustomFieldCriterionInputSerializer : KSerializer<CustomFieldCriterionInpu
                                         INT_TYPE -> decoder.decodeInt()
                                         DOUBLE_TYPE -> decoder.decodeDouble()
                                         FLOAT_TYPE -> decoder.decodeFloat()
-                                        else -> TODO()
+                                        else -> {
+                                            val msg = "Unknown decoding type: $type"
+                                            Log.e(TAG, msg)
+                                            throw UnsupportedOperationException(msg)
+                                        }
                                     }
                                 add(itemValue)
                             }
@@ -141,7 +146,11 @@ class CustomFieldCriterionInputSerializer : KSerializer<CustomFieldCriterionInpu
                             encoder.encodeFloat(it)
                         }
 
-                        else -> TODO()
+                        else -> {
+                            val msg = "Unknown custom field type: ${it::class}"
+                            Log.e(TAG, msg)
+                            throw UnsupportedOperationException(msg)
+                        }
                     }
                 }
             }
@@ -149,6 +158,8 @@ class CustomFieldCriterionInputSerializer : KSerializer<CustomFieldCriterionInpu
     }
 
     companion object {
+        private const val TAG = "CustomFieldCriterionInputSerializer"
+
         private const val STRING_TYPE = 0
         private const val INT_TYPE = 1
         private const val DOUBLE_TYPE = 2

@@ -12,7 +12,6 @@ import androidx.leanback.widget.Presenter
 import com.bumptech.glide.Glide
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.request.target.Target
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
 import com.github.damontecres.stashapp.actions.CreateMarkerAction
@@ -107,7 +106,7 @@ abstract class StashPresenter<T>(
             cardView.mainImageView.scaleType = ImageView.ScaleType.CENTER_CROP
             StashGlide
                 .with(cardView.context, url)
-                .override(Target.SIZE_ORIGINAL)
+//                .override(Target.SIZE_ORIGINAL)
                 .optionalCenterCrop()
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
@@ -115,7 +114,7 @@ abstract class StashPresenter<T>(
             cardView.mainImageView.scaleType = ImageView.ScaleType.FIT_CENTER
             StashGlide
                 .with(cardView.context, url)
-                .override(Target.SIZE_ORIGINAL)
+//                .override(Target.SIZE_ORIGINAL)
                 .error(glideError(cardView.context))
                 .into(cardView.mainImageView!!)
         }

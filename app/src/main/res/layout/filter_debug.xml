@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="8dp"
+    android:background="@color/default_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Filter"
+            android:textSize="28sp"/>
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stretchColumns="1">
+
+            <TableRow>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Name:"
+                    android:textSize="20sp"/>
+                <TextView
+                    android:id="@+id/filter_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"/>
+            </TableRow>
+            <TableRow>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Data Type:"
+                    android:textSize="20sp"/>
+                <TextView
+                    android:id="@+id/filter_datatype"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"/>
+            </TableRow>
+            <TableRow>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Find Filter:"
+                    android:textSize="20sp"/>
+                <TextView
+                    android:id="@+id/filter_findfilter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp" />
+            </TableRow>
+            <TableRow>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Object Filter:"
+                    android:textSize="20sp"/>
+                <TextView
+                    android:id="@+id/filter_objectfilter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="20sp"/>
+            </TableRow>
+
+        </TableLayout>
+        <LinearLayout
+            android:id="@+id/item_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/items_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Items"
+                android:textSize="28sp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

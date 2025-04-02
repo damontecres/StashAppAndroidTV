@@ -1,6 +1,8 @@
 package com.github.damontecres.stashapp.setup
 
 import android.os.Bundle
+import android.view.View
+import androidx.activity.addCallback
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.leanback.app.GuidedStepSupportFragment
@@ -27,6 +29,24 @@ class ManageServersFragment : GuidedStepSupportFragment() {
         overrideReadOnly =
             requireArguments().getDestination<Destination.ManageServers>().overrideReadOnly
         super.onCreate(savedInstanceState)
+    }
+
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        super.onViewCreated(view, savedInstanceState)
+        val backCallback =
+            requireActivity().onBackPressedDispatcher.addCallback(
+                viewLifecycleOwner,
+                enabled = false,
+            ) {
+                requireActivity().finish()
+            }
+        viewModel.currentServer.observe(viewLifecycleOwner) {
+            // If no server is defined, then exit the app on back
+            backCallback.isEnabled = it == null
+        }
     }
 
     override fun onProvideTheme(): Int = R.style.Theme_StashAppAndroidTV_GuidedStep

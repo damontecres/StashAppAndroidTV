@@ -28,6 +28,7 @@ import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
+import com.github.damontecres.stashapp.util.toReadableString
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -93,7 +94,13 @@ class StashGridViewModel : ViewModel() {
             _loadingStatus.value = LoadingStatus.NoOp
             return
         }
-        Log.d(TAG, "Setting new filter, Paging")
+        Log.d(TAG, "Setting new filter, pageSize=$pageSize")
+        Log.v(
+            TAG,
+            "filterArgs: dataType=${filterArgs.dataType}\n" +
+                "findFilter=${filterArgs.findFilter}\n" +
+                "objectFilter=${filterArgs.objectFilter?.toReadableString(true)}",
+        )
         _filterArgs.value = filterArgs
         _loadingStatus.value = LoadingStatus.Start
 

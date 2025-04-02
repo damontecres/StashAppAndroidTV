@@ -33,6 +33,7 @@
         <item>@string/playback_http_client_okhttp</item>
     </string-array>
     <string name="pref_key_playback_start_muted" translatable="false">playback.startMuted</string>
+    <string name="pref_key_playback_always_transcode" translatable="false">playback.alwaysTranscode</string>
 
     <string name="pref_key_ui_performer_tabs" translatable="false">ui.tabs.performer</string>
     <string name="pref_key_ui_gallery_tabs" translatable="false">ui.tabs.gallery</string>

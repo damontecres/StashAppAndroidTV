@@ -27,14 +27,12 @@ class StashGlideModule : AppGlideModule() {
         glide: Glide,
         registry: Registry,
     ) {
-        val server = StashServer.getCurrentStashServer()
-        if (server != null) {
-            registry.replace(
-                GlideUrl::class.java,
-                InputStream::class.java,
-                OkHttpUrlLoader.Factory(StashClient.okHttpClient),
-            )
-        }
+        registry.replace(
+            GlideUrl::class.java,
+            InputStream::class.java,
+            OkHttpUrlLoader.Factory(StashClient.okHttpClient),
+        )
+
         registry
             .register(SVG::class.java, PictureDrawable::class.java, SvgDrawableTranscoder())
             .append(InputStream::class.java, SVG::class.java, SvgDecoder())

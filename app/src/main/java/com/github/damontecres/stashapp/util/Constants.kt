@@ -47,7 +47,6 @@ import com.github.damontecres.stashapp.api.fragment.SlimTagData
 import com.github.damontecres.stashapp.api.fragment.TagData
 import com.github.damontecres.stashapp.api.fragment.VideoFile
 import com.github.damontecres.stashapp.api.fragment.VideoSceneData
-import com.github.damontecres.stashapp.api.type.SceneFilterType
 import com.github.damontecres.stashapp.api.type.StashDataFilter
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.navigation.Destination
@@ -84,7 +83,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.math.roundToInt
 import kotlin.random.Random
-import kotlin.reflect.full.cast
+import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -1027,34 +1026,57 @@ fun addExtraGridLongClicks(
  *
  * This is useful for debugging
  */
-fun <T : StashDataFilter> toReadableString(
-    dataType: DataType,
-    filter: T,
-): String =
+fun StashDataFilter.toReadableString(newlines: Boolean = false): String =
     buildString {
-        append(filter::class.simpleName)
+        append(this@toReadableString::class.simpleName)
         append("(")
         val params =
-            dataType.filterType.declaredMemberProperties
-                .map { param ->
-                    val obj = param.get(filter) as Optional<*>
+            this@toReadableString::class
+                .declaredMemberProperties
+                .mapNotNull { param ->
+                    val obj =
+                        (param as KProperty1<StashDataFilter, *>).get(this@toReadableString) as Optional<*>
                     val value = obj.getOrNull()
-                    if (value != null) {
-                        if (param.name in setOf("AND", "OR", "NOT")) {
-                            val str = toReadableString(dataType, dataType.filterType.cast(value))
-                            "${param.name}=$str"
+                    val str =
+                        if (value != null) {
+                            if (value is StashDataFilter) {
+                                val str = value.toReadableString()
+                                "${param.name}=$str"
+                            } else if (value::class.simpleName?.endsWith("CriterionInput") == true) {
+                                "${param.name}=${value.toReadableString()}"
+                            } else {
+                                "${param.name}=$value"
+                            }
                         } else {
-                            "${param.name}=$value"
+                            null
                         }
+                    if (newlines && str != null) "\t$str" else str
+                }
+        if (newlines && params.isNotEmpty()) append("\n")
+        append(params.joinNotNullOrBlank(if (newlines) ",\n" else ", "))
+        if (newlines && params.isNotEmpty()) append("\n")
+        append(")")
+    }.replace(Optional.absent().toString(), "Absent")
+
+fun Any.toReadableString() =
+    buildString {
+        append(this@toReadableString::class.simpleName)
+        append("(")
+        val params =
+            this@toReadableString::class
+                .declaredMemberProperties
+                .map { param ->
+                    param as KProperty1<Any, *>
+                    val value = param.get(this@toReadableString)
+                    if (value is Optional<*>) {
+                        "${param.name}=${value.getOrNull()}"
                     } else {
-                        null
+                        "${param.name}=$value"
                     }
                 }.joinNotNullOrBlank(", ")
         append(params)
         append(")")
-    }.replace(Optional.absent().toString(), "Absent")
-
-fun SceneFilterType.toReadableString(): String = toReadableString(DataType.SCENE, this)
+    }
 
 fun Fragment.keepScreenOn(keep: Boolean) {
     Log.v("keepScreenOn", "Keep screen on: $keep")
@@ -1087,4 +1109,27 @@ fun View.updateLayoutParams(transform: ViewGroup.LayoutParams.() -> Unit) {
     val lp = layoutParams
     transform(layoutParams)
     layoutParams = lp
+}
+
+fun calculatePageSize(
+    context: Context,
+    dataType: DataType,
+): Int {
+    val cardSize =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getInt("cardSize", context.getString(R.string.card_size_default))
+    val numberOfColumns =
+        (cardSize * (ScenePresenter.CARD_WIDTH.toDouble() / dataType.defaultCardWidth)).toInt()
+    val maxSearchResults =
+        PreferenceManager
+            .getDefaultSharedPreferences(context)
+            .getInt("maxSearchResults", 25)
+    val number = (numberOfColumns * 5).coerceAtLeast(maxSearchResults + numberOfColumns * 2)
+    val remainder = number % numberOfColumns
+    return if (remainder == 0) {
+        number
+    } else {
+        number + (numberOfColumns - remainder)
+    }
 }
