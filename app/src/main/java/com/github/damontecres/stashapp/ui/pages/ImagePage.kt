@@ -68,15 +68,23 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.compose.PlayerSurface
+import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
+import androidx.media3.ui.compose.modifiers.resizeWithContentScale
+import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
+import androidx.media3.ui.compose.state.rememberPresentationState
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Icon
@@ -89,6 +97,7 @@ import coil3.request.crossfade
 import com.apollographql.apollo.api.Query
 import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashApplication
+import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.api.fragment.ImageData
 import com.github.damontecres.stashapp.api.fragment.PerformerData
 import com.github.damontecres.stashapp.api.fragment.StashData
@@ -97,13 +106,13 @@ import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.OCounter
 import com.github.damontecres.stashapp.filter.extractTitle
 import com.github.damontecres.stashapp.navigation.NavigationManagerCompose
+import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.suppliers.DataSupplierFactory
 import com.github.damontecres.stashapp.suppliers.FilterArgs
 import com.github.damontecres.stashapp.suppliers.StashPagingSource
 import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.ui.ComposeUiConfig
 import com.github.damontecres.stashapp.ui.FontAwesome
-import com.github.damontecres.stashapp.ui.MainTheme
 import com.github.damontecres.stashapp.ui.Material3MainTheme
 import com.github.damontecres.stashapp.ui.components.DialogItem
 import com.github.damontecres.stashapp.ui.components.DialogPopup
@@ -118,6 +127,7 @@ import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.QueryEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
 import com.github.damontecres.stashapp.util.StashServer
+import com.github.damontecres.stashapp.util.isImageClip
 import com.github.damontecres.stashapp.util.isNotNullOrBlank
 import com.github.damontecres.stashapp.util.listOfNotNullOrBlank
 import com.github.damontecres.stashapp.util.readOnlyModeDisabled
@@ -336,6 +346,7 @@ sealed class ImageLoadingState {
     ) : ImageLoadingState()
 }
 
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 @Composable
 fun ImagePage(
     server: StashServer,
@@ -400,6 +411,25 @@ fun ImagePage(
         reset(true)
     }
 
+    val context = LocalContext.current
+    val player =
+        remember {
+            StashExoPlayer.getInstance(context, server).apply {
+                repeatMode = Player.REPEAT_MODE_OFF
+                playWhenReady = true
+            }
+        }
+    LifecycleStartEffect(Unit) {
+        onStopOrDispose {
+            StashExoPlayer.releasePlayer()
+        }
+    }
+
+    val presentationState = rememberPresentationState(player)
+    LaunchedEffect(player) {
+        maybeMuteAudio(context, player)
+    }
+
     Box(
         modifier =
             modifier
@@ -439,25 +469,65 @@ fun ImagePage(
     ) {
         imageState?.let { image ->
             if (image.paths.image.isNotNullOrBlank()) {
-                AsyncImage(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .graphicsLayer {
-                                scaleX = zoomAnimation
-                                scaleY = zoomAnimation
-                                translationX = panXAnimation
-                                translationY = panYAnimation
-                            }.rotate(rotateAnimation),
-                    model =
-                        ImageRequest
-                            .Builder(LocalContext.current)
-                            .data(image.paths.image)
-                            .crossfade(true)
-                            .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.FillHeight,
-                )
+                if (image.isImageClip) {
+                    LaunchedEffect(image.id) {
+                        val mediaItem =
+                            MediaItem
+                                .Builder()
+                                .setUri(image.paths.image)
+                                .build()
+                        player.setMediaItem(mediaItem)
+                        player.repeatMode = Player.REPEAT_MODE_ONE
+                        player.prepare()
+                        player.play()
+                    }
+                    val contentScale = ContentScale.Fit
+                    val scaledModifier =
+                        Modifier.resizeWithContentScale(contentScale, presentationState.videoSizeDp)
+                    PlayerSurface(
+                        player = player,
+                        surfaceType = SURFACE_TYPE_SURFACE_VIEW,
+                        modifier =
+                            scaledModifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    scaleX = zoomAnimation
+                                    scaleY = zoomAnimation
+                                    translationX = panXAnimation
+                                    translationY = panYAnimation
+                                }.rotate(rotateAnimation),
+                    )
+                    if (presentationState.coverSurface) {
+                        Box(
+                            Modifier
+                                .matchParentSize()
+                                .background(Color.Black),
+                        )
+                    }
+                } else {
+                    AsyncImage(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    scaleX = zoomAnimation
+                                    scaleY = zoomAnimation
+                                    translationX = panXAnimation
+                                    translationY = panYAnimation
+                                }.rotate(rotateAnimation),
+                        model =
+                            ImageRequest
+                                .Builder(LocalContext.current)
+                                .data(image.paths.image)
+                                .crossfade(true)
+                                .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.FillHeight,
+                    )
+                }
+            } else {
+                // TODO
+                Text("No image URL")
             }
             AnimatedVisibility(showOverlay) {
                 ImageOverlay(
@@ -466,6 +536,7 @@ fun ImagePage(
                             .fillMaxSize()
                             .background(AppColors.TransparentBlack50),
                     server = server,
+                    player = player,
                     image = image,
                     tags = tags,
                     performers = performers,
@@ -502,6 +573,7 @@ fun ImagePage(
 @Composable
 fun ImageOverlay(
     server: StashServer,
+    player: Player,
     image: ImageData,
     tags: List<TagData>,
     performers: List<PerformerData>,
@@ -566,6 +638,7 @@ fun ImageOverlay(
     ) {
         item {
             ImageDetailsHeader(
+                player = player,
                 image = image,
                 rating100 = rating100,
                 oCount = oCount,
@@ -706,6 +779,7 @@ fun ImageOverlay(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ImageDetailsHeader(
+    player: Player,
     image: ImageData,
     rating100: Int,
     oCount: Int,
@@ -843,6 +917,8 @@ fun ImageDetailsHeader(
             }
         }
         ImageControlsOverlay(
+            player = player,
+            isImageClip = image.isImageClip,
             oCount = oCount,
             bringIntoViewRequester = bringIntoViewRequester,
             onZoom = onZoom,
@@ -859,9 +935,12 @@ fun ImageDetailsHeader(
     }
 }
 
+@androidx.annotation.OptIn(UnstableApi::class)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ImageControlsOverlay(
+    player: Player,
+    isImageClip: Boolean,
     oCount: Int,
     onZoom: (Float) -> Unit,
     onRotate: (Int) -> Unit,
@@ -883,6 +962,7 @@ fun ImageControlsOverlay(
             scope.launch { bringIntoViewRequester.bringIntoView() }
         }
     }
+    val playPauseState = rememberPlayPauseButtonState(player)
     LazyRow(
         modifier =
             modifier
@@ -891,51 +971,75 @@ fun ImageControlsOverlay(
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        item {
-            ImageControlButton(
-                stringRes = R.string.fa_rotate_left,
-                onClick = { onRotate(-90) },
-                modifier =
-                    Modifier
-                        .focusRequester(focusRequester)
-                        .onFocusChanged(onFocused),
-            )
-        }
-        item {
-            ImageControlButton(
-                stringRes = R.string.fa_rotate_right,
-                onClick = { onRotate(90) },
-                modifier =
-                    Modifier
-                        .onFocusChanged(onFocused),
-            )
-        }
-        item {
-            ImageControlButton(
-                stringRes = R.string.fa_magnifying_glass_plus,
-                onClick = { onZoom(.15f) },
-                modifier =
-                    Modifier
-                        .onFocusChanged(onFocused),
-            )
-        }
-        item {
-            ImageControlButton(
-                stringRes = R.string.fa_magnifying_glass_minus,
-                onClick = { onZoom(-.15f) },
-                modifier =
-                    Modifier
-                        .onFocusChanged(onFocused),
-            )
-        }
-        item {
-            ImageControlButton(
-                drawableRes = R.drawable.baseline_undo_24,
-                onClick = onReset,
-                modifier =
-                    Modifier
-                        .onFocusChanged(onFocused),
-            )
+        if (isImageClip) {
+            item {
+                Button(
+                    onClick = playPauseState::onClick,
+                    modifier =
+                        Modifier
+                            .focusRequester(focusRequester)
+                            .onFocusChanged(onFocused),
+                    contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                ) {
+                    Icon(
+                        painter =
+                            painterResource(
+                                if (playPauseState.showPlay) R.drawable.baseline_play_arrow_24 else R.drawable.baseline_pause_24,
+                            ),
+                        contentDescription = null,
+                    )
+                }
+            }
+        } else {
+            // Regular image
+            // TODO might be able to apply to the player surface?
+            // If enabling these, make sure the focusRequester is updated!
+            item {
+                ImageControlButton(
+                    stringRes = R.string.fa_rotate_left,
+                    onClick = { onRotate(-90) },
+                    modifier =
+                        Modifier
+                            .focusRequester(focusRequester)
+                            .onFocusChanged(onFocused),
+                )
+            }
+            item {
+                ImageControlButton(
+                    stringRes = R.string.fa_rotate_right,
+                    onClick = { onRotate(90) },
+                    modifier =
+                        Modifier
+                            .onFocusChanged(onFocused),
+                )
+            }
+            item {
+                ImageControlButton(
+                    stringRes = R.string.fa_magnifying_glass_plus,
+                    onClick = { onZoom(.15f) },
+                    modifier =
+                        Modifier
+                            .onFocusChanged(onFocused),
+                )
+            }
+            item {
+                ImageControlButton(
+                    stringRes = R.string.fa_magnifying_glass_minus,
+                    onClick = { onZoom(-.15f) },
+                    modifier =
+                        Modifier
+                            .onFocusChanged(onFocused),
+                )
+            }
+            item {
+                ImageControlButton(
+                    drawableRes = R.drawable.baseline_undo_24,
+                    onClick = onReset,
+                    modifier =
+                        Modifier
+                            .onFocusChanged(onFocused),
+                )
+            }
         }
         // O-Counter
         item {
@@ -1064,21 +1168,23 @@ fun ImageDetailsFooter(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Preview(widthDp = 600)
-@Composable
-private fun ImageControlsOverlayPreview() {
-    MainTheme {
-        ImageControlsOverlay(
-            onZoom = {},
-            onRotate = {},
-            onReset = {},
-            bringIntoViewRequester = null,
-            oCount = 1,
-            moreOnClick = {},
-            oCounterOnClick = {},
-            oCounterOnLongClick = {},
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
+// @OptIn(ExperimentalFoundationApi::class)
+// @Preview(widthDp = 600)
+// @Composable
+// private fun ImageControlsOverlayPreview() {
+//    MainTheme {
+//        ImageControlsOverlay(
+//            player = PreviewFakePlayer(),
+//            isImageClip = false,
+//            onZoom = {},
+//            onRotate = {},
+//            onReset = {},
+//            bringIntoViewRequester = null,
+//            oCount = 1,
+//            moreOnClick = {},
+//            oCounterOnClick = {},
+//            oCounterOnLongClick = {},
+//            modifier = Modifier.fillMaxWidth(),
+//        )
+//    }
+// }

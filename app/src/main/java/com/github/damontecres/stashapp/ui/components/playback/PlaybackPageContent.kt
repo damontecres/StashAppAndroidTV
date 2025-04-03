@@ -45,6 +45,7 @@ import com.github.damontecres.stashapp.playback.StreamDecision
 import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
+import com.github.damontecres.stashapp.playback.maybeMuteAudio
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
 import com.github.damontecres.stashapp.util.MutationEngine
 import com.github.damontecres.stashapp.util.StashCoroutineExceptionHandler
@@ -139,6 +140,7 @@ fun PlaybackPageContent(
     }
 
     LaunchedEffect(server, scene, player) {
+        maybeMuteAudio(context, player)
         val decision = getStreamDecision(context, scene, playbackMode)
         val media = buildMediaItem(context, streamDecision, scene)
         player.setMediaItem(media, startPosition.coerceAtLeast(0L))
