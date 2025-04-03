@@ -4,15 +4,21 @@ import androidx.annotation.IntRange
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import com.github.damontecres.stashapp.data.Scene
+import com.github.damontecres.stashapp.playback.StreamDecision
+import com.github.damontecres.stashapp.ui.AppColors
 import com.github.damontecres.stashapp.util.StashServer
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
@@ -54,10 +60,12 @@ class ControllerViewState internal constructor(
 fun PlaybackOverlay(
     server: StashServer,
     scene: Scene,
+    streamDecision: StreamDecision,
     oCounter: Int,
     player: Player,
     controllerViewState: ControllerViewState,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
+    showDebugInfo: Boolean,
     modifier: Modifier = Modifier,
 ) {
     AnimatedVisibility(
@@ -69,6 +77,19 @@ fun PlaybackOverlay(
         Box(
             modifier,
         ) {
+            if (showDebugInfo) {
+                PlaybackDebugInfo(
+                    scene = scene,
+                    streamDecision = streamDecision,
+                    modifier =
+                        Modifier
+                            .padding(8.dp)
+                            .background(AppColors.TransparentBlack50)
+                            .align(Alignment.TopStart)
+                            // TODO the width isn't be used correctly
+                            .width(280.dp),
+                )
+            }
             PlaybackControls(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 scene = scene,
@@ -76,6 +97,7 @@ fun PlaybackOverlay(
                 player = player,
                 onPlaybackActionClick = onPlaybackActionClick,
                 controllerViewState = controllerViewState,
+                showDebugInfo = showDebugInfo,
             )
         }
     }

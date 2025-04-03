@@ -72,6 +72,7 @@ fun PlaybackControls(
     player: Player,
     controllerViewState: ControllerViewState,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
+    showDebugInfo: Boolean,
     modifier: Modifier = Modifier,
     initialFocusRequester: FocusRequester = remember { FocusRequester() },
 ) {
@@ -103,6 +104,7 @@ fun PlaybackControls(
             LeftPlaybackButtons(
                 onControllerInteraction = { controllerViewState.showControls() },
                 onPlaybackActionClick = onPlaybackActionClick,
+                showDebugInfo = showDebugInfo,
                 modifier = Modifier,
             )
             PlaybackButtons(
@@ -188,6 +190,7 @@ private val buttonSpacing = 4.dp
 fun LeftPlaybackButtons(
     onControllerInteraction: () -> Unit,
     onPlaybackActionClick: (PlaybackAction) -> Unit,
+    showDebugInfo: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var showMoreOptions by remember { mutableStateOf(false) }
@@ -211,7 +214,11 @@ fun LeftPlaybackButtons(
         )
     }
     if (showMoreOptions) {
-        val options = listOf("Show debug", "Create Marker")
+        val options =
+            listOf(
+                if (showDebugInfo) "Hide transcode info" else "Show transcode info",
+                "Create Marker",
+            )
         BottomDialog(
             choices = options,
             onDismissRequest = { showMoreOptions = false },

@@ -35,10 +35,14 @@ import androidx.media3.ui.compose.PlayerSurface
 import androidx.media3.ui.compose.SURFACE_TYPE_SURFACE_VIEW
 import androidx.media3.ui.compose.modifiers.resizeWithContentScale
 import androidx.media3.ui.compose.state.rememberPresentationState
+import androidx.preference.PreferenceManager
+import com.github.damontecres.stashapp.R
 import com.github.damontecres.stashapp.StashExoPlayer
 import com.github.damontecres.stashapp.data.DataType
 import com.github.damontecres.stashapp.data.Scene
 import com.github.damontecres.stashapp.playback.PlaybackMode
+import com.github.damontecres.stashapp.playback.StreamDecision
+import com.github.damontecres.stashapp.playback.TranscodeDecision
 import com.github.damontecres.stashapp.playback.buildMediaItem
 import com.github.damontecres.stashapp.playback.getStreamDecision
 import com.github.damontecres.stashapp.ui.pages.SearchForDialog
@@ -114,11 +118,32 @@ fun PlaybackPageContent(
     var createMarkerPosition by remember { mutableLongStateOf(-1L) }
     var playingBeforeCreateMarker by remember { mutableStateOf(false) }
 
+    var showDebugInfo by remember {
+        mutableStateOf(
+            PreferenceManager
+                .getDefaultSharedPreferences(
+                    context,
+                ).getBoolean(context.getString(R.string.pref_key_show_playback_debug_info), false),
+        )
+    }
+    var streamDecision by remember {
+        mutableStateOf<StreamDecision>(
+            StreamDecision(
+                sceneId = scene.id,
+                transcodeDecision = TranscodeDecision.DirectPlay,
+                videoSupported = false,
+                audioSupported = false,
+                containerSupported = false,
+            ),
+        )
+    }
+
     LaunchedEffect(server, scene, player) {
-        val streamDecision = getStreamDecision(context, scene, playbackMode)
+        val decision = getStreamDecision(context, scene, playbackMode)
         val media = buildMediaItem(context, streamDecision, scene)
         player.setMediaItem(media, startPosition.coerceAtLeast(0L))
         player.prepare()
+        streamDecision = decision
     }
 
     val controllerViewState =
@@ -191,6 +216,7 @@ fun PlaybackPageContent(
                     .background(Color.Transparent),
             server = server,
             scene = scene,
+            streamDecision = streamDecision,
             oCounter = scene.oCounter ?: 0,
             player = player,
             onPlaybackActionClick = {
@@ -205,11 +231,12 @@ fun PlaybackPageContent(
                     }
 
                     PlaybackAction.ShowDebug -> {
-                        // no-op
+                        showDebugInfo = !showDebugInfo
                     }
                 }
             },
             controllerViewState = controllerViewState,
+            showDebugInfo = showDebugInfo,
         )
     }
     val dismiss = {
